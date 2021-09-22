@@ -93,7 +93,7 @@ PenaltyExcessCharacter: 0
 PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Left
 RawStringFormats: 
-  - Delimiter:       pb
+  - Delimiters:       [pb]
     Language:        TextProto
     BasedOnStyle:    google
 ReflowComments:  true
