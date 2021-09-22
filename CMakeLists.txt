@@ -92,6 +92,11 @@ target_link_libraries(prefiltering_nodelet
   ${PCL_LIBRARIES}
 )
 
+add_library(plane_segmentation_nodelet apps/plane_segmentation_nodelet.cpp)
+target_link_libraries(plane_segmentation_nodelet
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
 
 add_library(floor_detection_nodelet apps/floor_detection_nodelet.cpp)
 target_link_libraries(floor_detection_nodelet
