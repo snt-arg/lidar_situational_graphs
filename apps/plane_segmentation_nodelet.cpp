@@ -29,6 +29,7 @@
 #include <pcl/sample_consensus/sac_model_parallel_plane.h>
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/features/normal_3d.h>
+#include <pcl/filters/extract_indices.h>
 
 namespace hdl_graph_slam {
 
@@ -99,6 +100,7 @@ private:
     // // ne.setIndices(inliers);
     // ne.compute(*normal_cloud);
     // std::cout << normal_cloud->size() << std::endl;
+    
     return normal_cloud;
   }
 
@@ -113,7 +115,7 @@ private:
       // Mandatory
       seg.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
       seg.setMethodType(pcl::SAC_RANSAC);
-      seg.setDistanceThreshold(0.1);
+      seg.setDistanceThreshold(0.01);
       if(i == 0)
         seg.setAxis(Eigen::Vector3f(1.0, 0.0, 0.0));
       else if(i == 1)
@@ -122,16 +124,13 @@ private:
         seg.setAxis(Eigen::Vector3f(0.0, 1.0, 0.0));
       else if(i == 3)
         seg.setAxis(Eigen::Vector3f(0.0, -1.0, 0.0));
-      seg.setEpsAngle(pcl::deg2rad(3.0f));
+      seg.setEpsAngle(pcl::deg2rad(15.0f));
       seg.setInputCloud(transformed_cloud);
       // seg.setInputNormals(normal_cloud);
       seg.segment(*inliers, *coefficients);
 
       for(const auto& idx : inliers->indices) {
         segmented_cloud.points.push_back(transformed_cloud->points[idx]);
-        int index = this->getIndex(transformed_cloud->points, transformed_cloud->points[idx]);
-        //std::cout << "index: " << index << std::endl;
-        //transformed_cloud->points.erase(transformed_cloud->points.begin() + index);
         if(i == 0) {
           segmented_cloud.back().r = 255;
           segmented_cloud.back().g = 0;
@@ -150,6 +149,11 @@ private:
           segmented_cloud.back().b = 204;
         }
       }
+      pcl::ExtractIndices<PointT> extract;
+      extract.setInputCloud (transformed_cloud);
+      extract.setIndices (inliers);
+      extract.setNegative (true);
+      extract.filter (*transformed_cloud);
     }
 
     sensor_msgs::PointCloud2 segmented_cloud_msg;
@@ -161,7 +165,6 @@ private:
   }
 
   int getIndex(std::vector<pcl::PointXYZRGB, Eigen::aligned_allocator<pcl::PointXYZRGB> > v, pcl::PointXYZRGB K) {
-    // auto it = std::find(v.begin(), v.end(), K);
     auto it = find_if(v.begin(), v.end(), [&K](const pcl::PointXYZRGB& obj) { return (obj.x == K.x && obj.y == K.y && obj.z == K.z); });
     int index = std::distance(v.begin(), it);
     return index;
