@@ -7,6 +7,7 @@
 #include <pcl_ros/transforms.h>
 #include <pcl_ros/point_cloud.h>
 #include <tf/transform_listener.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -23,6 +24,7 @@
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/segmentation/organized_multi_plane_segmentation.h>
 
 namespace hdl_graph_slam {
 
@@ -46,11 +48,13 @@ private:
   }
 
   void init_ros() {
-    filtered_point_cloud_sub_ = nh.subscribe("filtered_point_cloud", 1, &PlaneSegmentationNodelet::filteredPointCloudCallback, this);
+    filtered_point_cloud_sub_ = nh.subscribe("velodyne_points", 64, &PlaneSegmentationNodelet::filteredPointCloudCallback, this);
+    segmented_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("segmented_points", 1);
   }
 
   void filteredPointCloudCallback(const pcl::PointCloud<PointT>::ConstPtr& src_cloud) {
     if(src_cloud->empty()) {
+      std::cout << "Plane Segmentation got empty point cloud" << std::endl;
       return;
     }
 
@@ -68,6 +72,7 @@ private:
       pcl_ros::transformPointCloud(*src_cloud, *transformed, transform);
       transformed->header.frame_id = base_link_frame;
       transformed->header.stamp = src_cloud->header.stamp;
+      this->segment_planes(transformed);
     }
   }
 
@@ -86,11 +91,24 @@ private:
     seg.setInputCloud(transformed_cloud);
     seg.segment(*inliers, *coefficients);
 
-    std::cout << inliers->indices.size() << std::endl;
+    // std::cout << "Model coefficients: " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+    pcl::PointCloud<PointT> segmented_cloud;
+    for(const auto& idx : inliers->indices) {
+      segmented_cloud.points.push_back(transformed_cloud->points[idx]);
+      segmented_cloud.back().r = 0;
+      segmented_cloud.back().g = 255;
+      segmented_cloud.back().b = 0;
+    }
+    sensor_msgs::PointCloud2 segmented_cloud_msg;
+    pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
+    segmented_cloud_msg.header.stamp = ros::Time::now();
+    segmented_cloud_msg.header.frame_id = "velodyne";
+    segmented_cloud_pub_.publish(segmented_cloud_msg);
   }
 
 private:
   ros::Subscriber filtered_point_cloud_sub_;
+  ros::Publisher segmented_cloud_pub_;
 
   /* private variables */
 private:
