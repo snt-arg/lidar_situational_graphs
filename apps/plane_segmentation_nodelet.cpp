@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <ros/time.h>
-#include <hdl_graph_slam/plane_segmentor.hpp>
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
 #include <pcl_ros/transforms.h>

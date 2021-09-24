@@ -124,7 +124,6 @@ add_library(hdl_graph_slam_nodelet
   src/hdl_graph_slam/map_cloud_generator.cpp
   src/hdl_graph_slam/registrations.cpp
   src/hdl_graph_slam/information_matrix_calculator.cpp
-  src/hdl_graph_slam/plane_segmentor.cpp
   src/g2o/robust_kernel_io.cpp
 )
 target_link_libraries(hdl_graph_slam_nodelet
