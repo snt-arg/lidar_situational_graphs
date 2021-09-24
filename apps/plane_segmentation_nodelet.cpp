@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+
 #include <ros/time.h>
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
@@ -36,7 +37,7 @@ class PlaneSegmentationNodelet : public nodelet::Nodelet {
 public:
   typedef pcl::PointXYZRGB PointT;
 
-  PlaneSegmentationNodelet() {}
+  PlaneSegmentationNodelet() : cloud_accumulated_(new pcl::PointCloud<PointT>()) {}
   virtual ~PlaneSegmentationNodelet() {}
 
   virtual void onInit() {
@@ -48,7 +49,9 @@ public:
 
 private:
   void initialize_params() {
+    this->cloud_accum_ = 0;
     base_link_frame = private_nh.param<std::string>("base_link_frame", "base_link");
+    min_seg_points_ = private_nh.param<int>("min_seg_points", 1000);
   }
 
   void init_ros() {
@@ -67,7 +70,6 @@ private:
       if(!tf_listener.canTransform(base_link_frame, src_cloud->header.frame_id, ros::Time(0))) {
         std::cerr << "failed to find transform between " << base_link_frame << " and " << src_cloud->header.frame_id << std::endl;
       }
-
       tf::StampedTransform transform;
       tf_listener.waitForTransform(base_link_frame, src_cloud->header.frame_id, ros::Time(0), ros::Duration(2.0));
       tf_listener.lookupTransform(base_link_frame, src_cloud->header.frame_id, ros::Time(0), transform);
@@ -78,7 +80,7 @@ private:
       transformed->header.stamp = src_cloud->header.stamp;
 
       pcl::PointCloud<pcl::Normal>::Ptr normal_cloud;
-      normal_cloud = this->compute_normals(transformed);
+      // normal_cloud = this->compute_normals(cloud_accumulated_);
       this->segment_planes(transformed, normal_cloud);
     }
   }
@@ -99,67 +101,67 @@ private:
     // // ne.setIndices(inliers);
     // ne.compute(*normal_cloud);
     // std::cout << normal_cloud->size() << std::endl;
-    
+
     return normal_cloud;
   }
 
   void segment_planes(pcl::PointCloud<PointT>::Ptr transformed_cloud, pcl::PointCloud<pcl::Normal>::Ptr normal_cloud) {
     pcl::PointCloud<PointT> segmented_cloud;
-    for(int i = 0; i < 4; ++i) {
-      pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-      pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-      // Optional
-      pcl::SACSegmentation<PointT> seg;
-      seg.setOptimizeCoefficients(true);
-      // Mandatory
-      seg.setModelType(pcl::SACMODEL_PARALLEL_PLANE);
-      seg.setMethodType(pcl::SAC_RANSAC);
-      seg.setDistanceThreshold(0.01);
-      if(i == 0)
-        seg.setAxis(Eigen::Vector3f(1.0, 0.0, 0.0));
-      else if(i == 1)
-        seg.setAxis(Eigen::Vector3f(-1.0, 0.0, 0.0));
-      else if(i == 2)
-        seg.setAxis(Eigen::Vector3f(0.0, 1.0, 0.0));
-      else if(i == 3)
-        seg.setAxis(Eigen::Vector3f(0.0, -1.0, 0.0));
-      seg.setEpsAngle(pcl::deg2rad(15.0f));
-      seg.setInputCloud(transformed_cloud);
-      // seg.setInputNormals(normal_cloud);
-      seg.segment(*inliers, *coefficients);
-
-      for(const auto& idx : inliers->indices) {
-        segmented_cloud.points.push_back(transformed_cloud->points[idx]);
-        if(i == 0) {
-          segmented_cloud.back().r = 255;
-          segmented_cloud.back().g = 0;
-          segmented_cloud.back().b = 0;
-        } else if(i == 1) {
-          segmented_cloud.back().r = 0;
-          segmented_cloud.back().g = 0;
-          segmented_cloud.back().b = 255;
-        } else if(i == 2) {
-          segmented_cloud.back().r = 0;
-          segmented_cloud.back().g = 255;
-          segmented_cloud.back().b = 0;
-        } else if(i == 3) {
-          segmented_cloud.back().r = 255;
-          segmented_cloud.back().g = 192;
-          segmented_cloud.back().b = 204;
+    int i = 0;
+    while(transformed_cloud->points.size() > min_seg_points_) {
+      try {
+        pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+        pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+        // Optional
+        pcl::SACSegmentation<PointT> seg;
+        seg.setOptimizeCoefficients(true);
+        // Mandatory
+        seg.setModelType(pcl::SACMODEL_PLANE);
+        seg.setMethodType(pcl::SAC_RANSAC);
+        seg.setDistanceThreshold(0.1);
+        // seg.setEpsAngle(pcl::deg2rad(5.0f));
+        seg.setInputCloud(transformed_cloud);
+        // seg.setInputNormals(normal_cloud);
+        int model_type = seg.getModelType();
+        seg.segment(*inliers, *coefficients);
+        if(inliers->indices.empty()) {
+          break;
+          std::cout << "continuing as no model found" << std::endl;
         }
-      }
-      pcl::ExtractIndices<PointT> extract;
-      extract.setInputCloud (transformed_cloud);
-      extract.setIndices (inliers);
-      extract.setNegative (true);
-      extract.filter (*transformed_cloud);
-    }
+        std::cout << "Model coefficients " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
 
+        for(const auto& idx : inliers->indices) {
+          segmented_cloud.points.push_back(transformed_cloud->points[idx]);
+          if(coefficients->values[0] > 0.95) {
+            segmented_cloud.back().r = 255;
+            segmented_cloud.back().g = 0;
+            segmented_cloud.back().b = 0;
+          } else if(coefficients->values[1] < -0.95) {
+            segmented_cloud.back().r = 0;
+            segmented_cloud.back().g = 0;
+            segmented_cloud.back().b = 255;
+          } else if(coefficients->values[2] > 0.95) {
+            segmented_cloud.back().r = 0;
+            segmented_cloud.back().g = 255;
+            segmented_cloud.back().b = 0;
+          }
+        }
+        pcl::ExtractIndices<PointT> extract;
+        extract.setInputCloud(transformed_cloud);
+        extract.setIndices(inliers);
+        extract.setNegative(true);
+        extract.filter(*transformed_cloud);
+        i++;
+      } catch(const std::exception& e) {
+        std::cout << "No ransac model found" << std::endl;
+        break;
+      }
+    }
     sensor_msgs::PointCloud2 segmented_cloud_msg;
     pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
     std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
     segmented_cloud_msg.header = msg_header;
-    segmented_cloud_msg.header.frame_id = "velodyne";  // this is temporary
+    segmented_cloud_msg.header.frame_id = base_link_frame;
     segmented_cloud_pub_.publish(segmented_cloud_msg);
   }
 
@@ -178,8 +180,11 @@ private:
   ros::NodeHandle nh;
   ros::NodeHandle private_nh;
 
+  int cloud_accum_;
+  pcl::PointCloud<PointT>::Ptr cloud_accumulated_;
   tf::TransformListener tf_listener;
   std::string base_link_frame;
+  int min_seg_points_;
   friend bool operator==(const PointT& p1, const PointT& p2);
 };
 
