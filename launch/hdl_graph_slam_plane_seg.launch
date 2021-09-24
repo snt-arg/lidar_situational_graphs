@@ -5,7 +5,7 @@
   <node pkg="nodelet" type="nodelet" name="hdl_plane_segmentor" args="load hdl_graph_slam/PlaneSegmentationNodelet hdl_plane_seg_nodelet_manager">
     <param name="base_link_frame"        value="odom" />
     <param name="min_seg_points"         value="1000" />
-    <remap from="velodyne_points"        to="/platform/velodyne_points" />
+    <remap from="velodyne_points"        to="/slam/hdl_prefilter/filtered_point_cloud" />
   </node>
 <!--   <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 body velodyne 100" />
  -->
