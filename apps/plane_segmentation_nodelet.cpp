@@ -50,7 +50,7 @@ public:
 private:
   void initialize_params() {
     this->cloud_accum_ = 0;
-    base_link_frame_ = private_nh.param<std::string>("base_link_frame", "base_link");
+    plane_extraction_frame_ = private_nh.param<std::string>("plane_extraction_frame_id", "base_link");
     min_seg_points_ = private_nh.param<int>("min_seg_points", 1000);
   }
 
@@ -65,18 +65,19 @@ private:
       return;
     }
 
+
     // if base_link_frame is defined, transform the input cloud to the frame
-    if(!base_link_frame_.empty()) {
-      if(!tf_listener_.canTransform(base_link_frame_, src_cloud->header.frame_id, ros::Time(0))) {
-        std::cerr << "failed to find transform between " << base_link_frame_ << " and " << src_cloud->header.frame_id << std::endl;
+    if(!plane_extraction_frame_.empty()) {
+      if(!tf_listener_.canTransform(plane_extraction_frame_, src_cloud->header.frame_id, ros::Time(0))) {
+        std::cerr << "failed to find transform between " << plane_extraction_frame_ << " and " << src_cloud->header.frame_id << std::endl;
       }
       tf::StampedTransform transform;
-      tf_listener_.waitForTransform(base_link_frame_, src_cloud->header.frame_id, ros::Time(0), ros::Duration(2.0));
-      tf_listener_.lookupTransform(base_link_frame_, src_cloud->header.frame_id, ros::Time(0), transform);
+      tf_listener_.waitForTransform(plane_extraction_frame_, src_cloud->header.frame_id, ros::Time(0), ros::Duration(2.0));
+      tf_listener_.lookupTransform(plane_extraction_frame_, src_cloud->header.frame_id, ros::Time(0), transform);
 
       pcl::PointCloud<PointT>::Ptr transformed(new pcl::PointCloud<PointT>());
       pcl_ros::transformPointCloud(*src_cloud, *transformed, transform);
-      transformed->header.frame_id = base_link_frame_;
+      transformed->header.frame_id = plane_extraction_frame_;
       transformed->header.stamp = src_cloud->header.stamp;
       this->segment_planes(transformed);
     }
@@ -117,7 +118,7 @@ private:
             segmented_cloud.back().r = 0;
             segmented_cloud.back().g = 0;
             segmented_cloud.back().b = 255;
-          } else if(coefficients->values[2] > 0.95) {
+          } else if(coefficients->values[2] > 0.99) {
             segmented_cloud.back().r = 0;
             segmented_cloud.back().g = 255;
             segmented_cloud.back().b = 0;
@@ -138,7 +139,7 @@ private:
     pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
     std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
     segmented_cloud_msg.header = msg_header;
-    segmented_cloud_msg.header.frame_id = base_link_frame_;
+    segmented_cloud_msg.header.frame_id = plane_extraction_frame_;
     segmented_cloud_pub_.publish(segmented_cloud_msg);
   }
 
@@ -160,7 +161,7 @@ private:
   int cloud_accum_;
   pcl::PointCloud<PointT>::Ptr cloud_accumulated_;
   tf::TransformListener tf_listener_;
-  std::string base_link_frame_;
+  std::string plane_extraction_frame_;
   int min_seg_points_;
   friend bool operator==(const PointT& p1, const PointT& p2);
 };
