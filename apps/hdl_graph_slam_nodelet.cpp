@@ -65,7 +65,6 @@ namespace hdl_graph_slam {
 class HdlGraphSlamNodelet : public nodelet::Nodelet {
 public:
   typedef pcl::PointXYZI PointT;
-  typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
 
   HdlGraphSlamNodelet() {}
   virtual ~HdlGraphSlamNodelet() {}
@@ -79,7 +78,7 @@ public:
     map_frame_id = private_nh.param<std::string>("map_frame_id", "map");
     odom_frame_id = private_nh.param<std::string>("odom_frame_id", "odom");
     map_cloud_resolution = private_nh.param<double>("map_cloud_resolution", 0.05);
-    wait_trans_odom2map  = private_nh.param<bool>("wait_trans_odom2map", false);
+    wait_trans_odom2map = private_nh.param<bool>("wait_trans_odom2map", false);
     trans_odom2map.setIdentity();
 
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
@@ -103,12 +102,13 @@ public:
     imu_time_offset = private_nh.param<double>("imu_time_offset", 0.0);
     enable_imu_orientation = private_nh.param<bool>("enable_imu_orientation", false);
     enable_imu_acceleration = private_nh.param<bool>("enable_imu_acceleration", false);
+    sub_seg_cloud = private_nh.param<bool>("sub_seg_cloud", false);
     imu_orientation_edge_stddev = private_nh.param<double>("imu_orientation_edge_stddev", 0.1);
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
 
     points_topic = private_nh.param<std::string>("points_topic", "/velodyne_points");
 
-    init_odom2map_sub = nh.subscribe("/odom2map/initial_pose", 1, &HdlGraphSlamNodelet::init_map2odom_pose_callback, this); 
+    init_odom2map_sub = nh.subscribe("/odom2map/initial_pose", 1, &HdlGraphSlamNodelet::init_map2odom_pose_callback, this);
 
     while(wait_trans_odom2map && !got_trans_odom2map) {
       ROS_WARN("Waiting for the Initial Transform between odom and map frame");
@@ -116,11 +116,28 @@ public:
       usleep(1e6);
     }
     
+
     // subscribers
-    odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
-    cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
-    sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
-    sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_callback, this, _1, _2));
+    if(!sub_seg_cloud){
+      typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
+      std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
+
+      odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
+      cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
+      sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
+      sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_callback, this, _1, _2));
+    }
+    else {
+      typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2, sensor_msgs::PointCloud2> ApproxSyncPolicy;
+      std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
+
+      odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
+      cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
+      cloud_seg_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/segmented_points", 32));
+      sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub, *cloud_seg_sub));
+      sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_seg_callback, this, _1, _2, _3));
+    }
+
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &HdlGraphSlamNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &HdlGraphSlamNodelet::floor_coeffs_callback, this);
 
@@ -147,32 +164,26 @@ public:
   }
 
 private:
-    /**
+  /**
    * @brief receive the initial transform between map and odom frame
-   * @param map2odom_pose_msg 
+   * @param map2odom_pose_msg
    */
   void init_map2odom_pose_callback(const geometry_msgs::PoseStamped pose_msg) {
-    
-    if(got_trans_odom2map)
-      return;
+    if(got_trans_odom2map) return;
 
-    Eigen::Matrix3f mat3 = Eigen::Quaternionf(pose_msg.pose.orientation.w, 
-                                              pose_msg.pose.orientation.x, 
-                                              pose_msg.pose.orientation.y, 
-                                              pose_msg.pose.orientation.z).toRotationMatrix();
+    Eigen::Matrix3f mat3 = Eigen::Quaternionf(pose_msg.pose.orientation.w, pose_msg.pose.orientation.x, pose_msg.pose.orientation.y, pose_msg.pose.orientation.z).toRotationMatrix();
 
-    trans_odom2map.block<3,3>(0,0) = mat3;
-    trans_odom2map(0,3) = pose_msg.pose.position.x;
-    trans_odom2map(1,3) = pose_msg.pose.position.y;
-    trans_odom2map(2,3) = pose_msg.pose.position.z;
+    trans_odom2map.block<3, 3>(0, 0) = mat3;
+    trans_odom2map(0, 3) = pose_msg.pose.position.x;
+    trans_odom2map(1, 3) = pose_msg.pose.position.y;
+    trans_odom2map(2, 3) = pose_msg.pose.position.z;
 
     if(trans_odom2map.isIdentity())
       return;
     else {
-      got_trans_odom2map = true; 
+      got_trans_odom2map = true;
     }
   }
-
 
   /**
    * @brief received point clouds are pushed to #keyframe_queue
@@ -180,7 +191,6 @@ private:
    * @param cloud_msg
    */
   void cloud_callback(const nav_msgs::OdometryConstPtr& odom_msg, const sensor_msgs::PointCloud2::ConstPtr& cloud_msg) {
-
     const ros::Time& stamp = cloud_msg->header.stamp;
     Eigen::Isometry3d odom = odom2isometry(odom_msg);
 
@@ -210,6 +220,44 @@ private:
     std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
     keyframe_queue.push_back(keyframe);
   }
+
+ /**
+   * @brief received point clouds + segmented clouds pushed to #keyframe_queue
+   * @param odom_msg
+   * @param cloud_msg
+   * @param seg_cloud_msg
+   */
+  void cloud_seg_callback(const nav_msgs::OdometryConstPtr& odom_msg, const sensor_msgs::PointCloud2::ConstPtr& cloud_msg, const sensor_msgs::PointCloud2::ConstPtr& cloud_seg_msg) {
+    const ros::Time& stamp = cloud_msg->header.stamp;
+    Eigen::Isometry3d odom = odom2isometry(odom_msg);
+
+    pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+    pcl::fromROSMsg(*cloud_msg, *cloud);
+    if(base_frame_id.empty()) {
+      base_frame_id = cloud_msg->header.frame_id;
+    }
+
+    if(!keyframe_updater->update(odom)) {
+      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+      if(keyframe_queue.empty()) {
+        std_msgs::Header read_until;
+        read_until.stamp = stamp + ros::Duration(10, 0);
+        read_until.frame_id = points_topic;
+        read_until_pub.publish(read_until);
+        read_until.frame_id = "/filtered_points";
+        read_until_pub.publish(read_until);
+      }
+
+      return;
+    }
+
+    double accum_d = keyframe_updater->get_accum_distance();
+    KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
+
+    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+    keyframe_queue.push_back(keyframe);
+  }
+
 
   /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
@@ -634,7 +682,7 @@ private:
 
     geometry_msgs::TransformStamped ts = matrix2transform(keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
     odom2map_pub.publish(ts);
-    
+
     auto markers = create_marker_array(ros::Time::now());
     markers_pub.publish(markers);
   }
@@ -933,7 +981,8 @@ private:
 
   std::unique_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;
-  std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
+  bool sub_seg_cloud;
+  std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_seg_sub;
 
   ros::Subscriber gps_sub;
   ros::Subscriber nmea_sub;
@@ -946,7 +995,7 @@ private:
 
   std::string map_frame_id;
   std::string odom_frame_id;
-  
+
   bool wait_trans_odom2map, got_trans_odom2map;
   std::mutex trans_odom2map_mutex;
   Eigen::Matrix4f trans_odom2map;
