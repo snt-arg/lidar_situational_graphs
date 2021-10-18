@@ -35,7 +35,7 @@ namespace hdl_graph_slam {
 
 class PlaneSegmentationNodelet : public nodelet::Nodelet {
 public:
-  typedef pcl::PointXYZRGB PointT;
+  typedef pcl::PointXYZRGBNormal PointT;
 
   PlaneSegmentationNodelet() : cloud_accumulated_(new pcl::PointCloud<PointT>()) {}
   virtual ~PlaneSegmentationNodelet() {}
@@ -64,7 +64,6 @@ private:
       std::cout << "Plane Segmentation got empty point cloud" << std::endl;
       return;
     }
-
 
     // if base_link_frame is defined, transform the input cloud to the frame
     if(!plane_extraction_frame_.empty()) {
@@ -114,14 +113,23 @@ private:
             segmented_cloud.back().r = 255;
             segmented_cloud.back().g = 0;
             segmented_cloud.back().b = 0;
+            segmented_cloud.back().normal_x = coefficients->values[0];
+            segmented_cloud.back().normal_y = coefficients->values[1];
+            segmented_cloud.back().normal_z = coefficients->values[2];
           } else if(coefficients->values[1] < -0.95) {
             segmented_cloud.back().r = 0;
             segmented_cloud.back().g = 0;
             segmented_cloud.back().b = 255;
+            segmented_cloud.back().normal_x = coefficients->values[0];
+            segmented_cloud.back().normal_y = coefficients->values[1];
+            segmented_cloud.back().normal_z = coefficients->values[2];
           } else if(coefficients->values[2] > 0.99) {
             segmented_cloud.back().r = 0;
             segmented_cloud.back().g = 255;
             segmented_cloud.back().b = 0;
+            segmented_cloud.back().normal_x = coefficients->values[0];
+            segmented_cloud.back().normal_y = coefficients->values[1];
+            segmented_cloud.back().normal_z = coefficients->values[2];
           }
         }
         pcl::ExtractIndices<PointT> extract;
