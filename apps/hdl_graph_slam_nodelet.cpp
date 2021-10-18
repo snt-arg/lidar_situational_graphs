@@ -102,7 +102,6 @@ public:
     imu_time_offset = private_nh.param<double>("imu_time_offset", 0.0);
     enable_imu_orientation = private_nh.param<bool>("enable_imu_orientation", false);
     enable_imu_acceleration = private_nh.param<bool>("enable_imu_acceleration", false);
-    sub_seg_cloud = private_nh.param<bool>("sub_seg_cloud", false);
     imu_orientation_edge_stddev = private_nh.param<double>("imu_orientation_edge_stddev", 0.1);
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
 
@@ -118,28 +117,19 @@ public:
     
 
     // subscribers
-    if(!sub_seg_cloud){
-      typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
-      std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
 
-      odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
-      cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
-      sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
-      sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_callback, this, _1, _2));
-    }
-    else {
-      typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2, sensor_msgs::PointCloud2> ApproxSyncPolicy;
-      std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
+    typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
+    std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
 
-      odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
-      cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
-      cloud_seg_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/segmented_points", 32));
-      sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub, *cloud_seg_sub));
-      sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_seg_callback, this, _1, _2, _3));
-    }
+    odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
+    cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
+    sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
+    sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_callback, this, _1, _2));
+  
 
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &HdlGraphSlamNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &HdlGraphSlamNodelet::floor_coeffs_callback, this);
+    cloud_seg_sub = nh.subscribe("segmented_cloud", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
 
     if(private_nh.param<bool>("enable_gps", true)) {
       gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &HdlGraphSlamNodelet::gps_callback, this);
@@ -221,45 +211,17 @@ private:
     keyframe_queue.push_back(keyframe);
   }
 
- /**
-   * @brief received point clouds + segmented clouds pushed to #keyframe_queue
-   * @param odom_msg
-   * @param cloud_msg
+  /**
+   * @brief received segmented clouds pushed to be pushed #keyframe_queue
    * @param seg_cloud_msg
    */
-  void cloud_seg_callback(const nav_msgs::OdometryConstPtr& odom_msg, const sensor_msgs::PointCloud2::ConstPtr& cloud_msg, const sensor_msgs::PointCloud2::ConstPtr& cloud_seg_msg) {
-    const ros::Time& stamp = cloud_msg->header.stamp;
-    Eigen::Isometry3d odom = odom2isometry(odom_msg);
-
-    pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-    pcl::fromROSMsg(*cloud_msg, *cloud);
-    if(base_frame_id.empty()) {
-      base_frame_id = cloud_msg->header.frame_id;
-    }
-
-    if(!keyframe_updater->update(odom)) {
-      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-      if(keyframe_queue.empty()) {
-        std_msgs::Header read_until;
-        read_until.stamp = stamp + ros::Duration(10, 0);
-        read_until.frame_id = points_topic;
-        read_until_pub.publish(read_until);
-        read_until.frame_id = "/filtered_points";
-        read_until_pub.publish(read_until);
-      }
-
-      return;
-    }
-
-    double accum_d = keyframe_updater->get_accum_distance();
-    KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
-
-    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-    keyframe_queue.push_back(keyframe);
+  void cloud_seg_callback(const sensor_msgs::PointCloud2::Ptr& cloud_seg_msg) {
+      std::lock_guard<std::mutex> lock(cloud_seg_mutex);
+      cloud_seg_queue.push_back(cloud_seg_msg);
   }
 
 
-  /**
+ /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
    * @return if true, at least one keyframe was added to the pose graph
    */
@@ -981,9 +943,8 @@ private:
 
   std::unique_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;
-  bool sub_seg_cloud;
-  std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_seg_sub;
-
+  
+  ros::Subscriber cloud_seg_sub;
   ros::Subscriber gps_sub;
   ros::Subscriber nmea_sub;
   ros::Subscriber navsat_sub;
@@ -1038,13 +999,17 @@ private:
   std::mutex floor_coeffs_queue_mutex;
   std::deque<hdl_graph_slam::FloorCoeffsConstPtr> floor_coeffs_queue;
 
+  // Seg map queue
+  std::mutex cloud_seg_mutex;
+  std::deque<sensor_msgs::PointCloud2::Ptr> cloud_seg_queue; 
+
   // for map cloud generation
   std::atomic_bool graph_updated;
   double map_cloud_resolution;
   std::mutex keyframes_snapshot_mutex;
   std::vector<KeyFrameSnapshot::Ptr> keyframes_snapshot;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
-
+  
   // graph slam
   // all the below members must be accessed after locking main_thread_mutex
   std::mutex main_thread_mutex;

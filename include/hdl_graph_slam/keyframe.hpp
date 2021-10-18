@@ -40,6 +40,7 @@ public:
   Eigen::Isometry3d odom;                         // odometry (estimated by scan_matching_odometry)
   double accum_distance;                          // accumulated distance from the first node (by scan_matching_odometry)
   pcl::PointCloud<PointT>::ConstPtr cloud;        // point cloud
+  pcl::PointCloud<PointT>::ConstPtr seg_cloud;    // semantically segmented pointcloud
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS
 
