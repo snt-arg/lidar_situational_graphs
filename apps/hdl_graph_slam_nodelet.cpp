@@ -65,6 +65,8 @@ namespace hdl_graph_slam {
 class HdlGraphSlamNodelet : public nodelet::Nodelet {
 public:
   typedef pcl::PointXYZI PointT;
+  typedef pcl::PointXYZRGBNormal PointNormal;
+
 
   HdlGraphSlamNodelet() {}
   virtual ~HdlGraphSlamNodelet() {}
@@ -213,15 +215,61 @@ private:
 
   /**
    * @brief received segmented clouds pushed to be pushed #keyframe_queue
-   * @param seg_cloud_msg
+   * @param cloud_seg_msg
    */
   void cloud_seg_callback(const sensor_msgs::PointCloud2::Ptr& cloud_seg_msg) {
       std::lock_guard<std::mutex> lock(cloud_seg_mutex);
       cloud_seg_queue.push_back(cloud_seg_msg);
   }
 
+  /** 
+  * @brief flush the accumulated cloud seg queue
+  */
+  bool flush_cloud_seg_queue(){
+    std::lock_guard<std::mutex> lock(cloud_seg_mutex);
 
- /**
+    if(keyframe_queue.empty() || cloud_seg_queue.empty())
+      return false;
+
+    const auto& latest_keyframe_stamp = keyframes.back()->stamp;
+   
+    bool updated = false;
+    for(const auto& cloud_seg_msg : cloud_seg_queue) {
+      if(cloud_seg_msg->header.stamp > latest_keyframe_stamp) {
+        break;
+      }
+
+      auto found = keyframe_hash.find(cloud_seg_msg->header.stamp);
+      if(found == keyframe_hash.end()) {
+        continue;
+      }
+
+      pcl::PointCloud<PointNormal>::Ptr cloud_seg(new pcl::PointCloud<PointNormal>());
+      pcl::fromROSMsg(*cloud_seg_msg, *cloud_seg);
+
+      if (cloud_seg->back().normal_x) {
+        if (!x_vert_plane_node) {
+          x_vert_plane_node = graph_slam->add_plane_node(Eigen::Vector4d(1.0, 0.0, 0.0, 1.0));
+          x_vert_plane_node->setFixed(true);
+      }
+
+      const auto& keyframe = found->second;
+      Eigen::Vector4d coeffs(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, 1.0);
+      Eigen::Matrix4d information = Eigen::Matrix4d::Identity() * (1.0 / 0.2);
+      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs, information);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      keyframe->cloud_seg = cloud_seg;
+      updated = true;
+      }
+
+    auto remove_loc = std::upper_bound(cloud_seg_queue.begin(), cloud_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const sensor_msgs::PointCloud2::ConstPtr& cloud_seg) { return stamp < cloud_seg->header.stamp; });
+    cloud_seg_queue.erase(cloud_seg_queue.begin(), remove_loc);
+
+    return updated;
+    }
+  }
+
+  /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
    * @return if true, at least one keyframe was added to the pose graph
    */
@@ -1020,6 +1068,8 @@ private:
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;
   g2o::VertexPlane* floor_plane_node;
+  g2o::VertexPlane* x_vert_plane_node;
+  g2o::VertexPlane* y_vert_plane_node;
   std::vector<KeyFrame::Ptr> keyframes;
   std::unordered_map<ros::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
 

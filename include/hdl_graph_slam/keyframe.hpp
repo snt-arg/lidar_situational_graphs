@@ -23,6 +23,8 @@ struct KeyFrame {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using PointT = pcl::PointXYZI;
+  using PointNormal = pcl::PointXYZRGBNormal;
+
   using Ptr = std::shared_ptr<KeyFrame>;
 
   KeyFrame(const ros::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud);
@@ -40,7 +42,7 @@ public:
   Eigen::Isometry3d odom;                         // odometry (estimated by scan_matching_odometry)
   double accum_distance;                          // accumulated distance from the first node (by scan_matching_odometry)
   pcl::PointCloud<PointT>::ConstPtr cloud;        // point cloud
-  pcl::PointCloud<PointT>::ConstPtr seg_cloud;    // semantically segmented pointcloud
+  pcl::PointCloud<PointNormal>::ConstPtr cloud_seg;    // semantically segmented pointcloud
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS
 
