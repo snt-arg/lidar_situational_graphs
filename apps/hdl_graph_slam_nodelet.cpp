@@ -66,6 +66,7 @@ class HdlGraphSlamNodelet : public nodelet::Nodelet {
 public:
   typedef pcl::PointXYZI PointT;
   typedef pcl::PointXYZRGBNormal PointNormal;
+  typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
 
 
   HdlGraphSlamNodelet() {}
@@ -81,7 +82,8 @@ public:
     odom_frame_id = private_nh.param<std::string>("odom_frame_id", "odom");
     map_cloud_resolution = private_nh.param<double>("map_cloud_resolution", 0.05);
     wait_trans_odom2map = private_nh.param<bool>("wait_trans_odom2map", false);
-    trans_odom2map.setIdentity();
+    got_trans_odom2map = false;
+    trans_odom2map.setZero();
 
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
 
@@ -119,10 +121,6 @@ public:
     
 
     // subscribers
-
-    typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
-    std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
-
     odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
     cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
@@ -131,7 +129,7 @@ public:
 
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &HdlGraphSlamNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &HdlGraphSlamNodelet::floor_coeffs_callback, this);
-    cloud_seg_sub = nh.subscribe("segmented_cloud", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
+    cloud_seg_sub = nh.subscribe("/segmented_points", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
 
     if(private_nh.param<bool>("enable_gps", true)) {
       gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &HdlGraphSlamNodelet::gps_callback, this);
@@ -170,7 +168,7 @@ private:
     trans_odom2map(1, 3) = pose_msg.pose.position.y;
     trans_odom2map(2, 3) = pose_msg.pose.position.z;
 
-    if(trans_odom2map.isIdentity())
+    if(trans_odom2map.isZero())
       return;
     else {
       got_trans_odom2map = true;
@@ -228,14 +226,22 @@ private:
   bool flush_cloud_seg_queue(){
     std::lock_guard<std::mutex> lock(cloud_seg_mutex);
 
-    if(keyframe_queue.empty() || cloud_seg_queue.empty())
+    if(keyframes.empty() ) {
+      std::cout << "No keyframes" << std::endl;  
       return false;
+    }
+    else if (cloud_seg_queue.empty()) {
+      std::cout << "Cloud seg queue is empty" << std::endl;  
+      return false;
+    }
+      
 
     const auto& latest_keyframe_stamp = keyframes.back()->stamp;
    
     bool updated = false;
     for(const auto& cloud_seg_msg : cloud_seg_queue) {
       if(cloud_seg_msg->header.stamp > latest_keyframe_stamp) {
+        std::cout << "cloud_seg time is greater than last keyframe stamp" << std::endl;
         break;
       }
 
@@ -246,8 +252,13 @@ private:
 
       pcl::PointCloud<PointNormal>::Ptr cloud_seg(new pcl::PointCloud<PointNormal>());
       pcl::fromROSMsg(*cloud_seg_msg, *cloud_seg);
+      std::cout << "converted to pcl message" << std::endl;
+       
+      std::cout << "cloud_seg->back().normal_x: " << cloud_seg->back().normal_x << std::endl;
+      std::cout << "cloud_seg->back().normal_y: " << cloud_seg->back().normal_y << std::endl;
+      std::cout << "cloud_seg->back().normal_z: " << cloud_seg->back().normal_z << std::endl;
 
-      if (cloud_seg->back().normal_x) {
+      if (cloud_seg->back().normal_x > 0.95) {
         if (!x_vert_plane_node) {
           x_vert_plane_node = graph_slam->add_plane_node(Eigen::Vector4d(1.0, 0.0, 0.0, 1.0));
           x_vert_plane_node->setFixed(true);
@@ -255,18 +266,19 @@ private:
 
       const auto& keyframe = found->second;
       Eigen::Vector4d coeffs(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, 1.0);
-      Eigen::Matrix4d information = Eigen::Matrix4d::Identity() * (1.0 / 0.2);
+      Eigen::Matrix3d information = Eigen::Matrix3d::Identity() * (1.0 / 0.2);
       auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs, information);
+      std::cout << "Added vertical plane edge" << std::endl;
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
       keyframe->cloud_seg = cloud_seg;
       updated = true;
       }
+    }
 
     auto remove_loc = std::upper_bound(cloud_seg_queue.begin(), cloud_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const sensor_msgs::PointCloud2::ConstPtr& cloud_seg) { return stamp < cloud_seg->header.stamp; });
     cloud_seg_queue.erase(cloud_seg_queue.begin(), remove_loc);
 
     return updated;
-    }
   }
 
   /**
@@ -648,7 +660,7 @@ private:
       read_until_pub.publish(read_until);
     }
 
-    if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue()) {
+    if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue() & !flush_cloud_seg_queue()) {
       return;
     }
 
@@ -991,7 +1003,8 @@ private:
 
   std::unique_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;
-  
+  std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
+
   ros::Subscriber cloud_seg_sub;
   ros::Subscriber gps_sub;
   ros::Subscriber nmea_sub;
