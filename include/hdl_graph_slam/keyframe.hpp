@@ -4,9 +4,11 @@
 #define KEYFRAME_HPP
 
 #include <ros/ros.h>
+#include <vector>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <boost/optional.hpp>
+#include <hdl_graph_slam/planes.hpp>
 
 namespace g2o {
 class VertexSE3;
@@ -43,6 +45,7 @@ public:
   double accum_distance;                          // accumulated distance from the first node (by scan_matching_odometry)
   pcl::PointCloud<PointT>::ConstPtr cloud;        // point cloud
   pcl::PointCloud<PointNormal>::ConstPtr cloud_seg;    // semantically segmented pointcloud
+
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS
 

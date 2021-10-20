@@ -46,6 +46,7 @@
 
 #include <hdl_graph_slam/graph_slam.hpp>
 #include <hdl_graph_slam/keyframe.hpp>
+#include <hdl_graph_slam/planes.hpp>
 #include <hdl_graph_slam/keyframe_updater.hpp>
 #include <hdl_graph_slam/loop_detector.hpp>
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
@@ -257,21 +258,37 @@ private:
       std::cout << "cloud_seg->back().normal_x: " << cloud_seg->back().normal_x << std::endl;
       std::cout << "cloud_seg->back().normal_y: " << cloud_seg->back().normal_y << std::endl;
       std::cout << "cloud_seg->back().normal_z: " << cloud_seg->back().normal_z << std::endl;
+      std::cout << "cloud_seg->back().distance: " << cloud_seg->back().curvature << std::endl;
 
       if (cloud_seg->back().normal_x > 0.95) {
-        if (!x_vert_plane_node) {
-          x_vert_plane_node = graph_slam->add_plane_node(Eigen::Vector4d(1.0, 0.0, 0.0, 1.0));
-          x_vert_plane_node->setFixed(true);
-      }
+        const auto& keyframe = found->second;
+        Eigen::Vector4d coeffs(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, cloud_seg->back().curvature);
 
-      const auto& keyframe = found->second;
-      Eigen::Vector4d coeffs(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, 1.0);
-      Eigen::Matrix3d information = Eigen::Matrix3d::Identity() * (1.0 / 0.2);
-      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs, information);
-      std::cout << "Added vertical plane edge" << std::endl;
-      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-      keyframe->cloud_seg = cloud_seg;
-      updated = true;
+        //TODO: Perform data association of planes
+        int id = associate_vert_plane(keyframe, coeffs);
+        g2o::VertexPlane* x_vert_plane_node;
+        if(vert_planes.empty() || id == -1) {
+
+            x_vert_plane_node = graph_slam->add_plane_node(coeffs);
+            x_vert_plane_node->setFixed(true);
+            std::cout << "Added new vertical plane node" << std::endl;
+
+            VerticalPlanes vert_plane;
+            vert_plane.id = vert_planes.size();
+            vert_plane.coefficients = coeffs;
+            vert_plane.node = x_vert_plane_node; 
+            vert_planes.push_back(vert_plane);
+
+        } else {
+            std::cout << "matched with plane of id " << std::to_string(id)  << std::endl;
+            x_vert_plane_node = vert_planes[id].node;
+        }
+
+        Eigen::Matrix3d information = Eigen::Matrix3d::Identity() * (1.0 / 0.2);
+        auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs, information);
+        graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+        keyframe->cloud_seg = cloud_seg;
+        updated = true;
       }
     }
 
@@ -280,6 +297,28 @@ private:
 
     return updated;
   }
+  /** 
+  * @brief data assoction betweeen the planes
+  */
+  int associate_vert_plane(KeyFrame::Ptr keyframe, Eigen::Vector4d coeffs) {
+    int id;
+    float min_dist = 100;
+    for(int i=0; i< vert_planes.size(); ++i) { 
+      float dist = fabs(coeffs(3) - vert_planes[i].coefficients(0));
+      std::cout << "distance: " << dist << std::endl;
+      if(dist < min_dist){
+       min_dist = dist;
+       id = vert_planes[i].id;
+      }   
+    }
+
+    std::cout << "min_dist: " << min_dist << std::endl;
+    if(min_dist > 0.15)
+      id = -1;
+
+    return id;
+  }
+
 
   /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
@@ -716,7 +755,7 @@ private:
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp) const {
     visualization_msgs::MarkerArray markers;
-    markers.markers.resize(4);
+    markers.markers.resize(5);
 
     // node markers
     visualization_msgs::Marker& traj_marker = markers.markers[0];
@@ -821,8 +860,9 @@ private:
       g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
       if(edge_plane) {
         g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
+        g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
         Eigen::Vector3d pt1 = v1->estimate().translation();
-        Eigen::Vector3d pt2(pt1.x(), pt1.y(), 0.0);
+        Eigen::Vector3d pt2(-(v2->estimate().distance()), 0, 5.0);
 
         edge_marker.points[i * 2].x = pt1.x();
         edge_marker.points[i * 2].y = pt1.y();
@@ -902,6 +942,30 @@ private:
 
     sphere_marker.color.r = 1.0;
     sphere_marker.color.a = 0.3;
+
+    //vertical plane markers 
+    visualization_msgs::Marker& plane_marker = markers.markers[4];
+    plane_marker.pose.orientation.w = 1.0;
+    plane_marker.scale.x = 0.03;
+    plane_marker.scale.y = 3.0;
+    plane_marker.scale.z = 1.0;
+    plane_marker.points.resize(vert_planes.size());
+    
+    for(int i = 0; i < vert_planes.size(); ++i){
+
+      plane_marker.header.frame_id = "map";
+      plane_marker.header.stamp = stamp;
+      plane_marker.ns = "planes";
+      plane_marker.id = 4;
+      plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
+
+      plane_marker.points[i].x = vert_planes[i].coefficients(3);
+      plane_marker.points[i].y = 0.0;
+      plane_marker.points[i].z = 5.0;
+
+      plane_marker.color.r = 1;
+      plane_marker.color.a = 1;
+    }
 
     return markers;
   }
@@ -1060,6 +1124,10 @@ private:
   std::mutex floor_coeffs_queue_mutex;
   std::deque<hdl_graph_slam::FloorCoeffsConstPtr> floor_coeffs_queue;
 
+  //vertical and horizontal planes
+  std::vector<VerticalPlanes> vert_planes;         // vertically segmented planes
+  std::vector<HorizontalPlanes> hort_planes;      // horizontally segmented planes
+
   // Seg map queue
   std::mutex cloud_seg_mutex;
   std::deque<sensor_msgs::PointCloud2::Ptr> cloud_seg_queue; 
@@ -1071,6 +1139,7 @@ private:
   std::vector<KeyFrameSnapshot::Ptr> keyframes_snapshot;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
   
+  
   // graph slam
   // all the below members must be accessed after locking main_thread_mutex
   std::mutex main_thread_mutex;
@@ -1081,11 +1150,9 @@ private:
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;
   g2o::VertexPlane* floor_plane_node;
-  g2o::VertexPlane* x_vert_plane_node;
-  g2o::VertexPlane* y_vert_plane_node;
   std::vector<KeyFrame::Ptr> keyframes;
   std::unordered_map<ros::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
-
+  
   std::unique_ptr<GraphSLAM> graph_slam;
   std::unique_ptr<LoopDetector> loop_detector;
   std::unique_ptr<KeyframeUpdater> keyframe_updater;

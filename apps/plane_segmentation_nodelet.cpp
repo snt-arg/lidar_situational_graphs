@@ -105,14 +105,14 @@ private:
           break;
           std::cout << "Breaking as no model found" << std::endl;
         }
-        // std::cout << "Model coefficients " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+        //std::cout << "Model coefficients " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
 
         for(const auto& idx : inliers->indices) {
           segmented_cloud.points.push_back(transformed_cloud->points[idx]);
           segmented_cloud.back().normal_x = coefficients->values[0];
           segmented_cloud.back().normal_y = coefficients->values[1];
           segmented_cloud.back().normal_z = coefficients->values[2];
-          segmented_cloud.back().curvature =  coefficients->values[3];
+          segmented_cloud.back().curvature = -coefficients->values[3];
           if(coefficients->values[0] > 0.95) {
             segmented_cloud.back().r = 255;
             segmented_cloud.back().g = 0;
