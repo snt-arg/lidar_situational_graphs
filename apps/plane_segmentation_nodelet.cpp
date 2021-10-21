@@ -112,7 +112,7 @@ private:
           segmented_cloud.back().normal_x = coefficients->values[0];
           segmented_cloud.back().normal_y = coefficients->values[1];
           segmented_cloud.back().normal_z = coefficients->values[2];
-          segmented_cloud.back().curvature = -coefficients->values[3];
+          segmented_cloud.back().curvature = coefficients->values[3];
           if(coefficients->values[0] > 0.95) {
             segmented_cloud.back().r = 255;
             segmented_cloud.back().g = 0;
