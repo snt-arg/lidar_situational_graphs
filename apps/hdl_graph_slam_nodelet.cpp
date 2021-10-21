@@ -60,6 +60,7 @@
 #include <g2o/edge_se3_priorxyz.hpp>
 #include <g2o/edge_se3_priorvec.hpp>
 #include <g2o/edge_se3_priorquat.hpp>
+#include <g2o/types/slam3d_addons/vertex_plane.h>
 
 namespace hdl_graph_slam {
 
@@ -253,29 +254,33 @@ private:
 
       pcl::PointCloud<PointNormal>::Ptr cloud_seg(new pcl::PointCloud<PointNormal>());
       pcl::fromROSMsg(*cloud_seg_msg, *cloud_seg);
-      std::cout << "converted to pcl message" << std::endl;
-       
+
       std::cout << "cloud_seg->back().normal_x: " << cloud_seg->back().normal_x << std::endl;
       std::cout << "cloud_seg->back().normal_y: " << cloud_seg->back().normal_y << std::endl;
       std::cout << "cloud_seg->back().normal_z: " << cloud_seg->back().normal_z << std::endl;
-      std::cout << "cloud_seg->back().distance: " << cloud_seg->back().curvature << std::endl;
+      std::cout << "cloud_seg->back().distance: " << cloud_seg->back().curvature << std::endl;  
+      const auto& keyframe = found->second;
 
-      if (cloud_seg->back().normal_x > 0.95) {
-        const auto& keyframe = found->second;
-        Eigen::Vector4d coeffs(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, cloud_seg->back().curvature);
+      Eigen::Vector4d coeffs_map_frame(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, cloud_seg->back().curvature);
+      Eigen::Vector4d coeffs_body_frame; Eigen::Isometry3d w2n = keyframe->node->estimate().inverse();
+      coeffs_body_frame.head<3>() = w2n.rotation() * coeffs_map_frame.head<3>();
+      coeffs_body_frame(3) = coeffs_map_frame(3) - w2n.translation().dot(coeffs_body_frame.head<3>());
+      std::cout << "keyframe trans: " << w2n.translation() << std::endl;
+      std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
 
-        //TODO: Perform data association of planes
-        int id = associate_vert_plane(keyframe, coeffs);
+      if (coeffs_map_frame(0) > 0.95) {                
+        //TODO: convert the received planes to local body frame by multiplying with the inverse of the keyframe pose
+        int id = associate_vert_plane(keyframe, coeffs_map_frame);
         g2o::VertexPlane* x_vert_plane_node;
         if(vert_planes.empty() || id == -1) {
 
-            x_vert_plane_node = graph_slam->add_plane_node(coeffs);
+            x_vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
             x_vert_plane_node->setFixed(true);
-            std::cout << "Added new vertical plane node" << std::endl;
+            std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
 
             VerticalPlanes vert_plane;
             vert_plane.id = vert_planes.size();
-            vert_plane.coefficients = coeffs;
+            vert_plane.coefficients = coeffs_map_frame;
             vert_plane.node = x_vert_plane_node; 
             vert_planes.push_back(vert_plane);
 
@@ -284,8 +289,8 @@ private:
             x_vert_plane_node = vert_planes[id].node;
         }
 
-        Eigen::Matrix3d information = Eigen::Matrix3d::Identity() * (1.0 / 0.2);
-        auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs, information);
+        Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
+        auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs_body_frame, information);
         graph_slam->add_robust_kernel(edge, "Huber", 1.0);
         keyframe->cloud_seg = cloud_seg;
         updated = true;
@@ -304,16 +309,16 @@ private:
     int id;
     float min_dist = 100;
     for(int i=0; i< vert_planes.size(); ++i) { 
-      float dist = fabs(coeffs(3) - vert_planes[i].coefficients(0));
+      float dist = fabs(coeffs(3) - vert_planes[i].coefficients(3));
       std::cout << "distance: " << dist << std::endl;
       if(dist < min_dist){
-       min_dist = dist;
+      min_dist = dist;
        id = vert_planes[i].id;
       }   
     }
 
     std::cout << "min_dist: " << min_dist << std::endl;
-    if(min_dist > 0.15)
+    if(min_dist > 0.20)
       id = -1;
 
     return id;
@@ -862,7 +867,7 @@ private:
         g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
         g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
         Eigen::Vector3d pt1 = v1->estimate().translation();
-        Eigen::Vector3d pt2(-(v2->estimate().distance()), 0, 5.0);
+        Eigen::Vector3d pt2((v2->estimate().distance()), 0, 5.0);
 
         edge_marker.points[i * 2].x = pt1.x();
         edge_marker.points[i * 2].y = pt1.y();
@@ -959,7 +964,7 @@ private:
       plane_marker.id = 4;
       plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
 
-      plane_marker.points[i].x = vert_planes[i].coefficients(3);
+      plane_marker.points[i].x = -vert_planes[i].coefficients(3);
       plane_marker.points[i].y = 0.0;
       plane_marker.points[i].z = 5.0;
 
