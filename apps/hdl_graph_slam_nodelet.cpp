@@ -274,7 +274,11 @@ private:
         if (coeffs_map_frame(0) > 0.95) {     
           int plane_type = 0;           
           updated = factor_vert_planes(keyframe, cloud_seg, coeffs_map_frame, coeffs_body_frame, plane_type);
+        } else if (fabs(coeffs_map_frame(1)) > 0.95) {
+          int plane_type = 1;           
+          updated = factor_vert_planes(keyframe, cloud_seg, coeffs_map_frame, coeffs_body_frame, plane_type);
         }
+
       }
     }
     auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
@@ -806,7 +810,7 @@ private:
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp) const {
     visualization_msgs::MarkerArray markers;
-    markers.markers.resize(5);
+    markers.markers.resize(6);
 
     // node markers
     visualization_msgs::Marker& traj_marker = markers.markers[0];
@@ -913,7 +917,11 @@ private:
         g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
         g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
         Eigen::Vector3d pt1 = v1->estimate().translation();
-        Eigen::Vector3d pt2((v2->estimate().distance()), 0, 5.0);
+        Eigen::Vector3d pt2;
+        if (fabs(v2->estimate().normal()(0)) > 0.95) 
+          pt2 = Eigen::Vector3d(-(v2->estimate().distance()), -1.0, 5.0);
+        else if (fabs(v2->estimate().normal()(1)) > 0.95) 
+          pt2 = Eigen::Vector3d(2.0, (v2->estimate().distance()), 5.0);
 
         edge_marker.points[i * 2].x = pt1.x();
         edge_marker.points[i * 2].y = pt1.y();
@@ -994,32 +1002,54 @@ private:
     sphere_marker.color.r = 1.0;
     sphere_marker.color.a = 0.3;
 
-    //vertical plane markers 
-    visualization_msgs::Marker& plane_marker = markers.markers[4];
-    plane_marker.pose.orientation.w = 1.0;
-    plane_marker.scale.x = 0.05;
-    plane_marker.scale.y = 0.05;
-    plane_marker.scale.z = 0.05;
-    //plane_marker.points.resize(vert_planes.size());
-    
-    for(int i = 0; i < x_vert_planes.size(); ++i){
+    //x vertical plane markers 
+    visualization_msgs::Marker& x_vert_plane_marker = markers.markers[4];
+    x_vert_plane_marker.pose.orientation.w = 1.0;
+    x_vert_plane_marker.scale.x = 0.05;
+    x_vert_plane_marker.scale.y = 0.05;
+    x_vert_plane_marker.scale.z = 0.05;
+    //plane_marker.points.resize(vert_planes.size());    
+    x_vert_plane_marker.header.frame_id = "map";
+    x_vert_plane_marker.header.stamp = stamp;
+    x_vert_plane_marker.ns = "x_vert_planes";
+    x_vert_plane_marker.id = 4;
+    x_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
 
-      plane_marker.header.frame_id = "map";
-      plane_marker.header.stamp = stamp;
-      plane_marker.ns = "planes";
-      plane_marker.id = 4;
-      plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
-
-      for(size_t j=0; j < x_vert_planes[i].cloud_seg->size(); ++j){
+    for(int i = 0; i < x_vert_planes.size(); ++i) {
+      for(size_t j=0; j < x_vert_planes[i].cloud_seg->size(); ++j) {
         geometry_msgs::Point point;
         point.x = x_vert_planes[i].cloud_seg->points[j].x;
         point.y = x_vert_planes[i].cloud_seg->points[j].y;
         point.z = x_vert_planes[i].cloud_seg->points[j].z + 5.0;
-        plane_marker.points.push_back(point);
+        x_vert_plane_marker.points.push_back(point);
       }
+      x_vert_plane_marker.color.r = 1;
+      x_vert_plane_marker.color.a = 1;
+    }
 
-      plane_marker.color.r = 1;
-      plane_marker.color.a = 1;
+    //y vertical plane markers 
+    visualization_msgs::Marker& y_vert_plane_marker = markers.markers[5];
+    y_vert_plane_marker.pose.orientation.w = 1.0;
+    y_vert_plane_marker.scale.x = 0.05;
+    y_vert_plane_marker.scale.y = 0.05;
+    y_vert_plane_marker.scale.z = 0.05;
+    //plane_marker.points.resize(vert_planes.size());    
+    y_vert_plane_marker.header.frame_id = "map";
+    y_vert_plane_marker.header.stamp = stamp;
+    y_vert_plane_marker.ns = "y_vert_planes";
+    y_vert_plane_marker.id = 5;
+    y_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
+   
+    for(int i = 0; i < y_vert_planes.size(); ++i) {
+      for(size_t j=0; j < y_vert_planes[i].cloud_seg->size(); ++j) { 
+        geometry_msgs::Point point;
+        point.x = y_vert_planes[i].cloud_seg->points[j].x;
+        point.y = y_vert_planes[i].cloud_seg->points[j].y;
+        point.z = y_vert_planes[i].cloud_seg->points[j].z + 5.0;
+        y_vert_plane_marker.points.push_back(point);
+      }
+      y_vert_plane_marker.color.b = 1;
+      y_vert_plane_marker.color.a = 1;
     }
 
     return markers;

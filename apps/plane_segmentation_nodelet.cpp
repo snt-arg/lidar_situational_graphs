@@ -116,7 +116,7 @@ private:
           extracted_cloud.back().normal_x = coefficients->values[0];
           extracted_cloud.back().normal_y = coefficients->values[1];
           extracted_cloud.back().normal_z = coefficients->values[2];
-          extracted_cloud.back().curvature = coefficients->values[3];
+          extracted_cloud.back().curvature = -1*coefficients->values[3];
 
           //visulazing the pointcloud
           segmented_cloud.points.push_back(transformed_cloud->points[idx]);
