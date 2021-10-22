@@ -234,7 +234,7 @@ private:
       return false;
     }
     else if (clouds_seg_queue.empty()) {
-      std::cout << "Cloud seg queue is empty" << std::endl;  
+      std::cout << "Clouds seg queue is empty" << std::endl;  
       return false;
     }
       
@@ -272,41 +272,49 @@ private:
         std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
 
         if (coeffs_map_frame(0) > 0.95) {                
-          //TODO: convert the received planes to local body frame by multiplying with the inverse of the keyframe pose
-          int id = associate_vert_plane(keyframe, coeffs_map_frame);
-          g2o::VertexPlane* x_vert_plane_node;
-          if(vert_planes.empty() || id == -1) {
-
-              x_vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
-              x_vert_plane_node->setFixed(true);
-              std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
-
-              VerticalPlanes vert_plane;
-              vert_plane.id = vert_planes.size();
-              vert_plane.coefficients = coeffs_map_frame;
-              vert_plane.cloud_seg = cloud_seg;
-              vert_plane.node = x_vert_plane_node; 
-              vert_planes.push_back(vert_plane);
-
-          } else {
-              std::cout << "matched with plane of id " << std::to_string(id)  << std::endl;
-              x_vert_plane_node = vert_planes[id].node;
-          }
-
-          Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
-          auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs_body_frame, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-          keyframe->cloud_seg = cloud_seg;
-          updated = true;
+          updated = factor_vert_planes(keyframe, cloud_seg, coeffs_map_frame, coeffs_body_frame);
         }
       }
     }
-
     auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
     clouds_seg_queue.erase(clouds_seg_queue.begin(), remove_loc);
 
     return updated;
   }
+
+  /** 
+  * @brief create vertical plane factors
+  */
+  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame) {
+
+    int id = associate_vert_plane(keyframe, coeffs_map_frame);
+    g2o::VertexPlane* x_vert_plane_node;
+    if(vert_planes.empty() || id == -1) {
+
+        x_vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
+        //x_vert_plane_node->setFixed(true);
+        std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
+
+        VerticalPlanes vert_plane;
+        vert_plane.id = vert_planes.size();
+        vert_plane.coefficients = coeffs_map_frame;
+        vert_plane.cloud_seg = cloud_seg;
+        vert_plane.node = x_vert_plane_node; 
+        vert_planes.push_back(vert_plane);
+
+    } else {
+        std::cout << "matched with plane of id " << std::to_string(id)  << std::endl;
+        x_vert_plane_node = vert_planes[id].node;
+    }
+
+    Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
+    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs_body_frame, information);
+    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    keyframe->cloud_seg = cloud_seg;
+
+    return true;
+  }
+
   /** 
   * @brief data assoction betweeen the planes
   */
@@ -956,9 +964,9 @@ private:
     //vertical plane markers 
     visualization_msgs::Marker& plane_marker = markers.markers[4];
     plane_marker.pose.orientation.w = 1.0;
-    plane_marker.scale.x = 0.03;
-    plane_marker.scale.y = 0.03;
-    plane_marker.scale.z = 0.03;
+    plane_marker.scale.x = 0.05;
+    plane_marker.scale.y = 0.05;
+    plane_marker.scale.z = 0.05;
     //plane_marker.points.resize(vert_planes.size());
     
     for(int i = 0; i < vert_planes.size(); ++i){
