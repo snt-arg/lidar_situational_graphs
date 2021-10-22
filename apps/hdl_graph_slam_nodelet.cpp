@@ -291,11 +291,11 @@ private:
 
     if (plane_type == 0){  
       int id = associate_vert_plane(keyframe, coeffs_map_frame, plane_type);
+      
       if(x_vert_planes.empty() || id == -1) {
           vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
           //x_vert_plane_node->setFixed(true);
-          std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
-
+          std::cout << "Added new x vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
           VerticalPlanes vert_plane;
           vert_plane.id = x_vert_planes.size();
           vert_plane.coefficients = coeffs_map_frame;
@@ -307,7 +307,24 @@ private:
           std::cout << "matched x vert plane with x vert plane of id " << std::to_string(id)  << std::endl;
           vert_plane_node = x_vert_planes[id].node;
       }
-    } 
+    } else if (plane_type == 1) {
+      int id = associate_vert_plane(keyframe, coeffs_map_frame, plane_type);
+      
+      if(y_vert_planes.empty() || id == -1) {
+        vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
+        std::cout << "Added new y vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
+        VerticalPlanes vert_plane;
+        vert_plane.id = y_vert_planes.size();
+        vert_plane.coefficients = coeffs_map_frame;
+        vert_plane.cloud_seg = cloud_seg;
+        vert_plane.node = vert_plane_node; 
+        y_vert_planes.push_back(vert_plane);
+      } else {
+        std::cout << "matched y vert plane with x vert plane of id " << std::to_string(id)  << std::endl;
+        vert_plane_node = y_vert_planes[id].node;
+      }
+
+    }
 
     Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
     auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, coeffs_body_frame, information);
@@ -323,6 +340,7 @@ private:
   int associate_vert_plane(KeyFrame::Ptr keyframe, Eigen::Vector4d coeffs, int plane_type) {
     int id;
     float min_dist = 100;
+    
     if(plane_type == 0) {
       for(int i=0; i< x_vert_planes.size(); ++i) { 
         float dist = fabs(coeffs(3) - x_vert_planes[i].coefficients(3));
@@ -332,11 +350,22 @@ private:
         id = x_vert_planes[i].id;
         }   
       }
+    }
+
+    if(plane_type == 1) {
+        for(int i=0; i< y_vert_planes.size(); ++i) { 
+          float dist = fabs(coeffs(3) - y_vert_planes[i].coefficients(3));
+          std::cout << "distance: " << dist << std::endl;
+          if(dist < min_dist){
+          min_dist = dist;
+          id = y_vert_planes[i].id;
+          }   
+        }
+      }
 
       std::cout << "min_dist: " << min_dist << std::endl;
       if(min_dist > 0.20)
         id = -1;
-    }
 
     return id;
   }
