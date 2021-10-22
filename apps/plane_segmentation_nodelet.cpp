@@ -1,6 +1,8 @@
 #include <iostream>
 #include <string>
 
+#include <hdl_graph_slam/PointClouds.h>
+
 #include <ros/time.h>
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
@@ -57,6 +59,7 @@ private:
   void init_ros() {
     filtered_point_cloud_sub_ = nh.subscribe("velodyne_points", 64, &PlaneSegmentationNodelet::filteredPointCloudCallback, this);
     segmented_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("segmented_points", 1);
+    segmented_clouds_pub_ = nh.advertise<hdl_graph_slam::PointClouds>("segmented_clouds",1);
   }
 
   void filteredPointCloudCallback(const pcl::PointCloud<PointT>::ConstPtr& src_cloud) {
@@ -84,6 +87,7 @@ private:
 
   void segment_planes(pcl::PointCloud<PointT>::Ptr transformed_cloud) {
     pcl::PointCloud<PointT> segmented_cloud;
+    std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec;
     int i = 0;
     while(transformed_cloud->points.size() > min_seg_points_) {
       try {
@@ -106,13 +110,16 @@ private:
           std::cout << "Breaking as no model found" << std::endl;
         }
         //std::cout << "Model coefficients " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
-
+        pcl::PointCloud<PointT> extracted_cloud;
         for(const auto& idx : inliers->indices) {
+          extracted_cloud.push_back(transformed_cloud->points[idx]);
+          extracted_cloud.back().normal_x = coefficients->values[0];
+          extracted_cloud.back().normal_y = coefficients->values[1];
+          extracted_cloud.back().normal_z = coefficients->values[2];
+          extracted_cloud.back().curvature = coefficients->values[3];
+
+          //visulazing the pointcloud
           segmented_cloud.points.push_back(transformed_cloud->points[idx]);
-          segmented_cloud.back().normal_x = coefficients->values[0];
-          segmented_cloud.back().normal_y = coefficients->values[1];
-          segmented_cloud.back().normal_z = coefficients->values[2];
-          segmented_cloud.back().curvature = coefficients->values[3];
           if(coefficients->values[0] > 0.95) {
             segmented_cloud.back().r = 255;
             segmented_cloud.back().g = 0;
@@ -127,6 +134,13 @@ private:
             segmented_cloud.back().b = 0;
           }
         }
+        sensor_msgs::PointCloud2 extracted_cloud_msg;
+        pcl::toROSMsg(extracted_cloud, extracted_cloud_msg);
+        std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
+        extracted_cloud_msg.header = ext_msg_header;
+        extracted_cloud_msg.header.frame_id = plane_extraction_frame_;
+        extracted_cloud_vec.push_back(extracted_cloud_msg);
+        
         pcl::ExtractIndices<PointT> extract;
         extract.setInputCloud(transformed_cloud);
         extract.setIndices(inliers);
@@ -138,6 +152,14 @@ private:
         break;
       }
     }
+
+    hdl_graph_slam::PointClouds extracted_clouds_msg;
+    std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
+    extracted_clouds_msg.header = ext_msg_header;
+    extracted_clouds_msg.header.frame_id = plane_extraction_frame_;
+    extracted_clouds_msg.pointclouds = extracted_cloud_vec;
+    segmented_clouds_pub_.publish(extracted_clouds_msg);
+
     sensor_msgs::PointCloud2 segmented_cloud_msg;
     pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
     std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
@@ -155,6 +177,8 @@ private:
 private:
   ros::Subscriber filtered_point_cloud_sub_;
   ros::Publisher segmented_cloud_pub_;
+  ros::Publisher segmented_clouds_pub_;
+
 
   /* private variables */
 private:

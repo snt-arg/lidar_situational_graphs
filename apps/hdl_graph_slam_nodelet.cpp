@@ -43,6 +43,8 @@
 
 #include <hdl_graph_slam/ros_utils.hpp>
 #include <hdl_graph_slam/ros_time_hash.hpp>
+#include <hdl_graph_slam/PointClouds.h>
+
 
 #include <hdl_graph_slam/graph_slam.hpp>
 #include <hdl_graph_slam/keyframe.hpp>
@@ -61,7 +63,6 @@
 #include <g2o/edge_se3_priorvec.hpp>
 #include <g2o/edge_se3_priorquat.hpp>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
-
 namespace hdl_graph_slam {
 
 class HdlGraphSlamNodelet : public nodelet::Nodelet {
@@ -131,7 +132,7 @@ public:
 
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &HdlGraphSlamNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &HdlGraphSlamNodelet::floor_coeffs_callback, this);
-    cloud_seg_sub = nh.subscribe("/segmented_points", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
+    cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
 
     if(private_nh.param<bool>("enable_gps", true)) {
       gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &HdlGraphSlamNodelet::gps_callback, this);
@@ -215,24 +216,24 @@ private:
 
   /**
    * @brief received segmented clouds pushed to be pushed #keyframe_queue
-   * @param cloud_seg_msg
+   * @param clouds_seg_msg
    */
-  void cloud_seg_callback(const sensor_msgs::PointCloud2::Ptr& cloud_seg_msg) {
+  void cloud_seg_callback(const hdl_graph_slam::PointClouds::Ptr& clouds_seg_msg) {
       std::lock_guard<std::mutex> lock(cloud_seg_mutex);
-      cloud_seg_queue.push_back(cloud_seg_msg);
+      clouds_seg_queue.push_back(clouds_seg_msg);
   }
 
   /** 
   * @brief flush the accumulated cloud seg queue
   */
-  bool flush_cloud_seg_queue(){
+  bool flush_clouds_seg_queue(){
     std::lock_guard<std::mutex> lock(cloud_seg_mutex);
 
     if(keyframes.empty() ) {
       std::cout << "No keyframes" << std::endl;  
       return false;
     }
-    else if (cloud_seg_queue.empty()) {
+    else if (clouds_seg_queue.empty()) {
       std::cout << "Cloud seg queue is empty" << std::endl;  
       return false;
     }
@@ -241,64 +242,68 @@ private:
     const auto& latest_keyframe_stamp = keyframes.back()->stamp;
    
     bool updated = false;
-    for(const auto& cloud_seg_msg : cloud_seg_queue) {
-      if(cloud_seg_msg->header.stamp > latest_keyframe_stamp) {
-        std::cout << "cloud_seg time is greater than last keyframe stamp" << std::endl;
-        break;
-      }
+    for(const auto& clouds_seg_msg : clouds_seg_queue) {
+      for(const auto& cloud_seg_msg : clouds_seg_msg->pointclouds) {
 
-      auto found = keyframe_hash.find(cloud_seg_msg->header.stamp);
-      if(found == keyframe_hash.end()) {
-        continue;
-      }
-
-      pcl::PointCloud<PointNormal>::Ptr cloud_seg(new pcl::PointCloud<PointNormal>());
-      pcl::fromROSMsg(*cloud_seg_msg, *cloud_seg);
-
-      std::cout << "cloud_seg->back().normal_x: " << cloud_seg->back().normal_x << std::endl;
-      std::cout << "cloud_seg->back().normal_y: " << cloud_seg->back().normal_y << std::endl;
-      std::cout << "cloud_seg->back().normal_z: " << cloud_seg->back().normal_z << std::endl;
-      std::cout << "cloud_seg->back().distance: " << cloud_seg->back().curvature << std::endl;  
-      const auto& keyframe = found->second;
-
-      Eigen::Vector4d coeffs_map_frame(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, cloud_seg->back().curvature);
-      Eigen::Vector4d coeffs_body_frame; Eigen::Isometry3d w2n = keyframe->node->estimate().inverse();
-      coeffs_body_frame.head<3>() = w2n.rotation() * coeffs_map_frame.head<3>();
-      coeffs_body_frame(3) = coeffs_map_frame(3) - w2n.translation().dot(coeffs_body_frame.head<3>());
-      std::cout << "keyframe trans: " << w2n.translation() << std::endl;
-      std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
-
-      if (coeffs_map_frame(0) > 0.95) {                
-        //TODO: convert the received planes to local body frame by multiplying with the inverse of the keyframe pose
-        int id = associate_vert_plane(keyframe, coeffs_map_frame);
-        g2o::VertexPlane* x_vert_plane_node;
-        if(vert_planes.empty() || id == -1) {
-
-            x_vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
-            x_vert_plane_node->setFixed(true);
-            std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
-
-            VerticalPlanes vert_plane;
-            vert_plane.id = vert_planes.size();
-            vert_plane.coefficients = coeffs_map_frame;
-            vert_plane.node = x_vert_plane_node; 
-            vert_planes.push_back(vert_plane);
-
-        } else {
-            std::cout << "matched with plane of id " << std::to_string(id)  << std::endl;
-            x_vert_plane_node = vert_planes[id].node;
+        if(cloud_seg_msg.header.stamp > latest_keyframe_stamp) {
+          std::cout << "cloud_seg time is greater than last keyframe stamp" << std::endl;
+          break;
         }
 
-        Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
-        auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs_body_frame, information);
-        graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-        keyframe->cloud_seg = cloud_seg;
-        updated = true;
+        auto found = keyframe_hash.find(cloud_seg_msg.header.stamp);
+        if(found == keyframe_hash.end()) {
+          continue;
+        }
+
+        pcl::PointCloud<PointNormal>::Ptr cloud_seg(new pcl::PointCloud<PointNormal>());
+        pcl::fromROSMsg(cloud_seg_msg, *cloud_seg);
+
+        std::cout << "cloud_seg->back().normal_x: " << cloud_seg->back().normal_x << std::endl;
+        std::cout << "cloud_seg->back().normal_y: " << cloud_seg->back().normal_y << std::endl;
+        std::cout << "cloud_seg->back().normal_z: " << cloud_seg->back().normal_z << std::endl;
+        std::cout << "cloud_seg->back().distance: " << cloud_seg->back().curvature << std::endl;  
+        const auto& keyframe = found->second;
+
+        Eigen::Vector4d coeffs_map_frame(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, cloud_seg->back().curvature);
+        Eigen::Vector4d coeffs_body_frame; Eigen::Isometry3d w2n = keyframe->node->estimate().inverse();
+        coeffs_body_frame.head<3>() = w2n.rotation() * coeffs_map_frame.head<3>();
+        coeffs_body_frame(3) = coeffs_map_frame(3) - w2n.translation().dot(coeffs_body_frame.head<3>());
+        std::cout << "keyframe trans: " << w2n.translation() << std::endl;
+        std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
+
+        if (coeffs_map_frame(0) > 0.95) {                
+          //TODO: convert the received planes to local body frame by multiplying with the inverse of the keyframe pose
+          int id = associate_vert_plane(keyframe, coeffs_map_frame);
+          g2o::VertexPlane* x_vert_plane_node;
+          if(vert_planes.empty() || id == -1) {
+
+              x_vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
+              x_vert_plane_node->setFixed(true);
+              std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
+
+              VerticalPlanes vert_plane;
+              vert_plane.id = vert_planes.size();
+              vert_plane.coefficients = coeffs_map_frame;
+              vert_plane.cloud_seg = cloud_seg;
+              vert_plane.node = x_vert_plane_node; 
+              vert_planes.push_back(vert_plane);
+
+          } else {
+              std::cout << "matched with plane of id " << std::to_string(id)  << std::endl;
+              x_vert_plane_node = vert_planes[id].node;
+          }
+
+          Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
+          auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs_body_frame, information);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+          keyframe->cloud_seg = cloud_seg;
+          updated = true;
+        }
       }
     }
 
-    auto remove_loc = std::upper_bound(cloud_seg_queue.begin(), cloud_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const sensor_msgs::PointCloud2::ConstPtr& cloud_seg) { return stamp < cloud_seg->header.stamp; });
-    cloud_seg_queue.erase(cloud_seg_queue.begin(), remove_loc);
+    auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
+    clouds_seg_queue.erase(clouds_seg_queue.begin(), remove_loc);
 
     return updated;
   }
@@ -704,7 +709,7 @@ private:
       read_until_pub.publish(read_until);
     }
 
-    if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue() & !flush_cloud_seg_queue()) {
+    if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue() & !flush_clouds_seg_queue()) {
       return;
     }
 
@@ -952,9 +957,9 @@ private:
     visualization_msgs::Marker& plane_marker = markers.markers[4];
     plane_marker.pose.orientation.w = 1.0;
     plane_marker.scale.x = 0.03;
-    plane_marker.scale.y = 3.0;
-    plane_marker.scale.z = 1.0;
-    plane_marker.points.resize(vert_planes.size());
+    plane_marker.scale.y = 0.03;
+    plane_marker.scale.z = 0.03;
+    //plane_marker.points.resize(vert_planes.size());
     
     for(int i = 0; i < vert_planes.size(); ++i){
 
@@ -964,9 +969,13 @@ private:
       plane_marker.id = 4;
       plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
 
-      plane_marker.points[i].x = -vert_planes[i].coefficients(3);
-      plane_marker.points[i].y = 0.0;
-      plane_marker.points[i].z = 5.0;
+      for(size_t j=0; j < vert_planes[i].cloud_seg->size(); ++j){
+        geometry_msgs::Point point;
+        point.x = vert_planes[i].cloud_seg->points[j].x;
+        point.y = vert_planes[i].cloud_seg->points[j].y;
+        point.z = vert_planes[i].cloud_seg->points[j].z + 5.0;
+        plane_marker.points.push_back(point);
+      }
 
       plane_marker.color.r = 1;
       plane_marker.color.a = 1;
@@ -1135,7 +1144,7 @@ private:
 
   // Seg map queue
   std::mutex cloud_seg_mutex;
-  std::deque<sensor_msgs::PointCloud2::Ptr> cloud_seg_queue; 
+  std::deque<hdl_graph_slam::PointClouds::Ptr> clouds_seg_queue; 
 
   // for map cloud generation
   std::atomic_bool graph_updated;
