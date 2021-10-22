@@ -271,8 +271,9 @@ private:
         std::cout << "keyframe trans: " << w2n.translation() << std::endl;
         std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
 
-        if (coeffs_map_frame(0) > 0.95) {                
-          updated = factor_vert_planes(keyframe, cloud_seg, coeffs_map_frame, coeffs_body_frame);
+        if (coeffs_map_frame(0) > 0.95) {     
+          int plane_type = 0;           
+          updated = factor_vert_planes(keyframe, cloud_seg, coeffs_map_frame, coeffs_body_frame, plane_type);
         }
       }
     }
@@ -285,30 +286,31 @@ private:
   /** 
   * @brief create vertical plane factors
   */
-  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame) {
+  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type) {
+    g2o::VertexPlane* vert_plane_node;
 
-    int id = associate_vert_plane(keyframe, coeffs_map_frame);
-    g2o::VertexPlane* x_vert_plane_node;
-    if(vert_planes.empty() || id == -1) {
+    if (plane_type == 0){  
+      int id = associate_vert_plane(keyframe, coeffs_map_frame, plane_type);
+      if(x_vert_planes.empty() || id == -1) {
+          vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
+          //x_vert_plane_node->setFixed(true);
+          std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
 
-        x_vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
-        //x_vert_plane_node->setFixed(true);
-        std::cout << "Added new vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
+          VerticalPlanes vert_plane;
+          vert_plane.id = x_vert_planes.size();
+          vert_plane.coefficients = coeffs_map_frame;
+          vert_plane.cloud_seg = cloud_seg;
+          vert_plane.node = vert_plane_node; 
+          x_vert_planes.push_back(vert_plane);
 
-        VerticalPlanes vert_plane;
-        vert_plane.id = vert_planes.size();
-        vert_plane.coefficients = coeffs_map_frame;
-        vert_plane.cloud_seg = cloud_seg;
-        vert_plane.node = x_vert_plane_node; 
-        vert_planes.push_back(vert_plane);
-
-    } else {
-        std::cout << "matched with plane of id " << std::to_string(id)  << std::endl;
-        x_vert_plane_node = vert_planes[id].node;
-    }
+      } else {
+          std::cout << "matched x vert plane with x vert plane of id " << std::to_string(id)  << std::endl;
+          vert_plane_node = x_vert_planes[id].node;
+      }
+    } 
 
     Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
-    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, x_vert_plane_node, coeffs_body_frame, information);
+    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, coeffs_body_frame, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     keyframe->cloud_seg = cloud_seg;
 
@@ -318,21 +320,23 @@ private:
   /** 
   * @brief data assoction betweeen the planes
   */
-  int associate_vert_plane(KeyFrame::Ptr keyframe, Eigen::Vector4d coeffs) {
+  int associate_vert_plane(KeyFrame::Ptr keyframe, Eigen::Vector4d coeffs, int plane_type) {
     int id;
     float min_dist = 100;
-    for(int i=0; i< vert_planes.size(); ++i) { 
-      float dist = fabs(coeffs(3) - vert_planes[i].coefficients(3));
-      std::cout << "distance: " << dist << std::endl;
-      if(dist < min_dist){
-      min_dist = dist;
-       id = vert_planes[i].id;
-      }   
-    }
+    if(plane_type == 0) {
+      for(int i=0; i< x_vert_planes.size(); ++i) { 
+        float dist = fabs(coeffs(3) - x_vert_planes[i].coefficients(3));
+        std::cout << "distance: " << dist << std::endl;
+        if(dist < min_dist){
+        min_dist = dist;
+        id = x_vert_planes[i].id;
+        }   
+      }
 
-    std::cout << "min_dist: " << min_dist << std::endl;
-    if(min_dist > 0.20)
-      id = -1;
+      std::cout << "min_dist: " << min_dist << std::endl;
+      if(min_dist > 0.20)
+        id = -1;
+    }
 
     return id;
   }
@@ -969,7 +973,7 @@ private:
     plane_marker.scale.z = 0.05;
     //plane_marker.points.resize(vert_planes.size());
     
-    for(int i = 0; i < vert_planes.size(); ++i){
+    for(int i = 0; i < x_vert_planes.size(); ++i){
 
       plane_marker.header.frame_id = "map";
       plane_marker.header.stamp = stamp;
@@ -977,11 +981,11 @@ private:
       plane_marker.id = 4;
       plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
 
-      for(size_t j=0; j < vert_planes[i].cloud_seg->size(); ++j){
+      for(size_t j=0; j < x_vert_planes[i].cloud_seg->size(); ++j){
         geometry_msgs::Point point;
-        point.x = vert_planes[i].cloud_seg->points[j].x;
-        point.y = vert_planes[i].cloud_seg->points[j].y;
-        point.z = vert_planes[i].cloud_seg->points[j].z + 5.0;
+        point.x = x_vert_planes[i].cloud_seg->points[j].x;
+        point.y = x_vert_planes[i].cloud_seg->points[j].y;
+        point.z = x_vert_planes[i].cloud_seg->points[j].z + 5.0;
         plane_marker.points.push_back(point);
       }
 
@@ -1147,7 +1151,7 @@ private:
   std::deque<hdl_graph_slam::FloorCoeffsConstPtr> floor_coeffs_queue;
 
   //vertical and horizontal planes
-  std::vector<VerticalPlanes> vert_planes;         // vertically segmented planes
+  std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;      // horizontally segmented planes
 
   // Seg map queue
