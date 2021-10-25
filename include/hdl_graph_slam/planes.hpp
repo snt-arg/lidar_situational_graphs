@@ -21,7 +21,8 @@ public:
 public:
   int id;
   Eigen::Vector4d coefficients;
-  pcl::PointCloud<PointNormal>::Ptr cloud_seg;  // segmented points of the plane
+  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // segmented points of the plane in local body frame
+  pcl::PointCloud<PointNormal>::Ptr cloud_seg_map;  // segmented points of the plane in global map frame
   g2o::VertexPlane* node;                       // node instance
 };
 
@@ -32,7 +33,8 @@ public:
 public:
   int id;
   Eigen::Vector4d coefficients;
-  pcl::PointCloud<PointNormal>::Ptr cloud_seg;  // segmented points of the plane
+  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // segmented points of the plane in local body frame
+  pcl::PointCloud<PointNormal>::Ptr cloud_seg_map;  // segmented points of the plane in global map frame
   g2o::VertexPlane* node;                       // node instance
 };
 

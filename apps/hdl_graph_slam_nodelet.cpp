@@ -18,6 +18,7 @@
 #include <geodesy/utm.h>
 #include <geodesy/wgs84.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl_ros/transforms.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/time_synchronizer.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -255,30 +256,36 @@ private:
           continue;
         }
 
-        pcl::PointCloud<PointNormal>::Ptr cloud_seg(new pcl::PointCloud<PointNormal>());
-        pcl::fromROSMsg(cloud_seg_msg, *cloud_seg);
+        pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
+        pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
+        std::cout << "cloud_seg->back().normal_x: " << cloud_seg_body->back().normal_x << std::endl;
+        std::cout << "cloud_seg->back().normal_y: " << cloud_seg_body->back().normal_y << std::endl;
+        std::cout << "cloud_seg->back().normal_z: " << cloud_seg_body->back().normal_z << std::endl;
+        std::cout << "cloud_seg->back().distance: " << cloud_seg_body->back().curvature << std::endl;  
 
-        std::cout << "cloud_seg->back().normal_x: " << cloud_seg->back().normal_x << std::endl;
-        std::cout << "cloud_seg->back().normal_y: " << cloud_seg->back().normal_y << std::endl;
-        std::cout << "cloud_seg->back().normal_z: " << cloud_seg->back().normal_z << std::endl;
-        std::cout << "cloud_seg->back().distance: " << cloud_seg->back().curvature << std::endl;  
         const auto& keyframe = found->second;
-
-        Eigen::Vector4d coeffs_map_frame(cloud_seg->back().normal_x, cloud_seg->back().normal_y, cloud_seg->back().normal_z, cloud_seg->back().curvature);
-        Eigen::Vector4d coeffs_body_frame; Eigen::Isometry3d w2n = keyframe->node->estimate().inverse();
-        coeffs_body_frame.head<3>() = w2n.rotation() * coeffs_map_frame.head<3>();
-        coeffs_body_frame(3) = coeffs_map_frame(3) - w2n.translation().dot(coeffs_body_frame.head<3>());
-        std::cout << "keyframe trans: " << w2n.translation() << std::endl;
-        std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
-
-        if (coeffs_map_frame(0) > 0.95) {     
-          int plane_type = 0;           
-          updated = factor_vert_planes(keyframe, cloud_seg, coeffs_map_frame, coeffs_body_frame, plane_type);
-        } else if (fabs(coeffs_map_frame(1)) > 0.95) {
-          int plane_type = 1;           
-          updated = factor_vert_planes(keyframe, cloud_seg, coeffs_map_frame, coeffs_body_frame, plane_type);
+        pcl::PointCloud<PointNormal>::Ptr cloud_seg_map = convert_cloud_to_map(keyframe, cloud_seg_body);
+        if(cloud_seg_map->points.empty()) {
+          std::cout << "Could not convert the cloud to map frame";
+          return false; 
         }
 
+        Eigen::Vector4d coeffs_body_frame(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature); 
+        Eigen::Vector4d coeffs_map_frame; Eigen::Isometry3d w2n = keyframe->node->estimate();
+        coeffs_map_frame.head<3>() = w2n.rotation() * coeffs_body_frame.head<3>();
+        coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
+        std::cout << "keyframe trans: " << w2n.translation() << std::endl;
+        std::cout << "coeffs_map_frame: " << coeffs_map_frame << std::endl;
+
+        int plane_type;
+        if (coeffs_map_frame(0) > 0.95) {     
+          plane_type = 0;           
+        } else if (fabs(coeffs_map_frame(1)) > 0.95) {
+          plane_type = 1;           
+        } else 
+          continue;
+
+        updated = factor_vert_planes(keyframe, cloud_seg_body, cloud_seg_map, coeffs_map_frame, coeffs_body_frame, plane_type);
       }
     }
     auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
@@ -286,11 +293,25 @@ private:
 
     return updated;
   }
+  
+  /**  
+  *@brief Converting the cloud to map frame
+  */
+  pcl::PointCloud<PointNormal>::Ptr convert_cloud_to_map(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body) {
+    pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+    Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
+    for(const auto& src_pt : cloud_seg_body->points) {
+      PointNormal dst_pt;
+      dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+      cloud_seg_map->push_back(dst_pt);
+    }
+    return cloud_seg_map;
+  }
 
   /** 
   * @brief create vertical plane factors
   */
-  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type) {
+  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, pcl::PointCloud<PointNormal>::Ptr cloud_seg_map, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type) {
     g2o::VertexPlane* vert_plane_node;
 
     if (plane_type == 0){  
@@ -303,7 +324,8 @@ private:
           VerticalPlanes vert_plane;
           vert_plane.id = x_vert_planes.size();
           vert_plane.coefficients = coeffs_map_frame;
-          vert_plane.cloud_seg = cloud_seg;
+          vert_plane.cloud_seg_body = cloud_seg_body;
+          vert_plane.cloud_seg_map = cloud_seg_map;
           vert_plane.node = vert_plane_node; 
           x_vert_planes.push_back(vert_plane);
 
@@ -318,22 +340,22 @@ private:
         vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
         std::cout << "Added new y vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
         VerticalPlanes vert_plane;
-        vert_plane.id = y_vert_planes.size();
+        vert_plane.id = x_vert_planes.size();
         vert_plane.coefficients = coeffs_map_frame;
-        vert_plane.cloud_seg = cloud_seg;
+        vert_plane.cloud_seg_body = cloud_seg_body;
+        vert_plane.cloud_seg_map = cloud_seg_map;
         vert_plane.node = vert_plane_node; 
         y_vert_planes.push_back(vert_plane);
-      } else {
-        std::cout << "matched y vert plane with x vert plane of id " << std::to_string(id)  << std::endl;
+    } else {
+        std::cout << "matched y vert plane with y vert plane of id " << std::to_string(id)  << std::endl;
         vert_plane_node = y_vert_planes[id].node;
-      }
-
+      }   
     }
 
     Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
     auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, coeffs_body_frame, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-    keyframe->cloud_seg = cloud_seg;
+    keyframe->cloud_seg_body = cloud_seg_body;
 
     return true;
   }
@@ -814,7 +836,7 @@ private:
 
     // node markers
     visualization_msgs::Marker& traj_marker = markers.markers[0];
-    traj_marker.header.frame_id = "map";
+    traj_marker.header.frame_id = map_frame_id;
     traj_marker.header.stamp = stamp;
     traj_marker.ns = "nodes";
     traj_marker.id = 0;
@@ -866,7 +888,7 @@ private:
 
     // edge markers
     visualization_msgs::Marker& edge_marker = markers.markers[2];
-    edge_marker.header.frame_id = "map";
+    edge_marker.header.frame_id = map_frame_id;
     edge_marker.header.stamp = stamp;
     edge_marker.ns = "edges";
     edge_marker.id = 2;
@@ -919,9 +941,9 @@ private:
         Eigen::Vector3d pt1 = v1->estimate().translation();
         Eigen::Vector3d pt2;
         if (fabs(v2->estimate().normal()(0)) > 0.95) 
-          pt2 = Eigen::Vector3d(-(v2->estimate().distance()), -1.0, 5.0);
+          pt2 = Eigen::Vector3d((v2->estimate().distance()), -1.0, 5.0);
         else if (fabs(v2->estimate().normal()(1)) > 0.95) 
-          pt2 = Eigen::Vector3d(2.0, (v2->estimate().distance()), 5.0);
+          pt2 = Eigen::Vector3d(2.0, -(v2->estimate().distance()), 5.0);
 
         edge_marker.points[i * 2].x = pt1.x();
         edge_marker.points[i * 2].y = pt1.y();
@@ -984,7 +1006,7 @@ private:
 
     // sphere
     visualization_msgs::Marker& sphere_marker = markers.markers[3];
-    sphere_marker.header.frame_id = "map";
+    sphere_marker.header.frame_id = map_frame_id;
     sphere_marker.header.stamp = stamp;
     sphere_marker.ns = "loop_close_radius";
     sphere_marker.id = 3;
@@ -1009,18 +1031,18 @@ private:
     x_vert_plane_marker.scale.y = 0.05;
     x_vert_plane_marker.scale.z = 0.05;
     //plane_marker.points.resize(vert_planes.size());    
-    x_vert_plane_marker.header.frame_id = "map";
+    x_vert_plane_marker.header.frame_id = map_frame_id;
     x_vert_plane_marker.header.stamp = stamp;
     x_vert_plane_marker.ns = "x_vert_planes";
     x_vert_plane_marker.id = 4;
     x_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
 
     for(int i = 0; i < x_vert_planes.size(); ++i) {
-      for(size_t j=0; j < x_vert_planes[i].cloud_seg->size(); ++j) {
+      for(size_t j=0; j < x_vert_planes[i].cloud_seg_map->size(); ++j) {
         geometry_msgs::Point point;
-        point.x = x_vert_planes[i].cloud_seg->points[j].x;
-        point.y = x_vert_planes[i].cloud_seg->points[j].y;
-        point.z = x_vert_planes[i].cloud_seg->points[j].z + 5.0;
+        point.x = x_vert_planes[i].cloud_seg_map->points[j].x;
+        point.y = x_vert_planes[i].cloud_seg_map->points[j].y;
+        point.z = x_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         x_vert_plane_marker.points.push_back(point);
       }
       x_vert_plane_marker.color.r = 1;
@@ -1034,18 +1056,18 @@ private:
     y_vert_plane_marker.scale.y = 0.05;
     y_vert_plane_marker.scale.z = 0.05;
     //plane_marker.points.resize(vert_planes.size());    
-    y_vert_plane_marker.header.frame_id = "map";
+    y_vert_plane_marker.header.frame_id = map_frame_id;
     y_vert_plane_marker.header.stamp = stamp;
     y_vert_plane_marker.ns = "y_vert_planes";
     y_vert_plane_marker.id = 5;
     y_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
    
     for(int i = 0; i < y_vert_planes.size(); ++i) {
-      for(size_t j=0; j < y_vert_planes[i].cloud_seg->size(); ++j) { 
+      for(size_t j=0; j < y_vert_planes[i].cloud_seg_map->size(); ++j) { 
         geometry_msgs::Point point;
-        point.x = y_vert_planes[i].cloud_seg->points[j].x;
-        point.y = y_vert_planes[i].cloud_seg->points[j].y;
-        point.z = y_vert_planes[i].cloud_seg->points[j].z + 5.0;
+        point.x = y_vert_planes[i].cloud_seg_map->points[j].x;
+        point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
+        point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         y_vert_plane_marker.points.push_back(point);
       }
       y_vert_plane_marker.color.b = 1;

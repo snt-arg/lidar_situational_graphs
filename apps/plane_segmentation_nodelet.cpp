@@ -116,23 +116,23 @@ private:
           extracted_cloud.back().normal_x = coefficients->values[0];
           extracted_cloud.back().normal_y = coefficients->values[1];
           extracted_cloud.back().normal_z = coefficients->values[2];
-          extracted_cloud.back().curvature = -1*coefficients->values[3];
-
+          extracted_cloud.back().curvature = coefficients->values[3];
+          
           //visulazing the pointcloud
-          segmented_cloud.points.push_back(transformed_cloud->points[idx]);
-          if(coefficients->values[0] > 0.95) {
-            segmented_cloud.back().r = 255;
-            segmented_cloud.back().g = 0;
-            segmented_cloud.back().b = 0;
-          } else if(coefficients->values[1] < -0.95) {
-            segmented_cloud.back().r = 0;
-            segmented_cloud.back().g = 0;
-            segmented_cloud.back().b = 255;
-          } else if(coefficients->values[2] > 0.99) {
-            segmented_cloud.back().r = 0;
-            segmented_cloud.back().g = 255;
-            segmented_cloud.back().b = 0;
-          }
+          // segmented_cloud.points.push_back(transformed_cloud->points[idx]);
+          // if(coefficients->values[0] > 0.95) {
+          //   segmented_cloud.back().r = 255;
+          //   segmented_cloud.back().g = 0;
+          //   segmented_cloud.back().b = 0;
+          // } else if(coefficients->values[1] < -0.95) {
+          //   segmented_cloud.back().r = 0;
+          //   segmented_cloud.back().g = 0;
+          //   segmented_cloud.back().b = 255;
+          // } else if(coefficients->values[2] > 0.99) {
+          //   segmented_cloud.back().r = 0;
+          //   segmented_cloud.back().g = 255;
+          //   segmented_cloud.back().b = 0;
+          // }
         }
         sensor_msgs::PointCloud2 extracted_cloud_msg;
         pcl::toROSMsg(extracted_cloud, extracted_cloud_msg);
@@ -160,12 +160,12 @@ private:
     extracted_clouds_msg.pointclouds = extracted_cloud_vec;
     segmented_clouds_pub_.publish(extracted_clouds_msg);
 
-    sensor_msgs::PointCloud2 segmented_cloud_msg;
-    pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
-    std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
-    segmented_cloud_msg.header = msg_header;
-    segmented_cloud_msg.header.frame_id = plane_extraction_frame_;
-    segmented_cloud_pub_.publish(segmented_cloud_msg);
+    // sensor_msgs::PointCloud2 segmented_cloud_msg;
+    // pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
+    // std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
+    // segmented_cloud_msg.header = msg_header;
+    // segmented_cloud_msg.header.frame_id = plane_extraction_frame_;
+    // segmented_cloud_pub_.publish(segmented_cloud_msg);
   }
 
   int getIndex(std::vector<pcl::PointXYZRGB, Eigen::aligned_allocator<pcl::PointXYZRGB> > v, pcl::PointXYZRGB K) {
