@@ -32,7 +32,7 @@
 #include <pcl/features/integral_image_normal.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/extract_indices.h>
-
+#include <pcl/common/io.h>
 namespace hdl_graph_slam {
 
 class PlaneSegmentationNodelet : public nodelet::Nodelet {
@@ -81,6 +81,7 @@ private:
       pcl_ros::transformPointCloud(*src_cloud, *transformed, transform);
       transformed->header.frame_id = plane_extraction_frame_;
       transformed->header.stamp = src_cloud->header.stamp;
+      //pcl::copyPointCloud(*src_cloud, *transformed);
       this->segment_planes(transformed);
     }
   }
@@ -109,6 +110,7 @@ private:
           break;
           std::cout << "Breaking as no model found" << std::endl;
         }
+
         //std::cout << "Model coefficients " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
         pcl::PointCloud<PointT> extracted_cloud;
         for(const auto& idx : inliers->indices) {
