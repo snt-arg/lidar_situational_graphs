@@ -3,7 +3,7 @@
   <!--HDL PLANE SEGMENTATION -->
   <node pkg="nodelet" type="nodelet" name="hdl_plane_seg_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="hdl_plane_segmentor" args="load hdl_graph_slam/PlaneSegmentationNodelet hdl_plane_seg_nodelet_manager">
-    <param name="plane_extraction_frame_id"        value="map" />
+    <param name="plane_extraction_frame_id"        value="base_footprint" />
     <param name="min_seg_points"                   value="1000" />
     <remap from="velodyne_points"                  to="/slam/hdl_prefilter/filtered_point_cloud" />
   </node>
