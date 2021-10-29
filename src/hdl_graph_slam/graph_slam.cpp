@@ -16,6 +16,7 @@
 #include <g2o/types/slam3d/edge_se3_pointxyz.h>
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 #include <g2o/edge_se3_plane.hpp>
+#include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_se3_priorxy.hpp>
 #include <g2o/edge_se3_priorxyz.hpp>
 #include <g2o/edge_se3_priorvec.hpp>
@@ -31,6 +32,7 @@ G2O_USE_OPTIMIZATION_LIBRARY(csparse)  // be aware of that csparse brings LGPL u
 
 namespace g2o {
 G2O_REGISTER_TYPE(EDGE_SE3_PLANE, EdgeSE3Plane)
+G2O_REGISTER_TYPE(EDGE_SE3_POINT_TO_PLANE, EdgeSE3PointToPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_PRIORXY, EdgeSE3PriorXY)
 G2O_REGISTER_TYPE(EDGE_SE3_PRIORXYZ, EdgeSE3PriorXYZ)
 G2O_REGISTER_TYPE(EDGE_SE3_PRIORVEC, EdgeSE3PriorVec)
@@ -152,6 +154,18 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(g2o::VertexSE3* v_se3, g2o::Ver
 
   return edge;
 }
+
+g2o::EdgeSE3PointToPlane* GraphSLAM::add_se3_point_to_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane, const Eigen::Matrix4d& points_matrix, const Eigen::MatrixXd& information_matrix) {
+  g2o::EdgeSE3PointToPlane* edge(new g2o::EdgeSE3PointToPlane());
+  edge->setMeasurement(points_matrix);
+  edge->setInformation(information_matrix);
+  edge->vertices()[0] = v_se3;
+  edge->vertices()[1] = v_plane;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 
 g2o::EdgeSE3PointXYZ* GraphSLAM::add_se3_point_xyz_edge(g2o::VertexSE3* v_se3, g2o::VertexPointXYZ* v_xyz, const Eigen::Vector3d& xyz, const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PointXYZ* edge(new g2o::EdgeSE3PointXYZ());

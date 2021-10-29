@@ -14,6 +14,7 @@ class VertexPlane;
 class VertexPointXYZ;
 class EdgeSE3;
 class EdgeSE3Plane;
+class EdgeSE3PointToPlane;
 class EdgeSE3PointXYZ;
 class EdgeSE3PriorXY;
 class EdgeSE3PriorXYZ;
@@ -80,6 +81,16 @@ public:
    * @return registered edge
    */
   g2o::EdgeSE3Plane* add_se3_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& plane_coeffs, const Eigen::MatrixXd& information_matrix);
+
+  /**
+   * @brief add an edge between an SE3 node and to a plane using point to plane distances
+   * @param v_se3    SE3 node
+   * @param v_plane  plane node
+   * @param plane_coeffs  plane coefficients w.r.t. v_se3
+   * @param information_matrix  information matrix (it must be 3x3)
+   * @return registered edge
+   */
+  g2o::EdgeSE3PointToPlane* add_se3_point_to_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane, const Eigen::Matrix4d& points_matrix, const Eigen::MatrixXd& information_matrix);
 
   /**
    * @brief add an edge between an SE3 node and a point_xyz node
