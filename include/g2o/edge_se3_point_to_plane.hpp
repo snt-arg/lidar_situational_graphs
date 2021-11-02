@@ -41,10 +41,14 @@ public:
     const g2o::VertexSE3* v1 = static_cast<const g2o::VertexSE3*>(_vertices[0]);
     const g2o::VertexPlane* v2 = static_cast<const g2o::VertexPlane*>(_vertices[1]);
 
-    // Eigen::Isometry3d w2n = v1->estimate().inverse();
-    // Plane3D local_plane = w2n * v2->estimate();
-   // _error = local_plane.ominus(_measurement);
-   // _error = 0; 
+    Eigen::Matrix4d Tj =  v1->estimate().matrix();
+    Eigen::Matrix4d TjT = Tj.transpose();
+    Eigen::Vector4d Pj =  v2->estimate().toVector();
+    Pj(3) = 1;
+    Eigen::Vector4d PjT =  Pj.transpose();  
+    Eigen::Matrix4d Gij = _measurement;
+    
+    _error = Pj.transpose() * Tj * Gij * Tj.transpose() * Pj;
   }
 
   void setMeasurement(const Eigen::Matrix4d& m) override {
