@@ -40,15 +40,14 @@ public:
   void computeError() override {
     const g2o::VertexSE3* v1 = static_cast<const g2o::VertexSE3*>(_vertices[0]);
     const g2o::VertexPlane* v2 = static_cast<const g2o::VertexPlane*>(_vertices[1]);
-
-    Eigen::Matrix4d Tj =  v1->estimate().matrix();
-    Eigen::Matrix4d TjT = Tj.transpose();
+    
+    Eigen::Matrix4d Ti =  v1->estimate().matrix();
     Eigen::Vector4d Pj =  v2->estimate().toVector();
-    Pj(3) = 1;
     Eigen::Vector4d PjT =  Pj.transpose();  
     Eigen::Matrix4d Gij = _measurement;
     
-    _error = Pj.transpose() * Tj * Gij * Tj.transpose() * Pj;
+    _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj;
+    //std::cout << "error: " << _error << std::endl;
   }
 
   void setMeasurement(const Eigen::Matrix4d& m) override {
@@ -57,11 +56,11 @@ public:
 
   virtual bool read(std::istream& is) override {
     Eigen::Matrix4d v;
-    setMeasurement(Eigen::Matrix4d(v));
-    for(int i = 0; i < information().rows(); ++i)
-      for(int j = i; j < information().cols(); ++j) {
+    for(int i = 0; i < measurement().rows(); ++i)
+      for(int j = i; j < measurement().cols(); ++j) {
         is >> v(i,j);
       }
+    setMeasurement(Eigen::Matrix4d(v));
 
     for(int i = 0; i < information().rows(); ++i)
       for(int j = i; j < information().cols(); ++j) {
@@ -73,8 +72,8 @@ public:
   virtual bool write(std::ostream& os) const override {
     Eigen::Matrix4d v = _measurement;
     
-    for(int i = 0; i < information().rows(); ++i)
-      for(int j = i; j < information().cols(); ++j) {
+    for(int i = 0; i < measurement().rows(); ++i)
+      for(int j = i; j < measurement().cols(); ++j) {
         os << " " << v(i,j);
       }
 

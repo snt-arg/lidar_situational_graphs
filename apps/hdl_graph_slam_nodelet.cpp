@@ -64,6 +64,8 @@
 #include <g2o/edge_se3_priorvec.hpp>
 #include <g2o/edge_se3_priorquat.hpp>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
+#include <g2o/edge_se3_point_to_plane.hpp>
+
 namespace hdl_graph_slam {
 
 class HdlGraphSlamNodelet : public nodelet::Nodelet {
@@ -271,23 +273,23 @@ private:
         coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
 
         int plane_type;
+        bool use_point_to_plane = 1;     
         if (fabs(coeffs_map_frame(0)) > 0.95) {     
           // std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
           // std::cout << "coeffs_map_frame: " << coeffs_map_frame << std::endl;
-
-          //std::cout << "keyframe trans: " << w2n.translation() << std::endl;
-          plane_type = 0;    
-          updated = factor_vert_planes(keyframe, cloud_seg_body, cloud_seg_map, coeffs_map_frame, coeffs_body_frame, plane_type);          
+          // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
+          
+          plane_type = 0; 
+          updated = factor_vert_planes(keyframe, cloud_seg_body, cloud_seg_map, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(1)) > 0.95) {                   
           // std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
           // std::cout << "coeffs_map_frame: " << coeffs_map_frame << std::endl;
-
-          //std::cout << "keyframe trans: " << w2n.translation() << std::endl;
-          plane_type = 1;    
-          updated = factor_vert_planes(keyframe, cloud_seg_body, cloud_seg_map, coeffs_map_frame, coeffs_body_frame, plane_type);
+          // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
+        
+          plane_type = 1;  
+          updated = factor_vert_planes(keyframe, cloud_seg_body, cloud_seg_map, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
         } else 
           continue;
-
       }
     }
     auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
@@ -313,7 +315,7 @@ private:
   /** 
   * @brief create vertical plane factors
   */
-  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, pcl::PointCloud<PointNormal>::Ptr cloud_seg_map, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type) {
+  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, pcl::PointCloud<PointNormal>::Ptr cloud_seg_map, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type, bool use_point_to_plane) {
     g2o::VertexPlane* vert_plane_node;
 
     if (plane_type == 0){  
@@ -353,10 +355,24 @@ private:
         vert_plane_node = y_vert_planes[id].node;
       }   
     }
+    
+    Eigen::Matrix3d information = 0.1 * Eigen::Matrix3d::Identity();
 
-    Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
-    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, coeffs_body_frame, information);
-    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    if(use_point_to_plane) {
+      Eigen::Matrix4d Gij;
+      Gij.setZero();        
+      for(size_t i = 0; i < cloud_seg_body->points.size(); ++i) {
+        Eigen::Vector4d point(cloud_seg_body->points[i].x, cloud_seg_body->points[i].y, cloud_seg_body->points[i].z, 1);
+        Gij += point * point.transpose();
+      }
+      auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, vert_plane_node, Gij, information);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    } else {
+      Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
+      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, coeffs_body_frame, information);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    }    
+
     keyframe->cloud_seg_body = cloud_seg_body;
 
     return true;
@@ -392,7 +408,7 @@ private:
       }
 
       std::cout << "min_dist: " << min_dist << std::endl;
-      if(min_dist > 0.30)
+      if(min_dist > 0.15)
         id = -1;
 
     return id;
