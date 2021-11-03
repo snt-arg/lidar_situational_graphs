@@ -261,12 +261,7 @@ private:
         pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
 
         const auto& keyframe = found->second;
-        pcl::PointCloud<PointNormal>::Ptr cloud_seg_map = convert_cloud_to_map(keyframe, cloud_seg_body);
-        if(cloud_seg_map->points.empty()) { 
-          std::cout << "Could not convert the cloud to body frame";
-          return false; 
-        }
-
+    
         Eigen::Vector4d coeffs_body_frame(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);          
         Eigen::Vector4d coeffs_map_frame; Eigen::Isometry3d w2n = keyframe->node->estimate();
         coeffs_map_frame.head<3>() = w2n.rotation() * coeffs_body_frame.head<3>();
@@ -280,14 +275,14 @@ private:
           // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
           
           plane_type = 0; 
-          updated = factor_vert_planes(keyframe, cloud_seg_body, cloud_seg_map, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
+          updated = factor_vert_planes(keyframe, cloud_seg_body, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(1)) > 0.95) {                   
           // std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
           // std::cout << "coeffs_map_frame: " << coeffs_map_frame << std::endl;
           // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
         
           plane_type = 1;  
-          updated = factor_vert_planes(keyframe, cloud_seg_body, cloud_seg_map, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
+          updated = factor_vert_planes(keyframe, cloud_seg_body, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
         } else 
           continue;
       }
@@ -315,8 +310,33 @@ private:
   /** 
   * @brief create vertical plane factors
   */
-  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, pcl::PointCloud<PointNormal>::Ptr cloud_seg_map, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type, bool use_point_to_plane) {
+  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type, bool use_point_to_plane) {
     g2o::VertexPlane* vert_plane_node;
+    Eigen::Matrix4d Gij;
+    Gij.setZero();  
+ 
+    if(use_point_to_plane) {
+      auto it = cloud_seg_body->points.begin();
+      while (it != cloud_seg_body->points.end()) {
+        PointNormal point_normal;
+        point_normal = *it;
+        Eigen::Vector4d point(point_normal.x, point_normal.y, point_normal.z, 1);
+        double point_to_plane_d = coeffs_map_frame.transpose() * keyframe->node->estimate().matrix() * point;
+
+        if(abs(point_to_plane_d) < 0.1) {
+          Gij += point * point.transpose();
+          ++it;
+        } else {
+          it = cloud_seg_body->points.erase(it);
+        } 
+      }
+    }
+      
+    pcl::PointCloud<PointNormal>::Ptr cloud_seg_map = convert_cloud_to_map(keyframe, cloud_seg_body);
+    if(cloud_seg_map->points.empty()) { 
+      std::cout << "Could not convert the cloud to body frame";
+      return false;
+    }
 
     if (plane_type == 0){  
       int id = associate_vert_plane(keyframe, coeffs_map_frame, plane_type);
@@ -359,12 +379,6 @@ private:
     Eigen::Matrix3d information = 0.1 * Eigen::Matrix3d::Identity();
 
     if(use_point_to_plane) {
-      Eigen::Matrix4d Gij;
-      Gij.setZero();        
-      for(size_t i = 0; i < cloud_seg_body->points.size(); ++i) {
-        Eigen::Vector4d point(cloud_seg_body->points[i].x, cloud_seg_body->points[i].y, cloud_seg_body->points[i].z, 1);
-        Gij += point * point.transpose();
-      }
       auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, vert_plane_node, Gij, information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     } else {
@@ -408,7 +422,7 @@ private:
       }
 
       std::cout << "min_dist: " << min_dist << std::endl;
-      if(min_dist > 0.15)
+      if(min_dist > 0.10)
         id = -1;
 
     return id;
@@ -973,6 +987,32 @@ private:
         edge_marker.colors[i * 2].b = 1.0;
         edge_marker.colors[i * 2].a = 1.0;
         edge_marker.colors[i * 2 + 1].b = 1.0;
+        edge_marker.colors[i * 2 + 1].a = 1.0;
+
+        continue;
+      }
+
+      g2o::EdgeSE3PointToPlane* edge_point_to_plane = dynamic_cast<g2o::EdgeSE3PointToPlane*>(edge);
+      if(edge_point_to_plane) {
+        g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_point_to_plane->vertices()[0]);
+        g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_point_to_plane->vertices()[1]);
+        Eigen::Vector3d pt1 = v1->estimate().translation();
+        Eigen::Vector3d pt2;
+        if (fabs(v2->estimate().normal()(0)) > 0.95) 
+          pt2 = Eigen::Vector3d(-(v2->estimate().distance()), 0.0, 5.0);
+        else if (fabs(v2->estimate().normal()(1)) > 0.95) 
+          pt2 = Eigen::Vector3d(0.0, -(v2->estimate().distance()), 5.0);
+
+        edge_marker.points[i * 2].x = pt1.x();
+        edge_marker.points[i * 2].y = pt1.y();
+        edge_marker.points[i * 2].z = pt1.z();
+        edge_marker.points[i * 2 + 1].x = pt2.x();
+        edge_marker.points[i * 2 + 1].y = pt2.y();
+        edge_marker.points[i * 2 + 1].z = pt2.z();
+
+        edge_marker.colors[i * 2].g = 1.0;
+        edge_marker.colors[i * 2].a = 1.0;
+        edge_marker.colors[i * 2 + 1].g = 1.0;
         edge_marker.colors[i * 2 + 1].a = 1.0;
 
         continue;
