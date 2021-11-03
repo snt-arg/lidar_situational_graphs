@@ -43,7 +43,6 @@ public:
     
     Eigen::Matrix4d Ti =  v1->estimate().matrix();
     Eigen::Vector4d Pj =  v2->estimate().toVector();
-    Eigen::Vector4d PjT =  Pj.transpose();  
     Eigen::Matrix4d Gij = _measurement;
     
     _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj;
