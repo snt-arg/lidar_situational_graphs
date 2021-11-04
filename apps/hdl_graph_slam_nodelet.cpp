@@ -265,7 +265,6 @@ private:
         Eigen::Vector4d coeffs_body_frame(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);          
         Eigen::Vector4d coeffs_map_frame; Eigen::Isometry3d w2n = keyframe->node->estimate();
         coeffs_map_frame.head<3>() = w2n.rotation() * coeffs_body_frame.head<3>();
-        coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
 
         int plane_type;
         bool use_point_to_plane = 1;     
@@ -275,6 +274,8 @@ private:
           // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
           
           plane_type = 0; 
+          coeffs_map_frame(0) = -0.99; coeffs_map_frame(1) = 0.0; coeffs_map_frame(2) = 0.0; 
+          coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
           updated = factor_vert_planes(keyframe, cloud_seg_body, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(1)) > 0.95) {                   
           // std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
@@ -282,6 +283,8 @@ private:
           // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
         
           plane_type = 1;  
+          coeffs_map_frame(0) = 0.0; coeffs_map_frame(1) = -0.99; coeffs_map_frame(2) = 0.0; 
+          coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
           updated = factor_vert_planes(keyframe, cloud_seg_body, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
         } else 
           continue;
@@ -318,9 +321,9 @@ private:
     if(use_point_to_plane) {
       auto it = cloud_seg_body->points.begin();
       while (it != cloud_seg_body->points.end()) {
-        PointNormal point_normal;
-        point_normal = *it;
-        Eigen::Vector4d point(point_normal.x, point_normal.y, point_normal.z, 1);
+        PointNormal point_tmp;
+        point_tmp = *it;
+        Eigen::Vector4d point(point_tmp.x, point_tmp.y, point_tmp.z, 1);
         double point_to_plane_d = coeffs_map_frame.transpose() * keyframe->node->estimate().matrix() * point;
 
         if(abs(point_to_plane_d) < 0.1) {
@@ -376,7 +379,7 @@ private:
       }   
     }
     
-    Eigen::Matrix3d information = 0.1 * Eigen::Matrix3d::Identity();
+    Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
 
     if(use_point_to_plane) {
       auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, vert_plane_node, Gij, information);
@@ -422,7 +425,7 @@ private:
       }
 
       std::cout << "min_dist: " << min_dist << std::endl;
-      if(min_dist > 0.10)
+      if(min_dist > 0.30)
         id = -1;
 
     return id;
