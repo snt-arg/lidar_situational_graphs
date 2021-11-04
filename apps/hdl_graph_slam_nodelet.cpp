@@ -89,7 +89,7 @@ public:
     map_cloud_resolution = private_nh.param<double>("map_cloud_resolution", 0.05);
     wait_trans_odom2map = private_nh.param<bool>("wait_trans_odom2map", false);
     got_trans_odom2map = false;
-    trans_odom2map.setZero();
+    trans_odom2map.setIdentity();
 
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
 
@@ -174,7 +174,7 @@ private:
     trans_odom2map(1, 3) = pose_msg.pose.position.y;
     trans_odom2map(2, 3) = pose_msg.pose.position.z;
 
-    if(trans_odom2map.isZero())
+    if(trans_odom2map.isIdentity())
       return;
     else {
       got_trans_odom2map = true;
