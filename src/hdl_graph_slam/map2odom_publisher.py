@@ -34,6 +34,9 @@ if __name__ == '__main__':
 
 	rate = rospy.Rate(10.0)
 	while not rospy.is_shutdown():
-		node.spin()
-		rate.sleep()
+		try:
+			node.spin()
+			rate.sleep()
+		except:
+			continue			
 
