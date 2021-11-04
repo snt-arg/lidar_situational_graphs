@@ -263,29 +263,24 @@ private:
         const auto& keyframe = found->second;
     
         Eigen::Vector4d coeffs_body_frame(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);          
+        g2o::Plane3D det_plane_body_frame = coeffs_body_frame;
         Eigen::Vector4d coeffs_map_frame; Eigen::Isometry3d w2n = keyframe->node->estimate();
         coeffs_map_frame.head<3>() = w2n.rotation() * coeffs_body_frame.head<3>();
 
         int plane_type;
         bool use_point_to_plane = 1;     
-        if (fabs(coeffs_map_frame(0)) > 0.95) {     
-          // std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
-          // std::cout << "coeffs_map_frame: " << coeffs_map_frame << std::endl;
-          // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
-          
+        if (fabs(coeffs_map_frame(0)) > 0.95) {              
           plane_type = 0; 
           coeffs_map_frame(0) = -0.99; coeffs_map_frame(1) = 0.0; coeffs_map_frame(2) = 0.0; 
           coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
-          updated = factor_vert_planes(keyframe, cloud_seg_body, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
+          g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
+          updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(1)) > 0.95) {                   
-          // std::cout << "coeffs_body_frame: " << coeffs_body_frame << std::endl;
-          // std::cout << "coeffs_map_frame: " << coeffs_map_frame << std::endl;
-          // std::cout << "keyframe trans: " << w2n.translation() << std::endl;
-        
           plane_type = 1;  
           coeffs_map_frame(0) = 0.0; coeffs_map_frame(1) = -0.99; coeffs_map_frame(2) = 0.0; 
           coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
-          updated = factor_vert_planes(keyframe, cloud_seg_body, coeffs_map_frame, coeffs_body_frame, plane_type, use_point_to_plane);
+          g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
+          updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else 
           continue;
       }
@@ -313,7 +308,7 @@ private:
   /** 
   * @brief create vertical plane factors
   */
-  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, Eigen::Vector4d coeffs_map_frame, Eigen::Vector4d coeffs_body_frame, int plane_type, bool use_point_to_plane) {
+  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type, bool use_point_to_plane) {
     g2o::VertexPlane* vert_plane_node;
     Eigen::Matrix4d Gij;
     Gij.setZero();  
@@ -324,7 +319,7 @@ private:
         PointNormal point_tmp;
         point_tmp = *it;
         Eigen::Vector4d point(point_tmp.x, point_tmp.y, point_tmp.z, 1);
-        double point_to_plane_d = coeffs_map_frame.transpose() * keyframe->node->estimate().matrix() * point;
+        double point_to_plane_d = det_plane_map_frame.coeffs().transpose() * keyframe->node->estimate().matrix() * point;
 
         if(abs(point_to_plane_d) < 0.1) {
           Gij += point * point.transpose();
@@ -342,15 +337,15 @@ private:
     }
 
     if (plane_type == 0){  
-      int id = associate_vert_plane(keyframe, coeffs_map_frame, plane_type);
+      int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
       
       if(x_vert_planes.empty() || id == -1) {
-          vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
+          vert_plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
           //x_vert_plane_node->setFixed(true);
-          std::cout << "Added new x vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
+          std::cout << "Added new x vertical plane node with distance " <<  det_plane_map_frame.coeffs()(3) << std::endl;
           VerticalPlanes vert_plane;
           vert_plane.id = x_vert_planes.size();
-          vert_plane.coefficients = coeffs_map_frame;
+          vert_plane.plane = det_plane_map_frame.coeffs();
           vert_plane.cloud_seg_body = cloud_seg_body;
           vert_plane.cloud_seg_map = cloud_seg_map;
           vert_plane.node = vert_plane_node; 
@@ -361,14 +356,14 @@ private:
           vert_plane_node = x_vert_planes[id].node;
       }
     } else if (plane_type == 1) {
-      int id = associate_vert_plane(keyframe, coeffs_map_frame, plane_type);
+      int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
       
       if(y_vert_planes.empty() || id == -1) {
-        vert_plane_node = graph_slam->add_plane_node(coeffs_map_frame);
-        std::cout << "Added new y vertical plane node with distance " <<  coeffs_map_frame(3) << std::endl;
+        vert_plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+        std::cout << "Added new y vertical plane node with distance " <<  det_plane_map_frame.coeffs()(3) << std::endl;
         VerticalPlanes vert_plane;
         vert_plane.id = y_vert_planes.size();
-        vert_plane.coefficients = coeffs_map_frame;
+        vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body = cloud_seg_body;
         vert_plane.cloud_seg_map = cloud_seg_map;
         vert_plane.node = vert_plane_node; 
@@ -386,7 +381,7 @@ private:
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     } else {
       Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
-      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, coeffs_body_frame, information);
+      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, det_plane_body_frame.coeffs(), information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
 
@@ -398,13 +393,16 @@ private:
   /** 
   * @brief data assoction betweeen the planes
   */
-  int associate_vert_plane(KeyFrame::Ptr keyframe, Eigen::Vector4d coeffs, int plane_type) {
+  int associate_vert_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
     int id;
     float min_dist = 100;
     
     if(plane_type == 0) {
       for(int i=0; i< x_vert_planes.size(); ++i) { 
-        float dist = fabs(coeffs(3) - x_vert_planes[i].coefficients(3));
+        
+        Eigen::Vector3d error = x_vert_planes[i].plane.ominus(det_plane);
+        float dist = fabs(det_plane.coeffs()(3) - x_vert_planes[i].plane.coeffs()(3));
+
         std::cout << "distance: " << dist << std::endl;
         if(dist < min_dist){
         min_dist = dist;
@@ -415,7 +413,8 @@ private:
 
     if(plane_type == 1) {
         for(int i=0; i< y_vert_planes.size(); ++i) { 
-          float dist = fabs(coeffs(3) - y_vert_planes[i].coefficients(3));
+          Eigen::Vector3d error = y_vert_planes[i].plane.ominus(det_plane);
+          float dist = fabs(det_plane.coeffs()(3) - y_vert_planes[i].plane.coeffs()(3));
           std::cout << "distance: " << dist << std::endl;
           if(dist < min_dist){
           min_dist = dist;

@@ -3,6 +3,7 @@
 
 #include <Eigen/Eigen>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
+#include <g2o/types/slam3d_addons/plane3d.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
@@ -20,9 +21,10 @@ public:
 
 public:
   int id;
-  Eigen::Vector4d coefficients;
+  g2o::Plane3D plane;
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // segmented points of the plane in local body frame
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_map;  // segmented points of the plane in global map frame
+  Eigen::Matrix3d covariance;                       // covariance of the landmark
   g2o::VertexPlane* node;                       // node instance
 };
 
@@ -32,9 +34,10 @@ public:
 
 public:
   int id;
-  Eigen::Vector4d coefficients;
+  g2o::Plane3D plane;
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // segmented points of the plane in local body frame
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_map;  // segmented points of the plane in global map frame
+  Eigen::Matrix3d covariance;                       // covariance of the landmark
   g2o::VertexPlane* node;                       // node instance
 };
 
