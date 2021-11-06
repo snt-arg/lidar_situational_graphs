@@ -35,7 +35,10 @@ namespace g2o {
 class EdgeSE3PointToPlane : public g2o::BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3PointToPlane() : BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3, g2o::VertexPlane>() {}
+  EdgeSE3PointToPlane() : BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3, g2o::VertexPlane>() {
+    _information.setIdentity();
+    _error.setZero();
+  }
 
   void computeError() override {
     const g2o::VertexSE3* v1 = static_cast<const g2o::VertexSE3*>(_vertices[0]);
@@ -43,10 +46,11 @@ public:
     
     Eigen::Matrix4d Ti =  v1->estimate().matrix();
     Eigen::Vector4d Pj =  v2->estimate().toVector();
+    Eigen::Vector3d plane_point = Pj.head(2) * Pj(3); 
+    Pj.head(2) = plane_point / plane_point.norm(); 
+    Pj(3) = plane_point.norm();
     Eigen::Matrix4d Gij = _measurement;
-    
     _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj;
-    //std::cout << "error: " << _error << std::endl;
   }
 
   void setMeasurement(const Eigen::Matrix4d& m) override {
@@ -56,9 +60,9 @@ public:
   virtual bool read(std::istream& is) override {
     Eigen::Matrix4d v;
     for(int i = 0; i < measurement().rows(); ++i)
-      for(int j = i; j < measurement().cols(); ++j) {
+      for(int j = 0; j < measurement().cols(); ++j) {
         is >> v(i,j);
-      }
+    }
     setMeasurement(Eigen::Matrix4d(v));
 
     for(int i = 0; i < information().rows(); ++i)
@@ -72,7 +76,7 @@ public:
     Eigen::Matrix4d v = _measurement;
     
     for(int i = 0; i < measurement().rows(); ++i)
-      for(int j = i; j < measurement().cols(); ++j) {
+      for(int j = 0; j < measurement().cols(); ++j) {
         os << " " << v(i,j);
       }
 
