@@ -5,6 +5,8 @@
 
 #include <memory>
 #include <ros/time.h>
+#include <g2o/core/sparse_block_matrix.h>
+#include <g2o/core/sparse_optimizer.h>
 
 #include <g2o/core/hyper_graph.h>
 
@@ -87,7 +89,7 @@ public:
    * @param v_se3    SE3 node
    * @param v_plane  plane node
    * @param plane_coeffs  plane coefficients w.r.t. v_se3
-   * @param information_matrix  information matrix (it must be 3x3)
+   * @param information_matrix  information matrix (it must be 1x1)
    * @return registered edge
    */
   g2o::EdgeSE3PointToPlane* add_se3_point_to_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane, const Eigen::Matrix4d& points_matrix, const Eigen::MatrixXd& information_matrix);
@@ -136,6 +138,8 @@ public:
    */
   int optimize(int num_iterations);
 
+  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd> &spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
+
   /**
    * @brief save the pose graph to a file
    * @param filename  output filename
@@ -150,7 +154,7 @@ public:
 
 public:
   g2o::RobustKernelFactory* robust_kernel_factory;
-  std::unique_ptr<g2o::HyperGraph> graph;  // g2o graph
+  std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
 };
 
 }  // namespace hdl_graph_slam

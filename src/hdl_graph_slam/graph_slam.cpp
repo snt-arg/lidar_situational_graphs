@@ -324,7 +324,6 @@ int GraphSLAM::optimize(int num_iterations) {
   std::cout << "optimize!!" << std::endl;
   auto t1 = ros::WallTime::now();
   int iterations = graph->optimize(num_iterations);
-
   auto t2 = ros::WallTime::now();
   std::cout << "done" << std::endl;
   std::cout << "iterations: " << iterations << " / " << num_iterations << std::endl;
@@ -332,6 +331,14 @@ int GraphSLAM::optimize(int num_iterations) {
   std::cout << "time: " << boost::format("%.3f") % (t2 - t1).toSec() << "[sec]" << std::endl;
 
   return iterations;
+}
+
+bool GraphSLAM::compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd> &spinv, std::vector<std::pair<int, int>> vert_pairs_vec) {
+  if (graph->computeMarginals(spinv, vert_pairs_vec)) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 void GraphSLAM::save(const std::string& filename) {
