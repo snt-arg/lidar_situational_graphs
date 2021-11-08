@@ -35,10 +35,7 @@ namespace g2o {
 class EdgeSE3PointToPlane : public g2o::BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3PointToPlane() : BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3, g2o::VertexPlane>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
+  EdgeSE3PointToPlane() : BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3, g2o::VertexPlane>() {}
 
   void computeError() override {
     const g2o::VertexSE3* v1 = static_cast<const g2o::VertexSE3*>(_vertices[0]);
@@ -46,11 +43,12 @@ public:
     
     Eigen::Matrix4d Ti =  v1->estimate().matrix();
     Eigen::Vector4d Pj =  v2->estimate().toVector();
-    Eigen::Vector3d plane_point = Pj.head(2) * Pj(3); 
-    Pj.head(2) = plane_point / plane_point.norm(); 
-    Pj(3) = plane_point.norm();
+    // Eigen::Vector3d plane_point = Pj.head(2) * Pj(3); 
+    // Pj.head(2) = plane_point / plane_point.norm(); 
+    // Pj(3) = plane_point.norm();
     Eigen::Matrix4d Gij = _measurement;
-    _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj;
+    _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj / 2;
+    //std::cout << "error " << _error << std::endl;
   }
 
   void setMeasurement(const Eigen::Matrix4d& m) override {
@@ -84,6 +82,7 @@ public:
       for(int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
     return os.good();
   }
+
 };
 }  // namespace g2o
 
