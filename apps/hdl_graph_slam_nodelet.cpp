@@ -336,19 +336,21 @@ private:
       return false;
     }
 
+    //compute_plane_cov();
     if (plane_type == 0){  
       int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
       
       if(x_vert_planes.empty() || id == -1) {
           vert_plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
           //x_vert_plane_node->setFixed(true);
-          std::cout << "Added new x vertical plane node with distance " <<  det_plane_map_frame.coeffs()(3) << std::endl;
+          std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           VerticalPlanes vert_plane;
           vert_plane.id = x_vert_planes.size();
           vert_plane.plane = det_plane_map_frame.coeffs();
           vert_plane.cloud_seg_body = cloud_seg_body;
           vert_plane.cloud_seg_map = cloud_seg_map;
           vert_plane.node = vert_plane_node; 
+          vert_plane.covariance = Eigen::Matrix3d::Identity();
           x_vert_planes.push_back(vert_plane);
 
       } else {
@@ -360,13 +362,14 @@ private:
       
       if(y_vert_planes.empty() || id == -1) {
         vert_plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-        std::cout << "Added new y vertical plane node with distance " <<  det_plane_map_frame.coeffs()(3) << std::endl;
+        std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
         VerticalPlanes vert_plane;
         vert_plane.id = y_vert_planes.size();
         vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body = cloud_seg_body;
         vert_plane.cloud_seg_map = cloud_seg_map;
         vert_plane.node = vert_plane_node; 
+        vert_plane.covariance = Eigen::Matrix3d::Identity();
         y_vert_planes.push_back(vert_plane);
     } else {
         std::cout << "matched y vert plane with y vert plane of id " << std::to_string(id)  << std::endl;
@@ -374,13 +377,13 @@ private:
       }   
     }
     
-    Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
 
     if(use_point_to_plane) {
+      Eigen::Matrix<double, 1, 1> information(1);
       auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, vert_plane_node, Gij, information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     } else {
-      Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
+      Eigen::Matrix3d information = Eigen::Matrix3d::Identity();  
       auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, det_plane_body_frame.coeffs(), information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
@@ -396,36 +399,63 @@ private:
   int associate_vert_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
     int id;
     float min_dist = 100;
-    
+    double min_maha_dist = 100;  
+
     if(plane_type == 0) {
       for(int i=0; i< x_vert_planes.size(); ++i) { 
-        
-        Eigen::Vector3d error = x_vert_planes[i].plane.ominus(det_plane);
         float dist = fabs(det_plane.coeffs()(3) - x_vert_planes[i].plane.coeffs()(3));
-
-        std::cout << "distance: " << dist << std::endl;
+        std::cout << "distance x: " << dist << std::endl;
         if(dist < min_dist){
-        min_dist = dist;
-        id = x_vert_planes[i].id;
-        }   
-      }
-    }
-
-    if(plane_type == 1) {
-        for(int i=0; i< y_vert_planes.size(); ++i) { 
-          Eigen::Vector3d error = y_vert_planes[i].plane.ominus(det_plane);
-          float dist = fabs(det_plane.coeffs()(3) - y_vert_planes[i].plane.coeffs()(3));
-          std::cout << "distance: " << dist << std::endl;
-          if(dist < min_dist){
           min_dist = dist;
-          id = y_vert_planes[i].id;
-          }   
+          //id = x_vert_planes[i].id;
+        }
+        Eigen::Vector3d error = x_vert_planes[i].plane.ominus(det_plane);
+        double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
+        std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
+        std::cout << "maha distance x: " << maha_dist << std::endl;
+
+        if(std::isnan(maha_dist) || maha_dist < 1e-3) {
+            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+            maha_dist = sqrt(error.transpose() * cov * error);            
+          } 
+        if(maha_dist < min_maha_dist) {
+          min_maha_dist = maha_dist;
+          id = x_vert_planes[i].id;
+          }
         }
       }
 
+    if(plane_type == 1) {
+        for(int i=0; i< y_vert_planes.size(); ++i) { 
+          float dist = fabs(det_plane.coeffs()(3) - y_vert_planes[i].plane.coeffs()(3));
+          std::cout << "distance y: " << dist << std::endl;
+          if(dist < min_dist){
+            min_dist = dist;
+            //id = y_vert_planes[i].id;
+          }
+          Eigen::Vector3d error = y_vert_planes[i].plane.ominus(det_plane);
+          double maha_dist = sqrt(error.transpose() * y_vert_planes[i].covariance.inverse() * error);
+          std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
+          std::cout << "maha distance y: " << maha_dist << std::endl;
+          if(std::isnan(maha_dist) || maha_dist < 1e-3) {
+            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+            maha_dist = sqrt(error.transpose() * cov * error);            
+          } 
+          if(maha_dist < min_maha_dist) {
+            min_maha_dist = maha_dist;
+            id = y_vert_planes[i].id;
+            }
+          }   
+        }
+
       std::cout << "min_dist: " << min_dist << std::endl;
-      if(min_dist > 0.30)
-        id = -1;
+      std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
+
+      // if(min_dist > 0.30)
+      //   id = -1;
+
+      if(min_maha_dist > 0.13)
+         id = -1;
 
     return id;
   }
@@ -835,7 +865,8 @@ private:
 
     // optimize the pose graph
     int num_iterations = private_nh.param<int>("g2o_solver_num_iterations", 1024);
-    graph_slam->optimize(num_iterations);
+    if((graph_slam->optimize(num_iterations)) > 0)
+      compute_plane_cov();
 
     // publish tf
     const auto& keyframe = keyframes.back();
@@ -857,6 +888,48 @@ private:
 
     auto markers = create_marker_array(ros::Time::now());
     markers_pub.publish(markers);
+  }
+
+  /**  
+  * @brief compute the plane covariances
+  */
+  void compute_plane_cov() {
+    g2o::SparseBlockMatrix<Eigen::MatrixXd> plane_spinv_vec;
+    std::vector<std::pair<int, int>> vert_plane_pairs_vec;
+    for (int i = 0; i < x_vert_planes.size(); ++i) {
+      x_vert_planes[i].node->unlockQuadraticForm();
+      vert_plane_pairs_vec.push_back(std::make_pair(x_vert_planes[i].node->hessianIndex(), x_vert_planes[i].node->hessianIndex()));
+    }
+    for (int i = 0; i < y_vert_planes.size(); ++i) {
+      y_vert_planes[i].node->unlockQuadraticForm();
+      vert_plane_pairs_vec.push_back(std::make_pair(y_vert_planes[i].node->hessianIndex(), y_vert_planes[i].node->hessianIndex()));
+    }
+    if(!vert_plane_pairs_vec.empty()){
+      if (graph_slam->compute_landmark_marginals(plane_spinv_vec, vert_plane_pairs_vec)) {
+        int i=0;
+        while (i < x_vert_planes.size()) {
+          //std::cout << "covariance of x plane " << i << " " << y_vert_planes[i].covariance << std::endl;
+          x_vert_planes[i].covariance = plane_spinv_vec.block(x_vert_planes[i].node->hessianIndex(), x_vert_planes[i].node->hessianIndex())->eval().cast<double>();
+          Eigen::LLT<Eigen::MatrixXd> lltOfCov(x_vert_planes[i].covariance);
+          if(lltOfCov.info() == Eigen::NumericalIssue) {
+              //std::cout << "covariance of x plane not PSD" << i << " " << x_vert_planes[i].covariance << std::endl;
+              x_vert_planes[i].covariance = Eigen::Matrix3d::Identity();
+          }
+          i++; 
+        }
+        i=0;
+        while (i < y_vert_planes.size()) {
+          y_vert_planes[i].covariance = plane_spinv_vec.block(y_vert_planes[i].node->hessianIndex(), y_vert_planes[i].node->hessianIndex())->eval().cast<double>();
+          //std::cout << "covariance of y plane " << i << " " << y_vert_planes[i].covariance << std::endl;
+          Eigen::LLT<Eigen::MatrixXd> lltOfCov(y_vert_planes[i].covariance);
+          if(lltOfCov.info() == Eigen::NumericalIssue) {
+              //std::cout << "covariance of y plane not PSD " << i << " " << y_vert_planes[i].covariance << std::endl;
+              y_vert_planes[i].covariance = Eigen::Matrix3d::Identity();
+          }
+          i++;
+       }
+      }
+    }
   }
 
   /**
