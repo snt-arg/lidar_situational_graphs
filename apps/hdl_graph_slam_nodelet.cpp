@@ -281,6 +281,12 @@ private:
           coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+        } else if (fabs(coeffs_map_frame(2)) > 0.95) {
+          plane_type = 2;  
+          coeffs_map_frame(0) = 0.0; coeffs_map_frame(1) = 0.0; coeffs_map_frame(2) = -0.99; 
+          coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>()); 
+          g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
+          updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else 
           continue;
       }
@@ -309,7 +315,7 @@ private:
   * @brief create vertical plane factors
   */
   bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type, bool use_point_to_plane) {
-    g2o::VertexPlane* vert_plane_node;
+    g2o::VertexPlane* plane_node; 
     Eigen::Matrix4d Gij;
     Gij.setZero();  
  
@@ -336,12 +342,11 @@ private:
       return false;
     }
 
-    //compute_plane_cov();
     if (plane_type == 0){  
       int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
       
       if(x_vert_planes.empty() || id == -1) {
-          vert_plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+          plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
           //x_vert_plane_node->setFixed(true);
           std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           VerticalPlanes vert_plane;
@@ -349,42 +354,61 @@ private:
           vert_plane.plane = det_plane_map_frame.coeffs();
           vert_plane.cloud_seg_body = cloud_seg_body;
           vert_plane.cloud_seg_map = cloud_seg_map;
-          vert_plane.node = vert_plane_node; 
+          vert_plane.node = plane_node; 
           vert_plane.covariance = Eigen::Matrix3d::Identity();
           x_vert_planes.push_back(vert_plane);
 
       } else {
           std::cout << "matched x vert plane with x vert plane of id " << std::to_string(id)  << std::endl;
-          vert_plane_node = x_vert_planes[id].node;
+          plane_node = x_vert_planes[id].node;
       }
     } else if (plane_type == 1) {
       int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
       
       if(y_vert_planes.empty() || id == -1) {
-        vert_plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+        plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
         VerticalPlanes vert_plane;
         vert_plane.id = y_vert_planes.size();
         vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body = cloud_seg_body;
         vert_plane.cloud_seg_map = cloud_seg_map;
-        vert_plane.node = vert_plane_node; 
+        vert_plane.node = plane_node; 
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         y_vert_planes.push_back(vert_plane);
-    } else {
-        std::cout << "matched y vert plane with y vert plane of id " << std::to_string(id)  << std::endl;
-        vert_plane_node = y_vert_planes[id].node;
-      }   
-    }
+
+      } else {
+          std::cout << "matched y vert plane with y vert plane of id " << std::to_string(id)  << std::endl;
+          plane_node = y_vert_planes[id].node;
+        } 
+      } else if (plane_type == 2) {
+        int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
+        
+        if(hort_planes.empty() || id == -1) {
+          plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+          std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
+          HorizontalPlanes hort_plane;
+          hort_plane.id = hort_planes.size();
+          hort_plane.plane = det_plane_map_frame.coeffs();
+          hort_plane.cloud_seg_body = cloud_seg_body;
+          hort_plane.cloud_seg_map = cloud_seg_map;
+          hort_plane.node = plane_node; 
+          hort_plane.covariance = Eigen::Matrix3d::Identity();
+          hort_planes.push_back(hort_plane);
+      } else {
+        std::cout << "matched hort plane with hort plane of id " << std::to_string(id)  << std::endl;
+        plane_node = hort_planes[id].node;
+      }
+    } 
     
 
     if(use_point_to_plane) {
-      Eigen::Matrix<double, 1, 1> information(1);
-      auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, vert_plane_node, Gij, information);
+      Eigen::Matrix<double, 1, 1> information(0.001);
+      auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     } else {
       Eigen::Matrix3d information = Eigen::Matrix3d::Identity();  
-      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, vert_plane_node, det_plane_body_frame.coeffs(), information);
+      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
 
@@ -446,15 +470,44 @@ private:
             id = y_vert_planes[i].id;
             }
           }   
-        }
+      }
+
+    if(plane_type == 2) {
+        for(int i=0; i< hort_planes.size(); ++i) { 
+          float dist = fabs(det_plane.coeffs()(3) - hort_planes[i].plane.coeffs()(3));
+          std::cout << "distance hort: " << dist << std::endl;
+          if(dist < min_dist){
+            min_dist = dist;
+            //id = y_vert_planes[i].id;
+          }
+          Eigen::Vector3d error = hort_planes[i].plane.ominus(det_plane);
+          double maha_dist = sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
+          std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
+          std::cout << "maha distance hort: " << maha_dist << std::endl;
+          if(std::isnan(maha_dist) || maha_dist < 1e-3) {
+            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+            maha_dist = sqrt(error.transpose() * cov * error);            
+          } 
+          if(maha_dist < min_maha_dist) {
+            min_maha_dist = maha_dist;
+            id = hort_planes[i].id;
+            }
+          }   
+      }
+
 
       std::cout << "min_dist: " << min_dist << std::endl;
       std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
 
       // if(min_dist > 0.30)
       //   id = -1;
+      double threshold;
+      if(plane_type == 2)
+        threshold = 0.5;
+      else   
+        threshold = 0.15;
 
-      if(min_maha_dist > 0.13)
+      if(min_maha_dist > threshold)
          id = -1;
 
     return id;
@@ -895,17 +948,23 @@ private:
   */
   void compute_plane_cov() {
     g2o::SparseBlockMatrix<Eigen::MatrixXd> plane_spinv_vec;
-    std::vector<std::pair<int, int>> vert_plane_pairs_vec;
+    std::vector<std::pair<int, int>> plane_pairs_vec;
     for (int i = 0; i < x_vert_planes.size(); ++i) {
       x_vert_planes[i].node->unlockQuadraticForm();
-      vert_plane_pairs_vec.push_back(std::make_pair(x_vert_planes[i].node->hessianIndex(), x_vert_planes[i].node->hessianIndex()));
+      plane_pairs_vec.push_back(std::make_pair(x_vert_planes[i].node->hessianIndex(), x_vert_planes[i].node->hessianIndex()));
     }
     for (int i = 0; i < y_vert_planes.size(); ++i) {
       y_vert_planes[i].node->unlockQuadraticForm();
-      vert_plane_pairs_vec.push_back(std::make_pair(y_vert_planes[i].node->hessianIndex(), y_vert_planes[i].node->hessianIndex()));
+      plane_pairs_vec.push_back(std::make_pair(y_vert_planes[i].node->hessianIndex(), y_vert_planes[i].node->hessianIndex()));
     }
-    if(!vert_plane_pairs_vec.empty()){
-      if (graph_slam->compute_landmark_marginals(plane_spinv_vec, vert_plane_pairs_vec)) {
+    for (int i = 0; i < hort_planes.size(); ++i) {
+      hort_planes[i].node->unlockQuadraticForm();
+      plane_pairs_vec.push_back(std::make_pair(hort_planes[i].node->hessianIndex(), hort_planes[i].node->hessianIndex()));
+    }
+    
+
+    if(!plane_pairs_vec.empty()){
+      if (graph_slam->compute_landmark_marginals(plane_spinv_vec, plane_pairs_vec)) {
         int i=0;
         while (i < x_vert_planes.size()) {
           //std::cout << "covariance of x plane " << i << " " << y_vert_planes[i].covariance << std::endl;
@@ -928,6 +987,18 @@ private:
           }
           i++;
        }
+       i=0;
+       while (i < hort_planes.size()) {
+          hort_planes[i].covariance = plane_spinv_vec.block(hort_planes[i].node->hessianIndex(), hort_planes[i].node->hessianIndex())->eval().cast<double>();
+          //std::cout << "covariance of y plane " << i << " " << hort_planes[i].covariance << std::endl;
+          Eigen::LLT<Eigen::MatrixXd> lltOfCov(hort_planes[i].covariance);
+          if(lltOfCov.info() == Eigen::NumericalIssue) {
+              //std::cout << "covariance of y plane not PSD " << i << " " << hort_planes[i].covariance << std::endl;
+              hort_planes[i].covariance = Eigen::Matrix3d::Identity();
+          }
+          i++;
+       }
+
       }
     }
   }
@@ -939,7 +1010,7 @@ private:
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp) const {
     visualization_msgs::MarkerArray markers;
-    markers.markers.resize(6);
+    markers.markers.resize(7);
 
     // node markers
     visualization_msgs::Marker& traj_marker = markers.markers[0];
@@ -1077,6 +1148,8 @@ private:
           pt2 = Eigen::Vector3d(-(v2->estimate().distance()), 0.0, 5.0);
         else if (fabs(v2->estimate().normal()(1)) > 0.95) 
           pt2 = Eigen::Vector3d(0.0, -(v2->estimate().distance()), 5.0);
+        else if (fabs(v2->estimate().normal()(2)) > 0.95) 
+          pt2 = Eigen::Vector3d(0.0, 0.0, 5.0);  
 
         edge_marker.points[i * 2].x = pt1.x();
         edge_marker.points[i * 2].y = pt1.y();
@@ -1205,6 +1278,32 @@ private:
       }
       y_vert_plane_marker.color.b = 1;
       y_vert_plane_marker.color.a = 1;
+    }
+
+    //horizontal plane markers 
+    visualization_msgs::Marker& hort_plane_marker = markers.markers[6];
+    hort_plane_marker.pose.orientation.w = 1.0;
+    hort_plane_marker.scale.x = 0.05;
+    hort_plane_marker.scale.y = 0.05;
+    hort_plane_marker.scale.z = 0.05;
+    //plane_marker.points.resize(vert_planes.size());    
+    hort_plane_marker.header.frame_id = map_frame_id;
+    hort_plane_marker.header.stamp = stamp;
+    hort_plane_marker.ns = "hort_planes";
+    hort_plane_marker.id = 6;
+    hort_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
+   
+    for(int i = 0; i < hort_planes.size(); ++i) {
+      for(size_t j=0; j < hort_planes[i].cloud_seg_map->size(); ++j) { 
+        geometry_msgs::Point point;
+        point.x = hort_planes[i].cloud_seg_map->points[j].x;
+        point.y = hort_planes[i].cloud_seg_map->points[j].y;
+        point.z = hort_planes[i].cloud_seg_map->points[j].z + 5.0;
+        hort_plane_marker.points.push_back(point);
+      }
+      hort_plane_marker.color.r = 1;
+      hort_plane_marker.color.b = 1;
+      hort_plane_marker.color.a = 1;
     }
 
     return markers;
