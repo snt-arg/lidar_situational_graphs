@@ -503,7 +503,7 @@ private:
       //   id = -1;
       double threshold;
       if(plane_type == 2)
-        threshold = 0.5;
+        threshold = 0.2;
       else   
         threshold = 0.15;
 
@@ -1144,12 +1144,19 @@ private:
         g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_point_to_plane->vertices()[1]);
         Eigen::Vector3d pt1 = v1->estimate().translation();
         Eigen::Vector3d pt2;
-        if (fabs(v2->estimate().normal()(0)) > 0.95) 
+        float r=0, g=0, b=0.0;
+        if (fabs(v2->estimate().normal()(0)) > 0.95) {
           pt2 = Eigen::Vector3d(-(v2->estimate().distance()), 0.0, 5.0);
-        else if (fabs(v2->estimate().normal()(1)) > 0.95) 
+          r=1.0;
+        } 
+        else if (fabs(v2->estimate().normal()(1)) > 0.95) {
           pt2 = Eigen::Vector3d(0.0, -(v2->estimate().distance()), 5.0);
-        else if (fabs(v2->estimate().normal()(2)) > 0.95) 
+          b=1.0;
+        }
+        else if (fabs(v2->estimate().normal()(2)) > 0.95) {
           pt2 = Eigen::Vector3d(0.0, 0.0, 5.0);  
+          r=1; g=0.65;
+        }
 
         edge_marker.points[i * 2].x = pt1.x();
         edge_marker.points[i * 2].y = pt1.y();
@@ -1158,9 +1165,13 @@ private:
         edge_marker.points[i * 2 + 1].y = pt2.y();
         edge_marker.points[i * 2 + 1].z = pt2.z();
 
-        edge_marker.colors[i * 2].g = 1.0;
+        edge_marker.colors[i * 2].r = r;
+        edge_marker.colors[i * 2].g = g;
+        edge_marker.colors[i * 2].b = b;
         edge_marker.colors[i * 2].a = 1.0;
-        edge_marker.colors[i * 2 + 1].g = 1.0;
+        edge_marker.colors[i * 2 + 1].r = r;
+        edge_marker.colors[i * 2 + 1].g = g;
+        edge_marker.colors[i * 2 + 1].b = b;
         edge_marker.colors[i * 2 + 1].a = 1.0;
 
         continue;
@@ -1302,7 +1313,7 @@ private:
         hort_plane_marker.points.push_back(point);
       }
       hort_plane_marker.color.r = 1;
-      hort_plane_marker.color.b = 1;
+      hort_plane_marker.color.g = 0.65;
       hort_plane_marker.color.a = 1;
     }
 
