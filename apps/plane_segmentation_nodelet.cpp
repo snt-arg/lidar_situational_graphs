@@ -113,54 +113,22 @@ private:
           std::cout << "Breaking as no model found" << std::endl;
         }
 
-        //std::cout << "Model coefficients " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+        Eigen::Vector4d normal(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]);
+        Eigen::Vector3d closest_point = normal.head(3) * normal(3);
+        Eigen::Vector4d plane;
+        plane.head(3) = closest_point / closest_point.norm();
+        plane(3) = closest_point.norm();
 
-        tf::StampedTransform transform;
-        tf_listener_.waitForTransform("map", plane_extraction_frame_, ros::Time(0), ros::Duration(2.0));
-        tf_listener_.lookupTransform("map", plane_extraction_frame_, ros::Time(0), transform);
-        pcl::PointCloud<PointT>::Ptr src_cloud(new pcl::PointCloud<PointT>());
-        pcl::PointCloud<PointT>::Ptr dst_cloud(new pcl::PointCloud<PointT>());
-        src_cloud->resize(1);
-        src_cloud->back().normal_x = coefficients->values[0];
-        src_cloud->back().normal_y = coefficients->values[1];
-        src_cloud->back().normal_z = coefficients->values[2];
-        src_cloud->back().curvature = coefficients->values[3];
-        pcl_ros::transformPointCloudWithNormals(*src_cloud, *dst_cloud, transform);
-        dst_cloud->back().curvature = src_cloud->back().curvature;
-        // std::cout << "Model coefficients " << std::to_string(i) << ": " << dst_cloud->back().normal_x << " " << dst_cloud->back().normal_y << " " << dst_cloud->back().normal_z << " " << coefficients->values[3] << std::endl;
-
-        // x-plane normal
-        if(fabs(dst_cloud->back().normal_x) > 0.95) {
-          // if the x-normal in map frame is positive change it to negative along with it distance D
-          if(dst_cloud->back().normal_x > 0.1) {
-            dst_cloud->back().normal_x = -dst_cloud->back().normal_x;
-            dst_cloud->back().curvature = -dst_cloud->back().curvature;
-          }
-        }
-        // y-plane normal
-        else if(fabs(dst_cloud->back().normal_y) > 0.95) {
-          // if the y-normal in map frame is positive change it to negative along with it distance D
-          if(dst_cloud->back().normal_y > 0.1) {
-            dst_cloud->back().normal_y = -dst_cloud->back().normal_y;
-            dst_cloud->back().curvature = -dst_cloud->back().curvature;
-          }
-        }
-        //std::cout << "Model coefficients transformed "
-        //          << ": " << dst_cloud->back().normal_x << " " << dst_cloud->back().normal_y << " " << dst_cloud->back().normal_z << " " << dst_cloud->back().curvature << std::endl;
-
-        pcl::PointCloud<PointT>::Ptr final_cloud(new pcl::PointCloud<PointT>());
-        pcl_ros::transformPointCloudWithNormals(*dst_cloud, *final_cloud, transform.inverse());
-        final_cloud->back().curvature = dst_cloud->back().curvature;
-        //std::cout << "Model coefficients transformed in body "
-        //          << ": " << final_cloud->back().normal_x << " " << final_cloud->back().normal_y << " " << final_cloud->back().normal_z << " " << final_cloud->back().curvature << std::endl;
+        std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+        std::cout << "Model coefficients after " << std::to_string(i) << ": " << plane << std::endl;
 
         pcl::PointCloud<PointT> extracted_cloud;
         for(const auto& idx : inliers->indices) {
           extracted_cloud.push_back(transformed_cloud->points[idx]);
-          extracted_cloud.back().normal_x = final_cloud->back().normal_x;
-          extracted_cloud.back().normal_y = final_cloud->back().normal_y;
-          extracted_cloud.back().normal_z = final_cloud->back().normal_z;
-          extracted_cloud.back().curvature = final_cloud->back().curvature;
+          extracted_cloud.back().normal_x = plane(0);
+          extracted_cloud.back().normal_y = plane(1);
+          extracted_cloud.back().normal_z = plane(2);
+          extracted_cloud.back().curvature = plane(3);
 
           // visulazing the pointcloud
           // segmented_cloud.points.push_back(transformed_cloud->points[idx]);
