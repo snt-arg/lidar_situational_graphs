@@ -1141,11 +1141,11 @@ private:
         Eigen::Vector3d pt2;
         float r=0, g=0, b=0.0;
         if (fabs(v2->estimate().normal()(0)) > 0.95) {
-          pt2 = Eigen::Vector3d((v2->estimate().distance()), 0.0, 5.0);
+          pt2 = Eigen::Vector3d(v2->estimate().normal()(0)*(v2->estimate().distance()), 0.0, 5.0);
           r=1.0;
         } 
         else if (fabs(v2->estimate().normal()(1)) > 0.95) {
-          pt2 = Eigen::Vector3d(0.0, -(v2->estimate().distance()), 5.0);
+          pt2 = Eigen::Vector3d(0.0, (v2->estimate().normal()(1))*(v2->estimate().distance()), 5.0);
           b=1.0;
         }
         else if (fabs(v2->estimate().normal()(2)) > 0.95) {
