@@ -119,8 +119,8 @@ private:
         plane.head(3) = closest_point / closest_point.norm();
         plane(3) = closest_point.norm();
 
-        std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
-        std::cout << "Model coefficients after " << std::to_string(i) << ": " << plane << std::endl;
+        //std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+        //std::cout << "Model coefficients after " << std::to_string(i) << ": " << plane << std::endl;
 
         pcl::PointCloud<PointT> extracted_cloud;
         for(const auto& idx : inliers->indices) {
