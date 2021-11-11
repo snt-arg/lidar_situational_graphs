@@ -266,25 +266,20 @@ private:
         g2o::Plane3D det_plane_body_frame = coeffs_body_frame;
         Eigen::Vector4d coeffs_map_frame; Eigen::Isometry3d w2n = keyframe->node->estimate();
         coeffs_map_frame.head<3>() = w2n.rotation() * coeffs_body_frame.head<3>();
+        coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
 
         int plane_type;
-        bool use_point_to_plane = 1;     
+        bool use_point_to_plane = 1;
         if (fabs(coeffs_map_frame(0)) > 0.95) {              
           plane_type = 0; 
-          coeffs_map_frame(0) = -0.99; coeffs_map_frame(1) = 0.0; coeffs_map_frame(2) = 0.0; 
-          coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(1)) > 0.95) {                   
           plane_type = 1;  
-          coeffs_map_frame(0) = 0.0; coeffs_map_frame(1) = -0.99; coeffs_map_frame(2) = 0.0; 
-          coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(2)) > 0.95) {
           plane_type = 2;  
-          coeffs_map_frame(0) = 0.0; coeffs_map_frame(1) = 0.0; coeffs_map_frame(2) = -0.99; 
-          coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>()); 
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else 
@@ -1146,7 +1141,7 @@ private:
         Eigen::Vector3d pt2;
         float r=0, g=0, b=0.0;
         if (fabs(v2->estimate().normal()(0)) > 0.95) {
-          pt2 = Eigen::Vector3d(-(v2->estimate().distance()), 0.0, 5.0);
+          pt2 = Eigen::Vector3d((v2->estimate().distance()), 0.0, 5.0);
           r=1.0;
         } 
         else if (fabs(v2->estimate().normal()(1)) > 0.95) {
