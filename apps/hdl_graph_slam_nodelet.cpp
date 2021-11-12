@@ -338,7 +338,7 @@ private:
     }
 
     if (plane_type == 0){  
-      int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
+      int id = associate_vert_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
       if(x_vert_planes.empty() || id == -1) {
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
@@ -358,7 +358,7 @@ private:
           plane_node = x_vert_planes[id].node;
       }
     } else if (plane_type == 1) {
-      int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
+      int id = associate_vert_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
       if(y_vert_planes.empty() || id == -1) {
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
@@ -377,7 +377,7 @@ private:
           plane_node = y_vert_planes[id].node;
         } 
       } else if (plane_type == 2) {
-        int id = associate_vert_plane(keyframe, det_plane_map_frame.coeffs(), plane_type);
+        int id = associate_vert_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
         
         if(hort_planes.empty() || id == -1) {
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
@@ -419,6 +419,7 @@ private:
     int id;
     float min_dist = 100;
     double min_maha_dist = 100;  
+    Eigen::Isometry3d m2n = keyframe->estimate().inverse();
 
     if(plane_type == 0) {
       for(int i=0; i< x_vert_planes.size(); ++i) { 
@@ -428,7 +429,8 @@ private:
           min_dist = dist;
           //id = x_vert_planes[i].id;
         }
-        Eigen::Vector3d error = x_vert_planes[i].plane.ominus(det_plane);
+        g2o::Plane3D local_plane = m2n * x_vert_planes[i].plane;
+        Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
         std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
         std::cout << "maha distance x: " << maha_dist << std::endl;
@@ -452,7 +454,8 @@ private:
             min_dist = dist;
             //id = y_vert_planes[i].id;
           }
-          Eigen::Vector3d error = y_vert_planes[i].plane.ominus(det_plane);
+          g2o::Plane3D local_plane = m2n * y_vert_planes[i].plane;
+          Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * y_vert_planes[i].covariance.inverse() * error);
           std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
           std::cout << "maha distance y: " << maha_dist << std::endl;
@@ -475,7 +478,8 @@ private:
             min_dist = dist;
             //id = y_vert_planes[i].id;
           }
-          Eigen::Vector3d error = hort_planes[i].plane.ominus(det_plane);
+          g2o::Plane3D local_plane = m2n * hort_planes[i].plane;
+          Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
           std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
           std::cout << "maha distance hort: " << maha_dist << std::endl;
