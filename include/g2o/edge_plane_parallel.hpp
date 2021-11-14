@@ -33,10 +33,10 @@
 
 namespace g2o {
 
-class EdgePlaneParallel : public BaseBinaryEdge<3, Eigen::Vector3d, VertexPlane, VertexPlane> {
+class EdgePlaneParallel : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgePlaneParallel() : BaseBinaryEdge<3, Eigen::Vector3d, VertexPlane, VertexPlane>() {
+  EdgePlaneParallel() : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
     _information.setIdentity();
     _error.setZero();
   }
@@ -45,14 +45,16 @@ public:
     const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
 
-    Eigen::Vector3d normal1 = v1->estimate().normal();
-    Eigen::Vector3d normal2 = v2->estimate().normal();
-
-    if(normal1.dot(normal2) < 0.0) {
-      normal2 = -normal2;
-    }
-
-    _error = (normal2 - normal1) - _measurement;
+    //Eigen::Vector3d normal1 = v1->estimate().normal();
+    //Eigen::Vector3d normal2 = v2->estimate().normal();
+    //if(normal1.dot(normal2) < 0.0) {
+    //  normal2 = -normal2;
+    //}
+    //_error = (normal2 - normal1) - _measurement;
+    double num = v1->estimate().normal().dot(v2->estimate().normal());
+    double den = v1->estimate().normal().norm() * (v1->estimate().normal().norm());  
+    
+    _error[0] = acos(fabs(num)/den);
   }
   virtual bool read(std::istream& is) override {
     Eigen::Vector3d v;

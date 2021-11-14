@@ -273,15 +273,15 @@ private:
         if (fabs(coeffs_map_frame(0)) > 0.95) {              
           plane_type = 0; 
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(1)) > 0.95) {                   
           plane_type = 1;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else if (fabs(coeffs_map_frame(2)) > 0.95) {
           plane_type = 2;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          updated = factor_vert_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
         } else 
           continue;
       }
@@ -309,7 +309,7 @@ private:
   /** 
   * @brief create vertical plane factors
   */
-  bool factor_vert_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type, bool use_point_to_plane) {
+  bool factor_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type, bool use_point_to_plane) {
     g2o::VertexPlane* plane_node; 
     Eigen::Matrix4d Gij;
     Gij.setZero();  
@@ -337,8 +337,10 @@ private:
       return false;
     }
 
+    int id = -1;
+    bool add_parallel_plane_edge = false;
     if (plane_type == 0){  
-      int id = associate_vert_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+      id = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
       if(x_vert_planes.empty() || id == -1) {
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
@@ -352,13 +354,13 @@ private:
           vert_plane.node = plane_node; 
           vert_plane.covariance = Eigen::Matrix3d::Identity();
           x_vert_planes.push_back(vert_plane);
-
+          add_parallel_plane_edge = true;
       } else {
           std::cout << "matched x vert plane with x vert plane of id " << std::to_string(id)  << std::endl;
           plane_node = x_vert_planes[id].node;
       }
     } else if (plane_type == 1) {
-      int id = associate_vert_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+      id = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
       if(y_vert_planes.empty() || id == -1) {
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
@@ -371,13 +373,14 @@ private:
         vert_plane.node = plane_node; 
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         y_vert_planes.push_back(vert_plane);
-
+        add_parallel_plane_edge = true;
       } else {
           std::cout << "matched y vert plane with y vert plane of id " << std::to_string(id)  << std::endl;
           plane_node = y_vert_planes[id].node;
+
         } 
       } else if (plane_type == 2) {
-        int id = associate_vert_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+        id = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
         
         if(hort_planes.empty() || id == -1) {
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
@@ -390,6 +393,7 @@ private:
           hort_plane.node = plane_node; 
           hort_plane.covariance = Eigen::Matrix3d::Identity();
           hort_planes.push_back(hort_plane);
+          add_parallel_plane_edge = true;
       } else {
         std::cout << "matched hort plane with hort plane of id " << std::to_string(id)  << std::endl;
         plane_node = hort_planes[id].node;
@@ -407,6 +411,11 @@ private:
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
 
+    bool use_parallel_constraint = true;
+    if(use_parallel_constraint && add_parallel_plane_edge) {
+      parallel_plane_constraint(plane_node, id, plane_type);
+    }
+
     keyframe->cloud_seg_body = cloud_seg_body;
 
     return true;
@@ -415,7 +424,7 @@ private:
   /** 
   * @brief data assoction betweeen the planes
   */
-  int associate_vert_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
+  int associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
     int id;
     float min_dist = 100;
     double min_maha_dist = 100;  
@@ -494,7 +503,6 @@ private:
           }   
       }
 
-
       std::cout << "min_dist: " << min_dist << std::endl;
       std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
 
@@ -511,7 +519,32 @@ private:
 
     return id;
   }
-
+  
+  /**  
+  * @brief this method add parallel constraint between the planes
+  */
+  void parallel_plane_constraint(g2o::VertexPlane* plane_node, int id, int plane_type) {
+    if(plane_type == 0) {
+      for(int i=0; i<x_vert_planes.size(); ++i){
+        if(id != x_vert_planes[i].id) {
+          Eigen::Matrix<double, 1, 1> information(0.1);
+          Eigen::Vector3d meas(0,0,0);
+          auto edge = graph_slam->add_plane_parallel_edge(x_vert_planes[i].node, plane_node, meas, information);
+          //graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+        }
+      }
+    }
+    if(plane_type == 1) {
+      for(int i=0; i<y_vert_planes.size(); ++i){
+        if(id != y_vert_planes[i].id) {
+          Eigen::Matrix<double, 1, 1> information(0.1);
+          Eigen::Vector3d meas(0,0,0);
+          auto edge = graph_slam->add_plane_parallel_edge(y_vert_planes[i].node, plane_node, meas, information);
+          //graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+        }
+      }
+    }
+  }
 
   /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
