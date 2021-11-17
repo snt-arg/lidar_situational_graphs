@@ -25,6 +25,7 @@ public:
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // segmented points of the plane in local body frame
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_map;  // segmented points of the plane in global map frame
   Eigen::Matrix3d covariance;                       // covariance of the landmark
+  bool parallel_pair;                              // checking if the plane has parallel pair     
   g2o::VertexPlane* node;                       // node instance
 };
 
@@ -38,6 +39,7 @@ public:
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // segmented points of the plane in local body frame
   pcl::PointCloud<PointNormal>::Ptr cloud_seg_map;  // segmented points of the plane in global map frame
   Eigen::Matrix3d covariance;                       // covariance of the landmark
+  bool parallel_pair;                              // checking if the plane has parallel pair     
   g2o::VertexPlane* node;                       // node instance
 };
 
