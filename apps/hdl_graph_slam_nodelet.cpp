@@ -65,6 +65,7 @@
 #include <g2o/edge_se3_priorquat.hpp>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_point_to_plane.hpp>
+#include <g2o/edge_plane_parallel.hpp>
 
 namespace hdl_graph_slam {
 
@@ -347,12 +348,14 @@ private:
           //x_vert_plane_node->setFixed(true);
           std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           VerticalPlanes vert_plane;
-          vert_plane.id = x_vert_planes.size();
+          id = x_vert_planes.size();
+          vert_plane.id = id;
           vert_plane.plane = det_plane_map_frame.coeffs();
           vert_plane.cloud_seg_body = cloud_seg_body;
           vert_plane.cloud_seg_map = cloud_seg_map;
           vert_plane.node = plane_node; 
           vert_plane.covariance = Eigen::Matrix3d::Identity();
+          vert_plane.parallel_pair = false;
           x_vert_planes.push_back(vert_plane);
           add_parallel_plane_edge = true;
       } else {
@@ -366,12 +369,14 @@ private:
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
         VerticalPlanes vert_plane;
-        vert_plane.id = y_vert_planes.size();
+        id = y_vert_planes.size();
+        vert_plane.id = id;
         vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body = cloud_seg_body;
         vert_plane.cloud_seg_map = cloud_seg_map;
         vert_plane.node = plane_node; 
         vert_plane.covariance = Eigen::Matrix3d::Identity();
+        vert_plane.parallel_pair = false;
         y_vert_planes.push_back(vert_plane);
         add_parallel_plane_edge = true;
       } else {
@@ -386,7 +391,8 @@ private:
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
           std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           HorizontalPlanes hort_plane;
-          hort_plane.id = hort_planes.size();
+          id = hort_planes.size();
+          hort_plane.id = id;
           hort_plane.plane = det_plane_map_frame.coeffs();
           hort_plane.cloud_seg_body = cloud_seg_body;
           hort_plane.cloud_seg_map = cloud_seg_map;
@@ -530,7 +536,8 @@ private:
           Eigen::Matrix<double, 1, 1> information(0.1);
           Eigen::Vector3d meas(0,0,0);
           auto edge = graph_slam->add_plane_parallel_edge(x_vert_planes[i].node, plane_node, meas, information);
-          //graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+          x_vert_planes[i].parallel_pair = true;
         }
       }
     }
@@ -540,7 +547,8 @@ private:
           Eigen::Matrix<double, 1, 1> information(0.1);
           Eigen::Vector3d meas(0,0,0);
           auto edge = graph_slam->add_plane_parallel_edge(y_vert_planes[i].node, plane_node, meas, information);
-          //graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+          y_vert_planes[i].parallel_pair = true;
         }
       }
     }
@@ -1042,7 +1050,7 @@ private:
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp) const {
     visualization_msgs::MarkerArray markers;
-    markers.markers.resize(7);
+    markers.markers.resize(9);
 
     // node markers
     visualization_msgs::Marker& traj_marker = markers.markers[0];
@@ -1209,6 +1217,13 @@ private:
         continue;
       }
 
+      g2o::EdgePlaneParallel* edge_parallel_plane = dynamic_cast<g2o::EdgePlaneParallel*>(edge);  
+      if(edge_parallel_plane) {
+        g2o::VertexPlane* v1 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[0]);
+        g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[1]);
+
+      }
+
       g2o::EdgeSE3PriorXY* edge_priori_xy = dynamic_cast<g2o::EdgeSE3PriorXY*>(edge);
       if(edge_priori_xy) {
         g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_priori_xy->vertices()[0]);
@@ -1230,7 +1245,6 @@ private:
 
         continue;
       }
-
       g2o::EdgeSE3PriorXYZ* edge_priori_xyz = dynamic_cast<g2o::EdgeSE3PriorXYZ*>(edge);
       if(edge_priori_xyz) {
         g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_priori_xyz->vertices()[0]);
@@ -1293,6 +1307,13 @@ private:
         point.y = x_vert_planes[i].cloud_seg_map->points[j].y;
         point.z = x_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         x_vert_plane_marker.points.push_back(point);
+        if (x_vert_planes[i].parallel_pair) {
+          geometry_msgs::Point parallel_plane_point;
+          parallel_plane_point.x = x_vert_planes[i].cloud_seg_map->points[j].x;
+          parallel_plane_point.y = x_vert_planes[i].cloud_seg_map->points[j].y;
+          parallel_plane_point.z = x_vert_planes[i].cloud_seg_map->points[j].z + 10.0;
+          x_vert_plane_marker.points.push_back(parallel_plane_point);
+        }
       }
       x_vert_plane_marker.color.r = 1;
       x_vert_plane_marker.color.a = 1;
@@ -1318,6 +1339,13 @@ private:
         point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
         point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         y_vert_plane_marker.points.push_back(point);
+        if (x_vert_planes[i].parallel_pair) {
+          geometry_msgs::Point parallel_plane_point;
+          parallel_plane_point.x = y_vert_planes[i].cloud_seg_map->points[j].x;
+          parallel_plane_point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
+          parallel_plane_point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 10.0;
+          y_vert_plane_marker.points.push_back(parallel_plane_point);
+        }
       }
       y_vert_plane_marker.color.b = 1;
       y_vert_plane_marker.color.a = 1;
