@@ -338,18 +338,18 @@ private:
       return false;
     }
 
-    int id = -1;
+    std::pair<int,int> data_association; data_association.first = -1;
     bool add_parallel_plane_edge = false;
     if (plane_type == 0){  
-      id = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+      data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
-      if(x_vert_planes.empty() || id == -1) {
+      if(x_vert_planes.empty() || data_association.first == -1) {
+          data_association.first = graph_slam->num_vertices();
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
           //x_vert_plane_node->setFixed(true);
           std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           VerticalPlanes vert_plane;
-          id = x_vert_planes.size();
-          vert_plane.id = id;
+          vert_plane.id = data_association.first;
           vert_plane.plane = det_plane_map_frame.coeffs();
           vert_plane.cloud_seg_body = cloud_seg_body;
           vert_plane.cloud_seg_map = cloud_seg_map;
@@ -359,18 +359,18 @@ private:
           x_vert_planes.push_back(vert_plane);
           add_parallel_plane_edge = true;
       } else {
-          std::cout << "matched x vert plane with x vert plane of id " << std::to_string(id)  << std::endl;
-          plane_node = x_vert_planes[id].node;
+          std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
+          plane_node = x_vert_planes[data_association.second].node;
       }
     } else if (plane_type == 1) {
-      id = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+      data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
-      if(y_vert_planes.empty() || id == -1) {
+      if(y_vert_planes.empty() || data_association.first == -1) {
+        data_association.first = graph_slam->num_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
         VerticalPlanes vert_plane;
-        id = y_vert_planes.size();
-        vert_plane.id = id;
+        vert_plane.id = data_association.first;
         vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body = cloud_seg_body;
         vert_plane.cloud_seg_map = cloud_seg_map;
@@ -380,19 +380,19 @@ private:
         y_vert_planes.push_back(vert_plane);
         add_parallel_plane_edge = true;
       } else {
-          std::cout << "matched y vert plane with y vert plane of id " << std::to_string(id)  << std::endl;
-          plane_node = y_vert_planes[id].node;
+          std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
+          plane_node = y_vert_planes[data_association.second].node;
 
         } 
       } else if (plane_type == 2) {
-        id = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+        data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
         
-        if(hort_planes.empty() || id == -1) {
+        if(hort_planes.empty() || data_association.first == -1) {
+          data_association.first = graph_slam->num_vertices();
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
           std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           HorizontalPlanes hort_plane;
-          id = hort_planes.size();
-          hort_plane.id = id;
+          hort_plane.id = data_association.first;
           hort_plane.plane = det_plane_map_frame.coeffs();
           hort_plane.cloud_seg_body = cloud_seg_body;
           hort_plane.cloud_seg_map = cloud_seg_map;
@@ -401,8 +401,8 @@ private:
           hort_planes.push_back(hort_plane);
           add_parallel_plane_edge = true;
       } else {
-        std::cout << "matched hort plane with hort plane of id " << std::to_string(id)  << std::endl;
-        plane_node = hort_planes[id].node;
+        std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
+        plane_node = hort_planes[data_association.second].node;
       }
     } 
     
@@ -419,7 +419,7 @@ private:
 
     bool use_parallel_constraint = true;
     if(use_parallel_constraint && add_parallel_plane_edge) {
-      parallel_plane_constraint(plane_node, id, plane_type);
+      parallel_plane_constraint(plane_node, data_association.first, plane_type);
     }
 
     keyframe->cloud_seg_body = cloud_seg_body;
@@ -430,8 +430,8 @@ private:
   /** 
   * @brief data assoction betweeen the planes
   */
-  int associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
-    int id;
+  std::pair<int,int> associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
+    std::pair<int,int> data_association;
     float min_dist = 100;
     double min_maha_dist = 100;  
     Eigen::Isometry3d m2n = keyframe->estimate().inverse();
@@ -456,7 +456,8 @@ private:
           } 
         if(maha_dist < min_maha_dist) {
           min_maha_dist = maha_dist;
-          id = x_vert_planes[i].id;
+          data_association.first = x_vert_planes[i].id;
+          data_association.second = i;
           }
         }
       }
@@ -480,7 +481,8 @@ private:
           } 
           if(maha_dist < min_maha_dist) {
             min_maha_dist = maha_dist;
-            id = y_vert_planes[i].id;
+            data_association.first = y_vert_planes[i].id;
+            data_association.second = i;
             }
           }   
       }
@@ -504,7 +506,8 @@ private:
           } 
           if(maha_dist < min_maha_dist) {
             min_maha_dist = maha_dist;
-            id = hort_planes[i].id;
+            data_association.first = hort_planes[i].id;
+            data_association.second = i;
             }
           }   
       }
@@ -521,9 +524,9 @@ private:
         threshold = 0.15;
 
       if(min_maha_dist > threshold)
-         id = -1;
+         data_association.first = -1;
 
-    return id;
+    return data_association;
   }
   
   /**  
@@ -1185,16 +1188,35 @@ private:
         Eigen::Vector3d pt1 = v1->estimate().translation();
         Eigen::Vector3d pt2;
         float r=0, g=0, b=0.0;
+        double x=0, y=0;
         if (fabs(v2->estimate().normal()(0)) > 0.95) {
-          pt2 = Eigen::Vector3d(v2->estimate().normal()(0)*(v2->estimate().distance()), 0.0, 5.0);
+          for(auto x_plane : x_vert_planes) {
+            if (x_plane.id == v2->id()) {
+              x = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
+              y = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
+            } 
+          }
+          pt2 = Eigen::Vector3d(x, y, 5.0);
           r=1.0;
         } 
         else if (fabs(v2->estimate().normal()(1)) > 0.95) {
-          pt2 = Eigen::Vector3d(0.0, (v2->estimate().normal()(1))*(v2->estimate().distance()), 5.0);
+           for(auto y_plane : y_vert_planes) {
+            if (y_plane.id == v2->id()) {
+              x = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
+              y = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
+            } 
+          }
+          pt2 = Eigen::Vector3d(x, y, 5.0);
           b=1.0;
         }
         else if (fabs(v2->estimate().normal()(2)) > 0.95) {
-          pt2 = Eigen::Vector3d(0.0, 0.0, 5.0);  
+           for(auto h_plane : hort_planes) {
+            if (h_plane.id == v2->id()) {
+              x = h_plane.cloud_seg_map->points[(h_plane.cloud_seg_map->points.size()/2)].x;
+              y = h_plane.cloud_seg_map->points[(h_plane.cloud_seg_map->points.size()/2)].y;
+            }
+          } 
+          pt2 = Eigen::Vector3d(x, y, 5.0);  
           r=1; g=0.65;
         }
 
@@ -1221,7 +1243,51 @@ private:
       if(edge_parallel_plane) {
         g2o::VertexPlane* v1 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[0]);
         g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[1]);
+        Eigen::Vector3d pt1(0,0,0), pt2(0,0,0);
+        float r=0, g=0, b=0.0;
+        double x1=0, y1=0, x2 =0, y2=0;
+        if (fabs(v2->estimate().normal()(0)) > 0.95) {
+          for(auto x_plane : x_vert_planes) {
+            if (x_plane.id == v1->id()) {
+              x1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
+              y1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
+            } else if(x_plane.id == v2->id()) {
+              x2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
+              y2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
+            } 
+          }
+          pt1 = Eigen::Vector3d(x1, y1, 10.0);
+          pt2 = Eigen::Vector3d(x2, y2, 10.0);
+        }
+        if (fabs(v2->estimate().normal()(1)) > 0.95) {
+          for(auto y_plane : y_vert_planes) {
+            if (y_plane.id == v1->id()) {
+              x1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
+              y1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
+            } else if(y_plane.id == v2->id()) {
+              x2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
+              y2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
+            } 
+          }
+          pt1 = Eigen::Vector3d(x1, y1, 10.0);
+          pt2 = Eigen::Vector3d(x2, y2, 10.0);
+        }
+        
+        edge_marker.points[i * 2].x = pt1.x();
+        edge_marker.points[i * 2].y = pt1.y();
+        edge_marker.points[i * 2].z = pt1.z();
+        edge_marker.points[i * 2 + 1].x = pt2.x();
+        edge_marker.points[i * 2 + 1].y = pt2.y();
+        edge_marker.points[i * 2 + 1].z = pt2.z();
 
+        edge_marker.colors[i * 2].r = r;
+        edge_marker.colors[i * 2].g = g;
+        edge_marker.colors[i * 2].b = b;
+        edge_marker.colors[i * 2].a = 1.0;
+        edge_marker.colors[i * 2 + 1].r = r;
+        edge_marker.colors[i * 2 + 1].g = g;
+        edge_marker.colors[i * 2 + 1].b = b;
+        edge_marker.colors[i * 2 + 1].a = 1.0;
       }
 
       g2o::EdgeSE3PriorXY* edge_priori_xy = dynamic_cast<g2o::EdgeSE3PriorXY*>(edge);
