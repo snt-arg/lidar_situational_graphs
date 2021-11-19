@@ -1339,7 +1339,7 @@ private:
         point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
         point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         y_vert_plane_marker.points.push_back(point);
-        if (x_vert_planes[i].parallel_pair) {
+        if (y_vert_planes[i].parallel_pair) {
           geometry_msgs::Point parallel_plane_point;
           parallel_plane_point.x = y_vert_planes[i].cloud_seg_map->points[j].x;
           parallel_plane_point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
