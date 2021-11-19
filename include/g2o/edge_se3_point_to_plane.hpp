@@ -43,12 +43,8 @@ public:
     
     Eigen::Matrix4d Ti =  v1->estimate().matrix();
     Eigen::Vector4d Pj =  v2->estimate().toVector();
-    // Eigen::Vector3d plane_point = Pj.head(2) * Pj(3); 
-    // Pj.head(2) = plane_point / plane_point.norm(); 
-    // Pj(3) = plane_point.norm();
     Eigen::Matrix4d Gij = _measurement;
     _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj / 2;
-    //std::cout << "error " << _error << std::endl;
   }
 
   void setMeasurement(const Eigen::Matrix4d& m) override {
