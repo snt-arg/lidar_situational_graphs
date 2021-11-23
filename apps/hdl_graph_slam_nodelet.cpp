@@ -270,12 +270,12 @@ private:
         coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
 
         int plane_type;
-        bool use_point_to_plane = 1;
-        if (fabs(coeffs_map_frame(0)) > 0.95) {              
+        bool use_point_to_plane = 0;
+        if (fabs(coeffs_map_frame(0)) > 0.98) {              
           plane_type = 0; 
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
-        } else if (fabs(coeffs_map_frame(1)) > 0.95) {                   
+        } else if (fabs(coeffs_map_frame(1)) > 0.98) {                   
           plane_type = 1;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
@@ -339,7 +339,7 @@ private:
     }
 
     std::pair<int,int> data_association; data_association.first = -1;
-    bool add_parallel_plane_edge = false;
+    bool add_parallel_plane_edge = false, add_perpendicular_plane_edge = false;
     if (plane_type == 0){  
       data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
@@ -357,7 +357,7 @@ private:
           vert_plane.covariance = Eigen::Matrix3d::Identity();
           vert_plane.parallel_pair = false;
           x_vert_planes.push_back(vert_plane);
-          add_parallel_plane_edge = true;
+          add_parallel_plane_edge = true; add_perpendicular_plane_edge = true;
       } else {
           std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = x_vert_planes[data_association.second].node;
@@ -378,7 +378,7 @@ private:
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         vert_plane.parallel_pair = false;
         y_vert_planes.push_back(vert_plane);
-        add_parallel_plane_edge = true;
+        add_parallel_plane_edge = true; add_perpendicular_plane_edge = true;
       } else {
           std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = y_vert_planes[data_association.second].node;
@@ -399,7 +399,7 @@ private:
           hort_plane.node = plane_node; 
           hort_plane.covariance = Eigen::Matrix3d::Identity();
           hort_planes.push_back(hort_plane);
-          add_parallel_plane_edge = true;
+          add_parallel_plane_edge = true; add_perpendicular_plane_edge = true;
       } else {
         std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
         plane_node = hort_planes[data_association.second].node;
@@ -421,6 +421,10 @@ private:
     if(use_parallel_constraint && add_parallel_plane_edge) {
       parallel_plane_constraint(plane_node, data_association.first, plane_type);
     }
+    bool use_perpendicular_constraint = true;
+    if(use_perpendicular_constraint && add_perpendicular_plane_edge) {
+      perpendicular_plane_constraint(plane_node, data_association.first, plane_type);
+    }
 
     keyframe->cloud_seg_body = cloud_seg_body;
 
@@ -439,7 +443,7 @@ private:
     if(plane_type == 0) {
       for(int i=0; i< x_vert_planes.size(); ++i) { 
         float dist = fabs(det_plane.coeffs()(3) - x_vert_planes[i].plane.coeffs()(3));
-        std::cout << "distance x: " << dist << std::endl;
+        //std::cout << "distance x: " << dist << std::endl;
         if(dist < min_dist){
           min_dist = dist;
           //id = x_vert_planes[i].id;
@@ -447,8 +451,8 @@ private:
         g2o::Plane3D local_plane = m2n * x_vert_planes[i].plane;
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
-        std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
-        std::cout << "maha distance x: " << maha_dist << std::endl;
+        //std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
+        //std::cout << "maha distance x: " << maha_dist << std::endl;
 
         if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
@@ -465,7 +469,7 @@ private:
     if(plane_type == 1) {
         for(int i=0; i< y_vert_planes.size(); ++i) { 
           float dist = fabs(det_plane.coeffs()(3) - y_vert_planes[i].plane.coeffs()(3));
-          std::cout << "distance y: " << dist << std::endl;
+          //std::cout << "distance y: " << dist << std::endl;
           if(dist < min_dist){
             min_dist = dist;
             //id = y_vert_planes[i].id;
@@ -473,8 +477,8 @@ private:
           g2o::Plane3D local_plane = m2n * y_vert_planes[i].plane;
           Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * y_vert_planes[i].covariance.inverse() * error);
-          std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
-          std::cout << "maha distance y: " << maha_dist << std::endl;
+          //std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
+          //std::cout << "maha distance y: " << maha_dist << std::endl;
           if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
@@ -490,7 +494,7 @@ private:
     if(plane_type == 2) {
         for(int i=0; i< hort_planes.size(); ++i) { 
           float dist = fabs(det_plane.coeffs()(3) - hort_planes[i].plane.coeffs()(3));
-          std::cout << "distance hort: " << dist << std::endl;
+          //std::cout << "distance hort: " << dist << std::endl;
           if(dist < min_dist){
             min_dist = dist;
             //id = y_vert_planes[i].id;
@@ -498,8 +502,8 @@ private:
           g2o::Plane3D local_plane = m2n * hort_planes[i].plane;
           Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
-          std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
-          std::cout << "maha distance hort: " << maha_dist << std::endl;
+          //std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
+          //std::cout << "maha distance hort: " << maha_dist << std::endl;
           if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
@@ -512,14 +516,14 @@ private:
           }   
       }
 
-      std::cout << "min_dist: " << min_dist << std::endl;
-      std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
+      //std::cout << "min_dist: " << min_dist << std::endl;
+      //std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
 
       // if(min_dist > 0.30)
       //   id = -1;
       double threshold;
       if(plane_type == 2)
-        threshold = 0.2;
+        threshold = 0.15;
       else   
         threshold = 0.15;
 
@@ -533,11 +537,11 @@ private:
   * @brief this method add parallel constraint between the planes
   */
   void parallel_plane_constraint(g2o::VertexPlane* plane_node, int id, int plane_type) {
+    Eigen::Matrix<double, 1, 1> information(0.001);
+    Eigen::Vector3d meas(0,0,0);
     if(plane_type == 0) {
       for(int i=0; i<x_vert_planes.size(); ++i){
         if(id != x_vert_planes[i].id) {
-          Eigen::Matrix<double, 1, 1> information(0.1);
-          Eigen::Vector3d meas(0,0,0);
           auto edge = graph_slam->add_plane_parallel_edge(x_vert_planes[i].node, plane_node, meas, information);
           graph_slam->add_robust_kernel(edge, "Huber", 1.0);
           x_vert_planes[i].parallel_pair = true;
@@ -547,14 +551,52 @@ private:
     if(plane_type == 1) {
       for(int i=0; i<y_vert_planes.size(); ++i){
         if(id != y_vert_planes[i].id) {
-          Eigen::Matrix<double, 1, 1> information(0.1);
-          Eigen::Vector3d meas(0,0,0);
           auto edge = graph_slam->add_plane_parallel_edge(y_vert_planes[i].node, plane_node, meas, information);
           graph_slam->add_robust_kernel(edge, "Huber", 1.0);
           y_vert_planes[i].parallel_pair = true;
         }
       }
     }
+    if(plane_type == 2) {
+      for(int i=0; i<hort_planes.size(); ++i){
+        if(id != hort_planes[i].id) {
+          auto edge = graph_slam->add_plane_parallel_edge(hort_planes[i].node, plane_node, meas, information);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+          hort_planes[i].parallel_pair = true;
+        }
+      }
+    }
+  }
+
+  /**  
+  * @brief this method adds perpendicular constraint between the planes
+  */
+  void perpendicular_plane_constraint(g2o::VertexPlane* plane_node, int id, int plane_type) {
+    Eigen::Matrix<double, 1, 1> information(0.001);
+    Eigen::Vector3d meas(0,0,0);
+    if(plane_type == 0) {
+      for(int i=0; i<y_vert_planes.size(); ++i){
+          auto edge = graph_slam->add_plane_perpendicular_edge(y_vert_planes[i].node, plane_node, meas, information);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      }
+    }
+    if(plane_type == 1) {
+      for(int i=0; i<x_vert_planes.size(); ++i){
+          auto edge = graph_slam->add_plane_perpendicular_edge(x_vert_planes[i].node, plane_node, meas, information);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      }
+    } 
+    if(plane_type == 2) {
+      for(int i=0; i<x_vert_planes.size(); ++i){
+          auto edge = graph_slam->add_plane_perpendicular_edge(x_vert_planes[i].node, plane_node, meas, information);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      }
+      for(int i=0; i<y_vert_planes.size(); ++i){
+          auto edge = graph_slam->add_plane_perpendicular_edge(y_vert_planes[i].node, plane_node, meas, information);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      }
+
+    } 
   }
 
   /**
@@ -1239,56 +1281,58 @@ private:
         continue;
       }
 
-      g2o::EdgePlaneParallel* edge_parallel_plane = dynamic_cast<g2o::EdgePlaneParallel*>(edge);  
-      if(edge_parallel_plane) {
-        g2o::VertexPlane* v1 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[0]);
-        g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[1]);
-        Eigen::Vector3d pt1(0,0,0), pt2(0,0,0);
-        float r=0, g=0, b=0.0;
-        double x1=0, y1=0, x2 =0, y2=0;
-        if (fabs(v2->estimate().normal()(0)) > 0.95) {
-          for(auto x_plane : x_vert_planes) {
-            if (x_plane.id == v1->id()) {
-              x1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
-              y1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
-            } else if(x_plane.id == v2->id()) {
-              x2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
-              y2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
-            } 
-          }
-          pt1 = Eigen::Vector3d(x1, y1, 10.0);
-          pt2 = Eigen::Vector3d(x2, y2, 10.0);
-        }
-        if (fabs(v2->estimate().normal()(1)) > 0.95) {
-          for(auto y_plane : y_vert_planes) {
-            if (y_plane.id == v1->id()) {
-              x1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
-              y1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
-            } else if(y_plane.id == v2->id()) {
-              x2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
-              y2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
-            } 
-          }
-          pt1 = Eigen::Vector3d(x1, y1, 10.0);
-          pt2 = Eigen::Vector3d(x2, y2, 10.0);
-        }
+      // g2o::EdgePlaneParallel* edge_parallel_plane = dynamic_cast<g2o::EdgePlaneParallel*>(edge);  
+      // if(edge_parallel_plane) {
+      //   g2o::VertexPlane* v1 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[0]);
+      //   g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[1]);
+      //   Eigen::Vector3d pt1(0,0,0), pt2(0,0,0);
+      //   float r=0, g=0, b=0.0;
+      //   double x1=0, y1=0, x2 =0, y2=0;
+      //   if (fabs(v2->estimate().normal()(0)) > 0.95) {
+      //     for(auto x_plane : x_vert_planes) {
+      //       if (x_plane.id == v1->id()) {
+      //         x1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
+      //         y1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
+      //       } else if(x_plane.id == v2->id()) {
+      //         x2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
+      //         y2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
+      //       } 
+      //     }
+      //     pt1 = Eigen::Vector3d(x1, y1, 10.0);
+      //     pt2 = Eigen::Vector3d(x2, y2, 10.0);
+      //   }
+      //   if (fabs(v2->estimate().normal()(1)) > 0.95) {
+      //     for(auto y_plane : y_vert_planes) {
+      //       if (y_plane.id == v1->id()) {
+      //         x1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
+      //         y1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
+      //       } else if(y_plane.id == v2->id()) {
+      //         x2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
+      //         y2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
+      //       } 
+      //     }
+      //     pt1 = Eigen::Vector3d(x1, y1, 10.0);
+      //     pt2 = Eigen::Vector3d(x2, y2, 10.0);
+      //   }
         
-        edge_marker.points[i * 2].x = pt1.x();
-        edge_marker.points[i * 2].y = pt1.y();
-        edge_marker.points[i * 2].z = pt1.z();
-        edge_marker.points[i * 2 + 1].x = pt2.x();
-        edge_marker.points[i * 2 + 1].y = pt2.y();
-        edge_marker.points[i * 2 + 1].z = pt2.z();
+      //   edge_marker.points[i * 2].x = pt1.x();
+      //   edge_marker.points[i * 2].y = pt1.y();
+      //   edge_marker.points[i * 2].z = pt1.z();
+      //   edge_marker.points[i * 2 + 1].x = pt2.x();
+      //   edge_marker.points[i * 2 + 1].y = pt2.y();
+      //   edge_marker.points[i * 2 + 1].z = pt2.z();
 
-        edge_marker.colors[i * 2].r = r;
-        edge_marker.colors[i * 2].g = g;
-        edge_marker.colors[i * 2].b = b;
-        edge_marker.colors[i * 2].a = 1.0;
-        edge_marker.colors[i * 2 + 1].r = r;
-        edge_marker.colors[i * 2 + 1].g = g;
-        edge_marker.colors[i * 2 + 1].b = b;
-        edge_marker.colors[i * 2 + 1].a = 1.0;
-      }
+      //   edge_marker.colors[i * 2].r = r;
+      //   edge_marker.colors[i * 2].g = g;
+      //   edge_marker.colors[i * 2].b = b;
+      //   edge_marker.colors[i * 2].a = 1.0;
+      //   edge_marker.colors[i * 2 + 1].r = r;
+      //   edge_marker.colors[i * 2 + 1].g = g;
+      //   edge_marker.colors[i * 2 + 1].b = b;
+      //   edge_marker.colors[i * 2 + 1].a = 1.0;
+
+      //   continue;
+      // }
 
       g2o::EdgeSE3PriorXY* edge_priori_xy = dynamic_cast<g2o::EdgeSE3PriorXY*>(edge);
       if(edge_priori_xy) {
@@ -1373,13 +1417,13 @@ private:
         point.y = x_vert_planes[i].cloud_seg_map->points[j].y;
         point.z = x_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         x_vert_plane_marker.points.push_back(point);
-        if (x_vert_planes[i].parallel_pair) {
-          geometry_msgs::Point parallel_plane_point;
-          parallel_plane_point.x = x_vert_planes[i].cloud_seg_map->points[j].x;
-          parallel_plane_point.y = x_vert_planes[i].cloud_seg_map->points[j].y;
-          parallel_plane_point.z = x_vert_planes[i].cloud_seg_map->points[j].z + 10.0;
-          x_vert_plane_marker.points.push_back(parallel_plane_point);
-        }
+        // if (x_vert_planes[i].parallel_pair) {
+        //   geometry_msgs::Point parallel_plane_point;
+        //   parallel_plane_point.x = x_vert_planes[i].cloud_seg_map->points[j].x;
+        //   parallel_plane_point.y = x_vert_planes[i].cloud_seg_map->points[j].y;
+        //   parallel_plane_point.z = x_vert_planes[i].cloud_seg_map->points[j].z + 10.0;
+        //   x_vert_plane_marker.points.push_back(parallel_plane_point);
+        // }
       }
       x_vert_plane_marker.color.r = 1;
       x_vert_plane_marker.color.a = 1;
@@ -1405,13 +1449,13 @@ private:
         point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
         point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         y_vert_plane_marker.points.push_back(point);
-        if (y_vert_planes[i].parallel_pair) {
-          geometry_msgs::Point parallel_plane_point;
-          parallel_plane_point.x = y_vert_planes[i].cloud_seg_map->points[j].x;
-          parallel_plane_point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
-          parallel_plane_point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 10.0;
-          y_vert_plane_marker.points.push_back(parallel_plane_point);
-        }
+        // if (y_vert_planes[i].parallel_pair) {
+        //   geometry_msgs::Point parallel_plane_point;
+        //   parallel_plane_point.x = y_vert_planes[i].cloud_seg_map->points[j].x;
+        //   parallel_plane_point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
+        //   parallel_plane_point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 10.0;
+        //   y_vert_plane_marker.points.push_back(parallel_plane_point);
+        // }
       }
       y_vert_plane_marker.color.b = 1;
       y_vert_plane_marker.color.a = 1;
