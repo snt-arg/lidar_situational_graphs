@@ -60,7 +60,7 @@ private:
 
   void init_ros() {
     filtered_point_cloud_sub_ = nh.subscribe("velodyne_points", 64, &PlaneSegmentationNodelet::filteredPointCloudCallback, this);
-    segmented_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("segmented_points", 1);
+    segmented_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
     segmented_clouds_pub_ = nh.advertise<hdl_graph_slam::PointClouds>("segmented_clouds", 1);
   }
 
@@ -96,6 +96,7 @@ private:
       try {
         pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
         pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+        pcl::ExtractIndices<PointT> extract;
         // Optional
         pcl::SACSegmentation<PointT> seg;
         seg.setOptimizeCoefficients(true);
@@ -103,14 +104,14 @@ private:
         seg.setModelType(pcl::SACMODEL_PLANE);
         seg.setMethodType(pcl::SAC_RANSAC);
         seg.setDistanceThreshold(0.1);
-        // seg.setEpsAngle(pcl::deg2rad(5.0f));
+        //seg.setEpsAngle(pcl::deg2rad(5.0f));
         seg.setInputCloud(transformed_cloud);
         // seg.setInputNormals(normal_cloud);
         int model_type = seg.getModelType();
         seg.segment(*inliers, *coefficients);
-        if(inliers->indices.empty()) {
-          break;
+        if(inliers->indices.empty() || inliers->indices.size() < 800) {
           std::cout << "Breaking as no model found" << std::endl;
+          break;
         }
 
         Eigen::Vector4d normal(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]);
@@ -131,21 +132,12 @@ private:
           extracted_cloud.back().curvature = plane(3);
 
           // visulazing the pointcloud
-          // segmented_cloud.points.push_back(transformed_cloud->points[idx]);
-          // if(coefficients->values[0] > 0.95) {
-          //   segmented_cloud.back().r = 255;
-          //   segmented_cloud.back().g = 0;
-          //   segmented_cloud.back().b = 0;
-          // } else if(coefficients->values[1] < -0.95) {
-          //   segmented_cloud.back().r = 0;
-          //   segmented_cloud.back().g = 0;
-          //   segmented_cloud.back().b = 255;
-          // } else if(coefficients->values[2] > 0.99) {
-          //   segmented_cloud.back().r = 0;
-          //   segmented_cloud.back().g = 255;
-          //   segmented_cloud.back().b = 0;
-          // }
+          segmented_cloud.points.push_back(transformed_cloud->points[idx]);
+          segmented_cloud.back().r = 255 - (i*100);
+          segmented_cloud.back().g = (i*100);
+          segmented_cloud.back().b = 0;
         }
+
         sensor_msgs::PointCloud2 extracted_cloud_msg;
         pcl::toROSMsg(extracted_cloud, extracted_cloud_msg);
         std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
@@ -153,7 +145,6 @@ private:
         extracted_cloud_msg.header.frame_id = plane_extraction_frame_;
         extracted_cloud_vec.push_back(extracted_cloud_msg);
 
-        pcl::ExtractIndices<PointT> extract;
         extract.setInputCloud(transformed_cloud);
         extract.setIndices(inliers);
         extract.setNegative(true);
@@ -172,12 +163,12 @@ private:
     extracted_clouds_msg.pointclouds = extracted_cloud_vec;
     segmented_clouds_pub_.publish(extracted_clouds_msg);
 
-    // sensor_msgs::PointCloud2 segmented_cloud_msg;
-    // pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
-    // std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
-    // segmented_cloud_msg.header = msg_header;
-    // segmented_cloud_msg.header.frame_id = plane_extraction_frame_;
-    // segmented_cloud_pub_.publish(segmented_cloud_msg);
+    sensor_msgs::PointCloud2 segmented_cloud_msg;
+    pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
+    std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
+    segmented_cloud_msg.header = msg_header;
+    segmented_cloud_msg.header.frame_id = plane_extraction_frame_;
+    segmented_cloud_pub_.publish(segmented_cloud_msg);
   }
 
   int getIndex(std::vector<pcl::PointXYZRGB, Eigen::aligned_allocator<pcl::PointXYZRGB> > v, pcl::PointXYZRGB K) {
