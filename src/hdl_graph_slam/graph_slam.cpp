@@ -25,6 +25,7 @@
 #include <g2o/edge_plane_identity.hpp>
 #include <g2o/edge_plane_parallel.hpp>
 #include <g2o/robust_kernel_io.hpp>
+#include <g2o/edge_corridor_plane.hpp>
 
 G2O_USE_OPTIMIZATION_LIBRARY(pcg)
 G2O_USE_OPTIMIZATION_LIBRARY(cholmod)  // be aware of that cholmod brings GPL dependency
@@ -42,6 +43,7 @@ G2O_REGISTER_TYPE(EDGE_PLANE_PRIOR_DISTANCE, EdgePlanePriorDistance)
 G2O_REGISTER_TYPE(EDGE_PLANE_IDENTITY, EdgePlaneIdentity)
 G2O_REGISTER_TYPE(EDGE_PLANE_PARALLEL, EdgePlaneParallel)
 G2O_REGISTER_TYPE(EDGE_PLANE_PAERPENDICULAR, EdgePlanePerpendicular)
+G2O_REGISTER_TYPE(EDGE_CORRIDOR_PLANE, EdgeCorridorPlane)
 }  // namespace g2o
 
 namespace hdl_graph_slam {
@@ -283,6 +285,17 @@ g2o::EdgePlanePerpendicular* GraphSLAM::add_plane_perpendicular_edge(g2o::Vertex
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
 
+  return edge;
+}
+
+g2o::EdgeCorridorPlane* GraphSLAM::add_corridor_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeCorridorPlane* edge(new g2o::EdgeCorridorPlane());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_se3;
+  edge->vertices()[1] = v_plane2;
+  graph->addEdge(edge);
+ 
   return edge;
 }
 
