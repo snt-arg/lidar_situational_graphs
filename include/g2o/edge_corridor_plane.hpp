@@ -42,7 +42,17 @@ public:
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    _error[0] = 0;
+    Eigen::Vector3d t = v1->estimate().translation();
+    Eigen::Vector4d p = v2->estimate().coeffs();
+    
+    double est; 
+    if(fabs(t(2)) > fabs(p(3))) {
+       est =  t(2) - p(3);
+    } else {
+       est =  p(3) - t(2);
+    }
+    
+    _error[0] = _measurement[0] - est;
     }
 
   virtual bool read(std::istream& is) override {

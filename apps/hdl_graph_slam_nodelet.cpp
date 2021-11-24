@@ -13,6 +13,7 @@
 #include <boost/algorithm/string.hpp>
 #include <Eigen/Dense>
 #include <pcl/io/pcd_io.h>
+#include <pcl/common/distances.h>
 
 #include <ros/ros.h>
 #include <geodesy/utm.h>
@@ -50,6 +51,7 @@
 #include <hdl_graph_slam/graph_slam.hpp>
 #include <hdl_graph_slam/keyframe.hpp>
 #include <hdl_graph_slam/planes.hpp>
+#include <hdl_graph_slam/corridors.hpp>
 #include <hdl_graph_slam/keyframe_updater.hpp>
 #include <hdl_graph_slam/loop_detector.hpp>
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
@@ -66,6 +68,7 @@
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_plane_parallel.hpp>
+#include <g2o/edge_corridor_plane.hpp>
 
 namespace hdl_graph_slam {
 
@@ -244,8 +247,9 @@ private:
 
     const auto& latest_keyframe_stamp = keyframes.back()->stamp;
    
-    bool updated = false;
+    bool updated = false; int plane_id;
     for(const auto& clouds_seg_msg : clouds_seg_queue) {
+      g2o::Plane3D prev_plane = Eigen::Vector4d(0,0,0,0); int prev_plane_id =-1;
       for(const auto& cloud_seg_msg : clouds_seg_msg->pointclouds) {
 
         if(cloud_seg_msg.header.stamp > latest_keyframe_stamp) {
@@ -271,18 +275,27 @@ private:
 
         int plane_type;
         bool use_point_to_plane = 0;
+        int corridor_plane = 0;  
         if (fabs(coeffs_map_frame(0)) > 0.98) {              
           plane_type = 0; 
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          updated = true;
         } else if (fabs(coeffs_map_frame(1)) > 0.98) {                   
           plane_type = 1;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          if(det_plane_map_frame.coeffs().head(3).dot(prev_plane.coeffs().head(3)) < 0) {
+            factor_corridors(cloud_seg_body, prev_plane, prev_plane_id, det_plane_map_frame, plane_id);
+          }
+          prev_plane = det_plane_map_frame;
+          prev_plane_id = plane_id;
+          updated = true;
         } else if (fabs(coeffs_map_frame(2)) > 0.95) {
           plane_type = 2;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          updated = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          updated = true;
         } else 
           continue;
       }
@@ -310,7 +323,7 @@ private:
   /** 
   * @brief create vertical plane factors
   */
-  bool factor_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type, bool use_point_to_plane) {
+  int factor_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type, bool use_point_to_plane) {
     g2o::VertexPlane* plane_node; 
     Eigen::Matrix4d Gij;
     Gij.setZero();  
@@ -347,7 +360,7 @@ private:
           data_association.first = graph_slam->num_vertices();
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
           //x_vert_plane_node->setFixed(true);
-          std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
+          //std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           VerticalPlanes vert_plane;
           vert_plane.id = data_association.first;
           vert_plane.plane = det_plane_map_frame.coeffs();
@@ -359,7 +372,7 @@ private:
           x_vert_planes.push_back(vert_plane);
           add_parallel_plane_edge = true; add_perpendicular_plane_edge = true;
       } else {
-          std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
+          //std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = x_vert_planes[data_association.second].node;
       }
     } else if (plane_type == 1) {
@@ -368,7 +381,7 @@ private:
       if(y_vert_planes.empty() || data_association.first == -1) {
         data_association.first = graph_slam->num_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-        std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
+        //std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
         VerticalPlanes vert_plane;
         vert_plane.id = data_association.first;
         vert_plane.plane = det_plane_map_frame.coeffs();
@@ -380,7 +393,7 @@ private:
         y_vert_planes.push_back(vert_plane);
         add_parallel_plane_edge = true; add_perpendicular_plane_edge = true;
       } else {
-          std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
+          //std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = y_vert_planes[data_association.second].node;
 
         } 
@@ -390,7 +403,7 @@ private:
         if(hort_planes.empty() || data_association.first == -1) {
           data_association.first = graph_slam->num_vertices();
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-          std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
+          //std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           HorizontalPlanes hort_plane;
           hort_plane.id = data_association.first;
           hort_plane.plane = det_plane_map_frame.coeffs();
@@ -401,7 +414,7 @@ private:
           hort_planes.push_back(hort_plane);
           add_parallel_plane_edge = true; add_perpendicular_plane_edge = true;
       } else {
-        std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
+        //std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
         plane_node = hort_planes[data_association.second].node;
       }
     } 
@@ -428,7 +441,7 @@ private:
 
     keyframe->cloud_seg_body = cloud_seg_body;
 
-    return true;
+    return data_association.first;
   }
 
   /** 
@@ -597,6 +610,51 @@ private:
       }
 
     } 
+  }
+
+  void factor_corridors(pcl::PointCloud<PointNormal>::Ptr cloud_seg, g2o::Plane3D prev_plane, int prev_plane_id, g2o::Plane3D curr_plane, int curr_plane_id) {
+    PointNormal pmin, pmax; pcl::PointXY p1, p2;
+    pcl::getMaxSegment(*cloud_seg, pmin, pmax);
+    p1.x = pmin.x; p1.y = pmin.y;       
+    p2.x = pmax.x; p2.y = pmax.y;
+    float length = pcl::euclideanDistance(p1,p2);
+    std::cout << "length: " << length << std::endl;
+    if(length > 5 && corridors_vec.empty()) {
+      std::cout << "found a corridor between plane id " << prev_plane_id << " and plane id " << curr_plane_id << std::endl;
+      Eigen::Isometry3d pose = corridor_pose(prev_plane.coeffs(), curr_plane.coeffs());
+      g2o::VertexSE3* node = graph_slam->add_se3_node(pose);
+      
+
+      auto it = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == prev_plane_id);
+      Eigen::Vector3d meas(0,0,0);  Eigen::Matrix<double, 1, 1> information(0.001);
+      if(fabs(pose.translation()(2)) > fabs(prev_plane.coeffs()(3))) {
+       meas(0) =  pose.translation()(2) - prev_plane.coeffs()(3);
+      } else {
+       meas(0) =  prev_plane.coeffs()(3) - pose.translation()(2);
+      }
+      auto edge = graph_slam->add_corridor_plane_edge(node, (*it).node, meas, information);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+
+      Corridors det_corridor;
+      det_corridor.plane1 = prev_plane; det_corridor.plane2 = curr_plane; 
+      det_corridor.plane1_id = prev_plane_id; det_corridor.plane2_id = curr_plane_id; 
+      det_corridor.node = node;      
+      corridors_vec.push_back(det_corridor);
+    }
+   }
+
+  Eigen::Isometry3d corridor_pose(Eigen::Vector4d v1, Eigen::Vector4d v2) {
+    Eigen::Isometry3d corridor_pose;
+    corridor_pose.matrix() = Eigen::Matrix4d::Identity();
+
+    if(fabs(v1(3)) > fabs(v2(3))) {
+      double size = v1(3) - v2(3);
+      corridor_pose.translation()(1) = ((size)/2) + v2(3); 
+    } else {
+      double size = v2(3) - v1(3);
+      corridor_pose.translation()(1) = ((size)/2) + v1(3); 
+    }
+    return corridor_pose;
   }
 
   /**
@@ -1678,6 +1736,7 @@ private:
   //vertical and horizontal planes
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;      // horizontally segmented planes
+  std::vector<Corridors> corridors_vec;
 
   // Seg map queue
   std::mutex cloud_seg_mutex;
