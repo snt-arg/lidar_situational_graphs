@@ -619,42 +619,106 @@ private:
     float length = pcl::euclideanDistance(p1,p2);
     std::cout << "length: " << length << std::endl;
 
-    if(length > 5 && y_corridors.empty()) {
-      std::cout << "found a corridor between plane id " << prev_plane_id << " and plane id " << curr_plane_id << std::endl;
-      Eigen::Isometry3d pose = corridor_pose(prev_plane.coeffs(), curr_plane.coeffs());
-      g2o::VertexSE3* node = graph_slam->add_se3_node(pose);
-      
+    g2o::VertexSE3* corr_node;  std::pair<int,int> corr_data_association;   
+    Eigen::Vector3d meas_prev_plane, meas_curr_plane;
+    Eigen::Matrix<double, 1, 1> information(0.001);
+    Eigen::Isometry3d pose = corridor_pose(prev_plane.coeffs(), curr_plane.coeffs());
 
-      auto it = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == prev_plane_id);
-      Eigen::Vector3d meas(0,0,0);  Eigen::Matrix<double, 1, 1> information(0.001);
-      if(fabs(pose.translation()(2)) > fabs(prev_plane.coeffs()(3))) {
-       meas(0) =  pose.translation()(2) - prev_plane.coeffs()(3);
+    if(plane_type = plane_class::Y_VERT_PLANE) {
+
+      auto found_prev_plane = y_vert_planes.begin();
+      auto found_curr_plane = y_vert_planes.begin();
+      corr_data_association = associate_corridors(plane_type, pose);
+
+      if(length > 5 && (y_corridors.empty() || corr_data_association.first == -1)) {
+        
+        std::cout << "found a corridor between plane id " << prev_plane_id << " and plane id " << curr_plane_id << std::endl;
+        corr_data_association.first = graph_slam->num_vertices();
+        corr_node = graph_slam->add_se3_node(pose);
+        corr_node->setFixed(true);
+        Corridors det_corridor;
+        det_corridor.id = corr_data_association.first;
+        det_corridor.plane1 = prev_plane; det_corridor.plane2 = curr_plane; 
+        det_corridor.plane1_id = prev_plane_id; det_corridor.plane2_id = curr_plane_id; 
+        det_corridor.node = corr_node;      
+        y_corridors.push_back(det_corridor);
+        
+        found_prev_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == prev_plane_id);
+        found_curr_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == prev_plane_id);
+        meas_prev_plane =  corridor_measurement(pose.translation(), prev_plane.coeffs());
+        meas_curr_plane =  corridor_measurement(pose.translation(), prev_plane.coeffs());
+        
+        auto edge_prev_plane = graph_slam->add_corridor_plane_edge(corr_node, (*found_prev_plane).node, meas_prev_plane, information);
+        graph_slam->add_robust_kernel(edge_prev_plane, "Huber", 1.0);
+
+        auto edge_curr_plane = graph_slam->add_corridor_plane_edge(corr_node, (*found_curr_plane).node, meas_curr_plane, information);
+        graph_slam->add_robust_kernel(edge_curr_plane, "Huber", 1.0);
       } else {
-       meas(0) =  prev_plane.coeffs()(3) - pose.translation()(2);
-      }
-      auto edge = graph_slam->add_corridor_plane_edge(node, (*it).node, meas, information);
-      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+        /* add the edge between detected planes and the corridor */
+        std::cout << "Matched det corridor to mapped corridor with id " << corr_data_association.first << std::endl;
+        corr_node = y_corridors[corr_data_association.second].node;
+        
+        found_prev_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == prev_plane_id);
+        found_curr_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == prev_plane_id);
+        meas_prev_plane =  corridor_measurement(pose.translation(), prev_plane.coeffs());
+        meas_curr_plane =  corridor_measurement(pose.translation(), prev_plane.coeffs());
 
-      Corridors det_corridor;
-      det_corridor.plane1 = prev_plane; det_corridor.plane2 = curr_plane; 
-      det_corridor.plane1_id = prev_plane_id; det_corridor.plane2_id = curr_plane_id; 
-      det_corridor.node = node;      
-      y_corridors.push_back(det_corridor);
+        auto edge_prev_plane = graph_slam->add_corridor_plane_edge(corr_node, (*found_prev_plane).node, meas_prev_plane, information);
+        graph_slam->add_robust_kernel(edge_prev_plane, "Huber", 1.0);
+
+        auto edge_curr_plane = graph_slam->add_corridor_plane_edge(corr_node, (*found_curr_plane).node, meas_curr_plane, information);
+        graph_slam->add_robust_kernel(edge_curr_plane, "Huber", 1.0);
+      } 
     }
-   }
+    
+  }
 
   Eigen::Isometry3d corridor_pose(Eigen::Vector4d v1, Eigen::Vector4d v2) {
     Eigen::Isometry3d corridor_pose;
     corridor_pose.matrix() = Eigen::Matrix4d::Identity();
-
     if(fabs(v1(3)) > fabs(v2(3))) {
       double size = v1(3) - v2(3);
       corridor_pose.translation()(1) = ((size)/2) + v2(3); 
+      corridor_pose.translation()(2) = (size); 
     } else {
       double size = v2(3) - v1(3);
-      corridor_pose.translation()(1) = ((size)/2) + v1(3); 
+      corridor_pose.translation()(1) = ((size)/2) + v1(3);
+      corridor_pose.translation()(2) = (size);  
     }
     return corridor_pose;
+  }
+
+  Eigen::Vector3d corridor_measurement(Eigen::Vector3d corr, Eigen::Vector4d plane) {
+      Eigen::Vector3d meas(0,0,0);  
+      if(fabs(corr(2)) > fabs(plane(3))) {
+       meas(0) =  corr(2) - plane(3);
+      } else {
+       meas(0) =  plane(3) - corr(2);
+      }
+    return meas;
+  }
+
+  std::pair<int,int> associate_corridors(int plane_type, Eigen::Isometry3d corr_pose) {
+    float min_dist = 100;
+    std::pair<int,int> data_association; data_association.first = -1;
+    if(plane_type == plane_class::Y_VERT_PLANE) {
+      for(int i=0; i< y_corridors.size(); ++i) { 
+        float dist = fabs((corr_pose.translation()(2)) - (y_corridors[i].node->estimate().translation()(2)));
+        if(dist < min_dist) {
+          min_dist = dist;
+          std::cout << "dist: " << dist << std::endl;
+          data_association.first = y_corridors[i].id;
+          data_association.second = i;
+        }
+      }
+    }
+
+    std::cout << "min dist: " << min_dist << std::endl;
+    float threshold = 0.5;
+    if (min_dist > threshold) 
+      data_association.first = -1;
+
+    return data_association;
   }
 
   /**
