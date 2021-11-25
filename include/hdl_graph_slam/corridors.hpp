@@ -16,6 +16,7 @@ namespace hdl_graph_slam {
 
 struct Corridors {
 public:
+  int id;
   g2o::Plane3D plane1, plane2;
   int plane1_id, plane2_id;
   g2o::VertexSE3* node;                       // node instance
