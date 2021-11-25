@@ -277,22 +277,22 @@ private:
         bool use_point_to_plane = 0;
         int corridor_plane = 0;  
         if (fabs(coeffs_map_frame(0)) > 0.98) {              
-          plane_type = 0; 
+          plane_type = plane_class::X_VERT_PLANE; 
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
           updated = true;
         } else if (fabs(coeffs_map_frame(1)) > 0.98) {                   
-          plane_type = 1;  
+          plane_type = plane_class::Y_VERT_PLANE;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
           if(det_plane_map_frame.coeffs().head(3).dot(prev_plane.coeffs().head(3)) < 0) {
-            factor_corridors(cloud_seg_body, prev_plane, prev_plane_id, det_plane_map_frame, plane_id);
+            factor_corridors(plane_type, cloud_seg_body, prev_plane, prev_plane_id, det_plane_map_frame, plane_id);
           }
           prev_plane = det_plane_map_frame;
           prev_plane_id = plane_id;
           updated = true;
         } else if (fabs(coeffs_map_frame(2)) > 0.95) {
-          plane_type = 2;  
+          plane_type = plane_class::HORT_PLANE;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
           updated = true;
@@ -353,7 +353,7 @@ private:
 
     std::pair<int,int> data_association; data_association.first = -1;
     bool add_parallel_plane_edge = false, add_perpendicular_plane_edge = false;
-    if (plane_type == 0){  
+    if (plane_type == plane_class::X_VERT_PLANE){  
       data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
       if(x_vert_planes.empty() || data_association.first == -1) {
@@ -375,7 +375,7 @@ private:
           //std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = x_vert_planes[data_association.second].node;
       }
-    } else if (plane_type == 1) {
+    } else if (plane_type == plane_class::Y_VERT_PLANE) {
       data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
       
       if(y_vert_planes.empty() || data_association.first == -1) {
@@ -397,7 +397,7 @@ private:
           plane_node = y_vert_planes[data_association.second].node;
 
         } 
-      } else if (plane_type == 2) {
+      } else if (plane_type == plane_class::HORT_PLANE) {
         data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
         
         if(hort_planes.empty() || data_association.first == -1) {
@@ -453,7 +453,7 @@ private:
     double min_maha_dist = 100;  
     Eigen::Isometry3d m2n = keyframe->estimate().inverse();
 
-    if(plane_type == 0) {
+    if(plane_type == plane_class::X_VERT_PLANE) {
       for(int i=0; i< x_vert_planes.size(); ++i) { 
         float dist = fabs(det_plane.coeffs()(3) - x_vert_planes[i].plane.coeffs()(3));
         //std::cout << "distance x: " << dist << std::endl;
@@ -479,7 +479,7 @@ private:
         }
       }
 
-    if(plane_type == 1) {
+    if(plane_type == plane_class::Y_VERT_PLANE) {
         for(int i=0; i< y_vert_planes.size(); ++i) { 
           float dist = fabs(det_plane.coeffs()(3) - y_vert_planes[i].plane.coeffs()(3));
           //std::cout << "distance y: " << dist << std::endl;
@@ -504,7 +504,7 @@ private:
           }   
       }
 
-    if(plane_type == 2) {
+    if(plane_type == plane_class::HORT_PLANE) {
         for(int i=0; i< hort_planes.size(); ++i) { 
           float dist = fabs(det_plane.coeffs()(3) - hort_planes[i].plane.coeffs()(3));
           //std::cout << "distance hort: " << dist << std::endl;
@@ -535,7 +535,7 @@ private:
       // if(min_dist > 0.30)
       //   id = -1;
       double threshold;
-      if(plane_type == 2)
+      if(plane_type == plane_class::HORT_PLANE)
         threshold = 0.15;
       else   
         threshold = 0.15;
@@ -552,7 +552,7 @@ private:
   void parallel_plane_constraint(g2o::VertexPlane* plane_node, int id, int plane_type) {
     Eigen::Matrix<double, 1, 1> information(0.001);
     Eigen::Vector3d meas(0,0,0);
-    if(plane_type == 0) {
+    if(plane_type == plane_class::X_VERT_PLANE) {
       for(int i=0; i<x_vert_planes.size(); ++i){
         if(id != x_vert_planes[i].id) {
           auto edge = graph_slam->add_plane_parallel_edge(x_vert_planes[i].node, plane_node, meas, information);
@@ -561,7 +561,7 @@ private:
         }
       }
     }
-    if(plane_type == 1) {
+    if(plane_type == plane_class::Y_VERT_PLANE) {
       for(int i=0; i<y_vert_planes.size(); ++i){
         if(id != y_vert_planes[i].id) {
           auto edge = graph_slam->add_plane_parallel_edge(y_vert_planes[i].node, plane_node, meas, information);
@@ -570,7 +570,7 @@ private:
         }
       }
     }
-    if(plane_type == 2) {
+    if(plane_type == plane_class::HORT_PLANE) {
       for(int i=0; i<hort_planes.size(); ++i){
         if(id != hort_planes[i].id) {
           auto edge = graph_slam->add_plane_parallel_edge(hort_planes[i].node, plane_node, meas, information);
@@ -587,19 +587,19 @@ private:
   void perpendicular_plane_constraint(g2o::VertexPlane* plane_node, int id, int plane_type) {
     Eigen::Matrix<double, 1, 1> information(0.001);
     Eigen::Vector3d meas(0,0,0);
-    if(plane_type == 0) {
+    if(plane_type == plane_class::X_VERT_PLANE) {
       for(int i=0; i<y_vert_planes.size(); ++i){
           auto edge = graph_slam->add_plane_perpendicular_edge(y_vert_planes[i].node, plane_node, meas, information);
           graph_slam->add_robust_kernel(edge, "Huber", 1.0);
       }
     }
-    if(plane_type == 1) {
+    if(plane_type == plane_class::Y_VERT_PLANE) {
       for(int i=0; i<x_vert_planes.size(); ++i){
           auto edge = graph_slam->add_plane_perpendicular_edge(x_vert_planes[i].node, plane_node, meas, information);
           graph_slam->add_robust_kernel(edge, "Huber", 1.0);
       }
     } 
-    if(plane_type == 2) {
+    if(plane_type == plane_class::HORT_PLANE) {
       for(int i=0; i<x_vert_planes.size(); ++i){
           auto edge = graph_slam->add_plane_perpendicular_edge(x_vert_planes[i].node, plane_node, meas, information);
           graph_slam->add_robust_kernel(edge, "Huber", 1.0);
@@ -608,18 +608,18 @@ private:
           auto edge = graph_slam->add_plane_perpendicular_edge(y_vert_planes[i].node, plane_node, meas, information);
           graph_slam->add_robust_kernel(edge, "Huber", 1.0);
       }
-
     } 
   }
 
-  void factor_corridors(pcl::PointCloud<PointNormal>::Ptr cloud_seg, g2o::Plane3D prev_plane, int prev_plane_id, g2o::Plane3D curr_plane, int curr_plane_id) {
+  void factor_corridors(int plane_type, pcl::PointCloud<PointNormal>::Ptr cloud_seg, g2o::Plane3D prev_plane, int prev_plane_id, g2o::Plane3D curr_plane, int curr_plane_id) {
     PointNormal pmin, pmax; pcl::PointXY p1, p2;
     pcl::getMaxSegment(*cloud_seg, pmin, pmax);
     p1.x = pmin.x; p1.y = pmin.y;       
     p2.x = pmax.x; p2.y = pmax.y;
     float length = pcl::euclideanDistance(p1,p2);
     std::cout << "length: " << length << std::endl;
-    if(length > 5 && corridors_vec.empty()) {
+
+    if(length > 5 && y_corridors.empty()) {
       std::cout << "found a corridor between plane id " << prev_plane_id << " and plane id " << curr_plane_id << std::endl;
       Eigen::Isometry3d pose = corridor_pose(prev_plane.coeffs(), curr_plane.coeffs());
       g2o::VertexSE3* node = graph_slam->add_se3_node(pose);
@@ -639,7 +639,7 @@ private:
       det_corridor.plane1 = prev_plane; det_corridor.plane2 = curr_plane; 
       det_corridor.plane1_id = prev_plane_id; det_corridor.plane2_id = curr_plane_id; 
       det_corridor.node = node;      
-      corridors_vec.push_back(det_corridor);
+      y_corridors.push_back(det_corridor);
     }
    }
 
@@ -1736,7 +1736,12 @@ private:
   //vertical and horizontal planes
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;      // horizontally segmented planes
-  std::vector<Corridors> corridors_vec;
+  std::vector<Corridors> y_corridors;
+  enum plane_class : uint8_t{
+    X_VERT_PLANE = 0,
+    Y_VERT_PLANE = 1,
+    HORT_PLANE = 2,
+  };
 
   // Seg map queue
   std::mutex cloud_seg_mutex;
