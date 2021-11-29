@@ -254,6 +254,8 @@ private:
       g2o::Plane3D prev_x_plane = Eigen::Vector4d(0,0,0,0); int prev_x_plane_id =-1;
       g2o::Plane3D prev_y_plane = Eigen::Vector4d(0,0,0,0); int prev_y_plane_id =-1;
       std::vector<std::pair<g2o::Plane3D, int> > x_det_corridor_candidates, y_det_corridor_candidates;
+      std::vector<std::pair<g2o::Plane3D, int> > x_det_room_candidates, y_det_room_candidates;
+
       float prev_x_length = 0, prev_y_length = 0; 
 
       for(const auto& cloud_seg_msg : clouds_seg_msg->pointclouds) {
@@ -287,10 +289,14 @@ private:
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
           /* check for potential x corridor and room candidates */
-          float length =  plane_length(cloud_seg_body);            
-          if(length > 5) {
-            std::pair<g2o::Plane3D, int> x_plane_id_pair(det_plane_map_frame, plane_id);
+          float length =  plane_length(cloud_seg_body);       
+          std::cout << "length x: " << length << std::endl;
+    
+          std::pair<g2o::Plane3D, int> x_plane_id_pair(det_plane_map_frame, plane_id);
+          if(length > 10) {
             x_det_corridor_candidates.push_back(x_plane_id_pair); 
+          } else if (length > 3) {
+            x_det_room_candidates.push_back(x_plane_id_pair);
           }
           updated = true;
         } else if (fabs(coeffs_map_frame(1)) > 0.98) {                   
@@ -299,10 +305,13 @@ private:
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
 
           /* check for potential y corridor and room candidates */
-          float length =  plane_length(cloud_seg_body);            
-          if(length > 5) {
-            std::pair<g2o::Plane3D, int> y_plane_id_pair(det_plane_map_frame, plane_id);
+          float length =  plane_length(cloud_seg_body);  
+          std::cout << "length y: " << length << std::endl;
+          std::pair<g2o::Plane3D, int> y_plane_id_pair(det_plane_map_frame, plane_id);         
+          if(length > 10) {
             y_det_corridor_candidates.push_back(y_plane_id_pair); 
+          } else if (length > 3) {
+            y_det_room_candidates.push_back(y_plane_id_pair);
           }
           updated = true;
         } else if (fabs(coeffs_map_frame(2)) > 0.95) {
@@ -321,13 +330,9 @@ private:
           correct_plane_d(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i].first, x_det_corridor_candidates[j].first);
           float corr_width = width_between_planes(x_det_corridor_candidates[i].first.coeffs(), x_det_corridor_candidates[j].first.coeffs());
           std::cout << "x corr_width: " << corr_width << std::endl;
-          if (x_det_corridor_candidates[i].first.coeffs().head(3).dot(x_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 4 && corr_width > 0.5)) {
+          if (x_det_corridor_candidates[i].first.coeffs().head(3).dot(x_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 3 && corr_width > 0.5)) {
             factor_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i].first, x_det_corridor_candidates[i].second, x_det_corridor_candidates[j].first, x_det_corridor_candidates[j].second);
-          } else if (x_det_corridor_candidates[i].first.coeffs().head(3).dot(x_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && ( corr_width > 4)) {
-            room_x_det = true;
-            x_room_pair_vec.push_back(x_det_corridor_candidates[i]);
-            x_room_pair_vec.push_back(x_det_corridor_candidates[j]);
-          }
+          } 
         } 
       }
 
@@ -337,20 +342,42 @@ private:
           correct_plane_d(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i].first, y_det_corridor_candidates[j].first);
           float corr_width = width_between_planes(y_det_corridor_candidates[i].first.coeffs(), y_det_corridor_candidates[j].first.coeffs());
           std::cout << "y corr_width: " << corr_width << std::endl;
-          if (y_det_corridor_candidates[i].first.coeffs().head(3).dot(y_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 4 && corr_width > 0.5)) {
+          if (y_det_corridor_candidates[i].first.coeffs().head(3).dot(y_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 3 && corr_width > 0.5)) {
             factor_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i].first, y_det_corridor_candidates[i].second, y_det_corridor_candidates[j].first, y_det_corridor_candidates[j].second);     
-          } else if (y_det_corridor_candidates[i].first.coeffs().head(3).dot(y_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width > 4)) {
-            room_y_det = true;
-            y_room_pair_vec.push_back(y_det_corridor_candidates[i]);
-            y_room_pair_vec.push_back(y_det_corridor_candidates[j]);
+          } 
+        }
+      }
+
+      /* factor x planes of rooms */
+      for(int i=0; i < x_det_room_candidates.size(); ++i) {
+        for(int j=i+1; j < x_det_room_candidates.size(); ++j) {
+          correct_plane_d(plane_class::X_VERT_PLANE, x_det_room_candidates[i].first, x_det_room_candidates[j].first);
+          float room_width = width_between_planes(x_det_room_candidates[i].first.coeffs(), x_det_room_candidates[j].first.coeffs());
+          std::cout << "x room_width: " << room_width << std::endl;
+          if (x_det_room_candidates[i].first.coeffs().head(3).dot(x_det_room_candidates[j].first.coeffs().head(3)) < 0 && room_width > 3) {
+            x_room_pair_vec.push_back(x_det_room_candidates[i]);
+            x_room_pair_vec.push_back(x_det_room_candidates[j]);
+          }
+        }
+      }
+  
+      /* factor y planes of rooms */
+      for(int i=0; i < y_det_room_candidates.size(); ++i) {
+        for(int j=i+1; j < y_det_room_candidates.size(); ++j) {
+          correct_plane_d(plane_class::Y_VERT_PLANE, y_det_room_candidates[i].first, y_det_room_candidates[j].first);
+          float room_width = width_between_planes(y_det_room_candidates[i].first.coeffs(), y_det_room_candidates[j].first.coeffs());
+          std::cout << "y room_width: " << room_width << std::endl;
+          if (y_det_room_candidates[i].first.coeffs().head(3).dot(y_det_room_candidates[j].first.coeffs().head(3)) < 0 && room_width > 3) {
+            y_room_pair_vec.push_back(y_det_room_candidates[i]);
+            y_room_pair_vec.push_back(y_det_room_candidates[j]);
           }
         }
       }
 
-      if(room_x_det && room_y_det) {
-        std::cout << "ROOM deteted " << std::endl;
-        factor_rooms(x_room_pair_vec, y_room_pair_vec);
-      }
+      if(x_room_pair_vec.size() == 2 && y_room_pair_vec.size() == 2) {
+          std::cout << "ROOM deteted " << std::endl;
+          factor_rooms(x_room_pair_vec, y_room_pair_vec);
+        }
 
     }
     auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
@@ -848,7 +875,8 @@ private:
         room_data_association.first = graph_slam->num_vertices();
         room_node = graph_slam->add_se3_node(room_pose);
         room_node->setFixed(true);
-        Rooms det_room;      
+        Rooms det_room;
+        det_room.id = room_data_association.first;     
         det_room.plane_x1 = x_room_pair_vec[0].first; det_room.plane_x2 = x_room_pair_vec[1].first;
         det_room.plane_y1 = y_room_pair_vec[0].first; det_room.plane_y2 = y_room_pair_vec[1].first;       
         det_room.plane_x1_id = x_room_pair_vec[0].second; det_room.plane_x2_id = x_room_pair_vec[1].second; 
@@ -859,7 +887,7 @@ private:
     } else {
         /* add the edge between detected planes and the corridor */
         room_node = rooms_vec[room_data_association.second].node;
-        std::cout << "Matched det room with pose " << room_pose.translation()(1) << " to mapped room with id " << room_data_association.first << " and pose " << room_node->estimate().translation()(1)  << std::endl;
+        std::cout << "Matched det room with pose " << room_pose.translation() << " to mapped room with id " << room_data_association.first << " and pose " << room_node->estimate().translation()  << std::endl;
     }
 
       found_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[0].second);
@@ -892,6 +920,11 @@ private:
     room_pose.matrix() = Eigen::Matrix4d::Identity();
     Eigen::Vector4d x_plane1 = x_room_pair_vec[0].first.coeffs(),  x_plane2 = x_room_pair_vec[1].first.coeffs(); 
     Eigen::Vector4d y_plane1 = y_room_pair_vec[0].first.coeffs(),  y_plane2 = y_room_pair_vec[1].first.coeffs();
+    std::cout << "x_plane1: " << x_plane1 << std::endl;
+    std::cout << "x_plane2: " << x_plane2 << std::endl;
+    std::cout << "y_plane1: " << y_plane1 << std::endl;
+    std::cout << "y_plane2: " << y_plane2 << std::endl;
+
 
     if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
         double size = x_plane1(3) - x_plane2(3);
@@ -967,7 +1000,6 @@ private:
     p1.x = pmin.x; p1.y = pmin.y;       
     p2.x = pmax.x; p2.y = pmax.y;
     float length = pcl::euclideanDistance(p1,p2);
-    std::cout << "length: " << length << std::endl;
 
     return length;
   } 
