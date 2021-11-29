@@ -310,7 +310,7 @@ private:
           std::pair<g2o::Plane3D, int> y_plane_id_pair(det_plane_map_frame, plane_id);         
           if(length > 10) {
             y_det_corridor_candidates.push_back(y_plane_id_pair); 
-          } else if (length > 3) {
+          } else if (length > 2.5) {
             y_det_room_candidates.push_back(y_plane_id_pair);
           }
           updated = true;
@@ -354,7 +354,7 @@ private:
           correct_plane_d(plane_class::X_VERT_PLANE, x_det_room_candidates[i].first, x_det_room_candidates[j].first);
           float room_width = width_between_planes(x_det_room_candidates[i].first.coeffs(), x_det_room_candidates[j].first.coeffs());
           std::cout << "x room_width: " << room_width << std::endl;
-          if (x_det_room_candidates[i].first.coeffs().head(3).dot(x_det_room_candidates[j].first.coeffs().head(3)) < 0 && room_width > 3) {
+          if (x_det_room_candidates[i].first.coeffs().head(3).dot(x_det_room_candidates[j].first.coeffs().head(3)) < 0 && room_width > 2.5) {
             x_room_pair_vec.push_back(x_det_room_candidates[i]);
             x_room_pair_vec.push_back(x_det_room_candidates[j]);
           }
@@ -367,7 +367,7 @@ private:
           correct_plane_d(plane_class::Y_VERT_PLANE, y_det_room_candidates[i].first, y_det_room_candidates[j].first);
           float room_width = width_between_planes(y_det_room_candidates[i].first.coeffs(), y_det_room_candidates[j].first.coeffs());
           std::cout << "y room_width: " << room_width << std::endl;
-          if (y_det_room_candidates[i].first.coeffs().head(3).dot(y_det_room_candidates[j].first.coeffs().head(3)) < 0 && room_width > 3) {
+          if (y_det_room_candidates[i].first.coeffs().head(3).dot(y_det_room_candidates[j].first.coeffs().head(3)) < 0 && room_width > 2.5) {
             y_room_pair_vec.push_back(y_det_room_candidates[i]);
             y_room_pair_vec.push_back(y_det_room_candidates[j]);
           }
@@ -375,7 +375,6 @@ private:
       }
 
       if(x_room_pair_vec.size() == 2 && y_room_pair_vec.size() == 2) {
-          std::cout << "ROOM deteted " << std::endl;
           factor_rooms(x_room_pair_vec, y_room_pair_vec);
         }
 
@@ -785,22 +784,17 @@ private:
 
   Eigen::Isometry3d corridor_pose(Eigen::Vector4d v1, Eigen::Vector4d v2) {
     Eigen::Isometry3d corridor_pose;
-    std::cout << "prev plane: " << v1 << std::endl;
-    std::cout << "curr plane: " << v2 << std::endl;
 
     corridor_pose.matrix() = Eigen::Matrix4d::Identity();
     if(fabs(v1(3)) > fabs(v2(3))) {
       double size = v1(3) - v2(3);
       corridor_pose.translation()(1) = ((size)/2) + v2(3); 
       corridor_pose.translation()(2) = 0;//(size/2); 
-      std::cout << "size 1: " << size << std::endl;
 
     } else {
       double size = v2(3) - v1(3);
       corridor_pose.translation()(1) = ((size)/2) + v1(3);
       corridor_pose.translation()(2) = 0;//(size/2);  
-      std::cout << "size 2: " << size << std::endl;
-
     }
 
     return corridor_pose;
@@ -1537,7 +1531,7 @@ private:
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp) const {
     visualization_msgs::MarkerArray markers;
-    markers.markers.resize(9);
+    markers.markers.resize(11);
 
     // node markers
     visualization_msgs::Marker& traj_marker = markers.markers[0];
@@ -1959,6 +1953,62 @@ private:
       hort_plane_marker.color.g = 0.65;
       hort_plane_marker.color.a = 1;
     }
+
+    //x corridor markers
+    visualization_msgs::Marker& corridor_marker = markers.markers[7];
+    corridor_marker.pose.orientation.w = 1.0;
+    corridor_marker.scale.x = 0.5;
+    corridor_marker.scale.y = 0.5;
+    corridor_marker.scale.z = 0.5;
+    //plane_marker.points.resize(vert_planes.size());    
+    corridor_marker.header.frame_id = map_frame_id;
+    corridor_marker.header.stamp = stamp;
+    corridor_marker.ns = "corridors";
+    corridor_marker.id = 7;
+    corridor_marker.type = visualization_msgs::Marker::CUBE_LIST;
+
+    for(int i = 0; i < x_corridors.size(); ++i) {
+      geometry_msgs::Point point;
+      point.x = -x_corridors[i].node->estimate().translation()(0);
+      point.y = -x_corridors[i].node->estimate().translation()(1);
+      point.z = 10;
+      corridor_marker.points.push_back(point);
+    }
+    for(int i = 0; i < y_corridors.size(); ++i) {
+      geometry_msgs::Point point;
+      point.x = -y_corridors[i].node->estimate().translation()(0);
+      point.y = -y_corridors[i].node->estimate().translation()(1);
+      point.z = 10;
+      corridor_marker.points.push_back(point);
+    }
+    corridor_marker.color.r = 0;
+    corridor_marker.color.g = 1;
+    corridor_marker.color.a = 1; 
+
+    //room markers
+    visualization_msgs::Marker& room_marker = markers.markers[8];
+    room_marker.pose.orientation.w = 1.0;
+    room_marker.scale.x = 0.5;
+    room_marker.scale.y = 0.5;
+    room_marker.scale.z = 0.5;
+    //plane_marker.points.resize(vert_planes.size());    
+    room_marker.header.frame_id = map_frame_id;
+    room_marker.header.stamp = stamp;
+    room_marker.ns = "rooms";
+    room_marker.id = 8;
+    room_marker.type = visualization_msgs::Marker::CUBE_LIST;
+
+    for(int i = 0; i < rooms_vec.size(); ++i) {
+      geometry_msgs::Point point;
+      point.x = -rooms_vec[i].node->estimate().translation()(0);
+      point.y = -rooms_vec[i].node->estimate().translation()(1);
+      point.z = 10;
+      room_marker.points.push_back(point);
+    }
+    room_marker.color.r = 1;
+    room_marker.color.g = 0.07;
+    room_marker.color.b = 0.57;
+    room_marker.color.a = 1; 
 
     return markers;
   }
