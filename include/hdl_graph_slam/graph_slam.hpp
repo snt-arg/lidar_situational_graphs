@@ -26,6 +26,8 @@ class EdgePlane;
 class EdgePlaneIdentity;
 class EdgePlaneParallel;
 class EdgeCorridorPlane;
+class EdgeRoomXPlane;
+class EdgeRoomYPlane;
 class EdgePlanePerpendicular;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
@@ -133,6 +135,10 @@ public:
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeCorridorPlane* add_corridor_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   void add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size);
 
