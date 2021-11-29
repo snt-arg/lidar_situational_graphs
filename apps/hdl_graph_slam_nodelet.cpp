@@ -318,10 +318,12 @@ private:
       /* factor x corridors */
       for(int i=0; i < x_det_corridor_candidates.size(); ++i) {
         for(int j=i+1; j < x_det_corridor_candidates.size(); ++j) {
+          correct_plane_d(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i].first, x_det_corridor_candidates[j].first);
           float corr_width = width_between_planes(x_det_corridor_candidates[i].first.coeffs(), x_det_corridor_candidates[j].first.coeffs());
-          if (x_det_corridor_candidates[i].first.coeffs().head(3).dot(x_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 3 && corr_width > 1)) {
+          std::cout << "x corr_width: " << corr_width << std::endl;
+          if (x_det_corridor_candidates[i].first.coeffs().head(3).dot(x_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 4 && corr_width > 0.5)) {
             factor_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i].first, x_det_corridor_candidates[i].second, x_det_corridor_candidates[j].first, x_det_corridor_candidates[j].second);
-          } else if (x_det_corridor_candidates[i].first.coeffs().head(3).dot(x_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && ( corr_width > 3)) {
+          } else if (x_det_corridor_candidates[i].first.coeffs().head(3).dot(x_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && ( corr_width > 4)) {
             room_x_det = true;
             x_room_pair_vec.push_back(x_det_corridor_candidates[i]);
             x_room_pair_vec.push_back(x_det_corridor_candidates[j]);
@@ -332,10 +334,12 @@ private:
       /* factor y corridors */
       for(int i=0; i < y_det_corridor_candidates.size(); ++i) {
         for(int j=i+1; j < y_det_corridor_candidates.size(); ++j) {
+          correct_plane_d(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i].first, y_det_corridor_candidates[j].first);
           float corr_width = width_between_planes(y_det_corridor_candidates[i].first.coeffs(), y_det_corridor_candidates[j].first.coeffs());
-          if (y_det_corridor_candidates[i].first.coeffs().head(3).dot(y_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 3 && corr_width > 1)) {
+          std::cout << "y corr_width: " << corr_width << std::endl;
+          if (y_det_corridor_candidates[i].first.coeffs().head(3).dot(y_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width < 4 && corr_width > 0.5)) {
             factor_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i].first, y_det_corridor_candidates[i].second, y_det_corridor_candidates[j].first, y_det_corridor_candidates[j].second);     
-          } else if (y_det_corridor_candidates[i].first.coeffs().head(3).dot(y_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width > 3)) {
+          } else if (y_det_corridor_candidates[i].first.coeffs().head(3).dot(y_det_corridor_candidates[j].first.coeffs().head(3)) < 0 && (corr_width > 4)) {
             room_y_det = true;
             y_room_pair_vec.push_back(y_det_corridor_candidates[i]);
             y_room_pair_vec.push_back(y_det_corridor_candidates[j]);
@@ -665,7 +669,7 @@ private:
     g2o::VertexSE3* corr_node;  std::pair<int,int> corr_data_association;   
     Eigen::Vector3d meas_prev_plane, meas_curr_plane;
     Eigen::Matrix<double, 1, 1> information(1);
-    correct_plane_d(plane_type, prev_plane, curr_plane);
+    //correct_plane_d(plane_type, prev_plane, curr_plane);
     Eigen::Isometry3d corr_pose = corridor_pose(prev_plane.coeffs(), curr_plane.coeffs());
 
     if(plane_type == plane_class::Y_VERT_PLANE) {
@@ -827,8 +831,8 @@ private:
     Eigen::Matrix<double, 1, 1> information(0.0001);
     
     /* it is assumed that x_room_pair and y_room_pair have size 2 */
-    correct_plane_d(plane_class::X_VERT_PLANE, x_room_pair_vec[0].first, x_room_pair_vec[1].first);
-    correct_plane_d(plane_class::Y_VERT_PLANE, y_room_pair_vec[0].first, y_room_pair_vec[1].first);
+    //correct_plane_d(plane_class::X_VERT_PLANE, x_room_pair_vec[0].first, x_room_pair_vec[1].first);
+    //correct_plane_d(plane_class::Y_VERT_PLANE, y_room_pair_vec[0].first, y_room_pair_vec[1].first);
   
     auto found_x_plane1 = x_vert_planes.begin();
     auto found_x_plane2 = x_vert_planes.begin();
@@ -969,7 +973,13 @@ private:
   } 
 
   float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
-    return fabs(v1(3)) + fabs(v2(3));
+    float size = 0;
+    if(fabs(v1(3)) > fabs(v2(3))) 
+      size = fabs(v1(3) - v2(3));
+    else if (fabs(v2(3)) > fabs(v1(3))) 
+      size = fabs(v2(3) - v1(3));  
+
+    return size;  
   }
 
   void correct_plane_d(int plane_type, g2o::Plane3D& plane1, g2o::Plane3D& plane2) { 
