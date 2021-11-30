@@ -1606,8 +1606,8 @@ private:
     edge_marker.pose.orientation.w = 1.0;
     edge_marker.scale.x = 0.05;
 
-    edge_marker.points.resize(graph_slam->graph->edges().size() * 2);
-    edge_marker.colors.resize(graph_slam->graph->edges().size() * 2);
+    edge_marker.points.resize(graph_slam->graph->edges().size() * 4);
+    edge_marker.colors.resize(graph_slam->graph->edges().size() * 4);
 
     auto edge_itr = graph_slam->graph->edges().begin();
     for(int i = 0; edge_itr != graph_slam->graph->edges().end(); edge_itr++, i++) {
@@ -1648,7 +1648,7 @@ private:
         g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
         g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
         Eigen::Vector3d pt1 = v1->estimate().translation();
-        Eigen::Vector3d pt2;
+        Eigen::Vector3d pt2, pt3;
 
         float r=0, g=0, b=0.0;
         double x=0, y=0;
@@ -1659,7 +1659,8 @@ private:
               y = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
             } 
           }
-          pt2 = Eigen::Vector3d(x, y, 5.0);
+          pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0);
+          pt3 = Eigen::Vector3d(x, y, 5.0);
           r=1.0;
         } 
         else if (fabs(v2->estimate().normal()(1)) > 0.95) {
@@ -1669,7 +1670,8 @@ private:
               y = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
             } 
           }
-          pt2 = Eigen::Vector3d(x, y, 5.0);
+          pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0);
+          pt3 = Eigen::Vector3d(x, y, 5.0);
           b=1.0;
         }
         else if (fabs(v2->estimate().normal()(2)) > 0.95) {
@@ -1679,8 +1681,9 @@ private:
               y = h_plane.cloud_seg_map->points[(h_plane.cloud_seg_map->points.size()/2)].y;
             }
           } 
-          pt2 = Eigen::Vector3d(x, y, 5.0);  
-          r=1; g=0.65;
+          pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
+          pt3 = Eigen::Vector3d(x, y, 5.0); 
+          g=1;
         }
 
         edge_marker.points[i * 2].x = pt1.x();
@@ -1690,14 +1693,31 @@ private:
         edge_marker.points[i * 2 + 1].y = pt2.y();
         edge_marker.points[i * 2 + 1].z = pt2.z();
 
-        edge_marker.colors[i * 2].r = r;
-        edge_marker.colors[i * 2].g = g;
-        edge_marker.colors[i * 2].b = b;
+        edge_marker.colors[i * 2].r = 0.5;
+        edge_marker.colors[i * 2].g = 0;
+        edge_marker.colors[i * 2].b = 0.0;
         edge_marker.colors[i * 2].a = 1.0;
-        edge_marker.colors[i * 2 + 1].r = r;
-        edge_marker.colors[i * 2 + 1].g = g;
-        edge_marker.colors[i * 2 + 1].b = b;
-        edge_marker.colors[i * 2 + 1].a = 1.0;
+        edge_marker.colors[i * 2 + 1].r = 0.5;
+        edge_marker.colors[i * 2 + 1].g = 0;
+        edge_marker.colors[i * 2 + 1].b = 0;
+        edge_marker.colors[i * 2 + 1].a = 0.5;
+
+        edge_marker.points[i * 2+2].x = pt2.x();
+        edge_marker.points[i * 2+2].y = pt2.y();
+        edge_marker.points[i * 2+2].z = pt2.z();
+        edge_marker.points[i * 2 + 3].x = pt3.x();
+        edge_marker.points[i * 2 + 3].y = pt3.y();
+        edge_marker.points[i * 2 + 3].z = pt3.z();
+
+        edge_marker.colors[i * 2+2].r = r;
+        edge_marker.colors[i * 2+2].g = g;
+        edge_marker.colors[i * 2+2].b = b;
+        edge_marker.colors[i * 2+2].a = 1.0;
+        edge_marker.colors[i * 2 + 3].r = r;
+        edge_marker.colors[i * 2 + 3].g = g;
+        edge_marker.colors[i * 2 + 3].b = b;
+        edge_marker.colors[i * 2 + 3].a = 0.5;
+
         continue;
       }
 
@@ -1737,7 +1757,7 @@ private:
             }
           } 
           pt2 = Eigen::Vector3d(x, y, 5.0);  
-          r=1; g=0.65;
+          g=0.65;
         }
 
         edge_marker.points[i * 2].x = pt1.x();
@@ -2004,7 +2024,7 @@ private:
         point.z = hort_planes[i].cloud_seg_map->points[j].z + 5.0;
         hort_plane_marker.points.push_back(point);
       }
-      hort_plane_marker.color.r = 1;
+      hort_plane_marker.color.r = 0;
       hort_plane_marker.color.g = 0.65;
       hort_plane_marker.color.a = 1;
     }
