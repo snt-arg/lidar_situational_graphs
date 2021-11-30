@@ -720,6 +720,7 @@ private:
         det_corridor.id = corr_data_association.first;
         det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
+        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_trans;
         det_corridor.node = corr_node;      
         y_corridors.push_back(det_corridor);
         
@@ -761,6 +762,7 @@ private:
         det_corridor.id = corr_data_association.first;
         det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
+        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_trans;
         det_corridor.node = corr_node;   
         x_corridors.push_back(det_corridor);
 
@@ -1537,23 +1539,23 @@ private:
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp) const {
     visualization_msgs::MarkerArray markers;
-    markers.markers.resize(11);
+    //markers.markers.resize(11);
 
     // node markers
-    visualization_msgs::Marker& traj_marker = markers.markers[0];
+    visualization_msgs::Marker traj_marker;
     traj_marker.header.frame_id = map_frame_id;
     traj_marker.header.stamp = stamp;
     traj_marker.ns = "nodes";
-    traj_marker.id = 0;
+    traj_marker.id = markers.markers.size();
     traj_marker.type = visualization_msgs::Marker::SPHERE_LIST;
 
     traj_marker.pose.orientation.w = 1.0;
     traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.5;
 
-    visualization_msgs::Marker& imu_marker = markers.markers[1];
+    visualization_msgs::Marker imu_marker;
     imu_marker.header = traj_marker.header;
     imu_marker.ns = "imu";
-    imu_marker.id = 1;
+    imu_marker.id = markers.markers.size()+1;
     imu_marker.type = visualization_msgs::Marker::SPHERE_LIST;
 
     imu_marker.pose.orientation.w = 1.0;
@@ -1590,13 +1592,15 @@ private:
         imu_marker.colors.push_back(color);
       }
     }
+    markers.markers.push_back(traj_marker); 
+    markers.markers.push_back(imu_marker); 
 
     // edge markers
-    visualization_msgs::Marker& edge_marker = markers.markers[2];
+    visualization_msgs::Marker edge_marker;
     edge_marker.header.frame_id = map_frame_id;
     edge_marker.header.stamp = stamp;
     edge_marker.ns = "edges";
-    edge_marker.id = 2;
+    edge_marker.id = markers.markers.size();
     edge_marker.type = visualization_msgs::Marker::LINE_LIST;
 
     edge_marker.pose.orientation.w = 1.0;
@@ -1640,11 +1644,12 @@ private:
       }
 
       g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
-      if(edge_plane && (i % 4 == 0)) {
+      if(edge_plane) {
         g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
         g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
         Eigen::Vector3d pt1 = v1->estimate().translation();
         Eigen::Vector3d pt2;
+
         float r=0, g=0, b=0.0;
         double x=0, y=0;
         if (fabs(v2->estimate().normal()(0)) > 0.95) {
@@ -1849,13 +1854,14 @@ private:
         continue;
       }
     }
+    markers.markers.push_back(edge_marker); 
 
     // sphere
-    visualization_msgs::Marker& sphere_marker = markers.markers[3];
+    visualization_msgs::Marker sphere_marker;
     sphere_marker.header.frame_id = map_frame_id;
     sphere_marker.header.stamp = stamp;
     sphere_marker.ns = "loop_close_radius";
-    sphere_marker.id = 3;
+    sphere_marker.id = markers.markers.size();
     sphere_marker.type = visualization_msgs::Marker::SPHERE;
 
     if(!keyframes.empty()) {
@@ -1869,9 +1875,10 @@ private:
 
     sphere_marker.color.r = 1.0;
     sphere_marker.color.a = 0.3;
+    markers.markers.push_back(sphere_marker); 
 
     //x vertical plane markers 
-    visualization_msgs::Marker& x_vert_plane_marker = markers.markers[4];
+    visualization_msgs::Marker x_vert_plane_marker;
     x_vert_plane_marker.pose.orientation.w = 1.0;
     x_vert_plane_marker.scale.x = 0.05;
     x_vert_plane_marker.scale.y = 0.05;
@@ -1880,7 +1887,7 @@ private:
     x_vert_plane_marker.header.frame_id = map_frame_id;
     x_vert_plane_marker.header.stamp = stamp;
     x_vert_plane_marker.ns = "x_vert_planes";
-    x_vert_plane_marker.id = 4;
+    x_vert_plane_marker.id = markers.markers.size();
     x_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
 
     for(int i = 0; i < x_vert_planes.size(); ++i) {
@@ -1894,9 +1901,11 @@ private:
       x_vert_plane_marker.color.r = 1;
       x_vert_plane_marker.color.a = 1;
     }
+    markers.markers.push_back(x_vert_plane_marker); 
+
 
     //x parallel plane markers 
-    visualization_msgs::Marker& x_parallel_plane_marker = markers.markers[5];
+    visualization_msgs::Marker x_parallel_plane_marker;
     x_parallel_plane_marker.pose.orientation.w = 1.0;
     x_parallel_plane_marker.scale.x = 0.05;
     x_parallel_plane_marker.scale.y = 2;
@@ -1905,7 +1914,7 @@ private:
     x_parallel_plane_marker.header.frame_id = map_frame_id;
     x_parallel_plane_marker.header.stamp = stamp;
     x_parallel_plane_marker.ns = "x_parallel_planes";
-    x_parallel_plane_marker.id = 5;
+    x_parallel_plane_marker.id = markers.markers.size();
     x_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
     for(int i = 0; i < x_vert_planes.size(); ++i) {
       if (x_vert_planes[i].parallel_pair) {
@@ -1918,9 +1927,11 @@ private:
     }
     x_parallel_plane_marker.color.r = 1;
     x_parallel_plane_marker.color.a = 1;
+    markers.markers.push_back(x_parallel_plane_marker); 
+
 
     //y vertical plane markers 
-    visualization_msgs::Marker& y_vert_plane_marker = markers.markers[6];
+    visualization_msgs::Marker y_vert_plane_marker;
     y_vert_plane_marker.pose.orientation.w = 1.0;
     y_vert_plane_marker.scale.x = 0.05;
     y_vert_plane_marker.scale.y = 0.05;
@@ -1929,7 +1940,7 @@ private:
     y_vert_plane_marker.header.frame_id = map_frame_id;
     y_vert_plane_marker.header.stamp = stamp;
     y_vert_plane_marker.ns = "y_vert_planes";
-    y_vert_plane_marker.id = 6;
+    y_vert_plane_marker.id = markers.markers.size();
     y_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
    
     for(int i = 0; i < y_vert_planes.size(); ++i) {
@@ -1943,10 +1954,11 @@ private:
       y_vert_plane_marker.color.b = 1;
       y_vert_plane_marker.color.a = 1;
     }
+    markers.markers.push_back(y_vert_plane_marker); 
 
 
     //y parallel plane markers 
-    visualization_msgs::Marker& y_parallel_plane_marker = markers.markers[7];
+    visualization_msgs::Marker y_parallel_plane_marker;
     y_parallel_plane_marker.pose.orientation.w = 1.0;
     y_parallel_plane_marker.scale.x = 2.0;
     y_parallel_plane_marker.scale.y = 0.05;
@@ -1955,7 +1967,7 @@ private:
     y_parallel_plane_marker.header.frame_id = map_frame_id;
     y_parallel_plane_marker.header.stamp = stamp;
     y_parallel_plane_marker.ns = "x_parallel_planes";
-    y_parallel_plane_marker.id = 7;
+    y_parallel_plane_marker.id = markers.markers.size();
     y_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
     for(int i = 0; i < y_vert_planes.size(); ++i) {
       if (y_vert_planes[i].parallel_pair) {
@@ -1968,9 +1980,11 @@ private:
     }
     y_parallel_plane_marker.color.b = 1;
     y_parallel_plane_marker.color.a = 1;
+    markers.markers.push_back(y_parallel_plane_marker); 
+
 
     //horizontal plane markers 
-    visualization_msgs::Marker& hort_plane_marker = markers.markers[8];
+    visualization_msgs::Marker hort_plane_marker;
     hort_plane_marker.pose.orientation.w = 1.0;
     hort_plane_marker.scale.x = 0.05;
     hort_plane_marker.scale.y = 0.05;
@@ -1994,9 +2008,10 @@ private:
       hort_plane_marker.color.g = 0.65;
       hort_plane_marker.color.a = 1;
     }
+    markers.markers.push_back(hort_plane_marker); 
 
     //x corridor markers
-    visualization_msgs::Marker& corridor_marker = markers.markers[9];
+    visualization_msgs::Marker corridor_marker;
     corridor_marker.pose.orientation.w = 1.0;
     corridor_marker.scale.x = 0.5;
     corridor_marker.scale.y = 0.5;
@@ -2005,29 +2020,70 @@ private:
     corridor_marker.header.frame_id = map_frame_id;
     corridor_marker.header.stamp = stamp;
     corridor_marker.ns = "corridors";
-    corridor_marker.id = 9;
+    corridor_marker.id = markers.markers.size();
     corridor_marker.type = visualization_msgs::Marker::CUBE_LIST;
-
-    for(int i = 0; i < x_corridors.size(); ++i) {
-      geometry_msgs::Point point;
-      point.x = -x_corridors[i].node->estimate().translation()(0);
-      point.y = -x_corridors[i].node->estimate().translation()(1);
-      point.z = 10;
-      corridor_marker.points.push_back(point);
-    }
-    for(int i = 0; i < y_corridors.size(); ++i) {
-      geometry_msgs::Point point;
-      point.x = -y_corridors[i].node->estimate().translation()(0);
-      point.y = -y_corridors[i].node->estimate().translation()(1);
-      point.z = 10;
-      corridor_marker.points.push_back(point);
-    }
     corridor_marker.color.r = 0;
     corridor_marker.color.g = 1;
     corridor_marker.color.a = 1; 
 
+    for(int i = 0; i < x_corridors.size(); ++i) {
+      geometry_msgs::Point point;
+      point.x = -x_corridors[i].node->estimate().translation()(0);
+      point.y =  x_corridors[i].keyframe_trans(1);
+      point.z = 12;
+      corridor_marker.points.push_back(point);
+
+      //fill in the text marker
+      visualization_msgs::Marker corr_x_text_marker;
+      corr_x_text_marker.scale.z = 0.5;
+      corr_x_text_marker.ns = "corridor_x_text";
+      corr_x_text_marker.header.frame_id = map_frame_id;
+      corr_x_text_marker.header.stamp = stamp;
+      corr_x_text_marker.id = markers.markers.size()+1;
+      corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate().translation()(0);
+      corr_x_text_marker.pose.position.y = x_corridors[i].keyframe_trans(1);
+      corr_x_text_marker.pose.position.z = 11.5;
+      corr_x_text_marker.color.r = 1;
+      corr_x_text_marker.color.g = 1;
+      corr_x_text_marker.color.b = 1;
+      corr_x_text_marker.color.a = 1; 
+      corr_x_text_marker.pose.orientation.w = 1.0;
+      corr_x_text_marker.text = "Corridor X" + std::to_string(i+1);
+      markers.markers.push_back(corr_x_text_marker);
+    }
+    
+    for(int i = 0; i < y_corridors.size(); ++i) {
+      geometry_msgs::Point point;
+      point.x =  y_corridors[i].keyframe_trans(0);
+      point.y = -y_corridors[i].node->estimate().translation()(1);
+      point.z = 12;
+      corridor_marker.points.push_back(point);
+
+      //fill in the text marker
+      visualization_msgs::Marker corr_y_text_marker;
+      corr_y_text_marker.scale.z = 0.5;
+      corr_y_text_marker.ns = "corridor_y_text";
+      corr_y_text_marker.header.frame_id = map_frame_id;
+      corr_y_text_marker.header.stamp = stamp;
+      corr_y_text_marker.id = markers.markers.size()+1;
+      corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      corr_y_text_marker.pose.position.x = y_corridors[i].keyframe_trans(0);
+      corr_y_text_marker.pose.position.y = -y_corridors[i].node->estimate().translation()(1);
+      corr_y_text_marker.pose.position.z = 11.5;
+      corr_y_text_marker.color.r = 1;
+      corr_y_text_marker.color.g = 1;
+      corr_y_text_marker.color.b = 1;
+      corr_y_text_marker.color.a = 1; 
+      corr_y_text_marker.pose.orientation.w = 1.0;
+      corr_y_text_marker.text = "Corridor Y" + std::to_string(i+1);
+      markers.markers.push_back(corr_y_text_marker);
+    }
+    markers.markers.push_back(corridor_marker); 
+
+
     //room markers
-    visualization_msgs::Marker& room_marker = markers.markers[10];
+    visualization_msgs::Marker room_marker;
     room_marker.pose.orientation.w = 1.0;
     room_marker.scale.x = 0.5;
     room_marker.scale.y = 0.5;
@@ -2036,20 +2092,42 @@ private:
     room_marker.header.frame_id = map_frame_id;
     room_marker.header.stamp = stamp;
     room_marker.ns = "rooms";
-    room_marker.id = 10;
+    room_marker.id = markers.markers.size();
     room_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    room_marker.color.r = 1;
+    room_marker.color.g = 0.07;
+    room_marker.color.b = 0.57;
+    room_marker.color.a = 1; 
 
     for(int i = 0; i < rooms_vec.size(); ++i) {
       geometry_msgs::Point point;
       point.x = -rooms_vec[i].node->estimate().translation()(0);
       point.y = -rooms_vec[i].node->estimate().translation()(1);
-      point.z = 10;
+      point.z = 14;
       room_marker.points.push_back(point);
+
+      //fill in the text marker
+      visualization_msgs::Marker room_text_marker;
+      room_text_marker.scale.z = 0.5;
+      room_text_marker.ns = "rooms_text";
+      room_text_marker.header.frame_id = map_frame_id;
+      room_text_marker.header.stamp = stamp;
+      room_text_marker.id = markers.markers.size()+1;
+      room_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      room_text_marker.pose.position.x = -rooms_vec[i].node->estimate().translation()(0);
+      room_text_marker.pose.position.y = -rooms_vec[i].node->estimate().translation()(1);
+      room_text_marker.pose.position.z = 13.5;
+      room_text_marker.color.r = 1;
+      room_text_marker.color.g = 1;
+      room_text_marker.color.b = 1;
+      room_text_marker.color.a = 1; 
+      room_text_marker.pose.orientation.w = 1.0;
+      room_text_marker.text = "Room" + std::to_string(i+1);
+
+      markers.markers.push_back(room_text_marker);
     }
-    room_marker.color.r = 1;
-    room_marker.color.g = 0.07;
-    room_marker.color.b = 0.57;
-    room_marker.color.a = 1; 
+    markers.markers.push_back(room_marker); 
+
 
     return markers;
   }
