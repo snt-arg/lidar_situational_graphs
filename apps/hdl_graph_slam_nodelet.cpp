@@ -1693,14 +1693,14 @@ private:
         edge_marker.points[i * 2 + 1].y = pt2.y();
         edge_marker.points[i * 2 + 1].z = pt2.z();
 
-        edge_marker.colors[i * 2].r = 0.5;
+        edge_marker.colors[i * 2].r = 0;
         edge_marker.colors[i * 2].g = 0;
         edge_marker.colors[i * 2].b = 0.0;
         edge_marker.colors[i * 2].a = 1.0;
-        edge_marker.colors[i * 2 + 1].r = 0.5;
+        edge_marker.colors[i * 2 + 1].r = 0;
         edge_marker.colors[i * 2 + 1].g = 0;
         edge_marker.colors[i * 2 + 1].b = 0;
-        edge_marker.colors[i * 2 + 1].a = 0.5;
+        edge_marker.colors[i * 2 + 1].a = 1;
 
         edge_marker.points[i * 2+2].x = pt2.x();
         edge_marker.points[i * 2+2].y = pt2.y();
@@ -1925,29 +1925,29 @@ private:
 
 
     //x parallel plane markers 
-    visualization_msgs::Marker x_parallel_plane_marker;
-    x_parallel_plane_marker.pose.orientation.w = 1.0;
-    x_parallel_plane_marker.scale.x = 0.05;
-    x_parallel_plane_marker.scale.y = 2;
-    x_parallel_plane_marker.scale.z = 1.0;
-    //plane_marker.points.resize(vert_planes.size());    
-    x_parallel_plane_marker.header.frame_id = map_frame_id;
-    x_parallel_plane_marker.header.stamp = stamp;
-    x_parallel_plane_marker.ns = "x_parallel_planes";
-    x_parallel_plane_marker.id = markers.markers.size();
-    x_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
-    for(int i = 0; i < x_vert_planes.size(); ++i) {
-      if (x_vert_planes[i].parallel_pair) {
-        geometry_msgs::Point parallel_plane_point;
-        parallel_plane_point.x = x_vert_planes[i].cloud_seg_map->points[(x_vert_planes[i].cloud_seg_map->points.size()/2)].x;
-        parallel_plane_point.y = x_vert_planes[i].cloud_seg_map->points[(x_vert_planes[i].cloud_seg_map->points.size()/2)].y;
-        parallel_plane_point.z = 8.0;
-        x_parallel_plane_marker.points.push_back(parallel_plane_point);
-      }
-    }
-    x_parallel_plane_marker.color.r = 1;
-    x_parallel_plane_marker.color.a = 1;
-    markers.markers.push_back(x_parallel_plane_marker); 
+    // visualization_msgs::Marker x_parallel_plane_marker;
+    // x_parallel_plane_marker.pose.orientation.w = 1.0;
+    // x_parallel_plane_marker.scale.x = 0.05;
+    // x_parallel_plane_marker.scale.y = 2;
+    // x_parallel_plane_marker.scale.z = 1.0;
+    // //plane_marker.points.resize(vert_planes.size());    
+    // x_parallel_plane_marker.header.frame_id = map_frame_id;
+    // x_parallel_plane_marker.header.stamp = stamp;
+    // x_parallel_plane_marker.ns = "x_parallel_planes";
+    // x_parallel_plane_marker.id = markers.markers.size();
+    // x_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    // for(int i = 0; i < x_vert_planes.size(); ++i) {
+    //   if (x_vert_planes[i].parallel_pair) {
+    //     geometry_msgs::Point parallel_plane_point;
+    //     parallel_plane_point.x = x_vert_planes[i].cloud_seg_map->points[(x_vert_planes[i].cloud_seg_map->points.size()/2)].x;
+    //     parallel_plane_point.y = x_vert_planes[i].cloud_seg_map->points[(x_vert_planes[i].cloud_seg_map->points.size()/2)].y;
+    //     parallel_plane_point.z = 8.0;
+    //     x_parallel_plane_marker.points.push_back(parallel_plane_point);
+    //   }
+    // }
+    // x_parallel_plane_marker.color.r = 1;
+    // x_parallel_plane_marker.color.a = 1;
+    // markers.markers.push_back(x_parallel_plane_marker); 
 
 
     //y vertical plane markers 
@@ -1978,29 +1978,29 @@ private:
 
 
     //y parallel plane markers 
-    visualization_msgs::Marker y_parallel_plane_marker;
-    y_parallel_plane_marker.pose.orientation.w = 1.0;
-    y_parallel_plane_marker.scale.x = 2.0;
-    y_parallel_plane_marker.scale.y = 0.05;
-    y_parallel_plane_marker.scale.z = 1.0;
-    //plane_marker.points.resize(vert_planes.size());    
-    y_parallel_plane_marker.header.frame_id = map_frame_id;
-    y_parallel_plane_marker.header.stamp = stamp;
-    y_parallel_plane_marker.ns = "x_parallel_planes";
-    y_parallel_plane_marker.id = markers.markers.size();
-    y_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
-    for(int i = 0; i < y_vert_planes.size(); ++i) {
-      if (y_vert_planes[i].parallel_pair) {
-        geometry_msgs::Point parallel_plane_point;
-        parallel_plane_point.x = y_vert_planes[i].cloud_seg_map->points[(y_vert_planes[i].cloud_seg_map->points.size()/2)].x;
-        parallel_plane_point.y = y_vert_planes[i].cloud_seg_map->points[(y_vert_planes[i].cloud_seg_map->points.size()/2)].y;
-        parallel_plane_point.z = 8.0;
-        y_parallel_plane_marker.points.push_back(parallel_plane_point);
-      }
-    }
-    y_parallel_plane_marker.color.b = 1;
-    y_parallel_plane_marker.color.a = 1;
-    markers.markers.push_back(y_parallel_plane_marker); 
+    // visualization_msgs::Marker y_parallel_plane_marker;
+    // y_parallel_plane_marker.pose.orientation.w = 1.0;
+    // y_parallel_plane_marker.scale.x = 2.0;
+    // y_parallel_plane_marker.scale.y = 0.05;
+    // y_parallel_plane_marker.scale.z = 1.0;
+    // //plane_marker.points.resize(vert_planes.size());    
+    // y_parallel_plane_marker.header.frame_id = map_frame_id;
+    // y_parallel_plane_marker.header.stamp = stamp;
+    // y_parallel_plane_marker.ns = "x_parallel_planes";
+    // y_parallel_plane_marker.id = markers.markers.size();
+    // y_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    // for(int i = 0; i < y_vert_planes.size(); ++i) {
+    //   if (y_vert_planes[i].parallel_pair) {
+    //     geometry_msgs::Point parallel_plane_point;
+    //     parallel_plane_point.x = y_vert_planes[i].cloud_seg_map->points[(y_vert_planes[i].cloud_seg_map->points.size()/2)].x;
+    //     parallel_plane_point.y = y_vert_planes[i].cloud_seg_map->points[(y_vert_planes[i].cloud_seg_map->points.size()/2)].y;
+    //     parallel_plane_point.z = 8.0;
+    //     y_parallel_plane_marker.points.push_back(parallel_plane_point);
+    //   }
+    // }
+    // y_parallel_plane_marker.color.b = 1;
+    // y_parallel_plane_marker.color.a = 1;
+    // markers.markers.push_back(y_parallel_plane_marker); 
 
 
     //horizontal plane markers 
@@ -2064,13 +2064,39 @@ private:
       corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate().translation()(0);
       corr_x_text_marker.pose.position.y = x_corridors[i].keyframe_trans(1);
       corr_x_text_marker.pose.position.z = 11.5;
-      corr_x_text_marker.color.r = 1;
-      corr_x_text_marker.color.g = 1;
-      corr_x_text_marker.color.b = 1;
+      // corr_x_text_marker.color.r = 1;
+      // corr_x_text_marker.color.g = 1;
+      // corr_x_text_marker.color.b = 1;
       corr_x_text_marker.color.a = 1; 
       corr_x_text_marker.pose.orientation.w = 1.0;
       corr_x_text_marker.text = "Corridor X" + std::to_string(i+1);
       markers.markers.push_back(corr_x_text_marker);
+
+      //fill in the line marker
+      visualization_msgs::Marker corr_x_line_marker;
+      corr_x_line_marker.scale.x = 0.05;
+      corr_x_line_marker.pose.orientation.w = 1.0;
+      corr_x_line_marker.ns = "corridor_x_lines";
+      corr_x_line_marker.header.frame_id = map_frame_id;
+      corr_x_line_marker.header.stamp = stamp;
+      corr_x_line_marker.id = markers.markers.size()+1;
+      corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      corr_x_line_marker.color.a = 1.0;
+      geometry_msgs::Point p1,p2,p3;
+      p1.x = -x_corridors[i].node->estimate().translation()(0);
+      p1.y =  x_corridors[i].keyframe_trans(1);
+      p1.z =  11.5;
+      p2.x = -x_corridors[i].node->estimate().translation()(0) - 0.5;
+      p2.y =  x_corridors[i].keyframe_trans(1) - 0.5;
+      p2.z =  8;
+      corr_x_line_marker.points.push_back(p1);
+      corr_x_line_marker.points.push_back(p2);
+      p3.x = -x_corridors[i].node->estimate().translation()(0) + 0.5;
+      p3.y =  x_corridors[i].keyframe_trans(1) - 0.5;
+      p3.z =  8;
+      corr_x_line_marker.points.push_back(p1);
+      corr_x_line_marker.points.push_back(p3);
+      markers.markers.push_back(corr_x_line_marker); 
     }
     
     for(int i = 0; i < y_corridors.size(); ++i) {
@@ -2091,13 +2117,39 @@ private:
       corr_y_text_marker.pose.position.x = y_corridors[i].keyframe_trans(0);
       corr_y_text_marker.pose.position.y = -y_corridors[i].node->estimate().translation()(1);
       corr_y_text_marker.pose.position.z = 11.5;
-      corr_y_text_marker.color.r = 1;
-      corr_y_text_marker.color.g = 1;
-      corr_y_text_marker.color.b = 1;
+      // corr_y_text_marker.color.r = 1;
+      // corr_y_text_marker.color.g = 1;
+      // corr_y_text_marker.color.b = 1;
       corr_y_text_marker.color.a = 1; 
       corr_y_text_marker.pose.orientation.w = 1.0;
       corr_y_text_marker.text = "Corridor Y" + std::to_string(i+1);
       markers.markers.push_back(corr_y_text_marker);
+
+      //fill in the line marker
+      visualization_msgs::Marker corr_y_line_marker;
+      corr_y_line_marker.scale.x = 0.05;
+      corr_y_line_marker.pose.orientation.w = 1.0;
+      corr_y_line_marker.ns = "corridor_y_lines";
+      corr_y_line_marker.header.frame_id = map_frame_id;
+      corr_y_line_marker.header.stamp = stamp;
+      corr_y_line_marker.id = markers.markers.size()+1;
+      corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      corr_y_line_marker.color.a = 1.0;
+      geometry_msgs::Point p1,p2,p3;
+      p1.x =   y_corridors[i].keyframe_trans(0);
+      p1.y =  -y_corridors[i].node->estimate().translation()(1);
+      p1.z =  11.5;
+      p2.x =   y_corridors[i].keyframe_trans(0) - 0.5;
+      p2.y =  -y_corridors[i].node->estimate().translation()(1) - 0.5;
+      p2.z =   8;
+      corr_y_line_marker.points.push_back(p1);
+      corr_y_line_marker.points.push_back(p2);
+      p3.x =  y_corridors[i].keyframe_trans(0) + 0.5;
+      p3.y = -y_corridors[i].node->estimate().translation()(1) - 0.5;
+      p3.z =   8;
+      corr_y_line_marker.points.push_back(p1);
+      corr_y_line_marker.points.push_back(p3);
+      markers.markers.push_back(corr_y_line_marker); 
     }
     markers.markers.push_back(corridor_marker); 
 
@@ -2137,14 +2189,49 @@ private:
       room_text_marker.pose.position.x = -rooms_vec[i].node->estimate().translation()(0);
       room_text_marker.pose.position.y = -rooms_vec[i].node->estimate().translation()(1);
       room_text_marker.pose.position.z = 13.5;
-      room_text_marker.color.r = 1;
-      room_text_marker.color.g = 1;
-      room_text_marker.color.b = 1;
+      // room_text_marker.color.r = 1;
+      // room_text_marker.color.g = 1;
+      // room_text_marker.color.b = 1;
       room_text_marker.color.a = 1; 
       room_text_marker.pose.orientation.w = 1.0;
       room_text_marker.text = "Room" + std::to_string(i+1);
-
       markers.markers.push_back(room_text_marker);
+
+      //fill in the line marker
+      visualization_msgs::Marker room_line_marker;
+      room_line_marker.scale.x = 0.05;
+      room_line_marker.pose.orientation.w = 1.0;
+      room_line_marker.ns = "rooms_lines";
+      room_line_marker.header.frame_id = map_frame_id;
+      room_line_marker.header.stamp = stamp;
+      room_line_marker.id = markers.markers.size()+1;
+      room_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      room_line_marker.color.a = 1.0;
+      geometry_msgs::Point p1,p2,p3,p4,p5;
+      p1.x = -rooms_vec[i].node->estimate().translation()(0);
+      p1.y = -rooms_vec[i].node->estimate().translation()(1);
+      p1.z = 13;
+      p2.x = -rooms_vec[i].node->estimate().translation()(0) - 1;
+      p2.y = -rooms_vec[i].node->estimate().translation()(1) - 1;
+      p2.z = 10;
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p2);
+      p3.x = -rooms_vec[i].node->estimate().translation()(0) + 1;
+      p3.y = -rooms_vec[i].node->estimate().translation()(1) - 1;
+      p3.z = 10;
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p3);
+      p4.x = -rooms_vec[i].node->estimate().translation()(0) - 1;
+      p4.y = -rooms_vec[i].node->estimate().translation()(1) + 1;
+      p4.z = 10;
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p4);
+      p5.x = -rooms_vec[i].node->estimate().translation()(0) + 1;
+      p5.y = -rooms_vec[i].node->estimate().translation()(1) + 1;
+      p5.z = 10;
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p5);
+      markers.markers.push_back(room_line_marker); 
     }
     markers.markers.push_back(room_marker); 
 

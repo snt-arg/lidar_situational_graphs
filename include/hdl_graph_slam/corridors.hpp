@@ -19,6 +19,7 @@ public:
   int id;
   g2o::Plane3D plane1, plane2;
   int plane1_id, plane2_id;
+  Eigen::Vector3d keyframe_trans;
   g2o::VertexSE3* node;                       // node instance
 };
 
