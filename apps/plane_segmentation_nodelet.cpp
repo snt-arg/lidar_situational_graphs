@@ -109,9 +109,18 @@ private:
         // seg.setInputNormals(normal_cloud);
         int model_type = seg.getModelType();
         seg.segment(*inliers, *coefficients);
-        if(inliers->indices.empty() || inliers->indices.size() < 800) {
+        /* check if indicies are not empty for no crash */
+        if(inliers->indices.empty()) {
           std::cout << "Breaking as no model found" << std::endl;
           break;
+        }
+        /* filtering out noisy ground plane measurements */
+        if((fabs(coefficients->values[2]) > 0.9 && inliers->indices.size() < 800) || inliers->indices.size() < 100) {
+          extract.setInputCloud(transformed_cloud);
+          extract.setIndices(inliers);
+          extract.setNegative(true);
+          extract.filter(*transformed_cloud);
+          continue;
         }
 
         Eigen::Vector4d normal(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]);
@@ -133,9 +142,9 @@ private:
 
           // visulazing the pointcloud
           segmented_cloud.points.push_back(transformed_cloud->points[idx]);
-          segmented_cloud.back().r = 255 - (i*100);
-          segmented_cloud.back().g = (i*100);
-          segmented_cloud.back().b = 0;
+          segmented_cloud.back().r = 254;
+          segmented_cloud.back().g = 216;
+          segmented_cloud.back().b = 177;
         }
 
         sensor_msgs::PointCloud2 extracted_cloud_msg;
