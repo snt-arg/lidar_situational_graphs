@@ -774,7 +774,6 @@ private:
         /* add the edge between detected planes and the corridor */
         corr_node = x_corridors[corr_data_association.second].node;
         std::cout << "Matched det corridor X with pose " << corr_pose.translation()(1) << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate().translation()(1)  << std::endl;
-
         
         found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
@@ -1683,7 +1682,7 @@ private:
           } 
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
           pt3 = Eigen::Vector3d(x, y, 5.0); 
-          g=1;
+          r=1; g=0.65;
         }
 
         edge_marker.points[i * 2].x = pt1.x();
@@ -1757,7 +1756,7 @@ private:
             }
           } 
           pt2 = Eigen::Vector3d(x, y, 5.0);  
-          g=0.65;
+          r=1; g=0.65;
         }
 
         edge_marker.points[i * 2].x = pt1.x();
@@ -2024,7 +2023,7 @@ private:
         point.z = hort_planes[i].cloud_seg_map->points[j].z + 5.0;
         hort_plane_marker.points.push_back(point);
       }
-      hort_plane_marker.color.r = 0;
+      hort_plane_marker.color.r = 1;
       hort_plane_marker.color.g = 0.65;
       hort_plane_marker.color.a = 1;
     }
@@ -2048,7 +2047,7 @@ private:
 
     for(int i = 0; i < x_corridors.size(); ++i) {
       geometry_msgs::Point point;
-      point.x = -x_corridors[i].node->estimate().translation()(0);
+      point.x = -x_corridors[i].node->estimate().translation()(1);
       point.y =  x_corridors[i].keyframe_trans(1);
       point.z = 12;
       corridor_marker.points.push_back(point);
@@ -2061,7 +2060,7 @@ private:
       corr_x_text_marker.header.stamp = stamp;
       corr_x_text_marker.id = markers.markers.size()+1;
       corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate().translation()(0);
+      corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate().translation()(1);
       corr_x_text_marker.pose.position.y = x_corridors[i].keyframe_trans(1);
       corr_x_text_marker.pose.position.z = 11.5;
       // corr_x_text_marker.color.r = 1;
@@ -2083,16 +2082,16 @@ private:
       corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
       corr_x_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
-      p1.x = -x_corridors[i].node->estimate().translation()(0);
+      p1.x = -x_corridors[i].node->estimate().translation()(1);
       p1.y =  x_corridors[i].keyframe_trans(1);
       p1.z =  11.5;
-      p2.x = -x_corridors[i].node->estimate().translation()(0) - 0.5;
-      p2.y =  x_corridors[i].keyframe_trans(1) - 0.5;
+      p2.x = -x_corridors[i].node->estimate().translation()(1) - 0.5;
+      p2.y =  x_corridors[i].keyframe_trans(1);
       p2.z =  8;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p2);
-      p3.x = -x_corridors[i].node->estimate().translation()(0) + 0.5;
-      p3.y =  x_corridors[i].keyframe_trans(1) - 0.5;
+      p3.x = -x_corridors[i].node->estimate().translation()(1) + 0.5;
+      p3.y =  x_corridors[i].keyframe_trans(1);
       p3.z =  8;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p3);
@@ -2139,13 +2138,13 @@ private:
       p1.x =   y_corridors[i].keyframe_trans(0);
       p1.y =  -y_corridors[i].node->estimate().translation()(1);
       p1.z =  11.5;
-      p2.x =   y_corridors[i].keyframe_trans(0) - 0.5;
+      p2.x =   y_corridors[i].keyframe_trans(0);
       p2.y =  -y_corridors[i].node->estimate().translation()(1) - 0.5;
       p2.z =   8;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p2);
-      p3.x =  y_corridors[i].keyframe_trans(0) + 0.5;
-      p3.y = -y_corridors[i].node->estimate().translation()(1) - 0.5;
+      p3.x =  y_corridors[i].keyframe_trans(0);
+      p3.y = -y_corridors[i].node->estimate().translation()(1) + 0.5;
       p3.z =   8;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p3);
