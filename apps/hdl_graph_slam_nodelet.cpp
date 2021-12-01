@@ -125,6 +125,21 @@ public:
     enable_imu_acceleration = private_nh.param<bool>("enable_imu_acceleration", false);
     imu_orientation_edge_stddev = private_nh.param<double>("imu_orientation_edge_stddev", 0.1);
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
+    
+    plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
+    use_point_to_plane = private_nh.param<bool>("plane_dist_threshold", false);
+
+
+    corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 0.7);
+    corridor_min_length = private_nh.param<double>("corridor_min_length", 10);
+    corridor_min_width  = private_nh.param<double>("corridor_min_width", 0.5);
+    corridor_max_width  = private_nh.param<double>("corridor_max_width", 3.0);
+
+    room_dist_threshold = private_nh.param<double>("room_dist_threshold", 0.7);
+    room_min_length = private_nh.param<double>("room_min_length", 3.0);
+    room_min_width = private_nh.param<double>("room_min_width", 2.5);
+
+
 
     points_topic = private_nh.param<std::string>("points_topic", "/velodyne_points");
 
@@ -256,13 +271,9 @@ private:
    
     bool updated = false; int plane_id;
     for(const auto& clouds_seg_msg : clouds_seg_queue) {
-      g2o::Plane3D prev_x_plane = Eigen::Vector4d(0,0,0,0); int prev_x_plane_id =-1;
-      g2o::Plane3D prev_y_plane = Eigen::Vector4d(0,0,0,0); int prev_y_plane_id =-1;
 
       std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
       std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
-
-      float prev_x_length = 0, prev_y_length = 0; 
 
       for(const auto& cloud_seg_msg : clouds_seg_msg->pointclouds) {
 
@@ -287,45 +298,42 @@ private:
         coeffs_map_frame.head<3>() = w2n.rotation() * coeffs_body_frame.head<3>();
         coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
 
-        int plane_type;
-        bool use_point_to_plane = 0;
-        int corridor_plane = 0;  
         if (fabs(coeffs_map_frame(0)) > 0.98) {              
-          plane_type = plane_class::X_VERT_PLANE; 
+          int plane_type = plane_class::X_VERT_PLANE; 
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type);
           /* check for potential x corridor and room candidates */
           float length =  plane_length(cloud_seg_body);       
           std::cout << "length x: " << length << std::endl;
     
           plane_data_list x_plane_id_pair;
           x_plane_id_pair.plane = det_plane_map_frame; x_plane_id_pair.plane_id = plane_id; x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
-          if(length > 10) {
+          if(length >= corridor_min_length) {
             x_det_corridor_candidates.push_back(x_plane_id_pair); 
-          } else if (length > 3) {
+          } else if (length >= room_min_length && length <= corridor_min_length) {
             x_det_room_candidates.push_back(x_plane_id_pair);
           }
           updated = true;
         } else if (fabs(coeffs_map_frame(1)) > 0.98) {                   
-          plane_type = plane_class::Y_VERT_PLANE;  
+          int plane_type = plane_class::Y_VERT_PLANE;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type);
 
           /* check for potential y corridor and room candidates */
           float length =  plane_length(cloud_seg_body);  
           std::cout << "length y: " << length << std::endl;
           plane_data_list y_plane_id_pair;
           y_plane_id_pair.plane = det_plane_map_frame; y_plane_id_pair.plane_id = plane_id; y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
-          if(length > 10) {
+          if(length >= corridor_min_length) {
             y_det_corridor_candidates.push_back(y_plane_id_pair); 
-          } else if (length > 2.5) {
+          } else if (length >= room_min_length && length <= corridor_min_length) {
             y_det_room_candidates.push_back(y_plane_id_pair);
           }
           updated = true;
         } else if (fabs(coeffs_map_frame(2)) > 0.95) {
-          plane_type = plane_class::HORT_PLANE;  
+          int plane_type = plane_class::HORT_PLANE;  
           g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
-          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type, use_point_to_plane);
+          plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type);
           updated = true;
         } else 
           continue;
@@ -338,7 +346,7 @@ private:
           correct_plane_d(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i].plane, x_det_corridor_candidates[j].plane);
           float corr_width = width_between_planes(x_det_corridor_candidates[i].plane.coeffs(), x_det_corridor_candidates[j].plane.coeffs());
           std::cout << "x corr_width: " << corr_width << std::endl;
-          if (x_det_corridor_candidates[i].plane.coeffs().head(3).dot(x_det_corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < 3 && corr_width > 0.5)) {
+          if (x_det_corridor_candidates[i].plane.coeffs().head(3).dot(x_det_corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)) {
             factor_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i], x_det_corridor_candidates[j]);
           } 
         } 
@@ -350,7 +358,7 @@ private:
           correct_plane_d(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i].plane, y_det_corridor_candidates[j].plane);
           float corr_width = width_between_planes(y_det_corridor_candidates[i].plane.coeffs(), y_det_corridor_candidates[j].plane.coeffs());
           std::cout << "y corr_width: " << corr_width << std::endl;
-          if (y_det_corridor_candidates[i].plane.coeffs().head(3).dot(y_det_corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < 3 && corr_width > 0.5)) {
+          if (y_det_corridor_candidates[i].plane.coeffs().head(3).dot(y_det_corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)) {
             factor_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i], y_det_corridor_candidates[j]);     
           } 
         }
@@ -362,7 +370,7 @@ private:
           correct_plane_d(plane_class::X_VERT_PLANE, x_det_room_candidates[i].plane, x_det_room_candidates[j].plane);
           float room_width = width_between_planes(x_det_room_candidates[i].plane.coeffs(), x_det_room_candidates[j].plane.coeffs());
           std::cout << "x room_width: " << room_width << std::endl;
-          if (x_det_room_candidates[i].plane.coeffs().head(3).dot(x_det_room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > 2.5) {
+          if (x_det_room_candidates[i].plane.coeffs().head(3).dot(x_det_room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width) {
             x_room_pair_vec.push_back(x_det_room_candidates[i]);
             x_room_pair_vec.push_back(x_det_room_candidates[j]);
           }
@@ -375,7 +383,7 @@ private:
           correct_plane_d(plane_class::Y_VERT_PLANE, y_det_room_candidates[i].plane, y_det_room_candidates[j].plane);
           float room_width = width_between_planes(y_det_room_candidates[i].plane.coeffs(), y_det_room_candidates[j].plane.coeffs());
           std::cout << "y room_width: " << room_width << std::endl;
-          if (y_det_room_candidates[i].plane.coeffs().head(3).dot(y_det_room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > 2.5) {
+          if (y_det_room_candidates[i].plane.coeffs().head(3).dot(y_det_room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width) {
             y_room_pair_vec.push_back(y_det_room_candidates[i]);
             y_room_pair_vec.push_back(y_det_room_candidates[j]);
           }
@@ -410,7 +418,7 @@ private:
   /** 
   * @brief create vertical plane factors
   */
-  int factor_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type, bool use_point_to_plane) {
+  int factor_planes(KeyFrame::Ptr keyframe, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type) {
     g2o::VertexPlane* plane_node; 
     Eigen::Matrix4d Gij;
     Gij.setZero();  
@@ -621,13 +629,7 @@ private:
 
       // if(min_dist > 0.30)
       //   id = -1;
-      double threshold;
-      if(plane_type == plane_class::HORT_PLANE)
-        threshold = 0.15;
-      else   
-        threshold = 0.15;
-
-      if(min_maha_dist > threshold)
+      if(min_maha_dist > plane_dist_threshold)
          data_association.first = -1;
 
     return data_association;
@@ -847,8 +849,7 @@ private:
     }
 
     std::cout << "min dist: " << min_dist << std::endl;
-    float threshold = 0.7;
-    if (min_dist > threshold) 
+    if (min_dist > corridor_dist_threshold) 
       data_association.first = -1;
 
     return data_association;
@@ -987,8 +988,7 @@ private:
     }
 
     std::cout << "min dist: " << min_dist << std::endl;
-    float threshold = 0.7;
-    if (min_dist > threshold) 
+    if (min_dist > room_dist_threshold) 
       data_association.first = -1;
 
     return data_association;
@@ -1679,7 +1679,7 @@ private:
               x = h_plane.cloud_seg_map->points[(h_plane.cloud_seg_map->points.size()/2)].x;
               y = h_plane.cloud_seg_map->points[(h_plane.cloud_seg_map->points.size()/2)].y;
             }
-          } 
+          }   
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
           pt3 = Eigen::Vector3d(x, y, 5.0); 
           r=1; g=0.65;
@@ -2234,6 +2234,55 @@ private:
     }
     markers.markers.push_back(room_marker); 
 
+    // final line markers for printing different layers for abstraction
+    visualization_msgs::Marker robot_layer_marker;
+    robot_layer_marker.scale.z = 1.5;
+    robot_layer_marker.ns = "layer_marker";
+    robot_layer_marker.header.frame_id = map_frame_id;
+    robot_layer_marker.header.stamp = stamp;
+    robot_layer_marker.id = markers.markers.size();
+    robot_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    robot_layer_marker.pose.position.x = 0.0;
+    robot_layer_marker.pose.position.y = 30.0;
+    robot_layer_marker.pose.position.z = 0.0;
+    robot_layer_marker.color.a = 1; 
+    robot_layer_marker.pose.orientation.w = 1.0;
+    robot_layer_marker.text = "Robot Tracking Layer";
+    markers.markers.push_back(robot_layer_marker);
+
+    if(!y_vert_planes.empty() || !x_vert_planes.empty()) {
+      visualization_msgs::Marker semantic_layer_marker;
+      semantic_layer_marker.scale.z = 1.5;
+      semantic_layer_marker.ns = "layer_marker";
+      semantic_layer_marker.header.frame_id = map_frame_id;
+      semantic_layer_marker.header.stamp = stamp;
+      semantic_layer_marker.id = markers.markers.size();
+      semantic_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      semantic_layer_marker.pose.position.x = 0.0;
+      semantic_layer_marker.pose.position.y = 30.0;
+      semantic_layer_marker.pose.position.z = 5.0;
+      semantic_layer_marker.color.a = 1; 
+      semantic_layer_marker.pose.orientation.w = 1.0;
+      semantic_layer_marker.text = "Metric-Semantic Layer";
+      markers.markers.push_back(semantic_layer_marker);
+    }
+
+    if(!x_corridors.empty() || !y_corridors.empty() || !rooms_vec.empty()) {
+      visualization_msgs::Marker topological_layer_marker;
+      topological_layer_marker.scale.z = 1.5;
+      topological_layer_marker.ns = "layer_marker";
+      topological_layer_marker.header.frame_id = map_frame_id;
+      topological_layer_marker.header.stamp = stamp;
+      topological_layer_marker.id = markers.markers.size();
+      topological_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      topological_layer_marker.pose.position.x = 0.0;
+      topological_layer_marker.pose.position.y = 30.0;
+      topological_layer_marker.pose.position.z = 12.0;
+      topological_layer_marker.color.a = 1; 
+      topological_layer_marker.pose.orientation.w = 1.0;
+      topological_layer_marker.text = "Topological Layer";
+      markers.markers.push_back(topological_layer_marker);
+    }
 
     return markers;
   }
@@ -2393,6 +2442,10 @@ private:
   std::deque<hdl_graph_slam::FloorCoeffsConstPtr> floor_coeffs_queue;
 
   //vertical and horizontal planes
+  double plane_dist_threshold;
+  bool use_point_to_plane;
+  double corridor_dist_threshold, corridor_min_length, corridor_min_width, corridor_max_width;
+  double room_dist_threshold, room_min_length, room_min_width;
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                        // horizontally segmented planes
   std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes
