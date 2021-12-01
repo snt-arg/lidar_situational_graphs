@@ -56,6 +56,8 @@ private:
     this->cloud_accum_ = 0;
     plane_extraction_frame_ = private_nh.param<std::string>("plane_extraction_frame_id", "base_link");
     min_seg_points_ = private_nh.param<int>("min_seg_points", 1000);
+    min_horizontal_inliers_ = private_nh.param<int>("min_horizontal_inliers", 800);
+    min_vertical_inliers_ = private_nh.param<int>("min_vertical_inliers", 500);
   }
 
   void init_ros() {
@@ -115,7 +117,7 @@ private:
           break;
         }
         /* filtering out noisy ground plane measurements */
-        if((fabs(coefficients->values[2]) > 0.9 && inliers->indices.size() < 800) || inliers->indices.size() < 100) {
+        if((fabs(coefficients->values[2]) > 0.9 && inliers->indices.size() < min_horizontal_inliers_) || inliers->indices.size() < min_vertical_inliers_) {
           extract.setInputCloud(transformed_cloud);
           extract.setIndices(inliers);
           extract.setNegative(true);
@@ -200,7 +202,7 @@ private:
   pcl::PointCloud<PointT>::Ptr cloud_accumulated_;
   tf::TransformListener tf_listener_;
   std::string plane_extraction_frame_;
-  int min_seg_points_;
+  int min_seg_points_, min_horizontal_inliers_, min_vertical_inliers_;
   friend bool operator==(const PointT& p1, const PointT& p2);
 };
 
