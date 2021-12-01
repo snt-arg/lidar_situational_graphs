@@ -128,37 +128,33 @@ public:
     
     plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
     use_point_to_plane = private_nh.param<bool>("plane_dist_threshold", false);
-
+    use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
+    use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
     corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 0.7);
-    corridor_min_length = private_nh.param<double>("corridor_min_length", 10);
+    corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
     corridor_min_width  = private_nh.param<double>("corridor_min_width", 0.5);
     corridor_max_width  = private_nh.param<double>("corridor_max_width", 3.0);
 
     room_dist_threshold = private_nh.param<double>("room_dist_threshold", 0.7);
-    room_min_length = private_nh.param<double>("room_min_length", 3.0);
+    room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
     room_min_width = private_nh.param<double>("room_min_width", 2.5);
-
-
 
     points_topic = private_nh.param<std::string>("points_topic", "/velodyne_points");
 
     init_odom2map_sub = nh.subscribe("/odom2map/initial_pose", 1, &HdlGraphSlamNodelet::init_map2odom_pose_callback, this);
-
     while(wait_trans_odom2map && !got_trans_odom2map) {
       ROS_WARN("Waiting for the Initial Transform between odom and map frame");
       ros::spinOnce();
       usleep(1e6);
     }
     
-
     // subscribers
     odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
     cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
     sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_callback, this, _1, _2));
   
-
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &HdlGraphSlamNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &HdlGraphSlamNodelet::floor_coeffs_callback, this);
     cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
@@ -292,47 +288,41 @@ private:
 
         const auto& keyframe = found->second;
     
-        Eigen::Vector4d coeffs_body_frame(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);          
-        g2o::Plane3D det_plane_body_frame = coeffs_body_frame;
-        Eigen::Vector4d coeffs_map_frame; Eigen::Isometry3d w2n = keyframe->node->estimate();
-        coeffs_map_frame.head<3>() = w2n.rotation() * coeffs_body_frame.head<3>();
-        coeffs_map_frame(3) = coeffs_body_frame(3) - w2n.translation().dot(coeffs_map_frame.head<3>());
+        g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
+        g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
 
-        if (fabs(coeffs_map_frame(0)) > 0.98) {              
+        if (fabs(det_plane_map_frame.coeffs()(0)) > 0.98) {              
           int plane_type = plane_class::X_VERT_PLANE; 
-          g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type);
           /* check for potential x corridor and room candidates */
           float length =  plane_length(cloud_seg_body);       
-          std::cout << "length x: " << length << std::endl;
+          //std::cout << "length x: " << length << std::endl;
     
           plane_data_list x_plane_id_pair;
           x_plane_id_pair.plane = det_plane_map_frame; x_plane_id_pair.plane_id = plane_id; x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
-          if(length >= corridor_min_length) {
+          if(length >= corridor_min_plane_length) {
             x_det_corridor_candidates.push_back(x_plane_id_pair); 
-          } else if (length >= room_min_length && length <= corridor_min_length) {
+          } else if (length >= room_min_plane_length && length <= corridor_min_plane_length) {
             x_det_room_candidates.push_back(x_plane_id_pair);
           }
           updated = true;
-        } else if (fabs(coeffs_map_frame(1)) > 0.98) {                   
+        } else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.98) {                   
           int plane_type = plane_class::Y_VERT_PLANE;  
-          g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type);
 
           /* check for potential y corridor and room candidates */
           float length =  plane_length(cloud_seg_body);  
-          std::cout << "length y: " << length << std::endl;
+          //std::cout << "length y: " << length << std::endl;
           plane_data_list y_plane_id_pair;
           y_plane_id_pair.plane = det_plane_map_frame; y_plane_id_pair.plane_id = plane_id; y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
-          if(length >= corridor_min_length) {
+          if(length >= corridor_min_plane_length) {
             y_det_corridor_candidates.push_back(y_plane_id_pair); 
-          } else if (length >= room_min_length && length <= corridor_min_length) {
+          } else if (length >= room_min_plane_length && length <= corridor_min_plane_length) {
             y_det_room_candidates.push_back(y_plane_id_pair);
           }
           updated = true;
-        } else if (fabs(coeffs_map_frame(2)) > 0.95) {
+        } else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.95) {
           int plane_type = plane_class::HORT_PLANE;  
-          g2o::Plane3D det_plane_map_frame = coeffs_map_frame;
           plane_id = factor_planes(keyframe, cloud_seg_body, det_plane_map_frame, det_plane_body_frame, plane_type);
           updated = true;
         } else 
@@ -345,7 +335,7 @@ private:
         for(int j=i+1; j < x_det_corridor_candidates.size(); ++j) {
           correct_plane_d(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i].plane, x_det_corridor_candidates[j].plane);
           float corr_width = width_between_planes(x_det_corridor_candidates[i].plane.coeffs(), x_det_corridor_candidates[j].plane.coeffs());
-          std::cout << "x corr_width: " << corr_width << std::endl;
+          //std::cout << "x corr_width: " << corr_width << std::endl;
           if (x_det_corridor_candidates[i].plane.coeffs().head(3).dot(x_det_corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)) {
             factor_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates[i], x_det_corridor_candidates[j]);
           } 
@@ -357,7 +347,7 @@ private:
         for(int j=i+1; j < y_det_corridor_candidates.size(); ++j) {
           correct_plane_d(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i].plane, y_det_corridor_candidates[j].plane);
           float corr_width = width_between_planes(y_det_corridor_candidates[i].plane.coeffs(), y_det_corridor_candidates[j].plane.coeffs());
-          std::cout << "y corr_width: " << corr_width << std::endl;
+          //std::cout << "y corr_width: " << corr_width << std::endl;
           if (y_det_corridor_candidates[i].plane.coeffs().head(3).dot(y_det_corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)) {
             factor_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates[i], y_det_corridor_candidates[j]);     
           } 
@@ -369,7 +359,7 @@ private:
         for(int j=i+1; j < x_det_room_candidates.size(); ++j) {
           correct_plane_d(plane_class::X_VERT_PLANE, x_det_room_candidates[i].plane, x_det_room_candidates[j].plane);
           float room_width = width_between_planes(x_det_room_candidates[i].plane.coeffs(), x_det_room_candidates[j].plane.coeffs());
-          std::cout << "x room_width: " << room_width << std::endl;
+          //std::cout << "x room_width: " << room_width << std::endl;
           if (x_det_room_candidates[i].plane.coeffs().head(3).dot(x_det_room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width) {
             x_room_pair_vec.push_back(x_det_room_candidates[i]);
             x_room_pair_vec.push_back(x_det_room_candidates[j]);
@@ -382,7 +372,7 @@ private:
         for(int j=i+1; j < y_det_room_candidates.size(); ++j) {
           correct_plane_d(plane_class::Y_VERT_PLANE, y_det_room_candidates[i].plane, y_det_room_candidates[j].plane);
           float room_width = width_between_planes(y_det_room_candidates[i].plane.coeffs(), y_det_room_candidates[j].plane.coeffs());
-          std::cout << "y room_width: " << room_width << std::endl;
+          //std::cout << "y room_width: " << room_width << std::endl;
           if (y_det_room_candidates[i].plane.coeffs().head(3).dot(y_det_room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width) {
             y_room_pair_vec.push_back(y_det_room_candidates[i]);
             y_room_pair_vec.push_back(y_det_room_candidates[j]);
@@ -401,6 +391,21 @@ private:
     return updated;
   }
   
+  /**
+   * @brief convert body plane coefficients to map frame
+   */
+    g2o::Plane3D plane_in_map_frame(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_body_frame) {
+      g2o::Plane3D det_plane_map_frame; 
+      Eigen::Vector4d map_coeffs;
+
+      Eigen::Isometry3d w2n = keyframe->node->estimate();
+      map_coeffs.head<3>() =  w2n.rotation() * det_plane_body_frame.coeffs().head<3>();
+      map_coeffs(3) = det_plane_body_frame.coeffs()(3) - w2n.translation().dot(map_coeffs.head<3>());
+      det_plane_map_frame = map_coeffs;
+
+      return det_plane_map_frame;
+  }
+
   /**  
   *@brief Converting the cloud to map frame
   */
@@ -525,12 +530,10 @@ private:
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
 
-    bool use_parallel_constraint = true;
-    if(use_parallel_constraint && add_parallel_plane_edge) {
+    if(use_parallel_plane_constraint && add_parallel_plane_edge) {
       parallel_plane_constraint(plane_node, data_association.first, plane_type);
     }
-    bool use_perpendicular_constraint = true;
-    if(use_perpendicular_constraint && add_perpendicular_plane_edge) {
+    if(use_perpendicular_plane_constraint && add_perpendicular_plane_edge) {
       perpendicular_plane_constraint(plane_node, data_association.first, plane_type);
     }
 
@@ -705,6 +708,46 @@ private:
     Eigen::Vector3d meas_plane1, meas_plane2;
     Eigen::Matrix<double, 1, 1> information(1);
     Eigen::Isometry3d corr_pose = corridor_pose(corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs());
+    
+    if(plane_type == plane_class::X_VERT_PLANE) { 
+      auto found_plane1 = x_vert_planes.begin();
+      auto found_plane2 = x_vert_planes.begin();
+      corr_data_association = associate_corridors(plane_type, corr_pose);
+
+      if((x_corridors.empty() || corr_data_association.first == -1)) {
+        
+        std::cout << "found an X corridor with pose " << corr_pose.translation()(1) <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        corr_data_association.first = graph_slam->num_vertices();
+        corr_node = graph_slam->add_se3_node(corr_pose);
+        corr_node->setFixed(true);
+        Corridors det_corridor;
+        det_corridor.id = corr_data_association.first;
+        det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
+        det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
+        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_trans;
+        det_corridor.node = corr_node;   
+        x_corridors.push_back(det_corridor);
+
+        found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
+        found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
+        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
+        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
+      } else {
+        /* add the edge between detected planes and the corridor */
+        corr_node = x_corridors[corr_data_association.second].node;
+        std::cout << "Matched det corridor X with pose " << corr_pose.translation()(1) << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate().translation()(1)  << std::endl;
+        
+        found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
+        found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
+        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
+        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
+      }
+      auto edge_plane1 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane1).node, meas_plane1, information);
+      graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+
+      auto edge_plane2 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane2).node, meas_plane2, information);
+      graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+    }
 
     if(plane_type == plane_class::Y_VERT_PLANE) {
 
@@ -748,46 +791,6 @@ private:
       auto edge_plane2 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane2).node, meas_plane2, information);
       graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0); 
     } 
-    
-    else if(plane_type == plane_class::X_VERT_PLANE) { 
-      auto found_plane1 = x_vert_planes.begin();
-      auto found_plane2 = x_vert_planes.begin();
-      corr_data_association = associate_corridors(plane_type, corr_pose);
-
-      if((x_corridors.empty() || corr_data_association.first == -1)) {
-        
-        std::cout << "found an X corridor with pose " << corr_pose.translation()(1) <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
-        corr_data_association.first = graph_slam->num_vertices();
-        corr_node = graph_slam->add_se3_node(corr_pose);
-        corr_node->setFixed(true);
-        Corridors det_corridor;
-        det_corridor.id = corr_data_association.first;
-        det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
-        det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
-        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_trans;
-        det_corridor.node = corr_node;   
-        x_corridors.push_back(det_corridor);
-
-        found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
-        found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
-      } else {
-        /* add the edge between detected planes and the corridor */
-        corr_node = x_corridors[corr_data_association.second].node;
-        std::cout << "Matched det corridor X with pose " << corr_pose.translation()(1) << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate().translation()(1)  << std::endl;
-        
-        found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
-        found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
-      }
-      auto edge_plane1 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane1).node, meas_plane1, information);
-      graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
-
-      auto edge_plane2 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane2).node, meas_plane2, information);
-      graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
-    }
    
   }
 
@@ -858,11 +861,7 @@ private:
   void factor_rooms(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
     g2o::VertexSE3* room_node;  std::pair<int,int> room_data_association;   
     Eigen::Matrix<double, 1, 1> information(0.0001);
-    
-    /* it is assumed that x_room_pair and y_room_pair have size 2 */
-    //correct_plane_d(plane_class::X_VERT_PLANE, x_room_pair_vec[0].first, x_room_pair_vec[1].first);
-    //correct_plane_d(plane_class::Y_VERT_PLANE, y_room_pair_vec[0].first, y_room_pair_vec[1].first);
-  
+      
     auto found_x_plane1 = x_vert_planes.begin();
     auto found_x_plane2 = x_vert_planes.begin();
     auto found_y_plane1 = y_vert_planes.begin();
@@ -922,11 +921,6 @@ private:
     room_pose.matrix() = Eigen::Matrix4d::Identity();
     Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane.coeffs(),  x_plane2 = x_room_pair_vec[1].plane.coeffs(); 
     Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane.coeffs(),  y_plane2 = y_room_pair_vec[1].plane.coeffs();
-    std::cout << "x_plane1: " << x_plane1 << std::endl;
-    std::cout << "x_plane2: " << x_plane2 << std::endl;
-    std::cout << "y_plane1: " << y_plane1 << std::endl;
-    std::cout << "y_plane2: " << y_plane2 << std::endl;
-
 
     if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
         double size = x_plane1(3) - x_plane2(3);
@@ -2444,8 +2438,9 @@ private:
   //vertical and horizontal planes
   double plane_dist_threshold;
   bool use_point_to_plane;
-  double corridor_dist_threshold, corridor_min_length, corridor_min_width, corridor_max_width;
-  double room_dist_threshold, room_min_length, room_min_width;
+  bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
+  double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
+  double room_dist_threshold, room_min_plane_length, room_min_width;
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                        // horizontally segmented planes
   std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes
