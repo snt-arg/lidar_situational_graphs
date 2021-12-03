@@ -1,12 +1,14 @@
 <launch>
+  <arg name="min_horizontal_inliers" default="800" />
+  <arg name="min_vertical_inliers"   default="800" />
 
   <!--HDL PLANE SEGMENTATION -->
   <node pkg="nodelet" type="nodelet" name="hdl_plane_seg_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="hdl_plane_segmentor" args="load hdl_graph_slam/PlaneSegmentationNodelet hdl_plane_seg_nodelet_manager">
     <param name="plane_extraction_frame_id"        value="body" />
     <param name="min_seg_points"                   value="1000" />
-    <param name="min_horizontal_inliers"           value="800" />
-    <param name="min_vertical_inliers"             value="500" />
+    <param name="min_horizontal_inliers"           value="$(arg min_horizontal_inliers)" />
+    <param name="min_vertical_inliers"             value="$(arg min_vertical_inliers)" />
     <remap from="velodyne_points"                  to="/slam/hdl_prefilter/filtered_point_cloud" />
   </node>
 <!--   <node pkg="tf" type="static_transform_publisher" name="link1_broadcaster" args="0 0 0 0 0 0 body velodyne 100" />
