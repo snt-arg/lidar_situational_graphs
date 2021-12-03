@@ -31,18 +31,18 @@
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/types/slam3d/vertex_se3.h>
-
+#include "g2o/vertex_room.hpp"
 namespace g2o {
 
-class EdgeRoomXPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane> {
+class EdgeRoomXPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexRoomXYLB, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane>() {}
+  EdgeRoomXPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexRoomXYLB, g2o::VertexPlane>() {}
 
   void computeError() override {
-    const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
+    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector3d t = v1->estimate().translation();
+    Eigen::Vector4d t = v1->estimate();
     Eigen::Vector4d p = v2->estimate().coeffs();
 
     if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 

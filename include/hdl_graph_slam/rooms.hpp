@@ -7,7 +7,7 @@
 #include <pcl/point_cloud.h>
 
 namespace g2o {
-class VertexSE3;
+class VertexRoomXYLB;
 class HyperGraph;
 class SparseOptimizer;
 }  // namespace g2o
@@ -21,7 +21,7 @@ public:
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   bool x_axis_identified, y_axis_identified;
   bool room_identified;
-  g2o::VertexSE3* node;                       // node instance
+  g2o::VertexRoomXYLB* node;                       // node instance
 };
 
 }

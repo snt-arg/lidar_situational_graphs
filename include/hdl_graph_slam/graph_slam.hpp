@@ -32,6 +32,7 @@ class EdgePlanePerpendicular;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class RobustKernelFactory;
+class VertexRoomXYLB;
 }  // namespace g2o
 
 namespace hdl_graph_slam {
@@ -66,6 +67,13 @@ public:
    * @return registered node
    */
   g2o::VertexPointXYZ* add_point_xyz_node(const Eigen::Vector3d& xyz);
+
+    /**
+   * @brief add a room node to the graph
+   * @param room 
+   * @return registered node
+   */
+  g2o::VertexRoomXYLB* add_room_node(const Eigen::Vector4d& room_pose);
 
   /**
    * @brief add an edge between SE3 nodes
@@ -136,9 +144,9 @@ public:
 
   g2o::EdgeCorridorPlane* add_corridor_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
-  g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
-  g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexRoomXYLB* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   void add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size);
 

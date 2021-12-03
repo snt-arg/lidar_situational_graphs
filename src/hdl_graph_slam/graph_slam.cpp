@@ -15,6 +15,7 @@
 #include <g2o/types/slam3d/types_slam3d.h>
 #include <g2o/types/slam3d/edge_se3_pointxyz.h>
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
+#include <g2o/vertex_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_se3_priorxy.hpp>
@@ -48,6 +49,7 @@ G2O_REGISTER_TYPE(EDGE_PLANE_PAERPENDICULAR, EdgePlanePerpendicular)
 G2O_REGISTER_TYPE(EDGE_CORRIDOR_PLANE, EdgeCorridorPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_XPLANE, EdgeRoomXPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPLANE, EdgeRoomYPlane)
+G2O_REGISTER_TYPE(VERTEX_ROOMXYLB, VertexRoomXYLB)
 }  // namespace g2o
 
 namespace hdl_graph_slam {
@@ -134,6 +136,15 @@ g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   g2o::VertexPointXYZ* vertex(new g2o::VertexPointXYZ());
   vertex->setId(static_cast<int>(graph->vertices().size()));
   vertex->setEstimate(xyz);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
+g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector4d& room_pose) {
+  g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
+  vertex->setId(static_cast<int>(graph->vertices().size()));
+  vertex->setEstimate(room_pose);
   graph->addVertex(vertex);
 
   return vertex;
@@ -303,7 +314,7 @@ g2o::EdgeCorridorPlane* GraphSLAM::add_corridor_plane_edge(g2o::VertexSE3* v_se3
   return edge;
 }
 
-g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
+g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(g2o::VertexRoomXYLB* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeRoomXPlane* edge(new g2o::EdgeRoomXPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
@@ -314,7 +325,7 @@ g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(g2o::VertexSE3* v_se3, g2o:
   return edge;
 }
 
-g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
+g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(g2o::VertexRoomXYLB* v_se3, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeRoomYPlane* edge(new g2o::EdgeRoomYPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);

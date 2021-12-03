@@ -59,6 +59,7 @@
 #include <hdl_graph_slam/map_cloud_generator.hpp>
 #include <hdl_graph_slam/nmea_sentence_parser.hpp>
 
+#include <g2o/vertex_room.hpp>
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/edge_se3_plane.hpp>
@@ -841,7 +842,7 @@ private:
   }
 
   void factor_rooms(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
-    g2o::VertexSE3* room_node;  std::pair<int,int> room_data_association;   
+    g2o::VertexRoomXYLB* room_node;  std::pair<int,int> room_data_association;   
     Eigen::Matrix<double, 1, 1> information(0.0001);
       
     auto found_x_plane1 = x_vert_planes.begin();
@@ -851,12 +852,12 @@ private:
     Eigen::Vector3d x_plane1_meas, x_plane2_meas;
     Eigen::Vector3d y_plane1_meas, y_plane2_meas;
 
-    Eigen::Isometry3d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
+    Eigen::Vector4d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
     room_data_association = associate_rooms(room_pose);   
     if((rooms_vec.empty() || room_data_association.first == -1)) {
-        std::cout << "found first room with pose " << room_pose.translation() << std::endl;
+        std::cout << "found first room with pose " << room_pose << std::endl;
         room_data_association.first = graph_slam->num_vertices();
-        room_node = graph_slam->add_se3_node(room_pose);
+        room_node = graph_slam->add_room_node(room_pose);
         room_node->setFixed(true);
         Rooms det_room;
         det_room.id = room_data_association.first;     
@@ -870,18 +871,18 @@ private:
     } else {
         /* add the edge between detected planes and the corridor */
         room_node = rooms_vec[room_data_association.second].node;
-        std::cout << "Matched det room with pose " << room_pose.translation() << " to mapped room with id " << room_data_association.first << " and pose " << room_node->estimate().translation()  << std::endl;
+        std::cout << "Matched det room with pose " << room_pose << " to mapped room with id " << room_data_association.first << " and pose " << room_node->estimate()  << std::endl;
     }
 
       found_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[0].plane_id);
       found_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[1].plane_id);
-      x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose.translation(), x_room_pair_vec[0].plane.coeffs());
-      x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose.translation(), x_room_pair_vec[1].plane.coeffs());
+      x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[0].plane.coeffs());
+      x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[1].plane.coeffs());
 
       found_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[0].plane_id);
       found_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[1].plane_id);
-      y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose.translation(), y_room_pair_vec[0].plane.coeffs());
-      y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose.translation(), y_room_pair_vec[1].plane.coeffs());
+      y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[0].plane.coeffs());
+      y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane.coeffs());
 
 
       auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information);
@@ -898,32 +899,31 @@ private:
 
   }
 
-  Eigen::Isometry3d compute_room_pose(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
-    Eigen::Isometry3d room_pose;
-    room_pose.matrix() = Eigen::Matrix4d::Identity();
+  Eigen::Vector4d compute_room_pose(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
+    Eigen::Vector4d room_pose(0,0,0,0);
     Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane.coeffs(),  x_plane2 = x_room_pair_vec[1].plane.coeffs(); 
     Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane.coeffs(),  y_plane2 = y_room_pair_vec[1].plane.coeffs();
 
     if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
         double size = x_plane1(3) - x_plane2(3);
-        room_pose.translation()(0) = ((size)/2) + x_plane2(3);
+        room_pose(0) = ((size)/2) + x_plane2(3);
     } else {
         double size = x_plane2(3) - x_plane1(3);
-        room_pose.translation()(0) = ((size)/2) + x_plane1(3);
+        room_pose(0) = ((size)/2) + x_plane1(3);
     }
 
     if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
         double size = y_plane1(3) - y_plane2(3);
-        room_pose.translation()(1) = ((size)/2) + y_plane2(3);
+        room_pose(1) = ((size)/2) + y_plane2(3);
     } else {
         double size = y_plane2(3) - y_plane1(3);
-        room_pose.translation()(1) = ((size)/2) + y_plane1(3);
+        room_pose(1) = ((size)/2) + y_plane1(3);
     }
 
     return room_pose;
   }
 
-  Eigen::Vector3d room_measurement(int plane_type, Eigen::Vector3d room, Eigen::Vector4d plane) {
+  Eigen::Vector3d room_measurement(int plane_type, Eigen::Vector4d room, Eigen::Vector4d plane) {
     Eigen::Vector3d meas(0,0,0);  
     
     if(plane_type == plane_class::Y_VERT_PLANE) {
@@ -946,13 +946,13 @@ private:
   }
 
 
-  std::pair<int,int> associate_rooms(Eigen::Isometry3d room_pose) {
+  std::pair<int,int> associate_rooms(Eigen::Vector4d room_pose) {
     float min_dist = 100;
     std::pair<int,int> data_association; data_association.first = -1; 
 
     for(int i=0; i< rooms_vec.size(); ++i) {
-      float diff_x = room_pose.translation()(0) - rooms_vec[i].node->estimate().translation()(0); 
-      float diff_y = room_pose.translation()(1) - rooms_vec[i].node->estimate().translation()(1); 
+      float diff_x = room_pose(0) - rooms_vec[i].node->estimate()(0); 
+      float diff_y = room_pose(1) - rooms_vec[i].node->estimate()(1); 
       float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));  
       std::cout << "dist room: " << dist << std::endl;
 
@@ -2192,8 +2192,8 @@ private:
 
     for(int i = 0; i < rooms_vec.size(); ++i) {
       geometry_msgs::Point point;
-      point.x = -rooms_vec[i].node->estimate().translation()(0);
-      point.y = -rooms_vec[i].node->estimate().translation()(1);
+      point.x = -rooms_vec[i].node->estimate()(0);
+      point.y = -rooms_vec[i].node->estimate()(1);
       point.z = 14;
       room_marker.points.push_back(point);
 
@@ -2205,8 +2205,8 @@ private:
       room_text_marker.header.stamp = stamp;
       room_text_marker.id = markers.markers.size()+1;
       room_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      room_text_marker.pose.position.x = -rooms_vec[i].node->estimate().translation()(0);
-      room_text_marker.pose.position.y = -rooms_vec[i].node->estimate().translation()(1);
+      room_text_marker.pose.position.x = -rooms_vec[i].node->estimate()(0);
+      room_text_marker.pose.position.y = -rooms_vec[i].node->estimate()(1);
       room_text_marker.pose.position.z = 13.5;
       // room_text_marker.color.r = 1;
       // room_text_marker.color.g = 1;
@@ -2227,26 +2227,26 @@ private:
       room_line_marker.type = visualization_msgs::Marker::LINE_LIST;
       room_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3,p4,p5;
-      p1.x = -rooms_vec[i].node->estimate().translation()(0);
-      p1.y = -rooms_vec[i].node->estimate().translation()(1);
+      p1.x = -rooms_vec[i].node->estimate()(0);
+      p1.y = -rooms_vec[i].node->estimate()(1);
       p1.z = 13;
-      p2.x = -rooms_vec[i].node->estimate().translation()(0) - 1;
-      p2.y = -rooms_vec[i].node->estimate().translation()(1) - 1;
+      p2.x = -rooms_vec[i].node->estimate()(0) - 1;
+      p2.y = -rooms_vec[i].node->estimate()(1) - 1;
       p2.z = 10;
       room_line_marker.points.push_back(p1);
       room_line_marker.points.push_back(p2);
-      p3.x = -rooms_vec[i].node->estimate().translation()(0) + 1;
-      p3.y = -rooms_vec[i].node->estimate().translation()(1) - 1;
+      p3.x = -rooms_vec[i].node->estimate()(0) + 1;
+      p3.y = -rooms_vec[i].node->estimate()(1) - 1;
       p3.z = 10;
       room_line_marker.points.push_back(p1);
       room_line_marker.points.push_back(p3);
-      p4.x = -rooms_vec[i].node->estimate().translation()(0) - 1;
-      p4.y = -rooms_vec[i].node->estimate().translation()(1) + 1;
+      p4.x = -rooms_vec[i].node->estimate()(0) - 1;
+      p4.y = -rooms_vec[i].node->estimate()(1) + 1;
       p4.z = 10;
       room_line_marker.points.push_back(p1);
       room_line_marker.points.push_back(p4);
-      p5.x = -rooms_vec[i].node->estimate().translation()(0) + 1;
-      p5.y = -rooms_vec[i].node->estimate().translation()(1) + 1;
+      p5.x = -rooms_vec[i].node->estimate()(0) + 1;
+      p5.y = -rooms_vec[i].node->estimate()(1) + 1;
       p5.z = 10;
       room_line_marker.points.push_back(p1);
       room_line_marker.points.push_back(p5);
