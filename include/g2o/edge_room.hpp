@@ -34,15 +34,70 @@
 #include "g2o/vertex_room.hpp"
 namespace g2o {
 
-class EdgeRoomXPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexRoomXYLB, g2o::VertexPlane> {
+class EdgeSE3Room : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexRoomXYLB, g2o::VertexPlane>() {}
+  EdgeSE3Room() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB>() {
+    _information.setIdentity();
+    _error.setZero();
+  }
+
+  void computeError() override {
+    const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
+    const VertexRoomXYLB* v2 = static_cast<const VertexRoomXYLB*>(_vertices[1]);
+    Eigen::Isometry3d w2l = v1->estimate().inverse();
+    Eigen::Vector4d room_global(0,0,0,1);
+    room_global.head(2) = v2->estimate();
+    Eigen::Vector4d room_local =  w2l.matrix() * room_global; 
+
+    _error = _measurement - room_local.head(2);
+   }
+
+ virtual bool read(std::istream& is) override {
+    Eigen::Vector2d v;
+    is >> v(0) >> v(1);
+
+    setMeasurement(v);
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) {
+          information()(j, i) = information()(i, j);
+        }
+      }
+    }
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    Eigen::Vector2d v = _measurement;
+    os << v(0) << " " << v(1) << " ";
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        os << " " << information()(i, j);
+      };
+    }
+    return os.good();
+  }
+
+  virtual void setMeasurement(const Eigen::Vector2d& m) override {
+    _measurement = m;
+  }
+
+};
+class EdgeRoomXPlane : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexPlane> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeRoomXPlane() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexPlane>() {
+    _information.setZero();
+    _error.setZero();
+  }
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector4d t = v1->estimate();
+    Eigen::Vector2d t = v1->estimate();
     Eigen::Vector4d p = v2->estimate().coeffs();
 
     if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
@@ -57,14 +112,12 @@ public:
        est =  p(3) - t(0);
     }
 
-    _error[0] = _measurement[0] - est;
-    }
+    _error[0] = _measurement - est;
+  }
 
   virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    for(int i = 0; i < 3; ++i) {
-      is >> v[i];
-    }
+    double v;
+    is >> v;
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -80,9 +133,7 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    for(int i = 0; i < 3; ++i) {
-      os << _measurement[i] << " ";
-    }
+    os << _measurement << " ";
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
@@ -92,24 +143,25 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector3d& m) override {
+  virtual void setMeasurement(const double& m) override {
     _measurement = m;
   }
 
   virtual int measurementDimension() const override {
-    return 3;
+    return 1;
   }
+
 };
 
-class EdgeRoomYPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane> {
+class EdgeRoomYPlane : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomYPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane>() {}
+  EdgeRoomYPlane() : BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane>() {}
 
   void computeError() override {
-    const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
+    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector3d t = v1->estimate().translation();
+    Eigen::Vector2d t = v1->estimate();
     Eigen::Vector4d p = v2->estimate().coeffs();
 
     if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
@@ -124,14 +176,12 @@ public:
        est =  p(3) - t(1);
     }
 
-    _error[0] = _measurement[0] - est;
-    }
+    _error[0] = _measurement - est;
+  }
 
   virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    for(int i = 0; i < 3; ++i) {
-      is >> v[i];
-    }
+    double v;
+    is >> v;
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -147,9 +197,7 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    for(int i = 0; i < 3; ++i) {
-      os << _measurement[i] << " ";
-    }
+    os << _measurement << " ";
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
@@ -159,12 +207,12 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector3d& m) override {
+  virtual void setMeasurement(const double& m) override {
     _measurement = m;
   }
 
   virtual int measurementDimension() const override {
-    return 3;
+    return 1;
   }
 };
 

@@ -71,7 +71,7 @@
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_plane_parallel.hpp>
 #include <g2o/edge_corridor_plane.hpp>
-#include <g2o/edge_room_plane.hpp>
+#include <g2o/edge_room.hpp>
 
 namespace hdl_graph_slam {
 
@@ -82,8 +82,10 @@ public:
   typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
   
   struct plane_data_list { 
+    g2o::Plane3D plane_local;
     g2o::Plane3D plane;
     int plane_id;
+    g2o::VertexSE3* keyframe_node;
     Eigen::Vector3d keyframe_trans;
   };
 
@@ -301,7 +303,7 @@ private:
           //std::cout << "length x: " << length << std::endl;
     
           plane_data_list x_plane_id_pair;
-          x_plane_id_pair.plane = det_plane_map_frame; x_plane_id_pair.plane_id = plane_id; x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
+          x_plane_id_pair.plane = det_plane_map_frame; x_plane_id_pair.plane_local= det_plane_body_frame; x_plane_id_pair.plane_id = plane_id; x_plane_id_pair.keyframe_node = keyframe->node;  x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
           if(length >= corridor_min_plane_length) {
             x_det_corridor_candidates.push_back(x_plane_id_pair); 
           } else if (length >= room_min_plane_length && length <= corridor_min_plane_length) {
@@ -316,7 +318,7 @@ private:
           float length =  plane_length(keyframe->cloud_seg_body);  
           //std::cout << "length y: " << length << std::endl;
           plane_data_list y_plane_id_pair;
-          y_plane_id_pair.plane = det_plane_map_frame; y_plane_id_pair.plane_id = plane_id; y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
+          y_plane_id_pair.plane = det_plane_map_frame; y_plane_id_pair.plane_local = det_plane_body_frame; y_plane_id_pair.plane_id = plane_id; y_plane_id_pair.keyframe_node = keyframe->node; y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
           if(length >= corridor_min_plane_length) {
             y_det_corridor_candidates.push_back(y_plane_id_pair); 
           } else if (length >= room_min_plane_length && length <= corridor_min_plane_length) {
@@ -369,6 +371,7 @@ private:
     for(int i=0; i < room_candidates.size(); ++i) {
         for(int j=i+1; j < room_candidates.size(); ++j) {
           correct_plane_d(plane_type, room_candidates[i].plane, room_candidates[j].plane);
+          correct_plane_d(plane_type, room_candidates[i].plane_local, room_candidates[j].plane_local);
           float room_width = width_between_planes(room_candidates[i].plane.coeffs(), room_candidates[j].plane.coeffs());
           //std::cout << "x room_width: " << room_width << std::endl;
           if (room_candidates[i].plane.coeffs().head(3).dot(room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width) {
@@ -843,22 +846,24 @@ private:
 
   void factor_rooms(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
     g2o::VertexRoomXYLB* room_node;  std::pair<int,int> room_data_association;   
-    Eigen::Matrix<double, 1, 1> information(0.0001);
-      
+    Eigen::Matrix<double, 2, 2> information_se3_room = Eigen::Matrix2d::Identity();
+    Eigen::Matrix<double, 1, 1> information_room_plane(1);
+
     auto found_x_plane1 = x_vert_planes.begin();
     auto found_x_plane2 = x_vert_planes.begin();
     auto found_y_plane1 = y_vert_planes.begin();
     auto found_y_plane2 = y_vert_planes.begin();
-    Eigen::Vector3d x_plane1_meas, x_plane2_meas;
-    Eigen::Vector3d y_plane1_meas, y_plane2_meas;
+    double x_plane1_meas, x_plane2_meas;
+    double y_plane1_meas, y_plane2_meas;
 
-    Eigen::Vector4d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
+    Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
+    Eigen::Vector2d room_pose_local = compute_room_pose_local(x_room_pair_vec[0].keyframe_node, room_pose);
     room_data_association = associate_rooms(room_pose);   
     if((rooms_vec.empty() || room_data_association.first == -1)) {
         std::cout << "found first room with pose " << room_pose << std::endl;
         room_data_association.first = graph_slam->num_vertices();
         room_node = graph_slam->add_room_node(room_pose);
-        room_node->setFixed(true);
+        //room_node->setFixed(true);
         Rooms det_room;
         det_room.id = room_data_association.first;     
         det_room.plane_x1 = x_room_pair_vec[0].plane; det_room.plane_x2 = x_room_pair_vec[1].plane;
@@ -884,61 +889,75 @@ private:
       y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[0].plane.coeffs());
       y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane.coeffs());
 
+      auto edge_se3_room = graph_slam->add_se3_room_edge(x_room_pair_vec[0].keyframe_node, room_node, room_pose_local, information_se3_room);
 
-      auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information);
+      auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
       graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
 
-      auto edge_x_plane2 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane2).plane_node, x_plane2_meas, information);
+      auto edge_x_plane2 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane2).plane_node, x_plane2_meas, information_room_plane);
       graph_slam->add_robust_kernel(edge_x_plane2, "Huber", 1.0);
 
-      auto edge_y_plane1 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane1).plane_node, y_plane1_meas, information);
+      auto edge_y_plane1 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane1).plane_node, y_plane1_meas, information_room_plane);
       graph_slam->add_robust_kernel(edge_y_plane1, "Huber", 1.0);
 
-      auto edge_y_plane2 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane2).plane_node, y_plane2_meas, information);
+      auto edge_y_plane2 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane2).plane_node, y_plane2_meas, information_room_plane);
       graph_slam->add_robust_kernel(edge_y_plane2, "Huber", 1.0);
 
   }
 
-  Eigen::Vector4d compute_room_pose(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
-    Eigen::Vector4d room_pose(0,0,0,0);
+  Eigen::Vector2d compute_room_pose(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
+    Eigen::Vector2d room_pose(0,0);
     Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane.coeffs(),  x_plane2 = x_room_pair_vec[1].plane.coeffs(); 
     Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane.coeffs(),  y_plane2 = y_room_pair_vec[1].plane.coeffs();
 
     if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
         double size = x_plane1(3) - x_plane2(3);
         room_pose(0) = ((size)/2) + x_plane2(3);
+        //room_pose(2) = size;
     } else {
         double size = x_plane2(3) - x_plane1(3);
         room_pose(0) = ((size)/2) + x_plane1(3);
+        //room_pose(2) = size;
     }
 
     if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
         double size = y_plane1(3) - y_plane2(3);
         room_pose(1) = ((size)/2) + y_plane2(3);
+        //room_pose(3) = size;
     } else {
         double size = y_plane2(3) - y_plane1(3);
         room_pose(1) = ((size)/2) + y_plane1(3);
+        //room_pose(3) = size;
     }
 
     return room_pose;
   }
 
-  Eigen::Vector3d room_measurement(int plane_type, Eigen::Vector4d room, Eigen::Vector4d plane) {
-    Eigen::Vector3d meas(0,0,0);  
+    Eigen::Vector2d compute_room_pose_local(g2o::VertexSE3* keyframe_node, Eigen::Vector2d room_pose) {
+    Eigen::Vector4d room_pose_xy(room_pose(0),room_pose(1),0,1);
+    Eigen::Vector4d room_pose_local(0,0,0,1);
+    
+    room_pose_local =  keyframe_node->estimate().inverse().matrix() * room_pose_xy;
+
+    return room_pose_local.head(2);
+  }
+
+  double room_measurement(int plane_type, Eigen::Vector2d room, Eigen::Vector4d plane) {
+    double meas;  
     
     if(plane_type == plane_class::Y_VERT_PLANE) {
       if(fabs(room(1)) > fabs(plane(3))) {
-        meas(0) =  room(1) - plane(3);
+        meas =  room(1) - plane(3);
       } else {
-        meas(0) =  plane(3) - room(1);
+        meas =  plane(3) - room(1);
       }
     }
 
     if(plane_type == plane_class::X_VERT_PLANE) {
       if(fabs(room(0)) > fabs(plane(3))) {
-        meas(0) =  room(0) - plane(3);
+        meas =  room(0) - plane(3);
       } else {
-        meas(0) =  plane(3) - room(0);
+        meas =  plane(3) - room(0);
       }
     }
 
@@ -946,7 +965,7 @@ private:
   }
 
 
-  std::pair<int,int> associate_rooms(Eigen::Vector4d room_pose) {
+  std::pair<int,int> associate_rooms(Eigen::Vector2d room_pose) {
     float min_dist = 100;
     std::pair<int,int> data_association; data_association.first = -1; 
 

@@ -36,7 +36,7 @@
 
 namespace g2o {
 
-  class G2O_TYPES_SLAM3D_API VertexRoomXYLB : public BaseVertex<4, Vector4>
+  class G2O_TYPES_SLAM3D_API VertexRoomXYLB : public BaseVertex<2, Vector2>
   {
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
@@ -47,69 +47,47 @@ namespace g2o {
       }
 
       virtual bool setEstimateDataImpl(const number_t* est){
-        Eigen::Map<const Vector4> _est(est);
+        Eigen::Map<const Vector2> _est(est);
         _estimate = _est;
 
         return true;
       }
 
       virtual bool getEstimateData(number_t* est) const{
-        Eigen::Map<Vector4> _est(est);
+        Eigen::Map<Vector2> _est(est);
         _est = _estimate;
         return true;
       }
 
       virtual int estimateDimension() const { 
-        return 4;
+        return 2;
       }
 
       virtual bool setMinimalEstimateDataImpl(const number_t* est){
-        _estimate = Eigen::Map<const Vector4>(est);
+        _estimate = Eigen::Map<const Vector2>(est);
         return true;
       }
 
       virtual bool getMinimalEstimateData(number_t* est) const{
-        Eigen::Map<Vector4> v(est);
+        Eigen::Map<Vector2> v(est);
         v = _estimate;
         return true;
       }
 
       virtual int minimalEstimateDimension() const { 
-        return 4;
+        return 2;
       }
 
       virtual void oplusImpl(const number_t* update)
       {
         _estimate[0] += update[0];
         _estimate[1] += update[1];
-        _estimate[2] += update[2];
-        _estimate[3] += update[3];
-
       }
 
       virtual bool read(std::istream& is) { return internal::readVector(is, _estimate); }
       virtual bool write(std::ostream& os) const { return internal::writeVector(os, estimate()); }
 
   };
-
-//   class G2O_TYPES_SLAM3D_API VertexRoomXYLBWriteGnuplotAction: public WriteGnuplotAction {
-//   public:
-//     VertexRoomXYLBWriteGnuplotAction();
-//     virtual HyperGraphElementAction* operator()(HyperGraph::HyperGraphElement* element, 
-//             HyperGraphElementAction::Parameters* params_);
-//   };
-
-// #ifdef G2O_HAVE_OPENGL
-//   class VertexRoomXYLBDrawAction: public DrawAction{
-//   public:
-//     VertexRoomXYLBDrawAction();
-//     virtual HyperGraphElementAction* operator()(HyperGraph::HyperGraphElement* element, 
-//             HyperGraphElementAction::Parameters* params_);
-//   protected:
-//     FloatProperty *_pointSize;
-//     virtual bool refreshPropertyPtrs(HyperGraphElementAction::Parameters* params_);
-//   };
-// #endif
 
 }
 
