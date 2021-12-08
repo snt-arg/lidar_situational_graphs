@@ -25,7 +25,8 @@ class EdgeSE3PriorQuat;
 class EdgePlane;
 class EdgePlaneIdentity;
 class EdgePlaneParallel;
-class EdgeCorridorPlane;
+class EdgeCorridorXPlane;
+class EdgeCorridorYPlane;
 class EdgeSE3Room;
 class EdgeRoomXPlane;
 class EdgeRoomYPlane;
@@ -143,7 +144,9 @@ public:
 
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
-  g2o::EdgeCorridorPlane* add_corridor_plane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeCorridorXPlane* add_corridor_xplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeCorridorYPlane* add_corridor_yplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 

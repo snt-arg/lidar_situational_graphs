@@ -34,10 +34,79 @@
 
 namespace g2o {
 
-class EdgeCorridorPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane> {
+class EdgeCorridorXPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane>() {}
+  EdgeCorridorXPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane>() {}
+
+  void computeError() override {
+    const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
+    const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
+    Eigen::Vector3d t = v1->estimate().translation();
+    Eigen::Vector4d p = v2->estimate().coeffs();
+
+    if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
+      p(3) = -1*p(3);
+    else if(fabs(p(1)) > fabs(p(0)) && p(1) < 0) 
+      p(3) = -1*p(3);
+
+    double est; 
+    if(fabs(t(0)) > fabs(p(3))) {
+       est =  t(0) - p(3);
+    } else {
+       est =  p(3) - t(0);
+    }
+
+    _error[0] = _measurement[0] - est;
+    }
+
+  virtual bool read(std::istream& is) override {
+    Eigen::Vector3d v;
+    for(int i = 0; i < 3; ++i) {
+      is >> v[i];
+    }
+
+    setMeasurement(v);
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) {
+          information()(j, i) = information()(i, j);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    for(int i = 0; i < 3; ++i) {
+      os << _measurement[i] << " ";
+    }
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        os << " " << information()(i, j);
+      };
+    }
+    return os.good();
+  }
+
+  virtual void setMeasurement(const Eigen::Vector3d& m) override {
+    _measurement = m;
+  }
+
+  virtual int measurementDimension() const override {
+    return 3;
+  }
+};
+
+
+
+class EdgeCorridorYPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeCorridorYPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);

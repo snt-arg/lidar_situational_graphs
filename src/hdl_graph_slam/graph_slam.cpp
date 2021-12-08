@@ -46,7 +46,8 @@ G2O_REGISTER_TYPE(EDGE_PLANE_PRIOR_DISTANCE, EdgePlanePriorDistance)
 G2O_REGISTER_TYPE(EDGE_PLANE_IDENTITY, EdgePlaneIdentity)
 G2O_REGISTER_TYPE(EDGE_PLANE_PARALLEL, EdgePlaneParallel)
 G2O_REGISTER_TYPE(EDGE_PLANE_PAERPENDICULAR, EdgePlanePerpendicular)
-G2O_REGISTER_TYPE(EDGE_CORRIDOR_PLANE, EdgeCorridorPlane)
+G2O_REGISTER_TYPE(EDGE_CORRIDOR_XPLANE, EdgeCorridorXPlane)
+G2O_REGISTER_TYPE(EDGE_CORRIDOR_YPLANE, EdgeCorridorYPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_ROOM, EdgeSE3Room)
 G2O_REGISTER_TYPE(EDGE_ROOM_XPLANE, EdgeRoomXPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPLANE, EdgeRoomYPlane)
@@ -304,8 +305,19 @@ g2o::EdgePlanePerpendicular* GraphSLAM::add_plane_perpendicular_edge(g2o::Vertex
   return edge;
 }
 
-g2o::EdgeCorridorPlane* GraphSLAM::add_corridor_plane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeCorridorPlane* edge(new g2o::EdgeCorridorPlane());
+g2o::EdgeCorridorXPlane* GraphSLAM::add_corridor_xplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeCorridorXPlane* edge(new g2o::EdgeCorridorXPlane());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_corridor;
+  edge->vertices()[1] = v_plane2;
+  graph->addEdge(edge);
+ 
+  return edge;
+}
+
+g2o::EdgeCorridorYPlane* GraphSLAM::add_corridor_yplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeCorridorYPlane* edge(new g2o::EdgeCorridorYPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_corridor;

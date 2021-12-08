@@ -693,7 +693,8 @@ private:
     g2o::VertexSE3* corr_node;  std::pair<int,int> corr_data_association;   
     Eigen::Vector3d meas_plane1, meas_plane2;
     Eigen::Matrix<double, 1, 1> information(1);
-    Eigen::Isometry3d corr_pose = corridor_pose(corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs());
+    Eigen::Isometry3d corr_pose = corridor_pose(plane_type, corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs(), corr_plane1_pair.keyframe_node);
+    Eigen::Isometry3d corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
     
     if(plane_type == plane_class::X_VERT_PLANE) { 
       auto found_plane1 = x_vert_planes.begin();
@@ -702,7 +703,7 @@ private:
 
       if((x_corridors.empty() || corr_data_association.first == -1)) {
         
-        std::cout << "found an X corridor with pose " << corr_pose.translation()(1) <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        std::cout << "found an X corridor with pose " << corr_pose.translation() <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
         corr_data_association.first = graph_slam->num_vertices();
         corr_node = graph_slam->add_se3_node(corr_pose);
         corr_node->setFixed(true);
@@ -710,28 +711,29 @@ private:
         det_corridor.id = corr_data_association.first;
         det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
-        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_trans;
+        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_node->estimate().translation().head(3);
         det_corridor.node = corr_node;   
         x_corridors.push_back(det_corridor);
 
         found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane1_pair.plane.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane2_pair.plane.coeffs());
       } else {
         /* add the edge between detected planes and the corridor */
         corr_node = x_corridors[corr_data_association.second].node;
-        std::cout << "Matched det corridor X with pose " << corr_pose.translation()(1) << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate().translation()(1)  << std::endl;
+        std::cout << "Matched det corridor X with pose " << corr_pose.translation() << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate().translation()  << std::endl;
         
         found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane1_pair.plane.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane2_pair.plane.coeffs());
       }
-      auto edge_plane1 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information);
+
+      auto edge_plane1 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information);
       graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
 
-      auto edge_plane2 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information);
+      auto edge_plane2 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information);
       graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
     }
 
@@ -743,7 +745,7 @@ private:
 
       if((y_corridors.empty() || corr_data_association.first == -1)) {
         
-        std::cout << "found an Y corridor with pose " << corr_pose.translation()(1) <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        std::cout << "found an Y corridor with pose " << corr_pose.translation() <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
         corr_data_association.first = graph_slam->num_vertices();
         corr_node = graph_slam->add_se3_node(corr_pose);
         corr_node->setFixed(true);
@@ -751,60 +753,99 @@ private:
         det_corridor.id = corr_data_association.first;
         det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
-        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_trans;
+        det_corridor.keyframe_trans = corr_plane1_pair.keyframe_node->estimate().translation().head(3);
         det_corridor.node = corr_node;      
         y_corridors.push_back(det_corridor);
         
         found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane1_pair.plane.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane2_pair.plane.coeffs());
        
        } else {
         /* add the edge between detected planes and the corridor */
         corr_node = y_corridors[corr_data_association.second].node;
-        std::cout << "Matched det corridor Y with pose " << corr_pose.translation()(1) << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate().translation()(1)  << std::endl;
+        std::cout << "Matched det corridor Y with pose " << corr_pose.translation() << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate().translation()  << std::endl;
 
         found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(corr_pose.translation(), corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(corr_pose.translation(), corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane1_pair.plane.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose.translation(), corr_plane2_pair.plane.coeffs());
       }
 
-      auto edge_plane1 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information);
+      auto edge_plane1 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information);
       graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
 
-      auto edge_plane2 = graph_slam->add_corridor_plane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information);
+      auto edge_plane2 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information);
       graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0); 
     } 
-   
+
+    return;
   }
 
-  Eigen::Isometry3d corridor_pose(Eigen::Vector4d v1, Eigen::Vector4d v2) {
+  Eigen::Isometry3d corridor_pose(int plane_type, Eigen::Vector4d v1, Eigen::Vector4d v2, g2o::VertexSE3* keyframe_node) {
     Eigen::Isometry3d corridor_pose;
-
     corridor_pose.matrix() = Eigen::Matrix4d::Identity();
-    if(fabs(v1(3)) > fabs(v2(3))) {
-      double size = v1(3) - v2(3);
-      corridor_pose.translation()(1) = ((size)/2) + v2(3); 
-      corridor_pose.translation()(2) = 0;//(size/2); 
+    
+    if(plane_type == plane_class::X_VERT_PLANE) {
+      if(fabs(v1(3)) > fabs(v2(3))) {
+        double size = v1(3) - v2(3);
+        corridor_pose.translation()(0) = ((size)/2) + v2(3); 
+        corridor_pose.translation()(1) = keyframe_node->estimate().translation()(1); 
+        corridor_pose.translation()(2) = 0;//(size/2); 
 
-    } else {
-      double size = v2(3) - v1(3);
-      corridor_pose.translation()(1) = ((size)/2) + v1(3);
-      corridor_pose.translation()(2) = 0;//(size/2);  
+      } else {
+        double size = v2(3) - v1(3);
+        corridor_pose.translation()(0) = ((size)/2) + v1(3);
+        corridor_pose.translation()(1) = keyframe_node->estimate().translation()(1);  
+        corridor_pose.translation()(2) = 0;//(size/2); 
+      }
+    }    
+
+    if(plane_type == plane_class::Y_VERT_PLANE) {
+      if(fabs(v1(3)) > fabs(v2(3))) {
+        double size = v1(3) - v2(3);
+        corridor_pose.translation()(0) = keyframe_node->estimate().translation()(0); 
+        corridor_pose.translation()(1) = ((size)/2) + v2(3); 
+        corridor_pose.translation()(2) = 0;//(size/2); 
+
+      } else {
+        double size = v2(3) - v1(3);
+        corridor_pose.translation()(0) = keyframe_node->estimate().translation()(0); 
+        corridor_pose.translation()(1) = ((size)/2) + v1(3);
+        corridor_pose.translation()(2) = 0;//(size/2);  
+      }
     }
-
+    
     return corridor_pose;
   }
 
- Eigen::Vector3d corridor_measurement(Eigen::Vector3d corr, Eigen::Vector4d plane) {
+  Eigen::Isometry3d corridor_pose_local(g2o::VertexSE3* keyframe_node, Eigen::Isometry3d corr_pose) {
+    Eigen::Isometry3d corr_pose_local;
+    corr_pose_local.matrix() =  keyframe_node->estimate().inverse().matrix() * corr_pose.matrix();
+
+    return corr_pose_local;
+  }
+
+
+  Eigen::Vector3d corridor_measurement(int plane_type, Eigen::Vector3d corr, Eigen::Vector4d plane) {
     Eigen::Vector3d meas(0,0,0);  
-    if(fabs(corr(1)) > fabs(plane(3))) {
-      meas(0) =  corr(1) - plane(3);
-    } else {
-      meas(0) =  plane(3) - corr(1);
-    }
+
+    if(plane_type == plane_class::X_VERT_PLANE) {
+      if(fabs(corr(0)) > fabs(plane(3))) {
+        meas(0) =  corr(0) - plane(3);
+      } else {
+        meas(0) =  plane(3) - corr(0);
+      }
+    }  
+
+    if(plane_type == plane_class::Y_VERT_PLANE) {
+      if(fabs(corr(1)) > fabs(plane(3))) {
+        meas(0) =  corr(1) - plane(3);
+      } else {
+        meas(0) =  plane(3) - corr(1);
+      }
+    } 
 
     return meas;
   }
@@ -812,7 +853,20 @@ private:
   std::pair<int,int> associate_corridors(int plane_type, Eigen::Isometry3d corr_pose) {
     float min_dist = 100;
     std::pair<int,int> data_association; data_association.first = -1;
-   
+
+    if(plane_type == plane_class::X_VERT_PLANE) {
+      for(int i=0; i< x_corridors.size(); ++i) { 
+        float dist = fabs((corr_pose.translation()(0)) - (x_corridors[i].node->estimate().translation()(0)));
+        if(dist < min_dist) {
+          min_dist = dist;
+          std::cout << "dist X corr: " << dist << std::endl;
+          data_association.first = x_corridors[i].id;
+          data_association.second = i;
+        }
+      }
+    }
+
+
    if(plane_type == plane_class::Y_VERT_PLANE) {
       for(int i=0; i< y_corridors.size(); ++i) { 
         float dist = fabs((corr_pose.translation()(1)) - (y_corridors[i].node->estimate().translation()(1)));
@@ -820,18 +874,6 @@ private:
           min_dist = dist;
           std::cout << "dist Y corr: " << dist << std::endl;
           data_association.first = y_corridors[i].id;
-          data_association.second = i;
-        }
-      }
-    }
-
-    if(plane_type == plane_class::X_VERT_PLANE) {
-      for(int i=0; i< x_corridors.size(); ++i) { 
-        float dist = fabs((corr_pose.translation()(1)) - (x_corridors[i].node->estimate().translation()(1)));
-        if(dist < min_dist) {
-          min_dist = dist;
-          std::cout << "dist X corr: " << dist << std::endl;
-          data_association.first = x_corridors[i].id;
           data_association.second = i;
         }
       }
@@ -933,7 +975,7 @@ private:
     return room_pose;
   }
 
-    Eigen::Vector2d compute_room_pose_local(g2o::VertexSE3* keyframe_node, Eigen::Vector2d room_pose) {
+  Eigen::Vector2d compute_room_pose_local(g2o::VertexSE3* keyframe_node, Eigen::Vector2d room_pose) {
     Eigen::Vector4d room_pose_xy(room_pose(0),room_pose(1),0,1);
     Eigen::Vector4d room_pose_local(0,0,0,1);
     
@@ -2086,8 +2128,8 @@ private:
 
     for(int i = 0; i < x_corridors.size(); ++i) {
       geometry_msgs::Point point;
-      point.x = -x_corridors[i].node->estimate().translation()(1);
-      point.y =  x_corridors[i].keyframe_trans(1);
+      point.x = -x_corridors[i].node->estimate().translation()(0);
+      point.y =  x_corridors[i].node->estimate().translation()(1);
       point.z = 12;
       corridor_marker.points.push_back(point);
 
@@ -2099,8 +2141,8 @@ private:
       corr_x_text_marker.header.stamp = stamp;
       corr_x_text_marker.id = markers.markers.size()+1;
       corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate().translation()(1);
-      corr_x_text_marker.pose.position.y = x_corridors[i].keyframe_trans(1);
+      corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate().translation()(0);
+      corr_x_text_marker.pose.position.y = x_corridors[i].node->estimate().translation()(1);
       corr_x_text_marker.pose.position.z = 11.5;
       // corr_x_text_marker.color.r = 1;
       // corr_x_text_marker.color.g = 1;
@@ -2121,16 +2163,16 @@ private:
       corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
       corr_x_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
-      p1.x = -x_corridors[i].node->estimate().translation()(1);
-      p1.y =  x_corridors[i].keyframe_trans(1);
+      p1.x = -x_corridors[i].node->estimate().translation()(0);
+      p1.y =  x_corridors[i].node->estimate().translation()(1);
       p1.z =  11.5;
-      p2.x = -x_corridors[i].node->estimate().translation()(1) - 0.5;
-      p2.y =  x_corridors[i].keyframe_trans(1);
+      p2.x = -x_corridors[i].node->estimate().translation()(0) - 0.5;
+      p2.y =  x_corridors[i].node->estimate().translation()(1);
       p2.z =  8;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p2);
-      p3.x = -x_corridors[i].node->estimate().translation()(1) + 0.5;
-      p3.y =  x_corridors[i].keyframe_trans(1);
+      p3.x = -x_corridors[i].node->estimate().translation()(0) + 0.5;
+      p3.y =  x_corridors[i].node->estimate().translation()(1);
       p3.z =  8;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p3);
@@ -2139,7 +2181,7 @@ private:
     
     for(int i = 0; i < y_corridors.size(); ++i) {
       geometry_msgs::Point point;
-      point.x =  y_corridors[i].keyframe_trans(0);
+      point.x =  y_corridors[i].node->estimate().translation()(0);
       point.y = -y_corridors[i].node->estimate().translation()(1);
       point.z = 12;
       corridor_marker.points.push_back(point);
@@ -2152,7 +2194,7 @@ private:
       corr_y_text_marker.header.stamp = stamp;
       corr_y_text_marker.id = markers.markers.size()+1;
       corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_y_text_marker.pose.position.x = y_corridors[i].keyframe_trans(0);
+      corr_y_text_marker.pose.position.x = y_corridors[i].node->estimate().translation()(0);
       corr_y_text_marker.pose.position.y = -y_corridors[i].node->estimate().translation()(1);
       corr_y_text_marker.pose.position.z = 11.5;
       // corr_y_text_marker.color.r = 1;
@@ -2174,15 +2216,15 @@ private:
       corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
       corr_y_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
-      p1.x =   y_corridors[i].keyframe_trans(0);
+      p1.x =   y_corridors[i].node->estimate().translation()(0);
       p1.y =  -y_corridors[i].node->estimate().translation()(1);
       p1.z =  11.5;
-      p2.x =   y_corridors[i].keyframe_trans(0);
+      p2.x =   y_corridors[i].node->estimate().translation()(0);
       p2.y =  -y_corridors[i].node->estimate().translation()(1) - 0.5;
       p2.z =   8;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p2);
-      p3.x =  y_corridors[i].keyframe_trans(0);
+      p3.x =  y_corridors[i].node->estimate().translation()(0);
       p3.y = -y_corridors[i].node->estimate().translation()(1) + 0.5;
       p3.z =   8;
       corr_y_line_marker.points.push_back(p1);
