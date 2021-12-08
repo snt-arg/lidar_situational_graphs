@@ -146,7 +146,7 @@ g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   return vertex;
 }
 
-g2o::VertexCorridor* GraphSLAM::add_corridor_node(const Eigen::Vector2d& corridor_pose) {
+g2o::VertexCorridor* GraphSLAM::add_corridor_node(const Eigen::Vector3d& corridor_pose) {
   g2o::VertexCorridor* vertex(new g2o::VertexCorridor());
   vertex->setId(static_cast<int>(graph->vertices().size()));
   vertex->setEstimate(corridor_pose);
@@ -317,7 +317,7 @@ g2o::EdgePlanePerpendicular* GraphSLAM::add_plane_perpendicular_edge(g2o::Vertex
   return edge;
 }
 
-g2o::EdgeSE3Corridor* GraphSLAM::add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information) {
+g2o::EdgeSE3Corridor* GraphSLAM::add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Corridor* edge(new g2o::EdgeSE3Corridor());
   edge->setMeasurement(measurement);
   edge->setInformation(information);

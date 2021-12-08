@@ -35,10 +35,10 @@
 
 namespace g2o {
 
-class EdgeSE3Corridor : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexCorridor> {
+class EdgeSE3Corridor : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexCorridor> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3Corridor() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexCorridor>() {
+  EdgeSE3Corridor() : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexCorridor>() {
     _information.setIdentity();
     _error.setZero();
   }
@@ -48,15 +48,15 @@ public:
     const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
     Eigen::Isometry3d w2l = v1->estimate().inverse();
     Eigen::Vector4d corridor_global(0,0,0,1);
-    corridor_global.head(2) = v2->estimate();
-    Eigen::Vector4d corridor_local =  w2l.matrix() * corridor_global; 
+    corridor_global.head(3) = v2->estimate();
 
-    _error = _measurement - corridor_local.head(2);
+    Eigen::Vector4d corridor_local =  w2l.matrix() * corridor_global; 
+    _error = _measurement - corridor_local.head(3);
    }
 
  virtual bool read(std::istream& is) override {
-    Eigen::Vector2d v;
-    is >> v(0) >> v(1);
+    Eigen::Vector3d v;
+    is >> v(0) >> v(1) >> v(2);
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -71,8 +71,8 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    Eigen::Vector2d v = _measurement;
-    os << v(0) << " " << v(1) << " ";
+    Eigen::Vector3d v = _measurement;
+    os << v(0) << " " << v(1) << " " << v(2);
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
@@ -82,7 +82,7 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector2d& m) override {
+  virtual void setMeasurement(const Eigen::Vector3d& m) override {
     _measurement = m;
   }
 
@@ -96,7 +96,7 @@ public:
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector2d t = v1->estimate();
+    Eigen::Vector3d t = v1->estimate();
     Eigen::Vector4d p = v2->estimate().coeffs();
 
     if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
@@ -165,7 +165,7 @@ public:
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector2d t = v1->estimate();
+    Eigen::Vector3d t = v1->estimate();
     Eigen::Vector4d p = v2->estimate().coeffs();
 
     if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
