@@ -693,19 +693,20 @@ private:
   void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
     Eigen::Vector3d meas_plane1, meas_plane2;
-    Eigen::Matrix<double, 4, 4> information_se3_corridor = 0.01 * Eigen::Matrix4d::Identity();
-    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.01);
-    Eigen::Vector2d corr_pose = corridor_pose(plane_type, corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs(), corr_plane1_pair.keyframe_node);
-    Eigen::Vector2d corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
+    Eigen::Matrix<double, 4, 4> information_se3_corridor = 0.001 * Eigen::Matrix4d::Identity();
+    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.001);
+    Eigen::Vector2d pre_corr_pose = pre_corridor_pose(plane_type, corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs());
     
     if(plane_type == plane_class::X_VERT_PLANE) { 
+      Eigen::Vector2d corr_pose;
       auto found_plane1 = x_vert_planes.begin();
       auto found_plane2 = x_vert_planes.begin();
-      corr_data_association = associate_corridors(plane_type, corr_pose);
+      corr_data_association = associate_corridors(plane_type, pre_corr_pose);
 
       if((x_corridors.empty() || corr_data_association.first == -1)) {
         
-        std::cout << "found an X corridor with pose " << corr_pose <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        std::cout << "found an X corridor with pre pose " << pre_corr_pose <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        Eigen::Vector2d corr_pose = final_corridor_pose(plane_type, pre_corr_pose, corr_plane1_pair.keyframe_node);
         corr_data_association.first = graph_slam->num_vertices();
         corr_node = graph_slam->add_corridor_node(corr_pose);
         //corr_node->setFixed(true);
@@ -724,14 +725,15 @@ private:
       } else {
         /* add the edge between detected planes and the corridor */
         corr_node = x_corridors[corr_data_association.second].node;
-        std::cout << "Matched det corridor X with pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
+        std::cout << "Matched det corridor X with pre pose " << pre_corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
         
         found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
         meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane.coeffs());
         meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane.coeffs());
       }
-
+      
+      Eigen::Vector2d corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_node->estimate());
       auto edge_se3_corridor = graph_slam->add_se3_corridor_edge(corr_plane1_pair.keyframe_node, corr_node, corr_pose_local, information_se3_corridor);
       graph_slam->add_robust_kernel(edge_se3_corridor, "Huber", 1.0);
 
@@ -743,14 +745,15 @@ private:
     }
 
     if(plane_type == plane_class::Y_VERT_PLANE) {
-
+      Eigen::Vector2d corr_pose;
       auto found_plane1 = y_vert_planes.begin();
       auto found_plane2 = y_vert_planes.begin();
-      corr_data_association = associate_corridors(plane_type, corr_pose);
+      corr_data_association = associate_corridors(plane_type, pre_corr_pose);
 
       if((y_corridors.empty() || corr_data_association.first == -1)) {
 
-        std::cout << "found an Y corridor with pose " << corr_pose <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        std::cout << "found an Y corridor with pre pose " << pre_corr_pose <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        corr_pose = final_corridor_pose(plane_type, pre_corr_pose, corr_plane1_pair.keyframe_node);
         corr_data_association.first = graph_slam->num_vertices();
         corr_node = graph_slam->add_corridor_node(corr_pose);
         //corr_node->setFixed(true);
@@ -770,14 +773,15 @@ private:
        } else {
         /* add the edge between detected planes and the corridor */
         corr_node = y_corridors[corr_data_association.second].node;
-        std::cout << "Matched det corridor Y with pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
+        std::cout << "Matched det corridor Y with pre pose " << pre_corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
 
         found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
         meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane.coeffs());
         meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane.coeffs());
       }
-
+      
+      Eigen::Vector2d corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_node->estimate());
       auto edge_se3_corridor = graph_slam->add_se3_corridor_edge(corr_plane1_pair.keyframe_node, corr_node, corr_pose_local, information_se3_corridor);
       graph_slam->add_robust_kernel(edge_se3_corridor, "Huber", 1.0);
 
@@ -791,9 +795,9 @@ private:
     return;
   }
 
-  Eigen::Vector2d corridor_pose(int plane_type, Eigen::Vector4d v1, Eigen::Vector4d v2, g2o::VertexSE3* keyframe_node) {
+  Eigen::Vector2d pre_corridor_pose(int plane_type, Eigen::Vector4d v1, Eigen::Vector4d v2) {
     Eigen::Vector2d corridor_pose;
-    
+
     if(plane_type == plane_class::X_VERT_PLANE) {
       if(fabs(v1(3)) > fabs(v2(3))) {
         double size = v1(3) - v2(3);
@@ -804,18 +808,35 @@ private:
         corridor_pose(0) = ((size)/2) + v1(3);
         corridor_pose(1) = 0; //keyframe_node->estimate().translation()(1);  
       }
-    }    
+    }
 
     if(plane_type == plane_class::Y_VERT_PLANE) {
       if(fabs(v1(3)) > fabs(v2(3))) {
         double size = v1(3) - v2(3);
-        corridor_pose(0) = 0; //keyframe_node->estimate().translation()(0); 
+        corridor_pose(0) = 0; //keyframe_node->estimate().translation()(1); 
         corridor_pose(1) = ((size)/2) + v2(3); 
       } else {
         double size = v2(3) - v1(3);
-        corridor_pose(0) = 0; //keyframe_node->estimate().translation()(0); 
+        corridor_pose(0) = 0; //keyframe_node->estimate().translation()(1);  
         corridor_pose(1) = ((size)/2) + v1(3);
       }
+    }
+    
+    return corridor_pose;
+  }
+
+  Eigen::Vector2d final_corridor_pose(int plane_type, Eigen::Vector2d pre_corr_pose, g2o::VertexSE3* keyframe_node) {
+    /* TODO: Add z axis as well */
+    Eigen::Vector2d corridor_pose;
+    
+    if(plane_type == plane_class::X_VERT_PLANE) {
+      corridor_pose(0) = pre_corr_pose(0); 
+      corridor_pose(1) = keyframe_node->estimate().translation()(1);
+    }    
+
+    if(plane_type == plane_class::Y_VERT_PLANE) {
+        corridor_pose(0) = keyframe_node->estimate().translation()(0); 
+        corridor_pose(1) = pre_corr_pose(1); 
     }
     
     return corridor_pose;
@@ -935,6 +956,7 @@ private:
       y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane.coeffs());
 
       auto edge_se3_room = graph_slam->add_se3_room_edge(x_room_pair_vec[0].keyframe_node, room_node, room_pose_local, information_se3_room);
+      graph_slam->add_robust_kernel(edge_se3_room, "Huber", 1.0);
 
       auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
       graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
