@@ -14,6 +14,7 @@ namespace g2o {
 class VertexSE3;
 class VertexPlane;
 class VertexPointXYZ;
+class VertexCorridor;
 class EdgeSE3;
 class EdgeSE3Plane;
 class EdgeSE3PointToPlane;
@@ -25,6 +26,7 @@ class EdgeSE3PriorQuat;
 class EdgePlane;
 class EdgePlaneIdentity;
 class EdgePlaneParallel;
+class EdgeSE3Corridor;
 class EdgeCorridorXPlane;
 class EdgeCorridorYPlane;
 class EdgeSE3Room;
@@ -70,7 +72,14 @@ public:
    */
   g2o::VertexPointXYZ* add_point_xyz_node(const Eigen::Vector3d& xyz);
 
-    /**
+  /**
+   * @brief add a corridor node to the graph
+   * @param corridor 
+   * @return registered node
+   */
+  g2o::VertexCorridor* add_corridor_node(const Eigen::Vector2d& corridor_pose);
+
+  /**
    * @brief add a room node to the graph
    * @param room 
    * @return registered node
@@ -144,9 +153,11 @@ public:
 
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
-  g2o::EdgeCorridorXPlane* add_corridor_xplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeSE3Corridor* add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
-  g2o::EdgeCorridorYPlane* add_corridor_yplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeCorridorXPlane* add_corridor_xplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeCorridorYPlane* add_corridor_yplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 

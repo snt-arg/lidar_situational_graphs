@@ -16,6 +16,7 @@
 #include <g2o/types/slam3d/edge_se3_pointxyz.h>
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 #include <g2o/vertex_room.hpp>
+#include <g2o/vertex_corridor.hpp>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_se3_priorxy.hpp>
@@ -46,12 +47,14 @@ G2O_REGISTER_TYPE(EDGE_PLANE_PRIOR_DISTANCE, EdgePlanePriorDistance)
 G2O_REGISTER_TYPE(EDGE_PLANE_IDENTITY, EdgePlaneIdentity)
 G2O_REGISTER_TYPE(EDGE_PLANE_PARALLEL, EdgePlaneParallel)
 G2O_REGISTER_TYPE(EDGE_PLANE_PAERPENDICULAR, EdgePlanePerpendicular)
+G2O_REGISTER_TYPE(EDGE_SE3_CORRIDOR, EdgeSE3Corridor)
 G2O_REGISTER_TYPE(EDGE_CORRIDOR_XPLANE, EdgeCorridorXPlane)
 G2O_REGISTER_TYPE(EDGE_CORRIDOR_YPLANE, EdgeCorridorYPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_ROOM, EdgeSE3Room)
 G2O_REGISTER_TYPE(EDGE_ROOM_XPLANE, EdgeRoomXPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPLANE, EdgeRoomYPlane)
 G2O_REGISTER_TYPE(VERTEX_ROOMXYLB, VertexRoomXYLB)
+G2O_REGISTER_TYPE(VERTEX_CORRIDOR, VertexCorridor)
 }  // namespace g2o
 
 namespace hdl_graph_slam {
@@ -138,6 +141,15 @@ g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   g2o::VertexPointXYZ* vertex(new g2o::VertexPointXYZ());
   vertex->setId(static_cast<int>(graph->vertices().size()));
   vertex->setEstimate(xyz);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
+g2o::VertexCorridor* GraphSLAM::add_corridor_node(const Eigen::Vector2d& corridor_pose) {
+  g2o::VertexCorridor* vertex(new g2o::VertexCorridor());
+  vertex->setId(static_cast<int>(graph->vertices().size()));
+  vertex->setEstimate(corridor_pose);
   graph->addVertex(vertex);
 
   return vertex;
@@ -305,7 +317,18 @@ g2o::EdgePlanePerpendicular* GraphSLAM::add_plane_perpendicular_edge(g2o::Vertex
   return edge;
 }
 
-g2o::EdgeCorridorXPlane* GraphSLAM::add_corridor_xplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
+g2o::EdgeSE3Corridor* GraphSLAM::add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeSE3Corridor* edge(new g2o::EdgeSE3Corridor());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_se3;
+  edge->vertices()[1] = v_corridor;
+  graph->addEdge(edge);
+ 
+  return edge;
+}
+
+g2o::EdgeCorridorXPlane* GraphSLAM::add_corridor_xplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeCorridorXPlane* edge(new g2o::EdgeCorridorXPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
@@ -316,7 +339,7 @@ g2o::EdgeCorridorXPlane* GraphSLAM::add_corridor_xplane_edge(g2o::VertexSE3* v_c
   return edge;
 }
 
-g2o::EdgeCorridorYPlane* GraphSLAM::add_corridor_yplane_edge(g2o::VertexSE3* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
+g2o::EdgeCorridorYPlane* GraphSLAM::add_corridor_yplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeCorridorYPlane* edge(new g2o::EdgeCorridorYPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
