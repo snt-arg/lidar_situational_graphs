@@ -2202,9 +2202,9 @@ private:
       corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate()(0);
       corr_x_text_marker.pose.position.y = x_corridors[i].node->estimate()(1);
       corr_x_text_marker.pose.position.z = 11.5;
-      // corr_x_text_marker.color.r = 1;
-      // corr_x_text_marker.color.g = 1;
-      // corr_x_text_marker.color.b = 1;
+      corr_x_text_marker.color.r = 1;
+      corr_x_text_marker.color.g = 1;
+      corr_x_text_marker.color.b = 1;
       corr_x_text_marker.color.a = 1; 
       corr_x_text_marker.pose.orientation.w = 1.0;
       corr_x_text_marker.text = "Corridor X" + std::to_string(i+1);
@@ -2219,6 +2219,7 @@ private:
       corr_x_line_marker.header.stamp = stamp;
       corr_x_line_marker.id = markers.markers.size()+1;
       corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      corr_x_line_marker.color.r =  corr_x_line_marker.color.g = corr_x_line_marker.color.b = 1;  
       corr_x_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
       p1.x = -x_corridors[i].node->estimate()(0);
@@ -2255,9 +2256,9 @@ private:
       corr_y_text_marker.pose.position.x = y_corridors[i].node->estimate()(0);
       corr_y_text_marker.pose.position.y = -y_corridors[i].node->estimate()(1);
       corr_y_text_marker.pose.position.z = 11.5;
-      // corr_y_text_marker.color.r = 1;
-      // corr_y_text_marker.color.g = 1;
-      // corr_y_text_marker.color.b = 1;
+      corr_y_text_marker.color.r = 1;
+      corr_y_text_marker.color.g = 1;
+      corr_y_text_marker.color.b = 1;
       corr_y_text_marker.color.a = 1; 
       corr_y_text_marker.pose.orientation.w = 1.0;
       corr_y_text_marker.text = "Corridor Y" + std::to_string(i+1);
@@ -2272,6 +2273,7 @@ private:
       corr_y_line_marker.header.stamp = stamp;
       corr_y_line_marker.id = markers.markers.size()+1;
       corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      corr_y_line_marker.color.r =  corr_y_line_marker.color.g = corr_y_line_marker.color.b = 1;  
       corr_y_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
       p1.x =   y_corridors[i].node->estimate()(0);
@@ -2327,9 +2329,9 @@ private:
       room_text_marker.pose.position.x = -rooms_vec[i].node->estimate()(0);
       room_text_marker.pose.position.y = -rooms_vec[i].node->estimate()(1);
       room_text_marker.pose.position.z = 13.5;
-      // room_text_marker.color.r = 1;
-      // room_text_marker.color.g = 1;
-      // room_text_marker.color.b = 1;
+      room_text_marker.color.r = 1;
+      room_text_marker.color.g = 1;
+      room_text_marker.color.b = 1;
       room_text_marker.color.a = 1; 
       room_text_marker.pose.orientation.w = 1.0;
       room_text_marker.text = "Room" + std::to_string(i+1);
@@ -2344,6 +2346,7 @@ private:
       room_line_marker.header.stamp = stamp;
       room_line_marker.id = markers.markers.size()+1;
       room_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      room_line_marker.color.r =  room_line_marker.color.g = room_line_marker.color.b = 1;  
       room_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3,p4,p5;
       p1.x = -rooms_vec[i].node->estimate()(0);
@@ -2386,6 +2389,7 @@ private:
     robot_layer_marker.pose.position.z = 0.0;
     robot_layer_marker.color.a = 1; 
     robot_layer_marker.pose.orientation.w = 1.0;
+    robot_layer_marker.color.r =  robot_layer_marker.color.g = robot_layer_marker.color.b = 1;  
     robot_layer_marker.text = "Robot Tracking Layer";
     markers.markers.push_back(robot_layer_marker);
 
@@ -2400,6 +2404,7 @@ private:
       semantic_layer_marker.pose.position.x = 0.0;
       semantic_layer_marker.pose.position.y = 30.0;
       semantic_layer_marker.pose.position.z = 5.0;
+      semantic_layer_marker.color.r =  semantic_layer_marker.color.g = semantic_layer_marker.color.b = 1;  
       semantic_layer_marker.color.a = 1; 
       semantic_layer_marker.pose.orientation.w = 1.0;
       semantic_layer_marker.text = "Metric-Semantic Layer";
@@ -2417,6 +2422,7 @@ private:
       topological_layer_marker.pose.position.x = 0.0;
       topological_layer_marker.pose.position.y = 30.0;
       topological_layer_marker.pose.position.z = 12.0;
+      topological_layer_marker.color.r =  topological_layer_marker.color.g = topological_layer_marker.color.b = 1;  
       topological_layer_marker.color.a = 1; 
       topological_layer_marker.pose.orientation.w = 1.0;
       topological_layer_marker.text = "Topological Layer";
