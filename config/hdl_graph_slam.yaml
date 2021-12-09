@@ -1,0 +1,91 @@
+
+map_frame_id: "map"
+odom_frame_id: "odom_reset"
+
+# Optimization params
+g2o_solver_type: "lm_var_cholmod" # gn_var, gn_fix6_3, gn_var_cholmod, lm_var, lm_fix6_3, lm_var_cholmod
+g2o_solver_num_iterations: 512
+
+# Constraint switches
+enable_gps: false
+enable_imu_acceleration: false
+enable_imu_orientation: false
+
+# Keyframe registration
+max_keyframes_per_update: 10
+keyframe_delta_trans: 2.0
+keyframe_delta_angle: 2.0
+
+# Fix first node for optimization stability
+fix_first_node: true
+fix_first_node_stddev: 1 1 1 1 1 1
+fix_first_node_adaptive: true
+
+# Loop closure
+distance_thresh: 1.0
+accum_distance_thresh: 3.0
+min_edge_interval: 5.0
+fitness_score_thresh: 0.5
+
+# Scan matching
+registration_method: "FAST_GICP"
+reg_num_threads: 0
+reg_transformation_epsilon: 0.01
+reg_maximum_iterations: 64
+reg_max_correspondence_distance: 2.5
+reg_max_optimizer_iterations: 20
+reg_use_reciprocal_correspondences: false
+reg_correspondence_randomness: 20
+reg_resolution: 1.0
+reg_nn_search_method: "DIRECT7"
+    
+# Edge parameters
+    
+## GPS
+gps_edge_robust_kernel: "NONE"
+gps_edge_robust_kernel_size: 1.0
+gps_edge_stddev_xy: 20.0
+gps_edge_stddev_z: 5.0
+
+## IMU orientation
+imu_orientation_edge_robust_kernel: "NONE"
+imu_orientation_edge_stddev: 1.0
+
+## IMU acceleration
+imu_acceleration_edge_robust_kernel: "NONE"
+imu_acceleration_edge_stddev: 1.0
+
+# Ground plane
+floor_edge_robust_kernel: "NONE"
+floor_edge_stddev: 10.0
+
+# Scan matching
+odometry_edge_robust_kernel: "NONE" # NONE, Cauchy, DCS, Fair, GemanMcClure, Huber, PseudoHuber, Saturated, Tukey, Welsch
+odometry_edge_robust_kernel_size: 1.0
+loop_closure_edge_robust_kernel: "Huber"
+loop_closure_edge_robust_kernel_size: 1.0
+use_const_inf_matrix: false
+const_stddev_x: 0.5
+const_stddev_q: 0.1
+var_gain_a: 20.0
+min_stddev_x: 0.1
+max_stddev_x: 5.0
+min_stddev_q: 0.05
+max_stddev_q: 0.2
+graph_update_interval: 3.0
+map_cloud_update_interval: 10.0
+map_cloud_resolution: 0.05
+
+plane_dist_threshold:       0.15 
+use_point_to_plane:         false 
+use_parallel_plane_constraint: true 
+use_perpendicular_plane_constraint: true 
+corridor_dist_threshold:       1.0 
+corridor_min_plane_length:     5.0 
+corridor_min_width:            1.5 
+corridor_max_width:            2.5 
+room_dist_threshold:           1.0 
+room_min_plane_length:         2.0
+room_max_plane_length:         6.0 
+room_min_width:                2.0 
+plane_length_diff_threshold:   2.0 

@@ -16,11 +16,12 @@
   <!-- HDL GRAPH SLAM -->
   <node pkg="nodelet" type="nodelet" name="hdl_graph_slam_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="hdl_graph_slam" args="load hdl_graph_slam/HdlGraphSlamNodelet hdl_graph_slam_nodelet_manager" output="screen">
-    <rosparam command="load" file="$(find stugalux_spot_bringup)/config/slam/hdl_graph_slam.yaml" />
+    <rosparam command="load" file="$(find hdl_graph_slam)/config/hdl_graph_slam.yaml" />
     <param if="$(arg april_tag_enabled)"     name="wait_trans_odom2map"  value="true" />
     <param unless="$(arg april_tag_enabled)" name="wait_trans_odom2map"  value="false" />
     <param name="odom_frame_id"              value="odom_reset" />
     <param name="map_frame_id"               value="map" />
+    <param name="odom_frame_id"              value="odom_reset" />
     <!-- Inputs -->
     <remap from="/odom"                       to="/platform/reset_odometry" />
     <remap from="/filtered_points"            to="/slam/hdl_prefilter/filtered_point_cloud" />

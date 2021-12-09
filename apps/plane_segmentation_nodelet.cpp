@@ -28,7 +28,9 @@
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/shadowpoints.h>
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/segmentation/extract_clusters.h>
 #include <pcl/segmentation/organized_multi_plane_segmentation.h>
 #include <pcl/sample_consensus/sac_model_parallel_plane.h>
 #include <pcl/features/integral_image_normal.h>
@@ -58,6 +60,9 @@ private:
     min_seg_points_ = private_nh.param<int>("min_seg_points", 1000);
     min_horizontal_inliers_ = private_nh.param<int>("min_horizontal_inliers", 800);
     min_vertical_inliers_ = private_nh.param<int>("min_vertical_inliers", 500);
+    use_euclidean_filter_ = private_nh.param<bool>("use_euclidean_filter", false);
+    use_shadow_filter_ = private_nh.param<bool>("use_shadow_filter", false);
+
   }
 
   void init_ros() {
@@ -91,7 +96,7 @@ private:
   }
 
   void segment_planes(pcl::PointCloud<PointT>::Ptr transformed_cloud) {
-    pcl::PointCloud<PointT> segmented_cloud;
+    pcl::PointCloud<PointT>::Ptr segmented_cloud(new pcl::PointCloud<PointT>);
     std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec;
     int i = 0;
     while(transformed_cloud->points.size() > min_seg_points_) {
@@ -106,7 +111,7 @@ private:
         seg.setModelType(pcl::SACMODEL_PLANE);
         seg.setMethodType(pcl::SAC_RANSAC);
         seg.setDistanceThreshold(0.1);
-        //seg.setEpsAngle(pcl::deg2rad(5.0f));
+        // seg.setEpsAngle(pcl::deg2rad(5.0f));
         seg.setInputCloud(transformed_cloud);
         // seg.setInputNormals(normal_cloud);
         int model_type = seg.getModelType();
@@ -131,26 +136,38 @@ private:
         plane.head(3) = closest_point / closest_point.norm();
         plane(3) = closest_point.norm();
 
-        //std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
-        //std::cout << "Model coefficients after " << std::to_string(i) << ": " << plane << std::endl;
+        // std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+        // std::cout << "Model coefficients after " << std::to_string(i) << ": " << plane << std::endl;
 
-        pcl::PointCloud<PointT> extracted_cloud;
+        pcl::PointCloud<PointT>::Ptr extracted_cloud(new pcl::PointCloud<PointT>);
         for(const auto& idx : inliers->indices) {
-          extracted_cloud.push_back(transformed_cloud->points[idx]);
-          extracted_cloud.back().normal_x = plane(0);
-          extracted_cloud.back().normal_y = plane(1);
-          extracted_cloud.back().normal_z = plane(2);
-          extracted_cloud.back().curvature = plane(3);
+          extracted_cloud->push_back(transformed_cloud->points[idx]);
+          extracted_cloud->back().normal_x = plane(0);
+          extracted_cloud->back().normal_y = plane(1);
+          extracted_cloud->back().normal_z = plane(2);
+          extracted_cloud->back().curvature = plane(3);
+        }
+        
+        pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered;
+        if(use_euclidean_filter_)
+          extracted_cloud_filtered = compute_clusters(extracted_cloud);
+        else if(use_shadow_filter_){
+          pcl::PointCloud<pcl::Normal>::Ptr normals = compute_cloud_normals(extracted_cloud);
+          extracted_cloud_filtered = shadow_filter(extracted_cloud, normals);
+        } else {
+          extracted_cloud_filtered = extracted_cloud;
+        }
 
-          // visulazing the pointcloud
-          segmented_cloud.points.push_back(transformed_cloud->points[idx]);
-          segmented_cloud.back().r = 254;
-          segmented_cloud.back().g = 216;
-          segmented_cloud.back().b = 177;
+        // visulazing the pointcloud
+        for(int pc = 0; pc < extracted_cloud_filtered->points.size(); ++pc) {
+          segmented_cloud->points.push_back(extracted_cloud_filtered->points[pc]);
+          segmented_cloud->back().r = 254;
+          segmented_cloud->back().g = 216;
+          segmented_cloud->back().b = 177;
         }
 
         sensor_msgs::PointCloud2 extracted_cloud_msg;
-        pcl::toROSMsg(extracted_cloud, extracted_cloud_msg);
+        pcl::toROSMsg(*extracted_cloud_filtered, extracted_cloud_msg);
         std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
         extracted_cloud_msg.header = ext_msg_header;
         extracted_cloud_msg.header.frame_id = plane_extraction_frame_;
@@ -175,11 +192,66 @@ private:
     segmented_clouds_pub_.publish(extracted_clouds_msg);
 
     sensor_msgs::PointCloud2 segmented_cloud_msg;
-    pcl::toROSMsg(segmented_cloud, segmented_cloud_msg);
+    pcl::toROSMsg(*segmented_cloud, segmented_cloud_msg);
     std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
     segmented_cloud_msg.header = msg_header;
     segmented_cloud_msg.header.frame_id = plane_extraction_frame_;
     segmented_cloud_pub_.publish(segmented_cloud_msg);
+  }
+
+  pcl::PointCloud<PointT>::Ptr compute_clusters(const pcl::PointCloud<PointT>::Ptr& extracted_cloud) {
+    pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
+    tree->setInputCloud(extracted_cloud);
+    std::vector<pcl::PointIndices> cluster_indices;
+    pcl::EuclideanClusterExtraction<PointT> ec;
+    ec.setClusterTolerance(0.5);
+    ec.setMinClusterSize(50);
+    ec.setMaxClusterSize(25000);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud(extracted_cloud);
+    ec.extract(cluster_indices);
+
+    auto max_iterator = std::max_element(std::begin(cluster_indices), std::end(cluster_indices), [](const pcl::PointIndices& lhs, const pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
+
+    pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
+    if(cluster_indices.size() > 0) {
+      for(const auto& idx : (*max_iterator).indices) {
+        cloud_cluster->push_back(extracted_cloud->points[idx]);
+        cloud_cluster->width = cloud_cluster->size();
+        cloud_cluster->height = 1;
+        cloud_cluster->is_dense = true;
+        cloud_cluster->back().normal_x = extracted_cloud->back().normal_x;
+        cloud_cluster->back().normal_y = extracted_cloud->back().normal_y;
+        cloud_cluster->back().normal_z = extracted_cloud->back().normal_z;
+        cloud_cluster->back().curvature = extracted_cloud->back().curvature;
+      }
+    }
+
+    return cloud_cluster;
+  }
+
+  pcl::PointCloud<pcl::Normal>::Ptr compute_cloud_normals(const pcl::PointCloud<PointT>::Ptr& extracted_cloud) {
+    pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
+    pcl::NormalEstimation<PointT, pcl::Normal> ne;
+    pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>());
+
+    ne.setInputCloud(extracted_cloud);
+    ne.setSearchMethod(tree);
+    ne.setRadiusSearch(0.1);
+    ne.compute(*cloud_normals);
+
+    return cloud_normals;
+  }
+
+  pcl::PointCloud<PointT>::Ptr shadow_filter(const pcl::PointCloud<PointT>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals) {
+    pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered (new pcl::PointCloud<PointT>);
+    pcl::ShadowPoints<PointT, pcl::Normal> sp_filter;
+    sp_filter.setNormals(cloud_normals);
+    sp_filter.setThreshold(0.1);
+    sp_filter.setInputCloud(extracted_cloud);
+    sp_filter.filter(*extracted_cloud_filtered);
+
+    return extracted_cloud_filtered;
   }
 
   int getIndex(std::vector<pcl::PointXYZRGB, Eigen::aligned_allocator<pcl::PointXYZRGB> > v, pcl::PointXYZRGB K) {
@@ -203,6 +275,7 @@ private:
   tf::TransformListener tf_listener_;
   std::string plane_extraction_frame_;
   int min_seg_points_, min_horizontal_inliers_, min_vertical_inliers_;
+  bool use_euclidean_filter_, use_shadow_filter_; 
   friend bool operator==(const PointT& p1, const PointT& p2);
 };
 

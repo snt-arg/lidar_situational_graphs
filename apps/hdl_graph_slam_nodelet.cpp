@@ -86,6 +86,7 @@ public:
     g2o::Plane3D plane_local;
     g2o::Plane3D plane;
     int plane_id;
+    float plane_length;
     g2o::VertexSE3* keyframe_node;
     Eigen::Vector3d keyframe_trans;
   };
@@ -135,13 +136,15 @@ public:
     use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
     use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
-    corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 0.7);
+    corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 1.0);
     corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
-    corridor_min_width  = private_nh.param<double>("corridor_min_width", 0.5);
-    corridor_max_width  = private_nh.param<double>("corridor_max_width", 3.0);
+    corridor_min_width  = private_nh.param<double>("corridor_min_width", 1.5);
+    corridor_max_width  = private_nh.param<double>("corridor_max_width", 2.5);
+    plane_length_diff_threshold = private_nh.param<double>("plane_length_diff_threshold", 0.3);
 
-    room_dist_threshold = private_nh.param<double>("room_dist_threshold", 0.7);
+    room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
     room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
+    room_max_plane_length = private_nh.param<double>("room_max_plane_length", 6.0);
     room_min_width = private_nh.param<double>("room_min_width", 2.5);
 
     points_topic = private_nh.param<std::string>("points_topic", "/velodyne_points");
@@ -289,6 +292,9 @@ private:
 
         pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
         pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
+        
+        if(cloud_seg_body->points.empty())
+          continue;
 
         const auto& keyframe = found->second;
         keyframe->cloud_seg_body = cloud_seg_body;
@@ -298,47 +304,65 @@ private:
 
         if (fabs(det_plane_map_frame.coeffs()(0)) > 0.98) {              
           int plane_type = plane_class::X_VERT_PLANE; 
+          std::cout << "X det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
           /* check for potential x corridor and room candidates */
           float length =  plane_length(keyframe->cloud_seg_body);       
-          //std::cout << "length x: " << length << std::endl;
+          std::cout << "length x: " << length << std::endl;
     
           plane_data_list x_plane_id_pair;
-          x_plane_id_pair.plane = det_plane_map_frame; x_plane_id_pair.plane_local= det_plane_body_frame; x_plane_id_pair.plane_id = plane_id; x_plane_id_pair.keyframe_node = keyframe->node;  x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
+          x_plane_id_pair.plane = det_plane_map_frame; x_plane_id_pair.plane_local = det_plane_body_frame; 
+          x_plane_id_pair.plane_length = length;
+          x_plane_id_pair.plane_id = plane_id; 
+          x_plane_id_pair.keyframe_node = keyframe->node;  
+          x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
           if(length >= corridor_min_plane_length) {
+            std::cout << "added x corridor candidate " << std::endl;
             x_det_corridor_candidates.push_back(x_plane_id_pair); 
-          } else if (length >= room_min_plane_length && length <= corridor_min_plane_length) {
+          } 
+          if(length >= room_min_plane_length && length <= room_max_plane_length) {
+            std::cout << "added x room candidate " << std::endl;
             x_det_room_candidates.push_back(x_plane_id_pair);
           }
           updated = true;
-        } else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.98) {                   
+        }else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.98) {                   
           int plane_type = plane_class::Y_VERT_PLANE;  
+          std::cout << "Y det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
 
           /* check for potential y corridor and room candidates */
           float length =  plane_length(keyframe->cloud_seg_body);  
-          //std::cout << "length y: " << length << std::endl;
+          std::cout << "length y: " << length << std::endl;
           plane_data_list y_plane_id_pair;
-          y_plane_id_pair.plane = det_plane_map_frame; y_plane_id_pair.plane_local = det_plane_body_frame; y_plane_id_pair.plane_id = plane_id; y_plane_id_pair.keyframe_node = keyframe->node; y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
+          y_plane_id_pair.plane = det_plane_map_frame; y_plane_id_pair.plane_local = det_plane_body_frame; 
+          y_plane_id_pair.plane_length = length;
+          y_plane_id_pair.plane_id = plane_id; 
+          y_plane_id_pair.keyframe_node = keyframe->node;
+          y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
+
           if(length >= corridor_min_plane_length) {
+            std::cout << "added y corridor candidate " << std::endl;
             y_det_corridor_candidates.push_back(y_plane_id_pair); 
-          } else if (length >= room_min_plane_length && length <= corridor_min_plane_length) {
+          } 
+          if (length >= room_min_plane_length && length <= room_max_plane_length) {
+            std::cout << "added y room candidate " << std::endl;
             y_det_room_candidates.push_back(y_plane_id_pair);
           }
           updated = true;
-        } else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.95) {
+        }else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.98) {
           int plane_type = plane_class::HORT_PLANE;  
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
           updated = true;
-        } else 
+        }else 
           continue;
       }
 
       sort_and_factor_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates);  
       sort_and_factor_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates);  
-
-      std::vector<plane_data_list> x_room_pair_vec = sort_and_factor_rooms(plane_class::X_VERT_PLANE, x_det_room_candidates); 
-      std::vector<plane_data_list> y_room_pair_vec = sort_and_factor_rooms(plane_class::Y_VERT_PLANE, y_det_room_candidates);
+      float x_room_width=0, y_room_width=0; 
+      std::vector<plane_data_list> x_room_pair_vec = sort_and_factor_rooms(plane_class::X_VERT_PLANE, x_det_room_candidates,x_room_width); 
+      std::vector<plane_data_list> y_room_pair_vec = sort_and_factor_rooms(plane_class::Y_VERT_PLANE, y_det_room_candidates,y_room_width);
+      float room_width_diff = fabs(x_room_width) - fabs(y_room_width);
 
       if(x_room_pair_vec.size() == 2 && y_room_pair_vec.size() == 2) {
         factor_rooms(x_room_pair_vec, y_room_pair_vec);
@@ -358,24 +382,35 @@ private:
     for(int i=0; i < corridor_candidates.size(); ++i) {
       for(int j=i+1; j < corridor_candidates.size(); ++j) {
         correct_plane_d(plane_type, corridor_candidates[i].plane, corridor_candidates[j].plane);
+        correct_plane_d(plane_type, corridor_candidates[i].plane_local, corridor_candidates[j].plane_local);
         float corr_width = width_between_planes(corridor_candidates[i].plane.coeffs(), corridor_candidates[j].plane.coeffs());
-        //std::cout << "x corr_width: " << corr_width << std::endl;
-        if (corridor_candidates[i].plane.coeffs().head(3).dot(corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)) {
+        std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane.coeffs() << std::endl;
+        std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane.coeffs() << std::endl;
+        std::cout << "Corr_width: " << corr_width << std::endl;
+        float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length); 
+        std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
+        if (corridor_candidates[i].plane.coeffs().head(3).dot(corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
+           && diff_plane_length < plane_length_diff_threshold) {
             factor_corridors(plane_type, corridor_candidates[i], corridor_candidates[j]);
         } 
       } 
     }
   }
 
-  std::vector<plane_data_list> sort_and_factor_rooms(int plane_type, std::vector<plane_data_list> room_candidates) {
-    std::vector<plane_data_list> room_pair_vec;
+  std::vector<plane_data_list> sort_and_factor_rooms(int plane_type, std::vector<plane_data_list> room_candidates, float& room_width) {
+    std::vector<plane_data_list> room_pair_vec; 
+
     for(int i=0; i < room_candidates.size(); ++i) {
         for(int j=i+1; j < room_candidates.size(); ++j) {
           correct_plane_d(plane_type, room_candidates[i].plane, room_candidates[j].plane);
           correct_plane_d(plane_type, room_candidates[i].plane_local, room_candidates[j].plane_local);
-          float room_width = width_between_planes(room_candidates[i].plane.coeffs(), room_candidates[j].plane.coeffs());
-          //std::cout << "x room_width: " << room_width << std::endl;
-          if (room_candidates[i].plane.coeffs().head(3).dot(room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width) {
+          room_width = width_between_planes(room_candidates[i].plane.coeffs(), room_candidates[j].plane.coeffs());
+          std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane.coeffs() << std::endl;
+          std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane.coeffs() << std::endl;
+          std::cout << "rooom width : " << room_width << std::endl;
+          float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length); 
+          std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
+          if (room_candidates[i].plane.coeffs().head(3).dot(room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < plane_length_diff_threshold) {
             room_pair_vec.push_back(room_candidates[i]);
             room_pair_vec.push_back(room_candidates[j]);
           }
@@ -693,8 +728,8 @@ private:
   void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
     Eigen::Vector3d meas_plane1, meas_plane2;
-    Eigen::Matrix<double, 3, 3> information_se3_corridor = 0.001 * Eigen::Matrix3d::Identity();
-    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.001);
+    Eigen::Matrix<double, 3, 3> information_se3_corridor = 0.01 * Eigen::Matrix3d::Identity();
+    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.01);
     Eigen::Vector3d pre_corr_pose = pre_corridor_pose(plane_type, corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs());
     
     if(plane_type == plane_class::X_VERT_PLANE) { 
@@ -822,7 +857,6 @@ private:
   }
 
   Eigen::Vector3d final_corridor_pose(int plane_type, Eigen::Vector3d pre_corr_pose, g2o::VertexSE3* keyframe_node) {
-    /* TODO: Add z axis as well */
     Eigen::Vector3d corridor_pose;
     
     if(plane_type == plane_class::X_VERT_PLANE) {
@@ -873,6 +907,8 @@ private:
 
   std::pair<int,int> associate_corridors(int plane_type, Eigen::Vector3d corr_pose) {
     float min_dist = 100;
+    /* TODO: Add z axis as for calculation of the distance */
+
     std::pair<int,int> data_association; data_association.first = -1;
 
     if(plane_type == plane_class::X_VERT_PLANE) {
@@ -2549,7 +2585,8 @@ private:
   bool use_point_to_plane;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
   double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
-  double room_dist_threshold, room_min_plane_length, room_min_width;
+  double plane_length_diff_threshold;
+  double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width;
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                        // horizontally segmented planes
   std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes
