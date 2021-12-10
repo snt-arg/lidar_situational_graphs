@@ -137,12 +137,15 @@ public:
     use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
     use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
+    use_corridor_constraint = private_nh.param<bool>("use_corridor_constraint", false); 
     corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 1.0);
     corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
     corridor_min_width  = private_nh.param<double>("corridor_min_width", 1.5);
     corridor_max_width  = private_nh.param<double>("corridor_max_width", 2.5);
-    plane_length_diff_threshold = private_nh.param<double>("plane_length_diff_threshold", 0.3);
-
+    corridor_plane_length_diff_threshold = private_nh.param<double>("corridor_plane_length_diff_threshold", 0.3);
+      
+    use_room_constraint = private_nh.param<bool>("use_room_constraint", false); 
+    room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
     room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
     room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
     room_max_plane_length = private_nh.param<double>("room_max_plane_length", 6.0);
@@ -294,7 +297,7 @@ private:
         pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
         pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
         
-        if(cloud_seg_body->points.empty())
+        if(cloud_seg_body->points.size() < 100)
           continue;
 
         const auto& keyframe = found->second;
@@ -359,17 +362,23 @@ private:
         }else 
           continue;
       }
-
-      sort_and_factor_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates);  
-      sort_and_factor_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates);  
-      float x_room_width=0, y_room_width=0; 
-      std::vector<plane_data_list> x_room_pair_vec = sort_and_factor_rooms(plane_class::X_VERT_PLANE, x_det_room_candidates,x_room_width); 
-      std::vector<plane_data_list> y_room_pair_vec = sort_and_factor_rooms(plane_class::Y_VERT_PLANE, y_det_room_candidates,y_room_width);
-      float room_width_diff = fabs(x_room_width - y_room_width);
-
-      if(x_room_pair_vec.size() == 2 && y_room_pair_vec.size() == 2 && room_width_diff < 2.0) {
-        factor_rooms(x_room_pair_vec, y_room_pair_vec);
+      
+      if(use_corridor_constraint) {
+        sort_and_factor_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates);  
+        sort_and_factor_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates);  
       }
+
+      if(use_room_constraint)  {
+        float x_room_width=0, y_room_width=0; 
+        std::vector<plane_data_list> x_room_pair_vec = sort_and_factor_rooms(plane_class::X_VERT_PLANE, x_det_room_candidates,x_room_width); 
+        std::vector<plane_data_list> y_room_pair_vec = sort_and_factor_rooms(plane_class::Y_VERT_PLANE, y_det_room_candidates,y_room_width);
+        float room_width_diff = fabs(x_room_width - y_room_width);
+
+        if(x_room_pair_vec.size() == 2 && y_room_pair_vec.size() == 2 && room_width_diff < 2.0) {
+          factor_rooms(x_room_pair_vec, y_room_pair_vec);
+        }
+      }
+  
 
     }
     auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
@@ -391,14 +400,14 @@ private:
         correct_plane_d(plane_type, corridor_candidates[i].plane, corridor_candidates[j].plane);
         correct_plane_d(plane_type, corridor_candidates[i].plane_local, corridor_candidates[j].plane_local);
         float corr_width = width_between_planes(corridor_candidates[i].plane.coeffs(), corridor_candidates[j].plane.coeffs());
-        //std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane.coeffs() << std::endl;
-        //std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane.coeffs() << std::endl;
-        //std::cout << "Corr_width: " << corr_width << std::endl;
+        std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane.coeffs() << std::endl;
+        std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane.coeffs() << std::endl;
+        std::cout << "Corr_width: " << corr_width << std::endl;
         float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length); 
-        //std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
+        std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
         
         if (corridor_candidates[i].plane.coeffs().head(3).dot(corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
-           && diff_plane_length < plane_length_diff_threshold) {
+           && diff_plane_length < corridor_plane_length_diff_threshold) {
             corridor_candidates[i].is_structural_candidate = corridor_candidates[j].is_structural_candidate = true; 
             factor_corridors(plane_type, corridor_candidates[i], corridor_candidates[j]);
         } 
@@ -424,7 +433,7 @@ private:
           float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length); 
           //std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
           
-          if (room_candidates[i].plane.coeffs().head(3).dot(room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < plane_length_diff_threshold) {
+          if (room_candidates[i].plane.coeffs().head(3).dot(room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < room_plane_length_diff_threshold) {
             room_pair_vec.push_back(room_candidates[i]);
             room_pair_vec.push_back(room_candidates[j]);
             room_candidates[i].is_structural_candidate = room_candidates[j].is_structural_candidate = true; 
@@ -2606,8 +2615,10 @@ private:
   double plane_dist_threshold;
   bool use_point_to_plane;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
+  bool use_corridor_constraint, use_room_constraint;
   double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
-  double plane_length_diff_threshold;
+  double corridor_plane_length_diff_threshold;
+  double room_plane_length_diff_threshold;
   double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width;
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                        // horizontally segmented planes
