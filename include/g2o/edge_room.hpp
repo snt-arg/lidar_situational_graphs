@@ -45,12 +45,13 @@ public:
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
     const VertexRoomXYLB* v2 = static_cast<const VertexRoomXYLB*>(_vertices[1]);
-    Eigen::Isometry3d w2l = v1->estimate().inverse();
-    Eigen::Vector4d room_global(0,0,0,1);
-    room_global.head(2) = v2->estimate();
-    Eigen::Vector4d room_local =  w2l.matrix() * room_global; 
 
-    _error = _measurement - room_local.head(2);
+    Eigen::Isometry3d m2l = v1->estimate().inverse();
+    Eigen::Isometry3d room_map; room_map.matrix().block<4,4>(0,0) = Eigen::Matrix4d::Identity(); room_map.matrix().block<2,1>(0,3) = v2->estimate();
+
+    Eigen::Isometry3d room_local = room_map * m2l; 
+    Eigen::Vector2d est = room_local.matrix().block<2,1>(0,3);
+    _error = est - _measurement; 
    }
 
  virtual bool read(std::istream& is) override {
