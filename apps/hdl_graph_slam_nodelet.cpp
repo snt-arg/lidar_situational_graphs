@@ -89,6 +89,7 @@ public:
     float plane_length;
     g2o::VertexSE3* keyframe_node;
     Eigen::Vector3d keyframe_trans;
+    bool is_structural_candidate;
   };
 
   HdlGraphSlamNodelet() {}
@@ -316,6 +317,7 @@ private:
           x_plane_id_pair.plane_id = plane_id; 
           x_plane_id_pair.keyframe_node = keyframe->node;  
           x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
+          x_plane_id_pair.is_structural_candidate = false;
           if(length >= corridor_min_plane_length) {
             //std::cout << "added x corridor candidate " << std::endl;
             x_det_corridor_candidates.push_back(x_plane_id_pair); 
@@ -339,6 +341,7 @@ private:
           y_plane_id_pair.plane_id = plane_id; 
           y_plane_id_pair.keyframe_node = keyframe->node;
           y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
+          y_plane_id_pair.is_structural_candidate = false;
 
           if(length >= corridor_min_plane_length) {
             //std::cout << "added y corridor candidate " << std::endl;
@@ -381,6 +384,10 @@ private:
   void sort_and_factor_corridors(int plane_type, std::vector<plane_data_list> corridor_candidates) {
     for(int i=0; i < corridor_candidates.size(); ++i) {
       for(int j=i+1; j < corridor_candidates.size(); ++j) {
+        
+        if(corridor_candidates[i].is_structural_candidate || corridor_candidates[j].is_structural_candidate)
+          continue;
+        
         correct_plane_d(plane_type, corridor_candidates[i].plane, corridor_candidates[j].plane);
         correct_plane_d(plane_type, corridor_candidates[i].plane_local, corridor_candidates[j].plane_local);
         float corr_width = width_between_planes(corridor_candidates[i].plane.coeffs(), corridor_candidates[j].plane.coeffs());
@@ -389,8 +396,10 @@ private:
         //std::cout << "Corr_width: " << corr_width << std::endl;
         float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length); 
         //std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
+        
         if (corridor_candidates[i].plane.coeffs().head(3).dot(corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
            && diff_plane_length < plane_length_diff_threshold) {
+            corridor_candidates[i].is_structural_candidate = corridor_candidates[j].is_structural_candidate = true; 
             factor_corridors(plane_type, corridor_candidates[i], corridor_candidates[j]);
         } 
       } 
@@ -402,18 +411,24 @@ private:
 
     for(int i=0; i < room_candidates.size(); ++i) {
         for(int j=i+1; j < room_candidates.size(); ++j) {
+          
+          if(room_candidates[i].is_structural_candidate || room_candidates[j].is_structural_candidate)
+            return room_pair_vec;
+
           correct_plane_d(plane_type, room_candidates[i].plane, room_candidates[j].plane);
           correct_plane_d(plane_type, room_candidates[i].plane_local, room_candidates[j].plane_local);
           room_width = width_between_planes(room_candidates[i].plane.coeffs(), room_candidates[j].plane.coeffs());
-          std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane.coeffs() << std::endl;
-          std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane.coeffs() << std::endl;
-          std::cout << "rooom width : " << room_width << std::endl;
+          //std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane.coeffs() << std::endl;
+          //std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane.coeffs() << std::endl;
+          //std::cout << "rooom width : " << room_width << std::endl;
           float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length); 
-          std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
+          //std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
+          
           if (room_candidates[i].plane.coeffs().head(3).dot(room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < plane_length_diff_threshold) {
             room_pair_vec.push_back(room_candidates[i]);
             room_pair_vec.push_back(room_candidates[j]);
-            std::cout << "Adding room candidates" << std::endl;
+            room_candidates[i].is_structural_candidate = room_candidates[j].is_structural_candidate = true; 
+            //std::cout << "Adding room candidates" << std::endl;
           }
        }
     }
