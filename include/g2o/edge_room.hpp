@@ -113,7 +113,7 @@ public:
        est =  p(3) - t(0);
     }
 
-    _error[0] = _measurement - est;
+    _error[0] = est - _measurement;
   }
 
   virtual bool read(std::istream& is) override {
@@ -177,7 +177,7 @@ public:
        est =  p(3) - t(1);
     }
 
-    _error[0] = _measurement - est;
+    _error[0] = est - _measurement;
   }
 
   virtual bool read(std::istream& is) override {

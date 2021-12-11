@@ -46,12 +46,14 @@ public:
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
     const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
-    Eigen::Isometry3d w2l = v1->estimate().inverse();
-    Eigen::Vector4d corridor_global(0,0,0,1);
-    corridor_global.head(3) = v2->estimate();
+    Eigen::Isometry3d w2m = v1->estimate().inverse();
+    Eigen::Isometry3d corridor_pose_map;
+    corridor_pose_map.matrix().block<4,4>(0,0) = Eigen::Matrix4d::Identity(); corridor_pose_map.matrix().block<3,1>(0,3) = v2->estimate();  
 
-    Eigen::Vector4d corridor_local =  w2l.matrix() * corridor_global; 
-    _error = _measurement - corridor_local.head(3);
+    Eigen::Isometry3d corridor_pose_local =  corridor_pose_map * w2m; 
+    Eigen::Vector3d est = corridor_pose_local.matrix().block<3,1>(0,3);
+
+    _error = est - _measurement;
    }
 
  virtual bool read(std::istream& is) override {
@@ -111,7 +113,7 @@ public:
        est =  p(3) - t(0);
     }
 
-    _error[0] = _measurement[0] - est;
+    _error[0] = est - _measurement[0];
     }
 
   virtual bool read(std::istream& is) override {
@@ -180,7 +182,7 @@ public:
        est =  p(3) - t(1);
     }
 
-    _error[0] = _measurement[0] - est;
+    _error[0] = est - _measurement[0];
     }
 
   virtual bool read(std::istream& is) override {

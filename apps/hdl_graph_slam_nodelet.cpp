@@ -574,7 +574,7 @@ private:
       auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     } else {
-      Eigen::Matrix3d information = Eigen::Matrix3d::Identity();  
+      Eigen::Matrix3d information = 0.01 * Eigen::Matrix3d::Identity();  
       auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
@@ -901,11 +901,12 @@ private:
   }
 
   Eigen::Vector3d corridor_pose_local(g2o::VertexSE3* keyframe_node, Eigen::Vector3d corr_pose) {
-    Eigen::Vector4d corridor_pose_xy(corr_pose(0),corr_pose(1), corr_pose(2),1);
-    Eigen::Vector4d corridor_pose_local(0,0,0,1);
-    corridor_pose_local =  keyframe_node->estimate().inverse().matrix() * corridor_pose_xy;
+    Eigen::Isometry3d corridor_pose_map;
+    corridor_pose_map.matrix().block<4,4>(0,0) = Eigen::Matrix4d::Identity(); corridor_pose_map.matrix().block<3,1>(0,3) = corr_pose;  
 
-    return corridor_pose_local.head(3);
+    Eigen::Isometry3d corridor_pose_local = corridor_pose_map * keyframe_node->estimate().inverse();
+
+    return corridor_pose_local.matrix().block<3,1>(0,3);
   }
 
 
@@ -933,7 +934,6 @@ private:
 
   std::pair<int,int> associate_corridors(int plane_type, Eigen::Vector3d corr_pose) {
     float min_dist = 100;
-    /* TODO: Add z axis as for calculation of the distance */
 
     std::pair<int,int> data_association; data_association.first = -1;
 
