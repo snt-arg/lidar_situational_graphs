@@ -574,7 +574,7 @@ private:
       auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     } else {
-      Eigen::Matrix3d information = 0.01 * Eigen::Matrix3d::Identity();  
+      Eigen::Matrix3d information = 0.1 * Eigen::Matrix3d::Identity();  
       auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
