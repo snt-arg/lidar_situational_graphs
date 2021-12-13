@@ -928,20 +928,20 @@ private:
     if(plane_type == plane_class::X_VERT_PLANE) {
       if(fabs(v1(3)) > fabs(v2(3))) {
         double size = v1(3) - v2(3);
-        corridor_pose(0) = ((size)/2) + v2(3); 
+        corridor_pose(0) = -1*(((size)/2) + v2(3)); 
       } else {
         double size = v2(3) - v1(3);
-        corridor_pose(0) = ((size)/2) + v1(3);
+        corridor_pose(0) = -1*(((size)/2) + v1(3));
       }
     }
 
     if(plane_type == plane_class::Y_VERT_PLANE) {
       if(fabs(v1(3)) > fabs(v2(3))) {
         double size = v1(3) - v2(3);
-        corridor_pose(1) = ((size)/2) + v2(3); 
+        corridor_pose(1) = -1*(((size)/2) + v2(3)); 
       } else {
         double size = v2(3) - v1(3);
-        corridor_pose(1) = ((size)/2) + v1(3);
+        corridor_pose(1) = -1*(((size)/2) + v1(3));
       }
     }
     
@@ -1008,7 +1008,7 @@ private:
         float dist = fabs((corr_pose(0)) - (x_corridors[i].node->estimate()(0)));
         if(dist < min_dist) {
           min_dist = dist;
-          std::cout << "dist X corr: " << dist << std::endl;
+          //std::cout << "dist X corr: " << dist << std::endl;
           data_association.first = x_corridors[i].id;
           data_association.second = i;
         }
@@ -1021,14 +1021,14 @@ private:
         float dist = fabs((corr_pose(1)) - (y_corridors[i].node->estimate()(1)));
         if(dist < min_dist) {
           min_dist = dist;
-          std::cout << "dist Y corr: " << dist << std::endl;
+          //std::cout << "dist Y corr: " << dist << std::endl;
           data_association.first = y_corridors[i].id;
           data_association.second = i;
         }
       }
     }
 
-    std::cout << "min dist: " << min_dist << std::endl;
+    //std::cout << "min dist: " << min_dist << std::endl;
     if (min_dist > corridor_dist_threshold) 
       data_association.first = -1;
 
@@ -1080,7 +1080,7 @@ private:
       y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[0].plane.coeffs());
       y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane.coeffs());
 
-      std::cout << "room pose local: " << room_pose_local << std::endl;
+      //std::cout << "room pose local: " << room_pose_local << std::endl;
       auto edge_se3_room = graph_slam->add_se3_room_edge(x_room_pair_vec[0].keyframe_node, room_node, room_pose_local, information_se3_room);
       graph_slam->add_robust_kernel(edge_se3_room, "Huber", 1.0);
 
@@ -1167,7 +1167,7 @@ private:
       float diff_x = room_pose(0) - rooms_vec[i].node->estimate()(0); 
       float diff_y = room_pose(1) - rooms_vec[i].node->estimate()(1); 
       float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));  
-      std::cout << "dist room: " << dist << std::endl;
+      //std::cout << "dist room: " << dist << std::endl;
 
       if(dist < min_dist) {
           min_dist = dist;
@@ -1176,7 +1176,7 @@ private:
         }
     }
 
-    std::cout << "min dist: " << min_dist << std::endl;
+    //std::cout << "min dist: " << min_dist << std::endl;
     if (min_dist > room_dist_threshold) 
       data_association.first = -1;
 
@@ -2280,7 +2280,7 @@ private:
 
     for(int i = 0; i < x_corridors.size(); ++i) {
       geometry_msgs::Point point;
-      point.x = -x_corridors[i].node->estimate()(0);
+      point.x =  x_corridors[i].node->estimate()(0);
       point.y =  x_corridors[i].node->estimate()(1);
       point.z = 12;
       corridor_marker.points.push_back(point);
@@ -2293,7 +2293,7 @@ private:
       corr_x_text_marker.header.stamp = stamp;
       corr_x_text_marker.id = markers.markers.size()+1;
       corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_x_text_marker.pose.position.x = -x_corridors[i].node->estimate()(0);
+      corr_x_text_marker.pose.position.x = x_corridors[i].node->estimate()(0);
       corr_x_text_marker.pose.position.y = x_corridors[i].node->estimate()(1);
       corr_x_text_marker.pose.position.z = 11.5;
       corr_x_text_marker.color.r = 1;
@@ -2316,15 +2316,15 @@ private:
       corr_x_line_marker.color.r =  corr_x_line_marker.color.g = corr_x_line_marker.color.b = 1;  
       corr_x_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
-      p1.x = -x_corridors[i].node->estimate()(0);
+      p1.x =  x_corridors[i].node->estimate()(0);
       p1.y =  x_corridors[i].node->estimate()(1);
       p1.z =  11.5;
-      p2.x = -x_corridors[i].node->estimate()(0) - 0.5;
+      p2.x =  x_corridors[i].node->estimate()(0) - 0.5;
       p2.y =  x_corridors[i].node->estimate()(1);
       p2.z =  8;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p2);
-      p3.x = -x_corridors[i].node->estimate()(0) + 0.5;
+      p3.x =  x_corridors[i].node->estimate()(0) + 0.5;
       p3.y =  x_corridors[i].node->estimate()(1);
       p3.z =  8;
       corr_x_line_marker.points.push_back(p1);
@@ -2335,7 +2335,7 @@ private:
     for(int i = 0; i < y_corridors.size(); ++i) {
       geometry_msgs::Point point;
       point.x =  y_corridors[i].node->estimate()(0);
-      point.y = -y_corridors[i].node->estimate()(1);
+      point.y =  y_corridors[i].node->estimate()(1);
       point.z = 12;
       corridor_marker.points.push_back(point);
 
@@ -2348,7 +2348,7 @@ private:
       corr_y_text_marker.id = markers.markers.size()+1;
       corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
       corr_y_text_marker.pose.position.x = y_corridors[i].node->estimate()(0);
-      corr_y_text_marker.pose.position.y = -y_corridors[i].node->estimate()(1);
+      corr_y_text_marker.pose.position.y = y_corridors[i].node->estimate()(1);
       corr_y_text_marker.pose.position.z = 11.5;
       corr_y_text_marker.color.r = 1;
       corr_y_text_marker.color.g = 1;
@@ -2371,15 +2371,15 @@ private:
       corr_y_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
       p1.x =   y_corridors[i].node->estimate()(0);
-      p1.y =  -y_corridors[i].node->estimate()(1);
+      p1.y =   y_corridors[i].node->estimate()(1);
       p1.z =  11.5;
       p2.x =   y_corridors[i].node->estimate()(0);
-      p2.y =  -y_corridors[i].node->estimate()(1) - 0.5;
+      p2.y =   y_corridors[i].node->estimate()(1) - 0.5;
       p2.z =   8;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p2);
       p3.x =  y_corridors[i].node->estimate()(0);
-      p3.y = -y_corridors[i].node->estimate()(1) + 0.5;
+      p3.y =  y_corridors[i].node->estimate()(1) + 0.5;
       p3.z =   8;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p3);
