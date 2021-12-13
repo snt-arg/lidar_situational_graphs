@@ -90,10 +90,10 @@ public:
 
 };
 
-class EdgeCorridorXPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexCorridor, g2o::VertexPlane> {
+class EdgeCorridorXPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorXPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexCorridor, g2o::VertexPlane>() {}
+  EdgeCorridorXPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
@@ -113,14 +113,12 @@ public:
        est =  p(3) - t(0);
     }
 
-    _error[0] = est - _measurement[0];
+    _error[0] = est - _measurement;
     }
 
   virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    for(int i = 0; i < 3; ++i) {
-      is >> v[i];
-    }
+    double v;
+    is >> v;
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -136,9 +134,7 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    for(int i = 0; i < 3; ++i) {
-      os << _measurement[i] << " ";
-    }
+    os << _measurement << " ";
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
@@ -148,21 +144,21 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector3d& m) override {
+  virtual void setMeasurement(const double& m) override {
     _measurement = m;
   }
 
   virtual int measurementDimension() const override {
-    return 3;
+    return 1;
   }
 };
 
 
 
-class EdgeCorridorYPlane : public BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexCorridor, g2o::VertexPlane> {
+class EdgeCorridorYPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorYPlane() : BaseBinaryEdge<1, Eigen::Vector3d, g2o::VertexCorridor, g2o::VertexPlane>() {}
+  EdgeCorridorYPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
@@ -182,14 +178,12 @@ public:
        est =  p(3) - t(1);
     }
 
-    _error[0] = est - _measurement[0];
+    _error[0] = est - _measurement;
     }
 
   virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    for(int i = 0; i < 3; ++i) {
-      is >> v[i];
-    }
+    double v;
+    is >> v;
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -205,9 +199,7 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    for(int i = 0; i < 3; ++i) {
-      os << _measurement[i] << " ";
-    }
+    os << _measurement << " ";
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
@@ -217,12 +209,12 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector3d& m) override {
+  virtual void setMeasurement(const double& m) override {
     _measurement = m;
   }
 
   virtual int measurementDimension() const override {
-    return 3;
+    return 1;
   }
 };
 

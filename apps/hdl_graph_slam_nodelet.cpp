@@ -312,7 +312,7 @@ private:
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
         g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
 
-        if (fabs(det_plane_map_frame.coeffs()(0)) > 0.99) {              
+        if (fabs(det_plane_map_frame.coeffs()(0)) > 0.98) {              
           int plane_type = plane_class::X_VERT_PLANE; 
           //std::cout << "X det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
@@ -336,7 +336,7 @@ private:
             x_det_room_candidates.push_back(x_plane_id_pair);
           }
           updated = true;
-        }else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.99) {                   
+        }else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.98) {                   
           int plane_type = plane_class::Y_VERT_PLANE;  
           //std::cout << "Y det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
@@ -361,7 +361,7 @@ private:
             y_det_room_candidates.push_back(y_plane_id_pair);
           }
           updated = true;
-        }else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.99) {
+        }else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.98) {
           int plane_type = plane_class::HORT_PLANE;  
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
           updated = true;
@@ -818,9 +818,9 @@ private:
 
   void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
-    Eigen::Vector3d meas_plane1, meas_plane2;
-    Eigen::Matrix<double, 3, 3> information_se3_corridor = 0.01 * Eigen::Matrix3d::Identity();
-    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.01);
+    double meas_plane1, meas_plane2;
+    Eigen::Matrix<double, 3, 3> information_se3_corridor = Eigen::Matrix3d::Identity();
+    Eigen::Matrix<double, 1, 1> information_corridor_plane(1);
     Eigen::Vector3d pre_corr_pose = pre_corridor_pose(plane_type, corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs());
     
     if(plane_type == plane_class::X_VERT_PLANE) { 
@@ -976,22 +976,22 @@ private:
   }
 
 
-  Eigen::Vector3d corridor_measurement(int plane_type, Eigen::Vector3d corr, Eigen::Vector4d plane) {
-    Eigen::Vector3d meas(0,0,0);  
+  double corridor_measurement(int plane_type, Eigen::Vector3d corr, Eigen::Vector4d plane) {
+    double meas = 0;  
 
     if(plane_type == plane_class::X_VERT_PLANE) {
       if(fabs(corr(0)) > fabs(plane(3))) {
-        meas(0) =  corr(0) - plane(3);
+        meas =  corr(0) - plane(3);
       } else {
-        meas(0) =  plane(3) - corr(0);
+        meas =  plane(3) - corr(0);
       }
     }  
 
     if(plane_type == plane_class::Y_VERT_PLANE) {
       if(fabs(corr(1)) > fabs(plane(3))) {
-        meas(0) =  corr(1) - plane(3);
+        meas =  corr(1) - plane(3);
       } else {
-        meas(0) =  plane(3) - corr(1);
+        meas =  plane(3) - corr(1);
       }
     } 
 
