@@ -60,7 +60,7 @@ private:
     min_seg_points_ = private_nh.param<int>("min_seg_points", 1000);
     min_horizontal_inliers_ = private_nh.param<int>("min_horizontal_inliers", 800);
     min_vertical_inliers_ = private_nh.param<int>("min_vertical_inliers", 500);
-    use_euclidean_filter_ = private_nh.param<bool>("use_euclidean_filter", false);
+    use_euclidean_filter_ = private_nh.param<bool>("use_euclidean_filter", true);
     use_shadow_filter_ = private_nh.param<bool>("use_shadow_filter", false);
 
   }
@@ -204,18 +204,21 @@ private:
     tree->setInputCloud(extracted_cloud);
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<PointT> ec;
-    ec.setClusterTolerance(0.5);
-    ec.setMinClusterSize(50);
+    ec.setClusterTolerance(0.3);
+    ec.setMinClusterSize(10);
     ec.setMaxClusterSize(25000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(extracted_cloud);
     ec.extract(cluster_indices);
 
-    auto max_iterator = std::max_element(std::begin(cluster_indices), std::end(cluster_indices), [](const pcl::PointIndices& lhs, const pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
+    //auto max_iterator = std::max_element(std::begin(cluster_indices), std::end(cluster_indices), [](const pcl::PointIndices& lhs, const pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
 
     pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
-    if(cluster_indices.size() > 0) {
-      for(const auto& idx : (*max_iterator).indices) {
+    for (auto single_cluster : cluster_indices) {  
+      if(single_cluster.indices.size() < 10)
+        continue; 
+
+      for(const auto& idx : (single_cluster).indices) {
         cloud_cluster->push_back(extracted_cloud->points[idx]);
         cloud_cluster->width = cloud_cluster->size();
         cloud_cluster->height = 1;
