@@ -215,9 +215,6 @@ private:
 
     pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
     for (auto single_cluster : cluster_indices) {  
-      if(single_cluster.indices.size() < 10)
-        continue; 
-
       for(const auto& idx : (single_cluster).indices) {
         cloud_cluster->push_back(extracted_cloud->points[idx]);
         cloud_cluster->width = cloud_cluster->size();
