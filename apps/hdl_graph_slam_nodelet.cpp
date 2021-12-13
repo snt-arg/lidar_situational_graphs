@@ -312,7 +312,7 @@ private:
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
         g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
 
-        if (fabs(det_plane_map_frame.coeffs()(0)) > 0.98) {              
+        if (fabs(det_plane_map_frame.coeffs()(0)) > 0.99) {              
           int plane_type = plane_class::X_VERT_PLANE; 
           //std::cout << "X det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
@@ -336,7 +336,7 @@ private:
             x_det_room_candidates.push_back(x_plane_id_pair);
           }
           updated = true;
-        }else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.98) {                   
+        }else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.99) {                   
           int plane_type = plane_class::Y_VERT_PLANE;  
           //std::cout << "Y det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
@@ -361,7 +361,7 @@ private:
             y_det_room_candidates.push_back(y_plane_id_pair);
           }
           updated = true;
-        }else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.98) {
+        }else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.99) {
           int plane_type = plane_class::HORT_PLANE;  
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
           updated = true;
