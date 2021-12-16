@@ -84,7 +84,8 @@ public:
   
   struct plane_data_list { 
     g2o::Plane3D plane_local;
-    g2o::Plane3D plane;
+    //g2o::Plane3D plane;
+    g2o::Plane3D plane_unflipped;
     int plane_id;
     float plane_length;
     g2o::VertexSE3* keyframe_node;
@@ -319,14 +320,18 @@ private:
           /* check for potential x corridor and room candidates */
           float length =  plane_length(keyframe->cloud_seg_body);       
           //std::cout << "length x: " << length << std::endl;
-    
+          Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
+          correct_plane_d(plane_type, plane_unflipped);
+
           plane_data_list x_plane_id_pair;
-          x_plane_id_pair.plane = det_plane_map_frame; x_plane_id_pair.plane_local = det_plane_body_frame; 
+          //x_plane_id_pair.plane = det_plane_map_frame; 
+          x_plane_id_pair.plane_local = det_plane_body_frame; 
+          x_plane_id_pair.plane_unflipped = plane_unflipped;
           x_plane_id_pair.plane_length = length;
           x_plane_id_pair.plane_id = plane_id; 
           x_plane_id_pair.keyframe_node = keyframe->node;  
           x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
-          x_plane_id_pair.is_structural_candidate = false;
+
           if(length >= corridor_min_plane_length) {
             //std::cout << "added x corridor candidate " << std::endl;
             x_det_corridor_candidates.push_back(x_plane_id_pair); 
@@ -344,13 +349,17 @@ private:
           /* check for potential y corridor and room candidates */
           float length =  plane_length(keyframe->cloud_seg_body);  
           //std::cout << "length y: " << length << std::endl;
+          Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
+          correct_plane_d(plane_type, plane_unflipped);
+          
           plane_data_list y_plane_id_pair;
-          y_plane_id_pair.plane = det_plane_map_frame; y_plane_id_pair.plane_local = det_plane_body_frame; 
+          //y_plane_id_pair.plane = det_plane_map_frame; 
+          y_plane_id_pair.plane_local = det_plane_body_frame; 
+          y_plane_id_pair.plane_unflipped = plane_unflipped;
           y_plane_id_pair.plane_length = length;
           y_plane_id_pair.plane_id = plane_id; 
           y_plane_id_pair.keyframe_node = keyframe->node;
           y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
-          y_plane_id_pair.is_structural_candidate = false;
 
           if(length >= corridor_min_plane_length) {
             //std::cout << "added y corridor candidate " << std::endl;
@@ -408,16 +417,14 @@ private:
 
     for(int i=0; i < corridor_candidates.size(); ++i) {
       for(int j=i+1; j < corridor_candidates.size(); ++j) {       
-        correct_plane_d(plane_type, corridor_candidates[i].plane, corridor_candidates[j].plane);
-        correct_plane_d(plane_type, corridor_candidates[i].plane_local, corridor_candidates[j].plane_local);
-        float corr_width = width_between_planes(corridor_candidates[i].plane.coeffs(), corridor_candidates[j].plane.coeffs());
-        //std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane.coeffs() << std::endl;
-        //std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane.coeffs() << std::endl;
+        float corr_width = width_between_planes(corridor_candidates[i].plane_unflipped.coeffs(), corridor_candidates[j].plane_unflipped.coeffs());
+        //std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane_unflipped.coeffs() << std::endl;
+        //std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane_unflipped.coeffs() << std::endl;
         //std::cout << "Corr_width: " << corr_width << std::endl;
         float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length); 
         //std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
         
-        if (corridor_candidates[i].plane.coeffs().head(3).dot(corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
+        if (corridor_candidates[i].plane_unflipped.coeffs().head(3).dot(corridor_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
            && diff_plane_length < corridor_plane_length_diff_threshold) {
             //corridor_candidates[i].is_structural_candidate = corridor_candidates[j].is_structural_candidate = true; 
             structure_data_list corridor_pair;
@@ -460,23 +467,21 @@ private:
 
     for(int i=0; i < room_candidates.size(); ++i) {
         for(int j=i+1; j < room_candidates.size(); ++j) {
-          correct_plane_d(plane_type, room_candidates[i].plane, room_candidates[j].plane);
-          correct_plane_d(plane_type, room_candidates[i].plane_local, room_candidates[j].plane_local);
-          float room_width = width_between_planes(room_candidates[i].plane.coeffs(), room_candidates[j].plane.coeffs());
-          //std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane.coeffs() << std::endl;
-          //std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane.coeffs() << std::endl;
-          //std::cout << "rooom width : " << room_width << std::endl;
+          float room_width = width_between_planes(room_candidates[i].plane_unflipped.coeffs(), room_candidates[j].plane_unflipped.coeffs());
+          std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane_unflipped.coeffs() << std::endl;
+          std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane_unflipped.coeffs() << std::endl;
+          std::cout << "rooom width : " << room_width << std::endl;
           float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length); 
           //std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
           
-          if (room_candidates[i].plane.coeffs().head(3).dot(room_candidates[j].plane.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < room_plane_length_diff_threshold) {
+          if (room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < room_plane_length_diff_threshold) {
             structure_data_list room_pair;
             room_pair.plane1 = room_candidates[i];
             room_pair.plane2 = room_candidates[j];
             room_pair.width  = room_width;
             room_pair.length_diff = diff_plane_length;
             room_pair_vec.push_back(room_pair);
-            //std::cout << "Adding room candidates" << std::endl;
+            std::cout << "Adding room candidates" << std::endl;
           }
        }
     }
@@ -723,7 +728,7 @@ private:
     double meas_plane1, meas_plane2;
     Eigen::Matrix<double, 3, 3> information_se3_corridor = Eigen::Matrix3d::Identity();
     Eigen::Matrix<double, 1, 1> information_corridor_plane(1);
-    double corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane.coeffs(), corr_plane2_pair.plane.coeffs());
+    double corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
     double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
 
     if(plane_type == plane_class::X_VERT_PLANE) { 
@@ -740,7 +745,7 @@ private:
         //corr_node->setFixed(true);
         Corridors det_corridor;
         det_corridor.id = corr_data_association.first;
-        det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
+        det_corridor.plane1 = corr_plane1_pair.plane_unflipped; det_corridor.plane2 = corr_plane2_pair.plane_unflipped; 
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
         det_corridor.keyframe_trans = corr_plane1_pair.keyframe_node->estimate().translation().head(3);
         det_corridor.node = corr_node;   
@@ -748,8 +753,8 @@ private:
 
         found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
       } else {
         /* add the edge between detected planes and the corridor */
         corr_node = x_corridors[corr_data_association.second].node;
@@ -757,8 +762,8 @@ private:
 
         found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
       }
       
       //auto edge_se3_corridor = graph_slam->add_se3_corridor_edge(corr_plane1_pair.keyframe_node, corr_node, corr_pose_local, information_se3_corridor);
@@ -778,14 +783,14 @@ private:
 
       if((y_corridors.empty() || corr_data_association.first == -1)) {
 
-        std::cout << "found an Y corridor with pre pose " << corr_pose <<  " between plane id " << corr_plane1_pair.plane.coeffs() << " and plane id " << corr_plane2_pair.plane.coeffs() << std::endl;
+        std::cout << "found an Y corridor with pre pose " << corr_pose <<  " between plane id " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane id " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
         corr_data_association.first = graph_slam->num_vertices();
         corr_node = graph_slam->add_corridor_node(corr_pose);
         //corr_node->setFixed(true);
         Corridors det_corridor;
         det_corridor.id = corr_data_association.first;
-        det_corridor.plane1 = corr_plane1_pair.plane; det_corridor.plane2 = corr_plane2_pair.plane; 
+        det_corridor.plane1 = corr_plane1_pair.plane_unflipped; det_corridor.plane2 = corr_plane2_pair.plane_unflipped; 
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
         det_corridor.keyframe_trans = corr_plane1_pair.keyframe_node->estimate().translation().head(3);
         det_corridor.node = corr_node;      
@@ -793,8 +798,8 @@ private:
         
         found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
 
        } else {
         /* add the edge between detected planes and the corridor */
@@ -803,8 +808,8 @@ private:
         
         found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
         found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane.coeffs());
-        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane.coeffs());
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
       }
 
       //std::cout << "corr pose local: " << corr_pose_local << std::endl;
@@ -914,8 +919,7 @@ private:
 
   void factor_rooms(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
     g2o::VertexRoomXYLB* room_node;  std::pair<int,int> room_data_association;   
-    Eigen::Matrix<double, 2, 2> information_se3_room = 0.01 * Eigen::Matrix2d::Identity();
-    Eigen::Matrix<double, 1, 1> information_room_plane(0.01);
+    Eigen::Matrix<double, 1, 1> information_room_plane(1);
 
     auto found_x_plane1 = x_vert_planes.begin();
     auto found_x_plane2 = x_vert_planes.begin();
@@ -924,11 +928,10 @@ private:
     double x_plane1_meas, x_plane2_meas;
     double y_plane1_meas, y_plane2_meas;
 
-
-    std::cout << "room planes 1: " << x_room_pair_vec[0].plane.coeffs() << std::endl;
-    std::cout << "room planes 2: " << x_room_pair_vec[1].plane.coeffs() << std::endl;
-    std::cout << "room planes 3: " << y_room_pair_vec[0].plane.coeffs() << std::endl;
-    std::cout << "room planes 4: " << y_room_pair_vec[1].plane.coeffs() << std::endl;
+    std::cout << "room planes 1: " << x_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
+    std::cout << "room planes 2: " << x_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
+    std::cout << "room planes 3: " << y_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
+    std::cout << "room planes 4: " << y_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
 
     Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
     Eigen::Vector2d room_pose_local = compute_room_pose_local(x_room_pair_vec[0].keyframe_node, room_pose);
@@ -940,8 +943,8 @@ private:
         //room_node->setFixed(true);
         Rooms det_room;
         det_room.id = room_data_association.first;     
-        det_room.plane_x1 = x_room_pair_vec[0].plane; det_room.plane_x2 = x_room_pair_vec[1].plane;
-        det_room.plane_y1 = y_room_pair_vec[0].plane; det_room.plane_y2 = y_room_pair_vec[1].plane;       
+        det_room.plane_x1 = x_room_pair_vec[0].plane_unflipped; det_room.plane_x2 = x_room_pair_vec[1].plane_unflipped;
+        det_room.plane_y1 = y_room_pair_vec[0].plane_unflipped; det_room.plane_y2 = y_room_pair_vec[1].plane_unflipped;       
         det_room.plane_x1_id = x_room_pair_vec[0].plane_id; det_room.plane_x2_id = x_room_pair_vec[1].plane_id; 
         det_room.plane_y1_id = y_room_pair_vec[0].plane_id; det_room.plane_y2_id = y_room_pair_vec[1].plane_id; 
         det_room.node = room_node;   
@@ -949,13 +952,13 @@ private:
 
         found_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[0].plane_id);
         found_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[1].plane_id);
-        x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[0].plane.coeffs());
-        x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[1].plane.coeffs());
+        x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[0].plane_unflipped.coeffs());
+        x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[1].plane_unflipped.coeffs());
 
         found_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[0].plane_id);
         found_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[1].plane_id);
-        y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[0].plane.coeffs());
-        y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane.coeffs());
+        y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[0].plane_unflipped.coeffs());
+        y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane_unflipped.coeffs());
         
         /* Add parallel and perpendicular constraints here */
         if(use_parallel_plane_constraint) {
@@ -979,7 +982,9 @@ private:
         Eigen::Vector4d found_x_plane1_coeffs,found_x_plane2_coeffs;
         found_x_plane1_coeffs = (*found_x_plane1).plane_node->estimate().coeffs(); 
         found_x_plane2_coeffs = (*found_x_plane2).plane_node->estimate().coeffs();
-        correct_plane_coeffs_d(plane_class::X_VERT_PLANE, found_x_plane1_coeffs, found_x_plane2_coeffs);
+        correct_plane_d(plane_class::X_VERT_PLANE, found_x_plane1_coeffs);
+        correct_plane_d(plane_class::X_VERT_PLANE, found_x_plane2_coeffs);
+
         x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, found_x_plane1_coeffs);
         x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, found_x_plane2_coeffs);
 
@@ -988,33 +993,30 @@ private:
         Eigen::Vector4d found_y_plane1_coeffs,found_y_plane2_coeffs;
         found_y_plane1_coeffs = (*found_y_plane1).plane_node->estimate().coeffs(); 
         found_y_plane2_coeffs = (*found_y_plane2).plane_node->estimate().coeffs();
-        correct_plane_coeffs_d(plane_class::Y_VERT_PLANE, found_y_plane1_coeffs, found_y_plane2_coeffs); 
+        correct_plane_d(plane_class::Y_VERT_PLANE, found_y_plane1_coeffs); 
+        correct_plane_d(plane_class::Y_VERT_PLANE, found_y_plane2_coeffs); 
+
         y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, found_y_plane1_coeffs);
         y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, found_y_plane2_coeffs);
     }
 
-      //std::cout << "room pose local: " << room_pose_local << std::endl;
-      //auto edge_se3_room = graph_slam->add_se3_room_edge(x_room_pair_vec[0].keyframe_node, room_node, room_pose_local, information_se3_room);
-      //graph_slam->add_robust_kernel(edge_se3_room, "Huber", 1.0);
+      auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
+      graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
 
-      // auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
-      // graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
+      auto edge_x_plane2 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane2).plane_node, x_plane2_meas, information_room_plane);
+      graph_slam->add_robust_kernel(edge_x_plane2, "Huber", 1.0);
+      
+      auto edge_y_plane1 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane1).plane_node, y_plane1_meas, information_room_plane);
+      graph_slam->add_robust_kernel(edge_y_plane1, "Huber", 1.0);
 
-      // auto edge_x_plane2 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane2).plane_node, x_plane2_meas, information_room_plane);
-      // graph_slam->add_robust_kernel(edge_x_plane2, "Huber", 1.0);
-
-      // auto edge_y_plane1 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane1).plane_node, y_plane1_meas, information_room_plane);
-      // graph_slam->add_robust_kernel(edge_y_plane1, "Huber", 1.0);
-
-      // auto edge_y_plane2 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane2).plane_node, y_plane2_meas, information_room_plane);
-      // graph_slam->add_robust_kernel(edge_y_plane2, "Huber", 1.0);
-
+      auto edge_y_plane2 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane2).plane_node, y_plane2_meas, information_room_plane);
+      graph_slam->add_robust_kernel(edge_y_plane2, "Huber", 1.0);
   }
 
   Eigen::Vector2d compute_room_pose(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
     Eigen::Vector2d room_pose(0,0);
-    Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane.coeffs(),  x_plane2 = x_room_pair_vec[1].plane.coeffs(); 
-    Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane.coeffs(),  y_plane2 = y_room_pair_vec[1].plane.coeffs();
+    Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane_unflipped.coeffs(),  x_plane2 = x_room_pair_vec[1].plane_unflipped.coeffs(); 
+    Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane_unflipped.coeffs(),  y_plane2 = y_room_pair_vec[1].plane_unflipped.coeffs();
 
     if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
         double size = x_plane1(3) - x_plane2(3);
@@ -1052,19 +1054,19 @@ private:
   double room_measurement(int plane_type, Eigen::Vector2d room, Eigen::Vector4d plane) {
     double meas;  
     
-    if(plane_type == plane_class::Y_VERT_PLANE) {
-      if(fabs(room(1)) > fabs(plane(3))) {
-        meas =  room(1) - plane(3);
-      } else {
-        meas =  plane(3) - room(1);
-      }
-    }
-
     if(plane_type == plane_class::X_VERT_PLANE) {
       if(fabs(room(0)) > fabs(plane(3))) {
         meas =  room(0) - plane(3);
       } else {
         meas =  plane(3) - room(0);
+      }
+    }
+
+    if(plane_type == plane_class::Y_VERT_PLANE) {
+      if(fabs(room(1)) > fabs(plane(3))) {
+        meas =  room(1) - plane(3);
+      } else {
+        meas =  plane(3) - room(1);
       }
     }
 
@@ -1144,48 +1146,18 @@ private:
     return size;  
   }
 
-  void correct_plane_d(int plane_type, g2o::Plane3D& plane1, g2o::Plane3D& plane2) { 
-    Eigen::Vector4d coeffs1, coeffs2;
-    coeffs1 = plane1.coeffs(); coeffs2 = plane2.coeffs();
-
+  void correct_plane_d(int plane_type, Eigen::Vector4d& plane) { 
+    
     if(plane_type == plane_class::X_VERT_PLANE){
-      if(coeffs1(0) < 0) {
-        coeffs1(3) = -1*coeffs1(3); 
-        plane1 = coeffs1;
-      }
-      if(coeffs2(0) < 0) {
-        coeffs2(3) = -1*coeffs2(3); 
-        plane2 = coeffs2;
-      }
+      plane(3) = -1*plane(3);
+      double p_norm = plane(0)/fabs(plane(0));
+      plane(3) = p_norm*plane(3); 
     }
+    
     if(plane_type == plane_class::Y_VERT_PLANE){
-      if(coeffs1(1) < 0) {
-        coeffs1(3) = -1*coeffs1(3); 
-        plane1 = coeffs1;
-      }
-      if(coeffs2(1) < 0) {
-        coeffs2(3) = -1*coeffs2(3); 
-        plane2 = coeffs2;
-      }
-    }
-  }
-
-  void correct_plane_coeffs_d(int plane_type, Eigen::Vector4d& plane1, Eigen::Vector4d& plane2) {
-    if(plane_type == plane_class::X_VERT_PLANE){
-      if(plane1(0) < 0) {
-        plane1(3) = -1*plane1(3); 
-      }
-      if(plane2(0) < 0) {
-        plane2(3) = -1*plane2(3); 
-      }
-    }
-    if(plane_type == plane_class::Y_VERT_PLANE){
-      if(plane1(1) < 0) {
-          plane1(3) = -1*plane1(3); 
-      }
-      if(plane2(1) < 0) {
-          plane2(3) = -1*plane2(3); 
-      }
+      plane(3) = -1*plane(3);
+      double p_norm = plane(1)/fabs(plane(1));
+      plane(3) = p_norm*plane(3); 
     }
   }
 
@@ -2366,8 +2338,8 @@ private:
 
     for(int i = 0; i < rooms_vec.size(); ++i) {
       geometry_msgs::Point point;
-      point.x = -rooms_vec[i].node->estimate()(0);
-      point.y = -rooms_vec[i].node->estimate()(1);
+      point.x = rooms_vec[i].node->estimate()(0);
+      point.y = rooms_vec[i].node->estimate()(1);
       point.z = 14;
       room_marker.points.push_back(point);
 
@@ -2379,8 +2351,8 @@ private:
       room_text_marker.header.stamp = stamp;
       room_text_marker.id = markers.markers.size()+1;
       room_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      room_text_marker.pose.position.x = -rooms_vec[i].node->estimate()(0);
-      room_text_marker.pose.position.y = -rooms_vec[i].node->estimate()(1);
+      room_text_marker.pose.position.x = rooms_vec[i].node->estimate()(0);
+      room_text_marker.pose.position.y = rooms_vec[i].node->estimate()(1);
       room_text_marker.pose.position.z = 13.5;
       room_text_marker.color.r = 1;
       room_text_marker.color.g = 1;
