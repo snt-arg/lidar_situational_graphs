@@ -35,12 +35,11 @@
 
 namespace g2o {
 
-class EdgeSE3Corridor : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexCorridor> {
+class EdgeSE3Corridor : public BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3Corridor() : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexSE3, g2o::VertexCorridor>() {
+  EdgeSE3Corridor() : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor>() {
     _information.setIdentity();
-    _error.setZero();
   }
 
   void computeError() override {
@@ -48,17 +47,17 @@ public:
     const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
     Eigen::Isometry3d w2m = v1->estimate().inverse();
     Eigen::Isometry3d corridor_pose_map;
-    corridor_pose_map.matrix().block<4,4>(0,0) = Eigen::Matrix4d::Identity(); corridor_pose_map.matrix().block<3,1>(0,3) = v2->estimate();  
+    corridor_pose_map.matrix().block<4,4>(0,0) = Eigen::Matrix4d::Identity(); corridor_pose_map.matrix()(1,3) = v2->estimate();  
 
     Eigen::Isometry3d corridor_pose_local =  corridor_pose_map * w2m; 
-    Eigen::Vector3d est = corridor_pose_local.matrix().block<3,1>(0,3);
+    double est = corridor_pose_local.matrix()(0,3);
 
-    _error = est - _measurement;
+    _error[0] = est - _measurement;
    }
 
  virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    is >> v(0) >> v(1) >> v(2);
+    double v;
+    is >> v;
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -73,8 +72,7 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    Eigen::Vector3d v = _measurement;
-    os << v(0) << " " << v(1) << " " << v(2);
+    os << _measurement << " ";
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
@@ -84,7 +82,7 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector3d& m) override {
+  virtual void setMeasurement(const double& m) override {
     _measurement = m;
   }
 
@@ -98,7 +96,7 @@ public:
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector3d t = v1->estimate();
+    double t = v1->estimate();
     Eigen::Vector4d p = v2->estimate().coeffs();
 
     if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
@@ -107,10 +105,10 @@ public:
       p(3) = -1*p(3);
 
     double est; 
-    if(fabs(t(0)) > fabs(p(3))) {
-       est =  t(0) - p(3);
+    if(fabs(t) > fabs(p(3))) {
+       est =  t - p(3);
     } else {
-       est =  p(3) - t(0);
+       est =  p(3) - t;
     }
 
     _error[0] = est - _measurement;
@@ -163,7 +161,7 @@ public:
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector3d t = v1->estimate();
+    double t = v1->estimate();
     Eigen::Vector4d p = v2->estimate().coeffs();
 
     if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
@@ -172,10 +170,10 @@ public:
       p(3) = -1*p(3);
 
     double est; 
-    if(fabs(t(1)) > fabs(p(3))) {
-       est =  t(1) - p(3);
+    if(fabs(t) > fabs(p(3))) {
+       est =  t - p(3);
     } else {
-       est =  p(3) - t(1);
+       est =  p(3) - t;
     }
 
     _error[0] = est - _measurement;

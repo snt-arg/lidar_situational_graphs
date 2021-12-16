@@ -36,57 +36,59 @@
 
 namespace g2o {
 
-  class G2O_TYPES_SLAM3D_API VertexCorridor : public BaseVertex<3, Vector3>
+  class G2O_TYPES_SLAM3D_API VertexCorridor : public BaseVertex<1, double>
   {
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
       VertexCorridor() {}
 
       virtual void setToOriginImpl() {
-        _estimate.fill(0.);
+        _estimate = 0;
       }
 
       virtual bool setEstimateDataImpl(const number_t* est){
-        Eigen::Map<const Vector3> _est(est);
-        _estimate = _est;
+        _estimate = est[0];
 
         return true;
       }
 
       virtual bool getEstimateData(number_t* est) const{
-        Eigen::Map<Vector3> _est(est);
-        _est = _estimate;
+        est[0] = _estimate;
         return true;
       }
 
       virtual int estimateDimension() const { 
-        return 3;
+        return 1;
       }
 
       virtual bool setMinimalEstimateDataImpl(const number_t* est){
-        _estimate = Eigen::Map<const Vector3>(est);
+        setEstimateData(est);
         return true;
       }
 
       virtual bool getMinimalEstimateData(number_t* est) const{
-        Eigen::Map<Vector3> v(est);
-        v = _estimate;
+        getEstimateData(est);
         return true;
       }
 
       virtual int minimalEstimateDimension() const { 
-        return 3;
+        return 1;
       }
 
       virtual void oplusImpl(const number_t* update)
       {
-        _estimate[0] += update[0];
-        _estimate[1] += update[1];
-        _estimate[2] += update[2];
+        _estimate += update[0];
       }
 
-      virtual bool read(std::istream& is) { return internal::readVector(is, _estimate); }
-      virtual bool write(std::ostream& os) const { return internal::writeVector(os, estimate()); }
+      virtual bool read(std::istream& is) { 
+        is >> _estimate;
+        return true;
+      }
+      
+      virtual bool write(std::ostream& os) const { 
+        os << _estimate;
+        return true; 
+      }
 
   };
 
