@@ -110,7 +110,7 @@ private:
         // Mandatory
         seg.setModelType(pcl::SACMODEL_PLANE);
         seg.setMethodType(pcl::SAC_RANSAC);
-        seg.setDistanceThreshold(0.1);
+        seg.setDistanceThreshold(0.01);
         // seg.setEpsAngle(pcl::deg2rad(5.0f));
         seg.setInputCloud(transformed_cloud);
         // seg.setInputNormals(normal_cloud);
