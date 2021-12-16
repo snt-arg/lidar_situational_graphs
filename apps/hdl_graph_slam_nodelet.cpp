@@ -411,11 +411,11 @@ private:
         correct_plane_d(plane_type, corridor_candidates[i].plane, corridor_candidates[j].plane);
         correct_plane_d(plane_type, corridor_candidates[i].plane_local, corridor_candidates[j].plane_local);
         float corr_width = width_between_planes(corridor_candidates[i].plane.coeffs(), corridor_candidates[j].plane.coeffs());
-        std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane.coeffs() << std::endl;
-        std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane.coeffs() << std::endl;
-        std::cout << "Corr_width: " << corr_width << std::endl;
+        //std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane.coeffs() << std::endl;
+        //std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane.coeffs() << std::endl;
+        //std::cout << "Corr_width: " << corr_width << std::endl;
         float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length); 
-        std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
+        //std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
         
         if (corridor_candidates[i].plane.coeffs().head(3).dot(corridor_candidates[j].plane.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
            && diff_plane_length < corridor_plane_length_diff_threshold) {
@@ -525,20 +525,6 @@ private:
     return det_plane_map_frame;
   }
 
-  // /**  
-  // * @brief Converting the cloud to map frame
-  // */
-  // pcl::PointCloud<PointNormal>::Ptr convert_cloud_to_map(KeyFrame::Ptr keyframe) {
-  //   pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
-  //   Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
-  //   for(const auto& src_pt : keyframe->cloud_seg_body->points) {
-  //     PointNormal dst_pt;
-  //     dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
-  //     cloud_seg_map->push_back(dst_pt);
-  //   }
-  //   return cloud_seg_map;
-  // }
-
   /** 
   * @brief create vertical plane factors
   */
@@ -564,14 +550,8 @@ private:
       }
     }
       
-    // pcl::PointCloud<PointNormal>::Ptr cloud_seg_map = convert_cloud_to_map(keyframe);
-    // if(cloud_seg_map->points.empty()) { 
-    //   std::cout << "Could not convert the cloud to body frame";
-    //   return false;
-    // }
-    
+   
     std::pair<int,int> data_association; data_association.first = -1;
-    bool new_plane_node_added = false;
     data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
 
     if (plane_type == plane_class::X_VERT_PLANE) {  
@@ -587,9 +567,7 @@ private:
           vert_plane.keyframe_node = keyframe->node; 
           vert_plane.plane_node = plane_node; 
           vert_plane.covariance = Eigen::Matrix3d::Identity();
-          vert_plane.parallel_pair = false;
           x_vert_planes.push_back(vert_plane);
-          new_plane_node_added = true;
       } else {
           //std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = x_vert_planes[data_association.second].plane_node;
@@ -606,9 +584,7 @@ private:
         vert_plane.keyframe_node = keyframe->node; 
         vert_plane.plane_node = plane_node; 
         vert_plane.covariance = Eigen::Matrix3d::Identity();
-        vert_plane.parallel_pair = false;
         y_vert_planes.push_back(vert_plane);
-        new_plane_node_added = true; 
       } else {
           //std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = y_vert_planes[data_association.second].plane_node;
@@ -627,14 +603,12 @@ private:
           hort_plane.plane_node = plane_node; 
           hort_plane.covariance = Eigen::Matrix3d::Identity();
           hort_planes.push_back(hort_plane);
-          new_plane_node_added = true;
       } else {
         //std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
         plane_node = hort_planes[data_association.second].plane_node;
       }
     } 
     
-
     if(use_point_to_plane) {
       Eigen::Matrix<double, 1, 1> information(0.001);
       auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
@@ -644,13 +618,6 @@ private:
       auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
-
-    if(use_parallel_plane_constraint && new_plane_node_added) {
-      parallel_plane_constraint(plane_node, data_association.first, plane_type);
-    }
-    if(use_perpendicular_plane_constraint && new_plane_node_added) {
-      perpendicular_plane_constraint(plane_node, data_association.first, plane_type);
-    }
 
     return data_association.first;
   }
@@ -751,72 +718,7 @@ private:
     return data_association;
   }
   
-  /**  
-  * @brief this method add parallel constraint between the planes
-  */
-  void parallel_plane_constraint(g2o::VertexPlane* plane_node, int id, int plane_type) {
-    Eigen::Matrix<double, 1, 1> information(0.001);
-    Eigen::Vector3d meas(0,0,0);
-    if(plane_type == plane_class::X_VERT_PLANE) {
-      for(int i=0; i<x_vert_planes.size(); ++i){
-        if(id != x_vert_planes[i].id) {
-          auto edge = graph_slam->add_plane_parallel_edge(x_vert_planes[i].plane_node, plane_node, meas, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-          x_vert_planes[i].parallel_pair = true;
-        }
-      }
-    }
-    if(plane_type == plane_class::Y_VERT_PLANE) {
-      for(int i=0; i<y_vert_planes.size(); ++i){
-        if(id != y_vert_planes[i].id) {
-          auto edge = graph_slam->add_plane_parallel_edge(y_vert_planes[i].plane_node, plane_node, meas, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-          y_vert_planes[i].parallel_pair = true;
-        }
-      }
-    }
-    if(plane_type == plane_class::HORT_PLANE) {
-      for(int i=0; i<hort_planes.size(); ++i){
-        if(id != hort_planes[i].id) {
-          auto edge = graph_slam->add_plane_parallel_edge(hort_planes[i].plane_node, plane_node, meas, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-          hort_planes[i].parallel_pair = true;
-        }
-      }
-    }
-  }
-
-  /**  
-  * @brief this method adds perpendicular constraint between the planes
-  */
-  void perpendicular_plane_constraint(g2o::VertexPlane* plane_node, int id, int plane_type) {
-    Eigen::Matrix<double, 1, 1> information(0.001);
-    Eigen::Vector3d meas(0,0,0);
-    if(plane_type == plane_class::X_VERT_PLANE) {
-      for(int i=0; i<y_vert_planes.size(); ++i){
-          auto edge = graph_slam->add_plane_perpendicular_edge(y_vert_planes[i].plane_node, plane_node, meas, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-      }
-    }
-    if(plane_type == plane_class::Y_VERT_PLANE) {
-      for(int i=0; i<x_vert_planes.size(); ++i){
-          auto edge = graph_slam->add_plane_perpendicular_edge(x_vert_planes[i].plane_node, plane_node, meas, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-      }
-    } 
-    if(plane_type == plane_class::HORT_PLANE) {
-      for(int i=0; i<x_vert_planes.size(); ++i){
-          auto edge = graph_slam->add_plane_perpendicular_edge(x_vert_planes[i].plane_node, plane_node, meas, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-      }
-      for(int i=0; i<y_vert_planes.size(); ++i){
-          auto edge = graph_slam->add_plane_perpendicular_edge(y_vert_planes[i].plane_node, plane_node, meas, information);
-          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-      }
-    } 
-  }
-
-  void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
+   void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
     double meas_plane1, meas_plane2;
     Eigen::Matrix<double, 3, 3> information_se3_corridor = Eigen::Matrix3d::Identity();
@@ -957,10 +859,6 @@ private:
 
     Eigen::Isometry3d corridor_pose_local = corridor_pose_map * keyframe_node->estimate().inverse();
 
-    std::cout << "keyframe pose: " << keyframe_node->estimate().matrix() << std::endl;    
-    std::cout << "keyframe pose inverse: " << keyframe_node->estimate().inverse().matrix() << std::endl;    
-    std::cout << "corridor_pose_map: " << corridor_pose_map.matrix() << std::endl;    
-
     return corridor_pose_local.matrix()(1,3);
   }
 
@@ -1058,6 +956,18 @@ private:
         found_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[1].plane_id);
         y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[0].plane.coeffs());
         y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane.coeffs());
+        
+        /* Add parallel and perpendicular constraints here */
+        if(use_parallel_plane_constraint) {
+          parallel_plane_constraint((*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
+          parallel_plane_constraint((*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
+        }
+        if(use_perpendicular_plane_constraint){
+          perpendicular_plane_constraint((*found_x_plane1).plane_node, (*found_y_plane1).plane_node);
+          perpendicular_plane_constraint((*found_x_plane1).plane_node, (*found_y_plane2).plane_node);
+          perpendicular_plane_constraint((*found_x_plane2).plane_node, (*found_y_plane1).plane_node);
+          perpendicular_plane_constraint((*found_x_plane2).plane_node, (*found_y_plane2).plane_node);
+        }
 
     } else {
         /* add the edge between detected planes and the corridor */
@@ -1087,17 +997,17 @@ private:
       //auto edge_se3_room = graph_slam->add_se3_room_edge(x_room_pair_vec[0].keyframe_node, room_node, room_pose_local, information_se3_room);
       //graph_slam->add_robust_kernel(edge_se3_room, "Huber", 1.0);
 
-      auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
-      graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
+      // auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
+      // graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
 
-      auto edge_x_plane2 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane2).plane_node, x_plane2_meas, information_room_plane);
-      graph_slam->add_robust_kernel(edge_x_plane2, "Huber", 1.0);
+      // auto edge_x_plane2 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane2).plane_node, x_plane2_meas, information_room_plane);
+      // graph_slam->add_robust_kernel(edge_x_plane2, "Huber", 1.0);
 
-      auto edge_y_plane1 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane1).plane_node, y_plane1_meas, information_room_plane);
-      graph_slam->add_robust_kernel(edge_y_plane1, "Huber", 1.0);
+      // auto edge_y_plane1 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane1).plane_node, y_plane1_meas, information_room_plane);
+      // graph_slam->add_robust_kernel(edge_y_plane1, "Huber", 1.0);
 
-      auto edge_y_plane2 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane2).plane_node, y_plane2_meas, information_room_plane);
-      graph_slam->add_robust_kernel(edge_y_plane2, "Huber", 1.0);
+      // auto edge_y_plane2 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane2).plane_node, y_plane2_meas, information_room_plane);
+      // graph_slam->add_robust_kernel(edge_y_plane2, "Huber", 1.0);
 
   }
 
@@ -1190,6 +1100,29 @@ private:
     return data_association;
 
   }
+
+ /**  
+  * @brief this method add parallel constraint between the planes of rooms or corridors
+  */
+  void parallel_plane_constraint(g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node) {
+    Eigen::Matrix<double, 1, 1> information(0.1);
+    Eigen::Vector3d meas(0,0,0);
+    
+    auto edge = graph_slam->add_plane_parallel_edge(plane1_node, plane2_node, meas, information);
+    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+  }
+
+  /**  
+  * @brief this method adds perpendicular constraint between the planes of rooms or corridors
+  */
+  void perpendicular_plane_constraint(g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node) {
+    Eigen::Matrix<double, 1, 1> information(0.1);
+    Eigen::Vector3d meas(0,0,0);
+    
+    auto edge = graph_slam->add_plane_perpendicular_edge(plane1_node, plane2_node, meas, information);
+    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+  }
+
 
   float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg) {
     PointNormal pmin, pmax; pcl::PointXY p1, p2;
