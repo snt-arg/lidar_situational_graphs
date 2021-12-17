@@ -406,7 +406,7 @@ private:
   }
   
   /**
-   * @brief sort corridors and create their factors
+   * @brief sort corridors and add them possible candidates for refinement
   */
   std::vector<structure_data_list> sort_corridors(int plane_type, std::vector<plane_data_list> corridor_candidates) {
     std::vector<structure_data_list> corridor_pair_vec; 
@@ -435,6 +435,9 @@ private:
     return corridor_pair_vec;
   }
 
+  /**
+  * @brief refine the sorted corridors
+  */
   std::vector<plane_data_list> refine_corridors(std::vector<structure_data_list> corr_vec) {
     float min_width_diff=corridor_min_width; float min_corr_length_diff=100;
     std::vector<plane_data_list> corr_refined; corr_refined.resize(2);
@@ -455,8 +458,10 @@ private:
     else  
       return corr_refined;
   }
-
-
+  
+  /**
+  * @brief sort the rooms candidates
+  */
   std::vector<structure_data_list> sort_rooms(int plane_type, std::vector<plane_data_list> room_candidates) {
     std::vector<structure_data_list> room_pair_vec; 
 
@@ -482,7 +487,10 @@ private:
     }
     return room_pair_vec;
   }
-
+  
+  /**
+  * @brief refine the sorted room candidates
+  */
   std::pair<std::vector<plane_data_list>,std::vector<plane_data_list>> refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec) {
     float min_width_diff=2.5;
     std::vector<plane_data_list> x_room, y_room;
@@ -718,7 +726,10 @@ private:
     return data_association;
   }
   
-   void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
+  /**  
+  * @brief this method creates the corridor vertex and adds edges between the vertex the detected planes
+  */
+  void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
     double meas_plane1, meas_plane2;
     Eigen::Matrix<double, 3, 3> information_se3_corridor = Eigen::Matrix3d::Identity();
@@ -733,7 +744,9 @@ private:
 
       if((x_corridors.empty() || corr_data_association.first == -1)) {
         
-        std::cout << "found an X corridor with pre pose " << corr_pose <<  " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+        std::cout << "found an X corridor with pre pose " << corr_pose <<  
+        " between plane id " << corr_plane1_pair.plane_id << 
+        " and plane id " << corr_plane2_pair.plane_id << std::endl;
 
         corr_data_association.first = graph_slam->num_vertices();
         corr_node = graph_slam->add_corridor_node(corr_pose);
@@ -759,7 +772,9 @@ private:
       } else {
         /* add the edge between detected planes and the corridor */
         corr_node = x_corridors[corr_data_association.second].node;
-        std::cout << "Matched det corridor X with pre pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
+        std::cout << "Matched det corridor X with pre pose " << corr_pose << 
+        " to mapped corridor with id " << corr_data_association.first 
+        << " and pose " << corr_node->estimate()  << std::endl;
 
         found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[corr_data_association.second].plane1_id);
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[corr_data_association.second].plane2_id);
@@ -788,7 +803,9 @@ private:
 
       if((y_corridors.empty() || corr_data_association.first == -1)) {
 
-        std::cout << "found an Y corridor with pre pose " << corr_pose <<  " between plane id " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane id " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
+        std::cout << "found an Y corridor with pre pose " << corr_pose <<  
+        " between plane id " << corr_plane1_pair.plane_unflipped.coeffs() << 
+        " and plane id " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
         corr_data_association.first = graph_slam->num_vertices();
         corr_node = graph_slam->add_corridor_node(corr_pose);
@@ -814,7 +831,9 @@ private:
        } else {
         /* add the edge between detected planes and the corridor */
         corr_node = y_corridors[corr_data_association.second].node;
-        std::cout << "Matched det corridor Y with pre pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
+        std::cout << "Matched det corridor Y with pre pose " << corr_pose << 
+        " to mapped corridor with id " << corr_data_association.first << 
+        " and pose " << corr_node->estimate()  << std::endl;
         
         found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[corr_data_association.second].plane1_id);
         found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[corr_data_association.second].plane2_id);
@@ -918,6 +937,9 @@ private:
     return data_association;
   }
 
+   /**  
+  * @brief this method creates the room vertex and adds edges between the vertex and detected planes
+  */
   void factor_rooms(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
     g2o::VertexRoomXYLB* room_node;  std::pair<int,int> room_data_association;   
     Eigen::Matrix<double, 1, 1> information_room_plane(1);
@@ -938,7 +960,7 @@ private:
     Eigen::Vector2d room_pose_local = compute_room_pose_local(x_room_pair_vec[0].keyframe_node, room_pose);
     room_data_association = associate_rooms(room_pose);   
     if((rooms_vec.empty() || room_data_association.first == -1)) {
-        std::cout << "found first room with pose " << room_pose << std::endl;
+        std::cout << "found room with pose " << room_pose << std::endl;
         room_data_association.first = graph_slam->num_vertices();
         room_node = graph_slam->add_room_node(room_pose);
         //room_node->setFixed(true);
@@ -976,7 +998,9 @@ private:
     } else {
         /* add the edge between detected planes and the corridor */
         room_node = rooms_vec[room_data_association.second].node;
-        std::cout << "Matched det room with pose " << room_pose << " to mapped room with id " << room_data_association.first << " and pose " << room_node->estimate()  << std::endl;
+        std::cout << "Matched det room with pose " << room_pose << 
+        " to mapped room with id " << room_data_association.first << 
+        " and pose " << room_node->estimate()  << std::endl;
 
         found_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_x1_id);
         found_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_x2_id);
@@ -1077,7 +1101,6 @@ private:
 
     return meas;
   }
-
 
   std::pair<int,int> associate_rooms(Eigen::Vector2d room_pose) {
     float min_dist = 100;
