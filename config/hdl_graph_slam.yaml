@@ -81,7 +81,7 @@ use_point_to_plane:         false
 use_parallel_plane_constraint: true 
 use_perpendicular_plane_constraint: true
 use_corridor_constraint:              true       
-corridor_dist_threshold:              1.0
+corridor_dist_threshold:              0.5
 corridor_min_plane_length:            5.0 
 corridor_min_width:                   1.5 
 corridor_max_width:                   4.0

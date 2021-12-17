@@ -732,7 +732,7 @@ private:
   void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
     double meas_plane1, meas_plane2;
-    Eigen::Matrix<double, 1, 1> information_corridor_plane(1);
+    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.01);
     double corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
     //double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
 
