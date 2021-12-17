@@ -129,15 +129,18 @@ private:
           extract.filter(*transformed_cloud);
           continue;
         }
-
+        //std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+  
         Eigen::Vector4d normal(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]);
         Eigen::Vector3d closest_point = normal.head(3) * normal(3);
         Eigen::Vector4d plane;
         plane.head(3) = closest_point / closest_point.norm();
         plane(3) = closest_point.norm();
 
-        // std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
-        // std::cout << "Model coefficients after " << std::to_string(i) << ": " << plane << std::endl;
+        Eigen::Vector4f normals_flipped = normal.cast<float>();
+        pcl::flipNormalTowardsViewpoint(transformed_cloud->points[inliers->indices[0]], 0,0,0, normals_flipped);  
+
+        //std::cout << "Model coefficients after " << std::to_string(i) << ": " << normals_flipped << std::endl;
 
         pcl::PointCloud<PointT>::Ptr extracted_cloud(new pcl::PointCloud<PointT>);
         for(const auto& idx : inliers->indices) {
@@ -145,7 +148,7 @@ private:
           extracted_cloud->back().normal_x = plane(0);
           extracted_cloud->back().normal_y = plane(1);
           extracted_cloud->back().normal_z = plane(2);
-          extracted_cloud->back().curvature = plane(3);
+          extracted_cloud->back().curvature = plane(3); // normalized value of the plane distance
         }
         
         pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered;

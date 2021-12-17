@@ -89,8 +89,6 @@ public:
     int plane_id;
     float plane_length;
     g2o::VertexSE3* keyframe_node;
-    Eigen::Vector3d keyframe_trans;
-    bool is_structural_candidate;
   };
   struct structure_data_list {
     plane_data_list plane1;
@@ -330,7 +328,6 @@ private:
           x_plane_id_pair.plane_length = length;
           x_plane_id_pair.plane_id = plane_id; 
           x_plane_id_pair.keyframe_node = keyframe->node;  
-          x_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();
 
           if(length >= corridor_min_plane_length) {
             //std::cout << "added x corridor candidate " << std::endl;
@@ -359,7 +356,6 @@ private:
           y_plane_id_pair.plane_length = length;
           y_plane_id_pair.plane_id = plane_id; 
           y_plane_id_pair.keyframe_node = keyframe->node;
-          y_plane_id_pair.keyframe_trans = keyframe->node->estimate().translation();         
 
           if(length >= corridor_min_plane_length) {
             //std::cout << "added y corridor candidate " << std::endl;
@@ -426,7 +422,6 @@ private:
         
         if (corridor_candidates[i].plane_unflipped.coeffs().head(3).dot(corridor_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
            && diff_plane_length < corridor_plane_length_diff_threshold) {
-            //corridor_candidates[i].is_structural_candidate = corridor_candidates[j].is_structural_candidate = true; 
             structure_data_list corridor_pair;
             corridor_pair.plane1 = corridor_candidates[i];
             corridor_pair.plane2 = corridor_candidates[j];
@@ -468,9 +463,9 @@ private:
     for(int i=0; i < room_candidates.size(); ++i) {
         for(int j=i+1; j < room_candidates.size(); ++j) {
           float room_width = width_between_planes(room_candidates[i].plane_unflipped.coeffs(), room_candidates[j].plane_unflipped.coeffs());
-          std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane_unflipped.coeffs() << std::endl;
-          std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane_unflipped.coeffs() << std::endl;
-          std::cout << "rooom width : " << room_width << std::endl;
+          //std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane_unflipped.coeffs() << std::endl;
+          //std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane_unflipped.coeffs() << std::endl;
+          //std::cout << "rooom width : " << room_width << std::endl;
           float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length); 
           //std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
           
@@ -481,7 +476,7 @@ private:
             room_pair.width  = room_width;
             room_pair.length_diff = diff_plane_length;
             room_pair_vec.push_back(room_pair);
-            std::cout << "Adding room candidates" << std::endl;
+            //std::cout << "Adding room candidates" << std::endl;
           }
        }
     }
@@ -619,7 +614,7 @@ private:
       auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     } else {
-      Eigen::Matrix3d information = 0.01 * Eigen::Matrix3d::Identity();  
+      Eigen::Matrix3d information = Eigen::Matrix3d::Identity();  
       auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
@@ -727,9 +722,9 @@ private:
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
     double meas_plane1, meas_plane2;
     Eigen::Matrix<double, 3, 3> information_se3_corridor = Eigen::Matrix3d::Identity();
-    Eigen::Matrix<double, 1, 1> information_corridor_plane(1);
+    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.01);
     double corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
-    double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
+    //double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
 
     if(plane_type == plane_class::X_VERT_PLANE) { 
       auto found_plane1 = x_vert_planes.begin();
@@ -755,20 +750,30 @@ private:
         found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
         meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
         meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
+        /* Add parallel constraints here */
+        if(use_parallel_plane_constraint) {
+          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane1).plane_node);
+          parallel_plane_constraint((*found_plane2).plane_node, (*found_plane2).plane_node);
+        }
+
       } else {
         /* add the edge between detected planes and the corridor */
         corr_node = x_corridors[corr_data_association.second].node;
         std::cout << "Matched det corridor X with pre pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
 
-        found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
-        found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
-        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
+        found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[corr_data_association.second].plane1_id);
+        found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[corr_data_association.second].plane2_id);
+        
+        Eigen::Vector4d found_plane1_coeffs,found_plane2_coeffs;
+        found_plane1_coeffs = (*found_plane1).plane_node->estimate().coeffs(); 
+        found_plane2_coeffs = (*found_plane2).plane_node->estimate().coeffs();
+        correct_plane_d(plane_class::X_VERT_PLANE, found_plane1_coeffs);
+        correct_plane_d(plane_class::X_VERT_PLANE, found_plane2_coeffs);
+        
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose, found_plane2_coeffs);
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose, found_plane2_coeffs);
       }
       
-      //auto edge_se3_corridor = graph_slam->add_se3_corridor_edge(corr_plane1_pair.keyframe_node, corr_node, corr_pose_local, information_se3_corridor);
-      //graph_slam->add_robust_kernel(edge_se3_corridor, "Huber", 1.0);
-
       auto edge_plane1 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
       graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
 
@@ -800,21 +805,29 @@ private:
         found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
         meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
         meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
+        /* Add parallel constraints here */
+        if(use_parallel_plane_constraint) {
+          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane1).plane_node);
+          parallel_plane_constraint((*found_plane2).plane_node, (*found_plane2).plane_node);
+        }
 
        } else {
         /* add the edge between detected planes and the corridor */
         corr_node = y_corridors[corr_data_association.second].node;
         std::cout << "Matched det corridor Y with pre pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate()  << std::endl;
         
-        found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
-        found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-        meas_plane1 =  corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
-        meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
+        found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[corr_data_association.second].plane1_id);
+        found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[corr_data_association.second].plane2_id);
+        
+        Eigen::Vector4d found_plane1_coeffs,found_plane2_coeffs;
+        found_plane1_coeffs = (*found_plane1).plane_node->estimate().coeffs(); 
+        found_plane2_coeffs = (*found_plane2).plane_node->estimate().coeffs();
+        correct_plane_d(plane_class::Y_VERT_PLANE, found_plane1_coeffs);
+        correct_plane_d(plane_class::Y_VERT_PLANE, found_plane2_coeffs);
+        
+        meas_plane1 =  corridor_measurement(plane_type, corr_pose, found_plane1_coeffs);
+        meas_plane2 =  corridor_measurement(plane_type, corr_pose, found_plane2_coeffs);
       }
-
-      //std::cout << "corr pose local: " << corr_pose_local << std::endl;
-      //auto edge_se3_corridor = graph_slam->add_se3_corridor_edge(corr_plane1_pair.keyframe_node, corr_node, corr_pose_local, information_se3_corridor);
-      //graph_slam->add_robust_kernel(edge_se3_corridor, "Huber", 1.0);
 
       auto edge_plane1 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
       graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
@@ -831,10 +844,10 @@ private:
 
     if(fabs(v1(3)) > fabs(v2(3))) {
       double size = v1(3) - v2(3);
-      corridor_pose = -1*(((size)/2) + v2(3)); 
+      corridor_pose = ((size)/2) + v2(3); 
     } else {
       double size = v2(3) - v1(3);
-      corridor_pose = -1*(((size)/2) + v1(3));
+      corridor_pose = ((size)/2) + v1(3);
     }
    
     return corridor_pose;
@@ -858,22 +871,11 @@ private:
   //   return corridor_pose;
   // }
 
-  double corridor_pose_local(g2o::VertexSE3* keyframe_node, double corr_pose) {
-    Eigen::Isometry3d corridor_pose_map;
-    corridor_pose_map.matrix().block<4,4>(0,0) = Eigen::Matrix4d::Identity(); corridor_pose_map.matrix()(1,3) = corr_pose;  
-
-    Eigen::Isometry3d corridor_pose_local = corridor_pose_map * keyframe_node->estimate().inverse();
-
-    return corridor_pose_local.matrix()(1,3);
-  }
-
-
   double corridor_measurement(int plane_type, double corr, Eigen::Vector4d plane) {
     double meas = 0;  
 
     if(fabs(corr) > fabs(plane(3))) {
       meas =  corr - plane(3);
-    } else {
       meas =  plane(3) - corr;
     }
 
@@ -896,7 +898,6 @@ private:
         }
       }
     }
-
 
    if(plane_type == plane_class::Y_VERT_PLANE) {
       for(int i=0; i< y_corridors.size(); ++i) { 
@@ -928,10 +929,10 @@ private:
     double x_plane1_meas, x_plane2_meas;
     double y_plane1_meas, y_plane2_meas;
 
-    std::cout << "room planes 1: " << x_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
-    std::cout << "room planes 2: " << x_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
-    std::cout << "room planes 3: " << y_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
-    std::cout << "room planes 4: " << y_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
+    //std::cout << "room planes 1: " << x_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
+    //std::cout << "room planes 2: " << x_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
+    //std::cout << "room planes 3: " << y_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
+    //std::cout << "room planes 4: " << y_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
 
     Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
     Eigen::Vector2d room_pose_local = compute_room_pose_local(x_room_pair_vec[0].keyframe_node, room_pose);
@@ -1070,9 +1071,9 @@ private:
       }
     }
 
-    std::cout << "room pose: " << room << std::endl;
-    std::cout << "plane meas: " << plane(3) << std::endl;
-    std::cout << "meas: " << meas << std::endl;
+    //std::cout << "room pose: " << room << std::endl;
+    //std::cout << "plane meas: " << plane(3) << std::endl;
+    //std::cout << "meas: " << meas << std::endl;
 
     return meas;
   }
@@ -1103,7 +1104,7 @@ private:
 
   }
 
- /**  
+  /**  
   * @brief this method add parallel constraint between the planes of rooms or corridors
   */
   void parallel_plane_constraint(g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node) {
@@ -2212,7 +2213,7 @@ private:
     for(int i = 0; i < x_corridors.size(); ++i) {
       geometry_msgs::Point point;
       point.x =  x_corridors[i].node->estimate();
-      point.y =  x_corridors[i].node->estimate();
+      point.y =  x_corridors[i].keyframe_trans(1);
       point.z = 12;
       corridor_marker.points.push_back(point);
 
@@ -2225,7 +2226,7 @@ private:
       corr_x_text_marker.id = markers.markers.size()+1;
       corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
       corr_x_text_marker.pose.position.x = x_corridors[i].node->estimate();
-      corr_x_text_marker.pose.position.y = x_corridors[i].node->estimate();
+      corr_x_text_marker.pose.position.y = x_corridors[i].keyframe_trans(1);
       corr_x_text_marker.pose.position.z = 11.5;
       corr_x_text_marker.color.r = 1;
       corr_x_text_marker.color.g = 1;
@@ -2248,15 +2249,15 @@ private:
       corr_x_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
       p1.x =  x_corridors[i].node->estimate();
-      p1.y =  x_corridors[i].node->estimate();
+      p1.y =  x_corridors[i].keyframe_trans(1);
       p1.z =  11.5;
       p2.x =  x_corridors[i].node->estimate() - 0.5;
-      p2.y =  x_corridors[i].node->estimate();
+      p2.y =  x_corridors[i].keyframe_trans(1);
       p2.z =  8;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p2);
       p3.x =  x_corridors[i].node->estimate() + 0.5;
-      p3.y =  x_corridors[i].node->estimate();
+      p3.y =  x_corridors[i].keyframe_trans(1);
       p3.z =  8;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p3);
@@ -2265,7 +2266,7 @@ private:
     
     for(int i = 0; i < y_corridors.size(); ++i) {
       geometry_msgs::Point point;
-      point.x =  y_corridors[i].node->estimate();
+      point.x =  y_corridors[i].keyframe_trans(0);
       point.y =  y_corridors[i].node->estimate();
       point.z = 12;
       corridor_marker.points.push_back(point);
@@ -2278,7 +2279,7 @@ private:
       corr_y_text_marker.header.stamp = stamp;
       corr_y_text_marker.id = markers.markers.size()+1;
       corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_y_text_marker.pose.position.x = y_corridors[i].node->estimate();
+      corr_y_text_marker.pose.position.x = y_corridors[i].keyframe_trans(0);
       corr_y_text_marker.pose.position.y = y_corridors[i].node->estimate();
       corr_y_text_marker.pose.position.z = 11.5;
       corr_y_text_marker.color.r = 1;
@@ -2301,15 +2302,15 @@ private:
       corr_y_line_marker.color.r =  corr_y_line_marker.color.g = corr_y_line_marker.color.b = 1;  
       corr_y_line_marker.color.a = 1.0;
       geometry_msgs::Point p1,p2,p3;
-      p1.x =   y_corridors[i].node->estimate();
+      p1.x =   y_corridors[i].keyframe_trans(0);
       p1.y =   y_corridors[i].node->estimate();
       p1.z =  11.5;
-      p2.x =   y_corridors[i].node->estimate();
+      p2.x =   y_corridors[i].keyframe_trans(0);
       p2.y =   y_corridors[i].node->estimate() - 0.5;
       p2.z =   8;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p2);
-      p3.x =  y_corridors[i].node->estimate();
+      p3.x =  y_corridors[i].keyframe_trans(0);
       p3.y =  y_corridors[i].node->estimate() + 0.5;
       p3.z =   8;
       corr_y_line_marker.points.push_back(p1);

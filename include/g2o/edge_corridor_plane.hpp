@@ -96,19 +96,18 @@ public:
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    double t = v1->estimate();
-    Eigen::Vector4d p = v2->estimate().coeffs();
+    double trans = v1->estimate();
+    Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
-      p(3) = -1*p(3);
-    else if(fabs(p(1)) > fabs(p(0)) && p(1) < 0) 
-      p(3) = -1*p(3);
+    plane(3) = -1*plane(3);
+    double p_norm = plane(0)/fabs(plane(0));
+    plane(3) = p_norm*plane(3); 
 
     double est; 
-    if(fabs(t) > fabs(p(3))) {
-       est =  t - p(3);
+    if(fabs(trans) > fabs(plane(3))) {
+       est =  trans - plane(3);
     } else {
-       est =  p(3) - t;
+       est =  plane(3) - trans;
     }
 
     _error[0] = est - _measurement;
@@ -161,19 +160,18 @@ public:
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    double t = v1->estimate();
-    Eigen::Vector4d p = v2->estimate().coeffs();
+    double trans = v1->estimate();
+    Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    if(fabs(p(0)) > fabs(p(1)) && p(0) < 0) 
-      p(3) = -1*p(3);
-    else if(fabs(p(1)) > fabs(p(0)) && p(1) < 0) 
-      p(3) = -1*p(3);
+    plane(3) = -1*plane(3);
+    double p_norm = plane(1)/fabs(plane(1));
+    plane(3) = p_norm*plane(3); 
 
     double est; 
-    if(fabs(t) > fabs(p(3))) {
-       est =  t - p(3);
+    if(fabs(trans) > fabs(plane(3))) {
+       est =  trans - plane(3);
     } else {
-       est =  p(3) - t;
+       est =  plane(3) - trans;
     }
 
     _error[0] = est - _measurement;
