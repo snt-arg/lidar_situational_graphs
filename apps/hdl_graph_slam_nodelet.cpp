@@ -1889,21 +1889,21 @@ private:
         edge_marker.colors[i * 2 + 1].b = 0;
         edge_marker.colors[i * 2 + 1].a = 1;
 
-        edge_marker.points[i * 2+2].x = pt2.x();
-        edge_marker.points[i * 2+2].y = pt2.y();
-        edge_marker.points[i * 2+2].z = pt2.z();
-        edge_marker.points[i * 2 + 3].x = pt3.x();
-        edge_marker.points[i * 2 + 3].y = pt3.y();
-        edge_marker.points[i * 2 + 3].z = pt3.z();
+        edge_marker.points[(graph_slam->graph->edges().size()*2) + i * 2].x = pt2.x();
+        edge_marker.points[(graph_slam->graph->edges().size()*2) + i * 2].y = pt2.y();
+        edge_marker.points[(graph_slam->graph->edges().size()*2) + i * 2].z = pt2.z();
+        edge_marker.points[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].x = pt3.x();
+        edge_marker.points[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].y = pt3.y();
+        edge_marker.points[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].z = pt3.z();
 
-        edge_marker.colors[i * 2+2].r = r;
-        edge_marker.colors[i * 2+2].g = g;
-        edge_marker.colors[i * 2+2].b = b;
-        edge_marker.colors[i * 2+2].a = 1.0;
-        edge_marker.colors[i * 2 + 3].r = r;
-        edge_marker.colors[i * 2 + 3].g = g;
-        edge_marker.colors[i * 2 + 3].b = b;
-        edge_marker.colors[i * 2 + 3].a = 0.5;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].r = r;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].g = g;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].b = b;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].a = 1.0;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].r = r;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].g = g;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].b = b;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].a = 0.5;
 
         continue;
       }
@@ -1965,59 +1965,6 @@ private:
 
         continue;
       }
-
-      // g2o::EdgePlaneParallel* edge_parallel_plane = dynamic_cast<g2o::EdgePlaneParallel*>(edge);  
-      // if(edge_parallel_plane) {
-      //   g2o::VertexPlane* v1 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[0]);
-      //   g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_parallel_plane->vertices()[1]);
-      //   Eigen::Vector3d pt1(0,0,0), pt2(0,0,0);
-      //   float r=0, g=0, b=0.0;
-      //   double x1=0, y1=0, x2 =0, y2=0;
-      //   if (fabs(v2->estimate().normal()(0)) > 0.95) {
-      //     for(auto x_plane : x_vert_planes) {
-      //       if (x_plane.id == v1->id()) {
-      //         x1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
-      //         y1 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
-      //       } else if(x_plane.id == v2->id()) {
-      //         x2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
-      //         y2 = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
-      //       } 
-      //     }
-      //     pt1 = Eigen::Vector3d(x1, y1, 10.0);
-      //     pt2 = Eigen::Vector3d(x2, y2, 10.0);
-      //   }
-      //   if (fabs(v2->estimate().normal()(1)) > 0.95) {
-      //     for(auto y_plane : y_vert_planes) {
-      //       if (y_plane.id == v1->id()) {
-      //         x1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
-      //         y1 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
-      //       } else if(y_plane.id == v2->id()) {
-      //         x2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
-      //         y2 = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
-      //       } 
-      //     }
-      //     pt1 = Eigen::Vector3d(x1, y1, 10.0);
-      //     pt2 = Eigen::Vector3d(x2, y2, 10.0);
-      //   }
-        
-      //   edge_marker.points[i * 2].x = pt1.x();
-      //   edge_marker.points[i * 2].y = pt1.y();
-      //   edge_marker.points[i * 2].z = pt1.z();
-      //   edge_marker.points[i * 2 + 1].x = pt2.x();
-      //   edge_marker.points[i * 2 + 1].y = pt2.y();
-      //   edge_marker.points[i * 2 + 1].z = pt2.z();
-
-      //   edge_marker.colors[i * 2].r = r;
-      //   edge_marker.colors[i * 2].g = g;
-      //   edge_marker.colors[i * 2].b = b;
-      //   edge_marker.colors[i * 2].a = 1.0;
-      //   edge_marker.colors[i * 2 + 1].r = r;
-      //   edge_marker.colors[i * 2 + 1].g = g;
-      //   edge_marker.colors[i * 2 + 1].b = b;
-      //   edge_marker.colors[i * 2 + 1].a = 1.0;
-
-      //   continue;
-      // }
 
       g2o::EdgeSE3PriorXY* edge_priori_xy = dynamic_cast<g2o::EdgeSE3PriorXY*>(edge);
       if(edge_priori_xy) {
@@ -2110,33 +2057,6 @@ private:
     }
     markers.markers.push_back(x_vert_plane_marker); 
 
-
-    //x parallel plane markers 
-    // visualization_msgs::Marker x_parallel_plane_marker;
-    // x_parallel_plane_marker.pose.orientation.w = 1.0;
-    // x_parallel_plane_marker.scale.x = 0.05;
-    // x_parallel_plane_marker.scale.y = 2;
-    // x_parallel_plane_marker.scale.z = 1.0;
-    // //plane_marker.points.resize(vert_planes.size());    
-    // x_parallel_plane_marker.header.frame_id = map_frame_id;
-    // x_parallel_plane_marker.header.stamp = stamp;
-    // x_parallel_plane_marker.ns = "x_parallel_planes";
-    // x_parallel_plane_marker.id = markers.markers.size();
-    // x_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
-    // for(int i = 0; i < x_vert_planes.size(); ++i) {
-    //   if (x_vert_planes[i].parallel_pair) {
-    //     geometry_msgs::Point parallel_plane_point;
-    //     parallel_plane_point.x = x_vert_planes[i].cloud_seg_map->points[(x_vert_planes[i].cloud_seg_map->points.size()/2)].x;
-    //     parallel_plane_point.y = x_vert_planes[i].cloud_seg_map->points[(x_vert_planes[i].cloud_seg_map->points.size()/2)].y;
-    //     parallel_plane_point.z = 8.0;
-    //     x_parallel_plane_marker.points.push_back(parallel_plane_point);
-    //   }
-    // }
-    // x_parallel_plane_marker.color.r = 1;
-    // x_parallel_plane_marker.color.a = 1;
-    // markers.markers.push_back(x_parallel_plane_marker); 
-
-
     //y vertical plane markers 
     visualization_msgs::Marker y_vert_plane_marker;
     y_vert_plane_marker.pose.orientation.w = 1.0;
@@ -2162,33 +2082,6 @@ private:
       y_vert_plane_marker.color.a = 1;
     }
     markers.markers.push_back(y_vert_plane_marker); 
-
-
-    //y parallel plane markers 
-    // visualization_msgs::Marker y_parallel_plane_marker;
-    // y_parallel_plane_marker.pose.orientation.w = 1.0;
-    // y_parallel_plane_marker.scale.x = 2.0;
-    // y_parallel_plane_marker.scale.y = 0.05;
-    // y_parallel_plane_marker.scale.z = 1.0;
-    // //plane_marker.points.resize(vert_planes.size());    
-    // y_parallel_plane_marker.header.frame_id = map_frame_id;
-    // y_parallel_plane_marker.header.stamp = stamp;
-    // y_parallel_plane_marker.ns = "x_parallel_planes";
-    // y_parallel_plane_marker.id = markers.markers.size();
-    // y_parallel_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
-    // for(int i = 0; i < y_vert_planes.size(); ++i) {
-    //   if (y_vert_planes[i].parallel_pair) {
-    //     geometry_msgs::Point parallel_plane_point;
-    //     parallel_plane_point.x = y_vert_planes[i].cloud_seg_map->points[(y_vert_planes[i].cloud_seg_map->points.size()/2)].x;
-    //     parallel_plane_point.y = y_vert_planes[i].cloud_seg_map->points[(y_vert_planes[i].cloud_seg_map->points.size()/2)].y;
-    //     parallel_plane_point.z = 8.0;
-    //     y_parallel_plane_marker.points.push_back(parallel_plane_point);
-    //   }
-    // }
-    // y_parallel_plane_marker.color.b = 1;
-    // y_parallel_plane_marker.color.a = 1;
-    // markers.markers.push_back(y_parallel_plane_marker); 
-
 
     //horizontal plane markers 
     visualization_msgs::Marker hort_plane_marker;
