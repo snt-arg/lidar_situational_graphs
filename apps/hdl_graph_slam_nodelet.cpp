@@ -36,6 +36,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <hdl_graph_slam/FloorCoeffs.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <nav_msgs/Path.h>
 
 #include <hdl_graph_slam/SaveMap.h>
 #include <hdl_graph_slam/DumpGraph.h>
@@ -112,7 +113,7 @@ public:
     wait_trans_odom2map = private_nh.param<bool>("wait_trans_odom2map", false);
     got_trans_odom2map = false;
     trans_odom2map.setIdentity();
-
+    odom_path_vec.clear();
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
 
     //
@@ -170,7 +171,8 @@ public:
     cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
     sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_callback, this, _1, _2));
-  
+
+    raw_odom_sub = nh.subscribe("/odom", 1, &HdlGraphSlamNodelet::raw_odom_callback, this);
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &HdlGraphSlamNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &HdlGraphSlamNodelet::floor_coeffs_callback, this);
     cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
@@ -184,6 +186,9 @@ public:
     // publishers
     markers_pub = mt_nh.advertise<visualization_msgs::MarkerArray>("/hdl_graph_slam/markers", 16);
     odom2map_pub = mt_nh.advertise<geometry_msgs::TransformStamped>("/hdl_graph_slam/odom2map", 16);
+    odom_pose_corrected_pub = mt_nh.advertise<geometry_msgs::PoseStamped>("/hdl_graph_slam/odom_pose_corrected",10);
+    odom_path_corrected_pub = mt_nh.advertise<nav_msgs::Path>("/hdl_graph_slam/odom_path_corrected",10);
+
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/hdl_graph_slam/map_points", 1, true);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/hdl_graph_slam/read_until", 32);
 
@@ -198,6 +203,19 @@ public:
   }
 
 private:
+   /**
+   * @brief receive the raw odom msg to publish the corrected odom after 
+   * 
+   */
+  void raw_odom_callback(const nav_msgs::OdometryConstPtr& odom_msg) {
+    Eigen::Isometry3d odom = odom2isometry(odom_msg);
+    trans_odom2map_mutex.lock();
+    Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>(); 
+    trans_odom2map_mutex.unlock();
+    geometry_msgs::PoseStamped pose_stamped_corrected = matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id); 
+    publish_corrected_odom(pose_stamped_corrected);
+  }
+
   /**
    * @brief receive the initial transform between map and odom frame
    * @param map2odom_pose_msg
@@ -1615,6 +1633,19 @@ private:
     geometry_msgs::TransformStamped ts = matrix2transform(keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
     odom2map_pub.publish(ts);
 
+  }  
+  
+  /** 
+  * @brief publish odom corrected pose and path
+  */
+  void publish_corrected_odom(geometry_msgs::PoseStamped pose_stamped_corrected) {
+    nav_msgs::Path path_stamped_corrected;
+    path_stamped_corrected.header = pose_stamped_corrected.header;
+    odom_path_vec.push_back(pose_stamped_corrected);
+    path_stamped_corrected.poses = odom_path_vec;
+
+    odom_pose_corrected_pub.publish(pose_stamped_corrected);
+    odom_path_corrected_pub.publish(path_stamped_corrected);
   }
 
   /**  
@@ -2478,6 +2509,7 @@ private:
   ros::Subscriber nmea_sub;
   ros::Subscriber navsat_sub;
 
+  ros::Subscriber raw_odom_sub;
   ros::Subscriber imu_sub;
   ros::Subscriber floor_sub;
 
@@ -2490,6 +2522,9 @@ private:
   std::mutex trans_odom2map_mutex;
   Eigen::Matrix4f trans_odom2map;
   ros::Publisher odom2map_pub;
+  ros::Publisher odom_pose_corrected_pub;
+  ros::Publisher odom_path_corrected_pub;
+  std::vector<geometry_msgs::PoseStamped> odom_path_vec;
   ros::Subscriber init_odom2map_sub;
 
   std::string points_topic;
