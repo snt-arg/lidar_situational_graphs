@@ -547,14 +547,17 @@ private:
     
     for(int i=0; i<x_room_vec.size(); ++i) {
       for(int j=0; j<y_room_vec.size(); ++j) {
-          float room_diff = (x_room_vec[i].avg_point_diff + y_room_vec[j].avg_point_diff) / 2; 
-          if(room_diff < min_room_diff) {              
-            min_room_diff = room_diff;
-            x_room[0] = x_room_vec[i].plane1;
-            x_room[1] = x_room_vec[i].plane2;
-            y_room[0] = y_room_vec[j].plane1;
-            y_room[1] = y_room_vec[j].plane2;
-        }
+          float width_diff = fabs(x_room_vec[i].width - y_room_vec[j].width); 
+          if(width_diff < min_width_diff) {
+            float room_diff = (x_room_vec[i].avg_point_diff + y_room_vec[j].avg_point_diff) / 2; 
+            if(room_diff < min_room_diff) {              
+              min_room_diff = room_diff;
+              x_room[0] = x_room_vec[i].plane1;
+              x_room[1] = x_room_vec[i].plane2;
+              y_room[0] = y_room_vec[j].plane1;
+              y_room[1] = y_room_vec[j].plane2;
+          }
+       }
       }
     }
     
