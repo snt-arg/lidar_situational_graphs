@@ -88,6 +88,7 @@ public:
     //g2o::Plane3D plane;
     g2o::Plane3D plane_unflipped;
     int plane_id;
+    pcl::PointXY start_point, end_point;
     float plane_length;
     g2o::VertexSE3* keyframe_node;
   };
@@ -96,6 +97,7 @@ public:
     plane_data_list plane2;
     float width;
     float length_diff;
+    float avg_point_diff;
   };
 
   HdlGraphSlamNodelet() {}
@@ -334,7 +336,8 @@ private:
           //std::cout << "X det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
           /* check for potential x corridor and room candidates */
-          float length =  plane_length(keyframe->cloud_seg_body);       
+          pcl::PointXY start_point, end_point;
+          float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);       
           //std::cout << "length x: " << length << std::endl;
           Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
           correct_plane_d(plane_type, plane_unflipped);
@@ -344,6 +347,12 @@ private:
           x_plane_id_pair.plane_local = det_plane_body_frame; 
           x_plane_id_pair.plane_unflipped = plane_unflipped;
           x_plane_id_pair.plane_length = length;
+          if(start_point.y < end_point.y) {
+            x_plane_id_pair.start_point = start_point; x_plane_id_pair.end_point = end_point; 
+          }
+          else {
+            x_plane_id_pair.start_point = end_point; x_plane_id_pair.end_point = start_point;
+          }
           x_plane_id_pair.plane_id = plane_id; 
           x_plane_id_pair.keyframe_node = keyframe->node;  
 
@@ -362,7 +371,8 @@ private:
           plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
 
           /* check for potential y corridor and room candidates */
-          float length =  plane_length(keyframe->cloud_seg_body);  
+          pcl::PointXY start_point, end_point;
+          float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);  
           //std::cout << "length y: " << length << std::endl;
           Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
           correct_plane_d(plane_type, plane_unflipped);
@@ -371,6 +381,12 @@ private:
           //y_plane_id_pair.plane = det_plane_map_frame; 
           y_plane_id_pair.plane_local = det_plane_body_frame; 
           y_plane_id_pair.plane_unflipped = plane_unflipped;
+          if(start_point.x < end_point.x) {
+            y_plane_id_pair.start_point = start_point; y_plane_id_pair.end_point = end_point;
+          }
+          else {
+            y_plane_id_pair.start_point = end_point; y_plane_id_pair.end_point = start_point;
+          }
           y_plane_id_pair.plane_length = length;
           y_plane_id_pair.plane_id = plane_id; 
           y_plane_id_pair.keyframe_node = keyframe->node;
@@ -437,15 +453,22 @@ private:
         //std::cout << "Corr_width: " << corr_width << std::endl;
         float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length); 
         //std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
-        
+        float start_point_diff = point_difference(plane_type, corridor_candidates[i].start_point, corridor_candidates[j].start_point);
+        float end_point_diff = point_difference(plane_type, corridor_candidates[i].end_point, corridor_candidates[j].end_point);
+        float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
+        //std::cout << "corr point diff: " << avg_plane_point_diff << std::endl;
+
         if (corridor_candidates[i].plane_unflipped.coeffs().head(3).dot(corridor_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
            && diff_plane_length < corridor_plane_length_diff_threshold) {
-            structure_data_list corridor_pair;
-            corridor_pair.plane1 = corridor_candidates[i];
-            corridor_pair.plane2 = corridor_candidates[j];
-            corridor_pair.width  = corr_width;
-            corridor_pair.length_diff  = diff_plane_length;
-            corridor_pair_vec.push_back(corridor_pair);
+            if(avg_plane_point_diff < 3.0) {
+              structure_data_list corridor_pair;
+              corridor_pair.plane1 = corridor_candidates[i];
+              corridor_pair.plane2 = corridor_candidates[j];
+              corridor_pair.width  = corr_width;
+              corridor_pair.length_diff  = diff_plane_length;
+              corridor_pair.avg_point_diff = avg_plane_point_diff;
+              corridor_pair_vec.push_back(corridor_pair);
+          } 
         } 
       } 
     }
@@ -457,19 +480,19 @@ private:
   * @brief refine the sorted corridors
   */
   std::vector<plane_data_list> refine_corridors(std::vector<structure_data_list> corr_vec) {
-    float min_width_diff=corridor_min_width; float min_corr_length_diff=100;
+    float min_corridor_diff = 3.5;
     std::vector<plane_data_list> corr_refined; corr_refined.resize(2);
     
     for(int i=0; i<corr_vec.size(); ++i) {
-      float width_diff = fabs(corridor_max_width - corr_vec[i].width); 
-      if(corr_vec[i].length_diff < min_corr_length_diff) {
-          min_corr_length_diff = corr_vec[i].length_diff;
+      float corridor_diff = corr_vec[i].avg_point_diff; 
+      if(corridor_diff < min_corridor_diff) {
+          min_corridor_diff = corridor_diff;
           corr_refined[0] = corr_vec[i].plane1;
           corr_refined[1] = corr_vec[i].plane2;
         }
       }
     
-    if(min_corr_length_diff >= 100){
+    if(min_corridor_diff >= 3.5){
       std::vector<plane_data_list> corr_empty; corr_empty.resize(0);
       return corr_empty;
     }
@@ -491,15 +514,22 @@ private:
           //std::cout << "rooom width : " << room_width << std::endl;
           float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length); 
           //std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
-          
+          float start_point_diff = point_difference(plane_type, room_candidates[i].start_point, room_candidates[j].start_point);
+          float end_point_diff = point_difference(plane_type, room_candidates[i].end_point, room_candidates[j].end_point);
+          float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
+          //std::cout << "room point diff: " << avg_plane_point_diff << std::endl;
+
           if (room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < room_plane_length_diff_threshold) {
-            structure_data_list room_pair;
-            room_pair.plane1 = room_candidates[i];
-            room_pair.plane2 = room_candidates[j];
-            room_pair.width  = room_width;
-            room_pair.length_diff = diff_plane_length;
-            room_pair_vec.push_back(room_pair);
-            //std::cout << "Adding room candidates" << std::endl;
+            if(avg_plane_point_diff < 2.0) {
+              structure_data_list room_pair;
+              room_pair.plane1 = room_candidates[i];
+              room_pair.plane2 = room_candidates[j];
+              room_pair.width  = room_width;
+              room_pair.length_diff = diff_plane_length;
+              room_pair.avg_point_diff = avg_plane_point_diff;
+              room_pair_vec.push_back(room_pair);
+              //std::cout << "Adding room candidates" << std::endl;
+            }
           }
        }
     }
@@ -511,14 +541,15 @@ private:
   */
   std::pair<std::vector<plane_data_list>,std::vector<plane_data_list>> refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec) {
     float min_width_diff=2.5;
+    float min_room_diff=2.5;
     std::vector<plane_data_list> x_room, y_room;
     x_room.resize(2); y_room.resize(2);
     
     for(int i=0; i<x_room_vec.size(); ++i) {
       for(int j=0; j<y_room_vec.size(); ++j) {
-          float width_diff = fabs(x_room_vec[i].width - y_room_vec[j].width); 
-          if(width_diff < min_width_diff) {              
-            min_width_diff = width_diff;
+          float room_diff = (x_room_vec[i].avg_point_diff + y_room_vec[j].avg_point_diff) / 2; 
+          if(room_diff < min_room_diff) {              
+            min_room_diff = room_diff;
             x_room[0] = x_room_vec[i].plane1;
             x_room[1] = x_room_vec[i].plane2;
             y_room[0] = y_room_vec[j].plane1;
@@ -527,7 +558,7 @@ private:
       }
     }
     
-    if(min_width_diff >= 2.5) {
+    if(min_room_diff >= 2.5) {
       std::vector<plane_data_list> x_room_empty, y_room_empty;
       x_room_empty.resize(0); y_room_empty.resize(0);
       return std::make_pair(x_room_empty, x_room_empty);
@@ -1168,12 +1199,17 @@ private:
   }
 
 
-  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg) {
-    PointNormal pmin, pmax; pcl::PointXY p1, p2;
+  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2, g2o::VertexSE3* keyframe_node) {
+    PointNormal pmin, pmax;
     pcl::getMaxSegment(*cloud_seg, pmin, pmax);
     p1.x = pmin.x; p1.y = pmin.y;       
     p2.x = pmax.x; p2.y = pmax.y;
     float length = pcl::euclideanDistance(p1,p2);
+
+    pcl::PointXY p1_map, p2_map;
+    p1_map = convert_point_to_map(p1, keyframe_node->estimate().matrix());
+    p2_map = convert_point_to_map(p2, keyframe_node->estimate().matrix());
+    p1 = p1_map; p2 = p2_map;
 
     return length;
   } 
@@ -1186,6 +1222,34 @@ private:
       size = fabs(v2(3) - v1(3));  
 
     return size;  
+  }
+
+  float point_difference(int plane_type, pcl::PointXY p1, pcl::PointXY p2) {
+    float point_diff = 0;
+
+    if(plane_type == plane_class::X_VERT_PLANE) {
+      p1.x = 0; p2.x = 0;
+      point_diff = pcl::euclideanDistance(p1,p2);
+    }
+    if(plane_type == plane_class::Y_VERT_PLANE) {
+      p1.y = 0; p2.y = 0;
+      point_diff = pcl::euclideanDistance(p1,p2);
+    }
+
+    return point_diff;
+  }
+
+  pcl::PointXY convert_point_to_map(pcl::PointXY point_local, Eigen::Matrix4d keyframe_pose) {
+    pcl::PointXY point_map;
+
+    Eigen::Vector4d point_map_eigen, point_local_eigen;
+    point_local_eigen = point_map_eigen.setZero(); point_local_eigen(3) = point_map_eigen(3) = 1;
+    point_local_eigen(0) = point_local.x; 
+    point_local_eigen(1) = point_local.y; 
+    point_map_eigen = keyframe_pose * point_local_eigen;
+
+    point_map.x = point_map_eigen(0); point_map.y = point_map_eigen(1);
+    return point_map;   
   }
 
   void correct_plane_d(int plane_type, Eigen::Vector4d& plane) { 
