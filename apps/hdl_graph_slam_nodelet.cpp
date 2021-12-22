@@ -141,7 +141,8 @@ public:
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
     
     plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
-    use_point_to_plane = private_nh.param<bool>("plane_dist_threshold", false);
+    min_plane_points = private_nh.param<double>("min_plane_points", 100);
+    use_point_to_plane = private_nh.param<bool>("use_point_to_plane", false);
     use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
     use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
@@ -326,33 +327,33 @@ private:
         pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
         pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
         
-        if(cloud_seg_body->points.size() < 100)
+        if(cloud_seg_body->points.size() < min_plane_points)
           continue;
 
         const auto& keyframe = found->second;
         keyframe->cloud_seg_body = cloud_seg_body;
     
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
-        bool found_corridor = false; bool found_room = false;
+        bool found_corridor_candidates = false; bool found_room_candidates = false;
         plane_data_list plane_id_pair;
 
-        int plane_type = map_detected_planes(keyframe, det_plane_body_frame, found_corridor, found_room, plane_id_pair);
+        int plane_type = map_detected_planes(keyframe, det_plane_body_frame, found_corridor_candidates, found_room_candidates, plane_id_pair);
         switch(plane_type) {
           case plane_class::X_VERT_PLANE: {
-            if(found_corridor) {
+            if(found_corridor_candidates) {
               x_det_corridor_candidates.push_back(plane_id_pair); 
             }
-            if(found_room) {
+            if(found_room_candidates) {
               x_det_room_candidates.push_back(plane_id_pair);
             } 
             updated = true;
             break;
           }
           case plane_class::Y_VERT_PLANE: {
-            if(found_corridor) {
+            if(found_corridor_candidates) {
               y_det_corridor_candidates.push_back(plane_id_pair); 
             }
-            if(found_room) {
+            if(found_room_candidates) {
               y_det_room_candidates.push_back(plane_id_pair);
             }
             updated = true;
@@ -2694,6 +2695,7 @@ private:
 
   //vertical and horizontal planes
   double plane_dist_threshold;
+  double min_plane_points;
   bool use_point_to_plane;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
   bool use_corridor_constraint, use_room_constraint;
