@@ -301,7 +301,7 @@ private:
 
     const auto& latest_keyframe_stamp = keyframes.back()->stamp;
    
-    bool updated = false; int plane_id;
+    bool updated = false;
     for(const auto& clouds_seg_msg : clouds_seg_queue) {
 
       std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
@@ -331,81 +331,24 @@ private:
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
         g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
 
-        if (fabs(det_plane_map_frame.coeffs()(0)) > 0.98) {              
-          int plane_type = plane_class::X_VERT_PLANE; 
-          //std::cout << "X det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
-          plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
-          /* check for potential x corridor and room candidates */
-          pcl::PointXY start_point, end_point;
-          float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);       
-          //std::cout << "length x: " << length << std::endl;
-          Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-          correct_plane_d(plane_type, plane_unflipped);
-
-          plane_data_list x_plane_id_pair;
-          //x_plane_id_pair.plane = det_plane_map_frame; 
-          x_plane_id_pair.plane_local = det_plane_body_frame; 
-          x_plane_id_pair.plane_unflipped = plane_unflipped;
-          x_plane_id_pair.plane_length = length;
-          if(start_point.y < end_point.y) {
-            x_plane_id_pair.start_point = start_point; x_plane_id_pair.end_point = end_point; 
+        bool found_corridor = false; bool found_room = false;
+        plane_data_list plane_id_pair;
+        int plane_type = map_detected_planes(keyframe, det_plane_map_frame, det_plane_body_frame, found_corridor, found_room, plane_id_pair);
+        if(plane_type == plane_class::X_VERT_PLANE) {
+          if(found_corridor) {
+            x_det_corridor_candidates.push_back(plane_id_pair); 
           }
-          else {
-            x_plane_id_pair.start_point = end_point; x_plane_id_pair.end_point = start_point;
+          if(found_room) {
+            x_det_room_candidates.push_back(plane_id_pair);
+          }  
+        } else if(plane_type == plane_class::Y_VERT_PLANE) {
+          if(found_corridor) {
+            y_det_corridor_candidates.push_back(plane_id_pair); 
           }
-          x_plane_id_pair.plane_id = plane_id; 
-          x_plane_id_pair.keyframe_node = keyframe->node;  
-
-          if(length >= corridor_min_plane_length) {
-            //std::cout << "added x corridor candidate " << std::endl;
-            x_det_corridor_candidates.push_back(x_plane_id_pair); 
-          } 
-          if(length >= room_min_plane_length && length <= room_max_plane_length) {
-            //std::cout << "added x room candidate " << std::endl;
-            x_det_room_candidates.push_back(x_plane_id_pair);
-          }
-          updated = true;
-        }else if (fabs(det_plane_map_frame.coeffs()(1)) > 0.98) {                   
-          int plane_type = plane_class::Y_VERT_PLANE;  
-          //std::cout << "Y det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
-          plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
-
-          /* check for potential y corridor and room candidates */
-          pcl::PointXY start_point, end_point;
-          float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);  
-          //std::cout << "length y: " << length << std::endl;
-          Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-          correct_plane_d(plane_type, plane_unflipped);
-          
-          plane_data_list y_plane_id_pair;
-          //y_plane_id_pair.plane = det_plane_map_frame; 
-          y_plane_id_pair.plane_local = det_plane_body_frame; 
-          y_plane_id_pair.plane_unflipped = plane_unflipped;
-          if(start_point.x < end_point.x) {
-            y_plane_id_pair.start_point = start_point; y_plane_id_pair.end_point = end_point;
-          }
-          else {
-            y_plane_id_pair.start_point = end_point; y_plane_id_pair.end_point = start_point;
-          }
-          y_plane_id_pair.plane_length = length;
-          y_plane_id_pair.plane_id = plane_id; 
-          y_plane_id_pair.keyframe_node = keyframe->node;
-
-          if(length >= corridor_min_plane_length) {
-            //std::cout << "added y corridor candidate " << std::endl;
-            y_det_corridor_candidates.push_back(y_plane_id_pair); 
-          } 
-          if (length >= room_min_plane_length && length <= room_max_plane_length) {
-            //std::cout << "added y room candidate " << std::endl;
-            y_det_room_candidates.push_back(y_plane_id_pair);
-          }
-          updated = true;
-        }else if (fabs(det_plane_map_frame.coeffs()(2)) > 0.98) {
-          int plane_type = plane_class::HORT_PLANE;  
-          plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
-          updated = true;
-        }else 
-          continue;
+          if(found_room) {
+            y_det_room_candidates.push_back(plane_id_pair);
+          }  
+        }   
       }
       
       if(use_corridor_constraint) {
@@ -438,9 +381,316 @@ private:
 
     return updated;
   }
-  
+
   /**
-   * @brief sort corridors and add them possible candidates for refinement
+   * @brief detected plane mapping 
+   * 
+  */
+  int map_detected_planes(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
+    int plane_id;
+    int plane_type = -1;
+
+    if(fabs(det_plane_map_frame.coeffs()(0)) > 0.98)
+      plane_type = plane_class::X_VERT_PLANE; 
+    else if(fabs(det_plane_map_frame.coeffs()(1)) > 0.98)
+      plane_type = plane_class::Y_VERT_PLANE;
+    else if(fabs(det_plane_map_frame.coeffs()(2)) > 0.98) 
+      plane_type = plane_class::HORT_PLANE;
+
+    switch (plane_type) {
+      case plane_class::X_VERT_PLANE: { 
+        plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
+        //std::cout << "X det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
+        /* check for potential x corridor and room candidates */
+        pcl::PointXY start_point, end_point;
+        float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);       
+        //std::cout << "length x: " << length << std::endl;
+        Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
+        correct_plane_d(plane_type, plane_unflipped);
+
+        //x_plane_id_pair.plane = det_plane_map_frame; 
+        plane_id_pair.plane_local = det_plane_body_frame; 
+        plane_id_pair.plane_unflipped = plane_unflipped;
+        plane_id_pair.plane_length = length;
+        if(start_point.y < end_point.y) {
+          plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point; 
+        }
+        else {
+          plane_id_pair.start_point = end_point; plane_id_pair.end_point = start_point;
+        }
+        plane_id_pair.plane_id = plane_id; 
+        plane_id_pair.keyframe_node = keyframe->node;  
+
+        if(length >= corridor_min_plane_length) {
+          //std::cout << "added x corridor candidate " << std::endl;
+          found_corridor = true;
+        } 
+        if(length >= room_min_plane_length && length <= room_max_plane_length) {
+          //std::cout << "added x room candidate " << std::endl;
+          found_room = true;
+        }  
+        break;
+    }
+    case plane_class::Y_VERT_PLANE: {
+      plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
+      //std::cout << "Y det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
+      
+      /* check for potential y corridor and room candidates */
+      pcl::PointXY start_point, end_point;
+      float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);  
+      //std::cout << "length y: " << length << std::endl;
+      Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
+      correct_plane_d(plane_type, plane_unflipped);
+      
+      //y_plane_id_pair.plane = det_plane_map_frame; 
+      plane_id_pair.plane_local = det_plane_body_frame; 
+      plane_id_pair.plane_unflipped = plane_unflipped;
+      if(start_point.x < end_point.x) {
+        plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point;
+      }
+      else {
+        plane_id_pair.start_point = end_point; plane_id_pair.end_point = start_point;
+      }
+      plane_id_pair.plane_length = length;
+      plane_id_pair.plane_id = plane_id; 
+      plane_id_pair.keyframe_node = keyframe->node;
+
+      if(length >= corridor_min_plane_length) {
+        //std::cout << "added y corridor candidate " << std::endl;
+        found_corridor = true;
+      } 
+      if (length >= room_min_plane_length && length <= room_max_plane_length) {
+        //std::cout << "added y room candidate " << std::endl;
+        found_room = true;
+      }
+      break;
+    }
+    case plane_class::HORT_PLANE: {
+      plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
+      break;
+    }
+    default:
+      std::cout << "No planes found for mapping " << std::endl;
+      break;
+    }
+      
+   return plane_type; 
+  }
+
+  /**
+   * @brief sort and factor the detected planes 
+   * 
+   */
+  int sort_planes(int plane_type, KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame) {
+    int plane_id = factor_planes(keyframe, det_plane_map_frame, det_plane_body_frame, plane_type);
+
+    return plane_id;
+  }
+
+  /**
+  * @brief convert body plane coefficients to map frame
+  */
+  g2o::Plane3D plane_in_map_frame(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_body_frame) {
+    g2o::Plane3D det_plane_map_frame; 
+    Eigen::Vector4d map_coeffs;
+
+    Eigen::Isometry3d w2n = keyframe->node->estimate();
+    map_coeffs.head<3>() =  w2n.rotation() * det_plane_body_frame.coeffs().head<3>();
+    map_coeffs(3) = det_plane_body_frame.coeffs()(3) - w2n.translation().dot(map_coeffs.head<3>());
+    det_plane_map_frame = map_coeffs;
+
+    return det_plane_map_frame;
+  }
+
+  /** 
+  * @brief create vertical plane factors
+  */
+  int factor_planes(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type) {
+    g2o::VertexPlane* plane_node; 
+
+    Eigen::Matrix4d Gij;
+    Gij.setZero();  
+    if(use_point_to_plane) {
+      auto it = keyframe->cloud_seg_body->points.begin();
+      while (it != keyframe->cloud_seg_body->points.end()) {
+        PointNormal point_tmp;
+        point_tmp = *it;
+        Eigen::Vector4d point(point_tmp.x, point_tmp.y, point_tmp.z, 1);
+        double point_to_plane_d = det_plane_map_frame.coeffs().transpose() * keyframe->node->estimate().matrix() * point;
+
+        if(abs(point_to_plane_d) < 0.1) {
+          Gij += point * point.transpose();
+          ++it;
+        } else {
+          it = keyframe->cloud_seg_body->points.erase(it);
+        } 
+      }
+    }      
+   
+    std::pair<int,int> data_association; data_association.first = -1;
+    data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+
+    switch(plane_type) {
+      case plane_class::X_VERT_PLANE: {
+         if(x_vert_planes.empty() || data_association.first == -1) {
+          data_association.first = graph_slam->num_vertices();
+          plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+          //x_vert_plane_node->setFixed(true);
+          //std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
+          VerticalPlanes vert_plane;
+          vert_plane.id = data_association.first;
+          vert_plane.plane = det_plane_map_frame.coeffs();
+          vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
+          vert_plane.keyframe_node = keyframe->node; 
+          vert_plane.plane_node = plane_node; 
+          vert_plane.covariance = Eigen::Matrix3d::Identity();
+          x_vert_planes.push_back(vert_plane);
+        } else {
+          //std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
+          plane_node = x_vert_planes[data_association.second].plane_node;
+        }
+        break;
+      }
+      case plane_class::Y_VERT_PLANE: {
+        if(y_vert_planes.empty() || data_association.first == -1) {
+        data_association.first = graph_slam->num_vertices();
+        plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+        //std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
+        VerticalPlanes vert_plane;
+        vert_plane.id = data_association.first;
+        vert_plane.plane = det_plane_map_frame.coeffs();
+        vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
+        vert_plane.keyframe_node = keyframe->node; 
+        vert_plane.plane_node = plane_node; 
+        vert_plane.covariance = Eigen::Matrix3d::Identity();
+        y_vert_planes.push_back(vert_plane);
+        } else {
+          //std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
+          plane_node = y_vert_planes[data_association.second].plane_node;
+        } 
+        break;
+      }
+      case plane_class::HORT_PLANE: {
+        if(hort_planes.empty() || data_association.first == -1) {
+          data_association.first = graph_slam->num_vertices();
+          plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+          //std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
+          HorizontalPlanes hort_plane;
+          hort_plane.id = data_association.first;
+          hort_plane.plane = det_plane_map_frame.coeffs();
+          hort_plane.cloud_seg_body = keyframe->cloud_seg_body;
+          hort_plane.keyframe_node = keyframe->node; 
+          hort_plane.plane_node = plane_node; 
+          hort_plane.covariance = Eigen::Matrix3d::Identity();
+          hort_planes.push_back(hort_plane);
+        } else {
+        //std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
+        plane_node = hort_planes[data_association.second].plane_node;
+        }
+        break;
+      }
+      default: 
+        std::cout << "factoring planes function had a weird error " << std::endl;
+        break;
+    }  
+   
+    if(use_point_to_plane) {
+      Eigen::Matrix<double, 1, 1> information(0.001);
+      auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    } else {
+      Eigen::Matrix3d information = Eigen::Matrix3d::Identity();  
+      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    }    
+
+    return data_association.first;
+  }
+
+  /** 
+  * @brief data assoction betweeen the planes
+  */
+  std::pair<int,int> associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
+    std::pair<int,int> data_association;
+    double min_maha_dist = 100;  
+    Eigen::Isometry3d m2n = keyframe->estimate().inverse();
+
+    switch(plane_type) {
+      case plane_class::X_VERT_PLANE: {
+        for(int i=0; i< x_vert_planes.size(); ++i) { 
+        g2o::Plane3D local_plane = m2n * x_vert_planes[i].plane;
+        Eigen::Vector3d error = local_plane.ominus(det_plane);
+        double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
+        //std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
+        //std::cout << "maha distance x: " << maha_dist << std::endl;
+
+        if(std::isnan(maha_dist) || maha_dist < 1e-3) {
+            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+            maha_dist = sqrt(error.transpose() * cov * error);            
+          } 
+        if(maha_dist < min_maha_dist) {
+          min_maha_dist = maha_dist;
+          data_association.first = x_vert_planes[i].id;
+          data_association.second = i;
+          }
+        }
+        break;
+      }
+      case plane_class::Y_VERT_PLANE: {
+        for(int i=0; i< y_vert_planes.size(); ++i) { 
+          float dist = fabs(det_plane.coeffs()(3) - y_vert_planes[i].plane.coeffs()(3));
+          g2o::Plane3D local_plane = m2n * y_vert_planes[i].plane;
+          Eigen::Vector3d error = local_plane.ominus(det_plane);
+          double maha_dist = sqrt(error.transpose() * y_vert_planes[i].covariance.inverse() * error);
+          //std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
+          //std::cout << "maha distance y: " << maha_dist << std::endl;
+          
+          if(std::isnan(maha_dist) || maha_dist < 1e-3) {
+            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+            maha_dist = sqrt(error.transpose() * cov * error);            
+          } 
+          if(maha_dist < min_maha_dist) {
+            min_maha_dist = maha_dist;
+            data_association.first = y_vert_planes[i].id;
+            data_association.second = i;
+            }
+        }   
+        break;
+      }
+      case plane_class::HORT_PLANE: {
+         for(int i=0; i< hort_planes.size(); ++i) { 
+          g2o::Plane3D local_plane = m2n * hort_planes[i].plane;
+          Eigen::Vector3d error = local_plane.ominus(det_plane);
+          double maha_dist = sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
+          //std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
+          //std::cout << "maha distance hort: " << maha_dist << std::endl;
+          
+          if(std::isnan(maha_dist) || maha_dist < 1e-3) {
+            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+            maha_dist = sqrt(error.transpose() * cov * error);            
+          } 
+          if(maha_dist < min_maha_dist) {
+            min_maha_dist = maha_dist;
+            data_association.first = hort_planes[i].id;
+            data_association.second = i;
+            }
+        }   
+        break;
+      }
+      default:
+        std::cout << "associating planes had an error " << std::endl;
+        break;
+    }
+
+    //std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
+    if(min_maha_dist > plane_dist_threshold)
+      data_association.first = -1;
+
+    return data_association;
+  }
+
+  /**
+   * @brief sort corridors and add their possible candidates for refinement
   */
   std::vector<structure_data_list> sort_corridors(int plane_type, std::vector<plane_data_list> corridor_candidates) {
     std::vector<structure_data_list> corridor_pair_vec; 
@@ -568,214 +818,6 @@ private:
     }
     else 
       return std::make_pair(x_room, y_room);
-  }
-
-  /**
-  * @brief convert body plane coefficients to map frame
-  */
-  g2o::Plane3D plane_in_map_frame(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_body_frame) {
-    g2o::Plane3D det_plane_map_frame; 
-    Eigen::Vector4d map_coeffs;
-
-    Eigen::Isometry3d w2n = keyframe->node->estimate();
-    map_coeffs.head<3>() =  w2n.rotation() * det_plane_body_frame.coeffs().head<3>();
-    map_coeffs(3) = det_plane_body_frame.coeffs()(3) - w2n.translation().dot(map_coeffs.head<3>());
-    det_plane_map_frame = map_coeffs;
-
-    return det_plane_map_frame;
-  }
-
-  /** 
-  * @brief create vertical plane factors
-  */
-  int factor_planes(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type) {
-    g2o::VertexPlane* plane_node; 
-
-    Eigen::Matrix4d Gij;
-    Gij.setZero();  
-    if(use_point_to_plane) {
-      auto it = keyframe->cloud_seg_body->points.begin();
-      while (it != keyframe->cloud_seg_body->points.end()) {
-        PointNormal point_tmp;
-        point_tmp = *it;
-        Eigen::Vector4d point(point_tmp.x, point_tmp.y, point_tmp.z, 1);
-        double point_to_plane_d = det_plane_map_frame.coeffs().transpose() * keyframe->node->estimate().matrix() * point;
-
-        if(abs(point_to_plane_d) < 0.1) {
-          Gij += point * point.transpose();
-          ++it;
-        } else {
-          it = keyframe->cloud_seg_body->points.erase(it);
-        } 
-      }
-    }
-      
-   
-    std::pair<int,int> data_association; data_association.first = -1;
-    data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
-
-    if (plane_type == plane_class::X_VERT_PLANE) {  
-      if(x_vert_planes.empty() || data_association.first == -1) {
-          data_association.first = graph_slam->num_vertices();
-          plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-          //x_vert_plane_node->setFixed(true);
-          //std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
-          VerticalPlanes vert_plane;
-          vert_plane.id = data_association.first;
-          vert_plane.plane = det_plane_map_frame.coeffs();
-          vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
-          vert_plane.keyframe_node = keyframe->node; 
-          vert_plane.plane_node = plane_node; 
-          vert_plane.covariance = Eigen::Matrix3d::Identity();
-          x_vert_planes.push_back(vert_plane);
-      } else {
-          //std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
-          plane_node = x_vert_planes[data_association.second].plane_node;
-      }
-    } else if (plane_type == plane_class::Y_VERT_PLANE) {      
-      if(y_vert_planes.empty() || data_association.first == -1) {
-        data_association.first = graph_slam->num_vertices();
-        plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-        //std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
-        VerticalPlanes vert_plane;
-        vert_plane.id = data_association.first;
-        vert_plane.plane = det_plane_map_frame.coeffs();
-        vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
-        vert_plane.keyframe_node = keyframe->node; 
-        vert_plane.plane_node = plane_node; 
-        vert_plane.covariance = Eigen::Matrix3d::Identity();
-        y_vert_planes.push_back(vert_plane);
-      } else {
-          //std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
-          plane_node = y_vert_planes[data_association.second].plane_node;
-
-        } 
-      } else if (plane_type == plane_class::HORT_PLANE) {       
-        if(hort_planes.empty() || data_association.first == -1) {
-          data_association.first = graph_slam->num_vertices();
-          plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-          //std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
-          HorizontalPlanes hort_plane;
-          hort_plane.id = data_association.first;
-          hort_plane.plane = det_plane_map_frame.coeffs();
-          hort_plane.cloud_seg_body = keyframe->cloud_seg_body;
-          hort_plane.keyframe_node = keyframe->node; 
-          hort_plane.plane_node = plane_node; 
-          hort_plane.covariance = Eigen::Matrix3d::Identity();
-          hort_planes.push_back(hort_plane);
-      } else {
-        //std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
-        plane_node = hort_planes[data_association.second].plane_node;
-      }
-    } 
-    
-    if(use_point_to_plane) {
-      Eigen::Matrix<double, 1, 1> information(0.001);
-      auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
-      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-    } else {
-      Eigen::Matrix3d information = Eigen::Matrix3d::Identity();  
-      auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
-      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-    }    
-
-    return data_association.first;
-  }
-
-  /** 
-  * @brief data assoction betweeen the planes
-  */
-  std::pair<int,int> associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
-    std::pair<int,int> data_association;
-    float min_dist = 100;
-    double min_maha_dist = 100;  
-    Eigen::Isometry3d m2n = keyframe->estimate().inverse();
-
-    if(plane_type == plane_class::X_VERT_PLANE) {
-      for(int i=0; i< x_vert_planes.size(); ++i) { 
-        float dist = fabs(det_plane.coeffs()(3) - x_vert_planes[i].plane.coeffs()(3));
-        //std::cout << "distance x: " << dist << std::endl;
-        if(dist < min_dist){
-          min_dist = dist;
-          //id = x_vert_planes[i].id;
-        }
-        g2o::Plane3D local_plane = m2n * x_vert_planes[i].plane;
-        Eigen::Vector3d error = local_plane.ominus(det_plane);
-        double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
-        //std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
-        //std::cout << "maha distance x: " << maha_dist << std::endl;
-
-        if(std::isnan(maha_dist) || maha_dist < 1e-3) {
-            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
-            maha_dist = sqrt(error.transpose() * cov * error);            
-          } 
-        if(maha_dist < min_maha_dist) {
-          min_maha_dist = maha_dist;
-          data_association.first = x_vert_planes[i].id;
-          data_association.second = i;
-          }
-        }
-      }
-
-    if(plane_type == plane_class::Y_VERT_PLANE) {
-        for(int i=0; i< y_vert_planes.size(); ++i) { 
-          float dist = fabs(det_plane.coeffs()(3) - y_vert_planes[i].plane.coeffs()(3));
-          //std::cout << "distance y: " << dist << std::endl;
-          if(dist < min_dist){
-            min_dist = dist;
-            //id = y_vert_planes[i].id;
-          }
-          g2o::Plane3D local_plane = m2n * y_vert_planes[i].plane;
-          Eigen::Vector3d error = local_plane.ominus(det_plane);
-          double maha_dist = sqrt(error.transpose() * y_vert_planes[i].covariance.inverse() * error);
-          //std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
-          //std::cout << "maha distance y: " << maha_dist << std::endl;
-          if(std::isnan(maha_dist) || maha_dist < 1e-3) {
-            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
-            maha_dist = sqrt(error.transpose() * cov * error);            
-          } 
-          if(maha_dist < min_maha_dist) {
-            min_maha_dist = maha_dist;
-            data_association.first = y_vert_planes[i].id;
-            data_association.second = i;
-            }
-          }   
-      }
-
-    if(plane_type == plane_class::HORT_PLANE) {
-        for(int i=0; i< hort_planes.size(); ++i) { 
-          float dist = fabs(det_plane.coeffs()(3) - hort_planes[i].plane.coeffs()(3));
-          //std::cout << "distance hort: " << dist << std::endl;
-          if(dist < min_dist){
-            min_dist = dist;
-            //id = y_vert_planes[i].id;
-          }
-          g2o::Plane3D local_plane = m2n * hort_planes[i].plane;
-          Eigen::Vector3d error = local_plane.ominus(det_plane);
-          double maha_dist = sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
-          //std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
-          //std::cout << "maha distance hort: " << maha_dist << std::endl;
-          if(std::isnan(maha_dist) || maha_dist < 1e-3) {
-            Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
-            maha_dist = sqrt(error.transpose() * cov * error);            
-          } 
-          if(maha_dist < min_maha_dist) {
-            min_maha_dist = maha_dist;
-            data_association.first = hort_planes[i].id;
-            data_association.second = i;
-            }
-          }   
-      }
-
-      //std::cout << "min_dist: " << min_dist << std::endl;
-      //std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
-
-      // if(min_dist > 0.30)
-      //   id = -1;
-      if(min_maha_dist > plane_dist_threshold)
-         data_association.first = -1;
-
-    return data_association;
   }
   
   /**  
@@ -1146,10 +1188,6 @@ private:
         meas =  plane(3) - room(1);
       }
     }
-
-    //std::cout << "room pose: " << room << std::endl;
-    //std::cout << "plane meas: " << plane(3) << std::endl;
-    //std::cout << "meas: " << meas << std::endl;
 
     return meas;
   }
