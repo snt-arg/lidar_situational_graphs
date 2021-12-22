@@ -151,13 +151,17 @@ public:
     corridor_min_width  = private_nh.param<double>("corridor_min_width", 1.5);
     corridor_max_width  = private_nh.param<double>("corridor_max_width", 2.5);
     corridor_plane_length_diff_threshold = private_nh.param<double>("corridor_plane_length_diff_threshold", 0.3);
-      
+    corridor_point_diff_threshold = private_nh.param<double>("corridor_point_diff_threshold", 3.0);
+
     use_room_constraint = private_nh.param<bool>("use_room_constraint", false); 
     room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
     room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
     room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
     room_max_plane_length = private_nh.param<double>("room_max_plane_length", 6.0);
     room_min_width = private_nh.param<double>("room_min_width", 2.5);
+    room_point_diff_threshold = private_nh.param<double>("room_point_diff_threshold", 3.0);
+    room_width_diff_threshold = private_nh.param<double>("room_width_diff_threshold", 2.5);
+
 
     points_topic = private_nh.param<std::string>("points_topic", "/velodyne_points");
 
@@ -731,7 +735,7 @@ private:
 
         if (corridor_candidates[i].plane_unflipped.coeffs().head(3).dot(corridor_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
            && diff_plane_length < corridor_plane_length_diff_threshold) {
-            if(avg_plane_point_diff < 3.0) {
+            if(avg_plane_point_diff < corridor_point_diff_threshold) {
               structure_data_list corridor_pair;
               corridor_pair.plane1 = corridor_candidates[i];
               corridor_pair.plane2 = corridor_candidates[j];
@@ -791,7 +795,7 @@ private:
           //std::cout << "room point diff: " << avg_plane_point_diff << std::endl;
 
           if (room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < room_plane_length_diff_threshold) {
-            if(avg_plane_point_diff < 2.0) {
+            if(avg_plane_point_diff < room_point_diff_threshold) {
               structure_data_list room_pair;
               room_pair.plane1 = room_candidates[i];
               room_pair.plane2 = room_candidates[j];
@@ -811,18 +815,17 @@ private:
   * @brief refine the sorted room candidates
   */
   std::pair<std::vector<plane_data_list>,std::vector<plane_data_list>> refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec) {
-    float min_width_diff=2.5;
-    float min_room_diff=2.5;
+    float min_room_point_diff=room_point_diff_threshold;
     std::vector<plane_data_list> x_room, y_room;
     x_room.resize(2); y_room.resize(2);
     
     for(int i=0; i<x_room_vec.size(); ++i) {
       for(int j=0; j<y_room_vec.size(); ++j) {
           float width_diff = fabs(x_room_vec[i].width - y_room_vec[j].width); 
-          if(width_diff < min_width_diff) {
+          if(width_diff < room_width_diff_threshold) {
             float room_diff = (x_room_vec[i].avg_point_diff + y_room_vec[j].avg_point_diff) / 2; 
-            if(room_diff < min_room_diff) {              
-              min_room_diff = room_diff;
+            if(room_diff < min_room_point_diff) {              
+              min_room_point_diff = room_diff;
               x_room[0] = x_room_vec[i].plane1;
               x_room[1] = x_room_vec[i].plane2;
               y_room[0] = y_room_vec[j].plane1;
@@ -832,7 +835,7 @@ private:
       }
     }
     
-    if(min_room_diff >= 2.5) {
+    if(min_room_point_diff >= room_point_diff_threshold) {
       std::vector<plane_data_list> x_room_empty, y_room_empty;
       x_room_empty.resize(0); y_room_empty.resize(0);
       return std::make_pair(x_room_empty, x_room_empty);
@@ -2695,9 +2698,10 @@ private:
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
   bool use_corridor_constraint, use_room_constraint;
   double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
-  double corridor_plane_length_diff_threshold;
-  double room_plane_length_diff_threshold;
+  double corridor_plane_length_diff_threshold, corridor_point_diff_threshold;
+  double room_plane_length_diff_threshold, room_point_diff_threshold;
   double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width;
+  double room_width_diff_threshold;
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                        // horizontally segmented planes
   std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes

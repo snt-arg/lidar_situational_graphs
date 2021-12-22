@@ -86,9 +86,12 @@ corridor_min_plane_length:            5.0
 corridor_min_width:                   1.5 
 corridor_max_width:                   4.0
 corridor_plane_length_diff_threshold: 3.0
+corridor_point_diff_threshold:        2.5
 use_room_constraint:                  true       
 room_dist_threshold:                  1.0 
 room_min_plane_length:                2.0
 room_max_plane_length:                10.0 
 room_min_width:                       2.5 
 room_plane_length_diff_threshold:     3.0 
+room_point_diff_threshold:            2.5
+room_width_diff_threshold:            2.5
