@@ -329,50 +329,47 @@ private:
         keyframe->cloud_seg_body = cloud_seg_body;
     
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
-        g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
-
         bool found_corridor = false; bool found_room = false;
         plane_data_list plane_id_pair;
-        int plane_type = map_detected_planes(keyframe, det_plane_map_frame, det_plane_body_frame, found_corridor, found_room, plane_id_pair);
-        if(plane_type == plane_class::X_VERT_PLANE) {
-          if(found_corridor) {
-            x_det_corridor_candidates.push_back(plane_id_pair); 
+
+        int plane_type = map_detected_planes(keyframe, det_plane_body_frame, found_corridor, found_room, plane_id_pair);
+        switch(plane_type) {
+          case plane_class::X_VERT_PLANE: {
+            if(found_corridor) {
+              x_det_corridor_candidates.push_back(plane_id_pair); 
+            }
+            if(found_room) {
+              x_det_room_candidates.push_back(plane_id_pair);
+            } 
+            updated = true;
+            break;
           }
-          if(found_room) {
-            x_det_room_candidates.push_back(plane_id_pair);
-          }  
-        } else if(plane_type == plane_class::Y_VERT_PLANE) {
-          if(found_corridor) {
-            y_det_corridor_candidates.push_back(plane_id_pair); 
+          case plane_class::Y_VERT_PLANE: {
+            if(found_corridor) {
+              y_det_corridor_candidates.push_back(plane_id_pair); 
+            }
+            if(found_room) {
+              y_det_room_candidates.push_back(plane_id_pair);
+            }
+            updated = true;
+            break;
           }
-          if(found_room) {
-            y_det_room_candidates.push_back(plane_id_pair);
-          }  
-        }   
+          case plane_class::HORT_PLANE: {
+            updated = true;
+            break;
+          }
+          default: {
+            break;
+          }
+        }       
       }
       
       if(use_corridor_constraint) {
-        std::vector<structure_data_list> x_corridor = sort_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates);  
-        std::vector<structure_data_list> y_corridor = sort_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates);  
-        
-        std::vector<plane_data_list> x_corridor_refined = refine_corridors(x_corridor);
-        if(x_corridor_refined.size() == 2) 
-          factor_corridors(plane_class::X_VERT_PLANE, x_corridor_refined[0], x_corridor_refined[1]);
-        
-        std::vector<plane_data_list> y_corridor_refined = refine_corridors(y_corridor);
-        if(y_corridor_refined.size() == 2) 
-          factor_corridors(plane_class::Y_VERT_PLANE, y_corridor_refined[0], y_corridor_refined[1]);
-
+        lookup_corridors(x_det_corridor_candidates, y_det_corridor_candidates);
       }
 
       if(use_room_constraint)  {
-        std::vector<structure_data_list> x_room_pair_vec = sort_rooms(plane_class::X_VERT_PLANE, x_det_room_candidates); 
-        std::vector<structure_data_list> y_room_pair_vec = sort_rooms(plane_class::Y_VERT_PLANE, y_det_room_candidates);
-        std::pair<std::vector<plane_data_list>,std::vector<plane_data_list>> refined_room_pair = refine_rooms(x_room_pair_vec, y_room_pair_vec);
-
-        if(refined_room_pair.first.size() == 2 && refined_room_pair.second.size() == 2) {
-          factor_rooms(refined_room_pair.first, refined_room_pair.second);
-        }
+        lookup_rooms(x_det_room_candidates, y_det_room_candidates);
       }
     }
 
@@ -386,10 +383,11 @@ private:
    * @brief detected plane mapping 
    * 
   */
-  int map_detected_planes(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
+  int map_detected_planes(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_body_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
     int plane_id;
     int plane_type = -1;
-
+    
+    g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
     if(fabs(det_plane_map_frame.coeffs()(0)) > 0.98)
       plane_type = plane_class::X_VERT_PLANE; 
     else if(fabs(det_plane_map_frame.coeffs()(1)) > 0.98)
@@ -687,6 +685,29 @@ private:
       data_association.first = -1;
 
     return data_association;
+  }
+
+  void lookup_corridors(std::vector<plane_data_list> x_det_corridor_candidates, std::vector<plane_data_list> y_det_corridor_candidates) {
+    std::vector<structure_data_list> x_corridor = sort_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates);  
+    std::vector<structure_data_list> y_corridor = sort_corridors(plane_class::Y_VERT_PLANE, y_det_corridor_candidates);  
+    
+    std::vector<plane_data_list> x_corridor_refined = refine_corridors(x_corridor);
+    if(x_corridor_refined.size() == 2) 
+      factor_corridors(plane_class::X_VERT_PLANE, x_corridor_refined[0], x_corridor_refined[1]);
+    
+    std::vector<plane_data_list> y_corridor_refined = refine_corridors(y_corridor);
+    if(y_corridor_refined.size() == 2) 
+      factor_corridors(plane_class::Y_VERT_PLANE, y_corridor_refined[0], y_corridor_refined[1]);
+  }
+
+  void lookup_rooms(std::vector<plane_data_list> x_det_room_candidates, std::vector<plane_data_list> y_det_room_candidates) {
+    std::vector<structure_data_list> x_room_pair_vec = sort_rooms(plane_class::X_VERT_PLANE, x_det_room_candidates); 
+    std::vector<structure_data_list> y_room_pair_vec = sort_rooms(plane_class::Y_VERT_PLANE, y_det_room_candidates);
+    std::pair<std::vector<plane_data_list>,std::vector<plane_data_list>> refined_room_pair = refine_rooms(x_room_pair_vec, y_room_pair_vec);
+
+    if(refined_room_pair.first.size() == 2 && refined_room_pair.second.size() == 2) {
+      factor_rooms(refined_room_pair.first, refined_room_pair.second);
+    }
   }
 
   /**
