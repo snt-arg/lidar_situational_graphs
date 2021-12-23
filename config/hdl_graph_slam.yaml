@@ -76,7 +76,7 @@ graph_update_interval: 3.0
 map_cloud_update_interval: 10.0
 map_cloud_resolution: 0.05
 
-plane_dist_threshold:       0.15
+plane_dist_threshold:       0.12
 use_point_to_plane:         false 
 use_parallel_plane_constraint: true 
 use_perpendicular_plane_constraint: true
