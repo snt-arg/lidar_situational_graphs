@@ -147,6 +147,7 @@ public:
     use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
     use_corridor_constraint = private_nh.param<bool>("use_corridor_constraint", false); 
+    corridor_information = private_nh.param<double>("corridor_information", 0.01);
     corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 1.0);
     corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
     corridor_min_width  = private_nh.param<double>("corridor_min_width", 1.5);
@@ -155,6 +156,7 @@ public:
     corridor_point_diff_threshold = private_nh.param<double>("corridor_point_diff_threshold", 3.0);
 
     use_room_constraint = private_nh.param<bool>("use_room_constraint", false); 
+    room_information = private_nh.param<double>("room_information", 0.01);
     room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
     room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
     room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
@@ -403,11 +405,11 @@ private:
     switch (plane_type) {
       case plane_class::X_VERT_PLANE: { 
         plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
-        //std::cout << "X det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
+        ROS_DEBUG_NAMED("xplane information","det xplane map frame %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         /* check for potential x corridor and room candidates */
         pcl::PointXY start_point, end_point;
         float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);       
-        //std::cout << "length x: " << length << std::endl;
+        ROS_DEBUG_NAMED("xplane information","length x plane %f", length);
         Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
         correct_plane_d(plane_type, plane_unflipped);
 
@@ -425,23 +427,23 @@ private:
         plane_id_pair.keyframe_node = keyframe->node;  
 
         if(length >= corridor_min_plane_length) {
-          //std::cout << "added x corridor candidate " << std::endl;
+          ROS_DEBUG_NAMED("xplane information", "Added x plane as corridor");
           found_corridor = true;
         } 
         if(length >= room_min_plane_length && length <= room_max_plane_length) {
-          //std::cout << "added x room candidate " << std::endl;
+          ROS_DEBUG_NAMED("xplane information", "Added x plane as room");
           found_room = true;
         }  
         break;
     }
     case plane_class::Y_VERT_PLANE: {
       plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
-      //std::cout << "Y det_plane_map_frame " << det_plane_map_frame.coeffs() << std::endl;
+      ROS_DEBUG_NAMED("yplane information","det yplane map frame %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
       
       /* check for potential y corridor and room candidates */
       pcl::PointXY start_point, end_point;
       float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);  
-      //std::cout << "length y: " << length << std::endl;
+      ROS_DEBUG_NAMED("yplane information","length y plane %f", length);
       Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
       correct_plane_d(plane_type, plane_unflipped);
       
@@ -459,11 +461,11 @@ private:
       plane_id_pair.keyframe_node = keyframe->node;
 
       if(length >= corridor_min_plane_length) {
-        //std::cout << "added y corridor candidate " << std::endl;
+        ROS_DEBUG_NAMED("yplane information", "Added y plane as corridor");
         found_corridor = true;
       } 
       if (length >= room_min_plane_length && length <= room_max_plane_length) {
-        //std::cout << "added y room candidate " << std::endl;
+        ROS_DEBUG_NAMED("yplane information", "Added y plane as room");
         found_room = true;
       }
       break;
@@ -538,8 +540,6 @@ private:
          if(x_vert_planes.empty() || data_association.first == -1) {
           data_association.first = graph_slam->num_vertices();
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-          //x_vert_plane_node->setFixed(true);
-          //std::cout << "Added new x vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           VerticalPlanes vert_plane;
           vert_plane.id = data_association.first;
           vert_plane.plane = det_plane_map_frame.coeffs();
@@ -548,9 +548,11 @@ private:
           vert_plane.plane_node = plane_node; 
           vert_plane.covariance = Eigen::Matrix3d::Identity();
           x_vert_planes.push_back(vert_plane);
+          ROS_DEBUG_NAMED("xplane association", "Added new x vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
-          //std::cout << "matched x vert plane with x vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = x_vert_planes[data_association.second].plane_node;
+          ROS_DEBUG_NAMED("xplane association", "matched x vert plane with mapped x vert plane of coeffs %f %f %f %f", x_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), x_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
+                          x_vert_planes[data_association.second].plane_node->estimate().coeffs()(2),x_vert_planes[data_association.second].plane_node->estimate().coeffs()(3));
         }
         break;
       }
@@ -558,7 +560,6 @@ private:
         if(y_vert_planes.empty() || data_association.first == -1) {
         data_association.first = graph_slam->num_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-        //std::cout << "Added new y vertical plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
         VerticalPlanes vert_plane;
         vert_plane.id = data_association.first;
         vert_plane.plane = det_plane_map_frame.coeffs();
@@ -567,9 +568,11 @@ private:
         vert_plane.plane_node = plane_node; 
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         y_vert_planes.push_back(vert_plane);
+        ROS_DEBUG_NAMED("yplane association", "Added new y vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
-          //std::cout << "matched y vert plane with y vert plane of id " << std::to_string(data_association.first)  << std::endl;
           plane_node = y_vert_planes[data_association.second].plane_node;
+          ROS_DEBUG_NAMED("yplane association", "matched y vert plane with mapped y vert plane of coeffs %f %f %f %f", y_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), y_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
+                          y_vert_planes[data_association.second].plane_node->estimate().coeffs()(2),y_vert_planes[data_association.second].plane_node->estimate().coeffs()(3));
         } 
         break;
       }
@@ -577,7 +580,6 @@ private:
         if(hort_planes.empty() || data_association.first == -1) {
           data_association.first = graph_slam->num_vertices();
           plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
-          //std::cout << "Added new horizontal plane node with coeffs " <<  det_plane_map_frame.coeffs() << std::endl;
           HorizontalPlanes hort_plane;
           hort_plane.id = data_association.first;
           hort_plane.plane = det_plane_map_frame.coeffs();
@@ -586,9 +588,11 @@ private:
           hort_plane.plane_node = plane_node; 
           hort_plane.covariance = Eigen::Matrix3d::Identity();
           hort_planes.push_back(hort_plane);
+          ROS_DEBUG_NAMED("hort plane association", "Added new horizontal plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
-        //std::cout << "matched hort plane with hort plane of id " << std::to_string(data_association.first)  << std::endl;
-        plane_node = hort_planes[data_association.second].plane_node;
+          plane_node = hort_planes[data_association.second].plane_node;
+          ROS_DEBUG_NAMED("hort plane association", "matched hort plane with mapped hort plane of coeffs %f %f %f %f", hort_planes[data_association.second].plane_node->estimate().coeffs()(0), hort_planes[data_association.second].plane_node->estimate().coeffs()(1),
+                          hort_planes[data_association.second].plane_node->estimate().coeffs()(2), hort_planes[data_association.second].plane_node->estimate().coeffs()(3));
         }
         break;
       }
@@ -625,7 +629,7 @@ private:
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
         //std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
-        //std::cout << "maha distance x: " << maha_dist << std::endl;
+        ROS_DEBUG_NAMED("xplane association", "maha distance x: %f", maha_dist);
 
         if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
@@ -646,8 +650,8 @@ private:
           Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * y_vert_planes[i].covariance.inverse() * error);
           //std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
-          //std::cout << "maha distance y: " << maha_dist << std::endl;
-          
+          ROS_DEBUG_NAMED("yplane association", "maha distance y: %f", maha_dist);
+
           if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
@@ -666,8 +670,8 @@ private:
           Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
           //std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
-          //std::cout << "maha distance hort: " << maha_dist << std::endl;
-          
+          ROS_DEBUG_NAMED("hort plane association", "maha distance hort: %f", maha_dist);
+
           if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
@@ -685,7 +689,7 @@ private:
         break;
     }
 
-    //std::cout << "min_mah_dist: " << min_maha_dist << std::endl;
+    ROS_DEBUG_NAMED("xplane association", "min maha dist: %f", min_maha_dist);
     if(min_maha_dist > plane_dist_threshold)
       data_association.first = -1;
 
@@ -724,15 +728,15 @@ private:
     for(int i=0; i < corridor_candidates.size(); ++i) {
       for(int j=i+1; j < corridor_candidates.size(); ++j) {       
         float corr_width = width_between_planes(corridor_candidates[i].plane_unflipped.coeffs(), corridor_candidates[j].plane_unflipped.coeffs());
-        //std::cout << "Corr plane i coeffs of type " << plane_type << " " << corridor_candidates[i].plane_unflipped.coeffs() << std::endl;
-        //std::cout << "Corr plane j coeffs of type " << plane_type << " " << corridor_candidates[j].plane_unflipped.coeffs() << std::endl;
-        //std::cout << "Corr_width: " << corr_width << std::endl;
-        float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length); 
-        //std::cout << "corr diff_plane_length: " << diff_plane_length << std::endl;
+        float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length);     
         float start_point_diff = point_difference(plane_type, corridor_candidates[i].start_point, corridor_candidates[j].start_point);
         float end_point_diff = point_difference(plane_type, corridor_candidates[i].end_point, corridor_candidates[j].end_point);
         float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
-        //std::cout << "corr point diff: " << avg_plane_point_diff << std::endl;
+        ROS_DEBUG_NAMED("corridor planes", "corr plane i coeffs %f %f %f %f",  corridor_candidates[i].plane_unflipped.coeffs()(0), corridor_candidates[i].plane_unflipped.coeffs()(1), corridor_candidates[i].plane_unflipped.coeffs()(2), corridor_candidates[i].plane_unflipped.coeffs()(3));
+        ROS_DEBUG_NAMED("corridor planes", "corr plane j coeffs %f %f %f %f",  corridor_candidates[j].plane_unflipped.coeffs()(0), corridor_candidates[j].plane_unflipped.coeffs()(1), corridor_candidates[j].plane_unflipped.coeffs()(2), corridor_candidates[j].plane_unflipped.coeffs()(3));
+        ROS_DEBUG_NAMED("corridor planes", "corr width %f", corr_width);
+        ROS_DEBUG_NAMED("corridor planes", "plane length diff %f", diff_plane_length);
+        ROS_DEBUG_NAMED("corridor planes", "avg plane point diff %f", avg_plane_point_diff);
 
         if (corridor_candidates[i].plane_unflipped.coeffs().head(3).dot(corridor_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width)
            && diff_plane_length < corridor_plane_length_diff_threshold) {
@@ -744,6 +748,7 @@ private:
               corridor_pair.length_diff  = diff_plane_length;
               corridor_pair.avg_point_diff = avg_plane_point_diff;
               corridor_pair_vec.push_back(corridor_pair);
+              ROS_DEBUG_NAMED("corridor planes", "adding corridor candidates");
           } 
         } 
       } 
@@ -756,7 +761,7 @@ private:
   * @brief refine the sorted corridors
   */
   std::vector<plane_data_list> refine_corridors(std::vector<structure_data_list> corr_vec) {
-    float min_corridor_diff = 3.5;
+    float min_corridor_diff = corridor_point_diff_threshold;
     std::vector<plane_data_list> corr_refined; corr_refined.resize(2);
     
     for(int i=0; i<corr_vec.size(); ++i) {
@@ -768,7 +773,7 @@ private:
         }
       }
     
-    if(min_corridor_diff >= 3.5){
+    if(min_corridor_diff >= corridor_point_diff_threshold){
       std::vector<plane_data_list> corr_empty; corr_empty.resize(0);
       return corr_empty;
     }
@@ -785,15 +790,15 @@ private:
     for(int i=0; i < room_candidates.size(); ++i) {
         for(int j=i+1; j < room_candidates.size(); ++j) {
           float room_width = width_between_planes(room_candidates[i].plane_unflipped.coeffs(), room_candidates[j].plane_unflipped.coeffs());
-          //std::cout << "Room plane i coeffs of type " << plane_type << " " << room_candidates[i].plane_unflipped.coeffs() << std::endl;
-          //std::cout << "Room plane j coeffs of type " << plane_type << " " << room_candidates[j].plane_unflipped.coeffs() << std::endl;
-          //std::cout << "rooom width : " << room_width << std::endl;
           float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length); 
-          //std::cout << "room diff_plane_length: " << diff_plane_length << std::endl;
           float start_point_diff = point_difference(plane_type, room_candidates[i].start_point, room_candidates[j].start_point);
           float end_point_diff = point_difference(plane_type, room_candidates[i].end_point, room_candidates[j].end_point);
           float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
-          //std::cout << "room point diff: " << avg_plane_point_diff << std::endl;
+          ROS_DEBUG_NAMED("room planes", "room plane i coeffs %f %f %f %f",  room_candidates[i].plane_unflipped.coeffs()(0), room_candidates[i].plane_unflipped.coeffs()(1), room_candidates[i].plane_unflipped.coeffs()(2), room_candidates[i].plane_unflipped.coeffs()(3));
+          ROS_DEBUG_NAMED("room planes", "room plane j coeffs %f %f %f %f",  room_candidates[j].plane_unflipped.coeffs()(0), room_candidates[j].plane_unflipped.coeffs()(1), room_candidates[j].plane_unflipped.coeffs()(2), room_candidates[j].plane_unflipped.coeffs()(3));
+          ROS_DEBUG_NAMED("room planes", "room width %f", room_width);
+          ROS_DEBUG_NAMED("room planes", "room plane lenght diff %f", diff_plane_length);
+          ROS_DEBUG_NAMED("room planes", "room plane point diff %f", avg_plane_point_diff);
 
           if (room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < room_plane_length_diff_threshold) {
             if(avg_plane_point_diff < room_point_diff_threshold) {
@@ -804,7 +809,7 @@ private:
               room_pair.length_diff = diff_plane_length;
               room_pair.avg_point_diff = avg_plane_point_diff;
               room_pair_vec.push_back(room_pair);
-              //std::cout << "Adding room candidates" << std::endl;
+              ROS_DEBUG_NAMED("room planes", "adding room candidates");
             }
           }
        }
@@ -851,9 +856,11 @@ private:
   void factor_corridors(int plane_type, plane_data_list corr_plane1_pair, plane_data_list corr_plane2_pair) {
     g2o::VertexCorridor* corr_node;  std::pair<int,int> corr_data_association;   
     double meas_plane1, meas_plane2;
-    Eigen::Matrix<double, 1, 1> information_corridor_plane(0.01);
+    Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
     double corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
     //double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
+    ROS_DEBUG_NAMED("corridor factor","final corridor plane 1 %f %f %f %f", corr_plane1_pair.plane_unflipped.coeffs()(0), corr_plane1_pair.plane_unflipped.coeffs()(1), corr_plane1_pair.plane_unflipped.coeffs()(2), corr_plane1_pair.plane_unflipped.coeffs()(3));
+    ROS_DEBUG_NAMED("corridor factor","final corridor plane 2 %f %f %f %f", corr_plane2_pair.plane_unflipped.coeffs()(0), corr_plane2_pair.plane_unflipped.coeffs()(1), corr_plane2_pair.plane_unflipped.coeffs()(2), corr_plane2_pair.plane_unflipped.coeffs()(3));
 
     if(plane_type == plane_class::X_VERT_PLANE) { 
       auto found_plane1 = x_vert_planes.begin();
@@ -1030,9 +1037,9 @@ private:
         float dist = fabs((corr_pose) - (x_corridors[i].node->estimate()));
         if(dist < min_dist) {
           min_dist = dist;
-          //std::cout << "dist X corr: " << dist << std::endl;
           data_association.first = x_corridors[i].id;
           data_association.second = i;
+          ROS_DEBUG_NAMED("corridor factor", "dist x corr %f", dist);
         }
       }
     }
@@ -1042,14 +1049,14 @@ private:
         float dist = fabs((corr_pose) - (y_corridors[i].node->estimate()));
         if(dist < min_dist) {
           min_dist = dist;
-          //std::cout << "dist Y corr: " << dist << std::endl;
           data_association.first = y_corridors[i].id;
           data_association.second = i;
+          ROS_DEBUG_NAMED("corridor factor", "dist y corr %f", dist);
         }
       }
     }
-
-    //std::cout << "min dist: " << min_dist << std::endl;
+    
+    ROS_DEBUG_NAMED("corridor factor", "min dist %f", min_dist);
     if (min_dist > corridor_dist_threshold) 
       data_association.first = -1;
 
@@ -1061,7 +1068,7 @@ private:
   */
   void factor_rooms(std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec) {
     g2o::VertexRoomXYLB* room_node;  std::pair<int,int> room_data_association;   
-    Eigen::Matrix<double, 1, 1> information_room_plane(1);
+    Eigen::Matrix<double, 1, 1> information_room_plane(room_information);
 
     auto found_x_plane1 = x_vert_planes.begin();
     auto found_x_plane2 = x_vert_planes.begin();
@@ -1070,13 +1077,12 @@ private:
     double x_plane1_meas, x_plane2_meas;
     double y_plane1_meas, y_plane2_meas;
 
-    //std::cout << "room planes 1: " << x_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
-    //std::cout << "room planes 2: " << x_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
-    //std::cout << "room planes 3: " << y_room_pair_vec[0].plane_unflipped.coeffs() << std::endl;
-    //std::cout << "room planes 4: " << y_room_pair_vec[1].plane_unflipped.coeffs() << std::endl;
+    ROS_DEBUG_NAMED("room factor","final room plane 1 %f %f %f %f", x_room_pair_vec[0].plane_unflipped.coeffs()(0), x_room_pair_vec[0].plane_unflipped.coeffs()(1), x_room_pair_vec[0].plane_unflipped.coeffs()(2), x_room_pair_vec[0].plane_unflipped.coeffs()(3));
+    ROS_DEBUG_NAMED("room factor","final room plane 2 %f %f %f %f", x_room_pair_vec[1].plane_unflipped.coeffs()(0), x_room_pair_vec[1].plane_unflipped.coeffs()(1), x_room_pair_vec[1].plane_unflipped.coeffs()(2), x_room_pair_vec[1].plane_unflipped.coeffs()(3));
+    ROS_DEBUG_NAMED("room factor","final room plane 3 %f %f %f %f", y_room_pair_vec[0].plane_unflipped.coeffs()(0), y_room_pair_vec[0].plane_unflipped.coeffs()(1), y_room_pair_vec[0].plane_unflipped.coeffs()(2), y_room_pair_vec[0].plane_unflipped.coeffs()(3));
+    ROS_DEBUG_NAMED("room factor","final room plane 4 %f %f %f %f", y_room_pair_vec[1].plane_unflipped.coeffs()(0), y_room_pair_vec[1].plane_unflipped.coeffs()(1), y_room_pair_vec[1].plane_unflipped.coeffs()(2), y_room_pair_vec[1].plane_unflipped.coeffs()(3));
 
     Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
-    Eigen::Vector2d room_pose_local = compute_room_pose_local(x_room_pair_vec[0].keyframe_node, room_pose);
     room_data_association = associate_rooms(room_pose);   
     if((rooms_vec.empty() || room_data_association.first == -1)) {
         std::cout << "found room with pose " << room_pose << std::endl;
@@ -1225,7 +1231,8 @@ private:
       float diff_x = room_pose(0) - rooms_vec[i].node->estimate()(0); 
       float diff_y = room_pose(1) - rooms_vec[i].node->estimate()(1); 
       float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));  
-      //std::cout << "dist room: " << dist << std::endl;
+      ROS_DEBUG_NAMED("room factor", "dist room %f", dist);
+
 
       if(dist < min_dist) {
           min_dist = dist;
@@ -1234,7 +1241,7 @@ private:
         }
     }
 
-    //std::cout << "min dist: " << min_dist << std::endl;
+    ROS_DEBUG_NAMED("room factor", "min dist room %f", min_dist);
     if (min_dist > room_dist_threshold) 
       data_association.first = -1;
 
@@ -2699,8 +2706,10 @@ private:
   bool use_point_to_plane;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
   bool use_corridor_constraint, use_room_constraint;
+  double corridor_information;
   double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
   double corridor_plane_length_diff_threshold, corridor_point_diff_threshold;
+  double room_information;
   double room_plane_length_diff_threshold, room_point_diff_threshold;
   double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width;
   double room_width_diff_threshold;

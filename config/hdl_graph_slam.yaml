@@ -60,7 +60,7 @@ floor_edge_robust_kernel: "NONE"
 floor_edge_stddev: 10.0
 
 # Scan matching
-odometry_edge_robust_kernel: "NONE" # NONE, Cauchy, DCS, Fair, GemanMcClure, Huber, PseudoHuber, Saturated, Tukey, Welsch
+odometry_edge_robust_kernel: "Huber" # NONE, Cauchy, DCS, Fair, GemanMcClure, Huber, PseudoHuber, Saturated, Tukey, Welsch
 odometry_edge_robust_kernel_size: 1.0
 loop_closure_edge_robust_kernel: "Huber"
 loop_closure_edge_robust_kernel_size: 1.0
@@ -80,14 +80,16 @@ plane_dist_threshold:       0.15
 use_point_to_plane:         false 
 use_parallel_plane_constraint: true 
 use_perpendicular_plane_constraint: true
-use_corridor_constraint:              true       
+use_corridor_constraint:              true
+corridor_information:                 0.01       
 corridor_dist_threshold:              0.5
 corridor_min_plane_length:            5.0 
 corridor_min_width:                   1.5 
 corridor_max_width:                   4.0
 corridor_plane_length_diff_threshold: 3.0
-corridor_point_diff_threshold:        2.5
-use_room_constraint:                  true       
+corridor_point_diff_threshold:        3.5
+use_room_constraint:                  true      
+room_information:                     0.01       
 room_dist_threshold:                  1.0 
 room_min_plane_length:                2.0
 room_max_plane_length:                10.0 
