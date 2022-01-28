@@ -162,6 +162,7 @@ public:
     room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
     room_max_plane_length = private_nh.param<double>("room_max_plane_length", 6.0);
     room_min_width = private_nh.param<double>("room_min_width", 2.5);
+    room_max_width = private_nh.param<double>("room_max_width", 6.0);
     room_point_diff_threshold = private_nh.param<double>("room_point_diff_threshold", 3.0);
     room_width_diff_threshold = private_nh.param<double>("room_width_diff_threshold", 2.5);
 
@@ -807,7 +808,7 @@ private:
           ROS_DEBUG_NAMED("room planes", "room plane lenght diff %f", diff_plane_length);
           ROS_DEBUG_NAMED("room planes", "room plane point diff %f", avg_plane_point_diff);
 
-          if (room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && room_width > room_min_width && diff_plane_length < room_plane_length_diff_threshold) {
+          if (room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (room_width > room_min_width && room_width < room_max_width)  && diff_plane_length < room_plane_length_diff_threshold) {
             if(avg_plane_point_diff < room_point_diff_threshold) {
               structure_data_list room_pair;
               room_pair.plane1 = room_candidates[i];
@@ -2762,7 +2763,7 @@ private:
   double corridor_plane_length_diff_threshold, corridor_point_diff_threshold;
   double room_information;
   double room_plane_length_diff_threshold, room_point_diff_threshold;
-  double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width;
+  double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width, room_max_width;
   double room_width_diff_threshold;
   double color_r, color_g, color_b;
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
