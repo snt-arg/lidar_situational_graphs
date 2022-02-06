@@ -898,8 +898,7 @@ private:
         meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
         /* Add parallel constraints here */
         if(use_parallel_plane_constraint) {
-          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane1).plane_node);
-          parallel_plane_constraint((*found_plane2).plane_node, (*found_plane2).plane_node);
+          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
         }
 
       } else {
@@ -962,8 +961,7 @@ private:
         meas_plane2 =  corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
         /* Add parallel constraints here */
         if(use_parallel_plane_constraint) {
-          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane1).plane_node);
-          parallel_plane_constraint((*found_plane2).plane_node, (*found_plane2).plane_node);
+          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
         }
 
        } else {
