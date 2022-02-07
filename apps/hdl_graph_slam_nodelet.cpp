@@ -2337,6 +2337,10 @@ private:
     }
     markers.markers.push_back(hort_plane_marker); 
 
+    float corridor_node_h = 10.5; 
+    float corridor_text_h = 10;
+    float corridor_edge_h = 9.5;
+    float corridor_point_h = 5.0;
     //x corridor markers
     visualization_msgs::Marker corridor_marker;
     corridor_marker.pose.orientation.w = 1.0;
@@ -2357,7 +2361,7 @@ private:
       geometry_msgs::Point point;
       point.x =  x_corridors[i].node->estimate();
       point.y =  x_corridors[i].keyframe_trans(1);
-      point.z = 12;
+      point.z = corridor_node_h;
       corridor_marker.points.push_back(point);
 
       //fill in the text marker
@@ -2370,7 +2374,7 @@ private:
       corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
       corr_x_text_marker.pose.position.x = x_corridors[i].node->estimate();
       corr_x_text_marker.pose.position.y = x_corridors[i].keyframe_trans(1);
-      corr_x_text_marker.pose.position.z = 11.5;
+      corr_x_text_marker.pose.position.z = corridor_text_h;
       corr_x_text_marker.color.r = color_r;
       corr_x_text_marker.color.g = color_g;
       corr_x_text_marker.color.b = color_b;
@@ -2379,6 +2383,9 @@ private:
       corr_x_text_marker.text = "Corridor X" + std::to_string(i+1);
       markers.markers.push_back(corr_x_text_marker);
 
+      auto found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
+      auto found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
+        
       //fill in the line marker
       visualization_msgs::Marker corr_x_line_marker;
       corr_x_line_marker.scale.x = 0.05;
@@ -2395,17 +2402,32 @@ private:
       geometry_msgs::Point p1,p2,p3;
       p1.x =  x_corridors[i].node->estimate();
       p1.y =  x_corridors[i].keyframe_trans(1);
-      p1.z =  11.5;
-      p2.x =  x_corridors[i].node->estimate() - 0.5;
-      p2.y =  x_corridors[i].keyframe_trans(1);
-      p2.z =  8;
-      corr_x_line_marker.points.push_back(p1);
-      corr_x_line_marker.points.push_back(p2);
-      p3.x =  x_corridors[i].node->estimate() + 0.5;
-      p3.y =  x_corridors[i].keyframe_trans(1);
-      p3.z =  8;
-      corr_x_line_marker.points.push_back(p1);
-      corr_x_line_marker.points.push_back(p3);
+      p1.z =  corridor_edge_h;    
+
+      for(int l=0; l < (*found_plane1).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_x1 = (*found_plane1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_x1;
+        dst_pt_x1.getVector4fMap() = pose_x1 * (*found_plane1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p2.x =  dst_pt_x1.x;
+        p2.y =  dst_pt_x1.y;
+        p2.z =  corridor_point_h;
+        corr_x_line_marker.points.push_back(p1);
+        corr_x_line_marker.points.push_back(p2);
+      }
+
+      for(int l=0; l < (*found_plane2).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_x2 = (*found_plane2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_x2;
+        dst_pt_x2.getVector4fMap() = pose_x2 * (*found_plane2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p3.x =  dst_pt_x2.x;
+        p3.y =  dst_pt_x2.y;
+        p3.z =  corridor_point_h;
+        corr_x_line_marker.points.push_back(p1);
+        corr_x_line_marker.points.push_back(p3);
+      }
+      
       markers.markers.push_back(corr_x_line_marker); 
     }
     
@@ -2413,7 +2435,7 @@ private:
       geometry_msgs::Point point;
       point.x =  y_corridors[i].keyframe_trans(0);
       point.y =  y_corridors[i].node->estimate();
-      point.z = 12;
+      point.z = corridor_node_h;
       corridor_marker.points.push_back(point);
 
       //fill in the text marker
@@ -2426,7 +2448,7 @@ private:
       corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
       corr_y_text_marker.pose.position.x = y_corridors[i].keyframe_trans(0);
       corr_y_text_marker.pose.position.y = y_corridors[i].node->estimate();
-      corr_y_text_marker.pose.position.z = 11.5;
+      corr_y_text_marker.pose.position.z = corridor_text_h;
       corr_y_text_marker.color.r = color_r;
       corr_y_text_marker.color.g = color_g;
       corr_y_text_marker.color.b = color_b;
@@ -2434,6 +2456,9 @@ private:
       corr_y_text_marker.pose.orientation.w = 1.0;
       corr_y_text_marker.text = "Corridor Y" + std::to_string(i+1);
       markers.markers.push_back(corr_y_text_marker);
+
+      auto found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
+      auto found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
 
       //fill in the line marker
       visualization_msgs::Marker corr_y_line_marker;
@@ -2451,23 +2476,42 @@ private:
       geometry_msgs::Point p1,p2,p3;
       p1.x =   y_corridors[i].keyframe_trans(0);
       p1.y =   y_corridors[i].node->estimate();
-      p1.z =  11.5;
-      p2.x =   y_corridors[i].keyframe_trans(0);
-      p2.y =   y_corridors[i].node->estimate() - 0.5;
-      p2.z =   8;
-      corr_y_line_marker.points.push_back(p1);
-      corr_y_line_marker.points.push_back(p2);
-      p3.x =  y_corridors[i].keyframe_trans(0);
-      p3.y =  y_corridors[i].node->estimate() + 0.5;
-      p3.z =   8;
-      corr_y_line_marker.points.push_back(p1);
-      corr_y_line_marker.points.push_back(p3);
-      markers.markers.push_back(corr_y_line_marker); 
+      p1.z =  corridor_edge_h;
+      
+      for(int l=0; l < (*found_plane1).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_y1 = (*found_plane1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_y1;
+        dst_pt_y1.getVector4fMap() = pose_y1 * (*found_plane1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p2.x =  dst_pt_y1.x;
+        p2.y =  dst_pt_y1.y;
+        p2.z =  corridor_point_h;
+        corr_y_line_marker.points.push_back(p1);
+        corr_y_line_marker.points.push_back(p2);
+     }
+      
+      for(int l=0; l < (*found_plane2).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_y2 = (*found_plane2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_y2;
+        dst_pt_y2.getVector4fMap() = pose_y2 * (*found_plane2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p3.x =  dst_pt_y2.x;
+        p3.y =  dst_pt_y2.y;
+        p3.z =  corridor_point_h;
+        corr_y_line_marker.points.push_back(p1);
+        corr_y_line_marker.points.push_back(p3);
+      }
+
+      markers.markers.push_back(corr_y_line_marker);     
     }
     markers.markers.push_back(corridor_marker); 
 
 
     //room markers
+    float room_node_h = 10.5; 
+    float room_text_h = 10;
+    float room_edge_h = 9.5;
+    float room_point_h = 5.0;
     visualization_msgs::Marker room_marker;
     room_marker.pose.orientation.w = 1.0;
     room_marker.scale.x = 0.5;
@@ -2488,7 +2532,7 @@ private:
       geometry_msgs::Point point;
       point.x = rooms_vec[i].node->estimate()(0);
       point.y = rooms_vec[i].node->estimate()(1);
-      point.z = 14;
+      point.z = room_node_h;
       room_marker.points.push_back(point);
 
       //fill in the text marker
@@ -2501,7 +2545,7 @@ private:
       room_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
       room_text_marker.pose.position.x = rooms_vec[i].node->estimate()(0);
       room_text_marker.pose.position.y = rooms_vec[i].node->estimate()(1);
-      room_text_marker.pose.position.z = 13.5;
+      room_text_marker.pose.position.z = room_text_h;
       room_text_marker.color.r = color_r;
       room_text_marker.color.g = color_g;
       room_text_marker.color.b = color_b;
@@ -2526,27 +2570,62 @@ private:
       geometry_msgs::Point p1,p2,p3,p4,p5;
       p1.x = rooms_vec[i].node->estimate()(0);
       p1.y = rooms_vec[i].node->estimate()(1);
-      p1.z = 13;
-      p2.x = rooms_vec[i].node->estimate()(0) - 1;
-      p2.y = rooms_vec[i].node->estimate()(1) - 1;
-      p2.z = 10;
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p2);
-      p3.x = rooms_vec[i].node->estimate()(0) + 1;
-      p3.y = rooms_vec[i].node->estimate()(1) - 1;
-      p3.z = 10;
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p3);
-      p4.x = rooms_vec[i].node->estimate()(0) - 1;
-      p4.y = rooms_vec[i].node->estimate()(1) + 1;
-      p4.z = 10;
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p4);
-      p5.x = rooms_vec[i].node->estimate()(0) + 1;
-      p5.y = rooms_vec[i].node->estimate()(1) + 1;
-      p5.z = 10;
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p5);
+      p1.z = room_edge_h;
+      
+      
+      auto found_planex1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x1_id);
+      auto found_planex2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x2_id);
+      auto found_planey1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y1_id);
+      auto found_planey2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y2_id);
+      
+      for(int l=0; l < (*found_planex1).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_x1 = (*found_planex1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_x1;
+        dst_pt_x1.getVector4fMap() = pose_x1 * (*found_planex1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p2.x =  dst_pt_x1.x;
+        p2.y =  dst_pt_x1.y;
+        p2.z =  corridor_point_h;
+        room_line_marker.points.push_back(p1);
+        room_line_marker.points.push_back(p2);
+      }   
+
+      for(int l=0; l < (*found_planex2).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_x2 = (*found_planex2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_x2;
+        dst_pt_x2.getVector4fMap() = pose_x2 * (*found_planex2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p3.x =  dst_pt_x2.x;
+        p3.y =  dst_pt_x2.y;
+        p3.z =  corridor_point_h;
+        room_line_marker.points.push_back(p1);
+        room_line_marker.points.push_back(p3);
+      } 
+
+      for(int l=0; l < (*found_planey1).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_y1 = (*found_planey1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_y1;
+        dst_pt_y1.getVector4fMap() = pose_y1 * (*found_planey1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p4.x =  dst_pt_y1.x;
+        p4.y =  dst_pt_y1.y;
+        p4.z =  corridor_point_h;
+        room_line_marker.points.push_back(p1);
+        room_line_marker.points.push_back(p4);
+      } 
+
+
+      for(int l=0; l < (*found_planey2).keyframe_node_vec.size(); ++l) {
+        Eigen::Matrix4f pose_y2 = (*found_planey2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
+        PointNormal dst_pt_y2;
+        dst_pt_y2.getVector4fMap() = pose_y2 * (*found_planey2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+
+        p5.x =  dst_pt_y2.x;
+        p5.y =  dst_pt_y2.y;
+        p5.z =  corridor_point_h;
+        room_line_marker.points.push_back(p1);
+        room_line_marker.points.push_back(p5);
+      } 
       markers.markers.push_back(room_line_marker); 
     }
     markers.markers.push_back(room_marker); 
