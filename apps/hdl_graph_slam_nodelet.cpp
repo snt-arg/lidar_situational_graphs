@@ -549,6 +549,8 @@ private:
           vert_plane.id = data_association.first;
           vert_plane.plane = det_plane_map_frame.coeffs();
           vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
+          vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+          vert_plane.keyframe_node_vec.push_back(keyframe->node); 
           vert_plane.keyframe_node = keyframe->node; 
           vert_plane.plane_node = plane_node; 
           vert_plane.covariance = Eigen::Matrix3d::Identity();
@@ -556,6 +558,9 @@ private:
           ROS_DEBUG_NAMED("xplane association", "Added new x vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
           plane_node = x_vert_planes[data_association.second].plane_node;
+          x_vert_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+          x_vert_planes[data_association.second].keyframe_node_vec.push_back(keyframe->node);
+
           ROS_DEBUG_NAMED("xplane association", "matched x vert plane with coeffs %f %f %f %f to mapped x vert plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3),
                           x_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), x_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
                           x_vert_planes[data_association.second].plane_node->estimate().coeffs()(2),x_vert_planes[data_association.second].plane_node->estimate().coeffs()(3));
@@ -570,6 +575,8 @@ private:
         vert_plane.id = data_association.first;
         vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
+        vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+        vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.keyframe_node = keyframe->node; 
         vert_plane.plane_node = plane_node; 
         vert_plane.covariance = Eigen::Matrix3d::Identity();
@@ -577,6 +584,8 @@ private:
         ROS_DEBUG_NAMED("yplane association", "Added new y vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
           plane_node = y_vert_planes[data_association.second].plane_node;
+          y_vert_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+          y_vert_planes[data_association.second].keyframe_node_vec.push_back(keyframe->node);
           ROS_DEBUG_NAMED("yplane association", "matched y vert plane with coeffs %f %f %f %f to mapped y vert plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3),
                           y_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), y_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
                           y_vert_planes[data_association.second].plane_node->estimate().coeffs()(2),y_vert_planes[data_association.second].plane_node->estimate().coeffs()(3));
@@ -591,6 +600,8 @@ private:
           hort_plane.id = data_association.first;
           hort_plane.plane = det_plane_map_frame.coeffs();
           hort_plane.cloud_seg_body = keyframe->cloud_seg_body;
+          hort_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+          hort_plane.keyframe_node_vec.push_back(keyframe->node);
           hort_plane.keyframe_node = keyframe->node; 
           hort_plane.plane_node = plane_node; 
           hort_plane.covariance = Eigen::Matrix3d::Identity();
@@ -598,6 +609,8 @@ private:
           ROS_DEBUG_NAMED("hort plane association", "Added new horizontal plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
           plane_node = hort_planes[data_association.second].plane_node;
+          hort_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+          hort_planes[data_association.second].keyframe_node_vec.push_back(keyframe->node);
           ROS_DEBUG_NAMED("hort plane association", "matched hort plane with coeffs %f %f %f %f to mapped hort plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3), 
                           hort_planes[data_association.second].plane_node->estimate().coeffs()(0), hort_planes[data_association.second].plane_node->estimate().coeffs()(1),
                           hort_planes[data_association.second].plane_node->estimate().coeffs()(2), hort_planes[data_association.second].plane_node->estimate().coeffs()(3));
@@ -1889,39 +1902,47 @@ private:
   void convert_plane_points_to_map() {
 
     for(int i = 0; i < x_vert_planes.size(); ++i) {
-      Eigen::Matrix4f pose = x_vert_planes[i].keyframe_node->estimate().matrix().cast<float>();
       pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
       
-      for(size_t j=0; j < x_vert_planes[i].cloud_seg_body->points.size(); ++j) {
-        PointNormal dst_pt;
-        dst_pt.getVector4fMap() = pose * x_vert_planes[i].cloud_seg_body->points[j].getVector4fMap();
-        cloud_seg_map->points.push_back(dst_pt);
-        x_vert_planes[i].cloud_seg_map = cloud_seg_map;
+      for(int k=0; k< x_vert_planes[i].keyframe_node_vec.size(); ++k) {
+        Eigen::Matrix4f pose = x_vert_planes[i].keyframe_node_vec[k]->estimate().matrix().cast<float>(); 
+        for(size_t j=0; j < x_vert_planes[i].cloud_seg_body_vec[k]->points.size(); ++j) {
+          PointNormal dst_pt;
+          dst_pt.getVector4fMap() = pose * x_vert_planes[i].cloud_seg_body_vec[k]->points[j].getVector4fMap();
+          cloud_seg_map->points.push_back(dst_pt);
+        }
       }
+      x_vert_planes[i].cloud_seg_map = cloud_seg_map;    
     }
 
     for(int i = 0; i < y_vert_planes.size(); ++i) {
-      Eigen::Matrix4f pose = y_vert_planes[i].keyframe_node->estimate().matrix().cast<float>();
       pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+
+      for(int k=0; k< y_vert_planes[i].keyframe_node_vec.size(); ++k) {
+        Eigen::Matrix4f pose = y_vert_planes[i].keyframe_node_vec[k]->estimate().matrix().cast<float>();
       
-      for(size_t j=0; j < y_vert_planes[i].cloud_seg_body->points.size(); ++j) {
-        PointNormal dst_pt;
-        dst_pt.getVector4fMap() = pose * y_vert_planes[i].cloud_seg_body->points[j].getVector4fMap();
-        cloud_seg_map->points.push_back(dst_pt);
-        y_vert_planes[i].cloud_seg_map = cloud_seg_map;
+        for(size_t j=0; j < y_vert_planes[i].cloud_seg_body_vec[k]->points.size(); ++j) {
+          PointNormal dst_pt;
+          dst_pt.getVector4fMap() = pose * y_vert_planes[i].cloud_seg_body_vec[k]->points[j].getVector4fMap();
+          cloud_seg_map->points.push_back(dst_pt);
+        }
       }
+      y_vert_planes[i].cloud_seg_map = cloud_seg_map;
     }
 
     for(int i = 0; i < hort_planes.size(); ++i) {
-      Eigen::Matrix4f pose = hort_planes[i].keyframe_node->estimate().matrix().cast<float>();
       pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
-      
-      for(size_t j=0; j < hort_planes[i].cloud_seg_body->points.size(); ++j) {
-        PointNormal dst_pt;
-        dst_pt.getVector4fMap() = pose * hort_planes[i].cloud_seg_body->points[j].getVector4fMap();
-        cloud_seg_map->points.push_back(dst_pt);
-        hort_planes[i].cloud_seg_map = cloud_seg_map;
+
+      for(int k=0; k< hort_planes[i].keyframe_node_vec.size(); ++k) {
+        Eigen::Matrix4f pose = hort_planes[i].keyframe_node_vec[k]->estimate().matrix().cast<float>();
+        
+        for(size_t j=0; j < hort_planes[i].cloud_seg_body_vec[k]->points.size(); ++j) {
+          PointNormal dst_pt;
+          dst_pt.getVector4fMap() = pose * hort_planes[i].cloud_seg_body_vec[k]->points[j].getVector4fMap();
+          cloud_seg_map->points.push_back(dst_pt);
+        }
       }
+      hort_planes[i].cloud_seg_map = cloud_seg_map;
     }
   }
 
