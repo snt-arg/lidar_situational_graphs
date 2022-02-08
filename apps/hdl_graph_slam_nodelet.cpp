@@ -2066,37 +2066,59 @@ private:
 
         float r=0, g=0, b=0.0;
         double x=0, y=0;
+                
         if (fabs(v2->estimate().normal()(0)) > 0.95) {
           for(auto x_plane : x_vert_planes) {
             if (x_plane.id == v2->id()) {
-              x = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].x;
-              y = x_plane.cloud_seg_map->points[(x_plane.cloud_seg_map->points.size()/2)].y;
+            float min_dist = 100;
+            for(int p=0; p < x_plane.cloud_seg_map->points.size(); ++p) {
+              Eigen::Vector3d p_tmp;
+              p_tmp =  Eigen::Vector3d(x_plane.cloud_seg_map->points[p].x, x_plane.cloud_seg_map->points[p].y, 5.0);
+              float norm = std::sqrt(std::pow((pt1.x() - p_tmp.x()),2) + std::pow((pt1.y() - p_tmp.y()),2) + std::pow((pt1.z() - p_tmp.z()),2));
+              if (norm < min_dist) {
+                min_dist = norm;       
+                pt3 = p_tmp;
+                } 
+              }
             } 
           }
-          pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0);
-          pt3 = Eigen::Vector3d(x, y, 5.0);
+          pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
           r=1.0;
-        } 
+        }
         else if (fabs(v2->estimate().normal()(1)) > 0.95) {
            for(auto y_plane : y_vert_planes) {
             if (y_plane.id == v2->id()) {
-              x = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].x;
-              y = y_plane.cloud_seg_map->points[(y_plane.cloud_seg_map->points.size()/2)].y;
+              float min_dist = 100;
+              for(int p=0; p < y_plane.cloud_seg_map->points.size(); ++p) {
+                Eigen::Vector3d p_tmp;
+                p_tmp =  Eigen::Vector3d(y_plane.cloud_seg_map->points[p].x, y_plane.cloud_seg_map->points[p].y, 5.0);
+                float norm = std::sqrt(std::pow((pt1.x() - p_tmp.x()),2) + std::pow((pt1.y() - p_tmp.y()),2) + std::pow((pt1.z() - p_tmp.z()),2));
+                if (norm < min_dist) {
+                  min_dist = norm;       
+                  pt3 = p_tmp;
+                } 
+              }
             } 
           }
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0);
-          pt3 = Eigen::Vector3d(x, y, 5.0);
-          b=1.0;
+          b=1.0; 
         }
         else if (fabs(v2->estimate().normal()(2)) > 0.95) {
            for(auto h_plane : hort_planes) {
             if (h_plane.id == v2->id()) {
-              x = h_plane.cloud_seg_map->points[(h_plane.cloud_seg_map->points.size()/2)].x;
-              y = h_plane.cloud_seg_map->points[(h_plane.cloud_seg_map->points.size()/2)].y;
+              float min_dist = 100;
+              for(int p=0; p < h_plane.cloud_seg_map->points.size(); ++p) {
+                Eigen::Vector3d p_tmp;
+                p_tmp =  Eigen::Vector3d(h_plane.cloud_seg_map->points[p].x, h_plane.cloud_seg_map->points[p].y, 5.0);
+                float norm = std::sqrt(std::pow((pt1.x() - p_tmp.x()),2) + std::pow((pt1.y() - p_tmp.y()),2) + std::pow((pt1.z() - p_tmp.z()),2));
+                if (norm < min_dist) {
+                  min_dist = norm;       
+                  pt3 = p_tmp;
+                } 
+              }
             }
           }   
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
-          pt3 = Eigen::Vector3d(x, y, 5.0); 
           r=1; g=0.65;
         }
 
@@ -2110,11 +2132,11 @@ private:
         edge_marker.colors[i * 2].r = 0;
         edge_marker.colors[i * 2].g = 0;
         edge_marker.colors[i * 2].b = 0.0;
-        edge_marker.colors[i * 2].a = 1.0;
+        edge_marker.colors[i * 2].a = 0.4;
         edge_marker.colors[i * 2 + 1].r = 0;
         edge_marker.colors[i * 2 + 1].g = 0;
         edge_marker.colors[i * 2 + 1].b = 0;
-        edge_marker.colors[i * 2 + 1].a = 1;
+        edge_marker.colors[i * 2 + 1].a = 0.4;
 
         edge_marker.points[(graph_slam->graph->edges().size()*2) + i * 2].x = pt2.x();
         edge_marker.points[(graph_slam->graph->edges().size()*2) + i * 2].y = pt2.y();
@@ -2126,11 +2148,11 @@ private:
         edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].r = r;
         edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].g = g;
         edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].b = b;
-        edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].a = 1.0;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + i * 2].a = 0.4;
         edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].r = r;
         edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].g = g;
         edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].b = b;
-        edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].a = 0.5;
+        edge_marker.colors[(graph_slam->graph->edges().size()*2) + (i * 2 + 1)].a = 0.4;
 
         continue;
       }
@@ -2184,11 +2206,11 @@ private:
         edge_marker.colors[i * 2].r = r;
         edge_marker.colors[i * 2].g = g;
         edge_marker.colors[i * 2].b = b;
-        edge_marker.colors[i * 2].a = 1.0;
+        edge_marker.colors[i * 2].a = 0.4;
         edge_marker.colors[i * 2 + 1].r = r;
         edge_marker.colors[i * 2 + 1].g = g;
         edge_marker.colors[i * 2 + 1].b = b;
-        edge_marker.colors[i * 2 + 1].a = 1.0;
+        edge_marker.colors[i * 2 + 1].a = 0.4;
 
         continue;
       }
@@ -2280,7 +2302,7 @@ private:
         x_vert_plane_marker.points.push_back(point);
       }
       x_vert_plane_marker.color.r = 1;
-      x_vert_plane_marker.color.a = 1;
+      x_vert_plane_marker.color.a = 0.5;
     }
     markers.markers.push_back(x_vert_plane_marker); 
 
@@ -2306,7 +2328,7 @@ private:
         y_vert_plane_marker.points.push_back(point);
       }
       y_vert_plane_marker.color.b = 1;
-      y_vert_plane_marker.color.a = 1;
+      y_vert_plane_marker.color.a = 0.5;
     }
     markers.markers.push_back(y_vert_plane_marker); 
 
@@ -2333,7 +2355,7 @@ private:
       }
       hort_plane_marker.color.r = 1;
       hort_plane_marker.color.g = 0.65;
-      hort_plane_marker.color.a = 1;
+      hort_plane_marker.color.a = 0.5;
     }
     markers.markers.push_back(hort_plane_marker); 
 
@@ -2398,36 +2420,46 @@ private:
       corr_x_line_marker.color.r =  color_r;
       corr_x_line_marker.color.g =  color_g;
       corr_x_line_marker.color.b =  color_b;  
-      corr_x_line_marker.color.a = 1.0;
+      corr_x_line_marker.color.a = 0.4;
       geometry_msgs::Point p1,p2,p3;
       p1.x =  x_corridors[i].node->estimate();
       p1.y =  x_corridors[i].keyframe_trans(1);
       p1.z =  corridor_edge_h;    
 
-      for(int l=0; l < (*found_plane1).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_x1 = (*found_plane1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_x1;
-        dst_pt_x1.getVector4fMap() = pose_x1 * (*found_plane1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+      float min_dist_plane1 = 100;
+      for(int p=0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_plane1).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_plane1).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-        p2.x =  dst_pt_x1.x;
-        p2.y =  dst_pt_x1.y;
-        p2.z =  corridor_point_h;
-        corr_x_line_marker.points.push_back(p1);
-        corr_x_line_marker.points.push_back(p2);
+        if (norm < min_dist_plane1) {
+          min_dist_plane1 = norm;       
+          p2 = p_tmp;
+        } 
       }
+      corr_x_line_marker.points.push_back(p1);
+      corr_x_line_marker.points.push_back(p2);
 
-      for(int l=0; l < (*found_plane2).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_x2 = (*found_plane2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_x2;
-        dst_pt_x2.getVector4fMap() = pose_x2 * (*found_plane2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+      float min_dist_plane2 = 100;
+      for(int p=0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_plane2).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_plane2).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-        p3.x =  dst_pt_x2.x;
-        p3.y =  dst_pt_x2.y;
-        p3.z =  corridor_point_h;
-        corr_x_line_marker.points.push_back(p1);
-        corr_x_line_marker.points.push_back(p3);
+        if (norm < min_dist_plane2) {
+          min_dist_plane2 = norm;       
+          p3 = p_tmp;
+        } 
       }
-      
+      corr_x_line_marker.points.push_back(p1);
+      corr_x_line_marker.points.push_back(p3);
+          
       markers.markers.push_back(corr_x_line_marker); 
     }
     
@@ -2472,35 +2504,45 @@ private:
       corr_y_line_marker.color.r = color_r;
       corr_y_line_marker.color.g = color_g;
       corr_y_line_marker.color.b = color_b;  
-      corr_y_line_marker.color.a = 1.0;
+      corr_y_line_marker.color.a = 0.4;
       geometry_msgs::Point p1,p2,p3;
       p1.x =   y_corridors[i].keyframe_trans(0);
       p1.y =   y_corridors[i].node->estimate();
       p1.z =  corridor_edge_h;
-      
-      for(int l=0; l < (*found_plane1).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_y1 = (*found_plane1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_y1;
-        dst_pt_y1.getVector4fMap() = pose_y1 * (*found_plane1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
 
-        p2.x =  dst_pt_y1.x;
-        p2.y =  dst_pt_y1.y;
-        p2.z =  corridor_point_h;
-        corr_y_line_marker.points.push_back(p1);
-        corr_y_line_marker.points.push_back(p2);
-     }
-      
-      for(int l=0; l < (*found_plane2).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_y2 = (*found_plane2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_y2;
-        dst_pt_y2.getVector4fMap() = pose_y2 * (*found_plane2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+      float min_dist_plane1 = 100; 
+      for(int p=0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_plane1).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_plane1).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-        p3.x =  dst_pt_y2.x;
-        p3.y =  dst_pt_y2.y;
-        p3.z =  corridor_point_h;
-        corr_y_line_marker.points.push_back(p1);
-        corr_y_line_marker.points.push_back(p3);
+        if (norm < min_dist_plane1) {
+          min_dist_plane1 = norm;       
+          p2 = p_tmp;
+        } 
       }
+      corr_y_line_marker.points.push_back(p1);
+      corr_y_line_marker.points.push_back(p2);
+      
+      float min_dist_plane2 = 100; 
+      for(int p=0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_plane2).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_plane2).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
+
+        if (norm < min_dist_plane2) {
+          min_dist_plane2 = norm;       
+          p3 = p_tmp;
+        } 
+      }
+      corr_y_line_marker.points.push_back(p1);
+      corr_y_line_marker.points.push_back(p3);
 
       markers.markers.push_back(corr_y_line_marker);     
     }
@@ -2566,66 +2608,85 @@ private:
       room_line_marker.color.r = color_r; 
       room_line_marker.color.g = color_g;
       room_line_marker.color.b = color_b;  
-      room_line_marker.color.a = 1.0;
+      room_line_marker.color.a = 0.4;
       geometry_msgs::Point p1,p2,p3,p4,p5;
       p1.x = rooms_vec[i].node->estimate()(0);
       p1.y = rooms_vec[i].node->estimate()(1);
       p1.z = room_edge_h;
-      
-      
+            
       auto found_planex1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x1_id);
       auto found_planex2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x2_id);
       auto found_planey1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y1_id);
       auto found_planey2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y2_id);
-      
-      for(int l=0; l < (*found_planex1).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_x1 = (*found_planex1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_x1;
-        dst_pt_x1.getVector4fMap() = pose_x1 * (*found_planex1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
 
-        p2.x =  dst_pt_x1.x;
-        p2.y =  dst_pt_x1.y;
-        p2.z =  corridor_point_h;
-        room_line_marker.points.push_back(p1);
-        room_line_marker.points.push_back(p2);
-      }   
+      float min_dist_x1 = 100; 
+      for(int p=0; p < (*found_planex1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planex1).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planex1).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-      for(int l=0; l < (*found_planex2).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_x2 = (*found_planex2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_x2;
-        dst_pt_x2.getVector4fMap() = pose_x2 * (*found_planex2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+        if (norm < min_dist_x1) {
+          min_dist_x1 = norm;       
+          p2 = p_tmp;
+        } 
+      }
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p2);
 
-        p3.x =  dst_pt_x2.x;
-        p3.y =  dst_pt_x2.y;
-        p3.z =  corridor_point_h;
-        room_line_marker.points.push_back(p1);
-        room_line_marker.points.push_back(p3);
-      } 
+      float min_dist_x2 = 100; 
+      for(int p=0; p < (*found_planex2).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planex2).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planex2).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-      for(int l=0; l < (*found_planey1).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_y1 = (*found_planey1).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_y1;
-        dst_pt_y1.getVector4fMap() = pose_y1 * (*found_planey1).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+        if (norm < min_dist_x2) {
+          min_dist_x2 = norm;       
+          p3 = p_tmp;
+        } 
+      }
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p3);
 
-        p4.x =  dst_pt_y1.x;
-        p4.y =  dst_pt_y1.y;
-        p4.z =  corridor_point_h;
-        room_line_marker.points.push_back(p1);
-        room_line_marker.points.push_back(p4);
-      } 
+      float min_dist_y1 = 100; 
+      for(int p=0; p < (*found_planey1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planey1).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planey1).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
+        if (norm < min_dist_y1) {
+          min_dist_y1 = norm;       
+          p4 = p_tmp;
+        } 
+      }
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p4);
 
-      for(int l=0; l < (*found_planey2).keyframe_node_vec.size(); ++l) {
-        Eigen::Matrix4f pose_y2 = (*found_planey2).keyframe_node_vec[l]->estimate().matrix().cast<float>(); 
-        PointNormal dst_pt_y2;
-        dst_pt_y2.getVector4fMap() = pose_y2 * (*found_planey2).cloud_seg_body_vec[l]->points[0].getVector4fMap();
+      float min_dist_y2 = 100; 
+      for(int p=0; p < (*found_planey2).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planey2).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planey2).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
+        
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-        p5.x =  dst_pt_y2.x;
-        p5.y =  dst_pt_y2.y;
-        p5.z =  corridor_point_h;
-        room_line_marker.points.push_back(p1);
-        room_line_marker.points.push_back(p5);
-      } 
+        if (norm < min_dist_y2) {
+          min_dist_y2 = norm;       
+          p5 = p_tmp;
+        } 
+      }      
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p5);
+  
       markers.markers.push_back(room_line_marker); 
     }
     markers.markers.push_back(room_marker); 
