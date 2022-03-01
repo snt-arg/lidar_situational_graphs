@@ -141,6 +141,7 @@ public:
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
     
     plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
+    constant_covariance  = private_nh.param<bool>("constant_covariance", true);
     min_plane_points = private_nh.param<double>("min_plane_points", 100);
     use_point_to_plane = private_nh.param<bool>("use_point_to_plane", false);
     use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
@@ -640,7 +641,7 @@ private:
   */
   std::pair<int,int> associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
     std::pair<int,int> data_association;
-    double min_maha_dist = 100;  
+    double vert_min_maha_dist = 100; double hort_min_maha_dist = 100;  
     Eigen::Isometry3d m2n = keyframe->estimate().inverse();
 
     switch(plane_type) {
@@ -649,15 +650,15 @@ private:
         g2o::Plane3D local_plane = m2n * x_vert_planes[i].plane;
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
-        //std::cout << "cov x: " << x_vert_planes[i].covariance.inverse() << std::endl;
-        //ROS_DEBUG_NAMED("xplane association", "maha distance x: %f", maha_dist);
+        ROS_DEBUG_NAMED("xplane plane association", "maha distance xplane: %f", maha_dist);
+        //printf("\n maha distance x: %f", maha_dist);
 
         if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
           } 
-        if(maha_dist < min_maha_dist) {
-          min_maha_dist = maha_dist;
+        if(maha_dist < vert_min_maha_dist) {
+          vert_min_maha_dist = maha_dist;
           data_association.first = x_vert_planes[i].id;
           data_association.second = i;
           }
@@ -670,15 +671,15 @@ private:
           g2o::Plane3D local_plane = m2n * y_vert_planes[i].plane;
           Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * y_vert_planes[i].covariance.inverse() * error);
-          //std::cout << "cov y: " << y_vert_planes[i].covariance.inverse() << std::endl;
-          //ROS_DEBUG_NAMED("yplane association", "maha distance y: %f", maha_dist);
+          ROS_DEBUG_NAMED("yplane plane association", "maha distance yplane: %f", maha_dist);
+          //printf("\n maha distance y: %f", maha_dist);
 
           if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
           } 
-          if(maha_dist < min_maha_dist) {
-            min_maha_dist = maha_dist;
+          if(maha_dist < vert_min_maha_dist) {
+            vert_min_maha_dist = maha_dist;
             data_association.first = y_vert_planes[i].id;
             data_association.second = i;
             }
@@ -691,14 +692,14 @@ private:
           Eigen::Vector3d error = local_plane.ominus(det_plane);
           double maha_dist = sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
           //std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
-          //ROS_DEBUG_NAMED("hort plane association", "maha distance hort: %f", maha_dist);
+          ROS_DEBUG_NAMED("hort plane association", "maha distance hort: %f", maha_dist);
 
           if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
           } 
-          if(maha_dist < min_maha_dist) {
-            min_maha_dist = maha_dist;
+          if(maha_dist < hort_min_maha_dist) {
+            vert_min_maha_dist = maha_dist;
             data_association.first = hort_planes[i].id;
             data_association.second = i;
             }
@@ -710,8 +711,9 @@ private:
         break;
     }
 
-    ROS_DEBUG_NAMED("xplane association", "min maha dist: %f", min_maha_dist);
-    if(min_maha_dist > plane_dist_threshold)
+    //printf("\n vert min maha dist: %f", vert_min_maha_dist);
+    //printf("\n hort min maha dist: %f", hort_min_maha_dist);
+    if(vert_min_maha_dist > plane_dist_threshold && hort_min_maha_dist > plane_dist_threshold)
       data_association.first = -1;
 
     return data_association;
@@ -1800,7 +1802,8 @@ private:
 
     // optimize the pose graph
     int num_iterations = private_nh.param<int>("g2o_solver_num_iterations", 1024);
-    if((graph_slam->optimize(num_iterations)) > 0)
+  
+    if((graph_slam->optimize(num_iterations)) > 0 && !constant_covariance)
       compute_plane_cov();
 
     // publish tf
@@ -2913,6 +2916,7 @@ private:
 
   //vertical and horizontal planes
   double plane_dist_threshold;
+  bool constant_covariance;
   double min_plane_points;
   bool use_point_to_plane;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
