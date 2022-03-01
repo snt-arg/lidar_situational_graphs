@@ -932,15 +932,25 @@ private:
         correct_plane_d(plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
         correct_plane_d(plane_class::X_VERT_PLANE, found_mapped_plane2_coeffs);
         
+        bool found_new_plane = false;
         if((*found_mapped_plane1).id == (*found_plane1).id)
           meas_plane1 =  corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
-        else
+        else {
           meas_plane1 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
+          found_new_plane = true;
+        }
         
         if((*found_mapped_plane2).id == (*found_plane2).id)       
           meas_plane2 =  corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
-        else
+        else {
           meas_plane2 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+          found_new_plane = true;
+        }
+
+        if(use_parallel_plane_constraint && found_new_plane) {
+          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
+        }
+
       }
       
       auto edge_plane1 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
@@ -995,15 +1005,24 @@ private:
         correct_plane_d(plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
         correct_plane_d(plane_class::Y_VERT_PLANE, found_mapped_plane2_coeffs);
         
+        bool found_new_plane = false;
         if((*found_mapped_plane1).id == (*found_plane1).id)
           meas_plane1 =  corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
-        else
+        else {
           meas_plane1 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
+          found_new_plane = true;
+        }
 
         if((*found_mapped_plane2).id == (*found_plane2).id)       
           meas_plane2 =  corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
-        else
+        else {
           meas_plane2 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+          found_new_plane = true;
+        }
+
+        if(use_parallel_plane_constraint && found_new_plane) {
+          parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
+        }
       }
 
       auto edge_plane1 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
@@ -1173,16 +1192,24 @@ private:
         correct_plane_d(plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
         correct_plane_d(plane_class::X_VERT_PLANE, found_mapped_x_plane2_coeffs);
 
+        bool found_new_x_plane = false;
         if((*found_mapped_x_plane1).id == (*found_x_plane1).id)
           x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane1_coeffs);
-        /* TODO: a new plane is found so add parallel constraint with the others */
-        else 
+        else {
           x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
+          found_new_x_plane = true;
+        }
 
         if((*found_mapped_x_plane2).id == (*found_x_plane2).id)
           x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane2_coeffs);
-        else
+        else {
           x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane2_coeffs);
+          found_new_x_plane = true;
+        }
+
+        if(use_parallel_plane_constraint && found_new_x_plane) {
+          parallel_plane_constraint((*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
+        }
 
         found_mapped_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_y1_id);
         found_mapped_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_y2_id);
@@ -1192,17 +1219,25 @@ private:
         correct_plane_d(plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs); 
         correct_plane_d(plane_class::Y_VERT_PLANE, found_mapped_y_plane2_coeffs); 
 
+        bool found_new_y_plane = false;
         if((*found_mapped_y_plane1).id == (*found_y_plane1).id)
           y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane1_coeffs);
-        else
+        else {
           y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
+          found_new_y_plane = true;
+        }
 
         if((*found_mapped_y_plane2).id == (*found_y_plane2).id)
           y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane2_coeffs);
-        else
+        else {
           y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane2_coeffs);
-    }
-
+          found_new_y_plane = true;
+        }
+        
+        if(use_parallel_plane_constraint && found_new_y_plane) {
+          parallel_plane_constraint((*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
+        }
+      }
       auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
       graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
 
