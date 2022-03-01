@@ -2,7 +2,7 @@
 **Situational graphs (S-Graphs)** is a ROS package for generating in real-time three-layered hierarchical factor graphs including the lowest ***Robot Tracking Layer*** registring the robot poses, ***Metric-Semantic Layer*** which maps planar features and ***Topological Layer*** constraining the planar features using room/corridor factors. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [HDL_GRAPH_SLAM](https://github.com/koide3/hdl_graph_slam)
 
 
-[<img src="imgs/s_graphs.png" width="712pix" height="auto"/>](https://www.youtube.com/watch?v=eoWrBTY04Oc)
+[<img src="imgs/s_graphs.png" width="640pix" height="480pix"/>](https://www.youtube.com/watch?v=eoWrBTY04Oc)
 
 ## Paper
 
