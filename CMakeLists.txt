@@ -98,14 +98,14 @@ target_link_libraries(s_graphs_plane_segmentation_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
+add_dependencies(s_graphs_plane_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_library(s_graphs_floor_detection_nodelet apps/floor_detection_nodelet.cpp)
 target_link_libraries(s_graphs_floor_detection_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-add_dependencies(s_graphs_floor_detection_nodelet ${PROJECT_NAME}_gencpp)
-
+add_dependencies(s_graphs_floor_detection_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_library(s_graphs_scan_matching_odometry_nodelet
   apps/scan_matching_odometry_nodelet.cpp
@@ -115,8 +115,7 @@ target_link_libraries(s_graphs_scan_matching_odometry_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-add_dependencies(s_graphs_scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp)
-
+add_dependencies(s_graphs_scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
 
 add_library(s_graphs_nodelet
   apps/s_graphs_nodelet.cpp
