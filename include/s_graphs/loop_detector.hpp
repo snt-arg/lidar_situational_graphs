@@ -4,13 +4,13 @@
 #define LOOP_DETECTOR_HPP
 
 #include <boost/format.hpp>
-#include <hdl_graph_slam/keyframe.hpp>
-#include <hdl_graph_slam/registrations.hpp>
-#include <hdl_graph_slam/graph_slam.hpp>
+#include <s_graphs/keyframe.hpp>
+#include <s_graphs/registrations.hpp>
+#include <s_graphs/graph_slam.hpp>
 
 #include <g2o/types/slam3d/vertex_se3.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 struct Loop {
 public:
@@ -54,7 +54,7 @@ public:
    * @param new_keyframes   newly registered keyframes
    * @param graph_slam      pose graph
    */
-  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes, const std::deque<KeyFrame::Ptr>& new_keyframes, hdl_graph_slam::GraphSLAM& graph_slam) {
+  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes, const std::deque<KeyFrame::Ptr>& new_keyframes, s_graphs::GraphSLAM& graph_slam) {
     std::vector<Loop::Ptr> detected_loops;
     for(const auto& new_keyframe : new_keyframes) {
       auto candidates = find_candidates(keyframes, new_keyframe);
@@ -114,7 +114,7 @@ private:
    * @param new_keyframe         loop end keyframe
    * @param graph_slam           graph slam
    */
-  Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes, const KeyFrame::Ptr& new_keyframe, hdl_graph_slam::GraphSLAM& graph_slam) {
+  Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes, const KeyFrame::Ptr& new_keyframe, s_graphs::GraphSLAM& graph_slam) {
     if(candidate_keyframes.empty()) {
       return nullptr;
     }
@@ -183,6 +183,6 @@ private:
   pcl::Registration<PointT, PointT>::Ptr registration;
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // LOOP_DETECTOR_HPP

@@ -34,31 +34,31 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geographic_msgs/GeoPointStamped.h>
 #include <visualization_msgs/MarkerArray.h>
-#include <hdl_graph_slam/FloorCoeffs.h>
+#include <s_graphs/FloorCoeffs.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 
-#include <hdl_graph_slam/SaveMap.h>
-#include <hdl_graph_slam/DumpGraph.h>
+#include <s_graphs/SaveMap.h>
+#include <s_graphs/DumpGraph.h>
 
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
 
-#include <hdl_graph_slam/ros_utils.hpp>
-#include <hdl_graph_slam/ros_time_hash.hpp>
-#include <hdl_graph_slam/PointClouds.h>
+#include <s_graphs/ros_utils.hpp>
+#include <s_graphs/ros_time_hash.hpp>
+#include <s_graphs/PointClouds.h>
 
 
-#include <hdl_graph_slam/graph_slam.hpp>
-#include <hdl_graph_slam/keyframe.hpp>
-#include <hdl_graph_slam/planes.hpp>
-#include <hdl_graph_slam/corridors.hpp>
-#include <hdl_graph_slam/rooms.hpp>
-#include <hdl_graph_slam/keyframe_updater.hpp>
-#include <hdl_graph_slam/loop_detector.hpp>
-#include <hdl_graph_slam/information_matrix_calculator.hpp>
-#include <hdl_graph_slam/map_cloud_generator.hpp>
-#include <hdl_graph_slam/nmea_sentence_parser.hpp>
+#include <s_graphs/graph_slam.hpp>
+#include <s_graphs/keyframe.hpp>
+#include <s_graphs/planes.hpp>
+#include <s_graphs/corridors.hpp>
+#include <s_graphs/rooms.hpp>
+#include <s_graphs/keyframe_updater.hpp>
+#include <s_graphs/loop_detector.hpp>
+#include <s_graphs/information_matrix_calculator.hpp>
+#include <s_graphs/map_cloud_generator.hpp>
+#include <s_graphs/nmea_sentence_parser.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_corridor.hpp>
@@ -75,7 +75,7 @@
 #include <g2o/edge_corridor_plane.hpp>
 #include <g2o/edge_room.hpp>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 class HdlGraphSlamNodelet : public nodelet::Nodelet {
 public:
@@ -199,16 +199,16 @@ public:
     }
 
     // publishers
-    markers_pub = mt_nh.advertise<visualization_msgs::MarkerArray>("/hdl_graph_slam/markers", 16);
-    odom2map_pub = mt_nh.advertise<geometry_msgs::TransformStamped>("/hdl_graph_slam/odom2map", 16);
-    odom_pose_corrected_pub = mt_nh.advertise<geometry_msgs::PoseStamped>("/hdl_graph_slam/odom_pose_corrected",10);
-    odom_path_corrected_pub = mt_nh.advertise<nav_msgs::Path>("/hdl_graph_slam/odom_path_corrected",10);
+    markers_pub = mt_nh.advertise<visualization_msgs::MarkerArray>("/s_graphs/markers", 16);
+    odom2map_pub = mt_nh.advertise<geometry_msgs::TransformStamped>("/s_graphs/odom2map", 16);
+    odom_pose_corrected_pub = mt_nh.advertise<geometry_msgs::PoseStamped>("/s_graphs/odom_pose_corrected",10);
+    odom_path_corrected_pub = mt_nh.advertise<nav_msgs::Path>("/s_graphs/odom_path_corrected",10);
 
-    map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/hdl_graph_slam/map_points", 1, true);
-    read_until_pub = mt_nh.advertise<std_msgs::Header>("/hdl_graph_slam/read_until", 32);
+    map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
+    read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
 
-    dump_service_server = mt_nh.advertiseService("/hdl_graph_slam/dump", &HdlGraphSlamNodelet::dump_service, this);
-    save_map_service_server = mt_nh.advertiseService("/hdl_graph_slam/save_map", &HdlGraphSlamNodelet::save_map_service, this);
+    dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &HdlGraphSlamNodelet::dump_service, this);
+    save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &HdlGraphSlamNodelet::save_map_service, this);
 
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
@@ -292,7 +292,7 @@ private:
    * @brief received segmented clouds pushed to be pushed #keyframe_queue
    * @param clouds_seg_msg
    */
-  void cloud_seg_callback(const hdl_graph_slam::PointClouds::Ptr& clouds_seg_msg) {
+  void cloud_seg_callback(const s_graphs::PointClouds::Ptr& clouds_seg_msg) {
       std::lock_guard<std::mutex> lock(cloud_seg_mutex);
       clouds_seg_queue.push_back(clouds_seg_msg);
   }
@@ -386,7 +386,7 @@ private:
       }
     }
 
-    auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
+    auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const s_graphs::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
     clouds_seg_queue.erase(clouds_seg_queue.begin(), remove_loc);
 
     return updated;
@@ -1704,7 +1704,7 @@ private:
    * @brief received floor coefficients are added to #floor_coeffs_queue
    * @param floor_coeffs_msg
    */
-  void floor_coeffs_callback(const hdl_graph_slam::FloorCoeffsConstPtr& floor_coeffs_msg) {
+  void floor_coeffs_callback(const s_graphs::FloorCoeffsConstPtr& floor_coeffs_msg) {
     if(floor_coeffs_msg->coeffs.empty()) {
       return;
     }
@@ -1754,7 +1754,7 @@ private:
       updated = true;
     }
 
-    auto remove_loc = std::upper_bound(floor_coeffs_queue.begin(), floor_coeffs_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const hdl_graph_slam::FloorCoeffsConstPtr& coeffs) { return stamp < coeffs->header.stamp; });
+    auto remove_loc = std::upper_bound(floor_coeffs_queue.begin(), floor_coeffs_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const s_graphs::FloorCoeffsConstPtr& coeffs) { return stamp < coeffs->header.stamp; });
     floor_coeffs_queue.erase(floor_coeffs_queue.begin(), remove_loc);
 
     return updated;
@@ -2797,7 +2797,7 @@ private:
    * @param res
    * @return
    */
-  bool dump_service(hdl_graph_slam::DumpGraphRequest& req, hdl_graph_slam::DumpGraphResponse& res) {
+  bool dump_service(s_graphs::DumpGraphRequest& req, s_graphs::DumpGraphResponse& res) {
     std::lock_guard<std::mutex> lock(main_thread_mutex);
 
     std::string directory = req.destination;
@@ -2845,7 +2845,7 @@ private:
    * @param res
    * @return
    */
-  bool save_map_service(hdl_graph_slam::SaveMapRequest& req, hdl_graph_slam::SaveMapResponse& res) {
+  bool save_map_service(s_graphs::SaveMapRequest& req, s_graphs::SaveMapResponse& res) {
     std::vector<KeyFrameSnapshot::Ptr> snapshot;
 
     keyframes_snapshot_mutex.lock();
@@ -2947,7 +2947,7 @@ private:
   // floor_coeffs queue
   double floor_edge_stddev;
   std::mutex floor_coeffs_queue_mutex;
-  std::deque<hdl_graph_slam::FloorCoeffsConstPtr> floor_coeffs_queue;
+  std::deque<s_graphs::FloorCoeffsConstPtr> floor_coeffs_queue;
 
   //vertical and horizontal planes
   double plane_dist_threshold;
@@ -2976,7 +2976,7 @@ private:
 
   // Seg map queue
   std::mutex cloud_seg_mutex;
-  std::deque<hdl_graph_slam::PointClouds::Ptr> clouds_seg_queue; 
+  std::deque<s_graphs::PointClouds::Ptr> clouds_seg_queue; 
 
   // for map cloud generation
   std::atomic_bool graph_updated;
@@ -3007,6 +3007,6 @@ private:
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
-PLUGINLIB_EXPORT_CLASS(hdl_graph_slam::HdlGraphSlamNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(s_graphs::HdlGraphSlamNodelet, nodelet::Nodelet)

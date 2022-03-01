@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include <hdl_graph_slam/graph_slam.hpp>
+#include <s_graphs/graph_slam.hpp>
 
 #include <boost/format.hpp>
 #include <g2o/stuff/macros.h>
@@ -57,7 +57,7 @@ G2O_REGISTER_TYPE(VERTEX_ROOMXYLB, VertexRoomXYLB)
 G2O_REGISTER_TYPE(VERTEX_CORRIDOR, VertexCorridor)
 }  // namespace g2o
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 /**
  * @brief constructor
@@ -466,4 +466,4 @@ bool GraphSLAM::load(const std::string& filename) {
   return true;
 }
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs

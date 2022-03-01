@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 cmake_minimum_required(VERSION 2.8.3)
-project(hdl_graph_slam)
+project(s_graphs)
 
 # Can we use C++17 in indigo?
 add_definitions(-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
@@ -72,7 +72,7 @@ generate_messages(DEPENDENCIES std_msgs geometry_msgs sensor_msgs)
 ###################################
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES hdl_graph_slam_nodelet
+  LIBRARIES s_graphs_nodelet
 #  CATKIN_DEPENDS pcl_ros roscpp sensor_msgs
 #  DEPENDS system_lib
 )
@@ -87,47 +87,47 @@ include_directories(
 )
 
 # nodelets
-add_library(prefiltering_nodelet apps/prefiltering_nodelet.cpp)
-target_link_libraries(prefiltering_nodelet
+add_library(s_graphs_prefiltering_nodelet apps/prefiltering_nodelet.cpp)
+target_link_libraries(s_graphs_prefiltering_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
-add_library(plane_segmentation_nodelet apps/plane_segmentation_nodelet.cpp)
-target_link_libraries(plane_segmentation_nodelet
+add_library(s_graphs_plane_segmentation_nodelet apps/plane_segmentation_nodelet.cpp)
+target_link_libraries(s_graphs_plane_segmentation_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
 
-add_library(floor_detection_nodelet apps/floor_detection_nodelet.cpp)
-target_link_libraries(floor_detection_nodelet
+add_library(s_graphs_floor_detection_nodelet apps/floor_detection_nodelet.cpp)
+target_link_libraries(s_graphs_floor_detection_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-add_dependencies(floor_detection_nodelet ${PROJECT_NAME}_gencpp)
+add_dependencies(s_graphs_floor_detection_nodelet ${PROJECT_NAME}_gencpp)
 
 
-add_library(scan_matching_odometry_nodelet
+add_library(s_graphs_scan_matching_odometry_nodelet
   apps/scan_matching_odometry_nodelet.cpp
-  src/hdl_graph_slam/registrations.cpp
+  src/s_graphs/registrations.cpp
 )
-target_link_libraries(scan_matching_odometry_nodelet
+target_link_libraries(s_graphs_scan_matching_odometry_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-add_dependencies(scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp)
+add_dependencies(s_graphs_scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp)
 
 
-add_library(hdl_graph_slam_nodelet
-  apps/hdl_graph_slam_nodelet.cpp
-  src/hdl_graph_slam/graph_slam.cpp
-  src/hdl_graph_slam/keyframe.cpp
-  src/hdl_graph_slam/map_cloud_generator.cpp
-  src/hdl_graph_slam/registrations.cpp
-  src/hdl_graph_slam/information_matrix_calculator.cpp
+add_library(s_graphs_nodelet
+  apps/s_graphs_nodelet.cpp
+  src/s_graphs/graph_slam.cpp
+  src/s_graphs/keyframe.cpp
+  src/s_graphs/map_cloud_generator.cpp
+  src/s_graphs/registrations.cpp
+  src/s_graphs/information_matrix_calculator.cpp
   src/g2o/robust_kernel_io.cpp
 )
-target_link_libraries(hdl_graph_slam_nodelet
+target_link_libraries(s_graphs_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
   ${G2O_TYPES_DATA}
@@ -139,7 +139,7 @@ target_link_libraries(hdl_graph_slam_nodelet
   ${G2O_TYPES_SLAM3D}
   ${G2O_TYPES_SLAM3D_ADDONS}
 )
-add_dependencies(hdl_graph_slam_nodelet ${PROJECT_NAME}_gencpp)
+add_dependencies(s_graphs_nodelet ${PROJECT_NAME}_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
 catkin_install_python(
   PROGRAMS

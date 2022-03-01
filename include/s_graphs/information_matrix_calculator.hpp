@@ -7,7 +7,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 class InformationMatrixCalculator {
 public:
@@ -54,6 +54,6 @@ private:
   double fitness_score_thresh;
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // INFORMATION_MATRIX_CALCULATOR_HPP

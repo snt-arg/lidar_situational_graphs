@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include <hdl_graph_slam/keyframe.hpp>
+#include <s_graphs/keyframe.hpp>
 
 #include <boost/filesystem.hpp>
 
@@ -8,7 +8,7 @@
 #include <g2o/core/sparse_optimizer.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 KeyFrame::KeyFrame(const ros::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud) : stamp(stamp), odom(odom), accum_distance(accum_distance), cloud(cloud), node(nullptr) {}
 
@@ -158,4 +158,4 @@ KeyFrameSnapshot::KeyFrameSnapshot(const KeyFrame::Ptr& key) : pose(key->node->e
 
 KeyFrameSnapshot::~KeyFrameSnapshot() {}
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs

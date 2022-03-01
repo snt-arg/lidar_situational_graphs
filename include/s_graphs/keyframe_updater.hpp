@@ -6,7 +6,7 @@
 #include <ros/ros.h>
 #include <Eigen/Dense>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 /**
  * @brief this class decides if a new frame should be registered to the pose graph as a keyframe
@@ -72,6 +72,6 @@ private:
   Eigen::Isometry3d prev_keypose;
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // KEYFRAME_UPDATOR_HPP

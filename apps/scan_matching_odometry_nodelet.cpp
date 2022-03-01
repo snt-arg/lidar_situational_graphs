@@ -24,11 +24,11 @@
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/approximate_voxel_grid.h>
 
-#include <hdl_graph_slam/ros_utils.hpp>
-#include <hdl_graph_slam/registrations.hpp>
-#include <hdl_graph_slam/ScanMatchingStatus.h>
+#include <s_graphs/ros_utils.hpp>
+#include <s_graphs/registrations.hpp>
+#include <s_graphs/ScanMatchingStatus.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 class ScanMatchingOdometryNodelet : public nodelet::Nodelet {
 public:
@@ -383,6 +383,6 @@ private:
   pcl::Registration<PointT, PointT>::Ptr registration;
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
-PLUGINLIB_EXPORT_CLASS(hdl_graph_slam::ScanMatchingOdometryNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(s_graphs::ScanMatchingOdometryNodelet, nodelet::Nodelet)

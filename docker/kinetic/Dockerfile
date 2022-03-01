@@ -11,7 +11,7 @@ RUN /bin/bash -c '. /opt/ros/kinetic/setup.bash; catkin_init_workspace'
 RUN git clone https://github.com/koide3/ndt_omp.git
 RUN git clone https://github.com/SMRT-AIST/fast_gicp.git --recursive
 
-COPY . /root/catkin_ws/src/hdl_graph_slam/
+COPY . /root/catkin_ws/src/s_graphs/
 
 WORKDIR /root/catkin_ws
 RUN /bin/bash -c '. /opt/ros/kinetic/setup.bash; catkin_make'

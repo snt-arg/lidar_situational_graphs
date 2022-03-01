@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include <hdl_graph_slam/map_cloud_generator.hpp>
+#include <s_graphs/map_cloud_generator.hpp>
 
 #include <pcl/octree/octree_search.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 MapCloudGenerator::MapCloudGenerator() {}
 
@@ -50,4 +50,4 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(cons
   return filtered;
 }
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs

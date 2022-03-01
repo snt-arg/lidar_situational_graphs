@@ -9,7 +9,7 @@
 
 #include <std_msgs/Time.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <hdl_graph_slam/FloorCoeffs.h>
+#include <s_graphs/FloorCoeffs.h>
 
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>
@@ -22,7 +22,7 @@
 #include <pcl/sample_consensus/ransac.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 class FloorDetectionNodelet : public nodelet::Nodelet {
 public:
@@ -40,7 +40,7 @@ public:
     initialize_params();
 
     points_sub = nh.subscribe("/filtered_points", 256, &FloorDetectionNodelet::cloud_callback, this);
-    floor_pub = nh.advertise<hdl_graph_slam::FloorCoeffs>("/floor_detection/floor_coeffs", 32);
+    floor_pub = nh.advertise<s_graphs::FloorCoeffs>("/floor_detection/floor_coeffs", 32);
 
     read_until_pub = nh.advertise<std_msgs::Header>("/floor_detection/read_until", 32);
     floor_filtered_pub = nh.advertise<sensor_msgs::PointCloud2>("/floor_detection/floor_filtered_points", 32);
@@ -79,7 +79,7 @@ private:
     boost::optional<Eigen::Vector4f> floor = detect(cloud);
 
     // publish the detected floor coefficients
-    hdl_graph_slam::FloorCoeffs coeffs;
+    s_graphs::FloorCoeffs coeffs;
     coeffs.header = cloud_msg->header;
     if(floor) {
       coeffs.coeffs.resize(4);
@@ -262,6 +262,6 @@ private:
   double normal_filter_thresh;
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
-PLUGINLIB_EXPORT_CLASS(hdl_graph_slam::FloorDetectionNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(s_graphs::FloorDetectionNodelet, nodelet::Nodelet)

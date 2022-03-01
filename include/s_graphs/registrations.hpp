@@ -7,7 +7,7 @@
 
 #include <pcl/registration/registration.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 /**
  * @brief select a scan matching algorithm according to rosparams
@@ -16,6 +16,6 @@ namespace hdl_graph_slam {
  */
 boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>> select_registration_method(ros::NodeHandle& pnh);
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  //

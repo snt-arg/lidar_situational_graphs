@@ -8,7 +8,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <boost/optional.hpp>
-#include <hdl_graph_slam/planes.hpp>
+#include <s_graphs/planes.hpp>
 
 namespace g2o {
 class VertexSE3;
@@ -16,7 +16,7 @@ class HyperGraph;
 class SparseOptimizer;
 }  // namespace g2o
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 /**
  * @brief KeyFrame (pose node)
@@ -75,6 +75,6 @@ public:
   pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // KEYFRAME_HPP

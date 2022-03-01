@@ -13,7 +13,7 @@ class HyperGraph;
 class SparseOptimizer;
 }  // namespace g2o
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 struct Corridors {
 public:

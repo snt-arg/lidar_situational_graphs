@@ -22,7 +22,7 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 class PrefilteringNodelet : public nodelet::Nodelet {
 public:
@@ -265,6 +265,6 @@ private:
   pcl::Filter<PointT>::Ptr outlier_removal_filter;
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
-PLUGINLIB_EXPORT_CLASS(hdl_graph_slam::PrefilteringNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(s_graphs::PrefilteringNodelet, nodelet::Nodelet)

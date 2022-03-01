@@ -1,2 +1,2 @@
 #!/bin/bash
-docker build --tag hdl_graph_slam -f noetic/Dockerfile ..
+docker build --tag s_graphs -f noetic/Dockerfile ..

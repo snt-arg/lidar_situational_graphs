@@ -1,19 +1,19 @@
-<library path="lib/libscan_matching_odometry_nodelet">
-  <class name="hdl_graph_slam/ScanMatchingOdometryNodelet" type="hdl_graph_slam::ScanMatchingOdometryNodelet" base_class_type="nodelet::Nodelet" />
+<library path="lib/libs_graphs_scan_matching_odometry_nodelet">
+  <class name="s_graphs/ScanMatchingOdometryNodelet" type="s_graphs::ScanMatchingOdometryNodelet" base_class_type="nodelet::Nodelet" />
 </library>
 
-<library path="lib/libfloor_detection_nodelet">
-  <class name="hdl_graph_slam/FloorDetectionNodelet" type="hdl_graph_slam::FloorDetectionNodelet" base_class_type="nodelet::Nodelet" />
+<library path="lib/libs_graphs_floor_detection_nodelet">
+  <class name="s_graphs/FloorDetectionNodelet" type="s_graphs::FloorDetectionNodelet" base_class_type="nodelet::Nodelet" />
 </library>
 
-<library path="lib/libprefiltering_nodelet">
-  <class name="hdl_graph_slam/PrefilteringNodelet" type="hdl_graph_slam::PrefilteringNodelet" base_class_type="nodelet::Nodelet" />
+<library path="lib/libs_graphs_prefiltering_nodelet">
+  <class name="s_graphs/PrefilteringNodelet" type="s_graphs::PrefilteringNodelet" base_class_type="nodelet::Nodelet" />
 </library>
 
-<library path="lib/libplane_segmentation_nodelet">
-  <class name="hdl_graph_slam/PlaneSegmentationNodelet" type="hdl_graph_slam::PlaneSegmentationNodelet" base_class_type="nodelet::Nodelet" />
+<library path="lib/libs_graphs_plane_segmentation_nodelet">
+  <class name="s_graphs/PlaneSegmentationNodelet" type="s_graphs::PlaneSegmentationNodelet" base_class_type="nodelet::Nodelet" />
 </library>
 
-<library path="lib/libhdl_graph_slam_nodelet">
-  <class name="hdl_graph_slam/HdlGraphSlamNodelet" type="hdl_graph_slam::HdlGraphSlamNodelet" base_class_type="nodelet::Nodelet" />
+<library path="lib/libs_graphs_nodelet">
+  <class name="s_graphs/HdlGraphSlamNodelet" type="s_graphs::HdlGraphSlamNodelet" base_class_type="nodelet::Nodelet" />
 </library>

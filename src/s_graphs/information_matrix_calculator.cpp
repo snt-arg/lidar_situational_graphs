@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include <hdl_graph_slam/information_matrix_calculator.hpp>
+#include <s_graphs/information_matrix_calculator.hpp>
 
 #include <pcl/search/kdtree.h>
 #include <pcl/common/transforms.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 InformationMatrixCalculator::InformationMatrixCalculator(ros::NodeHandle& nh) {
   use_const_inf_matrix = nh.param<bool>("use_const_inf_matrix", false);
@@ -79,4 +79,4 @@ double InformationMatrixCalculator::calc_fitness_score(const pcl::PointCloud<Poi
     return (std::numeric_limits<double>::max());
 }
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs

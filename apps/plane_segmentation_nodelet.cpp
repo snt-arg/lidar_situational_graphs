@@ -3,7 +3,7 @@
 #include <cmath>
 #include <math.h>
 
-#include <hdl_graph_slam/PointClouds.h>
+#include <s_graphs/PointClouds.h>
 
 #include <ros/time.h>
 #include <nodelet/nodelet.h>
@@ -37,7 +37,7 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/io.h>
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 class PlaneSegmentationNodelet : public nodelet::Nodelet {
 public:
@@ -68,7 +68,7 @@ private:
   void init_ros() {
     filtered_point_cloud_sub_ = nh.subscribe("velodyne_points", 64, &PlaneSegmentationNodelet::filteredPointCloudCallback, this);
     segmented_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
-    segmented_clouds_pub_ = nh.advertise<hdl_graph_slam::PointClouds>("segmented_clouds", 1);
+    segmented_clouds_pub_ = nh.advertise<s_graphs::PointClouds>("segmented_clouds", 1);
   }
 
   void filteredPointCloudCallback(const pcl::PointCloud<PointT>::ConstPtr& src_cloud) {
@@ -187,7 +187,7 @@ private:
       }
     }
 
-    hdl_graph_slam::PointClouds extracted_clouds_msg;
+    s_graphs::PointClouds extracted_clouds_msg;
     std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
     extracted_clouds_msg.header = ext_msg_header;
     extracted_clouds_msg.header.frame_id = plane_extraction_frame_;
@@ -282,6 +282,6 @@ private:
   friend bool operator==(const PointT& p1, const PointT& p2);
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
-PLUGINLIB_EXPORT_CLASS(hdl_graph_slam::PlaneSegmentationNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(s_graphs::PlaneSegmentationNodelet, nodelet::Nodelet)

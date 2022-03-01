@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include <hdl_graph_slam/registrations.hpp>
+#include <s_graphs/registrations.hpp>
 
 #include <iostream>
 
@@ -17,7 +17,7 @@
 #include <fast_gicp/gicp/fast_vgicp_cuda.hpp>
 #endif
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>> select_registration_method(ros::NodeHandle& pnh) {
   using PointT = pcl::PointXYZI;
@@ -123,4 +123,4 @@ boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>> select_regi
   return nullptr;
 }
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs

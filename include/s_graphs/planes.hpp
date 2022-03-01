@@ -13,7 +13,7 @@ class HyperGraph;
 class SparseOptimizer;
 }  // namespace g2o
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 struct VerticalPlanes {
 public:
@@ -50,6 +50,6 @@ public:
 
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // PLANES_HPP

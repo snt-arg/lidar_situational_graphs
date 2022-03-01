@@ -168,7 +168,7 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.10000000149011612
       Style: Flat Squares
-      Topic: /hdl_graph_slam/map_points
+      Topic: /s_graphs/map_points
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
@@ -205,7 +205,7 @@ Visualization Manager:
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /hdl_graph_slam/markers
+      Marker Topic: /s_graphs/markers
       Name: MarkerArray
       Namespaces:
         edges: true

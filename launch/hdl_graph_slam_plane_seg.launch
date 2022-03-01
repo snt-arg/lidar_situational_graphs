@@ -5,7 +5,7 @@
 
   <!--HDL PLANE SEGMENTATION -->
   <node pkg="nodelet" type="nodelet" name="hdl_plane_seg_nodelet_manager" args="manager" output="screen" />
-  <node pkg="nodelet" type="nodelet" name="hdl_plane_segmentor" args="load hdl_graph_slam/PlaneSegmentationNodelet hdl_plane_seg_nodelet_manager">
+  <node pkg="nodelet" type="nodelet" name="hdl_plane_segmentor" args="load s_graphs/PlaneSegmentationNodelet hdl_plane_seg_nodelet_manager">
     <param name="plane_extraction_frame_id"        value="body" />
     <param name="min_seg_points"                   value="$(arg min_seg_points)" />
     <param name="min_horizontal_inliers"           value="$(arg min_horizontal_inliers)" />

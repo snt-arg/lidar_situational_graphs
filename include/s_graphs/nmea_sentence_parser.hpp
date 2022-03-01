@@ -9,7 +9,7 @@
 #include <numeric>
 #include <boost/algorithm/string.hpp>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 struct GPRMC {
 public:
@@ -103,6 +103,6 @@ public:
   }
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // NMEA_SENTENCE_PARSER_HPP

@@ -11,7 +11,7 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TransformStamped.h>
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 /**
  * @brief convert Eigen::Matrix to geometry_msgs::TransformStamped
@@ -107,6 +107,6 @@ static Eigen::Isometry3d odom2isometry(const nav_msgs::OdometryConstPtr& odom_ms
   return isometry;
 }
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // ROS_UTILS_HPP

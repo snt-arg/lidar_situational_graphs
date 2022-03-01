@@ -39,7 +39,7 @@ class RobustKernelFactory;
 class VertexRoomXYLB;
 }  // namespace g2o
 
-namespace hdl_graph_slam {
+namespace s_graphs {
 
 class GraphSLAM {
 public:
@@ -191,6 +191,6 @@ public:
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
 };
 
-}  // namespace hdl_graph_slam
+}  // namespace s_graphs
 
 #endif  // GRAPH_SLAM_HPP
