@@ -24,7 +24,7 @@
     <remap from="msf_core/imu_state_input" to="$(arg imu_topic)" />
     <remap from="msf_updates/transform_input" to="/scan_matching_odometry/transform" />
 
-    <rosparam file="$(find s_graphs)/launch/msf_config.yaml"/>
+    <rosparam file="$(find s_graphs)/config/msf_config.yaml"/>
   </node>
 
   <node pkg="rosservice" type="rosservice" name="initialize" args="call --wait /msf_lidar_scan_matching/pose_sensor/initialize_msf_scale 1"/>
