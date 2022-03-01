@@ -1,29 +1,47 @@
-# s_graphs
-***s_graphs*** is an open source ROS package for real-time 6DOF SLAM using a 3D LIDAR. It is based on 3D Graph SLAM with NDT scan matching-based odometry estimation and loop detection. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor), and floor plane (detected in a point cloud). We have tested this package with Velodyne (HDL32e, VLP16) and RoboSense (16 channels) sensors in indoor and outdoor environments.
+# S-Graphs
+**Situational graphs (S-Graphs)** is a ROS package for generating in real-time three-layered hierarchical factor graphs including the lowest ***Robot Tracking Layer*** registring the robot poses, ***Metric-Semantic Layer*** which maps planar features and ***Topological Layer*** constraining the planar features using room/corridor factors. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [HDL_GRAPH_SLAM](https://github.com/koide3/hdl_graph_slam)
 
-<img src="imgs/s_graphs.png" width="712pix" />
 
-[video](https://drive.google.com/open?id=0B9f5zFkpn4soSG96Tkt4SFFTbms)
+[<img src="imgs/s_graphs.png" width="712pix" height="auto"/>](https://www.youtube.com/watch?v=eoWrBTY04Oc)
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1175635f00394e789b457b44690ce72c)](https://app.codacy.com/app/koide3/s_graphs?utm_source=github.com&utm_medium=referral&utm_content=koide3/s_graphs&utm_campaign=Badge_Grade_Dashboard) [![Build Status](https://travis-ci.org/koide3/s_graphs.svg?branch=master)](https://travis-ci.org/koide3/s_graphs) on melodic & noetic
+## Paper
+
+```latex
+@misc{bavle2022situational,
+      title={Situational Graphs for Robot Navigation in Structured Indoor Environments}, 
+      author={Hriday Bavle and Jose Luis Sanchez-Lopez and Muhammad Shaheer and Javier Civera and Holger Voos},
+      year={2022},
+      eprint={2202.12197},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO}
+}
+```
 
 ## Nodelets
-***s_graphs*** consists of four nodelets.
+**S-Graphs** consists of four nodelets.
 
 - *prefiltering_nodelet*
 - *scan_matching_odometry_nodelet*
-- *floor_detection_nodelet*
+- *plane_segmentation_nodelet*
 - *s_graphs_nodelet*
 
-The input point cloud is first downsampled by *prefiltering_nodelet*, and then passed to the next nodelets. While *scan_matching_odometry_nodelet* estimates the sensor pose by iteratively applying a scan matching between consecutive frames (i.e., odometry estimation), *floor_detection_nodelet* detects floor planes by RANSAC. The estimated odometry and the detected floor planes are sent to *s_graphs*. To compensate the accumulated error of the scan matching, it performs loop detection and optimizes a pose graph which takes various constraints into account.
-
-<img src="imgs/nodelets.png" width="712pix" />
+The input point cloud is first downsampled by *prefiltering_nodelet*, and then passed to the next nodelets. While *scan_matching_odometry_nodelet* (optional module and can be replaced by an other odometry module) estimates the sensor pose by iteratively applying a scan matching between consecutive frames (i.e., odometry estimation), *plane_segmentation_nodelet* detects vertical and horizontal planes by RANSAC. The estimated odometry and the planes are sent to *s_graphs*. To compensate the accumulated error of the scan matching, it performs loop detection and optimizes a pose graph which takes various constraints into account.
 
 ## Constraints (Edges)
 
 You can enable/disable each constraint by changing params in the launch file, and you can also change the weight (\*_stddev) and the robust kernel (\*_robust_kernel) of each constraint.
 
 - ***Odometry***
+
+
+- ***Planar***
+  - *segmented_clouds* (vector of sensor_msgs/PointCloud)
+
+This constraint maps the vertical and horizontal planar surfaces using the planar surfaces detected from the *plane_extraction_nodelet*. 
+
+- ***Room/Corridor***
+
+This constraint parses the mapped vertical planar surfaces to further detect rooms and corridors and create their respective node with edges connecting the room/corridor node with corresponding planar surfaces. 
 
 - ***Loop closure***
 
@@ -43,11 +61,6 @@ This constraint rotates each pose node so that the acceleration vector associate
   - */gpsimu_driver/imu_data* (sensor_msgs/Imu)
 
   If your IMU has a reliable magnetic orientation sensor, you can add orientation data to the graph as 3D rotation constraints. Note that, magnetic orientation sensors can be affected by external magnetic disturbances. In such cases, this constraint should be disabled.
-
-- ***Floor plane***
-  - */floor_detection/floor_coeffs* (s_graphs/FloorCoeffs)
-
-This constraint optimizes the graph so that the floor planes (detected by RANSAC) of the pose nodes becomes the same. This is designed to compensate the accumulated rotation error of the scan matching in large flat indoor environments.
 
 
 ## Parameters
@@ -91,7 +104,7 @@ git clone https://github.com/SMRT-AIST/fast_gicp.git --recursive
 sudo pip install ProgressBar2
 ```
 
-## Example1 (Indoor)
+<!-- ## Example1 (Indoor)
 
 Bag file (recorded in a small room):
 
@@ -160,9 +173,9 @@ rosrun s_graphs ford2bag.py dataset-2.bag
 rosrun s_graphs bag_player.py dataset-2.bag
 ```
 
-<img src="imgs/ford1.png" height="200pix"/> <img src="imgs/ford2.png" height="200pix"/> <img src="imgs/ford3.png" height="200pix"/>
+<img src="imgs/ford1.png" height="200pix"/> <img src="imgs/ford2.png" height="200pix"/> <img src="imgs/ford3.png" height="200pix"/> -->
 
-## Use s_graphs in your system
+## Use S-Graphs on your system
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see line #11, s_graphs.launch). All the sensor data will be transformed into the common base_link frame, and then fed to the SLAM algorithm.
 
@@ -173,10 +186,10 @@ rosrun s_graphs bag_player.py dataset-2.bag
     <remap from="/velodyne_points" to="/rslidar_points"/>
   ...
 ```
+<!-- 
+## Common Problems -->
 
-## Common Problems
-
-### Parameter tuning guide
+<!-- ### Parameter tuning guide
 
 The mapping result deeply depends on the parameter setting. In particular, scan matching parameters have a big impact on the result. Tune the parameters accoding to the following instruction:
 
@@ -188,7 +201,7 @@ The mapping result deeply depends on the parameter setting. In particular, scan 
   This parameter decides the voxel size of NDT. Typically larger values are good for outdoor environements (0.5 - 2.0 [m] for indoor, 2.0 - 10.0 [m] for outdoor). If you chose NDT or NDT_OMP, tweak this parameter so you can obtain a good odometry estimation result.
 
 - ***other parameters***
-  All the configurable parameters are available in the launch file. Copy a template launch file (s_graphs_501.launch for indoor, s_graphs_400.launch for outdoor) and tweak parameters in the launch file to adapt it to your application.
+  All the configurable parameters are available in the launch file. Copy a template launch file (s_graphs_501.launch for indoor, s_graphs_400.launch for outdoor) and tweak parameters in the launch file to adapt it to your application. -->
 
 ## License
 
@@ -197,20 +210,17 @@ This package is released under the BSD-2-Clause License.
 
 Note that the cholmod solver in g2o is licensed under GPL. You may need to build g2o without cholmod dependency to avoid the GPL.
 
-## Related packages
+<!-- ## Related packages
 
 - [interactive_slam](https://github.com/koide3/interactive_slam)
 - [s_graphs](https://github.com/koide3/s_graphs)
 - [hdl_localization](https://github.com/koide3/hdl_localization)
 - [hdl_people_tracking](https://github.com/koide3/hdl_people_tracking)
 
-<img src="imgs/packages.png"/>
+<img src="imgs/packages.png"/> -->
 
-## Papers
-Kenji Koide, Jun Miura, and Emanuele Menegatti, A Portable 3D LIDAR-based System for Long-term and Wide-area People Behavior Measurement, Advanced Robotic Systems, 2019 [[link]](https://www.researchgate.net/publication/331283709_A_Portable_3D_LIDAR-based_System_for_Long-term_and_Wide-area_People_Behavior_Measurement).
-
-## Contact
+<!-- ## Contact
 Kenji Koide, k.koide@aist.go.jp, https://staff.aist.go.jp/k.koide
 
 Active Intelligent Systems Laboratory, Toyohashi University of Technology, Japan [\[URL\]](http://www.aisl.cs.tut.ac.jp)  
-Mobile Robotics Research Team, National Institute of Advanced Industrial Science and Technology (AIST), Japan  [\[URL\]](https://unit.aist.go.jp/rirc/en/team/smart_mobility.html)
+Mobile Robotics Research Team, National Institute of Advanced Industrial Science and Technology (AIST), Japan  [\[URL\]](https://unit.aist.go.jp/rirc/en/team/smart_mobility.html) -->
