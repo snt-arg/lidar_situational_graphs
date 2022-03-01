@@ -89,7 +89,7 @@
   </node>
 
   <!-- s_graphs_nodelet -->
-  <node pkg="nodelet" type="nodelet" name="s_graphs_nodelet" args="load s_graphs/HdlGraphSlamNodelet $(arg nodelet_manager)">
+  <node pkg="nodelet" type="nodelet" name="s_graphs_nodelet" args="load s_graphs/SGraphsNodelet $(arg nodelet_manager)">
     <param name="points_topic" value="$(arg points_topic)" />
     <remap from="/gpsimu_driver/imu_data" to="$(arg imu_topic)" />
     <!-- frame settings -->

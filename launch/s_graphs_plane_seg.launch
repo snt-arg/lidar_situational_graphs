@@ -3,7 +3,7 @@
   <arg name="min_horizontal_inliers" default="800" />
   <arg name="min_vertical_inliers"   default="800" />
 
-  <!--HDL PLANE SEGMENTATION -->
+  <!--PLANE SEGMENTATION -->
   <node pkg="nodelet" type="nodelet" name="hdl_plane_seg_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="hdl_plane_segmentor" args="load s_graphs/PlaneSegmentationNodelet hdl_plane_seg_nodelet_manager">
     <param name="plane_extraction_frame_id"        value="body" />

@@ -77,7 +77,7 @@
 
 namespace s_graphs {
 
-class HdlGraphSlamNodelet : public nodelet::Nodelet {
+class SGraphsNodelet : public nodelet::Nodelet {
 public:
   typedef pcl::PointXYZI PointT;
   typedef pcl::PointXYZRGBNormal PointNormal;
@@ -100,8 +100,8 @@ public:
     float avg_point_diff;
   };
 
-  HdlGraphSlamNodelet() {}
-  virtual ~HdlGraphSlamNodelet() {}
+  SGraphsNodelet() {}
+  virtual ~SGraphsNodelet() {}
 
   virtual void onInit() {
     nh = getNodeHandle();
@@ -174,7 +174,7 @@ public:
 
     points_topic = private_nh.param<std::string>("points_topic", "/velodyne_points");
 
-    init_odom2map_sub = nh.subscribe("/odom2map/initial_pose", 1, &HdlGraphSlamNodelet::init_map2odom_pose_callback, this);
+    init_odom2map_sub = nh.subscribe("/odom2map/initial_pose", 1, &SGraphsNodelet::init_map2odom_pose_callback, this);
     while(wait_trans_odom2map && !got_trans_odom2map) {
       ROS_WARN("Waiting for the Initial Transform between odom and map frame");
       ros::spinOnce();
@@ -185,17 +185,17 @@ public:
     odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
     cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
-    sync->registerCallback(boost::bind(&HdlGraphSlamNodelet::cloud_callback, this, _1, _2));
+    sync->registerCallback(boost::bind(&SGraphsNodelet::cloud_callback, this, _1, _2));
 
-    raw_odom_sub = nh.subscribe("/odom", 1, &HdlGraphSlamNodelet::raw_odom_callback, this);
-    imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &HdlGraphSlamNodelet::imu_callback, this);
-    floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &HdlGraphSlamNodelet::floor_coeffs_callback, this);
-    cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &HdlGraphSlamNodelet::cloud_seg_callback, this);
+    raw_odom_sub = nh.subscribe("/odom", 1, &SGraphsNodelet::raw_odom_callback, this);
+    imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &SGraphsNodelet::imu_callback, this);
+    floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &SGraphsNodelet::floor_coeffs_callback, this);
+    cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &SGraphsNodelet::cloud_seg_callback, this);
 
     if(private_nh.param<bool>("enable_gps", true)) {
-      gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &HdlGraphSlamNodelet::gps_callback, this);
-      nmea_sub = mt_nh.subscribe("/gpsimu_driver/nmea_sentence", 1024, &HdlGraphSlamNodelet::nmea_callback, this);
-      navsat_sub = mt_nh.subscribe("/gps/navsat", 1024, &HdlGraphSlamNodelet::navsat_callback, this);
+      gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &SGraphsNodelet::gps_callback, this);
+      nmea_sub = mt_nh.subscribe("/gpsimu_driver/nmea_sentence", 1024, &SGraphsNodelet::nmea_callback, this);
+      navsat_sub = mt_nh.subscribe("/gps/navsat", 1024, &SGraphsNodelet::navsat_callback, this);
     }
 
     // publishers
@@ -207,14 +207,14 @@ public:
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
 
-    dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &HdlGraphSlamNodelet::dump_service, this);
-    save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &HdlGraphSlamNodelet::save_map_service, this);
+    dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
+    save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
 
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
     double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
-    optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &HdlGraphSlamNodelet::optimization_timer_callback, this);
-    map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &HdlGraphSlamNodelet::map_points_publish_timer_callback, this);
+    optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
+    map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
   }
 
 private:
@@ -3009,4 +3009,4 @@ private:
 
 }  // namespace s_graphs
 
-PLUGINLIB_EXPORT_CLASS(s_graphs::HdlGraphSlamNodelet, nodelet::Nodelet)
+PLUGINLIB_EXPORT_CLASS(s_graphs::SGraphsNodelet, nodelet::Nodelet)

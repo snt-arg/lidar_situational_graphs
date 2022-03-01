@@ -15,7 +15,7 @@
  
   <!-- HDL GRAPH SLAM -->
   <node pkg="nodelet" type="nodelet" name="s_graphs_nodelet_manager" args="manager" output="screen" />
-  <node pkg="nodelet" type="nodelet" name="s_graphs" args="load s_graphs/HdlGraphSlamNodelet s_graphs_nodelet_manager" output="screen">
+  <node pkg="nodelet" type="nodelet" name="s_graphs" args="load s_graphs/SGraphsNodelet s_graphs_nodelet_manager" output="screen">
     <rosparam command="load" file="$(find s_graphs)/config/s_graphs.yaml" />
     <param if="$(arg april_tag_enabled)"     name="wait_trans_odom2map"  value="true" />
     <param unless="$(arg april_tag_enabled)" name="wait_trans_odom2map"  value="false" />

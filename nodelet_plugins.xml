@@ -15,5 +15,5 @@
 </library>
 
 <library path="lib/libs_graphs_nodelet">
-  <class name="s_graphs/HdlGraphSlamNodelet" type="s_graphs::HdlGraphSlamNodelet" base_class_type="nodelet::Nodelet" />
+  <class name="s_graphs/SGraphsNodelet" type="s_graphs::SGraphsNodelet" base_class_type="nodelet::Nodelet" />
 </library>
