@@ -401,11 +401,12 @@ private:
     int plane_type = -1;
     
     g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
-    if(fabs(det_plane_map_frame.coeffs()(0)) > 0.98)
+    /* Get the plane type based on the largest value of the normal orientation x,y and z */
+    if(fabs(det_plane_map_frame.coeffs()(0)) > fabs(det_plane_map_frame.coeffs()(1)) && fabs(det_plane_map_frame.coeffs()(0)) > fabs(det_plane_map_frame.coeffs()(2)))
       plane_type = plane_class::X_VERT_PLANE; 
-    else if(fabs(det_plane_map_frame.coeffs()(1)) > 0.98)
+    else if(fabs(det_plane_map_frame.coeffs()(1)) > fabs(det_plane_map_frame.coeffs()(0)) && fabs(det_plane_map_frame.coeffs()(1)) > fabs(det_plane_map_frame.coeffs()(2)))
       plane_type = plane_class::Y_VERT_PLANE;
-    else if(fabs(det_plane_map_frame.coeffs()(2)) > 0.98) 
+    else if(fabs(det_plane_map_frame.coeffs()(2)) > fabs(det_plane_map_frame.coeffs()(0)) && fabs(det_plane_map_frame.coeffs()(2)) > fabs(det_plane_map_frame.coeffs()(1))) 
       plane_type = plane_class::HORT_PLANE;
 
     switch (plane_type) {
