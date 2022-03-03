@@ -37,6 +37,7 @@
 #include <s_graphs/FloorCoeffs.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
+#include <std_msgs/ColorRGBA.h>
 
 #include <s_graphs/SaveMap.h>
 #include <s_graphs/DumpGraph.h>
@@ -540,7 +541,7 @@ private:
     }      
    
     std::pair<int,int> data_association; data_association.first = -1;
-    data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), plane_type);
+    data_association = associate_plane(keyframe, det_plane_body_frame.coeffs(), keyframe->cloud_seg_body, plane_type);
 
     switch(plane_type) {
       case plane_class::X_VERT_PLANE: {
@@ -640,7 +641,7 @@ private:
   /** 
   * @brief data assoction betweeen the planes
   */
-  std::pair<int,int> associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, int plane_type) {
+  std::pair<int,int> associate_plane(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane, pcl::PointCloud<PointNormal>::Ptr cloud_seg_body, int plane_type) {
     std::pair<int,int> data_association;
     double vert_min_maha_dist = 100; double hort_min_maha_dist = 100;  
     Eigen::Isometry3d m2n = keyframe->estimate().inverse();
@@ -652,8 +653,9 @@ private:
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist = sqrt(error.transpose() * x_vert_planes[i].covariance.inverse() * error);
         ROS_DEBUG_NAMED("xplane plane association", "maha distance xplane: %f", maha_dist);
+      
         //printf("\n maha distance x: %f", maha_dist);
-
+        
         if(std::isnan(maha_dist) || maha_dist < 1e-3) {
             Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
             maha_dist = sqrt(error.transpose() * cov * error);            
@@ -664,6 +666,34 @@ private:
           data_association.second = i;
           }
         }
+        if(vert_min_maha_dist < plane_dist_threshold) {
+          float min_segment = std::numeric_limits<float>::max ();
+          pcl::PointCloud<PointNormal>::Ptr cloud_seg_mapped(new pcl::PointCloud<PointNormal>());
+          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
+
+          for(int p=0; p < x_vert_planes[data_association.second].cloud_seg_body_vec.size(); ++p) {
+            Eigen::Matrix4f keyframe_pose = x_vert_planes[data_association.second].keyframe_node_vec[p]->estimate().matrix().cast<float>();
+            for(size_t j=0; j < x_vert_planes[data_association.second].cloud_seg_body_vec[p]->points.size(); ++j) {
+              PointNormal dst_pt;
+              dst_pt.getVector4fMap() = keyframe_pose * x_vert_planes[data_association.second].cloud_seg_body_vec[p]->points[j].getVector4fMap();
+              cloud_seg_mapped->points.push_back(dst_pt);
+            }
+          }
+          Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
+          for(size_t j=0; j < cloud_seg_body->points.size(); ++j) {
+            PointNormal dst_pt;
+            dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
+            cloud_seg_detected->points.push_back(dst_pt);
+          }
+          min_segment = get_min_segment(cloud_seg_mapped,cloud_seg_detected);
+          std::cout << "X plane min maha distance: " << vert_min_maha_dist << std::endl;
+          std::cout << "X plane min segment: " << min_segment << std::endl;
+          if (min_segment > 0.5) {
+            data_association.first = -1;
+          }
+        }
+        else
+          data_association.first = -1;
         break;
       }
       case plane_class::Y_VERT_PLANE: {
@@ -683,8 +713,37 @@ private:
             vert_min_maha_dist = maha_dist;
             data_association.first = y_vert_planes[i].id;
             data_association.second = i;
-            }
-        }   
+          }
+        }
+        if(vert_min_maha_dist < plane_dist_threshold) {
+          float min_segment = std::numeric_limits<float>::max ();
+          pcl::PointCloud<PointNormal>::Ptr cloud_seg_mapped(new pcl::PointCloud<PointNormal>());
+          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
+
+          for(int p=0; p < y_vert_planes[data_association.second].cloud_seg_body_vec.size(); ++p) {
+            Eigen::Matrix4f keyframe_pose = y_vert_planes[data_association.second].keyframe_node_vec[p]->estimate().matrix().cast<float>();
+            for(size_t j=0; j < y_vert_planes[data_association.second].cloud_seg_body_vec[p]->points.size(); ++j) {
+              PointNormal dst_pt;
+              dst_pt.getVector4fMap() = keyframe_pose * y_vert_planes[data_association.second].cloud_seg_body_vec[p]->points[j].getVector4fMap();
+              cloud_seg_mapped->points.push_back(dst_pt);
+            }          
+          }
+          Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
+          for(size_t j=0; j < cloud_seg_body->points.size(); ++j) {
+            PointNormal dst_pt;
+            dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
+            cloud_seg_detected->points.push_back(dst_pt);
+          }
+          min_segment = get_min_segment(cloud_seg_mapped,cloud_seg_detected);
+          std::cout << "Y plane min maha distance: " << vert_min_maha_dist << std::endl;
+          std::cout << "Y plane min segment: " << min_segment << std::endl;
+          std::cout << "Y plane coeffs: " << y_vert_planes[data_association.second].plane.coeffs() << std::endl;
+          if (min_segment > 0.5) {
+            data_association.first = -1;
+          }
+        }
+        else 
+          data_association.first = -1;
         break;
       }
       case plane_class::HORT_PLANE: {
@@ -704,7 +763,11 @@ private:
             data_association.first = hort_planes[i].id;
             data_association.second = i;
             }
-        }   
+        }
+      
+        if(hort_min_maha_dist > plane_dist_threshold)
+          data_association.first = -1;
+   
         break;
       }
       default:
@@ -714,9 +777,7 @@ private:
 
     //printf("\n vert min maha dist: %f", vert_min_maha_dist);
     //printf("\n hort min maha dist: %f", hort_min_maha_dist);
-    if(vert_min_maha_dist > plane_dist_threshold && hort_min_maha_dist > plane_dist_threshold)
-      data_association.first = -1;
-
+     
     return data_association;
   }
 
@@ -1374,6 +1435,34 @@ private:
     p1 = p1_map; p2 = p2_map;
 
     return length;
+  } 
+
+  float get_min_segment(const pcl::PointCloud<PointNormal>::Ptr &cloud_1, const pcl::PointCloud<PointNormal>::Ptr &cloud_2)
+  {
+    float min_dist = std::numeric_limits<float>::max();
+    const auto token = std::numeric_limits<std::size_t>::max();
+    std::size_t i_min = token, i_max = token;
+
+    for (std::size_t i = 0; i < cloud_1->points.size (); ++i) {
+      for (std::size_t j = 0; j < cloud_2->points.size (); ++j) {
+        // Compute the distance 
+        float dist = (cloud_1->points[i].getVector4fMap () - 
+                       cloud_2->points[j].getVector4fMap ()).squaredNorm ();
+        if (dist >= min_dist)
+          continue;
+
+        min_dist = dist;
+        i_min = i;
+        i_max = j;
+      }
+    }
+
+    //if (i_min == token || i_max == token)
+    //  return (min_dist = std::numeric_limits<double>::min ());
+
+    //pmin = cloud.points[i_min];
+    //pmax = cloud.points[i_max];
+    return (std::sqrt (min_dist));
   } 
 
   float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
@@ -2333,15 +2422,17 @@ private:
     x_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
 
     for(int i = 0; i < x_vert_planes.size(); ++i) {
+      double p = static_cast<double>(i) / x_vert_planes.size();
+      std_msgs::ColorRGBA color;
+      color.r = 1-p; color.g = p; color.b = p; color.a = 0.5;
       for(size_t j=0; j < x_vert_planes[i].cloud_seg_map->size(); ++j) {
         geometry_msgs::Point point;
         point.x = x_vert_planes[i].cloud_seg_map->points[j].x;
         point.y = x_vert_planes[i].cloud_seg_map->points[j].y;
         point.z = x_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         x_vert_plane_marker.points.push_back(point);
+        x_vert_plane_marker.colors.push_back(color);
       }
-      x_vert_plane_marker.color.r = 1;
-      x_vert_plane_marker.color.a = 0.5;
     }
     markers.markers.push_back(x_vert_plane_marker); 
 
@@ -2357,17 +2448,19 @@ private:
     y_vert_plane_marker.ns = "y_vert_planes";
     y_vert_plane_marker.id = markers.markers.size();
     y_vert_plane_marker.type = visualization_msgs::Marker::CUBE_LIST;
-   
+
     for(int i = 0; i < y_vert_planes.size(); ++i) {
+      double p = static_cast<double>(i) / y_vert_planes.size();
+      std_msgs::ColorRGBA color;
+      color.r = 0; color.g = 1.0-p; color.b = p; color.a = 0.5;
       for(size_t j=0; j < y_vert_planes[i].cloud_seg_map->size(); ++j) { 
         geometry_msgs::Point point;
         point.x = y_vert_planes[i].cloud_seg_map->points[j].x;
         point.y = y_vert_planes[i].cloud_seg_map->points[j].y;
         point.z = y_vert_planes[i].cloud_seg_map->points[j].z + 5.0;
         y_vert_plane_marker.points.push_back(point);
+        y_vert_plane_marker.colors.push_back(color);
       }
-      y_vert_plane_marker.color.b = 1;
-      y_vert_plane_marker.color.a = 0.5;
     }
     markers.markers.push_back(y_vert_plane_marker); 
 
