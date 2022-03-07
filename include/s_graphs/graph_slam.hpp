@@ -48,6 +48,9 @@ public:
 
   int num_vertices() const;
   int num_edges() const;
+  int num_vertices_local() const;
+  int num_edges_local() const;
+  int add_vertices();
 
   void set_solver(const std::string& solver_type);
 
@@ -64,6 +67,13 @@ public:
    * @return registered node
    */
   g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs);
+
+  /**
+   * @brief remove a plane node from the graph
+   * @param plane id
+   * @return success or failure
+   */
+  bool remove_plane_node(g2o::VertexPlane* plane_vertex);
 
   /**
    * @brief add a point_xyz node to the graph
@@ -189,6 +199,7 @@ public:
 public:
   g2o::RobustKernelFactory* robust_kernel_factory;
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
+  int vertex_count; int edge_count;
 };
 
 }  // namespace s_graphs

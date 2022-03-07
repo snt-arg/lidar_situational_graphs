@@ -83,6 +83,7 @@ GraphSLAM::GraphSLAM(const std::string& solver_type) {
   std::cout << "done" << std::endl;
 
   robust_kernel_factory = g2o::RobustKernelFactory::instance();
+  vertex_count = edge_count = 0;
 }
 
 /**
@@ -119,47 +120,70 @@ int GraphSLAM::num_edges() const {
   return graph->edges().size();
 }
 
+int GraphSLAM::num_vertices_local() const {
+  return vertex_count;    
+}
+int GraphSLAM::num_edges_local() const {
+  return edge_count;    
+}
+
+int GraphSLAM::add_vertices() {
+  return vertex_count += 1;    
+}
+
 g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
   g2o::VertexSE3* vertex(new g2o::VertexSE3());
-  vertex->setId(static_cast<int>(graph->vertices().size()));
+  vertex->setId(static_cast<int>(num_vertices_local()));
   vertex->setEstimate(pose);
   graph->addVertex(vertex);
+  this->add_vertices();
 
   return vertex;
 }
 
 g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs) {
   g2o::VertexPlane* vertex(new g2o::VertexPlane());
-  vertex->setId(static_cast<int>(graph->vertices().size()));
+  vertex->setId(static_cast<int>(num_vertices_local()));
   vertex->setEstimate(plane_coeffs);
   graph->addVertex(vertex);
+  this->add_vertices();
 
   return vertex;
 }
 
+bool GraphSLAM::remove_plane_node(g2o::VertexPlane* plane_vertex) {
+  bool ack = graph->removeVertex(plane_vertex);
+
+  return ack;
+}
+
+
 g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   g2o::VertexPointXYZ* vertex(new g2o::VertexPointXYZ());
-  vertex->setId(static_cast<int>(graph->vertices().size()));
+  vertex->setId(static_cast<int>(num_vertices_local()));
   vertex->setEstimate(xyz);
   graph->addVertex(vertex);
+  this->add_vertices();
 
   return vertex;
 }
 
 g2o::VertexCorridor* GraphSLAM::add_corridor_node(const double& corridor_pose) {
   g2o::VertexCorridor* vertex(new g2o::VertexCorridor());
-  vertex->setId(static_cast<int>(graph->vertices().size()));
+  vertex->setId(static_cast<int>(num_vertices_local()));
   vertex->setEstimate(corridor_pose);
   graph->addVertex(vertex);
+  this->add_vertices();
 
   return vertex;
 }
 
 g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector2d& room_pose) {
   g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
-  vertex->setId(static_cast<int>(graph->vertices().size()));
+  vertex->setId(static_cast<int>(num_vertices_local()));
   vertex->setEstimate(room_pose);
   graph->addVertex(vertex);
+  this->add_vertices();
 
   return vertex;
 }
