@@ -686,8 +686,8 @@ private:
             cloud_seg_detected->points.push_back(dst_pt);
           }
           min_segment = get_min_segment(cloud_seg_mapped,cloud_seg_detected);
-          std::cout << "X plane min maha distance: " << vert_min_maha_dist << std::endl;
-          std::cout << "X plane min segment: " << min_segment << std::endl;
+          //std::cout << "X plane min maha distance: " << vert_min_maha_dist << std::endl;
+          //std::cout << "X plane min segment: " << min_segment << std::endl;
           if (min_segment > 0.5) {
             data_association.first = -1;
           }
@@ -735,9 +735,10 @@ private:
             cloud_seg_detected->points.push_back(dst_pt);
           }
           min_segment = get_min_segment(cloud_seg_mapped,cloud_seg_detected);
-          std::cout << "Y plane min maha distance: " << vert_min_maha_dist << std::endl;
-          std::cout << "Y plane min segment: " << min_segment << std::endl;
-          std::cout << "Y plane coeffs: " << y_vert_planes[data_association.second].plane.coeffs() << std::endl;
+          //std::cout << "mapped plane id: " << data_association.first << std::endl;
+          //std::cout << "Y plane min maha distance: " << vert_min_maha_dist << std::endl;
+          //std::cout << "Y plane min segment: " << min_segment << std::endl;
+          //std::cout << "Y plane coeffs: " << y_vert_planes[data_association.second].plane.coeffs() << std::endl;
           if (min_segment > 0.5) {
             data_association.first = -1;
           }
@@ -1100,10 +1101,10 @@ private:
           found_new_plane = true;
         }
 
-        std::cout << "mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-        std::cout << "mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-        std::cout << "found plane1 id : " << (*found_plane1).id << std::endl;
-        std::cout << "found plane2 id : " << (*found_plane2).id << std::endl;
+        //std::cout << "mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+        //std::cout << "mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+        //std::cout << "found plane1 id : " << (*found_plane1).id << std::endl;
+        //std::cout << "found plane2 id : " << (*found_plane2).id << std::endl;
 
         if(use_parallel_plane_constraint && found_new_plane) {
           parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
@@ -2001,13 +2002,13 @@ private:
   * @brief remove all the duplicate x and y planes detected by room/corridors
   */
   void remove_duplicate_planes() {
-    std::cout << "duplicate X planes size: " << dupl_x_vert_planes.size() << std::endl;
-    std::cout << "duplicate Y planes size: " << dupl_y_vert_planes.size() << std::endl;
+    //::cout << "duplicate X planes size: " << dupl_x_vert_planes.size() << std::endl;
+    //std::cout << "duplicate Y planes size: " << dupl_y_vert_planes.size() << std::endl;
 
     auto it = dupl_y_vert_planes.begin();
     while(it != dupl_y_vert_planes.end()) {
       if(graph_slam->remove_plane_node((*it).plane_node)) {
-        std::cout << "remove duplicate y plane node " << std::endl;
+        //std::cout << "remove duplicate y plane node " << std::endl;
         dupl_y_vert_planes.erase(it);
         auto mapped_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == (*it).id);
         y_vert_planes.erase(mapped_plane);
