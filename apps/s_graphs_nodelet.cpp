@@ -14,6 +14,7 @@
 #include <Eigen/Dense>
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/distances.h>
+#include <pcl/common/centroid.h>
 
 #include <ros/ros.h>
 #include <geodesy/utm.h>
@@ -2261,57 +2262,42 @@ private:
 
         float r=0, g=0, b=0.0;
         double x=0, y=0;
-                
+        pcl::CentroidPoint<PointNormal> centroid;
         if (fabs(v2->estimate().normal()(0)) > 0.95) {
           for(auto x_plane : x_vert_planes) {
-            if (x_plane.id == v2->id()) {
-            float min_dist = 100;
-            for(int p=0; p < x_plane.cloud_seg_map->points.size(); ++p) {
-              Eigen::Vector3d p_tmp;
-              p_tmp =  Eigen::Vector3d(x_plane.cloud_seg_map->points[p].x, x_plane.cloud_seg_map->points[p].y, 5.0);
-              float norm = std::sqrt(std::pow((pt1.x() - p_tmp.x()),2) + std::pow((pt1.y() - p_tmp.y()),2) + std::pow((pt1.z() - p_tmp.z()),2));
-              if (norm < min_dist) {
-                min_dist = norm;       
-                pt3 = p_tmp;
-                } 
+            if(x_plane.id == v2->id()) {
+              for(int p = 0; p < x_plane.cloud_seg_map->points.size(); ++p) {
+                centroid.add(x_plane.cloud_seg_map->points[p]);
               }
+              PointNormal c_pt; centroid.get(c_pt);
+              pt3 =  Eigen::Vector3d(c_pt.x, c_pt.y, 5.0);
             } 
           }
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
           r=1.0;
         }
         else if (fabs(v2->estimate().normal()(1)) > 0.95) {
-           for(auto y_plane : y_vert_planes) {
+          for(auto y_plane : y_vert_planes) {
             if (y_plane.id == v2->id()) {
-              float min_dist = 100;
-              for(int p=0; p < y_plane.cloud_seg_map->points.size(); ++p) {
-                Eigen::Vector3d p_tmp;
-                p_tmp =  Eigen::Vector3d(y_plane.cloud_seg_map->points[p].x, y_plane.cloud_seg_map->points[p].y, 5.0);
-                float norm = std::sqrt(std::pow((pt1.x() - p_tmp.x()),2) + std::pow((pt1.y() - p_tmp.y()),2) + std::pow((pt1.z() - p_tmp.z()),2));
-                if (norm < min_dist) {
-                  min_dist = norm;       
-                  pt3 = p_tmp;
-                } 
+              for(int p = 0; p < y_plane.cloud_seg_map->points.size(); ++p) {
+                centroid.add(y_plane.cloud_seg_map->points[p]);
               }
+              PointNormal c_pt; centroid.get(c_pt);
+              pt3 =  Eigen::Vector3d(c_pt.x, c_pt.y, 5.0);
             } 
-          }
+          } 
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0);
           b=1.0; 
         }
         else if (fabs(v2->estimate().normal()(2)) > 0.95) {
-           for(auto h_plane : hort_planes) {
-            if (h_plane.id == v2->id()) {
-              float min_dist = 100;
-              for(int p=0; p < h_plane.cloud_seg_map->points.size(); ++p) {
-                Eigen::Vector3d p_tmp;
-                p_tmp =  Eigen::Vector3d(h_plane.cloud_seg_map->points[p].x, h_plane.cloud_seg_map->points[p].y, 5.0);
-                float norm = std::sqrt(std::pow((pt1.x() - p_tmp.x()),2) + std::pow((pt1.y() - p_tmp.y()),2) + std::pow((pt1.z() - p_tmp.z()),2));
-                if (norm < min_dist) {
-                  min_dist = norm;       
-                  pt3 = p_tmp;
-                } 
-              }
+          for(auto h_plane : hort_planes) {
+          if (h_plane.id == v2->id()) {
+            for(int p = 0; p < h_plane.cloud_seg_map->points.size(); ++p) {
+              centroid.add(h_plane.cloud_seg_map->points[p]);
             }
+            PointNormal c_pt; centroid.get(c_pt);
+            pt3 =  Eigen::Vector3d(c_pt.x, c_pt.y, 5.0);
+            } 
           }   
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
           r=1; g=0.65;
