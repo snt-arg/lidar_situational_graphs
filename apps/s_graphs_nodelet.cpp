@@ -2274,7 +2274,7 @@ private:
             } 
           }
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
-          r=1.0;
+          r=0.0;
         }
         else if (fabs(v2->estimate().normal()(1)) > 0.95) {
           for(auto y_plane : y_vert_planes) {
@@ -2287,7 +2287,7 @@ private:
             } 
           } 
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0);
-          b=1.0; 
+          b=0.0; 
         }
         else if (fabs(v2->estimate().normal()(2)) > 0.95) {
           for(auto h_plane : hort_planes) {
@@ -2300,7 +2300,7 @@ private:
             } 
           }   
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0); 
-          r=1; g=0.65;
+          r=0; g=0.0;
         }
 
         edge_marker.points[i * 2].x = pt1.x();
