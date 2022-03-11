@@ -403,6 +403,7 @@ private:
     int plane_type = -1;
     
     g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
+
     /* Get the plane type based on the largest value of the normal orientation x,y and z */
     if(fabs(det_plane_map_frame.coeffs()(0)) > fabs(det_plane_map_frame.coeffs()(1)) && fabs(det_plane_map_frame.coeffs()(0)) > fabs(det_plane_map_frame.coeffs()(2)))
       plane_type = plane_class::X_VERT_PLANE; 
@@ -636,6 +637,8 @@ private:
       graph_slam->add_robust_kernel(edge, "Huber", 1.0);
     }    
 
+    convert_plane_points_to_map();
+
     return data_association.first;
   }
 
@@ -669,24 +672,14 @@ private:
         }
         if(vert_min_maha_dist < plane_dist_threshold) {
           float min_segment = std::numeric_limits<float>::max ();
-          pcl::PointCloud<PointNormal>::Ptr cloud_seg_mapped(new pcl::PointCloud<PointNormal>());
           pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
-
-          for(int p=0; p < x_vert_planes[data_association.second].cloud_seg_body_vec.size(); ++p) {
-            Eigen::Matrix4f keyframe_pose = x_vert_planes[data_association.second].keyframe_node_vec[p]->estimate().matrix().cast<float>();
-            for(size_t j=0; j < x_vert_planes[data_association.second].cloud_seg_body_vec[p]->points.size(); ++j) {
-              PointNormal dst_pt;
-              dst_pt.getVector4fMap() = keyframe_pose * x_vert_planes[data_association.second].cloud_seg_body_vec[p]->points[j].getVector4fMap();
-              cloud_seg_mapped->points.push_back(dst_pt);
-            }
-          }
           Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
           for(size_t j=0; j < cloud_seg_body->points.size(); ++j) {
             PointNormal dst_pt;
             dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
             cloud_seg_detected->points.push_back(dst_pt);
           }
-          min_segment = get_min_segment(cloud_seg_mapped,cloud_seg_detected);
+          min_segment = get_min_segment(x_vert_planes[data_association.second].cloud_seg_map,cloud_seg_detected);
           //std::cout << "X plane min maha distance: " << vert_min_maha_dist << std::endl;
           //std::cout << "X plane min segment: " << min_segment << std::endl;
           if (min_segment > 0.5) {
@@ -718,24 +711,14 @@ private:
         }
         if(vert_min_maha_dist < plane_dist_threshold) {
           float min_segment = std::numeric_limits<float>::max ();
-          pcl::PointCloud<PointNormal>::Ptr cloud_seg_mapped(new pcl::PointCloud<PointNormal>());
           pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
-
-          for(int p=0; p < y_vert_planes[data_association.second].cloud_seg_body_vec.size(); ++p) {
-            Eigen::Matrix4f keyframe_pose = y_vert_planes[data_association.second].keyframe_node_vec[p]->estimate().matrix().cast<float>();
-            for(size_t j=0; j < y_vert_planes[data_association.second].cloud_seg_body_vec[p]->points.size(); ++j) {
-              PointNormal dst_pt;
-              dst_pt.getVector4fMap() = keyframe_pose * y_vert_planes[data_association.second].cloud_seg_body_vec[p]->points[j].getVector4fMap();
-              cloud_seg_mapped->points.push_back(dst_pt);
-            }          
-          }
           Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
           for(size_t j=0; j < cloud_seg_body->points.size(); ++j) {
             PointNormal dst_pt;
             dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
             cloud_seg_detected->points.push_back(dst_pt);
           }
-          min_segment = get_min_segment(cloud_seg_mapped,cloud_seg_detected);
+          min_segment = get_min_segment(y_vert_planes[data_association.second].cloud_seg_map,cloud_seg_detected);
           //std::cout << "mapped plane id: " << data_association.first << std::endl;
           //std::cout << "Y plane min maha distance: " << vert_min_maha_dist << std::endl;
           //std::cout << "Y plane min segment: " << min_segment << std::endl;
@@ -953,7 +936,7 @@ private:
       auto found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
       auto found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
 
-      corr_data_association = associate_corridors(plane_type, corr_pose);
+      corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2));
 
       if((x_corridors.empty() || corr_data_association.first == -1)) {
         
@@ -1035,7 +1018,7 @@ private:
     if(plane_type == plane_class::Y_VERT_PLANE) {           
       auto found_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
       auto found_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
-      corr_data_association = associate_corridors(plane_type, corr_pose);
+      corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2));
 
       if((y_corridors.empty() || corr_data_association.first == -1)) {
 
@@ -1136,24 +1119,6 @@ private:
     return corridor_pose;
   }
 
-  // Eigen::Vector3d final_corridor_pose(int plane_type, Eigen::Vector3d pre_corr_pose, Eigen::Vector3d keyframe_position) {
-  //   Eigen::Vector3d corridor_pose;
-    
-  //   if(plane_type == plane_class::X_VERT_PLANE) {
-  //     corridor_pose(0) = pre_corr_pose(0); 
-  //     corridor_pose(1) = keyframe_position(1);
-  //     corridor_pose(2) = keyframe_position(2);
-  //   }    
-
-  //   if(plane_type == plane_class::Y_VERT_PLANE) {
-  //       corridor_pose(0) = keyframe_position(0); 
-  //       corridor_pose(1) = pre_corr_pose(1); 
-  //       corridor_pose(2) = keyframe_position(2);
-  //   }
-
-  //   return corridor_pose;
-  // }
-
   double corridor_measurement(int plane_type, double corr, Eigen::Vector4d plane) {
     double meas = 0;  
 
@@ -1166,27 +1131,64 @@ private:
     return meas;
   }
 
-  std::pair<int,int> associate_corridors(int plane_type, double corr_pose) {
+  std::pair<int,int> associate_corridors(int plane_type, double corr_pose, VerticalPlanes plane1, VerticalPlanes plane2) {
     float min_dist = 100;
+    float plane1_min_segment = 100, plane2_min_segment = 100;
 
     std::pair<int,int> data_association; data_association.first = -1;
 
     if(plane_type == plane_class::X_VERT_PLANE) {
       for(int i=0; i< x_corridors.size(); ++i) { 
         float dist = fabs((corr_pose) - (x_corridors[i].node->estimate()));
-        if(dist < min_dist) {
+        
+        auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
+        auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
+        
+         if(plane1.id  == (*found_mapped_plane1).id || plane1.id  == (*found_mapped_plane2).id) {
+          plane1_min_segment = 0.0;
+        } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+          plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map,plane1.cloud_seg_map);
+        } else
+          plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map,plane1.cloud_seg_map);
+        
+        if(plane2.id  == (*found_mapped_plane1).id || plane2.id  == (*found_mapped_plane2).id) {
+          plane2_min_segment = 0.0;
+        } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+          plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map,plane2.cloud_seg_map);
+        } else
+          plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map,plane2.cloud_seg_map);
+        
+        if(dist < min_dist && (plane1_min_segment < 0.5 && plane2_min_segment < 0.5)) {
           min_dist = dist;
           data_association.first = x_corridors[i].id;
           data_association.second = i;
           ROS_DEBUG_NAMED("corridor planes", "dist x corr %f", dist);
         }
       }
-    }
+   }
 
    if(plane_type == plane_class::Y_VERT_PLANE) {
       for(int i=0; i< y_corridors.size(); ++i) { 
         float dist = fabs((corr_pose) - (y_corridors[i].node->estimate()));
-        if(dist < min_dist) {
+
+        auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
+        auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
+
+        if(plane1.id  == (*found_mapped_plane1).id || plane1.id  == (*found_mapped_plane2).id) {
+          plane1_min_segment = 0.0;
+        } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+          plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map,plane1.cloud_seg_map);
+        } else
+          plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map,plane1.cloud_seg_map);
+        
+        if(plane2.id  == (*found_mapped_plane1).id || plane2.id  == (*found_mapped_plane2).id) {
+          plane2_min_segment = 0.0;
+        } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+          plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map,plane2.cloud_seg_map);
+        } else
+          plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map,plane2.cloud_seg_map);
+
+        if(dist < min_dist && (plane1_min_segment < 0.5 && plane2_min_segment < 0.5)) {
           min_dist = dist;
           data_association.first = y_corridors[i].id;
           data_association.second = i;
@@ -1195,7 +1197,7 @@ private:
       }
     }
     
-    ROS_DEBUG_NAMED("corridor planes", "min dist %f", min_dist);
+    //ROS_DEBUG_NAMED("corridor planes", "min dist %f", min_dist);
     if (min_dist > corridor_dist_threshold) 
       data_association.first = -1;
 
@@ -1921,7 +1923,6 @@ private:
     sensor_msgs::PointCloud2Ptr cloud_msg(new sensor_msgs::PointCloud2());
     pcl::toROSMsg(*cloud, *cloud_msg);
 
-    convert_plane_points_to_map();
     auto markers = create_marker_array(ros::Time::now());
     markers_pub.publish(markers);
     
