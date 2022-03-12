@@ -210,6 +210,12 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(g2o::VertexSE3* v_se3, g2o::Ver
   return edge;
 }
 
+bool GraphSLAM::remove_se3_plane_edge(g2o::EdgeSE3Plane* se3_plane_edge) {
+  bool ack = graph->removeEdge(se3_plane_edge);
+  
+  return ack;
+}
+
 g2o::EdgeSE3PointToPlane* GraphSLAM::add_se3_point_to_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane, const Eigen::Matrix4d& points_matrix, const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PointToPlane* edge(new g2o::EdgeSE3PointToPlane());
   edge->setMeasurement(points_matrix);
@@ -220,7 +226,6 @@ g2o::EdgeSE3PointToPlane* GraphSLAM::add_se3_point_to_plane_edge(g2o::VertexSE3*
 
   return edge;
 }
-
 
 g2o::EdgeSE3PointXYZ* GraphSLAM::add_se3_point_xyz_edge(g2o::VertexSE3* v_se3, g2o::VertexPointXYZ* v_xyz, const Eigen::Vector3d& xyz, const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PointXYZ* edge(new g2o::EdgeSE3PointXYZ());
@@ -373,6 +378,13 @@ g2o::EdgeCorridorYPlane* GraphSLAM::add_corridor_yplane_edge(g2o::VertexCorridor
  
   return edge;
 }
+
+bool GraphSLAM::remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge) {
+  bool ack = graph->removeEdge(corridor_yplane_edge);
+
+  return ack;
+}
+
 
 g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Room* edge(new g2o::EdgeSE3Room());

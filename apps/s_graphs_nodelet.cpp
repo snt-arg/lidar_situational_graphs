@@ -1066,11 +1066,17 @@ private:
         else if ((*found_plane1).id == (*found_mapped_plane2).id)
           meas_plane1 =  corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
         else {
-          if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0)
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0) {
             meas_plane1 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
-          else 
+            dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane1);
+          }
+          else {
             meas_plane1 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane2); 
+          }
           found_new_plane = true;
+          dupl_y_vert_planes.push_back(dupl_plane_pair);      
         }
 
         if((*found_plane2).id == (*found_mapped_plane1).id)       
@@ -1078,11 +1084,17 @@ private:
         else if ((*found_plane2).id == (*found_mapped_plane2).id) 
           meas_plane2 =  corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
         else {
-          if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0)
-            meas_plane2 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
-          else
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0) {
+              meas_plane2 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
+              dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane1);
+          }
+          else {
             meas_plane2 =  corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane2);
+          }
           found_new_plane = true;
+          dupl_y_vert_planes.push_back(dupl_plane_pair);
         }
 
         //std::cout << "mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
@@ -1978,7 +1990,7 @@ private:
       compute_plane_cov();
 
     /*TODO: remove duplicate x_planes and y_planes detected from room/corridor constraints */
-    //remove_duplicate_planes();
+    remove_duplicate_planes();
 
     // publish tf
     const auto& keyframe = keyframes.back();
@@ -2009,10 +2021,33 @@ private:
 
     auto it = dupl_y_vert_planes.begin();
     while(it != dupl_y_vert_planes.end()) {
-      if(graph_slam->remove_plane_node((*it).plane_node)) {
+      std::set<g2o::HyperGraph::Edge*> edges = (*it).first.plane_node->edges();
+      auto edge_itr = edges.begin();
+      while(edge_itr != edges.end()) {
+        g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(*edge_itr);
+        if(edge_se3_plane) {
+          /* get the keyframe node and connect it with the original mapped plane node */
+          g2o::VertexSE3* keyframe_node = dynamic_cast<g2o::VertexSE3*>(edge_se3_plane->vertices()[0]);
+          g2o::Plane3D local_plane = keyframe_node->estimate().inverse() * (*it).second.plane_node->estimate();
+          Eigen::Matrix3d information = Eigen::Matrix3d::Identity();  
+          auto edge = graph_slam->add_se3_plane_edge(keyframe_node, (*it).second.plane_node, local_plane.coeffs(), information);
+          graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+
+          /* remove the edge between the keyframe and found duplicate plane */
+          graph_slam->remove_se3_plane_edge(edge_se3_plane);
+          
+        }
+        g2o::EdgeCorridorYPlane* edge_corridor_yplane = dynamic_cast<g2o::EdgeCorridorYPlane*>(*edge_itr);
+        if(edge_corridor_yplane) {
+          /* remove the edge between the corridor and the duplicate found plane */
+          graph_slam->remove_corridor_yplane_edge(edge_corridor_yplane);
+        }
+      }
+      /* finally remove the duplicate plane node */
+      if(graph_slam->remove_plane_node((*it).first.plane_node)) {
         //std::cout << "remove duplicate y plane node " << std::endl;
         dupl_y_vert_planes.erase(it);
-        auto mapped_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == (*it).id);
+        auto mapped_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == (*it).first.id);
         y_vert_planes.erase(mapped_plane);
       }
       else 
@@ -3078,7 +3113,7 @@ private:
   double room_width_diff_threshold;
   double color_r, color_g, color_b;
   std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;         // vertically segmented planes
-  std::deque<VerticalPlanes> dupl_x_vert_planes, dupl_y_vert_planes;         // vertically segmented planes
+  std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes, dupl_y_vert_planes;         // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                        // horizontally segmented planes
   int vertex_count;
   std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes

@@ -116,6 +116,8 @@ public:
    */
   g2o::EdgeSE3Plane* add_se3_plane_edge(g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& plane_coeffs, const Eigen::MatrixXd& information_matrix);
 
+  bool remove_se3_plane_edge(g2o::EdgeSE3Plane* se3_plane_edge);
+
   /**
    * @brief add an edge between an SE3 node and to a plane using point to plane distances
    * @param v_se3    SE3 node
@@ -169,6 +171,8 @@ public:
 
   g2o::EdgeCorridorYPlane* add_corridor_yplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
+  bool remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge);
+  
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
