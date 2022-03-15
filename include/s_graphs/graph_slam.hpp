@@ -181,6 +181,10 @@ public:
 
   g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
+  bool remove_room_xplane_edge(g2o::EdgeRoomXPlane* room_xplane_edge);
+
+  bool remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge);
+
   void add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size);
 
   /**

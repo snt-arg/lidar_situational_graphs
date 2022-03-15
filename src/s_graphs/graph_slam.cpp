@@ -391,7 +391,6 @@ bool GraphSLAM::remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yp
   return ack;
 }
 
-
 g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Room* edge(new g2o::EdgeSE3Room());
   edge->setMeasurement(measurement);
@@ -424,6 +423,20 @@ g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(g2o::VertexRoomXYLB* v_room
  
   return edge;
 }
+
+bool GraphSLAM::remove_room_xplane_edge(g2o::EdgeRoomXPlane* room_xplane_edge) {
+  bool ack = graph->removeEdge(room_xplane_edge);
+
+  return ack;
+}
+
+bool GraphSLAM::remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge) {
+  bool ack = graph->removeEdge(room_yplane_edge);
+
+  return ack;
+}
+
+
 
 void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size) {
   if(kernel_type == "NONE") {

@@ -1311,11 +1311,17 @@ private:
         else if((*found_x_plane1).id == (*found_mapped_x_plane2).id)
           x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane2_coeffs); 
         else {
-          if(((*found_x_plane1).plane_node->estimate().coeffs().head(3)).dot(found_mapped_x_plane1_coeffs.head(3)) > 0)
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if((*found_x_plane1).plane_node->estimate().coeffs().head(3).dot(found_mapped_x_plane1_coeffs.head(3)) > 0) {
             x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
-          else
+            dupl_plane_pair = std::make_pair(*found_x_plane1, *found_mapped_x_plane1);
+          }
+          else {
             x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_x_plane1, *found_mapped_x_plane2);
+          }
           found_new_x_plane = true;
+          dupl_x_vert_planes.push_back(dupl_plane_pair);
         }
 
         if((*found_x_plane2).id == (*found_mapped_x_plane1).id)
@@ -1323,11 +1329,17 @@ private:
         else if((*found_x_plane2).id == (*found_mapped_x_plane2).id)  
           x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane2_coeffs);
         else {
-          if(((*found_x_plane2).plane_node->estimate().coeffs().head(3)).dot(found_mapped_x_plane1_coeffs.head(3)) > 0)
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if((*found_x_plane2).plane_node->estimate().coeffs().head(3).dot(found_mapped_x_plane1_coeffs.head(3)) > 0) {
             x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
-          else
+            dupl_plane_pair = std::make_pair(*found_x_plane2, *found_mapped_x_plane1);
+          }
+          else {
             x_plane2_meas =  room_measurement(plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane2_coeffs); 
+            dupl_plane_pair = std::make_pair(*found_x_plane2, *found_mapped_x_plane2);
+          }
           found_new_x_plane = true;
+          dupl_x_vert_planes.push_back(dupl_plane_pair);
         }
 
         if(use_parallel_plane_constraint && found_new_x_plane) {
@@ -1348,11 +1360,17 @@ private:
         else if((*found_y_plane1).id == (*found_mapped_y_plane2).id)
           y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane2_coeffs);
         else {
-          if(((*found_y_plane1).plane_node->estimate().coeffs().head(3)).dot(found_mapped_y_plane1_coeffs.head(3)) > 0)
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if((*found_y_plane1).plane_node->estimate().coeffs().head(3).dot(found_mapped_y_plane1_coeffs.head(3)) > 0) {
             y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
-          else
+            dupl_plane_pair = std::make_pair(*found_y_plane1, *found_mapped_y_plane1);
+          }
+          else {
             y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_y_plane1, *found_mapped_y_plane2);
+          }
           found_new_y_plane = true;
+          dupl_y_vert_planes.push_back(dupl_plane_pair);
         }
 
         if((*found_y_plane2).id == (*found_mapped_y_plane1).id)
@@ -1360,11 +1378,17 @@ private:
         else if((*found_y_plane2).id == (*found_mapped_y_plane2).id)
           y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane2_coeffs);
         else {
-          if(((*found_y_plane2).plane_node->estimate().coeffs().head(3)).dot(found_mapped_y_plane1_coeffs.head(3)) > 0)
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if((*found_y_plane2).plane_node->estimate().coeffs().head(3).dot(found_mapped_y_plane1_coeffs.head(3)) > 0) {
             y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
-          else
+            dupl_plane_pair = std::make_pair(*found_y_plane2, *found_mapped_y_plane1);
+          }
+          else {
             y_plane2_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane2_coeffs); 
+            dupl_plane_pair = std::make_pair(*found_y_plane2, *found_mapped_y_plane2);
+          }
           found_new_y_plane = true;
+          dupl_y_vert_planes.push_back(dupl_plane_pair);
         }
         
         if(use_parallel_plane_constraint && found_new_y_plane) {
@@ -2054,7 +2078,14 @@ private:
             ++edge_itr;
           continue;    
         }
-        if(!edge_se3_plane || !edge_corridor_xplane) 
+       g2o::EdgeRoomXPlane* edge_room_xplane = dynamic_cast<g2o::EdgeRoomXPlane*>(*edge_itr);
+        if(edge_room_xplane) {
+          /* remove the edge between the room and the duplicate found plane */
+          if(graph_slam->remove_room_xplane_edge(edge_room_xplane)) 
+            ++edge_itr;
+          continue;    
+        }
+        if(!edge_se3_plane || !edge_corridor_xplane || !edge_room_xplane) 
           ++edge_itr;
       }
       /* finally remove the duplicate plane node */
@@ -2089,8 +2120,16 @@ private:
           if(graph_slam->remove_corridor_yplane_edge(edge_corridor_yplane)) 
             ++edge_itr;
           continue;    
+        }        
+        g2o::EdgeRoomYPlane* edge_room_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
+        if(edge_room_yplane) {
+          /* remove the edge between the room and the duplicate found plane */
+          if(graph_slam->remove_room_yplane_edge(edge_room_yplane)) 
+            ++edge_itr;
+          continue;    
         }
-        if(!edge_se3_plane || !edge_corridor_yplane) 
+        
+        if(!edge_se3_plane || !edge_corridor_yplane || !edge_room_yplane) 
           ++edge_itr;
       }
       /* finally remove the duplicate plane node */
