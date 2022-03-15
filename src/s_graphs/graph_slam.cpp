@@ -379,6 +379,12 @@ g2o::EdgeCorridorYPlane* GraphSLAM::add_corridor_yplane_edge(g2o::VertexCorridor
   return edge;
 }
 
+bool GraphSLAM::remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge) {
+  bool ack = graph->removeEdge(corridor_xplane_edge);
+
+  return ack;
+}
+
 bool GraphSLAM::remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge) {
   bool ack = graph->removeEdge(corridor_yplane_edge);
 
