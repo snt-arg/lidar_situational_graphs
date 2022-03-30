@@ -2094,11 +2094,9 @@ private:
   */
   void merge_duplicate_planes() {
     for(auto it = dupl_x_vert_planes.begin(); it != dupl_x_vert_planes.end(); ++it) {
-      std::cout << "dupl x plane id: " << (*it).first.id << std::endl;
       std::set<g2o::HyperGraph::Edge*> edges = (*it).first.plane_node->edges();
 
       for(auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
-        std::cout << "dupl x edges size: " << edges.size() << std::endl;
 
         g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(*edge_itr);
         if(edge_se3_plane) {
@@ -2124,13 +2122,9 @@ private:
           auto found_x_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
           /* if any of the mapped plane_id of the corridor equal to dupl plane id replace it */
           if((*found_x_corridor).plane1_id == (*it).first.id) {
-            std::cout << "(*found_x_corridor).plane_x1_id before: " << (*found_x_corridor).plane1_id << std::endl;
             (*found_x_corridor).plane1_id = (*it).second.id; (*found_x_corridor).plane1 = (*it).second.plane;
-            std::cout << "(*found_x_corridor).plane_x1_id after: " << (*found_x_corridor).plane1_id << std::endl;
           } else if((*found_x_corridor).plane2_id == (*it).first.id) {
-            std::cout << "(*found_x_corridor).plane_x2_id before: " << (*found_x_corridor).plane2_id << std::endl;           
             (*found_x_corridor).plane2_id = (*it).second.id; (*found_x_corridor).plane2 = (*it).second.plane;
-            std::cout << "(*found_x_corridor).plane_x2_id after: " << (*found_x_corridor).plane2_id << std::endl;
           }
           if(graph_slam->remove_corridor_xplane_edge(edge_corridor_xplane)) 
             std::cout << "removed edge - corridor xplane " << std::endl;
@@ -2144,18 +2138,14 @@ private:
           g2o::VertexRoomXYLB* room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_room_xplane->vertices()[0]);
           auto found_room = std::find_if(rooms_vec.begin(), rooms_vec.end(), boost::bind(&Rooms::id, _1) == room_node->id());
           if((*found_room).plane_x1_id == (*it).first.id) {
-            //std::cout << "(*found_room).plane_x1_id before: " << (*found_room).plane_x1_id << std::endl;
             (*found_room).plane_x1_id = (*it).second.id; (*found_room).plane_x1 = (*it).second.plane;
-            //std::cout << "(*found_room).plane_x1_id after: " << (*found_room).plane_x1_id << std::endl;
           } else if((*found_room).plane_x2_id == (*it).first.id) {
             (*found_room).plane_x2_id = (*it).second.id; (*found_room).plane_x2 = (*it).second.plane;
           }
           if(graph_slam->remove_room_xplane_edge(edge_room_xplane)) 
-            std::cout << "remove edge - room xplane " << std::endl;
+            std::cout << "removed edge - room xplane " << std::endl;
           continue;    
         }
-        // if(!edge_se3_plane || !edge_corridor_xplane || !edge_room_xplane) 
-        //   ++edge_itr;
       }
       /* finally remove the duplicate plane node */
       if(graph_slam->remove_plane_node((*it).first.plane_node)) {
@@ -2167,11 +2157,9 @@ private:
     dupl_x_vert_planes.clear();
 
     for(auto it = dupl_y_vert_planes.begin(); it != dupl_y_vert_planes.end(); ++it) {
-      std::cout << "dupl y plane id: " << (*it).first.id << std::endl;
       std::set<g2o::HyperGraph::Edge*> edges = (*it).first.plane_node->edges();
 
       for(auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
-        std::cout << "dupl y edges size: " << edges.size() << std::endl;
         g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(*edge_itr);
         if(edge_se3_plane) {
           /* get the keyframe node and connect it with the original mapped plane node */
@@ -2192,17 +2180,13 @@ private:
           g2o::VertexCorridor* corridor_node = dynamic_cast<g2o::VertexCorridor*>(edge_corridor_yplane->vertices()[0]);
           auto found_y_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
           if((*found_y_corridor).plane1_id == (*it).first.id) {
-            std::cout << "(*found_y_corridor).plane1_id before: " << (*found_y_corridor).plane1_id << std::endl;
             (*found_y_corridor).plane1_id = (*it).second.id; (*found_y_corridor).plane1 = (*it).second.plane;
-            std::cout << "(*found_y_corridor).plane1_id after: " << (*found_y_corridor).plane1_id << std::endl;
           } else if((*found_y_corridor).plane2_id == (*it).first.id) {
-            std::cout << "(*found_y_corridor).plane2_id before: " << (*found_y_corridor).plane2_id << std::endl;
             (*found_y_corridor).plane2_id = (*it).second.id; (*found_y_corridor).plane2 = (*it).second.plane;
-            std::cout << "(*found_y_corridor).plane2_id after: " << (*found_y_corridor).plane2_id << std::endl;
           }
 
           if(graph_slam->remove_corridor_yplane_edge(edge_corridor_yplane)) 
-            std::cout << "remove edge - corridor yplane " << std::endl;
+            std::cout << "removed edge - corridor yplane " << std::endl;
           continue;    
         }        
         g2o::EdgeRoomYPlane* edge_room_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
@@ -2211,20 +2195,15 @@ private:
           g2o::VertexRoomXYLB* room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_room_yplane->vertices()[0]);
           auto found_room = std::find_if(rooms_vec.begin(), rooms_vec.end(), boost::bind(&Rooms::id, _1) == room_node->id());
           if((*found_room).plane_y1_id == (*it).first.id) {
-            std::cout << "(*found_room).plane_y1_id before: " << (*found_room).plane_y1_id << std::endl;
             (*found_room).plane_y1_id = (*it).second.id; (*found_room).plane_y1 = (*it).second.plane;
-            std::cout << "(*found_room).plane_y1_id after: " << (*found_room).plane_y1_id << std::endl;
           } else if((*found_room).plane_y2_id == (*it).first.id) {
             (*found_room).plane_y2_id = (*it).second.id; (*found_room).plane_y2 = (*it).second.plane;
           }
           
           if(graph_slam->remove_room_yplane_edge(edge_room_yplane)) 
-            std::cout << "remove edge - room yplane " << std::endl;
+            std::cout << "removed edge - room yplane " << std::endl;
           continue;    
         }
-        
-        // if(!edge_se3_plane || !edge_corridor_yplane || !edge_room_yplane) 
-        //   ++edge_itr;
       }
       /* finally remove the duplicate plane node */
       if(graph_slam->remove_plane_node((*it).first.plane_node)) {
@@ -2459,8 +2438,8 @@ private:
     edge_marker.pose.orientation.w = 1.0;
     edge_marker.scale.x = 0.05;
 
-    edge_marker.points.resize(local_graph->edges().size() * 4);
-    edge_marker.colors.resize(local_graph->edges().size() * 4);
+    edge_marker.points.resize(local_graph->edges().size() * 8);
+    edge_marker.colors.resize(local_graph->edges().size() * 8);
 
     auto edge_itr = local_graph->edges().begin();
     for(int i = 0; edge_itr != local_graph->edges().end(); edge_itr++, i++) {
@@ -2807,357 +2786,357 @@ private:
     float corridor_text_h = 10;
     float corridor_edge_h = 9.5;
     float corridor_point_h = 5.0;
-    // //x corridor markers
-    // visualization_msgs::Marker corridor_marker;
-    // corridor_marker.pose.orientation.w = 1.0;
-    // corridor_marker.scale.x = 0.5;
-    // corridor_marker.scale.y = 0.5;
-    // corridor_marker.scale.z = 0.5;
-    // //plane_marker.points.resize(vert_planes.size());    
-    // corridor_marker.header.frame_id = map_frame_id;
-    // corridor_marker.header.stamp = stamp;
-    // corridor_marker.ns = "corridors";
-    // corridor_marker.id = markers.markers.size();
-    // corridor_marker.type = visualization_msgs::Marker::CUBE_LIST;
-    // corridor_marker.color.r = 0;
-    // corridor_marker.color.g = 1;
-    // corridor_marker.color.a = 1; 
+    //x corridor markers
+    visualization_msgs::Marker corridor_marker;
+    corridor_marker.pose.orientation.w = 1.0;
+    corridor_marker.scale.x = 0.5;
+    corridor_marker.scale.y = 0.5;
+    corridor_marker.scale.z = 0.5;
+    //plane_marker.points.resize(vert_planes.size());    
+    corridor_marker.header.frame_id = map_frame_id;
+    corridor_marker.header.stamp = stamp;
+    corridor_marker.ns = "corridors";
+    corridor_marker.id = markers.markers.size();
+    corridor_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    corridor_marker.color.r = 0;
+    corridor_marker.color.g = 1;
+    corridor_marker.color.a = 1; 
 
-    // for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
-    //   auto found_plane1 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane1_id);
-    //   auto found_plane2 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane2_id);
+    for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
+      auto found_plane1 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane1_id);
+      auto found_plane2 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane2_id);
         
-    //   //fill in the line marker
-    //   visualization_msgs::Marker corr_x_line_marker;
-    //   corr_x_line_marker.scale.x = 0.05;
-    //   corr_x_line_marker.pose.orientation.w = 1.0;
-    //   corr_x_line_marker.ns = "corridor_x_lines";
-    //   corr_x_line_marker.header.frame_id = map_frame_id;
-    //   corr_x_line_marker.header.stamp = stamp;
-    //   corr_x_line_marker.id = markers.markers.size()+1;
-    //   corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-    //   corr_x_line_marker.color.r =  color_r;
-    //   corr_x_line_marker.color.g =  color_g;
-    //   corr_x_line_marker.color.b =  color_b;  
-    //   corr_x_line_marker.color.a = 0.4;
-    //   geometry_msgs::Point p1,p2,p3;
+      //fill in the line marker
+      visualization_msgs::Marker corr_x_line_marker;
+      corr_x_line_marker.scale.x = 0.05;
+      corr_x_line_marker.pose.orientation.w = 1.0;
+      corr_x_line_marker.ns = "corridor_x_lines";
+      corr_x_line_marker.header.frame_id = map_frame_id;
+      corr_x_line_marker.header.stamp = stamp;
+      corr_x_line_marker.id = markers.markers.size()+1;
+      corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      corr_x_line_marker.color.r =  color_r;
+      corr_x_line_marker.color.g =  color_g;
+      corr_x_line_marker.color.b =  color_b;  
+      corr_x_line_marker.color.a = 0.4;
+      geometry_msgs::Point p1,p2,p3;
   
-    //   pcl::CentroidPoint<PointNormal> centroid_p1;           
-    //   for(int p=0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
-    //     centroid_p1.add((*found_plane1).cloud_seg_map->points[p]);
-    //   }
+      pcl::CentroidPoint<PointNormal> centroid_p1;           
+      for(int p=0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+        centroid_p1.add((*found_plane1).cloud_seg_map->points[p]);
+      }
 
-    //   PointNormal cp1_pt; centroid_p1.get(cp1_pt);
-    //   p1.x =  x_corridor_snapshot[i].node->estimate(); p1.y =  cp1_pt.y;  p1.z =  corridor_edge_h;  
-    //   p2.x =  cp1_pt.x; p2.y = cp1_pt.y; p2.z = 5.0;
-    //   corr_x_line_marker.points.push_back(p1);
-    //   corr_x_line_marker.points.push_back(p2);
+      PointNormal cp1_pt; centroid_p1.get(cp1_pt);
+      p1.x =  x_corridor_snapshot[i].node->estimate(); p1.y =  cp1_pt.y;  p1.z =  corridor_edge_h;  
+      p2.x =  cp1_pt.x; p2.y = cp1_pt.y; p2.z = 5.0;
+      corr_x_line_marker.points.push_back(p1);
+      corr_x_line_marker.points.push_back(p2);
 
-    //   pcl::CentroidPoint<PointNormal> centroid_p2;           
-    //   for(int p=0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
-    //     centroid_p2.add((*found_plane2).cloud_seg_map->points[p]);
-    //   }
-    //   PointNormal cp2_pt; centroid_p2.get(cp2_pt);
-    //   p3.x = cp2_pt.x; p3.y = cp2_pt.y; p3.z = 5.0;
-    //   corr_x_line_marker.points.push_back(p1);
-    //   corr_x_line_marker.points.push_back(p3);
-    //   markers.markers.push_back(corr_x_line_marker); 
+      pcl::CentroidPoint<PointNormal> centroid_p2;           
+      for(int p=0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
+        centroid_p2.add((*found_plane2).cloud_seg_map->points[p]);
+      }
+      PointNormal cp2_pt; centroid_p2.get(cp2_pt);
+      p3.x = cp2_pt.x; p3.y = cp2_pt.y; p3.z = 5.0;
+      corr_x_line_marker.points.push_back(p1);
+      corr_x_line_marker.points.push_back(p3);
+      markers.markers.push_back(corr_x_line_marker); 
 
-    //   //corridor cube  
-    //   geometry_msgs::Point point;
-    //   point.x =  x_corridor_snapshot[i].node->estimate();
-    //   point.y =  cp1_pt.y;
-    //   point.z = corridor_node_h;
-    //   corridor_marker.points.push_back(point);
+      //corridor cube  
+      geometry_msgs::Point point;
+      point.x =  x_corridor_snapshot[i].node->estimate();
+      point.y =  cp1_pt.y;
+      point.z = corridor_node_h;
+      corridor_marker.points.push_back(point);
 
-    //   //fill in the text marker
-    //   visualization_msgs::Marker corr_x_text_marker;
-    //   corr_x_text_marker.scale.z = 0.5;
-    //   corr_x_text_marker.ns = "corridor_x_text";
-    //   corr_x_text_marker.header.frame_id = map_frame_id;
-    //   corr_x_text_marker.header.stamp = stamp;
-    //   corr_x_text_marker.id = markers.markers.size()+1;
-    //   corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    //   corr_x_text_marker.pose.position.x = x_corridor_snapshot[i].node->estimate();
-    //   corr_x_text_marker.pose.position.y = cp1_pt.y;
-    //   corr_x_text_marker.pose.position.z = corridor_text_h;
-    //   corr_x_text_marker.color.r = color_r;
-    //   corr_x_text_marker.color.g = color_g;
-    //   corr_x_text_marker.color.b = color_b;
-    //   corr_x_text_marker.color.a = 1; 
-    //   corr_x_text_marker.pose.orientation.w = 1.0;
-    //   corr_x_text_marker.text = "Corridor X" + std::to_string(i+1);
-    //   markers.markers.push_back(corr_x_text_marker);
-    // }
+      //fill in the text marker
+      visualization_msgs::Marker corr_x_text_marker;
+      corr_x_text_marker.scale.z = 0.5;
+      corr_x_text_marker.ns = "corridor_x_text";
+      corr_x_text_marker.header.frame_id = map_frame_id;
+      corr_x_text_marker.header.stamp = stamp;
+      corr_x_text_marker.id = markers.markers.size()+1;
+      corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      corr_x_text_marker.pose.position.x = x_corridor_snapshot[i].node->estimate();
+      corr_x_text_marker.pose.position.y = cp1_pt.y;
+      corr_x_text_marker.pose.position.z = corridor_text_h;
+      corr_x_text_marker.color.r = color_r;
+      corr_x_text_marker.color.g = color_g;
+      corr_x_text_marker.color.b = color_b;
+      corr_x_text_marker.color.a = 1; 
+      corr_x_text_marker.pose.orientation.w = 1.0;
+      corr_x_text_marker.text = "Corridor X" + std::to_string(i+1);
+      markers.markers.push_back(corr_x_text_marker);
+    }
     
-    // for(int i = 0; i < y_corridors.size(); ++i) {
-    //   auto found_plane1 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane1_id);
-    //   auto found_plane2 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane2_id);
+    for(int i = 0; i < y_corridors.size(); ++i) {
+      auto found_plane1 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane1_id);
+      auto found_plane2 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane2_id);
 
-    //   //fill in the line marker
-    //   visualization_msgs::Marker corr_y_line_marker;
-    //   corr_y_line_marker.scale.x = 0.05;
-    //   corr_y_line_marker.pose.orientation.w = 1.0;
-    //   corr_y_line_marker.ns = "corridor_y_lines";
-    //   corr_y_line_marker.header.frame_id = map_frame_id;
-    //   corr_y_line_marker.header.stamp = stamp;
-    //   corr_y_line_marker.id = markers.markers.size()+1;
-    //   corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-    //   corr_y_line_marker.color.r = color_r;
-    //   corr_y_line_marker.color.g = color_g;
-    //   corr_y_line_marker.color.b = color_b;  
-    //   corr_y_line_marker.color.a = 0.4;
-    //   geometry_msgs::Point p1,p2,p3;
+      //fill in the line marker
+      visualization_msgs::Marker corr_y_line_marker;
+      corr_y_line_marker.scale.x = 0.05;
+      corr_y_line_marker.pose.orientation.w = 1.0;
+      corr_y_line_marker.ns = "corridor_y_lines";
+      corr_y_line_marker.header.frame_id = map_frame_id;
+      corr_y_line_marker.header.stamp = stamp;
+      corr_y_line_marker.id = markers.markers.size()+1;
+      corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      corr_y_line_marker.color.r = color_r;
+      corr_y_line_marker.color.g = color_g;
+      corr_y_line_marker.color.b = color_b;  
+      corr_y_line_marker.color.a = 0.4;
+      geometry_msgs::Point p1,p2,p3;
 
-    //   pcl::CentroidPoint<PointNormal> centroid_p1;           
-    //   for(int p=0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
-    //     centroid_p1.add((*found_plane1).cloud_seg_map->points[p]);
-    //   }
-    //   PointNormal cp1_pt; centroid_p1.get(cp1_pt);
-    //   p1.x =  cp1_pt.x; p1.y = y_corridor_snapshot[i].node->estimate(); p1.z =  corridor_edge_h;  
-    //   p2.x =  cp1_pt.x; p2.y = cp1_pt.y; p2.z = 5.0;
-    //   corr_y_line_marker.points.push_back(p1);
-    //   corr_y_line_marker.points.push_back(p2);
+      pcl::CentroidPoint<PointNormal> centroid_p1;           
+      for(int p=0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+        centroid_p1.add((*found_plane1).cloud_seg_map->points[p]);
+      }
+      PointNormal cp1_pt; centroid_p1.get(cp1_pt);
+      p1.x =  cp1_pt.x; p1.y = y_corridor_snapshot[i].node->estimate(); p1.z =  corridor_edge_h;  
+      p2.x =  cp1_pt.x; p2.y = cp1_pt.y; p2.z = 5.0;
+      corr_y_line_marker.points.push_back(p1);
+      corr_y_line_marker.points.push_back(p2);
       
-    //   pcl::CentroidPoint<PointNormal> centroid_p2;           
-    //   for(int p=0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
-    //     centroid_p2.add((*found_plane2).cloud_seg_map->points[p]);
-    //   }
-    //   PointNormal cp2_pt; centroid_p2.get(cp2_pt);
-    //   p3.x = cp2_pt.x; p3.y = cp2_pt.y; p3.z = 5.0;
-    //   corr_y_line_marker.points.push_back(p1);
-    //   corr_y_line_marker.points.push_back(p3);
-    //   markers.markers.push_back(corr_y_line_marker);     
+      pcl::CentroidPoint<PointNormal> centroid_p2;           
+      for(int p=0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
+        centroid_p2.add((*found_plane2).cloud_seg_map->points[p]);
+      }
+      PointNormal cp2_pt; centroid_p2.get(cp2_pt);
+      p3.x = cp2_pt.x; p3.y = cp2_pt.y; p3.z = 5.0;
+      corr_y_line_marker.points.push_back(p1);
+      corr_y_line_marker.points.push_back(p3);
+      markers.markers.push_back(corr_y_line_marker);     
       
-    //   //corridor cube
-    //   geometry_msgs::Point point;
-    //   point.x =  cp1_pt.x;
-    //   point.y =  y_corridor_snapshot[i].node->estimate();
-    //   point.z = corridor_node_h;
-    //   corridor_marker.points.push_back(point);
+      //corridor cube
+      geometry_msgs::Point point;
+      point.x =  cp1_pt.x;
+      point.y =  y_corridor_snapshot[i].node->estimate();
+      point.z = corridor_node_h;
+      corridor_marker.points.push_back(point);
 
-    //   //fill in the text marker
-    //   visualization_msgs::Marker corr_y_text_marker;
-    //   corr_y_text_marker.scale.z = 0.5;
-    //   corr_y_text_marker.ns = "corridor_y_text";
-    //   corr_y_text_marker.header.frame_id = map_frame_id;
-    //   corr_y_text_marker.header.stamp = stamp;
-    //   corr_y_text_marker.id = markers.markers.size()+1;
-    //   corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    //   corr_y_text_marker.pose.position.x = cp1_pt.x;
-    //   corr_y_text_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
-    //   corr_y_text_marker.pose.position.z = corridor_text_h;
-    //   corr_y_text_marker.color.r = color_r;
-    //   corr_y_text_marker.color.g = color_g;
-    //   corr_y_text_marker.color.b = color_b;
-    //   corr_y_text_marker.color.a = 1; 
-    //   corr_y_text_marker.pose.orientation.w = 1.0;
-    //   corr_y_text_marker.text = "Corridor Y" + std::to_string(i+1);
-    //   markers.markers.push_back(corr_y_text_marker);
+      //fill in the text marker
+      visualization_msgs::Marker corr_y_text_marker;
+      corr_y_text_marker.scale.z = 0.5;
+      corr_y_text_marker.ns = "corridor_y_text";
+      corr_y_text_marker.header.frame_id = map_frame_id;
+      corr_y_text_marker.header.stamp = stamp;
+      corr_y_text_marker.id = markers.markers.size()+1;
+      corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      corr_y_text_marker.pose.position.x = cp1_pt.x;
+      corr_y_text_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
+      corr_y_text_marker.pose.position.z = corridor_text_h;
+      corr_y_text_marker.color.r = color_r;
+      corr_y_text_marker.color.g = color_g;
+      corr_y_text_marker.color.b = color_b;
+      corr_y_text_marker.color.a = 1; 
+      corr_y_text_marker.pose.orientation.w = 1.0;
+      corr_y_text_marker.text = "Corridor Y" + std::to_string(i+1);
+      markers.markers.push_back(corr_y_text_marker);
 
-    // }
-    // markers.markers.push_back(corridor_marker); 
+    }
+    markers.markers.push_back(corridor_marker); 
 
-    // //room markers
-    // float room_node_h = 10.5; 
-    // float room_text_h = 10;
-    // float room_edge_h = 9.5;
-    // float room_point_h = 5.0;
-    // visualization_msgs::Marker room_marker;
-    // room_marker.pose.orientation.w = 1.0;
-    // room_marker.scale.x = 0.5;
-    // room_marker.scale.y = 0.5;
-    // room_marker.scale.z = 0.5;
-    // //plane_marker.points.resize(vert_planes.size());    
-    // room_marker.header.frame_id = map_frame_id;
-    // room_marker.header.stamp = stamp;
-    // room_marker.ns = "rooms";
-    // room_marker.id = markers.markers.size();
-    // room_marker.type = visualization_msgs::Marker::CUBE_LIST;
-    // room_marker.color.r = 1;
-    // room_marker.color.g = 0.07;
-    // room_marker.color.b = 0.57;
-    // room_marker.color.a = 1; 
+    //room markers
+    float room_node_h = 10.5; 
+    float room_text_h = 10;
+    float room_edge_h = 9.5;
+    float room_point_h = 5.0;
+    visualization_msgs::Marker room_marker;
+    room_marker.pose.orientation.w = 1.0;
+    room_marker.scale.x = 0.5;
+    room_marker.scale.y = 0.5;
+    room_marker.scale.z = 0.5;
+    //plane_marker.points.resize(vert_planes.size());    
+    room_marker.header.frame_id = map_frame_id;
+    room_marker.header.stamp = stamp;
+    room_marker.ns = "rooms";
+    room_marker.id = markers.markers.size();
+    room_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    room_marker.color.r = 1;
+    room_marker.color.g = 0.07;
+    room_marker.color.b = 0.57;
+    room_marker.color.a = 1; 
 
-    // for(int i = 0; i < room_snapshot.size(); ++i) {
-    //   geometry_msgs::Point point;
-    //   point.x = room_snapshot[i].node->estimate()(0);
-    //   point.y = room_snapshot[i].node->estimate()(1);
-    //   point.z = room_node_h;
-    //   room_marker.points.push_back(point);
+    for(int i = 0; i < room_snapshot.size(); ++i) {
+      geometry_msgs::Point point;
+      point.x = room_snapshot[i].node->estimate()(0);
+      point.y = room_snapshot[i].node->estimate()(1);
+      point.z = room_node_h;
+      room_marker.points.push_back(point);
 
-    //   //fill in the text marker
-    //   visualization_msgs::Marker room_text_marker;
-    //   room_text_marker.scale.z = 0.5;
-    //   room_text_marker.ns = "rooms_text";
-    //   room_text_marker.header.frame_id = map_frame_id;
-    //   room_text_marker.header.stamp = stamp;
-    //   room_text_marker.id = markers.markers.size()+1;
-    //   room_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    //   room_text_marker.pose.position.x = room_snapshot[i].node->estimate()(0);
-    //   room_text_marker.pose.position.y = room_snapshot[i].node->estimate()(1);
-    //   room_text_marker.pose.position.z = room_text_h;
-    //   room_text_marker.color.r = color_r;
-    //   room_text_marker.color.g = color_g;
-    //   room_text_marker.color.b = color_b;
-    //   room_text_marker.color.a = 1; 
-    //   room_text_marker.pose.orientation.w = 1.0;
-    //   room_text_marker.text = "Room" + std::to_string(i+1);
-    //   markers.markers.push_back(room_text_marker);
+      //fill in the text marker
+      visualization_msgs::Marker room_text_marker;
+      room_text_marker.scale.z = 0.5;
+      room_text_marker.ns = "rooms_text";
+      room_text_marker.header.frame_id = map_frame_id;
+      room_text_marker.header.stamp = stamp;
+      room_text_marker.id = markers.markers.size()+1;
+      room_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      room_text_marker.pose.position.x = room_snapshot[i].node->estimate()(0);
+      room_text_marker.pose.position.y = room_snapshot[i].node->estimate()(1);
+      room_text_marker.pose.position.z = room_text_h;
+      room_text_marker.color.r = color_r;
+      room_text_marker.color.g = color_g;
+      room_text_marker.color.b = color_b;
+      room_text_marker.color.a = 1; 
+      room_text_marker.pose.orientation.w = 1.0;
+      room_text_marker.text = "Room" + std::to_string(i+1);
+      markers.markers.push_back(room_text_marker);
 
-    //   //fill in the line marker
-    //   visualization_msgs::Marker room_line_marker;
-    //   room_line_marker.scale.x = 0.05;
-    //   room_line_marker.pose.orientation.w = 1.0;
-    //   room_line_marker.ns = "rooms_lines";
-    //   room_line_marker.header.frame_id = map_frame_id;
-    //   room_line_marker.header.stamp = stamp;
-    //   room_line_marker.id = markers.markers.size()+1;
-    //   room_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-    //   room_line_marker.color.r = color_r; 
-    //   room_line_marker.color.g = color_g;
-    //   room_line_marker.color.b = color_b;  
-    //   room_line_marker.color.a = 0.4;
-    //   geometry_msgs::Point p1,p2,p3,p4,p5;
-    //   p1.x = room_snapshot[i].node->estimate()(0);
-    //   p1.y = room_snapshot[i].node->estimate()(1);
-    //   p1.z = room_edge_h;
+      //fill in the line marker
+      visualization_msgs::Marker room_line_marker;
+      room_line_marker.scale.x = 0.05;
+      room_line_marker.pose.orientation.w = 1.0;
+      room_line_marker.ns = "rooms_lines";
+      room_line_marker.header.frame_id = map_frame_id;
+      room_line_marker.header.stamp = stamp;
+      room_line_marker.id = markers.markers.size()+1;
+      room_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      room_line_marker.color.r = color_r; 
+      room_line_marker.color.g = color_g;
+      room_line_marker.color.b = color_b;  
+      room_line_marker.color.a = 0.4;
+      geometry_msgs::Point p1,p2,p3,p4,p5;
+      p1.x = room_snapshot[i].node->estimate()(0);
+      p1.y = room_snapshot[i].node->estimate()(1);
+      p1.z = room_edge_h;
             
-    //   auto found_planex1 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_x1_id);
-    //   auto found_planex2 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_x2_id);
-    //   auto found_planey1 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_y1_id);
-    //   auto found_planey2 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_y2_id);
+      auto found_planex1 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_x1_id);
+      auto found_planex2 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_x2_id);
+      auto found_planey1 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_y1_id);
+      auto found_planey2 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_y2_id);
 
-    //   float min_dist_x1 = 100; 
-    //   for(int p=0; p < (*found_planex1).cloud_seg_map->points.size(); ++p) {
-    //     geometry_msgs::Point p_tmp;
-    //     p_tmp.x =  (*found_planex1).cloud_seg_map->points[p].x;
-    //     p_tmp.y =  (*found_planex1).cloud_seg_map->points[p].y;
-    //     p_tmp.z =  corridor_point_h;
+      float min_dist_x1 = 100; 
+      for(int p=0; p < (*found_planex1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planex1).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planex1).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
         
-    //     float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-    //     if (norm < min_dist_x1) {
-    //       min_dist_x1 = norm;       
-    //       p2 = p_tmp;
-    //     } 
-    //   }
-    //   room_line_marker.points.push_back(p1);
-    //   room_line_marker.points.push_back(p2);
+        if (norm < min_dist_x1) {
+          min_dist_x1 = norm;       
+          p2 = p_tmp;
+        } 
+      }
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p2);
 
-    //   float min_dist_x2 = 100; 
-    //   for(int p=0; p < (*found_planex2).cloud_seg_map->points.size(); ++p) {
-    //     geometry_msgs::Point p_tmp;
-    //     p_tmp.x =  (*found_planex2).cloud_seg_map->points[p].x;
-    //     p_tmp.y =  (*found_planex2).cloud_seg_map->points[p].y;
-    //     p_tmp.z =  corridor_point_h;
+      float min_dist_x2 = 100; 
+      for(int p=0; p < (*found_planex2).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planex2).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planex2).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
         
-    //     float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-    //     if (norm < min_dist_x2) {
-    //       min_dist_x2 = norm;       
-    //       p3 = p_tmp;
-    //     } 
-    //   }
-    //   room_line_marker.points.push_back(p1);
-    //   room_line_marker.points.push_back(p3);
+        if (norm < min_dist_x2) {
+          min_dist_x2 = norm;       
+          p3 = p_tmp;
+        } 
+      }
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p3);
 
-    //   float min_dist_y1 = 100; 
-    //   for(int p=0; p < (*found_planey1).cloud_seg_map->points.size(); ++p) {
-    //     geometry_msgs::Point p_tmp;
-    //     p_tmp.x =  (*found_planey1).cloud_seg_map->points[p].x;
-    //     p_tmp.y =  (*found_planey1).cloud_seg_map->points[p].y;
-    //     p_tmp.z =  corridor_point_h;
+      float min_dist_y1 = 100; 
+      for(int p=0; p < (*found_planey1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planey1).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planey1).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
         
-    //     float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-    //     if (norm < min_dist_y1) {
-    //       min_dist_y1 = norm;       
-    //       p4 = p_tmp;
-    //     } 
-    //   }
-    //   room_line_marker.points.push_back(p1);
-    //   room_line_marker.points.push_back(p4);
+        if (norm < min_dist_y1) {
+          min_dist_y1 = norm;       
+          p4 = p_tmp;
+        } 
+      }
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p4);
 
-    //   float min_dist_y2 = 100; 
-    //   for(int p=0; p < (*found_planey2).cloud_seg_map->points.size(); ++p) {
-    //     geometry_msgs::Point p_tmp;
-    //     p_tmp.x =  (*found_planey2).cloud_seg_map->points[p].x;
-    //     p_tmp.y =  (*found_planey2).cloud_seg_map->points[p].y;
-    //     p_tmp.z =  corridor_point_h;
+      float min_dist_y2 = 100; 
+      for(int p=0; p < (*found_planey2).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x =  (*found_planey2).cloud_seg_map->points[p].x;
+        p_tmp.y =  (*found_planey2).cloud_seg_map->points[p].y;
+        p_tmp.z =  corridor_point_h;
         
-    //     float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x),2) + std::pow((p1.y - p_tmp.y),2) + std::pow((p1.z - p_tmp.z),2));
 
-    //     if (norm < min_dist_y2) {
-    //       min_dist_y2 = norm;       
-    //       p5 = p_tmp;
-    //     } 
-    //   }      
-    //   room_line_marker.points.push_back(p1);
-    //   room_line_marker.points.push_back(p5);
+        if (norm < min_dist_y2) {
+          min_dist_y2 = norm;       
+          p5 = p_tmp;
+        } 
+      }      
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p5);
   
-    //   markers.markers.push_back(room_line_marker); 
-    // }
-    // markers.markers.push_back(room_marker); 
+      markers.markers.push_back(room_line_marker); 
+    }
+    markers.markers.push_back(room_marker); 
 
-    // //final line markers for printing different layers for abstraction
-    // visualization_msgs::Marker robot_layer_marker;
-    // robot_layer_marker.scale.z = 1.5;
-    // robot_layer_marker.ns = "layer_marker";
-    // robot_layer_marker.header.frame_id = map_frame_id;
-    // robot_layer_marker.header.stamp = stamp;
-    // robot_layer_marker.id = markers.markers.size();
-    // robot_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    // robot_layer_marker.pose.position.x = 0.0;
-    // robot_layer_marker.pose.position.y = 30.0;
-    // robot_layer_marker.pose.position.z = 0.0;
-    // robot_layer_marker.color.a = 1; 
-    // robot_layer_marker.pose.orientation.w = 1.0;
-    // robot_layer_marker.color.r = color_r;  
-    // robot_layer_marker.color.g = color_g;
-    // robot_layer_marker.color.b = color_b;  
-    // robot_layer_marker.text = "Robot Tracking Layer";
-    // markers.markers.push_back(robot_layer_marker);
+    //final line markers for printing different layers for abstraction
+    visualization_msgs::Marker robot_layer_marker;
+    robot_layer_marker.scale.z = 1.5;
+    robot_layer_marker.ns = "layer_marker";
+    robot_layer_marker.header.frame_id = map_frame_id;
+    robot_layer_marker.header.stamp = stamp;
+    robot_layer_marker.id = markers.markers.size();
+    robot_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+    robot_layer_marker.pose.position.x = 0.0;
+    robot_layer_marker.pose.position.y = 30.0;
+    robot_layer_marker.pose.position.z = 0.0;
+    robot_layer_marker.color.a = 1; 
+    robot_layer_marker.pose.orientation.w = 1.0;
+    robot_layer_marker.color.r = color_r;  
+    robot_layer_marker.color.g = color_g;
+    robot_layer_marker.color.b = color_b;  
+    robot_layer_marker.text = "Robot Tracking Layer";
+    markers.markers.push_back(robot_layer_marker);
 
-    // if(!y_plane_snapshot.empty() || !x_plane_snapshot.empty()) {
-    //   visualization_msgs::Marker semantic_layer_marker;
-    //   semantic_layer_marker.scale.z = 1.5;
-    //   semantic_layer_marker.ns = "layer_marker";
-    //   semantic_layer_marker.header.frame_id = map_frame_id;
-    //   semantic_layer_marker.header.stamp = stamp;
-    //   semantic_layer_marker.id = markers.markers.size();
-    //   semantic_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    //   semantic_layer_marker.pose.position.x = 0.0;
-    //   semantic_layer_marker.pose.position.y = 30.0;
-    //   semantic_layer_marker.pose.position.z = 5.0;
-    //   semantic_layer_marker.color.r = color_r;  
-    //   semantic_layer_marker.color.g = color_g; 
-    //   semantic_layer_marker.color.b = color_b;  
-    //   semantic_layer_marker.color.a = 1; 
-    //   semantic_layer_marker.pose.orientation.w = 1.0;
-    //   semantic_layer_marker.text = "Metric-Semantic Layer";
-    //   markers.markers.push_back(semantic_layer_marker);
-    // }
+    if(!y_plane_snapshot.empty() || !x_plane_snapshot.empty()) {
+      visualization_msgs::Marker semantic_layer_marker;
+      semantic_layer_marker.scale.z = 1.5;
+      semantic_layer_marker.ns = "layer_marker";
+      semantic_layer_marker.header.frame_id = map_frame_id;
+      semantic_layer_marker.header.stamp = stamp;
+      semantic_layer_marker.id = markers.markers.size();
+      semantic_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      semantic_layer_marker.pose.position.x = 0.0;
+      semantic_layer_marker.pose.position.y = 30.0;
+      semantic_layer_marker.pose.position.z = 5.0;
+      semantic_layer_marker.color.r = color_r;  
+      semantic_layer_marker.color.g = color_g; 
+      semantic_layer_marker.color.b = color_b;  
+      semantic_layer_marker.color.a = 1; 
+      semantic_layer_marker.pose.orientation.w = 1.0;
+      semantic_layer_marker.text = "Metric-Semantic Layer";
+      markers.markers.push_back(semantic_layer_marker);
+    }
 
-    // if(!x_corridor_snapshot.empty() || !y_corridor_snapshot.empty() || !room_snapshot.empty()) {
-    //   visualization_msgs::Marker topological_layer_marker;
-    //   topological_layer_marker.scale.z = 1.5;
-    //   topological_layer_marker.ns = "layer_marker";
-    //   topological_layer_marker.header.frame_id = map_frame_id;
-    //   topological_layer_marker.header.stamp = stamp;
-    //   topological_layer_marker.id = markers.markers.size();
-    //   topological_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    //   topological_layer_marker.pose.position.x = 0.0;
-    //   topological_layer_marker.pose.position.y = 30.0;
-    //   topological_layer_marker.pose.position.z = 12.0;
-    //   topological_layer_marker.color.r = color_r;  
-    //   topological_layer_marker.color.g = color_g; 
-    //   topological_layer_marker.color.b = color_b;  
-    //   topological_layer_marker.color.a = 1; 
-    //   topological_layer_marker.pose.orientation.w = 1.0;
-    //   topological_layer_marker.text = "Topological Layer";
-    //   markers.markers.push_back(topological_layer_marker);
-    // }
+    if(!x_corridor_snapshot.empty() || !y_corridor_snapshot.empty() || !room_snapshot.empty()) {
+      visualization_msgs::Marker topological_layer_marker;
+      topological_layer_marker.scale.z = 1.5;
+      topological_layer_marker.ns = "layer_marker";
+      topological_layer_marker.header.frame_id = map_frame_id;
+      topological_layer_marker.header.stamp = stamp;
+      topological_layer_marker.id = markers.markers.size();
+      topological_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      topological_layer_marker.pose.position.x = 0.0;
+      topological_layer_marker.pose.position.y = 30.0;
+      topological_layer_marker.pose.position.z = 12.0;
+      topological_layer_marker.color.r = color_r;  
+      topological_layer_marker.color.g = color_g; 
+      topological_layer_marker.color.b = color_b;  
+      topological_layer_marker.color.a = 1; 
+      topological_layer_marker.pose.orientation.w = 1.0;
+      topological_layer_marker.text = "Topological Layer";
+      markers.markers.push_back(topological_layer_marker);
+    }
 
     return markers;
   }
