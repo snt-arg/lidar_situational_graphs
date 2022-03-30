@@ -2521,7 +2521,7 @@ private:
           pt2 = Eigen::Vector3d(pt1.x(), pt1.y(), 3.0);
           b=0.0; 
         }
-        else if (fabs(v2->estimate().normal()(1)) > fabs(v2->estimate().normal()(0)) && fabs(v2->estimate().normal()(1)) > fabs(v2->estimate().normal()(2))) {
+        else if (fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(0)) && fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(1))) {
           for(auto h_plane : hort_plane_snapshot) {
           if (h_plane.id == v2->id()) {
             double x=0, y=0;
