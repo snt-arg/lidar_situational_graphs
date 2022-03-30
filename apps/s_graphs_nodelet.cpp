@@ -143,6 +143,7 @@ public:
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
     
     plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
+    plane_points_dist = private_nh.param<double>("plane_points_dist", 0.5);
     constant_covariance  = private_nh.param<bool>("constant_covariance", true);
     min_plane_points = private_nh.param<double>("min_plane_points", 100);
     use_point_to_plane = private_nh.param<bool>("use_point_to_plane", false);
@@ -686,7 +687,7 @@ private:
           min_segment = get_min_segment(x_vert_planes[data_association.second].cloud_seg_map,cloud_seg_detected);
           //std::cout << "X plane min maha distance: " << vert_min_maha_dist << std::endl;
           //std::cout << "X plane min segment: " << min_segment << std::endl;
-          if (min_segment > 0.5) {
+          if (min_segment > plane_points_dist) {
             data_association.first = -1;
           }
         }
@@ -727,7 +728,7 @@ private:
           //std::cout << "Y plane min maha distance: " << vert_min_maha_dist << std::endl;
           //std::cout << "Y plane min segment: " << min_segment << std::endl;
           //std::cout << "Y plane coeffs: " << y_vert_planes[data_association.second].plane.coeffs() << std::endl;
-          if (min_segment > 0.5) {
+          if (min_segment > plane_points_dist) {
             data_association.first = -1;
           }
         }
@@ -3334,6 +3335,7 @@ private:
 
   //vertical and horizontal planes
   double plane_dist_threshold;
+  double plane_points_dist;
   bool constant_covariance;
   double min_plane_points;
   bool use_point_to_plane;
