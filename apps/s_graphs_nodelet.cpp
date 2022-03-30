@@ -2114,7 +2114,6 @@ private:
         continue;        
         }
 
-        /* TODO: analyze if connecting corridor node with (*it).second.plane is necessary  */
         g2o::EdgeCorridorXPlane* edge_corridor_xplane = dynamic_cast<g2o::EdgeCorridorXPlane*>(*edge_itr);
         if(edge_corridor_xplane) {
           /* remove the edge between the corridor and the duplicate found plane */
@@ -2127,6 +2126,14 @@ private:
           } else if((*found_x_corridor).plane2_id == (*it).first.id) {
             (*found_x_corridor).plane2_id = (*it).second.id; (*found_x_corridor).plane2 = (*it).second.plane;
           }
+          /* Add edge between corridor and current mapped plane */  
+          Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
+          correct_plane_d(plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
+          double meas_plane1 =  corridor_measurement(plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
+          Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
+          auto edge_plane = graph_slam->add_corridor_xplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
+          graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
+
           if(graph_slam->remove_corridor_xplane_edge(edge_corridor_xplane)) 
             std::cout << "removed edge - corridor xplane " << std::endl;
           continue;    
@@ -2185,6 +2192,14 @@ private:
           } else if((*found_y_corridor).plane2_id == (*it).first.id) {
             (*found_y_corridor).plane2_id = (*it).second.id; (*found_y_corridor).plane2 = (*it).second.plane;
           }
+
+          /* Add edge between corridor and current mapped plane */  
+          Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
+          correct_plane_d(plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
+          double meas_plane1 =  corridor_measurement(plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
+          Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
+          auto edge_plane = graph_slam->add_corridor_yplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
+          graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
 
           if(graph_slam->remove_corridor_yplane_edge(edge_corridor_yplane)) 
             std::cout << "removed edge - corridor yplane " << std::endl;
