@@ -2150,6 +2150,15 @@ private:
           } else if((*found_room).plane_x2_id == (*it).first.id) {
             (*found_room).plane_x2_id = (*it).second.id; (*found_room).plane_x2 = (*it).second.plane;
           }
+
+          /* Add edge between room and current mapped plane */
+          Eigen::Vector4d found_mapped_x_plane1_coeffs = (*it).second.plane_node->estimate().coeffs(); 
+          correct_plane_d(plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
+          double x_plane1_meas =  room_measurement(plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
+          Eigen::Matrix<double, 1, 1> information_room_plane(room_information);
+          auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*it).second.plane_node, x_plane1_meas, information_room_plane);
+          graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
+
           if(graph_slam->remove_room_xplane_edge(edge_room_xplane)) 
             std::cout << "removed edge - room xplane " << std::endl;
           continue;    
@@ -2215,7 +2224,15 @@ private:
           } else if((*found_room).plane_y2_id == (*it).first.id) {
             (*found_room).plane_y2_id = (*it).second.id; (*found_room).plane_y2 = (*it).second.plane;
           }
-          
+
+          /* Add edge between room and current mapped plane */
+          Eigen::Vector4d found_mapped_y_plane1_coeffs = (*it).second.plane_node->estimate().coeffs(); 
+          correct_plane_d(plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs);
+          double y_plane1_meas =  room_measurement(plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
+          Eigen::Matrix<double, 1, 1> information_room_plane(room_information);
+          auto edge_y_plane1 = graph_slam->add_room_xplane_edge(room_node, (*it).second.plane_node, y_plane1_meas, information_room_plane);
+          graph_slam->add_robust_kernel(edge_y_plane1, "Huber", 1.0);
+
           if(graph_slam->remove_room_yplane_edge(edge_room_yplane)) 
             std::cout << "removed edge - room yplane " << std::endl;
           continue;    
