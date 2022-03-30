@@ -157,6 +157,7 @@ public:
     corridor_max_width  = private_nh.param<double>("corridor_max_width", 2.5);
     corridor_plane_length_diff_threshold = private_nh.param<double>("corridor_plane_length_diff_threshold", 0.3);
     corridor_point_diff_threshold = private_nh.param<double>("corridor_point_diff_threshold", 3.0);
+    corridor_min_seg_dist = private_nh.param<double>("corridor_min_seg_dist", 1.5);
 
     use_room_constraint = private_nh.param<bool>("use_room_constraint", false); 
     room_information = private_nh.param<double>("room_information", 0.01);
@@ -1193,7 +1194,7 @@ private:
         } else
           plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map,plane2.cloud_seg_map);
         
-        if(dist < min_dist && (plane1_min_segment < 0.5 && plane2_min_segment < 0.5)) {
+        if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
           min_dist = dist;
           data_association.first = x_corridors[i].id;
           data_association.second = i;
@@ -1223,7 +1224,7 @@ private:
         } else
           plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map,plane2.cloud_seg_map);
 
-        if(dist < min_dist && (plane1_min_segment < 0.5 && plane2_min_segment < 0.5)) {
+        if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
           min_dist = dist;
           data_association.first = y_corridors[i].id;
           data_association.second = i;
@@ -3309,6 +3310,7 @@ private:
   double corridor_information;
   double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
   double corridor_plane_length_diff_threshold, corridor_point_diff_threshold;
+  double corridor_min_seg_dist;
   double room_information;
   double room_plane_length_diff_threshold, room_point_diff_threshold;
   double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width, room_max_width;
