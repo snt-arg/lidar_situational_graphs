@@ -217,13 +217,15 @@ public:
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
     double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
+    double top_constraint_interval = private_nh.param<double>("top_constraint_interval",1.0);
     optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
     map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
+    topological_constraint_timer = mt_nh.createWallTimer(ros::WallDuration(top_constraint_interval), &SGraphsNodelet::topogological_constraint_callback, this);
   }
 
 private:
    /**
-   * @brief receive the raw odom msg to publish the corrected odom after 
+   * @brief receive the raw odom msg to publish the corrected odom after s
    * 
    */
   void raw_odom_callback(const nav_msgs::OdometryConstPtr& odom_msg) {
@@ -2091,6 +2093,14 @@ private:
 
   }  
 
+  /**
+   * @brief topological thread for finding room/corridor constraints for detected planes
+   * @param event
+   */
+  void topogological_constraint_callback(const ros::WallTimerEvent& event) {
+    std::cout << "Inside Topological constraint callback " << std::endl;
+  } 
+
   /** 
   * @brief merge all the duplicate x and y planes detected by room/corridors
   */
@@ -3269,6 +3279,7 @@ private:
   ros::NodeHandle private_nh;
   ros::WallTimer optimization_timer;
   ros::WallTimer map_publish_timer;
+  ros::WallTimer topological_constraint_timer;
 
   std::unique_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;
