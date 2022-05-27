@@ -346,7 +346,7 @@ private:
 
         const auto& keyframe = found->second;
         keyframe->cloud_seg_body = cloud_seg_body;
-    
+        
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
         bool found_corridor_candidates = false; bool found_room_candidates = false;
         plane_data_list plane_id_pair;
@@ -526,6 +526,7 @@ private:
   */
   int factor_planes(KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_map_frame, g2o::Plane3D det_plane_body_frame, int plane_type) {
     g2o::VertexPlane* plane_node; 
+    int plane_id = -1;
 
     Eigen::Matrix4d Gij;
     Gij.setZero();  
@@ -565,11 +566,14 @@ private:
           vert_plane.cloud_seg_map = nullptr;
           vert_plane.covariance = Eigen::Matrix3d::Identity();
           x_vert_planes.push_back(vert_plane);
+          keyframe->x_plane_ids.push_back(vert_plane.id);
+          
           ROS_DEBUG_NAMED("xplane association", "Added new x vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
           plane_node = x_vert_planes[data_association.second].plane_node;
           x_vert_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
           x_vert_planes[data_association.second].keyframe_node_vec.push_back(keyframe->node);
+          keyframe->x_plane_ids.push_back(x_vert_planes[data_association.second].id);
 
           ROS_DEBUG_NAMED("xplane association", "matched x vert plane with coeffs %f %f %f %f to mapped x vert plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3),
                           x_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), x_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
@@ -592,11 +596,15 @@ private:
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         y_vert_planes.push_back(vert_plane);
+        keyframe->y_plane_ids.push_back(vert_plane.id);
+        
         ROS_DEBUG_NAMED("yplane association", "Added new y vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
           plane_node = y_vert_planes[data_association.second].plane_node;
           y_vert_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
           y_vert_planes[data_association.second].keyframe_node_vec.push_back(keyframe->node);
+          keyframe->y_plane_ids.push_back(y_vert_planes[data_association.second].id);
+          
           ROS_DEBUG_NAMED("yplane association", "matched y vert plane with coeffs %f %f %f %f to mapped y vert plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3),
                           y_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), y_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
                           y_vert_planes[data_association.second].plane_node->estimate().coeffs()(2),y_vert_planes[data_association.second].plane_node->estimate().coeffs()(3));
@@ -618,11 +626,15 @@ private:
           hort_plane.cloud_seg_map = nullptr;
           hort_plane.covariance = Eigen::Matrix3d::Identity();
           hort_planes.push_back(hort_plane);
+          keyframe->hort_plane_ids.push_back(hort_plane.id);
+          
           ROS_DEBUG_NAMED("hort plane association", "Added new horizontal plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
           plane_node = hort_planes[data_association.second].plane_node;
           hort_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
           hort_planes[data_association.second].keyframe_node_vec.push_back(keyframe->node);
+          keyframe->hort_plane_ids.push_back(hort_planes[data_association.second].id);
+          
           ROS_DEBUG_NAMED("hort plane association", "matched hort plane with coeffs %f %f %f %f to mapped hort plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3), 
                           hort_planes[data_association.second].plane_node->estimate().coeffs()(0), hort_planes[data_association.second].plane_node->estimate().coeffs()(1),
                           hort_planes[data_association.second].plane_node->estimate().coeffs()(2), hort_planes[data_association.second].plane_node->estimate().coeffs()(3));
@@ -2099,6 +2111,9 @@ private:
    */
   void topogological_constraint_callback(const ros::WallTimerEvent& event) {
     std::cout << "Inside Topological constraint callback " << std::endl;
+    for(auto& keyframe : keyframes) {
+      std::cout << "keyframe id " << keyframe->id() << " has x planes " << keyframe->x_plane_ids.size() << " has y planes " << keyframe->y_plane_ids.size() << std::endl;
+    }
   } 
 
   /** 
