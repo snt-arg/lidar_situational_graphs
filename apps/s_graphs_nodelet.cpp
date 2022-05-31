@@ -119,7 +119,7 @@ public:
     trans_odom2map.setIdentity();
     odom_path_vec.clear();
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
-
+    previous_keyframe_size = 0;
     //
     anchor_node = nullptr;
     anchor_edge = nullptr;
@@ -220,7 +220,7 @@ public:
     double top_constraint_interval = private_nh.param<double>("top_constraint_interval",1.0);
     optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
     map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
-    topological_constraint_timer = mt_nh.createWallTimer(ros::WallDuration(top_constraint_interval), &SGraphsNodelet::topogological_constraint_callback, this);
+    topological_constraint_timer = mt_nh.createWallTimer(ros::WallDuration(top_constraint_interval), &SGraphsNodelet::topological_constraint_callback, this);
   }
 
 private:
@@ -416,83 +416,9 @@ private:
     else if(fabs(det_plane_map_frame.coeffs()(2)) > fabs(det_plane_map_frame.coeffs()(0)) && fabs(det_plane_map_frame.coeffs()(2)) > fabs(det_plane_map_frame.coeffs()(1))) 
       plane_type = plane_class::HORT_PLANE;
 
-    switch (plane_type) {
-      case plane_class::X_VERT_PLANE: { 
-        plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
-        ROS_DEBUG_NAMED("xplane information","det xplane map frame %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
-        /* check for potential x corridor and room candidates */
-        pcl::PointXY start_point, end_point;
-        float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);       
-        ROS_DEBUG_NAMED("xplane information","length x plane %f", length);
-        Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-        correct_plane_d(plane_type, plane_unflipped);
-
-        //x_plane_id_pair.plane = det_plane_map_frame; 
-        plane_id_pair.plane_local = det_plane_body_frame; 
-        plane_id_pair.plane_unflipped = plane_unflipped;
-        plane_id_pair.plane_length = length;
-        if(start_point.y < end_point.y) {
-          plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point; 
-        }
-        else {
-          plane_id_pair.start_point = end_point; plane_id_pair.end_point = start_point;
-        }
-        plane_id_pair.plane_id = plane_id; 
-        plane_id_pair.keyframe_node = keyframe->node;  
-
-        if(length >= corridor_min_plane_length) {
-          ROS_DEBUG_NAMED("xplane information", "Added x plane as corridor");
-          found_corridor = true;
-        } 
-        if(length >= room_min_plane_length && length <= room_max_plane_length) {
-          ROS_DEBUG_NAMED("xplane information", "Added x plane as room");
-          found_room = true;
-        }  
-        break;
-    }
-    case plane_class::Y_VERT_PLANE: {
-      plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
-      ROS_DEBUG_NAMED("yplane information","det yplane map frame %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
-      
-      /* check for potential y corridor and room candidates */
-      pcl::PointXY start_point, end_point;
-      float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);  
-      ROS_DEBUG_NAMED("yplane information","length y plane %f", length);
-      Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-      correct_plane_d(plane_type, plane_unflipped);
-      
-      //y_plane_id_pair.plane = det_plane_map_frame; 
-      plane_id_pair.plane_local = det_plane_body_frame; 
-      plane_id_pair.plane_unflipped = plane_unflipped;
-      if(start_point.x < end_point.x) {
-        plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point;
-      }
-      else {
-        plane_id_pair.start_point = end_point; plane_id_pair.end_point = start_point;
-      }
-      plane_id_pair.plane_length = length;
-      plane_id_pair.plane_id = plane_id; 
-      plane_id_pair.keyframe_node = keyframe->node;
-
-      if(length >= corridor_min_plane_length) {
-        ROS_DEBUG_NAMED("yplane information", "Added y plane as corridor");
-        found_corridor = true;
-      } 
-      if (length >= room_min_plane_length && length <= room_max_plane_length) {
-        ROS_DEBUG_NAMED("yplane information", "Added y plane as room");
-        found_room = true;
-      }
-      break;
-    }
-    case plane_class::HORT_PLANE: {
-      plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
-      break;
-    }
-    default:
-      std::cout << "No planes found for mapping " << std::endl;
-      break;
-    }
-      
+    plane_id = sort_planes(plane_type, keyframe, det_plane_map_frame, det_plane_body_frame); 
+    get_plane_properties(plane_type, plane_id, keyframe, det_plane_map_frame, found_corridor, found_room, plane_id_pair);
+     
    return plane_type; 
   }
 
@@ -784,6 +710,118 @@ private:
      
     return data_association;
   }
+
+  /**
+   * @brief get the plane length and add potential candidates for room/corridors function 1
+   * 
+   */
+  void get_plane_properties(int plane_type, int plane_id, KeyFrame::Ptr keyframe, g2o::Plane3D det_plane_map_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
+      
+      switch (plane_type) {
+        case plane_class::X_VERT_PLANE: { 
+          /* check for potential x corridor and room candidates */
+          pcl::PointXY start_point, end_point;
+          float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);       
+          ROS_DEBUG_NAMED("xplane information","length x plane %f", length);
+          Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
+          correct_plane_d(plane_type, plane_unflipped);
+
+          //x_plane_id_pair.plane = det_plane_map_frame; 
+          //plane_id_pair.plane_local = det_plane_body_frame; 
+          plane_id_pair.plane_unflipped = plane_unflipped;
+          plane_id_pair.plane_length = length;
+          if(start_point.y < end_point.y) {
+            plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point; 
+          }
+          else {
+            plane_id_pair.start_point = end_point; plane_id_pair.end_point = start_point;
+          }
+          plane_id_pair.plane_id = plane_id; 
+          plane_id_pair.keyframe_node = keyframe->node;  
+
+          if(length >= corridor_min_plane_length) {
+            ROS_DEBUG_NAMED("yplane information", "Added y plane as corridor");
+            found_corridor = true;
+          } 
+          if (length >= room_min_plane_length && length <= room_max_plane_length) {
+            ROS_DEBUG_NAMED("yplane information", "Added y plane as room");
+            found_room = true;
+          }
+          break;
+      }
+      case plane_class::Y_VERT_PLANE: {
+        /* check for potential y corridor and room candidates */
+        pcl::PointXY start_point, end_point;
+        float length =  plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);  
+        ROS_DEBUG_NAMED("yplane information","length y plane %f", length);
+        Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
+        correct_plane_d(plane_type, plane_unflipped);
+        
+        //y_plane_id_pair.plane = det_plane_map_frame; 
+        //plane_id_pair.plane_local = det_plane_body_frame; 
+        plane_id_pair.plane_unflipped = plane_unflipped;
+        if(start_point.x < end_point.x) {
+          plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point;
+        }
+        else {
+          plane_id_pair.start_point = end_point; plane_id_pair.end_point = start_point;
+        }
+        plane_id_pair.plane_length = length;
+        plane_id_pair.plane_id = plane_id; 
+        plane_id_pair.keyframe_node = keyframe->node;
+
+        if(length >= corridor_min_plane_length) {
+          ROS_DEBUG_NAMED("yplane information", "Added y plane as corridor");
+          found_corridor = true;
+        } 
+        if (length >= room_min_plane_length && length <= room_max_plane_length) {
+          ROS_DEBUG_NAMED("yplane information", "Added y plane as room");
+          found_room = true;
+        }
+        break;
+      }
+      case plane_class::HORT_PLANE: {
+        break;
+      }
+      default:
+        std::cout << "No planes found for mapping " << std::endl;
+        break;     
+    }
+  }
+
+
+  /**
+   * @brief get the plane length and add potential candidates for room/corridors function 2
+   * 
+   */
+  void get_plane_properties(int plane_type, VerticalPlanes vert_plane, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
+    
+    pcl::PointXY start_point, end_point;    
+    float length =  plane_length(vert_plane.cloud_seg_map, start_point, end_point);   
+    Eigen::Vector4d plane_unflipped = vert_plane.plane.coeffs();
+    correct_plane_d(plane_type, plane_unflipped);
+    
+    plane_id_pair.plane_unflipped = plane_unflipped;Identity
+    plane_id_pair.plane_length = length;
+    if(start_point.y < end_point.y) {
+      plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point; 
+    }
+    else {
+      plane_id_pair.start_point = end_point; plane_id_pair.end_point = start_point;
+    }
+    plane_id_pair.plane_id = vert_plane.id; 
+    plane_id_pair.keyframe_node = vert_plane.keyframe_node;  
+
+    std::cout << "plane length: " << length << std::endl;  
+    if(length >= corridor_min_plane_length) {
+      ROS_DEBUG_NAMED("yplane information", "Added plane as corridor");
+      found_corridor = true;
+    } 
+    if (length >= room_min_plane_length && length <= room_max_plane_length) {
+      ROS_DEBUG_NAMED("yplane information", "Added plane as room");
+      found_room = true;
+    }       
+   }
 
   void lookup_corridors(std::vector<plane_data_list> x_det_corridor_candidates, std::vector<plane_data_list> y_det_corridor_candidates) {
     std::vector<structure_data_list> x_corridor = sort_corridors(plane_class::X_VERT_PLANE, x_det_corridor_candidates);  
@@ -1568,6 +1606,16 @@ private:
     return length;
   } 
 
+  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2) {
+    PointNormal pmin, pmax;
+    pcl::getMaxSegment(*cloud_seg, pmin, pmax);
+    p1.x = pmin.x; p1.y = pmin.y;       
+    p2.x = pmax.x; p2.y = pmax.y;
+    float length = pcl::euclideanDistance(p1,p2);
+    
+    return length;
+  } 
+
   float get_min_segment(const pcl::PointCloud<PointNormal>::Ptr &cloud_1, const pcl::PointCloud<PointNormal>::Ptr &cloud_2)
   {
     float min_dist = std::numeric_limits<float>::max();
@@ -2109,11 +2157,63 @@ private:
    * @brief topological thread for finding room/corridor constraints for detected planes
    * @param event
    */
-  void topogological_constraint_callback(const ros::WallTimerEvent& event) {
-    std::cout << "Inside Topological constraint callback " << std::endl;
-    for(auto& keyframe : keyframes) {
-      std::cout << "keyframe id " << keyframe->id() << " has x planes " << keyframe->x_plane_ids.size() << " has y planes " << keyframe->y_plane_ids.size() << std::endl;
+  void topological_constraint_callback(const ros::WallTimerEvent& event) {    
+    int keyframe_size = keyframes.size()-1;
+    int min_keyframe_window_size = 2;
+    int keyframe_window_size = 10;
+    
+    if(keyframes.size() < min_keyframe_window_size) 
+      return;
+
+    if(keyframes.size() - previous_keyframe_size == 0)
+      return;
+    previous_keyframe_size = keyframes.size();   
+
+
+    std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
+    std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
+    for(int i = 0; i < keyframe_window.size(); ++i) {
+      for(const auto& x_plane_id : keyframe_window[i]->x_plane_ids) {
+        //std::cout << "keyframe id " << keyframe_window[i]->id() << " has x plane with id " << x_plane_id << std::endl; 
+        auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));  
+        //if (result.second == false)
+        //  std::cout << "x plane already existed with id : " <<  x_plane_id << std::endl;
+      }
+
+      for(const auto& y_plane_id : keyframe_window[i]->y_plane_ids) {
+        //std::cout << "keyframe id " << keyframe_window[i]->id() << " has y plane with id " << y_plane_id << std::endl; 
+        auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));  
+        //if (result.second == false)
+        //  std::cout << "y plane already existed with id : " <<  y_plane_id << std::endl;       
+      } 
     }
+    std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
+    for(const auto& unique_x_plane_id : unique_x_plane_ids) {
+      std::cout << "x planes with ids: " << unique_x_plane_id.first << std::endl;
+      auto found_x_plane = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_x_plane_id.first);
+      bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
+      get_plane_properties(plane_class::X_VERT_PLANE, (*found_x_plane), found_corridor, found_room, plane_id_pair);
+      //if(found_corridor)
+      //  std::cout << "found corridor from x planes " << std::endl;
+      if(found_room) {
+        std::cout << "found room from x planes " << std::endl;   
+        x_det_room_candidates.push_back(plane_id_pair);
+      }
+     }
+
+    for(const auto& unique_y_plane_id : unique_y_plane_ids) {
+      std::cout << "y planes with ids: " << unique_y_plane_id.first << std::endl;
+      auto found_y_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_y_plane_id.first);
+      bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
+      get_plane_properties(plane_class::Y_VERT_PLANE, (*found_y_plane), found_corridor, found_room, plane_id_pair);
+      //if(found_corridor)
+      //  std::cout << "found corridor from y planes " << std::endl;
+      if(found_room) {
+        std::cout << "found room from y planes " << std::endl; 
+        y_det_room_candidates.push_back(plane_id_pair);
+      }
+    }
+    lookup_rooms(x_det_room_candidates, y_det_room_candidates);     
   } 
 
   /** 
@@ -3420,6 +3520,7 @@ private:
 
   int max_keyframes_per_update;
   std::deque<KeyFrame::Ptr> new_keyframes;
+  int previous_keyframe_size;
 
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;
