@@ -801,7 +801,7 @@ private:
     Eigen::Vector4d plane_unflipped = vert_plane.plane.coeffs();
     correct_plane_d(plane_type, plane_unflipped);
     
-    plane_id_pair.plane_unflipped = plane_unflipped;Identity
+    plane_id_pair.plane_unflipped = plane_unflipped;
     plane_id_pair.plane_length = length;
     if(start_point.y < end_point.y) {
       plane_id_pair.start_point = start_point; plane_id_pair.end_point = end_point; 
@@ -2160,7 +2160,7 @@ private:
   void topological_constraint_callback(const ros::WallTimerEvent& event) {    
     int keyframe_size = keyframes.size()-1;
     int min_keyframe_window_size = 2;
-    int keyframe_window_size = 10;
+    int keyframe_window_size = 5;
     
     if(keyframes.size() < min_keyframe_window_size) 
       return;
@@ -2213,7 +2213,8 @@ private:
         y_det_room_candidates.push_back(plane_id_pair);
       }
     }
-    lookup_rooms(x_det_room_candidates, y_det_room_candidates);     
+
+    //lookup_rooms(x_det_room_candidates, y_det_room_candidates);     
   } 
 
   /** 
