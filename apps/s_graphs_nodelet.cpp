@@ -2158,61 +2158,61 @@ private:
    * @param event
    */
   void topological_constraint_callback(const ros::WallTimerEvent& event) {    
-    int keyframe_size = keyframes.size()-1;
-    int min_keyframe_window_size = 2;
-    int keyframe_window_size = 5;
+    // int keyframe_size = keyframes.size()-1;
+    // int min_keyframe_window_size = 2;
+    // int keyframe_window_size = 5;
     
-    if(keyframes.size() < min_keyframe_window_size) 
-      return;
+    // if(keyframes.size() < min_keyframe_window_size) 
+    //   return;
 
-    if(keyframes.size() - previous_keyframe_size == 0)
-      return;
-    previous_keyframe_size = keyframes.size();   
+    // if(keyframes.size() - previous_keyframe_size == 0)
+    //   return;
+    // previous_keyframe_size = keyframes.size();   
 
 
-    std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
-    std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
-    for(int i = 0; i < keyframe_window.size(); ++i) {
-      for(const auto& x_plane_id : keyframe_window[i]->x_plane_ids) {
-        //std::cout << "keyframe id " << keyframe_window[i]->id() << " has x plane with id " << x_plane_id << std::endl; 
-        auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));  
-        //if (result.second == false)
-        //  std::cout << "x plane already existed with id : " <<  x_plane_id << std::endl;
-      }
+    // std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
+    // std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
+    // for(int i = 0; i < keyframe_window.size(); ++i) {
+    //   for(const auto& x_plane_id : keyframe_window[i]->x_plane_ids) {
+    //     //std::cout << "keyframe id " << keyframe_window[i]->id() << " has x plane with id " << x_plane_id << std::endl; 
+    //     auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));  
+    //     //if (result.second == false)
+    //     //  std::cout << "x plane already existed with id : " <<  x_plane_id << std::endl;
+    //   }
 
-      for(const auto& y_plane_id : keyframe_window[i]->y_plane_ids) {
-        //std::cout << "keyframe id " << keyframe_window[i]->id() << " has y plane with id " << y_plane_id << std::endl; 
-        auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));  
-        //if (result.second == false)
-        //  std::cout << "y plane already existed with id : " <<  y_plane_id << std::endl;       
-      } 
-    }
-    std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
-    for(const auto& unique_x_plane_id : unique_x_plane_ids) {
-      std::cout << "x planes with ids: " << unique_x_plane_id.first << std::endl;
-      auto found_x_plane = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_x_plane_id.first);
-      bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
-      get_plane_properties(plane_class::X_VERT_PLANE, (*found_x_plane), found_corridor, found_room, plane_id_pair);
-      //if(found_corridor)
-      //  std::cout << "found corridor from x planes " << std::endl;
-      if(found_room) {
-        std::cout << "found room from x planes " << std::endl;   
-        x_det_room_candidates.push_back(plane_id_pair);
-      }
-     }
+    //   for(const auto& y_plane_id : keyframe_window[i]->y_plane_ids) {
+    //     //std::cout << "keyframe id " << keyframe_window[i]->id() << " has y plane with id " << y_plane_id << std::endl; 
+    //     auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));  
+    //     //if (result.second == false)
+    //     //  std::cout << "y plane already existed with id : " <<  y_plane_id << std::endl;       
+    //   } 
+    // }
+    // std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
+    // for(const auto& unique_x_plane_id : unique_x_plane_ids) {
+    //   std::cout << "x planes with ids: " << unique_x_plane_id.first << std::endl;
+    //   auto found_x_plane = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_x_plane_id.first);
+    //   bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
+    //   get_plane_properties(plane_class::X_VERT_PLANE, (*found_x_plane), found_corridor, found_room, plane_id_pair);
+    //   //if(found_corridor)
+    //   //  std::cout << "found corridor from x planes " << std::endl;
+    //   if(found_room) {
+    //     std::cout << "found room from x planes " << std::endl;   
+    //     x_det_room_candidates.push_back(plane_id_pair);
+    //   }
+    //  }
 
-    for(const auto& unique_y_plane_id : unique_y_plane_ids) {
-      std::cout << "y planes with ids: " << unique_y_plane_id.first << std::endl;
-      auto found_y_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_y_plane_id.first);
-      bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
-      get_plane_properties(plane_class::Y_VERT_PLANE, (*found_y_plane), found_corridor, found_room, plane_id_pair);
-      //if(found_corridor)
-      //  std::cout << "found corridor from y planes " << std::endl;
-      if(found_room) {
-        std::cout << "found room from y planes " << std::endl; 
-        y_det_room_candidates.push_back(plane_id_pair);
-      }
-    }
+    // for(const auto& unique_y_plane_id : unique_y_plane_ids) {
+    //   std::cout << "y planes with ids: " << unique_y_plane_id.first << std::endl;
+    //   auto found_y_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_y_plane_id.first);
+    //   bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
+    //   get_plane_properties(plane_class::Y_VERT_PLANE, (*found_y_plane), found_corridor, found_room, plane_id_pair);
+    //   //if(found_corridor)
+    //   //  std::cout << "found corridor from y planes " << std::endl;
+    //   if(found_room) {
+    //     std::cout << "found room from y planes " << std::endl; 
+    //     y_det_room_candidates.push_back(plane_id_pair);
+    //   }
+    // }
 
     //lookup_rooms(x_det_room_candidates, y_det_room_candidates);     
   } 
