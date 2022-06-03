@@ -65,9 +65,10 @@ private:
   void init_ros() {
     skeleton_graph_sub  = nh.subscribe("/voxblox_skeletonizer/sparse_graph", 1, &RoomSegmentationNodelet::skeleton_graph_callback, this);  
   
-    cluster_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_cloud",1,true);
-    cluster_clouds_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_clouds",1,true);
-    room_data_pub_      = nh.advertise<s_graphs::Rooms>("/room_segmentation/room_data", 1, true);
+    cluster_cloud_pub_   = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_cloud",1,true);
+    cluster_clouds_pub_  = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_clouds",1,true);
+    room_data_pub_       = nh.advertise<s_graphs::Rooms>("/room_segmentation/room_data", 1, true);
+    room_centers_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_centers", 1, true);
   }
 
 /**
@@ -155,13 +156,13 @@ private:
     for(const auto& cloud_cluster : cloud_clusters) {
       pcl::PointXY p1; pcl::PointXY p2;
       cluster_endpoints(cloud_cluster, p1, p2);
-      std::cout << "cluster " << i << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
-      std::cout << "cluster " << i << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
-      geometry_msgs::Point room_length = temp_room_length(p1,p2);
-      std::cout << "length of the cluster in x : " << room_length.x << std::endl;    
-      std::cout << "length of the cluster in y : " << room_length.y << std::endl;    
-      geometry_msgs::Point room_center = temp_room_center(p1, p2);
-      std::cout << "temp room center is: " << room_center.x << " , " << room_center.y << std::endl; 
+      //std::cout << "cluster " << i << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
+      //std::cout << "cluster " << i << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
+      geometry_msgs::Point room_length = get_room_length(p1,p2);
+      //std::cout << "length of the cluster in x : " << room_length.x << std::endl;    
+      //std::cout << "length of the cluster in y : " << room_length.y << std::endl;    
+      geometry_msgs::Point room_center = get_room_center(p1, p2);
+      //std::cout << "temp room center is: " << room_center.x << " , " << room_center.y << std::endl; 
 
       s_graphs::Room room_candidate;
       room_candidate.id = i;
@@ -175,7 +176,8 @@ private:
     room_candidates_msg.header.stamp = ros::Time::now();
     room_candidates_msg.rooms = room_candidates_vec;
     room_data_pub_.publish(room_candidates_msg);
-    
+    viz_room_centers(room_candidates_msg);
+
     sensor_msgs::PointCloud2 cloud_cluster_msg;
     pcl::toROSMsg(*cloud_cluster, cloud_cluster_msg);
     cloud_cluster_msg.header.stamp = ros::Time::now();
@@ -193,24 +195,24 @@ private:
 
   } 
 
-  geometry_msgs::Point temp_room_length(pcl::PointXY p1, pcl::PointXY p2) {
-    geometry_msgs::Point temp_length; 
+  geometry_msgs::Point get_room_length(pcl::PointXY p1, pcl::PointXY p2) {
+    geometry_msgs::Point length; 
     if(fabs(p1.x) > fabs(p2.x)) {
-      temp_length.x = fabs(p1.x - p2.x);
+      length.x = fabs(p1.x - p2.x);
     }else {
-      temp_length.x = fabs(p2.x - p1.x);
+      length.x = fabs(p2.x - p1.x);
     }
     
     if(fabs(p1.y) > fabs(p2.y)) {
-      temp_length.y = fabs(p1.y - p2.y);
+      length.y = fabs(p1.y - p2.y);
     }else {
-      temp_length.y = fabs(p2.y - p1.y);
+      length.y = fabs(p2.y - p1.y);
     }
 
-    return temp_length;
+    return length;
   }
 
-  geometry_msgs::Point temp_room_center(pcl::PointXY p1, pcl::PointXY p2) {
+  geometry_msgs::Point get_room_center(pcl::PointXY p1, pcl::PointXY p2) {
     geometry_msgs::Point center; 
     if(fabs(p1.x) > fabs(p2.x)) {
       float size = p1.x - p2.x;
@@ -231,11 +233,42 @@ private:
     return center;
   }
 
+  void viz_room_centers(s_graphs::Rooms room_vec) {
+    visualization_msgs::Marker room_marker;
+    room_marker.pose.orientation.w = 1.0;
+    room_marker.scale.x = 0.5;
+    room_marker.scale.y = 0.5;
+    room_marker.scale.z = 0.5;
+    //plane_marker.points.resize(vert_planes.size());    
+    room_marker.header.frame_id = "map";
+    room_marker.header.stamp = ros::Time::now();
+    room_marker.ns = "rooms";
+    room_marker.id = 0;
+    room_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    room_marker.color.r = 1;
+    room_marker.color.g = 0.07;
+    room_marker.color.b = 0.0;
+    room_marker.color.a = 1; 
+
+    for(const auto& room : room_vec.rooms) {
+       geometry_msgs::Point point;
+       point.x = room.room_center.x;
+       point.y = room.room_center.y;
+       point.z = 7.0;
+       room_marker.points.push_back(point);
+    }
+
+    visualization_msgs::MarkerArray markers;
+    markers.markers.push_back(room_marker);
+    room_centers_pub_.publish(markers);
+  }
+
 private:
   ros::Subscriber skeleton_graph_sub;
   ros::Publisher  cluster_cloud_pub_;
   ros::Publisher  cluster_clouds_pub_;
   ros::Publisher  room_data_pub_;
+  ros::Publisher  room_centers_pub_;
 
   /* private variables */
 private:
