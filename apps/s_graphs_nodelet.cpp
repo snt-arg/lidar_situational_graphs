@@ -49,7 +49,8 @@
 #include <s_graphs/ros_utils.hpp>
 #include <s_graphs/ros_time_hash.hpp>
 #include <s_graphs/PointClouds.h>
-
+#include <s_graphs/RoomData.h>
+#include <s_graphs/RoomsData.h>
 
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/keyframe.hpp>
@@ -195,6 +196,7 @@ public:
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &SGraphsNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &SGraphsNodelet::floor_coeffs_callback, this);
     cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &SGraphsNodelet::cloud_seg_callback, this);
+    room_data_sub  = nh.subscribe("/room_segmentation/room_data", 1, &SGraphsNodelet::room_data_callback,this);
 
     if(private_nh.param<bool>("enable_gps", true)) {
       gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &SGraphsNodelet::gps_callback, this);
@@ -210,7 +212,6 @@ public:
 
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
-
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
 
@@ -255,6 +256,55 @@ private:
       return;
     else {
       got_trans_odom2map = true;
+    }
+  }
+
+  /**
+   * @brief get the room data from room segmentation module
+   * 
+   */
+  void room_data_callback(const s_graphs::RoomsData rooms_msg) {
+    std::lock_guard<std::mutex> lock (room_data_queue_mutex); 
+    pre_room_data_vec = rooms_msg.rooms;    
+    std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
+  }
+
+  /**
+   * @brief check if room data already exists
+   * 
+   */
+  void validate_rooms(const s_graphs::RoomsData rooms_msg) {
+    float room_center_diff_thres = 1.0; 
+    float room_length_diff_thres = 1.0;
+    for(const auto& room_msg : rooms_msg.rooms) {
+      bool room_exists = false;
+      float min_center_dist = room_center_diff_thres; //float max_length_dist = room_length_diff_thres;
+      std::cout << "Room msg: " << room_msg.room_center.x << " , " << room_msg.room_center.y << std::endl;
+      for(auto& curr_room_data : pre_room_data_vec) {
+      //room center check 
+      float center_diff_x = curr_room_data.room_center.x - room_msg.room_center.x; 
+      float center_diff_y = curr_room_data.room_center.y - room_msg.room_center.y; 
+      float center_dist = sqrt(std::pow(center_diff_x, 2) + std::pow(center_diff_y, 2));  
+
+      std::cout << "pre room queue: " << curr_room_data.room_center.x << " , " << curr_room_data.room_center.y << std::endl;
+      std::cout << "center_dist: " << center_dist << std::endl;
+      std::cout << "min center_dist: " << min_center_dist << std::endl;
+
+      float length_diff_x = curr_room_data.room_length.x - room_msg.room_length.x;
+      float length_diff_y = curr_room_data.room_length.y - room_msg.room_length.y;
+      float length_dist = sqrt(std::pow(length_diff_x, 2) + std::pow(length_diff_y, 2));
+      
+      if(center_dist < min_center_dist) {
+          min_center_dist = center_dist;
+          curr_room_data = room_msg;
+          room_exists = true;         
+        }
+        std::cout << "room_exists " << room_exists << std::endl;
+      }
+
+      if(!room_exists) {
+        pre_room_data_vec.push_back(room_msg);
+      }
     }
   }
 
@@ -3409,6 +3459,7 @@ private:
   ros::Subscriber raw_odom_sub;
   ros::Subscriber imu_sub;
   ros::Subscriber floor_sub;
+  ros::Subscriber room_data_sub;
 
   ros::Publisher markers_pub;
 
@@ -3504,6 +3555,11 @@ private:
   // Seg map queue
   std::mutex cloud_seg_mutex;
   std::deque<s_graphs::PointClouds::Ptr> clouds_seg_queue; 
+
+  // room data queue 
+  std::mutex room_data_queue_mutex;
+  std::vector<s_graphs::RoomData> pre_room_data_vec;
+  
 
   // for map cloud generation
   std::atomic_bool graph_updated;
