@@ -4,8 +4,8 @@
 #include <math.h>
 
 #include <s_graphs/PointClouds.h>
-#include <s_graphs/Room.h>
-#include <s_graphs/Rooms.h>
+#include <s_graphs/RoomData.h>
+#include <s_graphs/RoomsData.h>
 
 #include <ros/time.h>
 #include <nodelet/nodelet.h>
@@ -67,7 +67,7 @@ private:
   
     cluster_cloud_pub_   = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_cloud",1,true);
     cluster_clouds_pub_  = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_clouds",1,true);
-    room_data_pub_       = nh.advertise<s_graphs::Rooms>("/room_segmentation/room_data", 1, true);
+    room_data_pub_       = nh.advertise<s_graphs::RoomsData>("/room_segmentation/room_data", 1, true);
     room_centers_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_centers", 1, true);
   }
 
@@ -152,7 +152,7 @@ private:
     }
 
     int i=0;
-    std::vector<s_graphs::Room> room_candidates_vec;
+    std::vector<s_graphs::RoomData> room_candidates_vec;
     for(const auto& cloud_cluster : cloud_clusters) {
       pcl::PointXY p1; pcl::PointXY p2;
       cluster_endpoints(cloud_cluster, p1, p2);
@@ -164,7 +164,7 @@ private:
       geometry_msgs::Point room_center = get_room_center(p1, p2);
       //std::cout << "temp room center is: " << room_center.x << " , " << room_center.y << std::endl; 
 
-      s_graphs::Room room_candidate;
+      s_graphs::RoomData room_candidate;
       room_candidate.id = i;
       room_candidate.room_length = room_length;
       room_candidate.room_center = room_center;
@@ -172,7 +172,7 @@ private:
       i++;
     }  
 
-    s_graphs::Rooms room_candidates_msg;
+    s_graphs::RoomsData room_candidates_msg;
     room_candidates_msg.header.stamp = ros::Time::now();
     room_candidates_msg.rooms = room_candidates_vec;
     room_data_pub_.publish(room_candidates_msg);
@@ -233,7 +233,7 @@ private:
     return center;
   }
 
-  void viz_room_centers(s_graphs::Rooms room_vec) {
+  void viz_room_centers(s_graphs::RoomsData room_vec) {
     visualization_msgs::Marker room_marker;
     room_marker.pose.orientation.w = 1.0;
     room_marker.scale.x = 0.5;

@@ -58,8 +58,8 @@ add_message_files(FILES
   FloorCoeffs.msg
   ScanMatchingStatus.msg
   PointClouds.msg
-  Room.msg
-  Rooms.msg
+  RoomData.msg
+  RoomsData.msg
 )
 
 add_service_files(FILES
