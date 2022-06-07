@@ -51,6 +51,8 @@
 #include <s_graphs/PointClouds.h>
 #include <s_graphs/RoomData.h>
 #include <s_graphs/RoomsData.h>
+#include <s_graphs/PlaneData.h>
+#include <s_graphs/PlanesData.h>
 
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/keyframe.hpp>
@@ -211,6 +213,7 @@ public:
     odom_path_corrected_pub = mt_nh.advertise<nav_msgs::Path>("/s_graphs/odom_path_corrected",10);
 
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
+    map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes",1,true);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
@@ -2104,10 +2107,10 @@ private:
 
     sensor_msgs::PointCloud2Ptr cloud_msg(new sensor_msgs::PointCloud2());
     pcl::toROSMsg(*cloud, *cloud_msg);
-
+      
     auto markers = create_marker_array(ros::Time::now());
     markers_pub.publish(markers);
-    
+
     map_points_pub.publish(cloud_msg);
   }
 
@@ -2201,6 +2204,36 @@ private:
     geometry_msgs::TransformStamped ts = matrix2transform(keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
     odom2map_pub.publish(ts);
 
+    //publish mapped planes
+    s_graphs::PlanesData vert_planes_data;
+    vert_planes_data.header.stamp = keyframe->stamp;
+    for(const auto& local_x_vert_plane : x_vert_planes_snapshot) {
+      s_graphs::PlaneData plane_data;
+      Eigen::Vector4d mapped_plane_coeffs;
+      mapped_plane_coeffs = local_x_vert_plane.plane_node->estimate().coeffs(); 
+      correct_plane_d(plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      plane_data.id = local_x_vert_plane.id;
+      plane_data.nx = mapped_plane_coeffs(0); 
+      plane_data.ny = mapped_plane_coeffs(1); 
+      plane_data.nz = mapped_plane_coeffs(2); 
+      plane_data.d  = mapped_plane_coeffs(3); 
+      vert_planes_data.x_planes.push_back(plane_data);
+    }
+    
+    for(const auto& local_y_vert_plane : y_vert_planes_snapshot) {
+      s_graphs::PlaneData plane_data;
+      Eigen::Vector4d mapped_plane_coeffs;
+      mapped_plane_coeffs = local_y_vert_plane.plane_node->estimate().coeffs(); 
+      correct_plane_d(plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      plane_data.id = local_y_vert_plane.id;
+      plane_data.nx = mapped_plane_coeffs(0); 
+      plane_data.ny = mapped_plane_coeffs(1); 
+      plane_data.nz = mapped_plane_coeffs(2); 
+      plane_data.d  = mapped_plane_coeffs(3); 
+      vert_planes_data.y_planes.push_back(plane_data);
+    }
+    map_planes_pub.publish(vert_planes_data);
+    
   }  
 
   /**
@@ -3478,6 +3511,7 @@ private:
   std::string points_topic;
   ros::Publisher read_until_pub;
   ros::Publisher map_points_pub;
+  ros::Publisher map_planes_pub;
 
   tf::TransformListener tf_listener;
 

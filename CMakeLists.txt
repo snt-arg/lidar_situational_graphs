@@ -60,6 +60,8 @@ add_message_files(FILES
   PointClouds.msg
   RoomData.msg
   RoomsData.msg
+  PlaneData.msg
+  PlanesData.msg
 )
 
 add_service_files(FILES
