@@ -2211,7 +2211,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = local_x_vert_plane.plane_node->estimate().coeffs(); 
-      correct_plane_d(plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      //correct_plane_d(plane_class::X_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = local_x_vert_plane.id;
       plane_data.nx = mapped_plane_coeffs(0); 
       plane_data.ny = mapped_plane_coeffs(1); 
@@ -2224,7 +2224,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = local_y_vert_plane.plane_node->estimate().coeffs(); 
-      correct_plane_d(plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      //correct_plane_d(plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = local_y_vert_plane.id;
       plane_data.nx = mapped_plane_coeffs(0); 
       plane_data.ny = mapped_plane_coeffs(1); 
