@@ -204,7 +204,7 @@ private:
       std::cout << "length of the cluster in y : " << room_length.y << std::endl;    
 
       float room_diff_thres = 3.0; 
-      if(fabs(room_length.x - room_length.y) > 3.0) {
+      if(room_length.x < 0.5 || room_length.y < 0.5) {
         i++;
         continue;
       }
@@ -356,8 +356,10 @@ private:
     bool found_x1_plane = false, found_x2_plane = false, found_y1_plane = false, found_y2_plane = false;
 
     for(const auto& x_plane : x_vert_plane_vec) {
-      //std::cout << "xplane: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
-
+      //std::cout << "xplane1: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
+      if(x_plane.nx < 0) {
+        continue;
+      }
       float dist_x1 = -1*(x_plane.nx * p_min.x + x_plane.ny * p_min.y);
       float diff_dist_x1 = 100;
       if((dist_x1 * x_plane.d) > 0)
@@ -368,7 +370,13 @@ private:
         min_dist_x1 = diff_dist_x1;
         x_plane1 = x_plane;
       }
+    }
 
+    for(const auto& x_plane : x_vert_plane_vec) {
+      //std::cout << "xplane2: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
+      if(x_plane.nx > 0) {
+        continue;
+      }
       float dist_x2 = -1*(x_plane.nx * p_max.x + x_plane.ny * p_max.y);
       float diff_dist_x2 = 100;
       if((dist_x2 * x_plane.d) > 0)
@@ -383,7 +391,7 @@ private:
 
     
     std::cout << "selected xplane1 : " << x_plane1.nx << ", " << x_plane1.ny << ", " << x_plane1.nz << ", " << x_plane1.d << std::endl;
-    std::cout << "selected yplane2 : " << x_plane2.nx << ", " << x_plane2.ny << ", " << x_plane2.nz << ", " << x_plane2.d << std::endl;
+    std::cout << "selected xplane2 : " << x_plane2.nx << ", " << x_plane2.ny << ", " << x_plane2.nz << ", " << x_plane2.d << std::endl;
 
     float point_dist_thres = 0.5;
     if(x_plane1.nx * x_plane2.nx > 0) {
@@ -393,14 +401,6 @@ private:
     } else {
       if(min_dist_x1 < room_dist_thres) {
         std::cout << "room has xplane1: " << x_plane1.nx << ", " << x_plane1.ny << ", " << x_plane1.nz << ", " << x_plane1.d << std::endl;
-        float min_point_dist = 100;
-        for(const auto& x_plane1_point : x_plane1.plane_points) {
-          float point_dist = std::sqrt(std::pow((p_min.x - x_plane1_point.x),2) + std::pow((p_min.y - x_plane1_point.y),2));            
-          if(point_dist < min_point_dist) {
-            min_point_dist = point_dist;
-          }
-        }
-        std::cout << "x1 plane min_point_dist: " << min_point_dist << std::endl;
         found_x1_plane = true;
       }
       else  {
@@ -419,7 +419,8 @@ private:
 
     float min_dist_y1 =100; float min_dist_y2 =100;
     for(const auto& y_plane : y_vert_plane_vec) {
-
+      if(y_plane.ny < 0) 
+        continue; 
       float dist_y1 = -1*(y_plane.nx * p_min.x + y_plane.ny * p_min.y);
       float diff_dist_y1 = 100;
       if((dist_y1 * y_plane.d) > 0)
@@ -430,7 +431,11 @@ private:
         min_dist_y1 = diff_dist_y1;
         y_plane1 = y_plane;
       }
+    }
 
+    for(const auto& y_plane : y_vert_plane_vec) {
+      if(y_plane.ny > 0)
+        continue;
       float dist_y2 = -1*(y_plane.nx * p_max.x + y_plane.ny * p_max.y);
       float diff_dist_y2 = 100;
       if((dist_y2 * y_plane.d) > 0)
@@ -441,7 +446,7 @@ private:
         min_dist_y2 = diff_dist_y2;
         y_plane2 = y_plane;
       }
-    }
+    } 
 
     std::cout << "selected yplane1 : " << y_plane1.nx << ", " << y_plane1.ny << ", " << y_plane1.nz << ", " << y_plane1.d << std::endl;
     std::cout << "selected yplane2 : " << y_plane2.nx << ", " << y_plane2.ny << ", " << y_plane2.nz << ", " << y_plane2.d << std::endl;
