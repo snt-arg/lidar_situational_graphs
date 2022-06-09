@@ -26,6 +26,7 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <tf_conversions/tf_eigen.h>
 #include <tf/transform_listener.h>
+#include <geometry_msgs/Vector3.h>
 
 #include <std_msgs/Time.h>
 #include <nav_msgs/Odometry.h>
@@ -2217,6 +2218,13 @@ private:
       plane_data.ny = mapped_plane_coeffs(1); 
       plane_data.nz = mapped_plane_coeffs(2); 
       plane_data.d  = mapped_plane_coeffs(3); 
+      // for(const auto& plane_point_data : local_x_vert_plane.cloud_seg_map->points) {
+      //   geometry_msgs::Vector3 plane_point;
+      //   plane_point.x = plane_point_data.x;
+      //   plane_point.y = plane_point_data.y;
+      //   plane_point.z = plane_point_data.z;
+      //   plane_data.plane_points.push_back(plane_point);
+      // }
       vert_planes_data.x_planes.push_back(plane_data);
     }
     
@@ -2230,6 +2238,13 @@ private:
       plane_data.ny = mapped_plane_coeffs(1); 
       plane_data.nz = mapped_plane_coeffs(2); 
       plane_data.d  = mapped_plane_coeffs(3); 
+      // for(const auto& plane_point_data : local_y_vert_plane.cloud_seg_map->points) {
+      //   geometry_msgs::Vector3 plane_point;
+      //   plane_point.x = plane_point_data.x;
+      //   plane_point.y = plane_point_data.y;
+      //   plane_point.z = plane_point_data.z;
+      //   plane_data.plane_points.push_back(plane_point);
+      // }
       vert_planes_data.y_planes.push_back(plane_data);
     }
     map_planes_pub.publish(vert_planes_data);
