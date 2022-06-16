@@ -44,6 +44,26 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/common/io.h>
+#include <pcl/ml/kmeans.h>
+#include <pcl/segmentation/conditional_euclidean_clustering.h>
+
+bool customRegionGrowing(const pcl::PointXYZRGB& point_a, const pcl::PointXYZRGB& point_b, float) {
+  double point_angle_thres = 60;
+  //std::cout << "Point a: " << point_a.x << ", " << point_a.y << std::endl;
+  //std::cout << "Point b: " << point_b.x << ", " << point_b.y << std::endl;
+  double diff_y = fabs(point_b.y - point_a.y);
+  double diff_x = fabs(point_b.x - point_a.x);
+  //std::cout << "diff_y: " << diff_y << std::endl;
+  //std::cout << "diff_x: " << diff_x << std::endl;
+
+  double angle = atan2(diff_x , diff_y) * 180 / M_PI;
+  if(angle > point_angle_thres) {
+    std::cout << "angle: " << angle << std::endl;  
+    return false;
+  } 
+  else
+    return true;
+}
 
 namespace s_graphs {
 
@@ -155,6 +175,7 @@ private:
     return true;
   }
 
+
   /**
    * @brief extract clusters with its centers from the skeletal cloud 
    * 
@@ -199,10 +220,11 @@ private:
     int i=0;
     std::vector<s_graphs::RoomData> room_candidates_vec;
     for(const auto& cloud_cluster : cloud_clusters) {
+
       pcl::PointXY p1; pcl::PointXY p2;
       cluster_endpoints(cloud_cluster, p1, p2);
-      //std::cout << "cluster " << i << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
-      //std::cout << "cluster " << i << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
+      std::cout << "cluster " << i << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
+      std::cout << "cluster " << i << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
       geometry_msgs::Point room_length = get_room_length(p1,p2);
       //std::cout << "length of the cluster in x : " << room_length.x << std::endl;    
       //std::cout << "length of the cluster in y : " << room_length.y << std::endl;    
@@ -211,8 +233,9 @@ private:
       if(room_length.x < 0.5 || room_length.y < 0.5) {
         i++;
         continue;
-      } else if (room_length.x > 5.0 && room_length.y < 3.0) {
-         std::cout << "found y corridor" << std::endl; 
+      } else if (room_length.x > 6.0 /*&& room_length.y < 3.0*/) {
+         //std::cout << "found y corridor" << std::endl; 
+         extract_line_segments(cloud_cluster);
          bool found_all_planes = false;
          s_graphs::PlaneData y_plane1, y_plane2;
          found_all_planes = get_corridor_planes(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
@@ -232,8 +255,9 @@ private:
             continue; 
           }
 
-      } else if (room_length.x < 3.0 && room_length.y > 5.0) {
-         std::cout << "found x corridor" << std::endl; 
+      } else if (room_length.y > 6.0 /*&& room_length.x < 3.0*/) {
+         //std::cout << "found x corridor" << std::endl; 
+         extract_line_segments(cloud_cluster);
          bool found_all_planes = false;
          s_graphs::PlaneData x_plane1, x_plane2;
          found_all_planes = get_corridor_planes(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
@@ -292,6 +316,31 @@ private:
     cluster_cloud_pub_.publish(cloud_cluster_msg);
   }
 
+
+  void extract_line_segments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster) {
+    while (cloud_cluster->size() > 10) {
+      pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+      pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+      pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+      // Optional
+      pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+      seg.setOptimizeCoefficients(true);
+      // Mandatory
+      seg.setModelType(pcl::SACMODEL_LINE);
+      seg.setMethodType(pcl::SAC_RANSAC);
+      seg.setDistanceThreshold(0.5);
+      seg.setInputCloud(cloud_cluster);
+      seg.segment(*inliers, *coefficients);
+      std::cout << "Model coeffs size: " << coefficients->values.size() << std::endl;
+      std::cout << "Model coefficients before: " << coefficients->values[0] << "; " << coefficients->values[1] << "; " << coefficients->values[2] << "; " << coefficients->values[3] <<  "; " << coefficients->values[4] << "; " << coefficients->values[5] << std::endl;
+      
+      extract.setInputCloud(cloud_cluster);
+      extract.setIndices(inliers);
+      extract.setNegative(true);
+      extract.filter(*cloud_cluster);
+    }
+  }  
+  
 
   void cluster_endpoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointXY& p1, pcl::PointXY& p2) {
     //pcl::PointXYZRGB pmin, pmax;
@@ -451,8 +500,7 @@ private:
       }
       float dist_x1 = -1*(x_plane.nx * p_min.x + x_plane.ny * p_min.y);
       float diff_dist_x1 = 100;
-      if((dist_x1 * x_plane.d) > 0)
-        diff_dist_x1 = fabs(dist_x1 - x_plane.d);
+      diff_dist_x1 = fabs(dist_x1 - x_plane.d);
 
       //std::cout << "diff dist x1: " << diff_dist_x1 << std::endl;
       if(diff_dist_x1 < min_dist_p1) {
@@ -468,10 +516,9 @@ private:
         }
         float dist_x2 = -1*(x_plane.nx * p_max.x + x_plane.ny * p_max.y);
         float diff_dist_x2 = 100;
-        if((dist_x2 * x_plane.d) > 0)
-          diff_dist_x2 = fabs(dist_x2 - x_plane.d);
+        diff_dist_x2 = fabs(dist_x2 - x_plane.d);
+        
         //std::cout << "diff dist x2: " << diff_dist_x2 << std::endl;
-
         if(diff_dist_x2 < min_dist_p2) {
           min_dist_p2 = diff_dist_x2;
           plane2 = x_plane;
@@ -508,14 +555,13 @@ private:
 
   if(plane_type == plane_class::Y_VERT_PLANE) {
     for(const auto& y_plane : y_vert_plane_vec) {
-      //std::cout << "xplane1: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
+      //std::cout << "yplane1: " << y_plane.nx << ", " << y_plane.ny << ", " << y_plane.nz << ", " << y_plane.d << std::endl;
       if(y_plane.ny < 0) {
         continue;
       }
       float dist_y1 = -1*(y_plane.nx * p_min.x + y_plane.ny * p_min.y);
       float diff_dist_y1 = 100;
-      if((dist_y1 * y_plane.d) > 0)
-        diff_dist_y1 = fabs(dist_y1 - y_plane.d);
+      diff_dist_y1 = fabs(dist_y1 - y_plane.d);
 
       //std::cout << "diff dist x1: " << diff_dist_y1 << std::endl;
       if(diff_dist_y1 < min_dist_p1) {
@@ -525,14 +571,13 @@ private:
     }
   
     for(const auto& y_plane : y_vert_plane_vec) {
-      //std::cout << "xplane1: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
+      //std::cout << "yplane2: " << y_plane.nx << ", " << y_plane.ny << ", " << y_plane.nz << ", " << y_plane.d << std::endl;
       if(y_plane.ny > 0) {
         continue;
       }
       float dist_y2 = -1*(y_plane.nx * p_max.x + y_plane.ny * p_max.y);
       float diff_dist_y2 = 100;
-      if((dist_y2 * y_plane.d) > 0)
-        diff_dist_y2 = fabs(dist_y2 - y_plane.d);
+      diff_dist_y2 = fabs(dist_y2 - y_plane.d);
 
       //std::cout << "diff dist x1: " << diff_dist_y2 << std::endl;
       if(diff_dist_y2 < min_dist_p1) {
@@ -582,14 +627,14 @@ private:
     bool found_x1_plane = false, found_x2_plane = false, found_y1_plane = false, found_y2_plane = false;
 
     for(const auto& x_plane : x_vert_plane_vec) {
-      //std::cout << "xplane1: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
       if(x_plane.nx < 0) {
         continue;
       }
+
+      //std::cout << "xplane1: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
       float dist_x1 = -1*(x_plane.nx * p_min.x + x_plane.ny * p_min.y);
       float diff_dist_x1 = 100;
-      if((dist_x1 * x_plane.d) > 0)
-        diff_dist_x1 = fabs(dist_x1 - x_plane.d);
+      diff_dist_x1 = fabs(dist_x1 - x_plane.d);
 
       //std::cout << "diff dist x1: " << diff_dist_x1 << std::endl;
       if(diff_dist_x1 < min_dist_x1) {
@@ -599,16 +644,16 @@ private:
     }
 
     for(const auto& x_plane : x_vert_plane_vec) {
-      //std::cout << "xplane2: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
       if(x_plane.nx > 0) {
         continue;
       }
+
+      //std::cout << "xplane2: " << x_plane.nx << ", " << x_plane.ny << ", " << x_plane.nz << ", " << x_plane.d << std::endl;
       float dist_x2 = -1*(x_plane.nx * p_max.x + x_plane.ny * p_max.y);
       float diff_dist_x2 = 100;
-      if((dist_x2 * x_plane.d) > 0)
-        diff_dist_x2 = fabs(dist_x2 - x_plane.d);
+      diff_dist_x2 = fabs(dist_x2 - x_plane.d);
+      
       //std::cout << "diff dist x2: " << diff_dist_x2 << std::endl;
-
       if(diff_dist_x2 < min_dist_x2) {
         min_dist_x2 = diff_dist_x2;
         x_plane2 = x_plane;
@@ -644,12 +689,14 @@ private:
 
     float min_dist_y1 =100; float min_dist_y2 =100;
     for(const auto& y_plane : y_vert_plane_vec) {
-      if(y_plane.ny < 0) 
+      if(y_plane.ny < 0) {
         continue; 
+      }
+      //std::cout << "y_plane1: " << y_plane.nx << ", " << y_plane.ny << ", " << y_plane.nz << ", " << y_plane.d << std::endl;
+
       float dist_y1 = -1*(y_plane.nx * p_min.x + y_plane.ny * p_min.y);
       float diff_dist_y1 = 100;
-      if((dist_y1 * y_plane.d) > 0)
-        diff_dist_y1 = fabs(dist_y1 - y_plane.d);
+      diff_dist_y1 = fabs(dist_y1 - y_plane.d);
 
       //std::cout << "diff dist y1: " << diff_dist_y1 << std::endl;
       if(diff_dist_y1 < min_dist_y1) {
@@ -659,14 +706,16 @@ private:
     }
 
     for(const auto& y_plane : y_vert_plane_vec) {
-      if(y_plane.ny > 0)
+      if(y_plane.ny > 0) {
         continue;
+      }
+      //std::cout << "y_plane2: " << y_plane.nx << ", " << y_plane.ny << ", " << y_plane.nz << ", " << y_plane.d << std::endl;
+
       float dist_y2 = -1*(y_plane.nx * p_max.x + y_plane.ny * p_max.y);
       float diff_dist_y2 = 100;
-      if((dist_y2 * y_plane.d) > 0)
-        diff_dist_y2 = fabs(dist_y2 - y_plane.d);
-      //std::cout << "diff dist y2: " << diff_dist_y2 << std::endl;
+      diff_dist_y2 = fabs(dist_y2 - y_plane.d);
 
+      //std::cout << "diff dist y2: " << diff_dist_y2 << std::endl;
       if(diff_dist_y2 < min_dist_y2) {
         min_dist_y2 = diff_dist_y2;
         y_plane2 = y_plane;
