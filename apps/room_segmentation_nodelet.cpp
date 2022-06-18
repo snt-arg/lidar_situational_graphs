@@ -46,6 +46,7 @@
 #include <pcl/common/io.h>
 #include <pcl/ml/kmeans.h>
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
+#include <pcl/ml/kmeans.h>
 
 bool customRegionGrowing(const pcl::PointXYZRGB& point_a, const pcl::PointXYZRGB& point_b, float) {
   double point_angle_thres = 60;
@@ -181,42 +182,6 @@ private:
    * 
    */
   void extract_skeletal_clusters(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters) {
-    // std::vector<pcl::PointIndices> cluster_indices;
-    // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
-    // tree->setInputCloud (skeleton_cloud);
-    // pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
-    // ec.setClusterTolerance (0.5); 
-    // ec.setMinClusterSize (10);
-    // ec.setMaxClusterSize (25000);
-    // ec.setSearchMethod (tree);
-    // ec.setInputCloud (skeleton_cloud);
-    // ec.extract (cluster_indices);
-
-    // std::cout << "cloud indices size: " << cluster_indices.size() << std::endl;
-    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
-    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
-    // std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters;
-
-    // for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it) {
-    //   pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
-    //   float r = rand()%256 ; float g = rand()%256; float b = rand()%256;
-    //   for (const auto& idx : it->indices) {
-    //     pcl::PointXYZRGB pointrgb;
-    //     pointrgb.x = skeleton_cloud->points[idx].x;
-    //     pointrgb.y = skeleton_cloud->points[idx].y;
-    //     pointrgb.z = skeleton_cloud->points[idx].z;
-    //     pointrgb.r = r;
-    //     pointrgb.g = g;
-    //     pointrgb.b = b;
-    //     cloud_cluster->points.push_back(pointrgb);
-    //     tmp_cloud_cluster->points.push_back(pointrgb);
-    //   }
-    //   cloud_cluster->width = cloud_cluster->size ();
-    //   cloud_cluster->height = 1;
-    //   cloud_cluster->is_dense = true;     
-    //   cloud_clusters.push_back(tmp_cloud_cluster);
-    // }
-
     int i=0;
     std::vector<s_graphs::RoomData> room_candidates_vec;
     for(const auto& cloud_cluster : cloud_clusters) {
@@ -235,7 +200,13 @@ private:
         continue;
       } else if (room_length.x > 6.0 /*&& room_length.y < 3.0*/) {
          //std::cout << "found y corridor" << std::endl; 
-         extract_line_segments(cloud_cluster);
+         //k_means_clustering(cloud_cluster);
+         sensor_msgs::PointCloud2 cloud_cluster_msg;
+         pcl::toROSMsg(*cloud_cluster, cloud_cluster_msg);
+         cloud_cluster_msg.header.stamp = ros::Time::now();
+         cloud_cluster_msg.header.frame_id = "map";
+         cluster_cloud_pub_.publish(cloud_cluster_msg);
+         
          bool found_all_planes = false;
          s_graphs::PlaneData y_plane1, y_plane2;
          found_all_planes = get_corridor_planes(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
@@ -257,7 +228,14 @@ private:
 
       } else if (room_length.y > 6.0 /*&& room_length.x < 3.0*/) {
          //std::cout << "found x corridor" << std::endl; 
-         extract_line_segments(cloud_cluster);
+         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster_cloud_post = axis_clustering(cloud_cluster);
+         sensor_msgs::PointCloud2 cloud_cluster_msg;
+         pcl::toROSMsg(*cluster_cloud_post, cloud_cluster_msg);
+         cloud_cluster_msg.header.stamp = ros::Time::now();
+         cloud_cluster_msg.header.frame_id = "map";
+         cluster_cloud_pub_.publish(cloud_cluster_msg);
+         
+         //k_means_clustering(cloud_cluster);
          bool found_all_planes = false;
          s_graphs::PlaneData x_plane1, x_plane2;
          found_all_planes = get_corridor_planes(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
@@ -279,6 +257,8 @@ private:
 
       } else {
           bool found_all_planes = false;
+          //extract_line_segments(cloud_cluster);
+
           s_graphs::PlaneData x_plane1, x_plane2, y_plane1, y_plane2;
           found_all_planes = get_room_planes(p1,p2, x_plane1, x_plane2, y_plane1, y_plane2);
           correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
@@ -313,9 +293,155 @@ private:
     pcl::toROSMsg(*cloud_cluster, cloud_cluster_msg);
     cloud_cluster_msg.header.stamp = ros::Time::now();
     cloud_cluster_msg.header.frame_id = "map";
-    cluster_cloud_pub_.publish(cloud_cluster_msg);
+    //cluster_cloud_pub_.publish(cloud_cluster_msg);
   }
 
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr axis_clustering(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud) {
+    pcl::PointXYZRGB rand_number = skeleton_cloud->points[rand() % skeleton_cloud->points.size()];
+    x_cluster_point x_centroid(rand_number.x, rand_number.y); x_centroid.cluster_id = 0;
+    y_cluster_point y_centroid(rand_number.x, rand_number.y); y_centroid.cluster_id = 1;
+    std::vector<cluster_point>  points_vec; 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
+    
+    for(int i=0; i < skeleton_cloud->points.size(); ++i) {
+      cluster_point point(skeleton_cloud->points[i].x, skeleton_cloud->points[i].y);
+      points_vec.push_back(point);
+    }     
+
+    int num_epochs = 0;
+    while(num_epochs < 100) {
+        for(int i=0; i < points_vec.size(); ++i) {
+          double dist = x_centroid.distance(points_vec[i]);
+          if(dist < points_vec[i].min_dist) {
+            points_vec[i].min_dist = dist;
+            points_vec[i].cluster_id = x_centroid.cluster_id;
+          }
+        }
+
+        for(int i=0; i < points_vec.size(); ++i) {
+          double dist = y_centroid.distance(points_vec[i]);
+          if(dist < points_vec[i].min_dist) {
+            points_vec[i].min_dist = dist;
+            points_vec[i].cluster_id = y_centroid.cluster_id;
+          }
+        }
+
+        std::vector<int> num_points; 
+        std::vector<double> sum_x; std::vector<double> sum_y;
+        for(int i=0; i< 2; i++){
+          num_points.push_back(0); 
+          sum_x.push_back(0); 
+          sum_y.push_back(0);
+        }
+        
+       for(int i=0; i < points_vec.size(); ++i) {
+          int cluster_id = points_vec[i].cluster_id;
+          num_points[cluster_id] += 1;
+          sum_x[cluster_id] += points_vec[i].x;
+          sum_y[cluster_id] += points_vec[i].y;
+          points_vec[i].min_dist = 1000;
+        }
+        
+        x_centroid.x = sum_x[0] / num_points[0];
+        x_centroid.y = sum_y[0] / num_points[0];
+
+        y_centroid.x = sum_x[1] / num_points[1];
+        y_centroid.y = sum_y[1] / num_points[1];
+
+        num_epochs++;
+    }
+
+    for(int i=0; i< points_vec.size(); ++i) {
+      int cluster_id = points_vec[i].cluster_id;
+      if(cluster_id == 0) {
+        pcl::PointXYZRGB point;
+        point.x = points_vec[i].x;
+        point.y = points_vec[i].y;
+        point.z = 7;
+        point.r = 255;     
+        point.g = 0;         
+        point.b = 0;         
+    
+        cluster_cloud->points.push_back(point);
+      }
+      if(cluster_id == 1) {
+        pcl::PointXYZRGB point;
+        point.x = points_vec[i].x;
+        point.y = points_vec[i].y;
+        point.z = 7;
+        point.r = 0;     
+        point.g = 0;         
+        point.b = 255;         
+    
+        cluster_cloud->points.push_back(point);
+      }
+    }
+    std::cout << "x centroid: " << x_centroid.x << " ; " << x_centroid.y << std::endl;
+    std::cout << "y centroid: " << y_centroid.x << " ; " << y_centroid.y << std::endl;
+    return cluster_cloud;
+
+  }
+
+  void euclidean_clustering(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud) {
+    // std::vector<pcl::PointIndices> cluster_indices;
+    // pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ>);
+    // tree->setInputCloud (skeleton_cloud);
+    // pcl::EuclideanClusterExtraction<pcl::PointXYZ> ec;
+    // ec.setClusterTolerance (0.1); 
+    // ec.setMinClusterSize (2);
+    // ec.setMaxClusterSize (500);
+    // ec.setSearchMethod (tree);
+    // ec.setInputCloud (skeleton_cloud);
+    // ec.extract (cluster_indices);
+
+    // std::cout << "cloud indices size: " << cluster_indices.size() << std::endl;
+    // pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
+    // std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters;
+
+    // for (std::vector<pcl::PointIndices>::const_iterator it = cluster_indices.begin (); it != cluster_indices.end (); ++it) {
+    //   pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
+    //   float r = rand()%256 ; float g = rand()%256; float b = rand()%256;
+    //   for (const auto& idx : it->indices) {
+    //     pcl::PointXYZRGB pointrgb;
+    //     pointrgb.x = skeleton_cloud->points[idx].x;
+    //     pointrgb.y = skeleton_cloud->points[idx].y;
+    //     pointrgb.z = skeleton_cloud->points[idx].z;
+    //     pointrgb.r = r;
+    //     pointrgb.g = g;
+    //     pointrgb.b = b;
+    //     tmp_cloud_cluster->points.push_back(pointrgb);
+    //   }
+    //   cloud_clusters.push_back(tmp_cloud_cluster);
+    // }
+
+    // for(const auto& cloud_cluster_1 :  cloud_clusters) {
+      
+    //   for()
+    // }
+
+  }
+
+  void k_means_clustering(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster) {
+    pcl::Kmeans k_means_clustering(static_cast<int> (cloud_cluster->points.size()), 3);
+    k_means_clustering.setClusterSize(2);
+    for (size_t i = 0; i < cloud_cluster->points.size(); i++) {
+            std::vector<float> data(3);
+            data[0] = cloud_cluster->points[i].x;
+            data[1] = cloud_cluster->points[i].y;
+            data[2] = cloud_cluster->points[i].z;
+            k_means_clustering.addDataPoint(data);
+    }
+
+    k_means_clustering.kMeans();
+    pcl::Kmeans::Centroids centroids = k_means_clustering.get_centroids();
+    std::cout << "centroid count: " << centroids.size() << std::endl;
+    for (int i = 0; i<centroids.size(); i++) {
+        std::cout << i << "_cent output: x: " << centroids[i][0] << " ,";
+        std::cout << "y: " << centroids[i][1] << " ,";
+        std::cout << "z: " << centroids[i][2] << std::endl;
+    }
+
+  }
 
   void extract_line_segments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster) {
     while (cloud_cluster->size() > 10) {
@@ -326,7 +452,7 @@ private:
       pcl::SACSegmentation<pcl::PointXYZRGB> seg;
       seg.setOptimizeCoefficients(true);
       // Mandatory
-      seg.setModelType(pcl::SACMODEL_LINE);
+      seg.setModelType(pcl::SACMODEL_CIRCLE2D);
       seg.setMethodType(pcl::SAC_RANSAC);
       seg.setDistanceThreshold(0.5);
       seg.setInputCloud(cloud_cluster);
@@ -790,6 +916,73 @@ private:
   ros::Publisher  cluster_clouds_pub_;
   ros::Publisher  room_data_pub_;
   ros::Publisher  room_centers_pub_;
+
+  struct cluster_point {
+    int cluster_id;
+    double x;
+    double y;
+    double min_dist;
+
+    cluster_point() : 
+        x(0.0), 
+        y(0.0),
+        cluster_id(-1),
+        min_dist(1000) {}
+        
+    cluster_point(double x, double y) : 
+        x(x), 
+        y(y),
+        cluster_id(-1),
+        min_dist(1000) {}
+  };
+  
+
+  struct x_cluster_point {
+    int cluster_id;
+    double x;
+    double y;
+    double min_dist;
+
+    x_cluster_point() : 
+        x(0.0), 
+        y(0.0),
+        cluster_id(-1),
+        min_dist(1000) {}
+        
+    x_cluster_point(double x, double y) : 
+        x(x), 
+        y(y),
+        cluster_id(-1),
+        min_dist(1000) {}
+
+    double distance(cluster_point p) {
+      return (p.x - x) * (p.x - x);
+    }
+  };
+
+  struct y_cluster_point {
+    int cluster_id;
+    double x;
+    double y;
+    double min_dist;
+
+    y_cluster_point() : 
+        x(0.0), 
+        y(0.0),
+        cluster_id(-1),
+        min_dist(1000) {}
+        
+    y_cluster_point(double x, double y) : 
+        x(x), 
+        y(y),
+        cluster_id(-1),
+        min_dist(1000) {}
+
+    double distance(cluster_point p) {
+      return (p.y - y) * (p.y - y);
+    }
+  };
+
 
   /* private variables */
 private:
