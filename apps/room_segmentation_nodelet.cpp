@@ -47,6 +47,8 @@
 #include <pcl/ml/kmeans.h>
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
 #include <pcl/ml/kmeans.h>
+#include <pcl/surface/concave_hull.h>
+#include <pcl/surface/convex_hull.h>
 
 bool customRegionGrowing(const pcl::PointXYZRGB& point_a, const pcl::PointXYZRGB& point_b, float) {
   double point_angle_thres = 60;
@@ -91,9 +93,11 @@ private:
     map_planes_sub      = nh.subscribe("/s_graphs/map_planes",1,&RoomSegmentationNodelet::map_planes_callback, this);
 
     cluster_cloud_pub_   = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_cloud",1,true);
+    hull_cloud_pub_      = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/hull_cloud",1,true);
     cluster_clouds_pub_  = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_clouds",1,true);
     room_data_pub_       = nh.advertise<s_graphs::RoomsData>("/room_segmentation/room_data", 1, true);
-    room_centers_pub_ = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_centers", 1, true);
+    room_centers_pub_    = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_centers", 1, true);
+    room_diagonal_pub_   = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_diagonal", 1, true);
   }
 
   /**
@@ -182,106 +186,39 @@ private:
    * 
    */
   void extract_skeletal_clusters(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters) {
-    int i=0;
+    int room_cluster_counter=0;
     std::vector<s_graphs::RoomData> room_candidates_vec;
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_visualizer (new pcl::PointCloud<pcl::PointXYZRGB>);
+    diag_line_viz_vec_.clear();
+
     for(const auto& cloud_cluster : cloud_clusters) {
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull (new pcl::PointCloud<pcl::PointXYZRGB>);
 
-      pcl::PointXY p1; pcl::PointXY p2;
-      cluster_endpoints(cloud_cluster, p1, p2);
-      std::cout << "cluster " << i << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
-      std::cout << "cluster " << i << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
-      geometry_msgs::Point room_length = get_room_length(p1,p2);
-      //std::cout << "length of the cluster in x : " << room_length.x << std::endl;    
-      //std::cout << "length of the cluster in y : " << room_length.y << std::endl;    
+      bool rectangle = get_convex_hull(cloud_cluster, cloud_hull);
+      for(int i=0; i < cloud_hull->points.size(); ++i) {
+          cloud_hull_visualizer->points.push_back(cloud_hull->points[i]);
+        } 
 
-      float room_diff_thres = 3.0; 
-      if(room_length.x < 0.5 || room_length.y < 0.5) {
-        i++;
-        continue;
-      } else if (room_length.x > 6.0 /*&& room_length.y < 3.0*/) {
-         //std::cout << "found y corridor" << std::endl; 
-         //k_means_clustering(cloud_cluster);
-         sensor_msgs::PointCloud2 cloud_cluster_msg;
-         pcl::toROSMsg(*cloud_cluster, cloud_cluster_msg);
-         cloud_cluster_msg.header.stamp = ros::Time::now();
-         cloud_cluster_msg.header.frame_id = "map";
-         cluster_cloud_pub_.publish(cloud_cluster_msg);
-         
-         bool found_all_planes = false;
-         s_graphs::PlaneData y_plane1, y_plane2;
-         found_all_planes = get_corridor_planes(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
-         if(found_all_planes) {
-            geometry_msgs::Point room_center = get_corridor_center(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
-            correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
-            correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
-            s_graphs::RoomData room_candidate;
-            room_candidate.id = i;
-            room_candidate.room_length = room_length;
-            room_candidate.room_center = room_center;
-            room_candidate.x_planes.push_back(y_plane1); room_candidate.x_planes.push_back(y_plane2);
-            room_candidates_vec.push_back(room_candidate);
-            i++;
-          } else {
-            i++;
-            continue; 
-          }
-
-      } else if (room_length.y > 6.0 /*&& room_length.x < 3.0*/) {
-         //std::cout << "found x corridor" << std::endl; 
-         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster_cloud_post = axis_clustering(cloud_cluster);
-         sensor_msgs::PointCloud2 cloud_cluster_msg;
-         pcl::toROSMsg(*cluster_cloud_post, cloud_cluster_msg);
-         cloud_cluster_msg.header.stamp = ros::Time::now();
-         cloud_cluster_msg.header.frame_id = "map";
-         cluster_cloud_pub_.publish(cloud_cluster_msg);
-         
-         //k_means_clustering(cloud_cluster);
-         bool found_all_planes = false;
-         s_graphs::PlaneData x_plane1, x_plane2;
-         found_all_planes = get_corridor_planes(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
-         correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
-         correct_plane_d(plane_class::X_VERT_PLANE, x_plane2); 
-         if(found_all_planes) {
-            geometry_msgs::Point room_center = get_corridor_center(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
-            s_graphs::RoomData room_candidate;
-            room_candidate.id = i;
-            room_candidate.room_length = room_length;
-            room_candidate.room_center = room_center;
-            room_candidate.y_planes.push_back(x_plane1); room_candidate.y_planes.push_back(x_plane2);
-            room_candidates_vec.push_back(room_candidate);
-            i++;
-          } else {
-            i++;
-            continue; 
-          }
-
-      } else {
-          bool found_all_planes = false;
-          //extract_line_segments(cloud_cluster);
-
-          s_graphs::PlaneData x_plane1, x_plane2, y_plane1, y_plane2;
-          found_all_planes = get_room_planes(p1,p2, x_plane1, x_plane2, y_plane1, y_plane2);
-          correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
-          correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
-          correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
-          correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
-
-          if(found_all_planes) {
-            geometry_msgs::Point room_center = get_room_center(p1, p2, x_plane1, x_plane2, y_plane1, y_plane2);
-            s_graphs::RoomData room_candidate;
-            room_candidate.id = i;
-            room_candidate.room_length = room_length;
-            room_candidate.room_center = room_center;
-            room_candidate.x_planes.push_back(x_plane1); room_candidate.x_planes.push_back(x_plane2);
-            room_candidate.y_planes.push_back(y_plane1); room_candidate.y_planes.push_back(y_plane2);
-            room_candidates_vec.push_back(room_candidate);
-            i++;
-          }else {
-            i++;
-            continue;
-          }
-        }  
+      //if we found two diagonals to a rectangle, its mostly a room and no need for further clustering
+      if(rectangle) {
+        //copy pointcloud for visualization  
+        for(int i=0; i < cloud_cluster->points.size(); ++i) {
+          cloud_visualizer->points.push_back(cloud_cluster->points[i]);
+        } 
+        perform_room_segmentation(room_cluster_counter, cloud_cluster, room_candidates_vec);
       }
+      else {
+        std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters_post = axis_clustering(cloud_cluster);
+        for(const auto& cloud_cluster_post : cloud_clusters_post) {  
+        //copy pointcloud for visualization  
+        for(int i=0; i < cloud_cluster_post->points.size(); ++i) {
+          cloud_visualizer->points.push_back(cloud_cluster_post->points[i]);
+        } 
+        perform_room_segmentation(room_cluster_counter, cloud_cluster_post, room_candidates_vec);
+       }   
+      }
+    }
     
     s_graphs::RoomsData room_candidates_msg;
     room_candidates_msg.header.stamp = ros::Time::now();
@@ -290,26 +227,231 @@ private:
     viz_room_centers(room_candidates_msg);
 
     sensor_msgs::PointCloud2 cloud_cluster_msg;
-    pcl::toROSMsg(*cloud_cluster, cloud_cluster_msg);
+    pcl::toROSMsg(*cloud_visualizer, cloud_cluster_msg);
     cloud_cluster_msg.header.stamp = ros::Time::now();
     cloud_cluster_msg.header.frame_id = "map";
-    //cluster_cloud_pub_.publish(cloud_cluster_msg);
+    cluster_cloud_pub_.publish(cloud_cluster_msg);
+
+    sensor_msgs::PointCloud2 cloud_hull_msg;
+    pcl::toROSMsg(*cloud_hull_visualizer, cloud_hull_msg);
+    cloud_hull_msg.header.stamp = ros::Time::now();
+    cloud_hull_msg.header.frame_id = "map";
+    hull_cloud_pub_.publish(cloud_hull_msg);
+
+    viz_line_segment();
   }
 
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr axis_clustering(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud) {
+  void perform_room_segmentation(int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<s_graphs::RoomData>& room_candidates_vec) {
+    pcl::PointXY p1; pcl::PointXY p2;
+    cluster_endpoints(cloud_cluster, p1, p2);
+    std::cout << "cluster " << room_cluster_counter << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
+    std::cout << "cluster " << room_cluster_counter << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
+    geometry_msgs::Point room_length = get_room_length(p1,p2);
+    //std::cout << "length of the cluster in x : " << room_length.x << std::endl;    
+    //std::cout << "length of the cluster in y : " << room_length.y << std::endl;    
+
+    float room_diff_thres = 3.0; 
+    if(room_length.x < 0.5 || room_length.y < 0.5) {
+      room_cluster_counter++;
+    } else if (room_length.x > 6.0 /*&& room_length.y < 3.0*/) {
+      //std::cout << "found y corridor" << std::endl; 
+      //k_means_clustering(cloud_cluster);
+      //  sensor_msgs::PointCloud2 cloud_cluster_msg;
+      //  pcl::toROSMsg(*cloud_cluster, cloud_cluster_msg);
+      //  cloud_cluster_msg.header.stamp = ros::Time::now();
+      //  cloud_cluster_msg.header.frame_id = "map";
+      //  cluster_cloud_pub_.publish(cloud_cluster_msg);
+      
+      bool found_all_planes = false;
+      s_graphs::PlaneData y_plane1, y_plane2;
+      found_all_planes = get_corridor_planes(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
+      correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
+      correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
+      if(found_all_planes) {
+          geometry_msgs::Point room_center = get_corridor_center(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
+          s_graphs::RoomData room_candidate;
+          room_candidate.id = room_cluster_counter;
+          room_candidate.room_length = room_length;
+          room_candidate.room_center = room_center;
+          room_candidate.y_planes.push_back(y_plane1); room_candidate.y_planes.push_back(y_plane2);
+          room_candidates_vec.push_back(room_candidate);
+          room_cluster_counter++;
+        } else {
+          room_cluster_counter++;
+        }
+
+    } else if (room_length.y > 6.0 /*&& room_length.x < 3.0*/) {
+      //std::cout << "found x corridor" << std::endl; 
+      //pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster_cloud_post = axis_clustering(cloud_cluster);
+      //  sensor_msgs::PointCloud2 cloud_cluster_msg;
+      //  pcl::toROSMsg(*cluster_cloud_post, cloud_cluster_msg);
+      //  cloud_cluster_msg.header.stamp = ros::Time::now();
+      //  cloud_cluster_msg.header.frame_id = "map";
+      //  cluster_cloud_pub_.publish(cloud_cluster_msg);
+      
+      //k_means_clustering(cloud_cluster);
+      bool found_all_planes = false;
+      s_graphs::PlaneData x_plane1, x_plane2;
+      found_all_planes = get_corridor_planes(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
+      correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
+      correct_plane_d(plane_class::X_VERT_PLANE, x_plane2); 
+      if(found_all_planes) {
+          geometry_msgs::Point room_center = get_corridor_center(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
+          s_graphs::RoomData room_candidate;
+          room_candidate.id = room_cluster_counter;
+          room_candidate.room_length = room_length;
+          room_candidate.room_center = room_center;
+          room_candidate.x_planes.push_back(x_plane1); room_candidate.x_planes.push_back(x_plane2);
+          room_candidates_vec.push_back(room_candidate);
+          room_cluster_counter++;
+        } else {
+          room_cluster_counter++;
+        }
+
+    } else {
+        bool found_all_planes = false;
+        //extract_line_segments(cloud_cluster);
+
+        s_graphs::PlaneData x_plane1, x_plane2, y_plane1, y_plane2;
+        found_all_planes = get_room_planes(p1,p2, x_plane1, x_plane2, y_plane1, y_plane2);
+        correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
+        correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
+        correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
+        correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
+
+        if(found_all_planes) {
+          geometry_msgs::Point room_center = get_room_center(p1, p2, x_plane1, x_plane2, y_plane1, y_plane2);
+          s_graphs::RoomData room_candidate;
+          room_candidate.id = room_cluster_counter;
+          room_candidate.room_length = room_length;
+          room_candidate.room_center = room_center;
+          room_candidate.x_planes.push_back(x_plane1); room_candidate.x_planes.push_back(x_plane2);
+          room_candidate.y_planes.push_back(y_plane1); room_candidate.y_planes.push_back(y_plane2);
+          room_candidates_vec.push_back(room_candidate);
+          room_cluster_counter++;
+        } else {
+          room_cluster_counter++;
+        }
+     }
+  }
+
+  bool get_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull) {
+    // Create a convex hull representation of the projected inliers
+    pcl::ConvexHull<pcl::PointXYZRGB> convex_hull;
+    std::vector<pcl::Vertices> polygons;
+    convex_hull.setInputCloud (skeleton_cloud);
+    //chull.setAlpha (0.1);
+    //convex_hull.setDimension(2);
+    convex_hull.setComputeAreaVolume(true);
+    convex_hull.reconstruct (*cloud_hull);
+    //std::cout << "cloud hull: " << cloud_hull->points.size() << std::endl;
+    double area = convex_hull.getTotalArea();
+    //std::cout << "area: " << area << std::endl;
+
+    pcl::PointXYZRGB min, max;
+    pcl::getMinMax3D(*cloud_hull, min, max);
+    //std::cout << "min point: " << min.x << "; " << min.y << "; " << min.z << std::endl;
+    //std::cout << "max point: " << max.x << "; " << max.y << "; " << max.z << std::endl;
+    //this->extract_line_segments(cloud_hull);
+    bool rectangle = get_diagonal_points(cloud_hull, min, max);
+
+    return rectangle;
+  }
+
+  void extract_line_segments(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull) {
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster(new pcl::PointCloud<pcl::PointXYZRGB>);
+    for(int i=0; i<cloud_hull->size();++i){
+      cloud_cluster->points.push_back(cloud_hull->points[i]);
+    }  
+    while (cloud_cluster->size() > 1) {
+      pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
+      pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
+      pcl::ExtractIndices<pcl::PointXYZRGB> extract;
+      // Optional
+      pcl::SACSegmentation<pcl::PointXYZRGB> seg;
+      //seg.setOptimizeCoefficients(true);
+      // Mandatory
+      seg.setModelType(pcl::SACMODEL_PARALLEL_LINES);
+      seg.setMethodType(pcl::SAC_RANSAC);
+      seg.setDistanceThreshold(0.1);
+      seg.setInputCloud(cloud_cluster);
+      seg.segment(*inliers, *coefficients);
+      //std::cout << "Model coefficients before: " << coefficients->values[0] << "; " << coefficients->values[1] << "; " << coefficients->values[2] << "; " << coefficients->values[3] <<  "; " << coefficients->values[4] << "; " << coefficients->values[5] << std::endl;
+      
+      extract.setInputCloud(cloud_cluster);
+      extract.setIndices(inliers);
+      extract.setNegative(true);
+      extract.filter(*cloud_cluster);
+    }
+  }  
+ 
+  bool get_diagonal_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, pcl::PointXYZRGB min, pcl::PointXYZRGB max) {
+    //get the set of diagonal points 
+    pcl::PointXYZ bottom_right, top_right, bottom_left, top_left;
+    bottom_right.x = min.x; bottom_right.y = min.y;
+    top_left.x = max.x; top_left.y = max.y;
+
+    //this is imaginary point and based on this we will find the closest point in our hull 
+    bottom_left.x = min.x; bottom_left.y = max.y;
+    top_right.x = max.x; top_right.y = min.y;
+
+    //find the neareast neighbour to our imaginary points in our hull
+    float min_dist_top = 100; float min_dist_bottom = 100;
+    int top_index = -1; float bottom_index = -1;
+    for(int i =0; i < cloud_hull->points.size(); ++i) {
+      float dist_top =  sqrt(pow(cloud_hull->points[i].x - top_right.x, 2) + pow(cloud_hull->points[i].y - top_right.y, 2));
+      //std::cout << "top_right points : " << top_right.x << " " << top_right.y << std::endl;
+      //std::cout << "bottom_left points : " << bottom_left.x << " " << bottom_left.y << std::endl;
+
+      //std::cout << "cloud_hull points : " << cloud_hull->points[i].x << " " << cloud_hull->points[i].y << std::endl;
+      //std::cout << "dist top: " << dist_top << std::endl;
+      if(dist_top < min_dist_top) {
+        min_dist_top = dist_top;
+        top_index = i;
+      }
+
+      float dist_bottom =  sqrt(pow(cloud_hull->points[i].x - bottom_left.x, 2) + pow(cloud_hull->points[i].y - bottom_left.y, 2));
+      //std::cout << "dist bottom: " << dist_bottom << std::endl;
+      if(dist_bottom < min_dist_bottom) {
+          min_dist_bottom = dist_bottom;
+          bottom_index = i;
+      }
+    }   
+    //std::cout << "min dist top: " << min_dist_top << std::endl;
+    //std::cout << "min dist bottom: " << min_dist_bottom << std::endl; 
+    if(top_index != -1 && bottom_index != -1) {
+      if(min_dist_top < 0.8 && min_dist_bottom < 1.0) {
+        //std::cout << "Found top diagonal point in the hull: " << cloud_hull->points[top_index].x << " " << cloud_hull->points[top_index].y << std::endl;
+        //std::cout << "Found bottom diagonal point in the hull: " << cloud_hull->points[bottom_index].x << " " << cloud_hull->points[bottom_index].y << std::endl;
+        pcl::PointXYZ bottom_left_act, top_right_act;
+        bottom_left_act.x = cloud_hull->points[bottom_index].x; bottom_left_act.y = cloud_hull->points[bottom_index].y;
+        top_right_act.x   = cloud_hull->points[top_index].x;  top_right_act.y = cloud_hull->points[top_index].y;
+        std::vector<pcl::PointXYZ> diag_line_vec;
+        diag_line_vec.push_back(top_left);
+        diag_line_vec.push_back(bottom_right); 
+        diag_line_vec.push_back(top_right_act);
+        diag_line_vec.push_back(bottom_left_act); 
+        diag_line_viz_vec_.push_back(diag_line_vec);  
+        return true;
+      }
+    }
+    return false;
+  }
+
+  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> axis_clustering(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud) {
     pcl::PointXYZRGB rand_number = skeleton_cloud->points[rand() % skeleton_cloud->points.size()];
     x_cluster_point x_centroid(rand_number.x, rand_number.y); x_centroid.cluster_id = 0;
     y_cluster_point y_centroid(rand_number.x, rand_number.y); y_centroid.cluster_id = 1;
     std::vector<cluster_point>  points_vec; 
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cluster_cloud (new pcl::PointCloud<pcl::PointXYZRGB>);
-    
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters;
+
     for(int i=0; i < skeleton_cloud->points.size(); ++i) {
       cluster_point point(skeleton_cloud->points[i].x, skeleton_cloud->points[i].y);
       points_vec.push_back(point);
     }     
 
     int num_epochs = 0;
-    while(num_epochs < 100) {
+    while(num_epochs < 500) {
         for(int i=0; i < points_vec.size(); ++i) {
           double dist = x_centroid.distance(points_vec[i]);
           if(dist < points_vec[i].min_dist) {
@@ -351,6 +493,9 @@ private:
         num_epochs++;
     }
 
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster1 (new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster2 (new pcl::PointCloud<pcl::PointXYZRGB>);
+
     for(int i=0; i< points_vec.size(); ++i) {
       int cluster_id = points_vec[i].cluster_id;
       if(cluster_id == 0) {
@@ -362,7 +507,7 @@ private:
         point.g = 0;         
         point.b = 0;         
     
-        cluster_cloud->points.push_back(point);
+        cloud_cluster1->points.push_back(point);
       }
       if(cluster_id == 1) {
         pcl::PointXYZRGB point;
@@ -373,13 +518,15 @@ private:
         point.g = 0;         
         point.b = 255;         
     
-        cluster_cloud->points.push_back(point);
+        cloud_cluster2->points.push_back(point);
       }
     }
+    cloud_clusters.push_back(cloud_cluster1);
+    cloud_clusters.push_back(cloud_cluster2);
     std::cout << "x centroid: " << x_centroid.x << " ; " << x_centroid.y << std::endl;
     std::cout << "y centroid: " << y_centroid.x << " ; " << y_centroid.y << std::endl;
-    return cluster_cloud;
-
+    
+    return cloud_clusters;
   }
 
   void euclidean_clustering(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud) {
@@ -443,30 +590,6 @@ private:
 
   }
 
-  void extract_line_segments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster) {
-    while (cloud_cluster->size() > 10) {
-      pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
-      pcl::PointIndices::Ptr inliers(new pcl::PointIndices);
-      pcl::ExtractIndices<pcl::PointXYZRGB> extract;
-      // Optional
-      pcl::SACSegmentation<pcl::PointXYZRGB> seg;
-      seg.setOptimizeCoefficients(true);
-      // Mandatory
-      seg.setModelType(pcl::SACMODEL_CIRCLE2D);
-      seg.setMethodType(pcl::SAC_RANSAC);
-      seg.setDistanceThreshold(0.5);
-      seg.setInputCloud(cloud_cluster);
-      seg.segment(*inliers, *coefficients);
-      std::cout << "Model coeffs size: " << coefficients->values.size() << std::endl;
-      std::cout << "Model coefficients before: " << coefficients->values[0] << "; " << coefficients->values[1] << "; " << coefficients->values[2] << "; " << coefficients->values[3] <<  "; " << coefficients->values[4] << "; " << coefficients->values[5] << std::endl;
-      
-      extract.setInputCloud(cloud_cluster);
-      extract.setIndices(inliers);
-      extract.setNegative(true);
-      extract.filter(*cloud_cluster);
-    }
-  }  
-  
 
   void cluster_endpoints(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointXY& p1, pcl::PointXY& p2) {
     //pcl::PointXYZRGB pmin, pmax;
@@ -706,9 +829,9 @@ private:
       diff_dist_y2 = fabs(dist_y2 - y_plane.d);
 
       //std::cout << "diff dist x1: " << diff_dist_y2 << std::endl;
-      if(diff_dist_y2 < min_dist_p1) {
-        min_dist_p1 = diff_dist_y2;
-        plane1 = y_plane;
+      if(diff_dist_y2 < min_dist_p2) {
+        min_dist_p2 = diff_dist_y2;
+        plane2 = y_plane;
       }
     }
 
@@ -892,9 +1015,9 @@ private:
     room_marker.id = 0;
     room_marker.type = visualization_msgs::Marker::CUBE_LIST;
     room_marker.color.r = 1;
-    room_marker.color.g = 0.07;
-    room_marker.color.b = 0.0;
-    room_marker.color.a = 1; 
+    // room_marker.color.g = 0.07;
+    // room_marker.color.b = 0.0;
+    // room_marker.color.a = 1; 
 
     for(const auto& room : room_vec.rooms) {
        geometry_msgs::Point point;
@@ -902,6 +1025,14 @@ private:
        point.y = room.room_center.y;
        point.z = 7.0;
        room_marker.points.push_back(point);
+
+       std_msgs::ColorRGBA point_color;
+       if(room.x_planes.size() == 2 &&  room.y_planes.size() == 2) {
+         point_color.r = 1; point_color.a = 1;
+       } else {
+         point_color.g = 1; point_color.a = 1;
+       } 
+       room_marker.colors.push_back(point_color);
     }
 
     visualization_msgs::MarkerArray markers;
@@ -909,14 +1040,46 @@ private:
     room_centers_pub_.publish(markers);
   }
 
+  void viz_line_segment() {
+    visualization_msgs::MarkerArray markers;
+    visualization_msgs::Marker diagonal_line_marker;
+    diagonal_line_marker.scale.x = 0.05;
+    diagonal_line_marker.pose.orientation.w = 1.0;
+    diagonal_line_marker.ns = "room_diagonal";
+    diagonal_line_marker.header.frame_id = "map";
+    diagonal_line_marker.header.stamp = ros::Time::now();
+    diagonal_line_marker.id = markers.markers.size()+1;
+    diagonal_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+    diagonal_line_marker.color.r = 0;
+    diagonal_line_marker.color.g = 1;
+    diagonal_line_marker.color.b = 0;  
+    diagonal_line_marker.color.a = 1;
+    geometry_msgs::Point p1,p2,p3,p4;
+
+    for(int i = 0; i < diag_line_viz_vec_.size(); ++i) {
+      p1.x = diag_line_viz_vec_[i][0].x; p1.y = diag_line_viz_vec_[i][0].y; p1.z =7.0;
+      p2.x = diag_line_viz_vec_[i][1].x; p2.y = diag_line_viz_vec_[i][1].y; p2.z =7.0;
+      diagonal_line_marker.points.push_back(p1);
+      diagonal_line_marker.points.push_back(p2);
+
+      p3.x = diag_line_viz_vec_[i][2].x; p3.y = diag_line_viz_vec_[i][2].y; p3.z =7.0;
+      p4.x = diag_line_viz_vec_[i][3].x; p4.y = diag_line_viz_vec_[i][3].y; p4.z =7.0;
+      diagonal_line_marker.points.push_back(p3);
+      diagonal_line_marker.points.push_back(p4);
+    }
+    markers.markers.push_back(diagonal_line_marker);
+    room_diagonal_pub_.publish(markers);
+  } 
+
 private:
   ros::Subscriber skeleton_graph_sub;
   ros::Subscriber map_planes_sub;
   ros::Publisher  cluster_cloud_pub_;
+  ros::Publisher  hull_cloud_pub_;
   ros::Publisher  cluster_clouds_pub_;
   ros::Publisher  room_data_pub_;
   ros::Publisher  room_centers_pub_;
-
+  ros::Publisher  room_diagonal_pub_;
   struct cluster_point {
     int cluster_id;
     double x;
@@ -989,7 +1152,7 @@ private:
   //skeleton graph queue
   std::deque<visualization_msgs::MarkerArray::Ptr> skeleton_graph_queue; 
   std::vector<s_graphs::PlaneData> x_vert_plane_vec, y_vert_plane_vec;
-
+  std::vector<std::vector<pcl::PointXYZ>> diag_line_viz_vec_;
   ros::NodeHandle nh;
   ros::NodeHandle private_nh;
 
