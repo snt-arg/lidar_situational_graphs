@@ -920,7 +920,7 @@ private:
       diff_dist_x1 = sqrt((dist_x1 - x_plane.d) * (dist_x1 - x_plane.d));
 
       //std::cout << "diff dist x1: " << diff_dist_x1 << std::endl;
-      if(diff_dist_x1 < min_dist_x1) {
+      if(diff_dist_x1 < min_dist_x1 && find_plane_points(plane_class::X_VERT_PLANE, p_min, p_max, x_plane)) {
         min_dist_x1 = diff_dist_x1;
         x_plane1 = x_plane;
       }
@@ -937,7 +937,7 @@ private:
       diff_dist_x2 = sqrt((dist_x2 - x_plane.d) * (dist_x2 - x_plane.d));
       
       //std::cout << "diff dist x2: " << diff_dist_x2 << std::endl;
-      if(diff_dist_x2 < min_dist_x2) {
+      if(diff_dist_x2 < min_dist_x2 && find_plane_points(plane_class::X_VERT_PLANE, p_min, p_max, x_plane)) {
         min_dist_x2 = diff_dist_x2;
         x_plane2 = x_plane;
       }
@@ -982,7 +982,7 @@ private:
       diff_dist_y1 = sqrt((dist_y1 - y_plane.d) * (dist_y1 - y_plane.d));
 
       //std::cout << "diff dist y1: " << diff_dist_y1 << std::endl;
-      if(diff_dist_y1 < min_dist_y1) {
+      if(diff_dist_y1 < min_dist_y1 && find_plane_points(plane_class::Y_VERT_PLANE, p_min, p_max, y_plane)) {
         min_dist_y1 = diff_dist_y1;
         y_plane1 = y_plane;
       }
@@ -999,7 +999,7 @@ private:
       diff_dist_y2 = sqrt((dist_y2 - y_plane.d) *  (dist_y2 - y_plane.d)) ;
 
       //std::cout << "diff dist y2: " << diff_dist_y2 << std::endl;
-      if(diff_dist_y2 < min_dist_y2) {
+      if(diff_dist_y2 < min_dist_y2 && find_plane_points(plane_class::Y_VERT_PLANE, p_min, p_max, y_plane)) {
         min_dist_y2 = diff_dist_y2;
         y_plane2 = y_plane;
       }
@@ -1023,13 +1023,70 @@ private:
       }
       if(min_dist_y2 < room_dist_thres) {
         //std::cout << "room has yplane2: " << y_plane2.nx << ", " << y_plane2.ny << ", " << y_plane2.nz << ", " << y_plane2.d << std::endl;  
-        found_y2_plane = true;
+        found_y2_plane = true;  
       } 
       else {
         //std::cout << "no yplane2 found " << std::endl;   
         found_y2_plane = false;
       }
     }
+  }
+
+  bool find_plane_points(int plane_type, pcl::PointXY p_min, pcl::PointXY p_max, const s_graphs::PlaneData& plane) {
+    if(plane_type == plane_class::X_VERT_PLANE) {
+      float min_y_point_plane_dist = 100; float max_y_point_plane_dist = 100;
+      for(const auto& plane_point : plane.plane_points) {
+        float plane_point_dist = sqrt(pow(p_min.y - plane_point.y, 2));
+        if(plane_point_dist < min_y_point_plane_dist) {
+          min_y_point_plane_dist = plane_point_dist;
+        }
+        if(min_y_point_plane_dist < 0.5) {
+          break;
+        }
+      }
+
+      for(const auto& plane_point : plane.plane_points) {
+        float plane_point_dist = sqrt(pow(p_max.y - plane_point.y, 2));
+        if(plane_point_dist < max_y_point_plane_dist) {
+          max_y_point_plane_dist = plane_point_dist;
+        }
+        if(max_y_point_plane_dist < 0.5) {
+          break;
+        }
+      }
+
+
+      if(min_y_point_plane_dist < 0.5 || max_y_point_plane_dist < 0.5) 
+        return true;
+    } 
+
+    if(plane_type == plane_class::Y_VERT_PLANE) {
+      float min_x_point_plane_dist = 100; float max_x_point_plane_dist = 100;
+      for(const auto& plane_point : plane.plane_points) {
+        float plane_point_dist = sqrt(pow(p_min.x - plane_point.x, 2));
+        if(plane_point_dist < min_x_point_plane_dist) {
+          min_x_point_plane_dist = plane_point_dist;
+        }
+        if(min_x_point_plane_dist < 0.5) {
+          break;
+        }
+      }
+      
+      for(const auto& plane_point : plane.plane_points) {
+        float plane_point_dist = sqrt(pow(p_max.x - plane_point.x, 2));
+        if(plane_point_dist < max_x_point_plane_dist) {
+          max_x_point_plane_dist = plane_point_dist;
+        }
+        if(max_x_point_plane_dist < 0.5) {
+          break;
+        }
+    }
+
+    if(min_x_point_plane_dist < 0.5 || max_x_point_plane_dist < 0.5) 
+        return true;
+    }
+
+    return false;  
   }
 
   void viz_room_centers(s_graphs::RoomsData room_vec) {
