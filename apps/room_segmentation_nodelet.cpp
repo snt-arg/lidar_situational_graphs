@@ -245,7 +245,6 @@ private:
                                            found_x1_plane, found_x2_plane, found_y1_plane, found_y2_plane);
         //if found all four planes its a room
         if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
-          //TODO:HB add a check here if the centroid lies outside the cloud points
           correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
           correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
           correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
@@ -277,8 +276,8 @@ private:
         }
         //if found only two y planes are found at y corridor
         else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
-          correct_plane_d(plane_class::X_VERT_PLANE, y_plane1);
-          correct_plane_d(plane_class::X_VERT_PLANE, y_plane2);
+          correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
+          correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
 
           geometry_msgs::Point room_center = get_corridor_center(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
           s_graphs::RoomData room_candidate;
