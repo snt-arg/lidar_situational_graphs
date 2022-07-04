@@ -90,7 +90,6 @@ public:
   typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
   
   struct plane_data_list { 
-    g2o::Plane3D plane_local;
     //g2o::Plane3D plane;
     g2o::Plane3D plane_unflipped;
     int plane_id;
@@ -269,50 +268,66 @@ private:
    */
   void room_data_callback(const s_graphs::RoomsData rooms_msg) {
     std::lock_guard<std::mutex> lock (room_data_queue_mutex); 
-    pre_room_data_vec = rooms_msg.rooms;    
-    std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
+    room_data_queue.push_back(rooms_msg);    
+    //std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
   }
 
   /**
-   * @brief check if room data already exists
+   * @brief flush the room data from room data queue
    * 
    */
-  void validate_rooms(const s_graphs::RoomsData rooms_msg) {
-    float room_center_diff_thres = 1.0; 
-    float room_length_diff_thres = 1.0;
-    for(const auto& room_msg : rooms_msg.rooms) {
-      bool room_exists = false;
-      float min_center_dist = room_center_diff_thres; //float max_length_dist = room_length_diff_thres;
-      std::cout << "Room msg: " << room_msg.room_center.x << " , " << room_msg.room_center.y << std::endl;
-      for(auto& curr_room_data : pre_room_data_vec) {
-      //room center check 
-      float center_diff_x = curr_room_data.room_center.x - room_msg.room_center.x; 
-      float center_diff_y = curr_room_data.room_center.y - room_msg.room_center.y; 
-      float center_dist = sqrt(std::pow(center_diff_x, 2) + std::pow(center_diff_y, 2));  
+  void flush_room_data_queue() {
+    std::lock_guard<std::mutex> lock (room_data_queue_mutex); 
 
-      std::cout << "pre room queue: " << curr_room_data.room_center.x << " , " << curr_room_data.room_center.y << std::endl;
-      std::cout << "center_dist: " << center_dist << std::endl;
-      std::cout << "min center_dist: " << min_center_dist << std::endl;
-
-      float length_diff_x = curr_room_data.room_length.x - room_msg.room_length.x;
-      float length_diff_y = curr_room_data.room_length.y - room_msg.room_length.y;
-      float length_dist = sqrt(std::pow(length_diff_x, 2) + std::pow(length_diff_y, 2));
-      
-      if(center_dist < min_center_dist) {
-          min_center_dist = center_dist;
-          curr_room_data = room_msg;
-          room_exists = true;         
-        }
-        std::cout << "room_exists " << room_exists << std::endl;
-      }
-
-      if(!room_exists) {
-        pre_room_data_vec.push_back(room_msg);
-      }
+    if(keyframes.empty() ) {
+      return;
     }
+    else if (room_data_queue.empty()) {
+      std::cout << "room data queue is empty" << std::endl;  
+      return;
+    }
+
+    const auto& latest_keyframe_stamp = keyframes.back()->stamp;
+    const auto& latest_keyframe = keyframes.back();
+    
+    for(const auto& room_data_msg : room_data_queue) {
+      //TODO:HB Factor rooms here appropriately
+      
+      for(const auto& room_data : room_data_msg.rooms) {
+        if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
+          //get the robot pose and check all the surrouding rooms 
+          //check the dist of room wrt robot
+          float dist_robot_room = sqrt(pow(room_data.room_center.x - latest_keyframe->node->estimate().matrix()(0,3),2) + pow(room_data.room_center.y - latest_keyframe->node->estimate().matrix()(1,3),2));
+          //std::cout << "dist robot room: " << dist_robot_room << std::endl;
+          //only factor rooms which are in the vicinity of the robot
+          if(dist_robot_room < 10) {
+            Eigen::Vector4d x_plane1(room_data.x_planes[0].nx,room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
+            Eigen::Vector4d x_plane2(room_data.x_planes[1].nx,room_data.x_planes[1].ny, room_data.x_planes[1].nz, room_data.x_planes[1].d);
+            Eigen::Vector4d y_plane1(room_data.y_planes[0].nx,room_data.y_planes[0].ny, room_data.y_planes[0].nz, room_data.y_planes[0].d);
+            Eigen::Vector4d y_plane2(room_data.y_planes[1].nx,room_data.y_planes[1].ny, room_data.y_planes[1].nz, room_data.y_planes[1].d);
+
+            plane_data_list x_plane1_data, x_plane2_data;
+            plane_data_list y_plane1_data, y_plane2_data;
+            
+            x_plane1_data.plane_id = room_data.x_planes[0].id; x_plane1_data.plane_unflipped = x_plane1;
+            x_plane2_data.plane_id = room_data.x_planes[1].id; x_plane2_data.plane_unflipped = x_plane2;
+
+            y_plane1_data.plane_id = room_data.y_planes[0].id; y_plane1_data.plane_unflipped = y_plane1;
+            y_plane2_data.plane_id = room_data.y_planes[1].id; y_plane2_data.plane_unflipped = y_plane2;
+
+            std::vector<plane_data_list> x_planes_room, y_planes_room;
+            x_planes_room.push_back(x_plane1_data); x_planes_room.push_back(x_plane2_data);
+            y_planes_room.push_back(y_plane1_data); y_planes_room.push_back(y_plane2_data); 
+            factor_rooms(x_planes_room, y_planes_room);  
+          } 
+        } 
+      }
+    room_data_queue.pop_front();
+    }
+    
   }
 
-  /**
+   /**
    * @brief received point clouds are pushed to #keyframe_queue
    * @param odom_msg
    * @param cloud_msg
@@ -2138,6 +2153,9 @@ private:
       return;
     }
 
+    //flush the room poses from room detector and no need to return if no rooms found 
+    flush_room_data_queue();
+
     // loop detection
     std::vector<Loop::Ptr> loops = loop_detector->detect(keyframes, new_keyframes, *graph_slam);
     for(const auto& loop : loops) {
@@ -3607,7 +3625,7 @@ private:
 
   // room data queue 
   std::mutex room_data_queue_mutex;
-  std::vector<s_graphs::RoomData> pre_room_data_vec;
+  std::deque<s_graphs::RoomsData> room_data_queue;
   
 
   // for map cloud generation
