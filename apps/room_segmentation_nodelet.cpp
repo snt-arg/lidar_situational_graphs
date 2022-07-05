@@ -1055,7 +1055,7 @@ private:
       }
 
 
-      if(min_y_point_plane_dist < 0.5 || max_y_point_plane_dist < 0.5) 
+      if(min_y_point_plane_dist < 0.5 && max_y_point_plane_dist < 0.5) 
         return true;
     } 
 
@@ -1081,7 +1081,7 @@ private:
         }
     }
 
-    if(min_x_point_plane_dist < 0.5 || max_x_point_plane_dist < 0.5) 
+    if(min_x_point_plane_dist < 0.5 && max_x_point_plane_dist < 0.5) 
         return true;
     }
 
