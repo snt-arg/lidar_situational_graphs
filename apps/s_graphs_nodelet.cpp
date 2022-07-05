@@ -1389,6 +1389,11 @@ private:
     found_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[0].plane_id);
     found_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[1].plane_id);
 
+    if(found_x_plane1==x_vert_planes.end() || found_x_plane2 ==x_vert_planes.end() || found_y_plane1==y_vert_planes.end() || found_y_plane2==y_vert_planes.end()) {
+      std::cout << "did not find a room plane in the plane vector" << std::endl;
+      return;
+    }
+
     Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
     room_data_association = associate_rooms(room_pose);   
     if((rooms_vec.empty() || room_data_association.first == -1)) {
@@ -2152,9 +2157,9 @@ private:
     if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue() & !flush_clouds_seg_queue()) {
       return;
     }
-
+    
     //flush the room poses from room detector and no need to return if no rooms found 
-    flush_room_data_queue();
+    flush_room_data_queue();  
 
     // loop detection
     std::vector<Loop::Ptr> loops = loop_detector->detect(keyframes, new_keyframes, *graph_slam);
@@ -2224,19 +2229,50 @@ private:
     odom2map_pub.publish(ts);
 
     //publish mapped planes
+    publish_mapped_planes(x_vert_planes_snapshot, y_vert_planes_snapshot);
+     
+  }  
+
+  /**
+   * @brief publish the mapped plane information from the last n keyframes
+   * 
+   */
+  void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot, std::vector<VerticalPlanes> y_vert_planes_snapshot) {
+    int keyframe_window_size = 5;
+    std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
+    std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
+    for(int i = 0; i < keyframe_window.size(); ++i) {
+      for(const auto& x_plane_id : keyframe_window[i]->x_plane_ids) {
+        //std::cout << "keyframe id " << keyframe_window[i]->id() << " has x plane with id " << x_plane_id << std::endl; 
+        auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));  
+        //if (result.second == false)
+        //  std::cout << "x plane already existed with id : " <<  x_plane_id << std::endl;
+      }
+
+      for(const auto& y_plane_id : keyframe_window[i]->y_plane_ids) {
+        //std::cout << "keyframe id " << keyframe_window[i]->id() << " has y plane with id " << y_plane_id << std::endl; 
+        auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));  
+        //if (result.second == false)
+        //  std::cout << "y plane already existed with id : " <<  y_plane_id << std::endl;       
+      } 
+    }
+    
     s_graphs::PlanesData vert_planes_data;
-    vert_planes_data.header.stamp = keyframe->stamp;
-    for(const auto& local_x_vert_plane : x_vert_planes_snapshot) {
+    vert_planes_data.header.stamp = keyframes.back()->stamp;
+    for(const auto& unique_x_plane_id : unique_x_plane_ids) {
+      auto local_x_vert_plane = std::find_if(x_vert_planes_snapshot.begin(), x_vert_planes_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == unique_x_plane_id.first);
+      if(local_x_vert_plane==x_vert_planes_snapshot.end()) 
+        continue;
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = local_x_vert_plane.plane_node->estimate().coeffs(); 
+      mapped_plane_coeffs = (*local_x_vert_plane).plane_node->estimate().coeffs(); 
       //correct_plane_d(plane_class::X_VERT_PLANE, mapped_plane_coeffs);
-      plane_data.id = local_x_vert_plane.id;
+      plane_data.id = (*local_x_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0); 
       plane_data.ny = mapped_plane_coeffs(1); 
       plane_data.nz = mapped_plane_coeffs(2); 
       plane_data.d  = mapped_plane_coeffs(3); 
-      for(const auto& plane_point_data : local_x_vert_plane.cloud_seg_map->points) {
+      for(const auto& plane_point_data : (*local_x_vert_plane).cloud_seg_map->points) {
         geometry_msgs::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -2246,17 +2282,20 @@ private:
       vert_planes_data.x_planes.push_back(plane_data);
     }
     
-    for(const auto& local_y_vert_plane : y_vert_planes_snapshot) {
+    for(const auto& unique_y_plane_id : unique_y_plane_ids) {
+      auto local_y_vert_plane = std::find_if(y_vert_planes_snapshot.begin(), y_vert_planes_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == unique_y_plane_id.first); 
+      if(local_y_vert_plane==y_vert_planes_snapshot.end()) 
+        continue;
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = local_y_vert_plane.plane_node->estimate().coeffs(); 
+      mapped_plane_coeffs = (*local_y_vert_plane).plane_node->estimate().coeffs(); 
       //correct_plane_d(plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
-      plane_data.id = local_y_vert_plane.id;
+      plane_data.id = (*local_y_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0); 
       plane_data.ny = mapped_plane_coeffs(1); 
       plane_data.nz = mapped_plane_coeffs(2); 
       plane_data.d  = mapped_plane_coeffs(3); 
-      for(const auto& plane_point_data : local_y_vert_plane.cloud_seg_map->points) {
+      for(const auto& plane_point_data : (*local_y_vert_plane).cloud_seg_map->points) {
         geometry_msgs::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -2266,8 +2305,8 @@ private:
       vert_planes_data.y_planes.push_back(plane_data);
     }
     map_planes_pub.publish(vert_planes_data);
-    
-  }  
+  
+  }
 
   /**
    * @brief topological thread for finding room/corridor constraints for detected planes
