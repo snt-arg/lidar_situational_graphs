@@ -342,6 +342,15 @@ private:
           x_planes_room.push_back(x_plane1_data); x_planes_room.push_back(x_plane2_data);
           y_planes_room.push_back(y_plane1_data); y_planes_room.push_back(y_plane2_data); 
           factor_rooms(x_planes_room, y_planes_room);  
+
+          //get the room neighbours
+          for(const auto& room_neighbour_id : room_data.neighbour_ids) {
+            for(const auto& single_room_data : room_data_msg.rooms) {
+              if(single_room_data.id == room_neighbour_id) 
+                std::cout << "detected room with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+            }
+          }
+
         }
         //x corridor
         if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
@@ -369,6 +378,14 @@ private:
             x_plane2_data.plane_id = room_data.x_planes[1].id; x_plane2_data.plane_unflipped = x_plane2; x_plane2_data.plane_centroid(1) = room_data.room_center.y;
             
             factor_corridors(plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data);
+
+            //get the corridor neighbours
+            for(const auto& room_neighbour_id : room_data.neighbour_ids) {
+              for(const auto& single_room_data : room_data_msg.rooms) {
+                if(single_room_data.id == room_neighbour_id) 
+                  std::cout << "detected x corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+            }
+           }
           }  
         }
         //y corridor
@@ -395,12 +412,17 @@ private:
             y_plane2_data.plane_id = room_data.y_planes[1].id; y_plane2_data.plane_unflipped = y_plane2; y_plane2_data.plane_centroid(0) = room_data.room_center.x;
 
             factor_corridors(plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data);
+            //get the corridor neighbours
+            for(const auto& room_neighbour_id : room_data.neighbour_ids) {
+              for(const auto& single_room_data : room_data_msg.rooms) {
+                if(single_room_data.id == room_neighbour_id) 
+                  std::cout << "detected y corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+            }
+           }
           }
-
         }
  
       }
-      
     room_data_queue.pop_front();
     }
     
@@ -3218,7 +3240,7 @@ private:
     corridor_marker.color.a = 1; 
 
     for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
-      float dist_room_x_corr = 0;
+      float dist_room_x_corr = 100;
       for(const auto& room : room_snapshot) {
         dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate(),2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].keyframe_trans(1),2));
         if(dist_room_x_corr < 1.0)
@@ -3295,7 +3317,7 @@ private:
     }
     
     for(int i = 0; i < y_corridor_snapshot.size(); ++i) {
-      float dist_room_y_corr = 0;
+      float dist_room_y_corr = 100;
       for(const auto& room : room_snapshot) {
         dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].keyframe_trans(0),2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate(),2));
         if(dist_room_y_corr <  1.0)

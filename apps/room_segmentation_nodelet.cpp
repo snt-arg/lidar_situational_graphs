@@ -128,7 +128,8 @@ private:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters;
 
-
+    int subgraph_id = 0;
+    std::vector<std::pair<int, int>> connected_subgraph_map;
     for(const auto& single_graph : skeleton_graph_msg->markers) {
        pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster (new pcl::PointCloud<pcl::PointXYZRGB>);
        std::string vertex_string = "connected_vertices_";
@@ -144,12 +145,47 @@ private:
           tmp_cloud_cluster->points.push_back(pcl_point);
           cloud_cluster->points.push_back(pcl_point);
        }
+      //insert subgraph id in the seq
+      tmp_cloud_cluster->header.seq =  subgraph_id; 
       cloud_clusters.push_back(tmp_cloud_cluster);
+      subgraph_id++;
      }
+
+      //get the connected subsgraphs
+      std::string connected_subgraph_string = "subgraph_edges_";
+      size_t found_connection = single_graph.ns.find(connected_subgraph_string);
+      if(found_connection != std::string::npos) {
+        //the position here encodes the two subgraph ids.
+        int subgraph_1_id = single_graph.id >> 8; 
+        int subgraph_2_id = single_graph.id & (2 * 2 * 2 * 2 - 1);
+
+        bool pair_exists = false;
+        for(const auto& connected_graph_ids : connected_subgraph_map) {
+          if(connected_graph_ids.first == subgraph_1_id &&  connected_graph_ids.second == subgraph_2_id) {
+            pair_exists = true;
+            continue;
+          }
+          else if (connected_graph_ids.first == subgraph_2_id && connected_graph_ids.second == subgraph_1_id) {
+            pair_exists = true;
+            continue;  
+          }
+        }
+        
+        if(pair_exists)
+          continue;
+        
+        //std::cout << "subgraph_1_id:" << subgraph_1_id << std::endl;
+        //std::cout << "subgraph_2_id:" << subgraph_2_id << std::endl;
+        
+        std::pair<int, int> connected_subgraph;
+        connected_subgraph = std::make_pair(subgraph_1_id, subgraph_2_id);
+        connected_subgraph_map.push_back(connected_subgraph);
+      }
     }          
     
+
     //std::cout << "skeletal cloud size: " << skeleton_cloud->points.size() << std::endl;  
-    extract_skeletal_clusters(cloud_cluster, cloud_clusters);
+    extract_skeletal_clusters(cloud_cluster, cloud_clusters, connected_subgraph_map);
 
     return true;
   }
@@ -159,7 +195,7 @@ private:
    * @brief extract clusters with its centers from the skeletal cloud 
    * 
    */
-  void extract_skeletal_clusters(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters) {
+  void extract_skeletal_clusters(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters, std::vector<std::pair<int, int>> connected_subgraph_map) {
     int room_cluster_counter=0;
     std::vector<s_graphs::RoomData> room_candidates_vec;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer (new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -186,7 +222,7 @@ private:
     
       //if we found two diagonals to a rectangle, its mostly a room and no need for further clustering
       //copy pointcloud for visualization  
-      perform_room_segmentation(room_cluster_counter, cloud_cluster, room_candidates_vec);
+      perform_room_segmentation(room_cluster_counter, cloud_cluster, room_candidates_vec, connected_subgraph_map);
       for(int i=0; i < cloud_cluster->points.size(); ++i) {
         cloud_visualizer->points.push_back(cloud_cluster->points[i]);
       } 
@@ -213,7 +249,7 @@ private:
     //viz_line_segment();
   }
 
-  void perform_room_segmentation(int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<s_graphs::RoomData>& room_candidates_vec) {
+  void perform_room_segmentation(int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map) {
     pcl::PointXY p1; pcl::PointXY p2;
     bool centroid_inside = get_centroid_location(cloud_cluster, p1, p2);   
 
@@ -249,10 +285,19 @@ private:
           correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
           correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
           correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
-          
+
+          std::cout << "subgraph id of the room is: " << cloud_cluster->header.seq << std::endl;
+          std::vector<int> neighbour_ids;
+          for(const auto& connected_ids : connected_subgraph_map) {
+            if(connected_ids.first == cloud_cluster->header.seq) 
+              neighbour_ids.push_back(connected_ids.second);
+            else if (connected_ids.second == cloud_cluster->header.seq)
+              neighbour_ids.push_back(connected_ids.first);
+          }  
           geometry_msgs::Point room_center = get_room_center(p1, p2, x_plane1, x_plane2, y_plane1, y_plane2);
           s_graphs::RoomData room_candidate;
-          room_candidate.id = room_cluster_counter;
+          room_candidate.id = cloud_cluster->header.seq;
+          room_candidate.neighbour_ids = neighbour_ids;
           room_candidate.room_length = room_length;
           room_candidate.room_center = room_center;
           room_candidate.x_planes.push_back(x_plane1); room_candidate.x_planes.push_back(x_plane2);
@@ -265,9 +310,19 @@ private:
           correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
           correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
 
+          std::cout << "subgraph id of the x corridor is: " << cloud_cluster->header.seq << std::endl;  
+          std::vector<int> neighbour_ids;
+          for(const auto& connected_ids : connected_subgraph_map) {
+            if(connected_ids.first == cloud_cluster->header.seq) 
+              neighbour_ids.push_back(connected_ids.second);
+            else if (connected_ids.second == cloud_cluster->header.seq)
+              neighbour_ids.push_back(connected_ids.first);
+          }  
+          
           geometry_msgs::Point room_center = get_corridor_center(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
           s_graphs::RoomData room_candidate;
-          room_candidate.id = room_cluster_counter;
+          room_candidate.id = cloud_cluster->header.seq;
+          room_candidate.neighbour_ids = neighbour_ids;
           room_candidate.room_length = room_length;
           room_candidate.room_center = room_center;
           room_candidate.x_planes.push_back(x_plane1); room_candidate.x_planes.push_back(x_plane2);
@@ -279,9 +334,19 @@ private:
           correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
           correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
 
+          std::cout << "subgraph id of the y corridor is: " << cloud_cluster->header.seq << std::endl; 
+          std::vector<int> neighbour_ids;
+          for(const auto& connected_ids : connected_subgraph_map) {
+            if(connected_ids.first == cloud_cluster->header.seq) 
+              neighbour_ids.push_back(connected_ids.second);
+            else if (connected_ids.second == cloud_cluster->header.seq)
+              neighbour_ids.push_back(connected_ids.first);
+          }  
+
           geometry_msgs::Point room_center = get_corridor_center(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
           s_graphs::RoomData room_candidate;
-          room_candidate.id = room_cluster_counter;
+          room_candidate.id = cloud_cluster->header.seq;
+          room_candidate.neighbour_ids = neighbour_ids;
           room_candidate.room_length = room_length;
           room_candidate.room_center = room_center;
           room_candidate.y_planes.push_back(y_plane1); room_candidate.y_planes.push_back(y_plane2);
