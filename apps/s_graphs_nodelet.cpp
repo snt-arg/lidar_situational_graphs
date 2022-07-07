@@ -355,7 +355,6 @@ private:
             }
           }
 
-
           std::vector<plane_data_list> x_planes_room, y_planes_room;
           x_planes_room.push_back(x_plane1_data); x_planes_room.push_back(x_plane2_data);
           y_planes_room.push_back(y_plane1_data); y_planes_room.push_back(y_plane2_data); 
@@ -426,7 +425,9 @@ private:
             y_plane1_data.connected_id = room_data.id; 
             //get the corridor neighbours
             for(const auto& room_neighbour_id : room_data.neighbour_ids) {
+                std::cout << "room_neighbour_id : " <<  room_neighbour_id << std::endl; 
               for(const auto& single_room_data : room_data_msg.rooms) {
+                  std::cout << "single_room_data : " <<  single_room_data.id << std::endl; 
                 if(single_room_data.id == room_neighbour_id) {
                   std::cout << "detected y corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
                   y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
@@ -1179,8 +1180,11 @@ private:
       auto found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
       auto found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
 
-      if(found_plane1 == x_vert_planes.end() || found_plane2 == x_vert_planes.end()) 
+      if(found_plane1 == x_vert_planes.end() || found_plane2 == x_vert_planes.end()) {
+        std::cout << "did not find planes for x corridor " << std::endl;
         return;
+      }
+        
 
       corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2));
 
@@ -1218,12 +1222,16 @@ private:
         << " and pose " << corr_node->estimate()  << std::endl;
 
         //Add the new detected neighbours to the matched corridor
-        for(const auto& current_corr_neighbour : x_corridors[corr_data_association.second].connected_neighbour_ids) {
-          for(const auto& det_corr_neighbour : corr_plane1_pair.connected_neighbour_ids) {
-            if(current_corr_neighbour != det_corr_neighbour) {
-              x_corridors[corr_data_association.second].connected_neighbour_ids.push_back(current_corr_neighbour);
+        for(const auto& det_corr_neighbour : corr_plane1_pair.connected_neighbour_ids) {
+          bool neighbour_exists = false; 
+          for(const auto& current_corr_neighbour : x_corridors[corr_data_association.second].connected_neighbour_ids) {
+            if(det_corr_neighbour == current_corr_neighbour) {
+              neighbour_exists = true; 
+              break;
             } 
           }   
+          if(!neighbour_exists)
+            x_corridors[corr_data_association.second].connected_neighbour_ids.push_back(det_corr_neighbour);
         }
 
         auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[corr_data_association.second].plane1_id);
@@ -1335,12 +1343,16 @@ private:
         " and pose " << corr_node->estimate()  << std::endl;
 
         //add the new detected neighbour to the matched corridor. 
-        for(const auto& current_corr_neighbour : y_corridors[corr_data_association.second].connected_neighbour_ids) {
-          for(const auto& det_corr_neighbour : corr_plane1_pair.connected_neighbour_ids) {
-            if(current_corr_neighbour != det_corr_neighbour) {
-              y_corridors[corr_data_association.second].connected_neighbour_ids.push_back(current_corr_neighbour);
+        for(const auto& det_corr_neighbour : corr_plane1_pair.connected_neighbour_ids) {
+          bool neighbour_exists = false; 
+          for(const auto& current_corr_neighbour : y_corridors[corr_data_association.second].connected_neighbour_ids) {
+            if(det_corr_neighbour == current_corr_neighbour) {
+              neighbour_exists = true; 
+              break;
             } 
           }   
+          if(!neighbour_exists)
+            y_corridors[corr_data_association.second].connected_neighbour_ids.push_back(det_corr_neighbour);
         }
 
         auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[corr_data_association.second].plane1_id);
@@ -1597,13 +1609,17 @@ private:
         " to mapped room with id " << room_data_association.first << 
         " and pose " << room_node->estimate()  << std::endl;
 
-        // check if a new neighbour id was added and if yes then add it to the vec of neighbour ids
-        for(const auto& current_room_neighbour : rooms_vec[room_data_association.second].connected_neighbour_ids) {
-          for(const auto& det_room_neighbour : x_room_pair_vec[0].connected_neighbour_ids) {
-            if(current_room_neighbour != det_room_neighbour) {
-              rooms_vec[room_data_association.second].connected_neighbour_ids.push_back(current_room_neighbour);
+        //check if a new neighbour id was added and if yes then add it to the vec of neighbour ids
+        for(const auto& det_room_neighbour : x_room_pair_vec[0].connected_neighbour_ids) {
+          bool neighbour_exists = false; 
+          for(const auto& current_corr_neighbour : rooms_vec[room_data_association.second].connected_neighbour_ids) {
+            if(det_room_neighbour == current_corr_neighbour) {
+              neighbour_exists = true; 
+              break;
             } 
           }   
+          if(!neighbour_exists)
+            rooms_vec[room_data_association.second].connected_neighbour_ids.push_back(det_room_neighbour);
         }
 
         found_mapped_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_x1_id);
@@ -3719,7 +3735,7 @@ private:
           p1.x = room.node->estimate()(0);
           p1.y = room.node->estimate()(1);
           p1.z = room_node_h;
-          
+
           auto found_neighbour_room = std::find_if(room_snapshot.begin(), room_snapshot.end(), boost::bind(&Rooms::connected_id, _1) == room_neighbour_id);
           if(found_neighbour_room != room_snapshot.end()) {
             p2.x = (*found_neighbour_room).node->estimate()(0);

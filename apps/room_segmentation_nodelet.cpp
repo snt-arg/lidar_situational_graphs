@@ -279,6 +279,10 @@ private:
         s_graphs::PlaneData x_plane1, x_plane2, y_plane1, y_plane2;
         get_room_planes(p1,p2, x_plane1, x_plane2, y_plane1, y_plane2,
                                            found_x1_plane, found_x2_plane, found_y1_plane, found_y2_plane);
+        //clear plane points which are not required now
+        x_plane1.plane_points.clear();x_plane2.plane_points.clear();
+        y_plane1.plane_points.clear();y_plane2.plane_points.clear(); 
+
         //if found all four planes its a room
         if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
           correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
