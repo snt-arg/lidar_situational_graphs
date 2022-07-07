@@ -90,10 +90,15 @@ public:
   typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry, sensor_msgs::PointCloud2> ApproxSyncPolicy;
   
   struct plane_data_list { 
-    plane_data_list() : plane_centroid(0,0,0) {}
+    plane_data_list() :
+    plane_centroid(0,0,0), connected_id(-1) {
+      connected_neighbour_ids.clear();
+    }
     //g2o::Plane3D plane;
     g2o::Plane3D plane_unflipped;
     int plane_id;
+    int connected_id;
+    std::vector<int> connected_neighbour_ids;
     pcl::PointXY start_point, end_point;
     float plane_length;
     g2o::VertexSE3* keyframe_node;
@@ -332,26 +337,31 @@ private:
           plane_data_list x_plane1_data, x_plane2_data;
           plane_data_list y_plane1_data, y_plane2_data;
           
+          
           x_plane1_data.plane_id = room_data.x_planes[0].id; x_plane1_data.plane_unflipped = x_plane1;
           x_plane2_data.plane_id = room_data.x_planes[1].id; x_plane2_data.plane_unflipped = x_plane2;
 
           y_plane1_data.plane_id = room_data.y_planes[0].id; y_plane1_data.plane_unflipped = y_plane1;
           y_plane2_data.plane_id = room_data.y_planes[1].id; y_plane2_data.plane_unflipped = y_plane2;
 
+         //get the room neighbours
+         x_plane1_data.connected_id = room_data.id; 
+         for(const auto& room_neighbour_id : room_data.neighbour_ids) {
+            for(const auto& single_room_data : room_data_msg.rooms) {
+              if(single_room_data.id == room_neighbour_id) {
+                std::cout << "detected room with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+                x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
+              }
+            }
+          }
+
+
           std::vector<plane_data_list> x_planes_room, y_planes_room;
           x_planes_room.push_back(x_plane1_data); x_planes_room.push_back(x_plane2_data);
           y_planes_room.push_back(y_plane1_data); y_planes_room.push_back(y_plane2_data); 
           factor_rooms(x_planes_room, y_planes_room);  
 
-          //get the room neighbours
-          for(const auto& room_neighbour_id : room_data.neighbour_ids) {
-            for(const auto& single_room_data : room_data_msg.rooms) {
-              if(single_room_data.id == room_neighbour_id) 
-                std::cout << "detected room with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
-            }
-          }
-
-        }
+         }
         //x corridor
         if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
           //check the distance with the current room vector
@@ -377,14 +387,16 @@ private:
             x_plane1_data.plane_id = room_data.x_planes[0].id; x_plane1_data.plane_unflipped = x_plane1; x_plane1_data.plane_centroid(1) = room_data.room_center.y; 
             x_plane2_data.plane_id = room_data.x_planes[1].id; x_plane2_data.plane_unflipped = x_plane2; x_plane2_data.plane_centroid(1) = room_data.room_center.y;
             
-            factor_corridors(plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data);
-
+            x_plane1_data.connected_id = room_data.id; 
             //get the corridor neighbours
             for(const auto& room_neighbour_id : room_data.neighbour_ids) {
               for(const auto& single_room_data : room_data_msg.rooms) {
-                if(single_room_data.id == room_neighbour_id) 
+                if(single_room_data.id == room_neighbour_id) {
                   std::cout << "detected x corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+                  x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
+                }
             }
+            factor_corridors(plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data);
            }
           }  
         }
@@ -411,21 +423,25 @@ private:
             y_plane1_data.plane_id = room_data.y_planes[0].id; y_plane1_data.plane_unflipped = y_plane1; y_plane1_data.plane_centroid(0) = room_data.room_center.x;
             y_plane2_data.plane_id = room_data.y_planes[1].id; y_plane2_data.plane_unflipped = y_plane2; y_plane2_data.plane_centroid(0) = room_data.room_center.x;
 
-            factor_corridors(plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data);
+            y_plane1_data.connected_id = room_data.id; 
             //get the corridor neighbours
             for(const auto& room_neighbour_id : room_data.neighbour_ids) {
               for(const auto& single_room_data : room_data_msg.rooms) {
-                if(single_room_data.id == room_neighbour_id) 
+                if(single_room_data.id == room_neighbour_id) {
                   std::cout << "detected y corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
-            }
+                  y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
+                }
+             }
            }
+          factor_corridors(plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data);
           }
         }
- 
       }
-    room_data_queue.pop_front();
+
+      //TODO:HB factor neighbours appropriately in the sgraphs
+      
+      room_data_queue.pop_front();
     }
-    
   }
 
    /**
@@ -1183,6 +1199,8 @@ private:
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
         det_corridor.keyframe_trans = corr_plane1_pair.plane_centroid;
         det_corridor.node = corr_node;   
+        det_corridor.connected_id = corr_plane1_pair.connected_id;
+        det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
         x_corridors.push_back(det_corridor);
 
         meas_plane1 =  corridor_measurement(plane_type, corr_pose(0), corr_plane1_pair.plane_unflipped.coeffs());
@@ -1198,6 +1216,15 @@ private:
         std::cout << "Matched det corridor X with pre pose " << corr_pose << 
         " to mapped corridor with id " << corr_data_association.first 
         << " and pose " << corr_node->estimate()  << std::endl;
+
+        //Add the new detected neighbours to the matched corridor
+        for(const auto& current_corr_neighbour : x_corridors[corr_data_association.second].connected_neighbour_ids) {
+          for(const auto& det_corr_neighbour : corr_plane1_pair.connected_neighbour_ids) {
+            if(current_corr_neighbour != det_corr_neighbour) {
+              x_corridors[corr_data_association.second].connected_neighbour_ids.push_back(current_corr_neighbour);
+            } 
+          }   
+        }
 
         auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[corr_data_association.second].plane1_id);
         auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[corr_data_association.second].plane2_id);
@@ -1288,7 +1315,9 @@ private:
         det_corridor.plane1 = corr_plane1_pair.plane_unflipped; det_corridor.plane2 = corr_plane2_pair.plane_unflipped; 
         det_corridor.plane1_id = corr_plane1_pair.plane_id; det_corridor.plane2_id = corr_plane2_pair.plane_id; 
         det_corridor.keyframe_trans = corr_plane1_pair.plane_centroid;
-        det_corridor.node = corr_node;      
+        det_corridor.node = corr_node; 
+        det_corridor.connected_id = corr_plane1_pair.connected_id;
+        det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;     
         y_corridors.push_back(det_corridor);
 
         meas_plane1 =  corridor_measurement(plane_type, corr_pose(1), corr_plane1_pair.plane_unflipped.coeffs());
@@ -1304,7 +1333,16 @@ private:
         std::cout << "Matched det corridor Y with pre pose " << corr_pose << 
         " to mapped corridor with id " << corr_data_association.first << 
         " and pose " << corr_node->estimate()  << std::endl;
-        
+
+        //add the new detected neighbour to the matched corridor. 
+        for(const auto& current_corr_neighbour : y_corridors[corr_data_association.second].connected_neighbour_ids) {
+          for(const auto& det_corr_neighbour : corr_plane1_pair.connected_neighbour_ids) {
+            if(current_corr_neighbour != det_corr_neighbour) {
+              y_corridors[corr_data_association.second].connected_neighbour_ids.push_back(current_corr_neighbour);
+            } 
+          }   
+        }
+
         auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[corr_data_association.second].plane1_id);
         auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[corr_data_association.second].plane2_id);
         
@@ -1529,6 +1567,8 @@ private:
         det_room.plane_y1 = y_room_pair_vec[0].plane_unflipped; det_room.plane_y2 = y_room_pair_vec[1].plane_unflipped;       
         det_room.plane_x1_id = x_room_pair_vec[0].plane_id; det_room.plane_x2_id = x_room_pair_vec[1].plane_id; 
         det_room.plane_y1_id = y_room_pair_vec[0].plane_id; det_room.plane_y2_id = y_room_pair_vec[1].plane_id; 
+        det_room.connected_id = x_room_pair_vec[0].connected_id;
+        det_room.connected_neighbour_ids = x_room_pair_vec[0].connected_neighbour_ids;
         det_room.node = room_node;   
         rooms_vec.push_back(det_room);
 
@@ -1556,6 +1596,15 @@ private:
         std::cout << "Matched det room with pose " << room_pose << 
         " to mapped room with id " << room_data_association.first << 
         " and pose " << room_node->estimate()  << std::endl;
+
+        // check if a new neighbour id was added and if yes then add it to the vec of neighbour ids
+        for(const auto& current_room_neighbour : rooms_vec[room_data_association.second].connected_neighbour_ids) {
+          for(const auto& det_room_neighbour : x_room_pair_vec[0].connected_neighbour_ids) {
+            if(current_room_neighbour != det_room_neighbour) {
+              rooms_vec[room_data_association.second].connected_neighbour_ids.push_back(current_room_neighbour);
+            } 
+          }   
+        }
 
         found_mapped_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_x1_id);
         found_mapped_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_x2_id);
@@ -3265,7 +3314,7 @@ private:
       corr_x_line_marker.color.r =  color_r;
       corr_x_line_marker.color.g =  color_g;
       corr_x_line_marker.color.b =  color_b;  
-      corr_x_line_marker.color.a = 0.4;
+      corr_x_line_marker.color.a = 0.8;
       geometry_msgs::Point p1,p2,p3;
   
       pcl::CentroidPoint<PointNormal> centroid_p1;           
@@ -3274,6 +3323,7 @@ private:
       }
 
       PointNormal cp1_pt; centroid_p1.get(cp1_pt);
+      x_corridor_snapshot[i].keyframe_trans(1) = cp1_pt.y;
       p1.x =  x_corridor_snapshot[i].node->estimate(); p1.y =  cp1_pt.y;  p1.z =  corridor_edge_h;  
       p2.x =  cp1_pt.x; p2.y = cp1_pt.y; p2.z = 5.0;
       corr_x_line_marker.points.push_back(p1);
@@ -3341,7 +3391,7 @@ private:
       corr_y_line_marker.color.r = color_r;
       corr_y_line_marker.color.g = color_g;
       corr_y_line_marker.color.b = color_b;  
-      corr_y_line_marker.color.a = 0.4;
+      corr_y_line_marker.color.a = 0.8;
       geometry_msgs::Point p1,p2,p3;
 
       pcl::CentroidPoint<PointNormal> centroid_p1;           
@@ -3349,6 +3399,7 @@ private:
         centroid_p1.add((*found_plane1).cloud_seg_map->points[p]);
       }
       PointNormal cp1_pt; centroid_p1.get(cp1_pt);
+      y_corridor_snapshot[i].keyframe_trans(0) =  cp1_pt.x;
       p1.x =  cp1_pt.x; p1.y = y_corridor_snapshot[i].node->estimate(); p1.z =  corridor_edge_h;  
       p2.x =  cp1_pt.x; p2.y = cp1_pt.y; p2.z = 5.0;
       corr_y_line_marker.points.push_back(p1);
@@ -3452,7 +3503,7 @@ private:
       room_line_marker.color.r = color_r; 
       room_line_marker.color.g = color_g;
       room_line_marker.color.b = color_b;  
-      room_line_marker.color.a = 0.4;
+      room_line_marker.color.a = 0.8;
       geometry_msgs::Point p1,p2,p3,p4,p5;
       p1.x = room_snapshot[i].node->estimate()(0);
       p1.y = room_snapshot[i].node->estimate()(1);
@@ -3534,6 +3585,176 @@ private:
       markers.markers.push_back(room_line_marker); 
     }
     markers.markers.push_back(room_marker); 
+
+    //check for xcorridor neighbours and draw lines between them
+    visualization_msgs::Marker x_corr_neighbour_line_marker;
+    x_corr_neighbour_line_marker.scale.x = 0.05;
+    x_corr_neighbour_line_marker.pose.orientation.w = 1.0;
+    x_corr_neighbour_line_marker.ns = "x_corr_neighbour_lines";
+    x_corr_neighbour_line_marker.header.frame_id = map_frame_id;
+    x_corr_neighbour_line_marker.header.stamp = stamp;
+    x_corr_neighbour_line_marker.id = markers.markers.size()+1;
+    x_corr_neighbour_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+    x_corr_neighbour_line_marker.color.r = 1; 
+    x_corr_neighbour_line_marker.color.g = 0;
+    x_corr_neighbour_line_marker.color.b = 0;  
+    x_corr_neighbour_line_marker.color.a = 0.8;
+    for(const auto& x_corridor : x_corridor_snapshot) {
+      for(const auto& x_corridor_neighbour_id : x_corridor.connected_neighbour_ids) {
+          geometry_msgs::Point p1,p2;
+          p1.x = x_corridor.node->estimate();
+          p1.y = x_corridor.keyframe_trans(1);
+          p1.z = corridor_node_h;
+
+          auto found_neighbour_room = std::find_if(room_snapshot.begin(), room_snapshot.end(), boost::bind(&Rooms::connected_id, _1) == x_corridor_neighbour_id);
+          if(found_neighbour_room != room_snapshot.end()) {
+            p2.x = (*found_neighbour_room).node->estimate()(0);
+            p2.y = (*found_neighbour_room).node->estimate()(1);
+            p2.z = room_node_h;
+
+            x_corr_neighbour_line_marker.points.push_back(p1);
+            x_corr_neighbour_line_marker.points.push_back(p2);
+          }
+          else {
+            auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::connected_id, _1) == x_corridor_neighbour_id);
+            if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
+              p2.x = (*found_neighbour_x_corr).node->estimate();
+              p2.y = (*found_neighbour_x_corr).keyframe_trans(1);
+              p2.z = corridor_node_h;
+              
+              x_corr_neighbour_line_marker.points.push_back(p1);
+              x_corr_neighbour_line_marker.points.push_back(p2);  
+            }
+            else {
+              auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::connected_id, _1) == x_corridor_neighbour_id);
+              if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
+                p2.x = (*found_neighbour_y_corr).keyframe_trans(0);
+                p2.y = (*found_neighbour_y_corr).node->estimate();
+                p2.z = corridor_node_h;
+                
+                x_corr_neighbour_line_marker.points.push_back(p1);
+                x_corr_neighbour_line_marker.points.push_back(p2);
+            }
+            else 
+              continue;
+          }
+        } 
+      }
+    }
+    markers.markers.push_back(x_corr_neighbour_line_marker); 
+
+    //check for ycorridor neighbours and draw lines between them
+    visualization_msgs::Marker y_corr_neighbour_line_marker;
+    y_corr_neighbour_line_marker.scale.x = 0.05;
+    y_corr_neighbour_line_marker.pose.orientation.w = 1.0;
+    y_corr_neighbour_line_marker.ns = "y_corr_neighbour_lines";
+    y_corr_neighbour_line_marker.header.frame_id = map_frame_id;
+    y_corr_neighbour_line_marker.header.stamp = stamp;
+    y_corr_neighbour_line_marker.id = markers.markers.size()+1;
+    y_corr_neighbour_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+    y_corr_neighbour_line_marker.color.r = 1; 
+    y_corr_neighbour_line_marker.color.g = 0;
+    y_corr_neighbour_line_marker.color.b = 0;  
+    y_corr_neighbour_line_marker.color.a = 0.8;
+    for(const auto& y_corridor : y_corridor_snapshot) {
+      for(const auto& y_corridor_neighbour_id : y_corridor.connected_neighbour_ids) { 
+          geometry_msgs::Point p1,p2;
+          p1.x = y_corridor.keyframe_trans(0);
+          p1.y = y_corridor.node->estimate();
+          p1.z = corridor_node_h;
+
+          auto found_neighbour_room = std::find_if(room_snapshot.begin(), room_snapshot.end(), boost::bind(&Rooms::connected_id, _1) == y_corridor_neighbour_id);
+          if(found_neighbour_room != room_snapshot.end()) {
+            p2.x = (*found_neighbour_room).node->estimate()(0);
+            p2.y = (*found_neighbour_room).node->estimate()(1);
+            p2.z = room_node_h;
+
+            y_corr_neighbour_line_marker.points.push_back(p1);
+            y_corr_neighbour_line_marker.points.push_back(p2);
+          }
+          else {
+            auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::connected_id, _1) == y_corridor_neighbour_id);
+            if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
+              p2.x = (*found_neighbour_x_corr).node->estimate();
+              p2.y = (*found_neighbour_x_corr).keyframe_trans(1);
+              p2.z = corridor_node_h;
+              
+              y_corr_neighbour_line_marker.points.push_back(p1);
+              y_corr_neighbour_line_marker.points.push_back(p2);  
+          }
+          else {
+            auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::connected_id, _1) == y_corridor_neighbour_id);
+            if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
+              p2.x = (*found_neighbour_y_corr).keyframe_trans(0);
+              p2.y = (*found_neighbour_y_corr).node->estimate();
+              p2.z = corridor_node_h;
+              
+              y_corr_neighbour_line_marker.points.push_back(p1);
+              y_corr_neighbour_line_marker.points.push_back(p2);
+          }
+          else 
+            continue; 
+          }
+        } 
+      }
+    }
+    markers.markers.push_back(y_corr_neighbour_line_marker); 
+
+    //check the neighbours for the rooms and draw lines between them
+    visualization_msgs::Marker room_neighbour_line_marker;
+    room_neighbour_line_marker.scale.x = 0.05;
+    room_neighbour_line_marker.pose.orientation.w = 1.0;
+    room_neighbour_line_marker.ns = "room_neighbour_lines";
+    room_neighbour_line_marker.header.frame_id = map_frame_id;
+    room_neighbour_line_marker.header.stamp = stamp;
+    room_neighbour_line_marker.id = markers.markers.size()+1;
+    room_neighbour_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+    room_neighbour_line_marker.color.r = 1; 
+    room_neighbour_line_marker.color.g = 0;
+    room_neighbour_line_marker.color.b = 0;  
+    room_neighbour_line_marker.color.a = 0.8;
+    for(const auto& room : room_snapshot) {
+      for(const auto& room_neighbour_id : room.connected_neighbour_ids){
+          geometry_msgs::Point p1,p2;
+          p1.x = room.node->estimate()(0);
+          p1.y = room.node->estimate()(1);
+          p1.z = room_node_h;
+          
+          auto found_neighbour_room = std::find_if(room_snapshot.begin(), room_snapshot.end(), boost::bind(&Rooms::connected_id, _1) == room_neighbour_id);
+          if(found_neighbour_room != room_snapshot.end()) {
+            p2.x = (*found_neighbour_room).node->estimate()(0);
+            p2.y = (*found_neighbour_room).node->estimate()(1);
+            p2.z = room_node_h;
+
+            room_neighbour_line_marker.points.push_back(p1);
+            room_neighbour_line_marker.points.push_back(p2);
+          }
+          else {
+            auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::connected_id, _1) == room_neighbour_id);
+            if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
+              p2.x = (*found_neighbour_x_corr).node->estimate();
+              p2.y = (*found_neighbour_x_corr).keyframe_trans(1);
+              p2.z = corridor_node_h;
+              room_neighbour_line_marker.points.push_back(p1);
+              room_neighbour_line_marker.points.push_back(p2);
+            }
+            else {
+              auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::connected_id, _1) == room_neighbour_id);
+              if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
+                p2.x = (*found_neighbour_y_corr).keyframe_trans(0);
+                p2.y = (*found_neighbour_y_corr).node->estimate();
+                p2.z = corridor_node_h;
+                room_neighbour_line_marker.points.push_back(p1);
+                room_neighbour_line_marker.points.push_back(p2);
+              }
+              else 
+                continue;
+            }
+          }
+       }
+    }
+    markers.markers.push_back(room_neighbour_line_marker); 
+
 
     //final line markers for printing different layers for abstraction
     visualization_msgs::Marker robot_layer_marker;

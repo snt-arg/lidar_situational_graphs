@@ -17,6 +17,8 @@ namespace s_graphs {
 struct Rooms {
 public:
   int id;
+  int connected_id;
+  std::vector<int> connected_neighbour_ids;
   g2o::Plane3D plane_x1, plane_x2, plane_y1, plane_y2;
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   bool x_axis_identified, y_axis_identified;

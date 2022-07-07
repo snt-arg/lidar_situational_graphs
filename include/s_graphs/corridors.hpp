@@ -18,6 +18,8 @@ namespace s_graphs {
 struct Corridors {
 public:
   int id;
+  int connected_id;
+  std::vector<int> connected_neighbour_ids;
   g2o::Plane3D plane1, plane2;
   int plane1_id, plane2_id;
   Eigen::Vector3d keyframe_trans;
