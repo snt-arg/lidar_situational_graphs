@@ -347,12 +347,8 @@ private:
          //get the room neighbours
          x_plane1_data.connected_id = room_data.id; 
          for(const auto& room_neighbour_id : room_data.neighbour_ids) {
-            for(const auto& single_room_data : room_data_msg.rooms) {
-              if(single_room_data.id == room_neighbour_id) {
-                std::cout << "detected room with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
-                x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-              }
-            }
+            std::cout << "detected room with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+            x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
           }
 
           std::vector<plane_data_list> x_planes_room, y_planes_room;
@@ -389,14 +385,10 @@ private:
             x_plane1_data.connected_id = room_data.id; 
             //get the corridor neighbours
             for(const auto& room_neighbour_id : room_data.neighbour_ids) {
-              for(const auto& single_room_data : room_data_msg.rooms) {
-                if(single_room_data.id == room_neighbour_id) {
-                  std::cout << "detected x corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
-                  x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-                }
+              std::cout << "detected x corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+              x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
             }
             factor_corridors(plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data);
-           }
           }  
         }
         //y corridor
@@ -425,22 +417,15 @@ private:
             y_plane1_data.connected_id = room_data.id; 
             //get the corridor neighbours
             for(const auto& room_neighbour_id : room_data.neighbour_ids) {
-                std::cout << "room_neighbour_id : " <<  room_neighbour_id << std::endl; 
-              for(const auto& single_room_data : room_data_msg.rooms) {
-                  std::cout << "single_room_data : " <<  single_room_data.id << std::endl; 
-                if(single_room_data.id == room_neighbour_id) {
-                  std::cout << "detected y corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
-                  y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-                }
-             }
-           }
-          factor_corridors(plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data);
+              std::cout << "detected y corridor with id : " << room_data.id << " has neighbour id: " << room_neighbour_id << std::endl; 
+              y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
+            }
+            factor_corridors(plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data);
           }
         }
       }
 
       //TODO:HB factor neighbours appropriately in the sgraphs
-      
       room_data_queue.pop_front();
     }
   }
