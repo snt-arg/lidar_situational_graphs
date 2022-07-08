@@ -62,7 +62,6 @@ private:
     min_vertical_inliers_ = private_nh.param<int>("min_vertical_inliers", 500);
     use_euclidean_filter_ = private_nh.param<bool>("use_euclidean_filter", true);
     use_shadow_filter_ = private_nh.param<bool>("use_shadow_filter", false);
-
   }
 
   void init_ros() {
@@ -129,8 +128,8 @@ private:
           extract.filter(*transformed_cloud);
           continue;
         }
-        //std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
-  
+        // std::cout << "Model coefficients before " << std::to_string(i) << ": " << coefficients->values[0] << " " << coefficients->values[1] << " " << coefficients->values[2] << " " << coefficients->values[3] << std::endl;
+
         Eigen::Vector4d normal(coefficients->values[0], coefficients->values[1], coefficients->values[2], coefficients->values[3]);
         Eigen::Vector3d closest_point = normal.head(3) * normal(3);
         Eigen::Vector4d plane;
@@ -138,9 +137,9 @@ private:
         plane(3) = closest_point.norm();
 
         Eigen::Vector4f normals_flipped = normal.cast<float>();
-        pcl::flipNormalTowardsViewpoint(transformed_cloud->points[inliers->indices[0]], 0,0,0, normals_flipped);  
+        pcl::flipNormalTowardsViewpoint(transformed_cloud->points[inliers->indices[0]], 0, 0, 0, normals_flipped);
 
-        //std::cout << "Model coefficients after " << std::to_string(i) << ": " << normals_flipped << std::endl;
+        // std::cout << "Model coefficients after " << std::to_string(i) << ": " << normals_flipped << std::endl;
 
         pcl::PointCloud<PointT>::Ptr extracted_cloud(new pcl::PointCloud<PointT>);
         for(const auto& idx : inliers->indices) {
@@ -148,13 +147,13 @@ private:
           extracted_cloud->back().normal_x = plane(0);
           extracted_cloud->back().normal_y = plane(1);
           extracted_cloud->back().normal_z = plane(2);
-          extracted_cloud->back().curvature = plane(3); // normalized value of the plane distance
+          extracted_cloud->back().curvature = plane(3);  // normalized value of the plane distance
         }
-        
+
         pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered;
         if(use_euclidean_filter_)
           extracted_cloud_filtered = compute_clusters(extracted_cloud);
-        else if(use_shadow_filter_){
+        else if(use_shadow_filter_) {
           pcl::PointCloud<pcl::Normal>::Ptr normals = compute_cloud_normals(extracted_cloud);
           extracted_cloud_filtered = shadow_filter(extracted_cloud, normals);
         } else {
@@ -214,10 +213,10 @@ private:
     ec.setInputCloud(extracted_cloud);
     ec.extract(cluster_indices);
 
-    //auto max_iterator = std::max_element(std::begin(cluster_indices), std::end(cluster_indices), [](const pcl::PointIndices& lhs, const pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
+    // auto max_iterator = std::max_element(std::begin(cluster_indices), std::end(cluster_indices), [](const pcl::PointIndices& lhs, const pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
 
     pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
-    for (auto single_cluster : cluster_indices) {  
+    for(auto single_cluster : cluster_indices) {
       for(const auto& idx : (single_cluster).indices) {
         cloud_cluster->push_back(extracted_cloud->points[idx]);
         cloud_cluster->width = cloud_cluster->size();
@@ -247,7 +246,7 @@ private:
   }
 
   pcl::PointCloud<PointT>::Ptr shadow_filter(const pcl::PointCloud<PointT>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals) {
-    pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered (new pcl::PointCloud<PointT>);
+    pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered(new pcl::PointCloud<PointT>);
     pcl::ShadowPoints<PointT, pcl::Normal> sp_filter;
     sp_filter.setNormals(cloud_normals);
     sp_filter.setThreshold(0.1);
@@ -278,7 +277,7 @@ private:
   tf::TransformListener tf_listener_;
   std::string plane_extraction_frame_;
   int min_seg_points_, min_horizontal_inliers_, min_vertical_inliers_;
-  bool use_euclidean_filter_, use_shadow_filter_; 
+  bool use_euclidean_filter_, use_shadow_filter_;
   friend bool operator==(const PointT& p1, const PointT& p2);
 };
 
