@@ -23,8 +23,9 @@ public:
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   bool x_axis_identified, y_axis_identified;
   bool room_identified;
-  g2o::VertexRoomXYLB* node;                       // node instance
+  std::vector<int> neighbour_ids;
+  g2o::VertexRoomXYLB* node;  // node instance
 };
 
-}
+}  // namespace s_graphs
 #endif  // ROOMS_HPP

@@ -23,8 +23,9 @@ public:
   g2o::Plane3D plane1, plane2;
   int plane1_id, plane2_id;
   Eigen::Vector3d keyframe_trans;
-  g2o::VertexCorridor* node;                       // node instance
+  std::vector<int> neighbour_ids;
+  g2o::VertexCorridor* node;  // node instance
 };
 
-}
+}  // namespace s_graphs
 #endif  // CORRIDORS_HPP
