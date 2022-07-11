@@ -32,6 +32,11 @@ class EdgeCorridorYPlane;
 class EdgeSE3Room;
 class EdgeRoomXPlane;
 class EdgeRoomYPlane;
+class EdgeRoomRoom;
+class EdgeRoomXCorridor;
+class EdgeRoomYCorridor;
+class EdgeXCorridorXCorridor;
+class EdgeYCorridorYCorridor;
 class EdgePlanePerpendicular;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
@@ -84,14 +89,14 @@ public:
 
   /**
    * @brief add a corridor node to the graph
-   * @param corridor 
+   * @param corridor
    * @return registered node
    */
   g2o::VertexCorridor* add_corridor_node(const double& corridor_pose);
 
   /**
    * @brief add a room node to the graph
-   * @param room 
+   * @param room
    * @return registered node
    */
   g2o::VertexRoomXYLB* add_room_node(const Eigen::Vector2d& room_pose);
@@ -174,12 +179,22 @@ public:
   bool remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge);
 
   bool remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge);
-  
+
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoomRoom* add_room_room_edge(g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoomXCorridor* add_room_x_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_xcorridor, const double& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoomYCorridor* add_room_y_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_ycorridor, const double& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeXCorridorXCorridor* add_x_corridor_x_corridor_edge(g2o::VertexCorridor* v_xcorr1, g2o::VertexCorridor* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information);
+
+  g2o::EdgeYCorridorYCorridor* add_y_corridor_y_corridor_edge(g2o::VertexCorridor* v_ycorr1, g2o::VertexCorridor* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information);
 
   bool remove_room_xplane_edge(g2o::EdgeRoomXPlane* room_xplane_edge);
 
@@ -192,7 +207,7 @@ public:
    */
   int optimize(int num_iterations);
 
-  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd> &spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
+  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
 
   /**
    * @brief save the pose graph to a file
@@ -209,7 +224,8 @@ public:
 public:
   g2o::RobustKernelFactory* robust_kernel_factory;
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
-  int vertex_count; int edge_count;
+  int vertex_count;
+  int edge_count;
 };
 
 }  // namespace s_graphs

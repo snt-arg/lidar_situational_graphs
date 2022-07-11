@@ -47,15 +47,16 @@ public:
     const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
     Eigen::Isometry3d w2m = v1->estimate().inverse();
     Eigen::Isometry3d corridor_pose_map;
-    corridor_pose_map.matrix().block<4,4>(0,0) = Eigen::Matrix4d::Identity(); corridor_pose_map.matrix()(1,3) = v2->estimate();  
+    corridor_pose_map.matrix().block<4, 4>(0, 0) = Eigen::Matrix4d::Identity();
+    corridor_pose_map.matrix()(1, 3) = v2->estimate();
 
-    Eigen::Isometry3d corridor_pose_local =  corridor_pose_map * w2m; 
-    double est = corridor_pose_local.matrix()(0,3);
+    Eigen::Isometry3d corridor_pose_local = corridor_pose_map * w2m;
+    double est = corridor_pose_local.matrix()(0, 3);
 
     _error[0] = est - _measurement;
-   }
+  }
 
- virtual bool read(std::istream& is) override {
+  virtual bool read(std::istream& is) override {
     double v;
     is >> v;
 
@@ -85,7 +86,6 @@ public:
   virtual void setMeasurement(const double& m) override {
     _measurement = m;
   }
-
 };
 
 class EdgeCorridorXPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
@@ -99,19 +99,19 @@ public:
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    plane(3) = -1*plane(3);
-    double p_norm = plane(0)/fabs(plane(0));
-    plane(3) = p_norm*plane(3); 
+    plane(3) = -1 * plane(3);
+    double p_norm = plane(0) / fabs(plane(0));
+    plane(3) = p_norm * plane(3);
 
-    double est; 
+    double est;
     if(fabs(trans) > fabs(plane(3))) {
-       est =  trans - plane(3);
+      est = trans - plane(3);
     } else {
-       est =  plane(3) - trans;
+      est = plane(3) - trans;
     }
 
     _error[0] = est - _measurement;
-    }
+  }
 
   virtual bool read(std::istream& is) override {
     double v;
@@ -149,8 +149,6 @@ public:
     return 1;
   }
 };
-
-
 
 class EdgeCorridorYPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
 public:
@@ -163,19 +161,19 @@ public:
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    plane(3) = -1*plane(3);
-    double p_norm = plane(1)/fabs(plane(1));
-    plane(3) = p_norm*plane(3); 
+    plane(3) = -1 * plane(3);
+    double p_norm = plane(1) / fabs(plane(1));
+    plane(3) = p_norm * plane(3);
 
-    double est; 
+    double est;
     if(fabs(trans) > fabs(plane(3))) {
-       est =  trans - plane(3);
+      est = trans - plane(3);
     } else {
-       est =  plane(3) - trans;
+      est = plane(3) - trans;
     }
 
     _error[0] = est - _measurement;
-    }
+  }
 
   virtual bool read(std::istream& is) override {
     double v;
@@ -214,5 +212,107 @@ public:
   }
 };
 
-}
+class EdgeXCorridorXCorridor : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeXCorridorXCorridor() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor>() {}
+
+  void computeError() override {
+    const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
+    const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
+
+    double est = pow(v1 - v2, 2);
+
+    _error[0] = est - _measurement;
+  }
+
+  virtual bool read(std::istream& is) override {
+    double v;
+    is >> v;
+
+    setMeasurement(v);
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) {
+          information()(j, i) = information()(i, j);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    os << _measurement << " ";
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        os << " " << information()(i, j);
+      };
+    }
+    return os.good();
+  }
+
+  virtual void setMeasurement(const double& m) override {
+    _measurement = m;
+  }
+
+  virtual int measurementDimension() const override {
+    return 1;
+  }
+};
+
+class EdgeYCorridorYCorridor : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeYCorridorYCorridor() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor>() {}
+
+  void computeError() override {
+    const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
+    const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
+
+    double est = pow(v1 - v2, 2);
+
+    _error[0] = est - _measurement;
+  }
+
+  virtual bool read(std::istream& is) override {
+    double v;
+    is >> v;
+
+    setMeasurement(v);
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) {
+          information()(j, i) = information()(i, j);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    os << _measurement << " ";
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        os << " " << information()(i, j);
+      };
+    }
+    return os.good();
+  }
+
+  virtual void setMeasurement(const double& m) override {
+    _measurement = m;
+  }
+
+  virtual int measurementDimension() const override {
+    return 1;
+  }
+};
+
+}  // namespace g2o
 #endif  // EDGE_CORRIDOR_PLANE_HPP

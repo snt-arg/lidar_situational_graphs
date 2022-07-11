@@ -258,8 +258,8 @@ private:
     }
 
     // cluster_endpoints(cloud_cluster, p1, p2);
-    // std::cout << "cluster " << room_cluster_counter << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
-    // std::cout << "cluster " << room_cluster_counter << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
+    std::cout << "cluster " << room_cluster_counter << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
+    std::cout << "cluster " << room_cluster_counter << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
     geometry_msgs::Point room_length = get_room_length(p1, p2);
     // std::cout << "length of the cluster in x : " << room_length.x << std::endl;
     // std::cout << "length of the cluster in y : " << room_length.y << std::endl;
@@ -291,7 +291,6 @@ private:
         correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
         correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
 
-        std::cout << "subgraph id of the room is: " << cloud_cluster->header.seq << std::endl;
         std::vector<int> neighbour_ids;
         for(const auto& connected_ids : connected_subgraph_map) {
           if(connected_ids.first == cloud_cluster->header.seq)
@@ -317,7 +316,6 @@ private:
         correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
         correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
 
-        std::cout << "subgraph id of the x corridor is: " << cloud_cluster->header.seq << std::endl;
         std::vector<int> neighbour_ids;
         for(const auto& connected_ids : connected_subgraph_map) {
           if(connected_ids.first == cloud_cluster->header.seq)
@@ -342,7 +340,6 @@ private:
         correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
         correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
 
-        std::cout << "subgraph id of the y corridor is: " << cloud_cluster->header.seq << std::endl;
         std::vector<int> neighbour_ids;
         for(const auto& connected_ids : connected_subgraph_map) {
           if(connected_ids.first == cloud_cluster->header.seq)
