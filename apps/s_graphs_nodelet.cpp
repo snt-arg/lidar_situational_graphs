@@ -218,7 +218,7 @@ public:
     odom_path_corrected_pub = mt_nh.advertise<nav_msgs::Path>("/s_graphs/odom_path_corrected", 10);
 
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
-    map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes", 1, true);
+    map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes", 1, false);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
@@ -368,6 +368,7 @@ private:
             }
           }
 
+          std::cout << "x corridor center: " << room_data.room_center.x << "; " << room_data.room_center.y << std::endl;
           if(dist_x_corr_room < 1.5) {
             std::cout << "Room already exists in the given location, not inserting a x corridor" << std::endl;
             continue;
@@ -854,6 +855,9 @@ private:
         lookup_rooms(x_det_room_candidates, y_det_room_candidates);
       }
     }
+
+    // publish mapped planes
+    publish_mapped_planes(x_vert_planes, y_vert_planes);
 
     auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const s_graphs::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
     clouds_seg_queue.erase(clouds_seg_queue.begin(), remove_loc);
@@ -1741,24 +1745,24 @@ private:
       for(int i = 0; i < x_corridors.size(); ++i) {
         float dist = sqrt(pow(corr_pose(0) - x_corridors[i].node->estimate(), 2) + pow(corr_pose(1) - x_corridors[i].keyframe_trans(1), 2));
 
-        auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
-        auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
+        // auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
+        // auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
 
-        if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
-          plane1_min_segment = 0.0;
-        } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
-        } else
-          plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
+        // if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
+        //   plane1_min_segment = 0.0;
+        // } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        //   plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
+        // } else
+        //   plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
 
-        if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
-          plane2_min_segment = 0.0;
-        } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
-        } else
-          plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
+        // if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
+        //   plane2_min_segment = 0.0;
+        // } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        //   plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
+        // } else
+        //   plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
 
-        if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
+        if(dist < min_dist /*&& (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)*/) {
           min_dist = dist;
           data_association.first = x_corridors[i].id;
           data_association.second = i;
@@ -1771,24 +1775,24 @@ private:
       for(int i = 0; i < y_corridors.size(); ++i) {
         float dist = sqrt(pow(corr_pose(0) - y_corridors[i].keyframe_trans(0), 2) + pow(corr_pose(1) - y_corridors[i].node->estimate(), 2));
 
-        auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
-        auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
+        // auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
+        // auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
 
-        if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
-          plane1_min_segment = 0.0;
-        } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
-        } else
-          plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
+        // if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
+        //   plane1_min_segment = 0.0;
+        // } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        //   plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
+        // } else
+        //   plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
 
-        if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
-          plane2_min_segment = 0.0;
-        } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
-        } else
-          plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
+        // if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
+        //   plane2_min_segment = 0.0;
+        // } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        //   plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
+        // } else
+        //   plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
 
-        if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
+        if(dist < min_dist /*&& (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)*/) {
           min_dist = dist;
           data_association.first = y_corridors[i].id;
           data_association.second = i;
@@ -2686,9 +2690,6 @@ private:
 
     geometry_msgs::TransformStamped ts = matrix2transform(keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
     odom2map_pub.publish(ts);
-
-    // publish mapped planes
-    publish_mapped_planes(x_vert_planes_snapshot, y_vert_planes_snapshot);
   }
 
   /**
@@ -3571,13 +3572,13 @@ private:
     corridor_marker.color.a = 1;
 
     for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
-      float dist_room_x_corr = 100;
-      for(const auto& room : room_snapshot) {
-        dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate(), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].keyframe_trans(1), 2));
-        if(dist_room_x_corr < 1.0) break;
-      }
-      // TODO:HB ideally use the room length and width to get the threshold
-      if(dist_room_x_corr < 1.0) continue;
+      // float dist_room_x_corr = 100;
+      // for(const auto& room : room_snapshot) {
+      //   dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate(), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].keyframe_trans(1), 2));
+      //   if(dist_room_x_corr < 1.0) break;
+      // }
+      // // TODO:HB ideally use the room length and width to get the threshold
+      // if(dist_room_x_corr < 1.0) continue;
 
       auto found_plane1 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane1_id);
       auto found_plane2 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane2_id);
@@ -3604,9 +3605,8 @@ private:
 
       PointNormal cp1_pt;
       centroid_p1.get(cp1_pt);
-      x_corridor_snapshot[i].keyframe_trans(1) = cp1_pt.y;
       p1.x = x_corridor_snapshot[i].node->estimate();
-      p1.y = cp1_pt.y;
+      p1.y = x_corridor_snapshot[i].keyframe_trans(1);
       p1.z = corridor_edge_h;
       p2.x = cp1_pt.x;
       p2.y = cp1_pt.y;
@@ -3630,7 +3630,7 @@ private:
       // corridor cube
       geometry_msgs::Point point;
       point.x = x_corridor_snapshot[i].node->estimate();
-      point.y = cp1_pt.y;
+      point.y = x_corridor_snapshot[i].keyframe_trans(1);
       point.z = corridor_node_h;
       corridor_marker.points.push_back(point);
 
@@ -3643,7 +3643,7 @@ private:
       corr_x_text_marker.id = markers.markers.size() + 1;
       corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
       corr_x_text_marker.pose.position.x = x_corridor_snapshot[i].node->estimate();
-      corr_x_text_marker.pose.position.y = cp1_pt.y;
+      corr_x_text_marker.pose.position.y = x_corridor_snapshot[i].keyframe_trans(1);
       corr_x_text_marker.pose.position.z = corridor_text_h;
       corr_x_text_marker.color.r = color_r;
       corr_x_text_marker.color.g = color_g;
@@ -3655,12 +3655,12 @@ private:
     }
 
     for(int i = 0; i < y_corridor_snapshot.size(); ++i) {
-      float dist_room_y_corr = 100;
-      for(const auto& room : room_snapshot) {
-        dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].keyframe_trans(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate(), 2));
-        if(dist_room_y_corr < 1.0) break;
-      }
-      if(dist_room_y_corr < 1.0) continue;
+      // float dist_room_y_corr = 100;
+      // for(const auto& room : room_snapshot) {
+      //   dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].keyframe_trans(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate(), 2));
+      //   if(dist_room_y_corr < 1.0) break;
+      // }
+      // if(dist_room_y_corr < 1.0) continue;
 
       auto found_plane1 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane1_id);
       auto found_plane2 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane2_id);
@@ -3686,8 +3686,7 @@ private:
       }
       PointNormal cp1_pt;
       centroid_p1.get(cp1_pt);
-      y_corridor_snapshot[i].keyframe_trans(0) = cp1_pt.x;
-      p1.x = cp1_pt.x;
+      p1.x = y_corridor_snapshot[i].keyframe_trans(0);
       p1.y = y_corridor_snapshot[i].node->estimate();
       p1.z = corridor_edge_h;
       p2.x = cp1_pt.x;
@@ -3711,7 +3710,7 @@ private:
 
       // corridor cube
       geometry_msgs::Point point;
-      point.x = cp1_pt.x;
+      point.x = y_corridor_snapshot[i].keyframe_trans(0);
       point.y = y_corridor_snapshot[i].node->estimate();
       point.z = corridor_node_h;
       corridor_marker.points.push_back(point);
@@ -3724,7 +3723,7 @@ private:
       corr_y_text_marker.header.stamp = stamp;
       corr_y_text_marker.id = markers.markers.size() + 1;
       corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_y_text_marker.pose.position.x = cp1_pt.x;
+      corr_y_text_marker.pose.position.x = y_corridor_snapshot[i].keyframe_trans(0);
       corr_y_text_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
       corr_y_text_marker.pose.position.z = corridor_text_h;
       corr_y_text_marker.color.r = color_r;
