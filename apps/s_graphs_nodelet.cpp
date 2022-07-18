@@ -2895,7 +2895,7 @@ private:
   void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot, std::vector<VerticalPlanes> y_vert_planes_snapshot) {
     if(keyframes.empty()) return;
 
-    int keyframe_window_size = 2;
+    int keyframe_window_size = 3;
     std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
     std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
     for(std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin(); it != keyframe_window.rend(); ++it) {
@@ -3750,30 +3750,17 @@ private:
     float corridor_text_h = 10;
     float corridor_edge_h = 9.5;
     float corridor_point_h = 5.0;
-    // x corridor markers
-    visualization_msgs::Marker corridor_marker;
-    corridor_marker.pose.orientation.w = 1.0;
-    corridor_marker.scale.x = 0.5;
-    corridor_marker.scale.y = 0.5;
-    corridor_marker.scale.z = 0.5;
-    // plane_marker.points.resize(vert_planes.size());
-    corridor_marker.header.frame_id = map_frame_id;
-    corridor_marker.header.stamp = stamp;
-    corridor_marker.ns = "corridors";
-    corridor_marker.id = markers.markers.size();
-    corridor_marker.type = visualization_msgs::Marker::CUBE_LIST;
-    corridor_marker.color.r = 0;
-    corridor_marker.color.g = 1;
-    corridor_marker.color.a = 1;
 
     for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
-      // float dist_room_x_corr = 100;
-      // for(const auto& room : room_snapshot) {
-      //   dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate(), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].keyframe_trans(1), 2));
-      //   if(dist_room_x_corr < 1.0) break;
-      // }
-      // // TODO:HB ideally use the room length and width to get the threshold
-      // if(dist_room_x_corr < 1.0) continue;
+      bool overlapped_corridor = false;
+      float dist_room_x_corr = 100;
+      for(const auto& room : room_snapshot) {
+        dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate(), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].keyframe_trans(1), 2));
+        if(dist_room_x_corr < 0.5) {
+          overlapped_corridor = true;
+          break;
+        }
+      }
 
       auto found_plane1 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane1_id);
       auto found_plane2 = std::find_if(x_plane_snapshot.begin(), x_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridor_snapshot[i].plane2_id);
@@ -3782,7 +3769,10 @@ private:
       visualization_msgs::Marker corr_x_line_marker;
       corr_x_line_marker.scale.x = 0.05;
       corr_x_line_marker.pose.orientation.w = 1.0;
-      corr_x_line_marker.ns = "corridor_x_lines";
+      if(!overlapped_corridor)
+        corr_x_line_marker.ns = "corridor_x_lines";
+      else
+        corr_x_line_marker.ns = "overlapped_corridor_x_lines";
       corr_x_line_marker.header.frame_id = map_frame_id;
       corr_x_line_marker.header.stamp = stamp;
       corr_x_line_marker.id = markers.markers.size() + 1;
@@ -3791,6 +3781,7 @@ private:
       corr_x_line_marker.color.g = color_g;
       corr_x_line_marker.color.b = color_b;
       corr_x_line_marker.color.a = 0.8;
+      corr_x_line_marker.lifetime = ros::Duration(15.0);
       geometry_msgs::Point p1, p2, p3;
 
       pcl::CentroidPoint<PointNormal> centroid_p1;
@@ -3822,17 +3813,13 @@ private:
       corr_x_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_x_line_marker);
 
-      // corridor cube
-      geometry_msgs::Point point;
-      point.x = x_corridor_snapshot[i].node->estimate();
-      point.y = x_corridor_snapshot[i].keyframe_trans(1);
-      point.z = corridor_node_h;
-      corridor_marker.points.push_back(point);
-
       // fill in the text marker
       visualization_msgs::Marker corr_x_text_marker;
       corr_x_text_marker.scale.z = 0.5;
-      corr_x_text_marker.ns = "corridor_x_text";
+      if(!overlapped_corridor)
+        corr_x_text_marker.ns = "corridor_x_text";
+      else
+        corr_x_text_marker.ns = "corridor_x_text";
       corr_x_text_marker.header.frame_id = map_frame_id;
       corr_x_text_marker.header.stamp = stamp;
       corr_x_text_marker.id = markers.markers.size() + 1;
@@ -3845,17 +3832,45 @@ private:
       corr_x_text_marker.color.b = color_b;
       corr_x_text_marker.color.a = 1;
       corr_x_text_marker.pose.orientation.w = 1.0;
+      corr_x_text_marker.lifetime = ros::Duration(15.0);
       corr_x_text_marker.text = "Corridor X" + std::to_string(i + 1);
+
+      // x corridor cube
+      visualization_msgs::Marker corridor_pose_marker;
+      corridor_pose_marker.pose.orientation.w = 1.0;
+      corridor_pose_marker.scale.x = 0.5;
+      corridor_pose_marker.scale.y = 0.5;
+      corridor_pose_marker.scale.z = 0.5;
+      // plane_marker.points.resize(vert_planes.size());
+      corridor_pose_marker.header.frame_id = map_frame_id;
+      corridor_pose_marker.header.stamp = stamp;
+      if(!overlapped_corridor)
+        corridor_pose_marker.ns = "x_corridor";
+      else
+        corridor_pose_marker.ns = "overlapped_x_corridor";
+      corridor_pose_marker.id = markers.markers.size();
+      corridor_pose_marker.type = visualization_msgs::Marker::CUBE;
+      corridor_pose_marker.color.r = 0;
+      corridor_pose_marker.color.g = 1;
+      corridor_pose_marker.color.a = 1;
+      corridor_pose_marker.pose.position.x = x_corridor_snapshot[i].node->estimate();
+      corridor_pose_marker.pose.position.y = x_corridor_snapshot[i].keyframe_trans(1);
+      corridor_pose_marker.pose.position.z = corridor_node_h;
+      corridor_pose_marker.lifetime = ros::Duration(15.0);
+      markers.markers.push_back(corridor_pose_marker);
       markers.markers.push_back(corr_x_text_marker);
     }
 
     for(int i = 0; i < y_corridor_snapshot.size(); ++i) {
-      // float dist_room_y_corr = 100;
-      // for(const auto& room : room_snapshot) {
-      //   dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].keyframe_trans(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate(), 2));
-      //   if(dist_room_y_corr < 1.0) break;
-      // }
-      // if(dist_room_y_corr < 1.0) continue;
+      bool overlapped_corridor = false;
+      float dist_room_y_corr = 100;
+      for(const auto& room : room_snapshot) {
+        dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].keyframe_trans(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate(), 2));
+        if(dist_room_y_corr < 1.0) {
+          overlapped_corridor = true;
+          break;
+        }
+      }
 
       auto found_plane1 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane1_id);
       auto found_plane2 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridor_snapshot[i].plane2_id);
@@ -3864,7 +3879,10 @@ private:
       visualization_msgs::Marker corr_y_line_marker;
       corr_y_line_marker.scale.x = 0.05;
       corr_y_line_marker.pose.orientation.w = 1.0;
-      corr_y_line_marker.ns = "corridor_y_lines";
+      if(!overlapped_corridor)
+        corr_y_line_marker.ns = "corridor_y_lines";
+      else
+        corr_y_line_marker.ns = "overlapped_corridor_y_lines";
       corr_y_line_marker.header.frame_id = map_frame_id;
       corr_y_line_marker.header.stamp = stamp;
       corr_y_line_marker.id = markers.markers.size() + 1;
@@ -3873,6 +3891,7 @@ private:
       corr_y_line_marker.color.g = color_g;
       corr_y_line_marker.color.b = color_b;
       corr_y_line_marker.color.a = 0.8;
+      corr_y_line_marker.lifetime = ros::Duration(15.0);
       geometry_msgs::Point p1, p2, p3;
 
       pcl::CentroidPoint<PointNormal> centroid_p1;
@@ -3903,17 +3922,13 @@ private:
       corr_y_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_y_line_marker);
 
-      // corridor cube
-      geometry_msgs::Point point;
-      point.x = y_corridor_snapshot[i].keyframe_trans(0);
-      point.y = y_corridor_snapshot[i].node->estimate();
-      point.z = corridor_node_h;
-      corridor_marker.points.push_back(point);
-
       // fill in the text marker
       visualization_msgs::Marker corr_y_text_marker;
       corr_y_text_marker.scale.z = 0.5;
-      corr_y_text_marker.ns = "corridor_y_text";
+      if(!overlapped_corridor)
+        corr_y_text_marker.ns = "corridor_y_text";
+      else
+        corr_y_text_marker.ns = "overlapped_corridor_y_text";
       corr_y_text_marker.header.frame_id = map_frame_id;
       corr_y_text_marker.header.stamp = stamp;
       corr_y_text_marker.id = markers.markers.size() + 1;
@@ -3926,10 +3941,34 @@ private:
       corr_y_text_marker.color.b = color_b;
       corr_y_text_marker.color.a = 1;
       corr_y_text_marker.pose.orientation.w = 1.0;
-      corr_y_text_marker.text = "Corridor Y" + std::to_string(i + 1);
+      corr_y_text_marker.lifetime = ros::Duration(15.0);
+      corr_y_text_marker.text = "Corridor Y " + std::to_string(i + 1);
+
+      // y corridor cube
+      visualization_msgs::Marker corridor_pose_marker;
+      corridor_pose_marker.pose.orientation.w = 1.0;
+      corridor_pose_marker.scale.x = 0.5;
+      corridor_pose_marker.scale.y = 0.5;
+      corridor_pose_marker.scale.z = 0.5;
+      // plane_marker.points.resize(vert_planes.size());
+      corridor_pose_marker.header.frame_id = map_frame_id;
+      corridor_pose_marker.header.stamp = stamp;
+      if(!overlapped_corridor)
+        corridor_pose_marker.ns = "y_corridor";
+      else
+        corridor_pose_marker.ns = "overlapped_y_corridor";
+      corridor_pose_marker.id = markers.markers.size();
+      corridor_pose_marker.type = visualization_msgs::Marker::CUBE;
+      corridor_pose_marker.color.r = 0;
+      corridor_pose_marker.color.g = 1;
+      corridor_pose_marker.color.a = 1;
+      corridor_pose_marker.pose.position.x = y_corridor_snapshot[i].keyframe_trans(0);
+      corridor_pose_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
+      corridor_pose_marker.pose.position.z = corridor_node_h;
+      corridor_pose_marker.lifetime = ros::Duration(15.0);
+      markers.markers.push_back(corridor_pose_marker);
       markers.markers.push_back(corr_y_text_marker);
     }
-    markers.markers.push_back(corridor_marker);
 
     // room markers
     float room_node_h = 10.5;
@@ -3951,6 +3990,7 @@ private:
     room_marker.color.g = 0.07;
     room_marker.color.b = 0.57;
     room_marker.color.a = 1;
+    room_marker.lifetime = ros::Duration(15.0);
 
     for(int i = 0; i < room_snapshot.size(); ++i) {
       geometry_msgs::Point point;
@@ -3976,6 +4016,7 @@ private:
       room_text_marker.color.a = 1;
       room_text_marker.pose.orientation.w = 1.0;
       room_text_marker.text = "Room" + std::to_string(i + 1);
+      room_text_marker.lifetime = ros::Duration(15.0);
       markers.markers.push_back(room_text_marker);
 
       // fill in the line marker
@@ -3991,6 +4032,7 @@ private:
       room_line_marker.color.g = color_g;
       room_line_marker.color.b = color_b;
       room_line_marker.color.a = 0.8;
+      room_line_marker.lifetime = ros::Duration(15.0);
       geometry_msgs::Point p1, p2, p3, p4, p5;
       p1.x = room_snapshot[i].node->estimate()(0);
       p1.y = room_snapshot[i].node->estimate()(1);
