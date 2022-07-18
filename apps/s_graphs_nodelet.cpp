@@ -6,6 +6,7 @@
 #include <memory>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <unordered_map>
 #include <boost/format.hpp>
 #include <boost/thread.hpp>
@@ -229,7 +230,7 @@ public:
     double top_constraint_interval = private_nh.param<double>("top_constraint_interval", 1.0);
     optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
     map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
-    topological_constraint_timer = mt_nh.createWallTimer(ros::WallDuration(top_constraint_interval), &SGraphsNodelet::topological_constraint_callback, this);
+    // topological_constraint_timer = mt_nh.createWallTimer(ros::WallDuration(top_constraint_interval), &SGraphsNodelet::topological_constraint_callback, this);
   }
 
 private:
@@ -319,6 +320,7 @@ private:
             }
           }
 
+          // TODO:HB the below implementation doesnt work, check if removing the existing corridor node will make sense?
           if(min_dist_room_y_corr < 0.5 && min_dist_room_x_corr < 0.5) {
             std::cout << "Adding a room using mapped x and y corridor planes " << std::endl;
             map_room_from_existing_corridors(room_data, matched_x_corridor, matched_y_corridor);
@@ -362,7 +364,7 @@ private:
           factor_rooms(x_planes_room, y_planes_room);
         }
         // x corridor
-        if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
+        else if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
           // check the distance with the current room vector
           Rooms matched_room;
           float min_dist_x_corr_room = 100;
@@ -380,6 +382,7 @@ private:
             std::cout << "Room already exists in the given location, inserting a x corridor using its x planes" << std::endl;
             // TODO:HB add a function which adds a new corridor x node getting the mapped planes from the corresponding detected room
             map_corridor_from_existing_room(plane_class::X_VERT_PLANE, room_data, matched_room);
+            // continue;
           }
           // factor the corridor here
           std::cout << "factoring x corridor" << std::endl;
@@ -401,7 +404,7 @@ private:
           factor_corridors(plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data);
         }
         // y corridor
-        if(room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
+        else if(room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
           float min_dist_y_corr_room = 100;
           Rooms matched_room;
           for(const auto& current_room : rooms_vec) {
@@ -415,6 +418,7 @@ private:
           if(min_dist_y_corr_room < 0.5) {
             std::cout << "Room already exists in the given location, inserting a y corridor using its y planes" << std::endl;
             map_corridor_from_existing_room(plane_class::Y_VERT_PLANE, room_data, matched_room);
+            // continue;
           }
 
           // factor the corridor here
@@ -438,7 +442,7 @@ private:
         }
       }
       // TODO:HB factor neighbours appropriately in the sgraphs
-      factor_room_neighbours(room_data_msg);
+      // factor_room_neighbours(room_data_msg);
       room_data_queue.pop_front();
     }
   }
@@ -589,6 +593,15 @@ private:
       return;
     } else {
       return;
+    }
+  }
+
+  /**
+   * @brief detect the room neighbours w/o factoring them
+   *
+   */
+  void detect_room_neighbours(const s_graphs::RoomsData& room_msg) {
+    for(const auto& room_data : room_msg.rooms) {
     }
   }
 
@@ -1711,6 +1724,16 @@ private:
           dupl_x_vert_planes.push_back(dupl_plane_pair);
         }
 
+        std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+        std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+        std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+        std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+
+        std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
+        std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+        std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
+        std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+
         if(use_parallel_plane_constraint && found_new_plane) {
           parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
         }
@@ -1820,10 +1843,15 @@ private:
           dupl_y_vert_planes.push_back(dupl_plane_pair);
         }
 
-        // std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-        // std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-        // std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
-        // std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
+        std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+        std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+        std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+        std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+
+        std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
+        std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+        std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
+        std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
         if(use_parallel_plane_constraint && found_new_plane) {
           parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
@@ -2142,14 +2170,34 @@ private:
       }
     }
 
-    // std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
-    // std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
-    // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
-    // std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
-    // std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
-    // std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
-    // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
-    // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
+    std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
+    std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
+    std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
+    std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
+
+    std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
+    std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
+    std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
+    std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
+
+    std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
+    std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
+    std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
+    std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
+
+    std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
+    std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
+    std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
+    std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
+
+    // std::cout << "found xplane1 id : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "found xplane2 id : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "found yplane1 id : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "found yplane2 id : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
 
     auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
     graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
@@ -2767,6 +2815,8 @@ private:
     if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue() & !flush_clouds_seg_queue()) {
       return;
     }
+    // publish mapped planes
+    publish_mapped_planes(x_vert_planes, y_vert_planes);
 
     // flush the room poses from room detector and no need to return if no rooms found
     flush_room_data_queue();
@@ -2836,9 +2886,6 @@ private:
 
     geometry_msgs::TransformStamped ts = matrix2transform(keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
     odom2map_pub.publish(ts);
-
-    // publish mapped planes
-    publish_mapped_planes(x_vert_planes_snapshot, y_vert_planes_snapshot);
   }
 
   /**
@@ -2846,22 +2893,20 @@ private:
    *
    */
   void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot, std::vector<VerticalPlanes> y_vert_planes_snapshot) {
-    int keyframe_window_size = 5;
+    if(keyframes.empty()) return;
+
+    int keyframe_window_size = 2;
     std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
     std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
-    for(int i = 0; i < keyframe_window.size(); ++i) {
-      for(const auto& x_plane_id : keyframe_window[i]->x_plane_ids) {
-        // std::cout << "keyframe id " << keyframe_window[i]->id() << " has x plane with id " << x_plane_id << std::endl;
+    for(std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin(); it != keyframe_window.rend(); ++it) {
+      for(const auto& x_plane_id : (*it)->x_plane_ids) {
         auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));
-        // if (result.second == false)
-        //  std::cout << "x plane already existed with id : " <<  x_plane_id << std::endl;
+        // if(result.second == false) std::cout << "x plane already existed with id : " << x_plane_id << std::endl;
       }
 
-      for(const auto& y_plane_id : keyframe_window[i]->y_plane_ids) {
-        // std::cout << "keyframe id " << keyframe_window[i]->id() << " has y plane with id " << y_plane_id << std::endl;
+      for(const auto& y_plane_id : (*it)->y_plane_ids) {
         auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));
-        // if (result.second == false)
-        //  std::cout << "y plane already existed with id : " <<  y_plane_id << std::endl;
+        // if(result.second == false) std::cout << "y plane already existed with id : " << y_plane_id << std::endl;
       }
     }
 
@@ -3129,6 +3174,7 @@ private:
       if(graph_slam->remove_plane_node((*it).first.plane_node)) {
         auto mapped_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == (*it).first.id);
         y_vert_planes.erase(mapped_plane);
+        std::cout << "removed y vert plane " << std::endl;
       }
     }
     dupl_y_vert_planes.clear();
