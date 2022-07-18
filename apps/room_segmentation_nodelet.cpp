@@ -673,8 +673,8 @@ private:
   }
 
   void get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
-    float room_dist_thres = 1.5;
-    float plane_point_dist_thres = 1.0;
+    float room_dist_thres = 1.2;
+    float plane_point_dist_thres = 1.2;
     float min_dist_x1 = 100;
     float min_dist_x2 = 100;
     std::vector<float> min_x1_plane_points_dist;
