@@ -66,6 +66,7 @@
 #include <s_graphs/information_matrix_calculator.hpp>
 #include <s_graphs/map_cloud_generator.hpp>
 #include <s_graphs/nmea_sentence_parser.hpp>
+#include <s_graphs/plane_utils.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_corridor.hpp>
@@ -2416,20 +2417,6 @@ private:
     return point_map;
   }
 
-  void correct_plane_d(int plane_type, Eigen::Vector4d& plane) {
-    if(plane_type == plane_class::X_VERT_PLANE) {
-      plane(3) = -1 * plane(3);
-      double p_norm = plane(0) / fabs(plane(0));
-      plane(3) = p_norm * plane(3);
-    }
-
-    if(plane_type == plane_class::Y_VERT_PLANE) {
-      plane(3) = -1 * plane(3);
-      double p_norm = plane(1) / fabs(plane(1));
-      plane(3) = p_norm * plane(3);
-    }
-  }
-
   /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
    * @return if true, at least one keyframe was added to the pose graph
@@ -4521,11 +4508,6 @@ private:
   int vertex_count;
   std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes
   std::vector<Rooms> rooms_vec;                     // rooms segmented from planes
-  enum plane_class : uint8_t {
-    X_VERT_PLANE = 0,
-    Y_VERT_PLANE = 1,
-    HORT_PLANE = 2,
-  };
 
   std::mutex vert_plane_snapshot_mutex;
   std::vector<VerticalPlanes> x_vert_planes_snapshot, y_vert_planes_snapshot;  // snapshot of vertically segmented planes

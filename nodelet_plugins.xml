@@ -18,6 +18,10 @@
   <class name="s_graphs/RoomSegmentationNodelet" type="s_graphs::RoomSegmentationNodelet" base_class_type="nodelet::Nodelet" />
 </library>
 
+<library path="lib/libs_graphs_floor_plan_nodelet">
+  <class name="s_graphs/FloorPlanNodelet" type="s_graphs::FloorPlanNodelet" base_class_type="nodelet::Nodelet" />
+</library>
+
 <library path="lib/libs_graphs_nodelet">
   <class name="s_graphs/SGraphsNodelet" type="s_graphs::SGraphsNodelet" base_class_type="nodelet::Nodelet" />
 </library>
