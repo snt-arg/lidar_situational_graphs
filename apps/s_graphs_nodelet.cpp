@@ -1129,6 +1129,11 @@ private:
           vert_plane.plane_node = plane_node;
           vert_plane.cloud_seg_map = nullptr;
           vert_plane.covariance = Eigen::Matrix3d::Identity();
+          std::vector<double> color;
+          color.push_back(keyframe->cloud_seg_body->back().r);  // red
+          color.push_back(0.0);                                 // green
+          color.push_back(0.0);                                 // blue
+          vert_plane.color = color;
           x_vert_planes.push_back(vert_plane);
           keyframe->x_plane_ids.push_back(vert_plane.id);
 
@@ -1159,9 +1164,13 @@ private:
           vert_plane.plane_node = plane_node;
           vert_plane.cloud_seg_map = nullptr;
           vert_plane.covariance = Eigen::Matrix3d::Identity();
+          std::vector<double> color;
+          color.push_back(0.0);                                 // red
+          color.push_back(0.0);                                 // green
+          color.push_back(keyframe->cloud_seg_body->back().b);  // blue
+          vert_plane.color = color;
           y_vert_planes.push_back(vert_plane);
           keyframe->y_plane_ids.push_back(vert_plane.id);
-
           ROS_DEBUG_NAMED("yplane association", "Added new y vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
         } else {
           plane_node = y_vert_planes[data_association.second].plane_node;
@@ -1189,6 +1198,11 @@ private:
           hort_plane.plane_node = plane_node;
           hort_plane.cloud_seg_map = nullptr;
           hort_plane.covariance = Eigen::Matrix3d::Identity();
+          std::vector<double> color;
+          color.push_back(255);  // red
+          color.push_back(0.0);  // green
+          color.push_back(100);  // blue
+          hort_plane.color = color;
           hort_planes.push_back(hort_plane);
           keyframe->hort_plane_ids.push_back(hort_plane.id);
 
@@ -1264,8 +1278,7 @@ private:
             cloud_seg_detected->points.push_back(dst_pt);
           }
           min_segment = get_min_segment(x_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
-          // std::cout << "X plane min maha distance: " << vert_min_maha_dist << std::endl;
-          // std::cout << "X plane min segment: " << min_segment << std::endl;
+
           if(min_segment > plane_points_dist) {
             data_association.first = -1;
           }
@@ -1728,15 +1741,15 @@ private:
           dupl_x_vert_planes.push_back(dupl_plane_pair);
         }
 
-        std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-        std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-        std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-        std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+        // std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+        // std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
 
-        std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
-        std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-        std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
-        std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
+        // std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
+        // std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
         if(use_parallel_plane_constraint && found_new_plane) {
           parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
@@ -1847,15 +1860,15 @@ private:
           dupl_y_vert_planes.push_back(dupl_plane_pair);
         }
 
-        std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-        std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-        std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-        std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+        // std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+        // std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
 
-        std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
-        std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-        std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
-        std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
+        // std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
+        // std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
         if(use_parallel_plane_constraint && found_new_plane) {
           parallel_plane_constraint((*found_plane1).plane_node, (*found_plane2).plane_node);
@@ -2174,25 +2187,25 @@ private:
       }
     }
 
-    std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
-    std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
-    std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
-    std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
+    // std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
+    // std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
 
-    std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
-    std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
-    std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
-    std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
+    // std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
+    // std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
 
-    std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
-    std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
-    std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
-    std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
+    // std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
+    // std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
 
-    std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
-    std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
-    std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
-    std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
+    // std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
+    // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
+    // std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
 
     // std::cout << "found xplane1 id : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
     // std::cout << "found xplane2 id : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
@@ -2885,7 +2898,7 @@ private:
   void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot, std::vector<VerticalPlanes> y_vert_planes_snapshot) {
     if(keyframes.empty()) return;
 
-    int keyframe_window_size = 3;
+    int keyframe_window_size = 5;
     std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
     std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
     for(std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin(); it != keyframe_window.rend(); ++it) {
@@ -3663,9 +3676,9 @@ private:
     for(int i = 0; i < x_plane_snapshot.size(); ++i) {
       double p = static_cast<double>(i) / x_plane_snapshot.size();
       std_msgs::ColorRGBA color;
-      color.r = 1 - p;
-      color.g = p;
-      color.b = p;
+      color.r = x_plane_snapshot[i].color[0] / 255;
+      color.g = x_plane_snapshot[i].color[1] / 255;
+      color.b = x_plane_snapshot[i].color[2] / 255;
       color.a = 0.5;
       for(size_t j = 0; j < x_plane_snapshot[i].cloud_seg_map->size(); ++j) {
         geometry_msgs::Point point;
@@ -3694,9 +3707,9 @@ private:
     for(int i = 0; i < y_plane_snapshot.size(); ++i) {
       double p = static_cast<double>(i) / y_plane_snapshot.size();
       std_msgs::ColorRGBA color;
-      color.r = 0;
-      color.g = 1.0 - p;
-      color.b = p;
+      color.r = y_plane_snapshot[i].color[0] / 255;
+      color.g = y_plane_snapshot[i].color[1] / 255;
+      color.b = y_plane_snapshot[i].color[2] / 255;
       color.a = 0.5;
       for(size_t j = 0; j < y_plane_snapshot[i].cloud_seg_map->size(); ++j) {
         geometry_msgs::Point point;

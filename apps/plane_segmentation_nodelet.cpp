@@ -57,6 +57,8 @@ private:
   void initialize_params() {
     this->cloud_accum_ = 0;
     plane_extraction_frame_ = private_nh.param<std::string>("plane_extraction_frame_id", "base_link");
+    plane_visualization_frame_ = private_nh.param<std::string>("plane_visualization_frame_id", "base_link_elevated");
+
     min_seg_points_ = private_nh.param<int>("min_seg_points", 1000);
     min_horizontal_inliers_ = private_nh.param<int>("min_horizontal_inliers", 800);
     min_vertical_inliers_ = private_nh.param<int>("min_vertical_inliers", 500);
@@ -163,9 +165,9 @@ private:
         // visulazing the pointcloud
         for(int pc = 0; pc < extracted_cloud_filtered->points.size(); ++pc) {
           segmented_cloud->points.push_back(extracted_cloud_filtered->points[pc]);
-          segmented_cloud->back().r = 254;
-          segmented_cloud->back().g = 216;
-          segmented_cloud->back().b = 177;
+          // segmented_cloud->back().r = 254;
+          // segmented_cloud->back().g = 216;
+          // segmented_cloud->back().b = 177;
         }
 
         sensor_msgs::PointCloud2 extracted_cloud_msg;
@@ -197,7 +199,7 @@ private:
     pcl::toROSMsg(*segmented_cloud, segmented_cloud_msg);
     std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
     segmented_cloud_msg.header = msg_header;
-    segmented_cloud_msg.header.frame_id = plane_extraction_frame_;
+    segmented_cloud_msg.header.frame_id = plane_visualization_frame_;
     segmented_cloud_pub_.publish(segmented_cloud_msg);
   }
 
@@ -217,6 +219,9 @@ private:
 
     pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
     for(auto single_cluster : cluster_indices) {
+      double r = rand() % 256;
+      double g = rand() % 256;
+      double b = rand() % 256;
       for(const auto& idx : (single_cluster).indices) {
         cloud_cluster->push_back(extracted_cloud->points[idx]);
         cloud_cluster->width = cloud_cluster->size();
@@ -226,6 +231,9 @@ private:
         cloud_cluster->back().normal_y = extracted_cloud->back().normal_y;
         cloud_cluster->back().normal_z = extracted_cloud->back().normal_z;
         cloud_cluster->back().curvature = extracted_cloud->back().curvature;
+        cloud_cluster->back().r = r;
+        cloud_cluster->back().g = g;
+        cloud_cluster->back().b = b;
       }
     }
 
@@ -276,6 +284,7 @@ private:
   pcl::PointCloud<PointT>::Ptr cloud_accumulated_;
   tf::TransformListener tf_listener_;
   std::string plane_extraction_frame_;
+  std::string plane_visualization_frame_;
   int min_seg_points_, min_horizontal_inliers_, min_vertical_inliers_;
   bool use_euclidean_filter_, use_shadow_filter_;
   friend bool operator==(const PointT& p1, const PointT& p2);
