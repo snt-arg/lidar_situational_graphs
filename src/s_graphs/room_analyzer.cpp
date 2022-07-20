@@ -16,6 +16,7 @@ RoomAnalyzer::~RoomAnalyzer() {
 }
 
 void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray::Ptr& skeleton_graph_msg) {
+  skeleton_graph_mutex.lock();
   cloud_clusters_.clear();
   connected_subgraphs_.clear();
 
@@ -73,7 +74,6 @@ void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray:
     }
   }
 
-  skeleton_graph_mutex.lock();
   cloud_clusters_ = curr_cloud_clusters;
   connected_subgraphs_ = connected_subgraph_map;
   skeleton_graph_mutex.unlock();
@@ -249,8 +249,8 @@ void RoomAnalyzer::get_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skelet
 }
 
 void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
-  float room_dist_thres = 1.2;
-  float plane_point_dist_thres = 1.2;
+  float room_dist_thres = 1.5;
+  float plane_point_dist_thres = 1.5;
   float min_dist_x1 = 100;
   float min_dist_x2 = 100;
   std::vector<float> min_x1_plane_points_dist;
@@ -477,21 +477,21 @@ bool RoomAnalyzer::compute_diagonal_points(const pcl::PointCloud<pcl::PointXYZRG
   }
 
   if(top_right_index != -1 && bottom_right_index != -1 && top_left_index != -1 && bottom_left_index != -1) {
-    if(min_dist_top_right < 1.0 && min_dist_bottom_left < 1.0) {
-      top_right.x = cloud_hull->points[top_right_index].x;
-      top_right.y = cloud_hull->points[top_right_index].y;
+    // if(min_dist_top_right < 1.0 && min_dist_bottom_left < 1.0) {
+    top_right.x = cloud_hull->points[top_right_index].x;
+    top_right.y = cloud_hull->points[top_right_index].y;
 
-      bottom_right.x = cloud_hull->points[bottom_right_index].x;
-      bottom_right.y = cloud_hull->points[bottom_right_index].y;
+    bottom_right.x = cloud_hull->points[bottom_right_index].x;
+    bottom_right.y = cloud_hull->points[bottom_right_index].y;
 
-      top_left.x = cloud_hull->points[top_left_index].x;
-      top_left.y = cloud_hull->points[top_left_index].y;
+    top_left.x = cloud_hull->points[top_left_index].x;
+    top_left.y = cloud_hull->points[top_left_index].y;
 
-      bottom_left.x = cloud_hull->points[bottom_left_index].x;
-      bottom_left.y = cloud_hull->points[bottom_left_index].y;
+    bottom_left.x = cloud_hull->points[bottom_left_index].x;
+    bottom_left.y = cloud_hull->points[bottom_left_index].y;
 
-      return true;
-    }
+    return true;
+    //}
   }
   return false;
 }
