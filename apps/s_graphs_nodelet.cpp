@@ -16,6 +16,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/common/distances.h>
 #include <pcl/common/centroid.h>
+#include <pcl/common/io.h>
 
 #include <ros/ros.h>
 #include <geodesy/utm.h>
@@ -131,7 +132,7 @@ public:
     odom_path_vec.clear();
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
     previous_keyframe_size = 0;
-    //
+
     anchor_node = nullptr;
     anchor_edge = nullptr;
     floor_plane_node = nullptr;
@@ -228,7 +229,7 @@ public:
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
     double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
-    double top_constraint_interval = private_nh.param<double>("top_constraint_interval", 1.0);
+    // double top_constraint_interval = private_nh.param<double>("top_constraint_interval", 1.0);
     optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
     map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
     // topological_constraint_timer = mt_nh.createWallTimer(ros::WallDuration(top_constraint_interval), &SGraphsNodelet::topological_constraint_callback, this);
@@ -244,6 +245,7 @@ private:
     trans_odom2map_mutex.lock();
     Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
     trans_odom2map_mutex.unlock();
+
     geometry_msgs::PoseStamped pose_stamped_corrected = matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id);
     publish_corrected_odom(pose_stamped_corrected);
   }
@@ -906,6 +908,7 @@ private:
 
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
     pcl::fromROSMsg(*cloud_msg, *cloud);
+
     if(base_frame_id.empty()) {
       base_frame_id = cloud_msg->header.frame_id;
     }
@@ -2753,7 +2756,7 @@ private:
    * @param event
    */
   void map_points_publish_timer_callback(const ros::WallTimerEvent& event) {
-    if(!map_points_pub.getNumSubscribers() || !graph_updated) {
+    if(!map_points_pub.getNumSubscribers() || !graph_updated || !markers_pub.getNumSubscribers()) {
       return;
     }
 
