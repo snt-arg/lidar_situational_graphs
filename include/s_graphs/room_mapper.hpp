@@ -47,29 +47,6 @@
 
 namespace s_graphs {
 
-struct plane_data_list {
-  plane_data_list() : plane_centroid(0, 0, 0), connected_id(-1) {
-    connected_neighbour_ids.clear();
-  }
-  // g2o::Plane3D plane;
-  g2o::Plane3D plane_unflipped;
-  int plane_id;
-  int connected_id;
-  std::vector<int> connected_neighbour_ids;
-  pcl::PointXY start_point, end_point;
-  float plane_length;
-  g2o::VertexSE3* keyframe_node;
-  Eigen::Vector3d plane_centroid;
-};
-
-struct structure_data_list {
-  plane_data_list plane1;
-  plane_data_list plane2;
-  float width;
-  float length_diff;
-  float avg_point_diff;
-};
-
 class MapperUtils {
 public:
   MapperUtils() {

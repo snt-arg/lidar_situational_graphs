@@ -69,6 +69,7 @@
 #include <s_graphs/nmea_sentence_parser.hpp>
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/room_mapper.hpp>
+#include <s_graphs/plane_mapper.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_corridor.hpp>
@@ -122,6 +123,7 @@ public:
     inf_calclator.reset(new InformationMatrixCalculator(private_nh));
     nmea_parser.reset(new NmeaSentenceParser());
     plane_utils.reset(new PlaneUtils());
+    plane_mapper.reset(new PlaneMapper(private_nh));
     inf_room_mapper.reset(new InfiniteRoomMapper(private_nh));
     finite_room_mapper.reset(new FiniteRoomMapper(private_nh));
 
@@ -960,7 +962,7 @@ private:
 
         if(cloud_seg_body->points.size() < min_plane_points) continue;
 
-        const auto& keyframe = found->second;
+        auto& keyframe = found->second;
         keyframe->cloud_seg_body = cloud_seg_body;
 
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
@@ -968,7 +970,7 @@ private:
         bool found_room_candidates = false;
         plane_data_list plane_id_pair;
 
-        int plane_type = map_detected_planes(keyframe, det_plane_body_frame, found_corridor_candidates, found_room_candidates, plane_id_pair);
+        int plane_type = plane_mapper->map_detected_planes(graph_slam, keyframe, det_plane_body_frame, found_corridor_candidates, found_room_candidates, plane_id_pair, x_vert_planes, y_vert_planes, hort_planes);
         switch(plane_type) {
           case PlaneUtils::plane_class::X_VERT_PLANE: {
             if(found_corridor_candidates) {
@@ -1413,39 +1415,6 @@ private:
       default:
         std::cout << "No planes found for mapping " << std::endl;
         break;
-    }
-  }
-
-  /**
-   * @brief get the plane length and add potential candidates for room/corridors function 2
-   *
-   */
-  void get_plane_properties(int plane_type, VerticalPlanes vert_plane, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
-    pcl::PointXY start_point, end_point;
-    float length = plane_utils->plane_length(vert_plane.cloud_seg_map, start_point, end_point);
-    Eigen::Vector4d plane_unflipped = vert_plane.plane.coeffs();
-    plane_utils->correct_plane_d(plane_type, plane_unflipped);
-
-    plane_id_pair.plane_unflipped = plane_unflipped;
-    plane_id_pair.plane_length = length;
-    if(start_point.y < end_point.y) {
-      plane_id_pair.start_point = start_point;
-      plane_id_pair.end_point = end_point;
-    } else {
-      plane_id_pair.start_point = end_point;
-      plane_id_pair.end_point = start_point;
-    }
-    plane_id_pair.plane_id = vert_plane.id;
-    plane_id_pair.keyframe_node = vert_plane.keyframe_node;
-
-    std::cout << "plane length: " << length << std::endl;
-    if(length >= corridor_min_plane_length) {
-      ROS_DEBUG_NAMED("yplane information", "Added plane as corridor");
-      found_corridor = true;
-    }
-    if(length >= room_min_plane_length && length <= room_max_plane_length) {
-      ROS_DEBUG_NAMED("yplane information", "Added plane as room");
-      found_room = true;
     }
   }
 
@@ -3530,6 +3499,7 @@ private:
   std::unique_ptr<PlaneUtils> plane_utils;
   std::unique_ptr<InfiniteRoomMapper> inf_room_mapper;
   std::unique_ptr<FiniteRoomMapper> finite_room_mapper;
+  std::unique_ptr<PlaneMapper> plane_mapper;
 };
 
 }  // namespace s_graphs
