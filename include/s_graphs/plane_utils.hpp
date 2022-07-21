@@ -20,6 +20,27 @@ public:
     HORT_PLANE = 2,
   };
 
+  inline float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
+    float size = 0;
+    if(fabs(v1(3)) > fabs(v2(3)))
+      size = fabs(v1(3) - v2(3));
+    else if(fabs(v2(3)) > fabs(v1(3)))
+      size = fabs(v2(3) - v1(3));
+
+    return size;
+  }
+
+  inline float width_between_planes(s_graphs::PlaneData& plane1, s_graphs::PlaneData& plane2) {
+    float size = 0;
+    float room_width_threshold = 1.0;
+    if(fabs(plane1.d) > fabs(plane2.d))
+      size = fabs(plane1.d - plane2.d);
+    else if(fabs(plane2.d) > fabs(plane1.d))
+      size = fabs(plane2.d - plane1.d);
+
+    return size;
+  }
+
   void correct_plane_d(int plane_type, s_graphs::PlaneData& plane) {
     if(plane_type == plane_class::X_VERT_PLANE) {
       plane.d = -1 * plane.d;

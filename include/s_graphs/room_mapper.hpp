@@ -70,10 +70,60 @@ struct structure_data_list {
   float avg_point_diff;
 };
 
+class MapperUtils {
+public:
+  MapperUtils() {
+    plane_utils.reset(new PlaneUtils());
+  }
+
+public:
+  std::unique_ptr<PlaneUtils> plane_utils;
+
+public:
+  inline float point_difference(int plane_type, pcl::PointXY p1, pcl::PointXY p2) {
+    float point_diff = 0;
+
+    if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+      p1.x = 0;
+      p2.x = 0;
+      point_diff = pcl::euclideanDistance(p1, p2);
+    }
+    if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
+      p1.y = 0;
+      p2.y = 0;
+      point_diff = pcl::euclideanDistance(p1, p2);
+    }
+
+    return point_diff;
+  }
+
+  /**
+   * @brief this method add parallel constraint between the planes of rooms or corridors
+   */
+  void parallel_plane_constraint(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node) {
+    Eigen::Matrix<double, 1, 1> information(0.1);
+    Eigen::Vector3d meas(0, 0, 0);
+
+    auto edge = graph_slam->add_plane_parallel_edge(plane1_node, plane2_node, meas, information);
+    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+  }
+
+  /**
+   * @brief this method adds perpendicular constraint between the planes of rooms or corridors
+   */
+  void perpendicular_plane_constraint(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node) {
+    Eigen::Matrix<double, 1, 1> information(0.1);
+    Eigen::Vector3d meas(0, 0, 0);
+
+    auto edge = graph_slam->add_plane_perpendicular_edge(plane1_node, plane2_node, meas, information);
+    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+  }
+};
+
 /**
  * @brief this class provides tools for different analysis over open space clusters to generate rooms
  */
-class InfiniteRoomMapper {
+class InfiniteRoomMapper : MapperUtils {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
 public:
@@ -100,10 +150,6 @@ private:
   void parallel_plane_constraint(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node);
 
 private:
-  float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2);
-  float point_difference(int plane_type, pcl::PointXY p1, pcl::PointXY p2);
-
-private:
   double corridor_plane_length_diff_threshold, corridor_point_diff_threshold;
   double corridor_min_width, corridor_max_width;
   double corridor_information;
@@ -111,7 +157,7 @@ private:
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
 };
 
-class FiniteRoomMapper {
+class FiniteRoomMapper : MapperUtils {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
 public:
@@ -121,6 +167,25 @@ public:
 private:
   ros::NodeHandle nh;
   std::unique_ptr<PlaneUtils> plane_utils;
+
+public:
+  void lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_room_candidates, const std::vector<plane_data_list>& y_det_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec);
+  void factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec);
+  double room_measurement(const int& plane_type, const Eigen::Vector2d& room, const Eigen::Vector4d& plane);
+  std::pair<int, int> associate_rooms(const Eigen::Vector2d& room_pose, const std::vector<Rooms>& rooms_vec);
+
+private:
+  std::vector<structure_data_list> sort_rooms(const int& plane_type, const std::vector<plane_data_list>& room_candidates);
+  std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec);
+  Eigen::Vector2d compute_room_pose(const std::vector<plane_data_list>& x_room_pair_vec, const std::vector<plane_data_list>& y_room_pair_vec);
+
+private:
+  double room_width_diff_threshold;
+  double room_plane_length_diff_threshold, room_point_diff_threshold;
+  double room_min_width, room_max_width;
+  double room_information;
+  double room_dist_threshold;
+  bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
 };
 
 }  // namespace s_graphs

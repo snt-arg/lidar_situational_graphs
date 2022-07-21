@@ -40,7 +40,7 @@ std::vector<structure_data_list> InfiniteRoomMapper::sort_corridors(const int pl
 
   for(int i = 0; i < corridor_candidates.size(); ++i) {
     for(int j = i + 1; j < corridor_candidates.size(); ++j) {
-      float corr_width = width_between_planes(corridor_candidates[i].plane_unflipped.coeffs(), corridor_candidates[j].plane_unflipped.coeffs());
+      float corr_width = plane_utils->width_between_planes(corridor_candidates[i].plane_unflipped.coeffs(), corridor_candidates[j].plane_unflipped.coeffs());
       float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length);
       float start_point_diff = point_difference(plane_type, corridor_candidates[i].start_point, corridor_candidates[j].start_point);
       float end_point_diff = point_difference(plane_type, corridor_candidates[i].end_point, corridor_candidates[j].end_point);
@@ -94,33 +94,6 @@ std::vector<plane_data_list> InfiniteRoomMapper::refine_corridors(const std::vec
     return corr_empty;
   } else
     return corr_refined;
-}
-
-float InfiniteRoomMapper::width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
-  float size = 0;
-  if(fabs(v1(3)) > fabs(v2(3)))
-    size = fabs(v1(3) - v2(3));
-  else if(fabs(v2(3)) > fabs(v1(3)))
-    size = fabs(v2(3) - v1(3));
-
-  return size;
-}
-
-float InfiniteRoomMapper::point_difference(int plane_type, pcl::PointXY p1, pcl::PointXY p2) {
-  float point_diff = 0;
-
-  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    p1.x = 0;
-    p2.x = 0;
-    point_diff = pcl::euclideanDistance(p1, p2);
-  }
-  if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    p1.y = 0;
-    p2.y = 0;
-    point_diff = pcl::euclideanDistance(p1, p2);
-  }
-
-  return point_diff;
 }
 
 /**
@@ -470,17 +443,6 @@ double InfiniteRoomMapper::corridor_measurement(int plane_type, double corr, con
   }
 
   return meas;
-}
-
-/**
- * @brief this method add parallel constraint between the planes of rooms or corridors
- */
-void InfiniteRoomMapper::parallel_plane_constraint(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node) {
-  Eigen::Matrix<double, 1, 1> information(0.1);
-  Eigen::Vector3d meas(0, 0, 0);
-
-  auto edge = graph_slam->add_plane_parallel_edge(plane1_node, plane2_node, meas, information);
-  graph_slam->add_robust_kernel(edge, "Huber", 1.0);
 }
 
 }  // namespace s_graphs

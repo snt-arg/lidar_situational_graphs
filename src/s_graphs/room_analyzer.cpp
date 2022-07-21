@@ -221,17 +221,6 @@ pcl::PointXYZRGB RoomAnalyzer::compute_centroid(const pcl::PointXYZRGB& p1, cons
   return center;
 }
 
-float RoomAnalyzer::get_room_width(s_graphs::PlaneData& plane1, s_graphs::PlaneData& plane2) {
-  float size = 0;
-  float room_width_threshold = 1.0;
-  if(fabs(plane1.d) > fabs(plane2.d))
-    size = fabs(plane1.d - plane2.d);
-  else if(fabs(plane2.d) > fabs(plane1.d))
-    size = fabs(plane2.d - plane1.d);
-
-  return size;
-}
-
 void RoomAnalyzer::get_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, float& area) {
   // Create a convex hull representation of the projected inliers
   pcl::ConvexHull<pcl::PointXYZRGB> convex_hull;

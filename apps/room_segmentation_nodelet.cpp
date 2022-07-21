@@ -235,8 +235,8 @@ private:
         plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane2);
 
         // first check the width of the rooms
-        float x_plane_width = room_analyzer->get_room_width(x_plane1, x_plane2);
-        float y_plane_width = room_analyzer->get_room_width(y_plane1, y_plane2);
+        float x_plane_width = plane_utils->width_between_planes(x_plane1, x_plane2);
+        float y_plane_width = plane_utils->width_between_planes(y_plane1, y_plane2);
 
         if(x_plane_width < room_width_threshold || y_plane_width < room_width_threshold) {
           std::cout << "returning as the room is not sufficiently wide" << std::endl;
@@ -268,7 +268,7 @@ private:
         plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane1);
         plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane2);
 
-        float x_plane_width = room_analyzer->get_room_width(x_plane1, x_plane2);
+        float x_plane_width = plane_utils->width_between_planes(x_plane1, x_plane2);
         if(x_plane_width < room_width_threshold) {
           std::cout << "returning as the room is not sufficiently wide" << std::endl;
           return;
@@ -298,7 +298,7 @@ private:
         plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1);
         plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane2);
 
-        float y_plane_width = room_analyzer->get_room_width(y_plane1, y_plane2);
+        float y_plane_width = plane_utils->width_between_planes(y_plane1, y_plane2);
         if(y_plane_width < room_width_threshold) {
           std::cout << "returning as the room is not sufficiently wide" << std::endl;
           return;

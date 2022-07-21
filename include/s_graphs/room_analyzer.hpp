@@ -44,7 +44,6 @@ public:
   geometry_msgs::Point get_room_length(pcl::PointXY p1, pcl::PointXY p2);
   geometry_msgs::Point get_room_center(pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData x_plane1, s_graphs::PlaneData x_plane2, s_graphs::PlaneData y_plane1, s_graphs::PlaneData y_plane2);
   geometry_msgs::Point get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2);
-  float get_room_width(s_graphs::PlaneData& plane1, s_graphs::PlaneData& plane2);
 
 private:
   ros::NodeHandle nh;

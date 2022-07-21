@@ -6,8 +6,395 @@ namespace s_graphs {
 
 FiniteRoomMapper::FiniteRoomMapper(const ros::NodeHandle& private_nh) {
   plane_utils.reset(new PlaneUtils());
+
+  room_information = private_nh.param<double>("room_information", 0.01);
+
+  room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
+  room_point_diff_threshold = private_nh.param<double>("room_point_diff_threshold", 3.0);
+  room_width_diff_threshold = private_nh.param<double>("room_width_diff_threshold", 2.5);
+  room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
+
+  room_min_width = private_nh.param<double>("room_min_width", 2.5);
+  room_max_width = private_nh.param<double>("room_max_width", 6.0);
+
+  use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
+  use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 }
 
 FiniteRoomMapper::~FiniteRoomMapper() {}
+
+void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_room_candidates, const std::vector<plane_data_list>& y_det_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
+  std::vector<structure_data_list> x_room_pair_vec = sort_rooms(PlaneUtils::plane_class::X_VERT_PLANE, x_det_room_candidates);
+  std::vector<structure_data_list> y_room_pair_vec = sort_rooms(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_room_candidates);
+  std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> refined_room_pair = refine_rooms(x_room_pair_vec, y_room_pair_vec);
+
+  if(refined_room_pair.first.size() == 2 && refined_room_pair.second.size() == 2) {
+    factor_rooms(graph_slam, refined_room_pair.first, refined_room_pair.second, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, rooms_vec);
+  }
+}
+
+/**
+ * @brief sort the rooms candidates
+ */
+std::vector<structure_data_list> FiniteRoomMapper::sort_rooms(const int& plane_type, const std::vector<plane_data_list>& room_candidates) {
+  std::vector<structure_data_list> room_pair_vec;
+
+  for(int i = 0; i < room_candidates.size(); ++i) {
+    for(int j = i + 1; j < room_candidates.size(); ++j) {
+      float room_width = plane_utils->width_between_planes(room_candidates[i].plane_unflipped.coeffs(), room_candidates[j].plane_unflipped.coeffs());
+      float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length);
+      float start_point_diff = point_difference(plane_type, room_candidates[i].start_point, room_candidates[j].start_point);
+      float end_point_diff = point_difference(plane_type, room_candidates[i].end_point, room_candidates[j].end_point);
+      float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
+      ROS_DEBUG_NAMED("room planes", "room plane i coeffs %f %f %f %f", room_candidates[i].plane_unflipped.coeffs()(0), room_candidates[i].plane_unflipped.coeffs()(1), room_candidates[i].plane_unflipped.coeffs()(2), room_candidates[i].plane_unflipped.coeffs()(3));
+      ROS_DEBUG_NAMED("room planes", "room plane j coeffs %f %f %f %f", room_candidates[j].plane_unflipped.coeffs()(0), room_candidates[j].plane_unflipped.coeffs()(1), room_candidates[j].plane_unflipped.coeffs()(2), room_candidates[j].plane_unflipped.coeffs()(3));
+      ROS_DEBUG_NAMED("room planes", "room width %f", room_width);
+      ROS_DEBUG_NAMED("room planes", "room plane lenght diff %f", diff_plane_length);
+      ROS_DEBUG_NAMED("room planes", "room plane point diff %f", avg_plane_point_diff);
+
+      if(room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (room_width > room_min_width && room_width < room_max_width) && diff_plane_length < room_plane_length_diff_threshold) {
+        if(avg_plane_point_diff < room_point_diff_threshold) {
+          structure_data_list room_pair;
+          room_pair.plane1 = room_candidates[i];
+          room_pair.plane2 = room_candidates[j];
+          room_pair.width = room_width;
+          room_pair.length_diff = diff_plane_length;
+          room_pair.avg_point_diff = avg_plane_point_diff;
+          room_pair_vec.push_back(room_pair);
+          ROS_DEBUG_NAMED("room planes", "adding room candidates");
+        }
+      }
+    }
+  }
+  return room_pair_vec;
+}
+
+/**
+ * @brief refine the sorted room candidates
+ */
+std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> FiniteRoomMapper::refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec) {
+  float min_room_point_diff = room_point_diff_threshold;
+  std::vector<plane_data_list> x_room, y_room;
+  x_room.resize(2);
+  y_room.resize(2);
+
+  for(int i = 0; i < x_room_vec.size(); ++i) {
+    for(int j = 0; j < y_room_vec.size(); ++j) {
+      float width_diff = fabs(x_room_vec[i].width - y_room_vec[j].width);
+      if(width_diff < room_width_diff_threshold) {
+        float room_diff = (x_room_vec[i].avg_point_diff + y_room_vec[j].avg_point_diff) / 2;
+        if(room_diff < min_room_point_diff) {
+          min_room_point_diff = room_diff;
+          x_room[0] = x_room_vec[i].plane1;
+          x_room[1] = x_room_vec[i].plane2;
+          y_room[0] = y_room_vec[j].plane1;
+          y_room[1] = y_room_vec[j].plane2;
+        }
+      }
+    }
+  }
+
+  if(min_room_point_diff >= room_point_diff_threshold) {
+    std::vector<plane_data_list> x_room_empty, y_room_empty;
+    x_room_empty.resize(0);
+    y_room_empty.resize(0);
+    return std::make_pair(x_room_empty, x_room_empty);
+  } else
+    return std::make_pair(x_room, y_room);
+}
+
+/**
+ * @brief this method creates the room vertex and adds edges between the vertex and detected planes
+ */
+void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
+  g2o::VertexRoomXYLB* room_node;
+  std::pair<int, int> room_data_association;
+  Eigen::Matrix<double, 1, 1> information_room_plane(room_information);
+  auto found_x_plane1 = x_vert_planes.begin();
+  auto found_x_plane2 = x_vert_planes.begin();
+  auto found_y_plane1 = y_vert_planes.begin();
+  auto found_y_plane2 = y_vert_planes.begin();
+  auto found_mapped_x_plane1 = x_vert_planes.begin();
+  auto found_mapped_x_plane2 = x_vert_planes.begin();
+  auto found_mapped_y_plane1 = y_vert_planes.begin();
+  auto found_mapped_y_plane2 = y_vert_planes.begin();
+  double x_plane1_meas, x_plane2_meas;
+  double y_plane1_meas, y_plane2_meas;
+
+  ROS_DEBUG_NAMED("room planes", "final room plane 1 %f %f %f %f", x_room_pair_vec[0].plane_unflipped.coeffs()(0), x_room_pair_vec[0].plane_unflipped.coeffs()(1), x_room_pair_vec[0].plane_unflipped.coeffs()(2), x_room_pair_vec[0].plane_unflipped.coeffs()(3));
+  ROS_DEBUG_NAMED("room planes", "final room plane 2 %f %f %f %f", x_room_pair_vec[1].plane_unflipped.coeffs()(0), x_room_pair_vec[1].plane_unflipped.coeffs()(1), x_room_pair_vec[1].plane_unflipped.coeffs()(2), x_room_pair_vec[1].plane_unflipped.coeffs()(3));
+  ROS_DEBUG_NAMED("room planes", "final room plane 3 %f %f %f %f", y_room_pair_vec[0].plane_unflipped.coeffs()(0), y_room_pair_vec[0].plane_unflipped.coeffs()(1), y_room_pair_vec[0].plane_unflipped.coeffs()(2), y_room_pair_vec[0].plane_unflipped.coeffs()(3));
+  ROS_DEBUG_NAMED("room planes", "final room plane 4 %f %f %f %f", y_room_pair_vec[1].plane_unflipped.coeffs()(0), y_room_pair_vec[1].plane_unflipped.coeffs()(1), y_room_pair_vec[1].plane_unflipped.coeffs()(2), y_room_pair_vec[1].plane_unflipped.coeffs()(3));
+
+  found_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[0].plane_id);
+  found_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[1].plane_id);
+  found_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[0].plane_id);
+  found_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[1].plane_id);
+
+  if(found_x_plane1 == x_vert_planes.end() || found_x_plane2 == x_vert_planes.end() || found_y_plane1 == y_vert_planes.end() || found_y_plane2 == y_vert_planes.end()) {
+    std::cout << "did not find a room plane in the plane vector" << std::endl;
+    return;
+  }
+
+  Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
+  room_data_association = associate_rooms(room_pose, rooms_vec);
+  if((rooms_vec.empty() || room_data_association.first == -1)) {
+    std::cout << "found room with pose " << room_pose << std::endl;
+    room_data_association.first = graph_slam->num_vertices_local();
+    room_node = graph_slam->add_room_node(room_pose);
+    // room_node->setFixed(true);
+    Rooms det_room;
+    det_room.id = room_data_association.first;
+    det_room.plane_x1 = x_room_pair_vec[0].plane_unflipped;
+    det_room.plane_x2 = x_room_pair_vec[1].plane_unflipped;
+    det_room.plane_y1 = y_room_pair_vec[0].plane_unflipped;
+    det_room.plane_y2 = y_room_pair_vec[1].plane_unflipped;
+    det_room.plane_x1_id = x_room_pair_vec[0].plane_id;
+    det_room.plane_x2_id = x_room_pair_vec[1].plane_id;
+    det_room.plane_y1_id = y_room_pair_vec[0].plane_id;
+    det_room.plane_y2_id = y_room_pair_vec[1].plane_id;
+    det_room.connected_id = x_room_pair_vec[0].connected_id;
+    det_room.connected_neighbour_ids = x_room_pair_vec[0].connected_neighbour_ids;
+    det_room.node = room_node;
+    rooms_vec.push_back(det_room);
+
+    x_plane1_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[0].plane_unflipped.coeffs());
+    x_plane2_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, x_room_pair_vec[1].plane_unflipped.coeffs());
+
+    y_plane1_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[0].plane_unflipped.coeffs());
+    y_plane2_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, y_room_pair_vec[1].plane_unflipped.coeffs());
+
+    /* Add parallel and perpendicular constraints here */
+    if(use_parallel_plane_constraint) {
+      parallel_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
+      parallel_plane_constraint(graph_slam, (*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
+    }
+    if(use_perpendicular_plane_constraint) {
+      perpendicular_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_y_plane1).plane_node);
+      perpendicular_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_y_plane2).plane_node);
+      perpendicular_plane_constraint(graph_slam, (*found_x_plane2).plane_node, (*found_y_plane1).plane_node);
+      perpendicular_plane_constraint(graph_slam, (*found_x_plane2).plane_node, (*found_y_plane2).plane_node);
+    }
+
+  } else {
+    /* add the edge between detected planes and the corridor */
+    room_node = rooms_vec[room_data_association.second].node;
+    std::cout << "Matched det room with pose " << room_pose << " to mapped room with id " << room_data_association.first << " and pose " << room_node->estimate() << std::endl;
+
+    rooms_vec[room_data_association.second].connected_id = x_room_pair_vec[0].connected_id;
+    for(const auto& det_room_neighbour : x_room_pair_vec[0].connected_neighbour_ids) {
+      rooms_vec[room_data_association.second].connected_neighbour_ids.push_back(det_room_neighbour);
+    }
+
+    found_mapped_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_x1_id);
+    found_mapped_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_x2_id);
+    Eigen::Vector4d found_mapped_x_plane1_coeffs, found_mapped_x_plane2_coeffs;
+    found_mapped_x_plane1_coeffs = (*found_mapped_x_plane1).plane_node->estimate().coeffs();
+    found_mapped_x_plane2_coeffs = (*found_mapped_x_plane2).plane_node->estimate().coeffs();
+    plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
+    plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane2_coeffs);
+
+    bool found_new_x_plane = false;
+    if((*found_x_plane1).id == (*found_mapped_x_plane1).id)
+      x_plane1_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane1_coeffs);
+    else if((*found_x_plane1).id == (*found_mapped_x_plane2).id)
+      x_plane1_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane2_coeffs);
+    else {
+      std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+      if((*found_x_plane1).plane_node->estimate().coeffs().head(3).dot(found_mapped_x_plane1_coeffs.head(3)) > 0) {
+        x_plane1_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
+        dupl_plane_pair = std::make_pair(*found_x_plane1, *found_mapped_x_plane1);
+      } else {
+        x_plane1_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane2_coeffs);
+        dupl_plane_pair = std::make_pair(*found_x_plane1, *found_mapped_x_plane2);
+      }
+      found_new_x_plane = true;
+      dupl_x_vert_planes.push_back(dupl_plane_pair);
+    }
+
+    if((*found_x_plane2).id == (*found_mapped_x_plane1).id)
+      x_plane2_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane1_coeffs);
+    else if((*found_x_plane2).id == (*found_mapped_x_plane2).id)
+      x_plane2_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane2_coeffs);
+    else {
+      std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+      if((*found_x_plane2).plane_node->estimate().coeffs().head(3).dot(found_mapped_x_plane1_coeffs.head(3)) > 0) {
+        x_plane2_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
+        dupl_plane_pair = std::make_pair(*found_x_plane2, *found_mapped_x_plane1);
+      } else {
+        x_plane2_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane2_coeffs);
+        dupl_plane_pair = std::make_pair(*found_x_plane2, *found_mapped_x_plane2);
+      }
+      found_new_x_plane = true;
+      dupl_x_vert_planes.push_back(dupl_plane_pair);
+    }
+
+    if(use_parallel_plane_constraint && found_new_x_plane) {
+      parallel_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
+    }
+
+    found_mapped_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_y1_id);
+    found_mapped_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_y2_id);
+    Eigen::Vector4d found_mapped_y_plane1_coeffs, found_mapped_y_plane2_coeffs;
+    found_mapped_y_plane1_coeffs = (*found_mapped_y_plane1).plane_node->estimate().coeffs();
+    found_mapped_y_plane2_coeffs = (*found_mapped_y_plane2).plane_node->estimate().coeffs();
+    plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs);
+    plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane2_coeffs);
+
+    bool found_new_y_plane = false;
+    if((*found_y_plane1).id == (*found_mapped_y_plane1).id)
+      y_plane1_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane1_coeffs);
+    else if((*found_y_plane1).id == (*found_mapped_y_plane2).id)
+      y_plane1_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane2_coeffs);
+    else {
+      std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+      if((*found_y_plane1).plane_node->estimate().coeffs().head(3).dot(found_mapped_y_plane1_coeffs.head(3)) > 0) {
+        y_plane1_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
+        dupl_plane_pair = std::make_pair(*found_y_plane1, *found_mapped_y_plane1);
+      } else {
+        y_plane1_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane2_coeffs);
+        dupl_plane_pair = std::make_pair(*found_y_plane1, *found_mapped_y_plane2);
+      }
+      found_new_y_plane = true;
+      dupl_y_vert_planes.push_back(dupl_plane_pair);
+    }
+
+    if((*found_y_plane2).id == (*found_mapped_y_plane1).id)
+      y_plane2_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane1_coeffs);
+    else if((*found_y_plane2).id == (*found_mapped_y_plane2).id)
+      y_plane2_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane2_coeffs);
+    else {
+      std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+      if((*found_y_plane2).plane_node->estimate().coeffs().head(3).dot(found_mapped_y_plane1_coeffs.head(3)) > 0) {
+        y_plane2_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
+        dupl_plane_pair = std::make_pair(*found_y_plane2, *found_mapped_y_plane1);
+      } else {
+        y_plane2_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane2_coeffs);
+        dupl_plane_pair = std::make_pair(*found_y_plane2, *found_mapped_y_plane2);
+      }
+      found_new_y_plane = true;
+      dupl_y_vert_planes.push_back(dupl_plane_pair);
+    }
+
+    if(use_parallel_plane_constraint && found_new_y_plane) {
+      parallel_plane_constraint(graph_slam, (*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
+    }
+  }
+
+  // std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
+  // std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
+  // std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
+
+  // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
+  // std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
+  // std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
+
+  // std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
+  // std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
+  // std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
+
+  // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
+  // std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
+  // std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
+
+  // std::cout << "found xplane1 id : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found xplane2 id : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found yplane1 id : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found yplane2 id : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
+
+  auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane1).plane_node, x_plane1_meas, information_room_plane);
+  graph_slam->add_robust_kernel(edge_x_plane1, "Huber", 1.0);
+
+  auto edge_x_plane2 = graph_slam->add_room_xplane_edge(room_node, (*found_x_plane2).plane_node, x_plane2_meas, information_room_plane);
+  graph_slam->add_robust_kernel(edge_x_plane2, "Huber", 1.0);
+
+  auto edge_y_plane1 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane1).plane_node, y_plane1_meas, information_room_plane);
+  graph_slam->add_robust_kernel(edge_y_plane1, "Huber", 1.0);
+
+  auto edge_y_plane2 = graph_slam->add_room_yplane_edge(room_node, (*found_y_plane2).plane_node, y_plane2_meas, information_room_plane);
+  graph_slam->add_robust_kernel(edge_y_plane2, "Huber", 1.0);
+}
+
+Eigen::Vector2d FiniteRoomMapper::compute_room_pose(const std::vector<plane_data_list>& x_room_pair_vec, const std::vector<plane_data_list>& y_room_pair_vec) {
+  Eigen::Vector2d room_pose(0, 0);
+  Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane_unflipped.coeffs(), x_plane2 = x_room_pair_vec[1].plane_unflipped.coeffs();
+  Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane_unflipped.coeffs(), y_plane2 = y_room_pair_vec[1].plane_unflipped.coeffs();
+
+  if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
+    double size = x_plane1(3) - x_plane2(3);
+    room_pose(0) = (((size) / 2) + x_plane2(3));
+    // room_pose(2) = size;
+  } else {
+    double size = x_plane2(3) - x_plane1(3);
+    room_pose(0) = (((size) / 2) + x_plane1(3));
+    // room_pose(2) = size;
+  }
+
+  if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
+    double size = y_plane1(3) - y_plane2(3);
+    room_pose(1) = (((size) / 2) + y_plane2(3));
+    // room_pose(3) = size;
+  } else {
+    double size = y_plane2(3) - y_plane1(3);
+    room_pose(1) = (((size) / 2) + y_plane1(3));
+    // room_pose(3) = size;
+  }
+
+  return room_pose;
+}
+
+std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& room_pose, const std::vector<Rooms>& rooms_vec) {
+  float min_dist = 100;
+  std::pair<int, int> data_association;
+  data_association.first = -1;
+
+  for(int i = 0; i < rooms_vec.size(); ++i) {
+    float diff_x = room_pose(0) - rooms_vec[i].node->estimate()(0);
+    float diff_y = room_pose(1) - rooms_vec[i].node->estimate()(1);
+    float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));
+    ROS_DEBUG_NAMED("room planes", "dist room %f", dist);
+
+    if(dist < min_dist) {
+      min_dist = dist;
+      data_association.first = rooms_vec[i].id;
+      data_association.second = i;
+    }
+  }
+
+  ROS_DEBUG_NAMED("room planes", "min dist room %f", min_dist);
+  if(min_dist > room_dist_threshold) data_association.first = -1;
+
+  return data_association;
+}
+
+double FiniteRoomMapper::room_measurement(const int& plane_type, const Eigen::Vector2d& room, const Eigen::Vector4d& plane) {
+  double meas;
+
+  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+    if(fabs(room(0)) > fabs(plane(3))) {
+      meas = room(0) - plane(3);
+    } else {
+      meas = plane(3) - room(0);
+    }
+  }
+
+  if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
+    if(fabs(room(1)) > fabs(plane(3))) {
+      meas = room(1) - plane(3);
+    } else {
+      meas = plane(3) - room(1);
+    }
+  }
+
+  return meas;
+}
 
 }  // namespace s_graphs
