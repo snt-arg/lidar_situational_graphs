@@ -122,7 +122,7 @@ public:
     inf_calclator.reset(new InformationMatrixCalculator(private_nh));
     nmea_parser.reset(new NmeaSentenceParser());
     plane_utils.reset(new PlaneUtils());
-    room_mapper.reset(new RoomMapper(private_nh));
+    inf_room_mapper.reset(new InfiniteRoomMapper(private_nh));
 
     gps_time_offset = private_nh.param<double>("gps_time_offset", 0.0);
     gps_edge_stddev_xy = private_nh.param<double>("gps_edge_stddev_xy", 10000.0);
@@ -385,7 +385,7 @@ private:
           for(const auto& room_neighbour_id : room_data.neighbour_ids) {
             x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
           }
-          room_mapper->factor_corridors(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+          inf_room_mapper->factor_corridors(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
         }
         // y corridor
         else if(room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
@@ -422,7 +422,7 @@ private:
           for(const auto& room_neighbour_id : room_data.neighbour_ids) {
             y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
           }
-          room_mapper->factor_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+          inf_room_mapper->factor_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
         }
       }
       // TODO:HB factor neighbours appropriately in the sgraphs
@@ -543,7 +543,7 @@ private:
     Eigen::Vector2d corr_pose(det_room_data.room_center.x, det_room_data.room_center.y);
     std::pair<int, int> corr_data_association;
 
-    corr_data_association = room_mapper->associate_corridors(plane_type, corr_pose, x_corridors, y_corridors);
+    corr_data_association = inf_room_mapper->associate_corridors(plane_type, corr_pose, x_corridors, y_corridors);
     if(corr_data_association.first == -1) {
       Corridors det_corridor;
       det_corridor.id = graph_slam->num_vertices_local();
@@ -1002,7 +1002,7 @@ private:
       }
 
       if(use_corridor_constraint) {
-        room_mapper->lookup_corridors(graph_slam, x_det_corridor_candidates, y_det_corridor_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+        inf_room_mapper->lookup_corridors(graph_slam, x_det_corridor_candidates, y_det_corridor_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
       }
 
       if(use_room_constraint) {
@@ -2595,7 +2595,7 @@ private:
           /* Add edge between corridor and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
-          double meas_plane1 = room_mapper->corridor_measurement(PlaneUtils::plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
+          double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
           auto edge_plane = graph_slam->add_corridor_xplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
@@ -2672,7 +2672,7 @@ private:
           /* Add edge between corridor and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
-          double meas_plane1 = room_mapper->corridor_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
+          double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
           auto edge_plane = graph_slam->add_corridor_yplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
@@ -4107,7 +4107,7 @@ private:
   std::unique_ptr<NmeaSentenceParser> nmea_parser;
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
   std::unique_ptr<PlaneUtils> plane_utils;
-  std::unique_ptr<RoomMapper> room_mapper;
+  std::unique_ptr<InfiniteRoomMapper> inf_room_mapper;
 };
 
 }  // namespace s_graphs

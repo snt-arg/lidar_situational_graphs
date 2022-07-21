@@ -73,12 +73,12 @@ struct structure_data_list {
 /**
  * @brief this class provides tools for different analysis over open space clusters to generate rooms
  */
-class RoomMapper {
+class InfiniteRoomMapper {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
 public:
-  RoomMapper(const ros::NodeHandle& private_nh);
-  ~RoomMapper();
+  InfiniteRoomMapper(const ros::NodeHandle& private_nh);
+  ~InfiniteRoomMapper();
 
 private:
   ros::NodeHandle nh;
@@ -110,6 +110,19 @@ private:
   double corridor_dist_threshold;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
 };
+
+class FiniteRoomMapper {
+  typedef pcl::PointXYZRGBNormal PointNormal;
+
+public:
+  FiniteRoomMapper(const ros::NodeHandle& private_nh);
+  ~FiniteRoomMapper();
+
+private:
+  ros::NodeHandle nh;
+  std::unique_ptr<PlaneUtils> plane_utils;
+};
+
 }  // namespace s_graphs
 
 #endif  // ROOM_MAPPER_HPP
