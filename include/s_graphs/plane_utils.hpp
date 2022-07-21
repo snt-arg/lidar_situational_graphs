@@ -5,10 +5,13 @@
 
 #include <Eigen/Dense>
 #include <s_graphs/PlanesData.h>
+#include <g2o/types/slam3d/vertex_se3.h>
 
 namespace s_graphs {
 
 class PlaneUtils {
+  typedef pcl::PointXYZRGBNormal PointNormal;
+
 public:
   PlaneUtils() {}
   ~PlaneUtils() {}
@@ -69,6 +72,76 @@ public:
       plane(3) = p_norm * plane(3);
     }
     return;
+  }
+
+  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2, g2o::VertexSE3* keyframe_node) {
+    PointNormal pmin, pmax;
+    pcl::getMaxSegment(*cloud_seg, pmin, pmax);
+    p1.x = pmin.x;
+    p1.y = pmin.y;
+    p2.x = pmax.x;
+    p2.y = pmax.y;
+    float length = pcl::euclideanDistance(p1, p2);
+
+    pcl::PointXY p1_map, p2_map;
+    p1_map = convert_point_to_map(p1, keyframe_node->estimate().matrix());
+    p2_map = convert_point_to_map(p2, keyframe_node->estimate().matrix());
+    p1 = p1_map;
+    p2 = p2_map;
+
+    return length;
+  }
+
+  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2) {
+    PointNormal pmin, pmax;
+    pcl::getMaxSegment(*cloud_seg, pmin, pmax);
+    p1.x = pmin.x;
+    p1.y = pmin.y;
+    p2.x = pmax.x;
+    p2.y = pmax.y;
+    float length = pcl::euclideanDistance(p1, p2);
+
+    return length;
+  }
+
+  pcl::PointXY convert_point_to_map(pcl::PointXY point_local, Eigen::Matrix4d keyframe_pose) {
+    pcl::PointXY point_map;
+
+    Eigen::Vector4d point_map_eigen, point_local_eigen;
+    point_local_eigen = point_map_eigen.setZero();
+    point_local_eigen(3) = point_map_eigen(3) = 1;
+    point_local_eigen(0) = point_local.x;
+    point_local_eigen(1) = point_local.y;
+    point_map_eigen = keyframe_pose * point_local_eigen;
+
+    point_map.x = point_map_eigen(0);
+    point_map.y = point_map_eigen(1);
+    return point_map;
+  }
+
+  float get_min_segment(const pcl::PointCloud<PointNormal>::Ptr& cloud_1, const pcl::PointCloud<PointNormal>::Ptr& cloud_2) {
+    float min_dist = std::numeric_limits<float>::max();
+    const auto token = std::numeric_limits<std::size_t>::max();
+    std::size_t i_min = token, i_max = token;
+
+    for(std::size_t i = 0; i < cloud_1->points.size(); ++i) {
+      for(std::size_t j = 0; j < cloud_2->points.size(); ++j) {
+        // Compute the distance
+        float dist = (cloud_1->points[i].getVector4fMap() - cloud_2->points[j].getVector4fMap()).squaredNorm();
+        if(dist >= min_dist) continue;
+
+        min_dist = dist;
+        i_min = i;
+        i_max = j;
+      }
+    }
+
+    // if (i_min == token || i_max == token)
+    //  return (min_dist = std::numeric_limits<double>::min ());
+
+    // pmin = cloud.points[i_min];
+    // pmax = cloud.points[i_max];
+    return (std::sqrt(min_dist));
   }
 };
 }  // namespace s_graphs

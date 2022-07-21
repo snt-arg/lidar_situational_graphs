@@ -211,10 +211,8 @@ public:
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
     double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
-    // double top_constraint_interval = private_nh.param<double>("top_constraint_interval", 1.0);
     optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
     map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
-    // topological_constraint_timer = mt_nh.createWallTimer(ros::WallDuration(top_constraint_interval), &SGraphsNodelet::topological_constraint_callback, this);
   }
 
 private:
@@ -1259,7 +1257,7 @@ private:
             dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
             cloud_seg_detected->points.push_back(dst_pt);
           }
-          min_segment = get_min_segment(x_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
+          min_segment = plane_utils->get_min_segment(x_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
 
           if(min_segment > plane_points_dist) {
             data_association.first = -1;
@@ -1296,7 +1294,7 @@ private:
             dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
             cloud_seg_detected->points.push_back(dst_pt);
           }
-          min_segment = get_min_segment(y_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
+          min_segment = plane_utils->get_min_segment(y_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
 
           if(min_segment > plane_points_dist) {
             data_association.first = -1;
@@ -1348,7 +1346,7 @@ private:
       case PlaneUtils::plane_class::X_VERT_PLANE: {
         /* check for potential x corridor and room candidates */
         pcl::PointXY start_point, end_point;
-        float length = plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
+        float length = plane_utils->plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
         ROS_DEBUG_NAMED("xplane information", "length x plane %f", length);
         Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
         plane_utils->correct_plane_d(plane_type, plane_unflipped);
@@ -1380,7 +1378,7 @@ private:
       case PlaneUtils::plane_class::Y_VERT_PLANE: {
         /* check for potential y corridor and room candidates */
         pcl::PointXY start_point, end_point;
-        float length = plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
+        float length = plane_utils->plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
         ROS_DEBUG_NAMED("yplane information", "length y plane %f", length);
         Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
         plane_utils->correct_plane_d(plane_type, plane_unflipped);
@@ -1424,7 +1422,7 @@ private:
    */
   void get_plane_properties(int plane_type, VerticalPlanes vert_plane, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
     pcl::PointXY start_point, end_point;
-    float length = plane_length(vert_plane.cloud_seg_map, start_point, end_point);
+    float length = plane_utils->plane_length(vert_plane.cloud_seg_map, start_point, end_point);
     Eigen::Vector4d plane_unflipped = vert_plane.plane.coeffs();
     plane_utils->correct_plane_d(plane_type, plane_unflipped);
 
@@ -1449,76 +1447,6 @@ private:
       ROS_DEBUG_NAMED("yplane information", "Added plane as room");
       found_room = true;
     }
-  }
-
-  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2, g2o::VertexSE3* keyframe_node) {
-    PointNormal pmin, pmax;
-    pcl::getMaxSegment(*cloud_seg, pmin, pmax);
-    p1.x = pmin.x;
-    p1.y = pmin.y;
-    p2.x = pmax.x;
-    p2.y = pmax.y;
-    float length = pcl::euclideanDistance(p1, p2);
-
-    pcl::PointXY p1_map, p2_map;
-    p1_map = convert_point_to_map(p1, keyframe_node->estimate().matrix());
-    p2_map = convert_point_to_map(p2, keyframe_node->estimate().matrix());
-    p1 = p1_map;
-    p2 = p2_map;
-
-    return length;
-  }
-
-  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2) {
-    PointNormal pmin, pmax;
-    pcl::getMaxSegment(*cloud_seg, pmin, pmax);
-    p1.x = pmin.x;
-    p1.y = pmin.y;
-    p2.x = pmax.x;
-    p2.y = pmax.y;
-    float length = pcl::euclideanDistance(p1, p2);
-
-    return length;
-  }
-
-  float get_min_segment(const pcl::PointCloud<PointNormal>::Ptr& cloud_1, const pcl::PointCloud<PointNormal>::Ptr& cloud_2) {
-    float min_dist = std::numeric_limits<float>::max();
-    const auto token = std::numeric_limits<std::size_t>::max();
-    std::size_t i_min = token, i_max = token;
-
-    for(std::size_t i = 0; i < cloud_1->points.size(); ++i) {
-      for(std::size_t j = 0; j < cloud_2->points.size(); ++j) {
-        // Compute the distance
-        float dist = (cloud_1->points[i].getVector4fMap() - cloud_2->points[j].getVector4fMap()).squaredNorm();
-        if(dist >= min_dist) continue;
-
-        min_dist = dist;
-        i_min = i;
-        i_max = j;
-      }
-    }
-
-    // if (i_min == token || i_max == token)
-    //  return (min_dist = std::numeric_limits<double>::min ());
-
-    // pmin = cloud.points[i_min];
-    // pmax = cloud.points[i_max];
-    return (std::sqrt(min_dist));
-  }
-
-  pcl::PointXY convert_point_to_map(pcl::PointXY point_local, Eigen::Matrix4d keyframe_pose) {
-    pcl::PointXY point_map;
-
-    Eigen::Vector4d point_map_eigen, point_local_eigen;
-    point_local_eigen = point_map_eigen.setZero();
-    point_local_eigen(3) = point_map_eigen(3) = 1;
-    point_local_eigen(0) = point_local.x;
-    point_local_eigen(1) = point_local.y;
-    point_map_eigen = keyframe_pose * point_local_eigen;
-
-    point_map.x = point_map_eigen(0);
-    point_map.y = point_map_eigen(1);
-    return point_map;
   }
 
   /**
@@ -2047,69 +1975,6 @@ private:
       vert_planes_data.y_planes.push_back(plane_data);
     }
     map_planes_pub.publish(vert_planes_data);
-  }
-
-  /**
-   * @brief topological thread for finding room/corridor constraints for detected planes
-   * @param event
-   */
-  void topological_constraint_callback(const ros::WallTimerEvent& event) {
-    // int keyframe_size = keyframes.size()-1;
-    // int min_keyframe_window_size = 2;
-    // int keyframe_window_size = 5;
-
-    // if(keyframes.size() < min_keyframe_window_size)
-    //   return;
-
-    // if(keyframes.size() - previous_keyframe_size == 0)
-    //   return;
-    // previous_keyframe_size = keyframes.size();
-
-    // std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
-    // std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
-    // for(int i = 0; i < keyframe_window.size(); ++i) {
-    //   for(const auto& x_plane_id : keyframe_window[i]->x_plane_ids) {
-    //     //std::cout << "keyframe id " << keyframe_window[i]->id() << " has x plane with id " << x_plane_id << std::endl;
-    //     auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));
-    //     //if (result.second == false)
-    //     //  std::cout << "x plane already existed with id : " <<  x_plane_id << std::endl;
-    //   }
-
-    //   for(const auto& y_plane_id : keyframe_window[i]->y_plane_ids) {
-    //     //std::cout << "keyframe id " << keyframe_window[i]->id() << " has y plane with id " << y_plane_id << std::endl;
-    //     auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));
-    //     //if (result.second == false)
-    //     //  std::cout << "y plane already existed with id : " <<  y_plane_id << std::endl;
-    //   }
-    // }
-    // std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
-    // for(const auto& unique_x_plane_id : unique_x_plane_ids) {
-    //   std::cout << "x planes with ids: " << unique_x_plane_id.first << std::endl;
-    //   auto found_x_plane = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_x_plane_id.first);
-    //   bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
-    //   get_plane_properties(PlaneUtils::plane_class::X_VERT_PLANE, (*found_x_plane), found_corridor, found_room, plane_id_pair);
-    //   //if(found_corridor)
-    //   //  std::cout << "found corridor from x planes " << std::endl;
-    //   if(found_room) {
-    //     std::cout << "found room from x planes " << std::endl;
-    //     x_det_room_candidates.push_back(plane_id_pair);
-    //   }
-    //  }
-
-    // for(const auto& unique_y_plane_id : unique_y_plane_ids) {
-    //   std::cout << "y planes with ids: " << unique_y_plane_id.first << std::endl;
-    //   auto found_y_plane = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == unique_y_plane_id.first);
-    //   bool found_room = false; bool found_corridor =false; plane_data_list plane_id_pair;
-    //   get_plane_properties(PlaneUtils::plane_class::Y_VERT_PLANE, (*found_y_plane), found_corridor, found_room, plane_id_pair);
-    //   //if(found_corridor)
-    //   //  std::cout << "found corridor from y planes " << std::endl;
-    //   if(found_room) {
-    //     std::cout << "found room from y planes " << std::endl;
-    //     y_det_room_candidates.push_back(plane_id_pair);
-    //   }
-    // }
-
-    // lookup_rooms(x_det_room_candidates, y_det_room_candidates);
   }
 
   /**
