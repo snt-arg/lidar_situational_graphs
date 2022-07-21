@@ -59,6 +59,7 @@ public:
 private:
   void initialize_params() {
     room_analyzer.reset(new RoomAnalyzer(private_nh));
+    plane_utils.reset(new PlaneUtils());
   }
 
   void init_ros() {
@@ -228,10 +229,10 @@ private:
 
       // if found all four planes its a room
       if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
-        correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
-        correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
-        correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
-        correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane1);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane2);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane2);
 
         // first check the width of the rooms
         float x_plane_width = room_analyzer->get_room_width(x_plane1, x_plane2);
@@ -264,8 +265,8 @@ private:
       }
       // if found only two x planes are found at x corridor
       else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
-        correct_plane_d(plane_class::X_VERT_PLANE, x_plane1);
-        correct_plane_d(plane_class::X_VERT_PLANE, x_plane2);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane1);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane2);
 
         float x_plane_width = room_analyzer->get_room_width(x_plane1, x_plane2);
         if(x_plane_width < room_width_threshold) {
@@ -281,7 +282,7 @@ private:
             neighbour_ids.push_back(connected_ids.first);
         }
 
-        geometry_msgs::Point room_center = room_analyzer->get_corridor_center(plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
+        geometry_msgs::Point room_center = room_analyzer->get_corridor_center(PlaneUtils::plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
         s_graphs::RoomData room_candidate;
         room_candidate.id = cloud_cluster->header.seq;
         room_candidate.neighbour_ids = neighbour_ids;
@@ -294,8 +295,8 @@ private:
       }
       // if found only two y planes are found at y corridor
       else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
-        correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1);
-        correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1);
+        plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane2);
 
         float y_plane_width = room_analyzer->get_room_width(y_plane1, y_plane2);
         if(y_plane_width < room_width_threshold) {
@@ -311,7 +312,7 @@ private:
             neighbour_ids.push_back(connected_ids.first);
         }
 
-        geometry_msgs::Point room_center = room_analyzer->get_corridor_center(plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
+        geometry_msgs::Point room_center = room_analyzer->get_corridor_center(PlaneUtils::plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
         s_graphs::RoomData room_candidate;
         room_candidate.id = cloud_cluster->header.seq;
         room_candidate.neighbour_ids = neighbour_ids;
@@ -388,6 +389,7 @@ private:
   ros::NodeHandle private_nh;
 
   std::unique_ptr<RoomAnalyzer> room_analyzer;
+  std::unique_ptr<PlaneUtils> plane_utils;
 };
 
 }  // namespace s_graphs

@@ -141,6 +141,7 @@ add_dependencies(s_graphs_scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp 
 add_library(s_graphs_nodelet
   apps/s_graphs_nodelet.cpp
   src/s_graphs/graph_slam.cpp
+  src/s_graphs/room_mapper.cpp
   src/s_graphs/keyframe.cpp
   src/s_graphs/map_cloud_generator.cpp
   src/s_graphs/registrations.cpp
