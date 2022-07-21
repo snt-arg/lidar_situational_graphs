@@ -21,7 +21,7 @@ RoomMapper::RoomMapper(const ros::NodeHandle& private_nh) {
 
 RoomMapper::~RoomMapper() {}
 
-void RoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_det_corridor_candidates, std::vector<plane_data_list> y_det_corridor_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
+void RoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_corridor_candidates, const std::vector<plane_data_list>& y_det_corridor_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
   std::vector<structure_data_list> x_corridor = sort_corridors(PlaneUtils::plane_class::X_VERT_PLANE, x_det_corridor_candidates);
   std::vector<structure_data_list> y_corridor = sort_corridors(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_corridor_candidates);
 
@@ -35,7 +35,7 @@ void RoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, std::v
 /**
  * @brief sort corridors and add their possible candidates for refinement
  */
-std::vector<structure_data_list> RoomMapper::sort_corridors(int plane_type, std::vector<plane_data_list> corridor_candidates) {
+std::vector<structure_data_list> RoomMapper::sort_corridors(const int plane_type, const std::vector<plane_data_list>& corridor_candidates) {
   std::vector<structure_data_list> corridor_pair_vec;
 
   for(int i = 0; i < corridor_candidates.size(); ++i) {
@@ -74,7 +74,7 @@ std::vector<structure_data_list> RoomMapper::sort_corridors(int plane_type, std:
 /**
  * @brief refine the sorted corridors
  */
-std::vector<plane_data_list> RoomMapper::refine_corridors(std::vector<structure_data_list> corr_vec) {
+std::vector<plane_data_list> RoomMapper::refine_corridors(const std::vector<structure_data_list>& corr_vec) {
   float min_corridor_diff = corridor_point_diff_threshold;
   std::vector<plane_data_list> corr_refined;
   corr_refined.resize(2);
@@ -387,7 +387,7 @@ Eigen::Vector2d RoomMapper::compute_corridor_pose(int plane_type, Eigen::Vector3
   return corridor_pose;
 }
 
-std::pair<int, int> RoomMapper::associate_corridors(int plane_type, Eigen::Vector2d corr_pose, const std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
+std::pair<int, int> RoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors) {
   float min_dist = 100;
   // float plane1_min_segment = 100, plane2_min_segment = 100;
 
@@ -460,7 +460,7 @@ std::pair<int, int> RoomMapper::associate_corridors(int plane_type, Eigen::Vecto
   return data_association;
 }
 
-double RoomMapper::corridor_measurement(int plane_type, double corr, Eigen::Vector4d plane) {
+double RoomMapper::corridor_measurement(int plane_type, double corr, const Eigen::Vector4d& plane) {
   double meas = 0;
 
   if(fabs(corr) > fabs(plane(3))) {
