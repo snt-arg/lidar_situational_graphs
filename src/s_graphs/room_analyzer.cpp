@@ -426,7 +426,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     if(use_max_neighbours_algo) {
       int y2_neighbours = find_plane_points(cloud_hull, y_plane);
 
-      if(y2_neighbours > max_x2_neighbours) {
+      if(y2_neighbours > max_y2_neighbours) {
         min_dist_y2 = diff_dist_y2;
         max_y2_neighbours = y2_neighbours;
         y_plane2 = y_plane;
