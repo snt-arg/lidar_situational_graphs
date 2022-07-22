@@ -251,6 +251,11 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
   min_x2_plane_points_dist[0] = 100;
   min_x2_plane_points_dist[1] = 100;
 
+  bool use_max_neighbours_algo = true;
+  int max_x1_neighbours, max_x2_neighbours, max_y1_neighbours, max_y2_neighbours;
+  max_x1_neighbours = max_x2_neighbours = max_y1_neighbours = max_y2_neighbours = 0;
+  int min_neighbors_thres = 2;
+
   pcl::PointXY top_right, bottom_right, top_left, bottom_left;
   if(!compute_diagonal_points(cloud_hull, p_min, p_max, top_right, bottom_right, top_left, bottom_left)) {
     std::cout << "didnt not get diagonal points" << std::endl;
@@ -268,14 +273,23 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     diff_dist_x1 = sqrt((dist_x1 - x_plane.d) * (dist_x1 - x_plane.d));
 
     // std::cout << "diff dist x1: " << diff_dist_x1 << std::endl;
+    if(use_max_neighbours_algo) {
+      int x1_neighbours = find_plane_points(cloud_hull, x_plane);
 
-    std::vector<float> diff_x_plane_points_dist = find_plane_points(bottom_left, bottom_right, x_plane);
-    if(diff_x_plane_points_dist[0] < min_x1_plane_points_dist[0] && diff_x_plane_points_dist[1] < min_x1_plane_points_dist[1]) {
-      min_dist_x1 = diff_dist_x1;
-      min_x1_plane_points_dist[0] = diff_x_plane_points_dist[0];
-      min_x1_plane_points_dist[1] = diff_x_plane_points_dist[1];
+      if(x1_neighbours > max_x1_neighbours) {
+        min_dist_x1 = diff_dist_x1;
+        max_x1_neighbours = x1_neighbours;
+        x_plane1 = x_plane;
+      }
+    } else {
+      std::vector<float> diff_x_plane_points_dist = find_plane_points(bottom_left, bottom_right, x_plane);
+      if(diff_x_plane_points_dist[0] < min_x1_plane_points_dist[0] && diff_x_plane_points_dist[1] < min_x1_plane_points_dist[1]) {
+        min_dist_x1 = diff_dist_x1;
+        min_x1_plane_points_dist[0] = diff_x_plane_points_dist[0];
+        min_x1_plane_points_dist[1] = diff_x_plane_points_dist[1];
 
-      x_plane1 = x_plane;
+        x_plane1 = x_plane;
+      }
     }
   }
 
@@ -290,13 +304,23 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     diff_dist_x2 = sqrt((dist_x2 - x_plane.d) * (dist_x2 - x_plane.d));
 
     // std::cout << "diff dist x2: " << diff_dist_x2 << std::endl;
-    std::vector<float> diff_x_plane_points_dist = find_plane_points(top_right, top_left, x_plane);
-    if(diff_x_plane_points_dist[0] < min_x2_plane_points_dist[0] && diff_x_plane_points_dist[1] < min_x2_plane_points_dist[1]) {
-      min_dist_x2 = diff_dist_x2;
-      min_x2_plane_points_dist[0] = diff_x_plane_points_dist[0];
-      min_x2_plane_points_dist[1] = diff_x_plane_points_dist[1];
+    if(use_max_neighbours_algo) {
+      int x2_neighbours = find_plane_points(cloud_hull, x_plane);
 
-      x_plane2 = x_plane;
+      if(x2_neighbours > max_x2_neighbours) {
+        min_dist_x2 = diff_dist_x2;
+        max_x2_neighbours = x2_neighbours;
+        x_plane2 = x_plane;
+      }
+    } else {
+      std::vector<float> diff_x_plane_points_dist = find_plane_points(top_right, top_left, x_plane);
+      if(diff_x_plane_points_dist[0] < min_x2_plane_points_dist[0] && diff_x_plane_points_dist[1] < min_x2_plane_points_dist[1]) {
+        min_dist_x2 = diff_dist_x2;
+        min_x2_plane_points_dist[0] = diff_x_plane_points_dist[0];
+        min_x2_plane_points_dist[1] = diff_x_plane_points_dist[1];
+
+        x_plane2 = x_plane;
+      }
     }
   }
 
@@ -315,19 +339,36 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     // std::cout << "no xplane2 found " << std::endl;
     found_x1_plane = false, found_x2_plane = false;
   } else {
-    if(min_dist_x1 < room_dist_thres && min_x1_plane_points_dist[0] < plane_point_dist_thres && min_x1_plane_points_dist[1] < plane_point_dist_thres) {
-      std::cout << "room has xplane1: " << x_plane1.nx << ", " << x_plane1.ny << ", " << x_plane1.nz << ", " << x_plane1.d << std::endl;
-      found_x1_plane = true;
+    if(use_max_neighbours_algo) {
+      if(min_dist_x1 < room_dist_thres && max_x1_neighbours >= min_neighbors_thres) {
+        std::cout << "room has xplane1: " << x_plane1.nx << ", " << x_plane1.ny << ", " << x_plane1.nz << ", " << x_plane1.d << std::endl;
+        found_x1_plane = true;
+      } else {
+        std::cout << "no xplane1 found " << std::endl;
+        found_x1_plane = false;
+      }
+      if(min_dist_x2 < room_dist_thres && max_x2_neighbours >= min_neighbors_thres) {
+        std::cout << "room has xplane2: " << x_plane2.nx << ", " << x_plane2.ny << ", " << x_plane2.nz << ", " << x_plane2.d << std::endl;
+        found_x2_plane = true;
+      } else {
+        std::cout << "no xplane2 found " << std::endl;
+        found_x2_plane = false;
+      }
     } else {
-      std::cout << "no xplane1 found " << std::endl;
-      found_x1_plane = false;
-    }
-    if(min_dist_x2 < room_dist_thres && min_x2_plane_points_dist[0] < plane_point_dist_thres && min_x2_plane_points_dist[1] < plane_point_dist_thres) {
-      std::cout << "room has xplane2: " << x_plane2.nx << ", " << x_plane2.ny << ", " << x_plane2.nz << ", " << x_plane2.d << std::endl;
-      found_x2_plane = true;
-    } else {
-      std::cout << "no xplane2 found " << std::endl;
-      found_x2_plane = false;
+      if(min_dist_x1 < room_dist_thres && min_x1_plane_points_dist[0] < plane_point_dist_thres && min_x1_plane_points_dist[1] < plane_point_dist_thres) {
+        std::cout << "room has xplane1: " << x_plane1.nx << ", " << x_plane1.ny << ", " << x_plane1.nz << ", " << x_plane1.d << std::endl;
+        found_x1_plane = true;
+      } else {
+        std::cout << "no xplane1 found " << std::endl;
+        found_x1_plane = false;
+      }
+      if(min_dist_x2 < room_dist_thres && min_x2_plane_points_dist[0] < plane_point_dist_thres && min_x2_plane_points_dist[1] < plane_point_dist_thres) {
+        std::cout << "room has xplane2: " << x_plane2.nx << ", " << x_plane2.ny << ", " << x_plane2.nz << ", " << x_plane2.d << std::endl;
+        found_x2_plane = true;
+      } else {
+        std::cout << "no xplane2 found " << std::endl;
+        found_x2_plane = false;
+      }
     }
   }
 
@@ -352,13 +393,23 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     float diff_dist_y1 = 100;
     diff_dist_y1 = sqrt((dist_y1 - y_plane.d) * (dist_y1 - y_plane.d));
 
-    // std::cout << "diff dist y1: " << diff_dist_y1 << std::endl;
-    std::vector<float> diff_plane_points_dist = find_plane_points(top_right, bottom_right, y_plane);
-    if(diff_plane_points_dist[0] < min_y1_plane_points_dist[0] && diff_plane_points_dist[1] < min_y1_plane_points_dist[1]) {
-      min_dist_y1 = diff_dist_y1;
-      min_y1_plane_points_dist[0] = diff_plane_points_dist[0];
-      min_y1_plane_points_dist[1] = diff_plane_points_dist[1];
-      y_plane1 = y_plane;
+    if(use_max_neighbours_algo) {
+      int y1_neighbours = find_plane_points(cloud_hull, y_plane);
+
+      if(y1_neighbours > max_y1_neighbours) {
+        min_dist_y1 = diff_dist_y1;
+        max_y1_neighbours = y1_neighbours;
+        y_plane1 = y_plane;
+      }
+    } else {
+      // std::cout << "diff dist y1: " << diff_dist_y1 << std::endl;
+      std::vector<float> diff_plane_points_dist = find_plane_points(top_right, bottom_right, y_plane);
+      if(diff_plane_points_dist[0] < min_y1_plane_points_dist[0] && diff_plane_points_dist[1] < min_y1_plane_points_dist[1]) {
+        min_dist_y1 = diff_dist_y1;
+        min_y1_plane_points_dist[0] = diff_plane_points_dist[0];
+        min_y1_plane_points_dist[1] = diff_plane_points_dist[1];
+        y_plane1 = y_plane;
+      }
     }
   }
 
@@ -372,13 +423,23 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     float diff_dist_y2 = 100;
     diff_dist_y2 = sqrt((dist_y2 - y_plane.d) * (dist_y2 - y_plane.d));
 
-    // std::cout << "diff dist y2: " << diff_dist_y2 << std::endl;
-    std::vector<float> diff_plane_points_dist = find_plane_points(bottom_left, top_left, y_plane);
-    if(diff_plane_points_dist[0] < min_y2_plane_points_dist[0] && diff_plane_points_dist[1] < min_y2_plane_points_dist[1]) {
-      min_dist_y2 = diff_dist_y2;
-      min_y2_plane_points_dist[0] = diff_plane_points_dist[0];
-      min_y2_plane_points_dist[1] = diff_plane_points_dist[1];
-      y_plane2 = y_plane;
+    if(use_max_neighbours_algo) {
+      int y2_neighbours = find_plane_points(cloud_hull, y_plane);
+
+      if(y2_neighbours > max_x2_neighbours) {
+        min_dist_y2 = diff_dist_y2;
+        max_y2_neighbours = y2_neighbours;
+        y_plane2 = y_plane;
+      }
+    } else {
+      // std::cout << "diff dist y2: " << diff_dist_y2 << std::endl;
+      std::vector<float> diff_plane_points_dist = find_plane_points(bottom_left, top_left, y_plane);
+      if(diff_plane_points_dist[0] < min_y2_plane_points_dist[0] && diff_plane_points_dist[1] < min_y2_plane_points_dist[1]) {
+        min_dist_y2 = diff_dist_y2;
+        min_y2_plane_points_dist[0] = diff_plane_points_dist[0];
+        min_y2_plane_points_dist[1] = diff_plane_points_dist[1];
+        y_plane2 = y_plane;
+      }
     }
   }
 
@@ -397,19 +458,36 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     // std::cout << "no yplane2 found " << std::endl;
     found_y1_plane = false, found_y2_plane = false;
   } else {
-    if(min_dist_y1 < room_dist_thres && min_y1_plane_points_dist[0] < plane_point_dist_thres && min_y1_plane_points_dist[1] < plane_point_dist_thres) {
-      std::cout << "room has yplane1: " << y_plane1.nx << ", " << y_plane1.ny << ", " << y_plane1.nz << ", " << y_plane1.d << std::endl;
-      found_y1_plane = true;
+    if(use_max_neighbours_algo) {
+      if(min_dist_y1 < room_dist_thres && max_y1_neighbours >= min_neighbors_thres) {
+        std::cout << "room has yplane1: " << y_plane1.nx << ", " << y_plane1.ny << ", " << y_plane1.nz << ", " << y_plane1.d << std::endl;
+        found_y1_plane = true;
+      } else {
+        std::cout << "no yplane1 found " << std::endl;
+        found_y1_plane = false;
+      }
+      if(min_dist_y2 < room_dist_thres && max_y2_neighbours >= min_neighbors_thres) {
+        std::cout << "room has yplane2: " << y_plane2.nx << ", " << y_plane2.ny << ", " << y_plane2.nz << ", " << y_plane2.d << std::endl;
+        found_y2_plane = true;
+      } else {
+        std::cout << "no yplane2 found " << std::endl;
+        found_y2_plane = false;
+      }
     } else {
-      std::cout << "no yplane1 found " << std::endl;
-      found_y1_plane = false;
-    }
-    if(min_dist_y2 < room_dist_thres && min_y2_plane_points_dist[0] < plane_point_dist_thres && min_y2_plane_points_dist[1] < plane_point_dist_thres) {
-      std::cout << "room has yplane2: " << y_plane2.nx << ", " << y_plane2.ny << ", " << y_plane2.nz << ", " << y_plane2.d << std::endl;
-      found_y2_plane = true;
-    } else {
-      std::cout << "no yplane2 found " << std::endl;
-      found_y2_plane = false;
+      if(min_dist_y1 < room_dist_thres && min_y1_plane_points_dist[0] < plane_point_dist_thres && min_y1_plane_points_dist[1] < plane_point_dist_thres) {
+        std::cout << "room has yplane1: " << y_plane1.nx << ", " << y_plane1.ny << ", " << y_plane1.nz << ", " << y_plane1.d << std::endl;
+        found_y1_plane = true;
+      } else {
+        std::cout << "no yplane1 found " << std::endl;
+        found_y1_plane = false;
+      }
+      if(min_dist_y2 < room_dist_thres && min_y2_plane_points_dist[0] < plane_point_dist_thres && min_y2_plane_points_dist[1] < plane_point_dist_thres) {
+        std::cout << "room has yplane2: " << y_plane2.nx << ", " << y_plane2.ny << ", " << y_plane2.nz << ", " << y_plane2.d << std::endl;
+        found_y2_plane = true;
+      } else {
+        std::cout << "no yplane2 found " << std::endl;
+        found_y2_plane = false;
+      }
     }
   }
 }
@@ -512,6 +590,23 @@ std::vector<float> RoomAnalyzer::find_plane_points(const pcl::PointXY& start_poi
   plane_point_distances.push_back(min_end_point_plane_dist);
 
   return plane_point_distances;
+}
+
+int RoomAnalyzer::find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane) {
+  int num_neighbours = 0;
+  double point_hull_dist_thres = 1.0;
+  for(int i = 0; i < cloud_hull->points.size(); ++i) {
+    double min_point_hull_dist = 1000;
+    for(const auto& plane_point : plane.plane_points) {
+      float point_hull_dist = sqrt(pow(plane_point.x - cloud_hull->points[i].x, 2) + pow(plane_point.y - cloud_hull->points[i].y, 2));
+      if(point_hull_dist < min_point_hull_dist) {
+        min_point_hull_dist = point_hull_dist;
+      }
+    }
+    if(min_point_hull_dist < point_hull_dist_thres) num_neighbours++;
+  }
+  std::cout << "num nieghbours: " << num_neighbours << std::endl;
+  return num_neighbours;
 }
 
 }  // namespace s_graphs

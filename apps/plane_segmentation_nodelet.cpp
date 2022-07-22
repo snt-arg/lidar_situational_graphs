@@ -208,9 +208,9 @@ private:
     tree->setInputCloud(extracted_cloud);
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<PointT> ec;
-    ec.setClusterTolerance(0.3);
+    ec.setClusterTolerance(0.5);
     ec.setMinClusterSize(10);
-    ec.setMaxClusterSize(25000);
+    ec.setMaxClusterSize(250000);
     ec.setSearchMethod(tree);
     ec.setInputCloud(extracted_cloud);
     ec.extract(cluster_indices);
