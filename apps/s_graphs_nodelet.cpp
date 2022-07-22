@@ -289,131 +289,16 @@ private:
         }
         // x corridor
         else if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
-          // check the distance with the current room vector
-          Rooms matched_room;
-          float min_dist_x_corr_room = 100;
-          for(const auto& current_room : rooms_vec) {
-            float dist_x_corr_room = sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) + pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
-
-            if(dist_x_corr_room < min_dist_x_corr_room) {
-              min_dist_x_corr_room = dist_x_corr_room;
-              matched_room = current_room;
-            }
-          }
-
-          std::cout << "x corridor center: " << room_data.room_center.x << "; " << room_data.room_center.y << std::endl;
-          if(min_dist_x_corr_room < 0.5) {
-            std::cout << "Room already exists in the given location, inserting a x corridor using its x planes" << std::endl;
-            // TODO:HB add a function which adds a new corridor x node getting the mapped planes from the corresponding detected room
-            map_corridor_from_existing_room(PlaneUtils::plane_class::X_VERT_PLANE, room_data, matched_room);
-            // continue;
-          }
-          // factor the corridor here
-          std::cout << "factoring x corridor" << std::endl;
-          Eigen::Vector4d x_plane1(room_data.x_planes[0].nx, room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
-          Eigen::Vector4d x_plane2(room_data.x_planes[1].nx, room_data.x_planes[1].ny, room_data.x_planes[1].nz, room_data.x_planes[1].d);
-          plane_data_list x_plane1_data, x_plane2_data;
-          x_plane1_data.plane_id = room_data.x_planes[0].id;
-          x_plane1_data.plane_unflipped = x_plane1;
-          x_plane1_data.plane_centroid(1) = room_data.room_center.y;
-          x_plane2_data.plane_id = room_data.x_planes[1].id;
-          x_plane2_data.plane_unflipped = x_plane2;
-          x_plane2_data.plane_centroid(1) = room_data.room_center.y;
-
-          x_plane1_data.connected_id = room_data.id;
-          // get the corridor neighbours
-          for(const auto& room_neighbour_id : room_data.neighbour_ids) {
-            x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-          }
-          inf_room_mapper->factor_corridors(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+          inf_room_mapper->lookup_corridors(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors, rooms_vec);
         }
         // y corridor
         else if(room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
-          float min_dist_y_corr_room = 100;
-          Rooms matched_room;
-          for(const auto& current_room : rooms_vec) {
-            float dist_y_corr_room = sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) + pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
-
-            if(dist_y_corr_room < min_dist_y_corr_room) {
-              min_dist_y_corr_room = dist_y_corr_room;
-              matched_room = current_room;
-            }
-          }
-          if(min_dist_y_corr_room < 0.5) {
-            std::cout << "Room already exists in the given location, inserting a y corridor using its y planes" << std::endl;
-            map_corridor_from_existing_room(PlaneUtils::plane_class::Y_VERT_PLANE, room_data, matched_room);
-            // continue;
-          }
-
-          // factor the corridor here
-          std::cout << "factoring y corridor" << std::endl;
-          Eigen::Vector4d y_plane1(room_data.y_planes[0].nx, room_data.y_planes[0].ny, room_data.y_planes[0].nz, room_data.y_planes[0].d);
-          Eigen::Vector4d y_plane2(room_data.y_planes[1].nx, room_data.y_planes[1].ny, room_data.y_planes[1].nz, room_data.y_planes[1].d);
-          plane_data_list y_plane1_data, y_plane2_data;
-          y_plane1_data.plane_id = room_data.y_planes[0].id;
-          y_plane1_data.plane_unflipped = y_plane1;
-          y_plane1_data.plane_centroid(0) = room_data.room_center.x;
-          y_plane2_data.plane_id = room_data.y_planes[1].id;
-          y_plane2_data.plane_unflipped = y_plane2;
-          y_plane2_data.plane_centroid(0) = room_data.room_center.x;
-
-          y_plane1_data.connected_id = room_data.id;
-          // get the corridor neighbours
-          for(const auto& room_neighbour_id : room_data.neighbour_ids) {
-            y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-          }
-          inf_room_mapper->factor_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+          inf_room_mapper->lookup_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors, rooms_vec);
         }
       }
       // TODO:HB factor neighbours appropriately in the sgraphs
       // factor_room_neighbours(room_data_msg);
       room_data_queue.pop_front();
-    }
-  }
-
-  /**
-   * @brief map a new corridor from mapped room planes
-   *
-   */
-  void map_corridor_from_existing_room(int plane_type, s_graphs::RoomData det_room_data, s_graphs::Rooms matched_room) {
-    g2o::VertexCorridor* corr_node;
-    Eigen::Vector2d corr_pose(det_room_data.room_center.x, det_room_data.room_center.y);
-    std::pair<int, int> corr_data_association;
-
-    corr_data_association = inf_room_mapper->associate_corridors(plane_type, corr_pose, x_corridors, y_corridors);
-    if(corr_data_association.first == -1) {
-      Corridors det_corridor;
-      det_corridor.id = graph_slam->num_vertices_local();
-
-      if(x_corridors.empty() || plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-        std::cout << "Add a X corridor with pose " << corr_pose << std::endl;
-        corr_node = graph_slam->add_corridor_node(corr_pose(0));
-        det_corridor.plane1 = matched_room.plane_x1;
-        det_corridor.plane2 = matched_room.plane_x2;
-        det_corridor.plane1_id = matched_room.plane_x1_id;
-        det_corridor.plane2_id = matched_room.plane_x2_id;
-        det_corridor.keyframe_trans << corr_pose(0), corr_pose(1), 0;
-        det_corridor.node = corr_node;
-        det_corridor.connected_id = det_room_data.id;
-        det_corridor.connected_neighbour_ids = det_room_data.neighbour_ids;
-        x_corridors.push_back(det_corridor);
-      }
-      if(y_corridors.empty() || plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-        std::cout << "Add a Y corridor with pose " << corr_pose << std::endl;
-        corr_node = graph_slam->add_corridor_node(corr_pose(1));
-        det_corridor.plane1 = matched_room.plane_y1;
-        det_corridor.plane2 = matched_room.plane_y2;
-        det_corridor.plane1_id = matched_room.plane_y1_id;
-        det_corridor.plane2_id = matched_room.plane_y2_id;
-        det_corridor.keyframe_trans << corr_pose(0), corr_pose(1), 0;
-        det_corridor.node = corr_node;
-        det_corridor.connected_id = det_room_data.id;
-        det_corridor.connected_neighbour_ids = det_room_data.neighbour_ids;
-        y_corridors.push_back(det_corridor);
-      }
-      return;
-    } else {
-      return;
     }
   }
 
