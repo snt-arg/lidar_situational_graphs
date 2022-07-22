@@ -305,15 +305,6 @@ private:
   }
 
   /**
-   * @brief detect the room neighbours w/o factoring them
-   *
-   */
-  void detect_room_neighbours(const s_graphs::RoomsData& room_msg) {
-    for(const auto& room_data : room_msg.rooms) {
-    }
-  }
-
-  /**
    * @brief received point clouds are pushed to #keyframe_queue
    * @param odom_msg
    * @param cloud_msg
