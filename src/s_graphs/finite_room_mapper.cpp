@@ -33,9 +33,71 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   }
 }
 
-/**
- * @brief sort the rooms candidates
- */
+void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec) {
+  float min_dist_room_x_corr = 100;
+  s_graphs::Corridors matched_x_corridor;
+  for(const auto& current_x_corridor : x_corridors) {
+    float dist_room_x_corr = sqrt(pow(room_data.room_center.x - current_x_corridor.node->estimate(), 2) + pow(room_data.room_center.y - current_x_corridor.keyframe_trans(1), 2));
+    if(dist_room_x_corr < min_dist_room_x_corr) {
+      min_dist_room_x_corr = dist_room_x_corr;
+      matched_x_corridor = current_x_corridor;
+    }
+  }
+
+  float min_dist_room_y_corr = 100;
+  s_graphs::Corridors matched_y_corridor;
+  for(const auto& current_y_corridor : y_corridors) {
+    float dist_room_y_corr = sqrt(pow(room_data.room_center.x - current_y_corridor.keyframe_trans(0), 2) + pow(room_data.room_center.y - current_y_corridor.node->estimate(), 2));
+    if(dist_room_y_corr < min_dist_room_y_corr) {
+      min_dist_room_y_corr = dist_room_y_corr;
+      matched_y_corridor = current_y_corridor;
+    }
+  }
+
+  // TODO:HB the below implementation doesnt work, check if removing the existing corridor node will make sense?
+  if(min_dist_room_y_corr < 0.5 && min_dist_room_x_corr < 0.5) {
+    std::cout << "Adding a room using mapped x and y corridor planes " << std::endl;
+    map_room_from_existing_corridors(graph_slam, room_data, matched_x_corridor, matched_y_corridor, rooms_vec);
+  } else if(min_dist_room_x_corr < 0.5 && min_dist_room_y_corr > 0.5) {
+    map_room_from_existing_x_corridor(graph_slam, room_data, matched_x_corridor, rooms_vec);
+    std::cout << "Will add room using mapped x corridor planes " << std::endl;
+  } else if(min_dist_room_y_corr < 0.5 && min_dist_room_x_corr > 0.5) {
+    std::cout << "Will add room using mapped y corridor planes " << std::endl;
+    map_room_from_existing_y_corridor(graph_slam, room_data, matched_y_corridor, rooms_vec);
+  }
+
+  Eigen::Vector4d x_plane1(room_data.x_planes[0].nx, room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
+  Eigen::Vector4d x_plane2(room_data.x_planes[1].nx, room_data.x_planes[1].ny, room_data.x_planes[1].nz, room_data.x_planes[1].d);
+  Eigen::Vector4d y_plane1(room_data.y_planes[0].nx, room_data.y_planes[0].ny, room_data.y_planes[0].nz, room_data.y_planes[0].d);
+  Eigen::Vector4d y_plane2(room_data.y_planes[1].nx, room_data.y_planes[1].ny, room_data.y_planes[1].nz, room_data.y_planes[1].d);
+
+  plane_data_list x_plane1_data, x_plane2_data;
+  plane_data_list y_plane1_data, y_plane2_data;
+
+  x_plane1_data.plane_id = room_data.x_planes[0].id;
+  x_plane1_data.plane_unflipped = x_plane1;
+  x_plane2_data.plane_id = room_data.x_planes[1].id;
+  x_plane2_data.plane_unflipped = x_plane2;
+
+  y_plane1_data.plane_id = room_data.y_planes[0].id;
+  y_plane1_data.plane_unflipped = y_plane1;
+  y_plane2_data.plane_id = room_data.y_planes[1].id;
+  y_plane2_data.plane_unflipped = y_plane2;
+
+  // get the room neighbours
+  x_plane1_data.connected_id = room_data.id;
+  for(const auto& room_neighbour_id : room_data.neighbour_ids) {
+    x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
+  }
+
+  std::vector<plane_data_list> x_planes_room, y_planes_room;
+  x_planes_room.push_back(x_plane1_data);
+  x_planes_room.push_back(x_plane2_data);
+  y_planes_room.push_back(y_plane1_data);
+  y_planes_room.push_back(y_plane2_data);
+  factor_rooms(graph_slam, x_planes_room, y_planes_room, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, rooms_vec);
+}
+
 std::vector<structure_data_list> FiniteRoomMapper::sort_rooms(const int& plane_type, const std::vector<plane_data_list>& room_candidates) {
   std::vector<structure_data_list> room_pair_vec;
 
@@ -69,9 +131,6 @@ std::vector<structure_data_list> FiniteRoomMapper::sort_rooms(const int& plane_t
   return room_pair_vec;
 }
 
-/**
- * @brief refine the sorted room candidates
- */
 std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> FiniteRoomMapper::refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec) {
   float min_room_point_diff = room_point_diff_threshold;
   std::vector<plane_data_list> x_room, y_room;
@@ -103,9 +162,6 @@ std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> FiniteRoom
     return std::make_pair(x_room, y_room);
 }
 
-/**
- * @brief this method creates the room vertex and adds edges between the vertex and detected planes
- */
 void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
@@ -395,6 +451,97 @@ double FiniteRoomMapper::room_measurement(const int& plane_type, const Eigen::Ve
   }
 
   return meas;
+}
+
+void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec) {
+  g2o::VertexRoomXYLB* room_node;
+  std::pair<int, int> room_data_association;
+
+  Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
+  room_data_association = associate_rooms(room_pose, rooms_vec);
+  if((rooms_vec.empty() || room_data_association.first == -1)) {
+    std::cout << "Add a room using mapped x and y corridors at pose" << room_pose << std::endl;
+    room_data_association.first = graph_slam->num_vertices_local();
+    room_node = graph_slam->add_room_node(room_pose);
+    Rooms det_room;
+    det_room.id = room_data_association.first;
+    det_room.plane_x1 = matched_x_corridor.plane1;
+    det_room.plane_x2 = matched_x_corridor.plane2;
+    det_room.plane_y1 = matched_y_corridor.plane1;
+    det_room.plane_y2 = matched_y_corridor.plane2;
+    det_room.plane_x1_id = matched_x_corridor.plane1_id;
+    det_room.plane_x2_id = matched_x_corridor.plane2_id;
+    det_room.plane_y1_id = matched_y_corridor.plane1_id;
+    det_room.plane_y2_id = matched_y_corridor.plane2_id;
+    det_room.connected_id = det_room_data.id;
+    det_room.connected_neighbour_ids = det_room_data.neighbour_ids;
+    det_room.node = room_node;
+    rooms_vec.push_back(det_room);
+    return;
+  } else
+    return;
+}
+
+void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, std::vector<Rooms>& rooms_vec) {
+  g2o::VertexRoomXYLB* room_node;
+  std::pair<int, int> room_data_association;
+
+  Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
+  room_data_association = associate_rooms(room_pose, rooms_vec);
+  if((rooms_vec.empty() || room_data_association.first == -1)) {
+    std::cout << "Add a room using mapped x corridors planes at pose" << room_pose << std::endl;
+    room_data_association.first = graph_slam->num_vertices_local();
+    room_node = graph_slam->add_room_node(room_pose);
+    Rooms det_room;
+    det_room.id = room_data_association.first;
+    det_room.plane_x1 = matched_x_corridor.plane1;
+    det_room.plane_x2 = matched_x_corridor.plane2;
+    Eigen::Vector4d y_plane1(det_room_data.y_planes[0].nx, det_room_data.y_planes[0].ny, det_room_data.y_planes[0].nz, det_room_data.y_planes[0].d);
+    Eigen::Vector4d y_plane2(det_room_data.y_planes[1].nx, det_room_data.y_planes[1].ny, det_room_data.y_planes[1].nz, det_room_data.y_planes[1].d);
+    det_room.plane_y1 = y_plane1;
+    det_room.plane_y2 = y_plane2;
+    det_room.plane_x1_id = matched_x_corridor.plane1_id;
+    det_room.plane_x2_id = matched_x_corridor.plane2_id;
+    det_room.plane_y1_id = det_room_data.y_planes[0].id;
+    det_room.plane_y2_id = det_room_data.y_planes[1].id;
+    det_room.connected_id = det_room_data.id;
+    det_room.connected_neighbour_ids = det_room_data.neighbour_ids;
+    det_room.node = room_node;
+    rooms_vec.push_back(det_room);
+    return;
+  } else
+    return;
+}
+
+void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec) {
+  g2o::VertexRoomXYLB* room_node;
+  std::pair<int, int> room_data_association;
+
+  Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
+  room_data_association = associate_rooms(room_pose, rooms_vec);
+  if((rooms_vec.empty() || room_data_association.first == -1)) {
+    std::cout << "Add a room using mapped y corridors planes at pose" << room_pose << std::endl;
+    room_data_association.first = graph_slam->num_vertices_local();
+    room_node = graph_slam->add_room_node(room_pose);
+    Rooms det_room;
+    det_room.id = room_data_association.first;
+    Eigen::Vector4d x_plane1(det_room_data.x_planes[0].nx, det_room_data.x_planes[0].ny, det_room_data.x_planes[0].nz, det_room_data.x_planes[0].d);
+    Eigen::Vector4d x_plane2(det_room_data.x_planes[1].nx, det_room_data.x_planes[1].ny, det_room_data.x_planes[1].nz, det_room_data.x_planes[1].d);
+    det_room.plane_x1 = x_plane1;
+    det_room.plane_x2 = x_plane2;
+    det_room.plane_y1 = matched_y_corridor.plane1;
+    det_room.plane_y2 = matched_y_corridor.plane2;
+    det_room.plane_x1_id = det_room_data.x_planes[0].id;
+    det_room.plane_x2_id = det_room_data.x_planes[1].id;
+    det_room.plane_y1_id = matched_y_corridor.plane1_id;
+    det_room.plane_y2_id = matched_y_corridor.plane2_id;
+    det_room.connected_id = det_room_data.id;
+    det_room.connected_neighbour_ids = det_room_data.neighbour_ids;
+    det_room.node = room_node;
+    rooms_vec.push_back(det_room);
+    return;
+  } else
+    return;
 }
 
 }  // namespace s_graphs
