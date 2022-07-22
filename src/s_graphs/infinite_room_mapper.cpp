@@ -16,6 +16,8 @@ InfiniteRoomMapper::InfiniteRoomMapper(const ros::NodeHandle& private_nh) {
   use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
   use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
+  corridor_min_seg_dist = private_nh.param<double>("corridor_min_seg_dist", 1.5);
+
   plane_utils.reset(new PlaneUtils());
 }
 
@@ -185,7 +187,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       return;
     }
 
-    corr_data_association = associate_corridors(plane_type, corr_pose, x_corridors, y_corridors);
+    corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_corridors, y_corridors);
 
     if((x_corridors.empty() || corr_data_association.first == -1)) {
       std::cout << "found an X corridor with pre pose " << corr_pose << " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
@@ -294,7 +296,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
     if(found_plane1 == y_vert_planes.end() || found_plane2 == y_vert_planes.end()) return;
 
-    corr_data_association = associate_corridors(plane_type, corr_pose, x_corridors, y_corridors);
+    corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_corridors, y_corridors);
 
     if((y_corridors.empty() || corr_data_association.first == -1)) {
       std::cout << "found an Y corridor with pre pose " << corr_pose << " between plane id " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane id " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
@@ -427,10 +429,81 @@ Eigen::Vector2d InfiniteRoomMapper::compute_corridor_pose(int plane_type, Eigen:
   return corridor_pose;
 }
 
+std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors) {
+  float min_dist = 100;
+  float plane1_min_segment = 100, plane2_min_segment = 100;
+
+  std::pair<int, int> data_association;
+  data_association.first = -1;
+
+  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+    for(int i = 0; i < x_corridors.size(); ++i) {
+      float dist = sqrt(pow(corr_pose(0) - x_corridors[i].node->estimate(), 2));
+
+      auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
+      auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
+
+      if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
+        plane1_min_segment = 0.0;
+      } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
+      } else
+        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
+
+      if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
+        plane2_min_segment = 0.0;
+      } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
+      } else
+        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
+
+      if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
+        min_dist = dist;
+        data_association.first = x_corridors[i].id;
+        data_association.second = i;
+        ROS_DEBUG_NAMED("corridor planes", "dist x corr %f", dist);
+      }
+    }
+  }
+
+  if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
+    for(int i = 0; i < y_corridors.size(); ++i) {
+      float dist = sqrt(pow(corr_pose(1) - y_corridors[i].node->estimate(), 2));
+
+      auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
+      auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
+
+      if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
+        plane1_min_segment = 0.0;
+      } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
+      } else
+        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
+
+      if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
+        plane2_min_segment = 0.0;
+      } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
+      } else
+        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
+
+      if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
+        min_dist = dist;
+        data_association.first = y_corridors[i].id;
+        data_association.second = i;
+        ROS_DEBUG_NAMED("corridor planes", "dist y corr %f", dist);
+      }
+    }
+  }
+
+  // ROS_DEBUG_NAMED("corridor planes", "min dist %f", min_dist);
+  if(min_dist > corridor_dist_threshold) data_association.first = -1;
+
+  return data_association;
+}
+
 std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors) {
   float min_dist = 100;
-  // float plane1_min_segment = 100, plane2_min_segment = 100;
-
   std::pair<int, int> data_association;
   data_association.first = -1;
 
@@ -438,24 +511,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
     for(int i = 0; i < x_corridors.size(); ++i) {
       float dist = sqrt(pow(corr_pose(0) - x_corridors[i].node->estimate(), 2) + pow(corr_pose(1) - x_corridors[i].keyframe_trans(1), 2));
 
-      // auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
-      // auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
-
-      // if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
-      //   plane1_min_segment = 0.0;
-      // } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      //   plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
-      // } else
-      //   plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
-
-      // if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
-      //   plane2_min_segment = 0.0;
-      // } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      //   plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
-      // } else
-      //   plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
-
-      if(dist < min_dist /*&& (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)*/) {
+      if(dist < min_dist) {
         min_dist = dist;
         data_association.first = x_corridors[i].id;
         data_association.second = i;
@@ -468,24 +524,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
     for(int i = 0; i < y_corridors.size(); ++i) {
       float dist = sqrt(pow(corr_pose(0) - y_corridors[i].keyframe_trans(0), 2) + pow(corr_pose(1) - y_corridors[i].node->estimate(), 2));
 
-      // auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
-      // auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
-
-      // if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
-      //   plane1_min_segment = 0.0;
-      // } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      //   plane1_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
-      // } else
-      //   plane1_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
-
-      // if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
-      //   plane2_min_segment = 0.0;
-      // } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      //   plane2_min_segment = get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
-      // } else
-      //   plane2_min_segment = get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
-
-      if(dist < min_dist /*&& (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)*/) {
+      if(dist < min_dist) {
         min_dist = dist;
         data_association.first = y_corridors[i].id;
         data_association.second = i;

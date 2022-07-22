@@ -131,6 +131,7 @@ private:
   void factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors);
 
   std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
+  std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
   Eigen::Vector2d compute_corridor_pose(int plane_type, Eigen::Vector3d keyframe_pose, Eigen::Vector4d v1, Eigen::Vector4d v2);
 
   /**
@@ -147,6 +148,7 @@ private:
   double corridor_min_width, corridor_max_width;
   double corridor_information;
   double corridor_dist_threshold;
+  double corridor_min_seg_dist;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
 };
 
