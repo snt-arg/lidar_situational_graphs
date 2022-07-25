@@ -63,6 +63,7 @@ private:
   std::vector<float> find_plane_points(const pcl::PointXY& start_point, const pcl::PointXY& end_point, const s_graphs::PlaneData& plane);
   int find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane);
   pcl::PointXYZRGB compute_centroid(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);
+  bool compute_point_difference(const double plane1_point, const double plane2_point);
 
   enum plane_class : uint8_t {
     X_VERT_PLANE = 0,
