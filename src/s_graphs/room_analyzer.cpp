@@ -170,13 +170,21 @@ geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::Poin
   return center;
 }
 
-bool RoomAnalyzer::get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, pcl::PointXY& p1, pcl::PointXY& p2) {
+void RoomAnalyzer::get_cluster_endpoints(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, pcl::PointXY& p1, pcl::PointXY& p2) {
   pcl::PointXYZRGB min, max;
   pcl::getMinMax3D(*skeleton_cloud, min, max);
   p1.x = min.x;
   p1.y = min.y;
   p2.x = max.x;
   p2.y = max.y;
+}
+
+bool RoomAnalyzer::get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, const pcl::PointXY& p1, const pcl::PointXY& p2) {
+  pcl::PointXYZRGB min, max;
+  min.x = p1.x;
+  min.y = p1.y;
+  max.x = p2.x;
+  max.y = p2.y;
 
   pcl::PointXYZRGB centroid = compute_centroid(min, max);
 
@@ -193,6 +201,26 @@ bool RoomAnalyzer::get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>
 
   if(min_dist > 0.5) {
     std::cout << "centroid outside the cluster! Do something " << std::endl;
+    return false;
+  }
+
+  return true;
+}
+
+bool RoomAnalyzer::get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, const geometry_msgs::Point& room_center) {
+  // get the dist of centroid wrt to all the points in the cluster
+  // centroids lying outside will have higher distance to the points in the cluster
+  float min_dist = 100;
+  for(size_t i = 0; i < skeleton_cloud->points.size(); ++i) {
+    float dist = sqrt(pow(room_center.x - skeleton_cloud->points[i].x, 2) + pow(room_center.y - skeleton_cloud->points[i].y, 2));
+
+    if(dist < min_dist) {
+      min_dist = dist;
+    }
+  }
+
+  if(min_dist > 0.5) {
+    std::cout << "centroid outside the cluster! Discarding the found room " << std::endl;
     return false;
   }
 
@@ -340,14 +368,14 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     found_x1_plane = false, found_x2_plane = false;
   } else {
     if(use_max_neighbours_algo) {
-      if(min_dist_x1 < room_dist_thres && max_x1_neighbours >= min_neighbors_thres) {
+      if(max_x1_neighbours >= min_neighbors_thres) {
         std::cout << "room has xplane1: " << x_plane1.nx << ", " << x_plane1.ny << ", " << x_plane1.nz << ", " << x_plane1.d << std::endl;
         found_x1_plane = true;
       } else {
         std::cout << "no xplane1 found " << std::endl;
         found_x1_plane = false;
       }
-      if(min_dist_x2 < room_dist_thres && max_x2_neighbours >= min_neighbors_thres) {
+      if(max_x2_neighbours >= min_neighbors_thres) {
         std::cout << "room has xplane2: " << x_plane2.nx << ", " << x_plane2.ny << ", " << x_plane2.nz << ", " << x_plane2.d << std::endl;
         found_x2_plane = true;
       } else {
@@ -459,14 +487,14 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     found_y1_plane = false, found_y2_plane = false;
   } else {
     if(use_max_neighbours_algo) {
-      if(min_dist_y1 < room_dist_thres && max_y1_neighbours >= min_neighbors_thres) {
+      if(max_y1_neighbours >= min_neighbors_thres) {
         std::cout << "room has yplane1: " << y_plane1.nx << ", " << y_plane1.ny << ", " << y_plane1.nz << ", " << y_plane1.d << std::endl;
         found_y1_plane = true;
       } else {
         std::cout << "no yplane1 found " << std::endl;
         found_y1_plane = false;
       }
-      if(min_dist_y2 < room_dist_thres && max_y2_neighbours >= min_neighbors_thres) {
+      if(max_y2_neighbours >= min_neighbors_thres) {
         std::cout << "room has yplane2: " << y_plane2.nx << ", " << y_plane2.ny << ", " << y_plane2.nz << ", " << y_plane2.d << std::endl;
         found_y2_plane = true;
       } else {
