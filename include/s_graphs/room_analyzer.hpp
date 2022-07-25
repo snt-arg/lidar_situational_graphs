@@ -24,6 +24,7 @@
 #include <s_graphs/RoomsData.h>
 #include <s_graphs/PlaneData.h>
 #include <s_graphs/PlanesData.h>
+#include <s_graphs/plane_utils.hpp>
 
 namespace s_graphs {
 
@@ -32,7 +33,7 @@ namespace s_graphs {
  */
 class RoomAnalyzer {
 public:
-  RoomAnalyzer(const ros::NodeHandle& private_nh);
+  RoomAnalyzer(const ros::NodeHandle& private_nh, std::shared_ptr<PlaneUtils> plane_utils_ptr);
   ~RoomAnalyzer();
 
   void analyze_skeleton_graph(const visualization_msgs::MarkerArray::Ptr& skeleton_graph_msg);
@@ -47,9 +48,11 @@ public:
   geometry_msgs::Point get_room_length(pcl::PointXY p1, pcl::PointXY p2);
   geometry_msgs::Point get_room_center(pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData x_plane1, s_graphs::PlaneData x_plane2, s_graphs::PlaneData y_plane1, s_graphs::PlaneData y_plane2);
   geometry_msgs::Point get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2);
+  void perform_room_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map);
 
 private:
   ros::NodeHandle nh;
+  std::shared_ptr<PlaneUtils> plane_utils;
 
   std::mutex skeleton_graph_mutex;
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters_;
