@@ -55,6 +55,12 @@ public:
 
 public:
   /**
+   * @brief detect all the room neighbours from all room data
+   *
+   */
+  void detect_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec);
+
+  /**
    * @brief factor the room neighbours between two rooms/corridors
    *
    */

@@ -193,6 +193,7 @@ public:
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &SGraphsNodelet::floor_coeffs_callback, this);
     cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &SGraphsNodelet::cloud_seg_callback, this);
     room_data_sub = nh.subscribe("/room_segmentation/room_data", 1, &SGraphsNodelet::room_data_callback, this);
+    all_room_data_sub = nh.subscribe("/floor_plan/all_rooms_data", 1, &SGraphsNodelet::all_room_data_callback, this);
 
     if(private_nh.param<bool>("enable_gps", true)) {
       gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &SGraphsNodelet::gps_callback, this);
@@ -281,9 +282,6 @@ private:
       return;
     }
 
-    const auto& latest_keyframe_stamp = keyframes.back()->stamp;
-    const auto& latest_keyframe = keyframes.back();
-
     for(const auto& room_data_msg : room_data_queue) {
       for(const auto& room_data : room_data_msg.rooms) {
         // float dist_robot_room = sqrt(pow(room_data.room_center.x - latest_keyframe->node->estimate().matrix()(0,3),2) + pow(room_data.room_center.y - latest_keyframe->node->estimate().matrix()(1,3),2));
@@ -301,8 +299,34 @@ private:
         }
       }
 
-      // neighbour_mapper->factor_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
       room_data_queue.pop_front();
+    }
+  }
+
+  /**
+   * @brief get the entire room data from floor plan module to detect neighbours
+   *
+   */
+  void all_room_data_callback(const s_graphs::RoomsData rooms_msg) {
+    std::lock_guard<std::mutex> lock(all_room_data_queue_mutex);
+    all_room_data_queue.push_back(rooms_msg);
+  }
+
+  void flush_all_room_data_queue() {
+    std::lock_guard<std::mutex> lock(all_room_data_queue_mutex);
+
+    if(keyframes.empty()) {
+      return;
+    } else if(all_room_data_queue.empty()) {
+      std::cout << "all room data queue is empty" << std::endl;
+      return;
+    }
+
+    for(const auto& room_data_msg : all_room_data_queue) {
+      neighbour_mapper->detect_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
+      neighbour_mapper->factor_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
+
+      all_room_data_queue.pop_front();
     }
   }
 
@@ -862,6 +886,9 @@ private:
 
     // flush the room poses from room detector and no need to return if no rooms found
     flush_room_data_queue();
+
+    // flush all the rooms queue to map neighbours
+    flush_all_room_data_queue();
 
     // loop detection
     std::vector<Loop::Ptr> loops = loop_detector->detect(keyframes, new_keyframes, *graph_slam);
@@ -2131,6 +2158,8 @@ private:
     x_corr_neighbour_line_marker.color.g = 0;
     x_corr_neighbour_line_marker.color.b = 0;
     x_corr_neighbour_line_marker.color.a = 0.8;
+    x_corr_neighbour_line_marker.lifetime = ros::Duration(15.0);
+
     for(const auto& x_corridor : x_corridor_snapshot) {
       for(const auto& x_corridor_neighbour_id : x_corridor.neighbour_ids) {
         geometry_msgs::Point p1, p2;
@@ -2185,6 +2214,8 @@ private:
     y_corr_neighbour_line_marker.color.g = 0;
     y_corr_neighbour_line_marker.color.b = 0;
     y_corr_neighbour_line_marker.color.a = 0.8;
+    y_corr_neighbour_line_marker.lifetime = ros::Duration(15.0);
+
     for(const auto& y_corridor : y_corridor_snapshot) {
       for(const auto& y_corridor_neighbour_id : y_corridor.neighbour_ids) {
         geometry_msgs::Point p1, p2;
@@ -2239,6 +2270,8 @@ private:
     room_neighbour_line_marker.color.g = 0;
     room_neighbour_line_marker.color.b = 0;
     room_neighbour_line_marker.color.a = 0.8;
+    room_neighbour_line_marker.lifetime = ros::Duration(15.0);
+
     for(const auto& room : room_snapshot) {
       for(const auto& room_neighbour_id : room.neighbour_ids) {
         geometry_msgs::Point p1, p2;
@@ -2449,6 +2482,7 @@ private:
   ros::Subscriber imu_sub;
   ros::Subscriber floor_sub;
   ros::Subscriber room_data_sub;
+  ros::Subscriber all_room_data_sub;
 
   ros::Publisher markers_pub;
 
@@ -2545,6 +2579,10 @@ private:
   // room data queue
   std::mutex room_data_queue_mutex;
   std::deque<s_graphs::RoomsData> room_data_queue;
+
+  // all room data queue
+  std::mutex all_room_data_queue_mutex;
+  std::deque<s_graphs::RoomsData> all_room_data_queue;
 
   // for map cloud generation
   std::atomic_bool graph_updated;

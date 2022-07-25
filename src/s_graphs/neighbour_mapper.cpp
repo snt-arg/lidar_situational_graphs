@@ -8,6 +8,53 @@ NeighbourMapper::NeighbourMapper(const ros::NodeHandle& private_nh) {}
 
 NeighbourMapper::~NeighbourMapper() {}
 
+void NeighbourMapper::detect_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec) {
+  float min_dist_room_room = 100;
+  float min_dist_room_x_corridor = 100;
+  float min_dist_room_y_corridor = 100;
+  float matching_threshold = 0.5;
+
+  s_graphs::Rooms* mapped_room;
+  s_graphs::Corridors* mapped_x_corridor;
+  s_graphs::Corridors* mapped_y_corridor;
+  for(const auto& room_data : room_msg.rooms) {
+    for(auto& current_room : rooms_vec) {
+      float dist_room_room = sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) + pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
+      if(dist_room_room < min_dist_room_room) {
+        min_dist_room_room = dist_room_room;
+        mapped_room = &current_room;
+      }
+    }
+
+    for(auto& current_x_corridor : x_corridors) {
+      float dist_room_x_corridor = sqrt(pow(room_data.room_center.x - current_x_corridor.node->estimate(), 2) + pow(room_data.room_center.y - current_x_corridor.keyframe_trans(1), 2));
+      if(dist_room_x_corridor < min_dist_room_x_corridor) {
+        min_dist_room_x_corridor = dist_room_x_corridor;
+        mapped_x_corridor = &current_x_corridor;
+      }
+    }
+
+    for(auto& current_y_corridor : y_corridors) {
+      float dist_room_y_corridor = sqrt(pow(room_data.room_center.x - current_y_corridor.keyframe_trans(0), 2) + pow(room_data.room_center.y - current_y_corridor.node->estimate(), 2));
+      if(dist_room_y_corridor < min_dist_room_y_corridor) {
+        min_dist_room_y_corridor = dist_room_y_corridor;
+        mapped_y_corridor = &current_y_corridor;
+      }
+    }
+
+    if(min_dist_room_room < min_dist_room_x_corridor && min_dist_room_room < min_dist_room_y_corridor && min_dist_room_room < matching_threshold) {
+      mapped_room->connected_id = room_data.id;
+      mapped_room->connected_neighbour_ids = room_data.neighbour_ids;
+    } else if(min_dist_room_x_corridor < min_dist_room_room && min_dist_room_x_corridor < min_dist_room_y_corridor && min_dist_room_x_corridor < matching_threshold) {
+      mapped_x_corridor->connected_id = room_data.id;
+      mapped_x_corridor->connected_neighbour_ids = room_data.neighbour_ids;
+    } else if(min_dist_room_y_corridor < min_dist_room_room && min_dist_room_y_corridor < min_dist_room_x_corridor && min_dist_room_y_corridor < matching_threshold) {
+      mapped_y_corridor->connected_id = room_data.id;
+      mapped_y_corridor->connected_neighbour_ids = room_data.neighbour_ids;
+    }
+  }
+}
+
 void NeighbourMapper::factor_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec) {
   // here we have all the room detected connected ids filled it along with its neighbours
   for(const auto& room_data : room_msg.rooms) {
