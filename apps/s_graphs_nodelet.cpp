@@ -208,6 +208,8 @@ public:
 
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
     map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes", 1, false);
+    all_map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/all_map_planes", 1, false);
+
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
@@ -799,9 +801,37 @@ private:
     sensor_msgs::PointCloud2Ptr cloud_msg(new sensor_msgs::PointCloud2());
     pcl::toROSMsg(*cloud, *cloud_msg);
 
-    auto markers = create_marker_array(ros::Time::now());
+    g2o::SparseOptimizer* local_graph;
+    graph_mutex.lock();
+    local_graph = graph_snapshot;
+    graph_mutex.unlock();
+
+    std::vector<VerticalPlanes> x_plane_snapshot, y_plane_snapshot;
+    vert_plane_snapshot_mutex.lock();
+    x_plane_snapshot = x_vert_planes_snapshot;
+    y_plane_snapshot = y_vert_planes_snapshot;
+    vert_plane_snapshot_mutex.unlock();
+
+    std::vector<HorizontalPlanes> hort_plane_snapshot;
+    hort_plane_snapshot_mutex.lock();
+    hort_plane_snapshot = hort_planes_snapshot;
+    hort_plane_snapshot_mutex.unlock();
+
+    std::vector<Corridors> x_corridor_snapshot, y_corridor_snapshot;
+    corridor_snapshot_mutex.lock();
+    x_corridor_snapshot = x_corridors_snapshot;
+    y_corridor_snapshot = y_corridors_snapshot;
+    corridor_snapshot_mutex.unlock();
+
+    std::vector<Rooms> room_snapshot;
+    room_snapshot_mutex.lock();
+    room_snapshot = rooms_vec_snapshot;
+    room_snapshot_mutex.unlock();
+
+    auto markers = create_marker_array(ros::Time::now(), local_graph, x_plane_snapshot, y_plane_snapshot, hort_plane_snapshot, x_corridor_snapshot, y_corridor_snapshot, room_snapshot);
     markers_pub.publish(markers);
 
+    publish_all_mapped_planes(x_plane_snapshot, y_plane_snapshot);
     map_points_pub.publish(cloud_msg);
   }
 
@@ -968,6 +998,57 @@ private:
       vert_planes_data.y_planes.push_back(plane_data);
     }
     map_planes_pub.publish(vert_planes_data);
+  }
+
+  /**
+   * @brief publish all the mapped plane information from the entire set of keyframes
+   *
+   */
+  void publish_all_mapped_planes(const std::vector<VerticalPlanes>& x_vert_planes_snapshot, const std::vector<VerticalPlanes>& y_vert_planes_snapshot) {
+    if(keyframes.empty()) return;
+
+    s_graphs::PlanesData vert_planes_data;
+    vert_planes_data.header.stamp = keyframes.back()->stamp;
+    for(const auto& x_vert_plane : x_vert_planes_snapshot) {
+      s_graphs::PlaneData plane_data;
+      Eigen::Vector4d mapped_plane_coeffs;
+      mapped_plane_coeffs = (x_vert_plane).plane_node->estimate().coeffs();
+      // correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      plane_data.id = (x_vert_plane).id;
+      plane_data.nx = mapped_plane_coeffs(0);
+      plane_data.ny = mapped_plane_coeffs(1);
+      plane_data.nz = mapped_plane_coeffs(2);
+      plane_data.d = mapped_plane_coeffs(3);
+      for(const auto& plane_point_data : (x_vert_plane).cloud_seg_map->points) {
+        geometry_msgs::Vector3 plane_point;
+        plane_point.x = plane_point_data.x;
+        plane_point.y = plane_point_data.y;
+        plane_point.z = plane_point_data.z;
+        plane_data.plane_points.push_back(plane_point);
+      }
+      vert_planes_data.x_planes.push_back(plane_data);
+    }
+
+    for(const auto& y_vert_plane : y_vert_planes_snapshot) {
+      s_graphs::PlaneData plane_data;
+      Eigen::Vector4d mapped_plane_coeffs;
+      mapped_plane_coeffs = (y_vert_plane).plane_node->estimate().coeffs();
+      // correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
+      plane_data.id = (y_vert_plane).id;
+      plane_data.nx = mapped_plane_coeffs(0);
+      plane_data.ny = mapped_plane_coeffs(1);
+      plane_data.nz = mapped_plane_coeffs(2);
+      plane_data.d = mapped_plane_coeffs(3);
+      for(const auto& plane_point_data : (y_vert_plane).cloud_seg_map->points) {
+        geometry_msgs::Vector3 plane_point;
+        plane_point.x = plane_point_data.x;
+        plane_point.y = plane_point_data.y;
+        plane_point.z = plane_point_data.z;
+        plane_data.plane_points.push_back(plane_point);
+      }
+      vert_planes_data.y_planes.push_back(plane_data);
+    }
+    all_map_planes_pub.publish(vert_planes_data);
   }
 
   /**
@@ -1254,36 +1335,9 @@ private:
    * @param stamp
    * @return
    */
-  visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp) {
+  visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, const std::vector<Corridors>& x_corridor_snapshot, const std::vector<Corridors>& y_corridor_snapshot, const std::vector<Rooms>& room_snapshot) {
     visualization_msgs::MarkerArray markers;
     // markers.markers.resize(11);
-
-    g2o::SparseOptimizer* local_graph;
-    graph_mutex.lock();
-    local_graph = graph_snapshot;
-    graph_mutex.unlock();
-
-    std::vector<VerticalPlanes> x_plane_snapshot, y_plane_snapshot;
-    vert_plane_snapshot_mutex.lock();
-    x_plane_snapshot = x_vert_planes_snapshot;
-    y_plane_snapshot = y_vert_planes_snapshot;
-    vert_plane_snapshot_mutex.unlock();
-
-    std::vector<HorizontalPlanes> hort_plane_snapshot;
-    hort_plane_snapshot_mutex.lock();
-    hort_plane_snapshot = hort_planes_snapshot;
-    hort_plane_snapshot_mutex.unlock();
-
-    std::vector<Corridors> x_corridor_snapshot, y_corridor_snapshot;
-    corridor_snapshot_mutex.lock();
-    x_corridor_snapshot = x_corridors_snapshot;
-    y_corridor_snapshot = y_corridors_snapshot;
-    corridor_snapshot_mutex.unlock();
-
-    std::vector<Rooms> room_snapshot;
-    room_snapshot_mutex.lock();
-    room_snapshot = rooms_vec_snapshot;
-    room_snapshot_mutex.unlock();
 
     // node markers
     visualization_msgs::Marker traj_marker;
@@ -2414,6 +2468,7 @@ private:
   ros::Publisher read_until_pub;
   ros::Publisher map_points_pub;
   ros::Publisher map_planes_pub;
+  ros::Publisher all_map_planes_pub;
 
   tf::TransformListener tf_listener;
 
