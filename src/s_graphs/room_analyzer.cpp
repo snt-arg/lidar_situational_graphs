@@ -737,7 +737,7 @@ bool RoomAnalyzer::check_x1yplane_alignment(const std::vector<geometry_msgs::Vec
       float dist = y_plane_points[i].x - x_plane1_points[j].x;
       if(dist > 0) {
         point_count++;
-        continue;
+        break;
       }
     }
     if(point_count > 50) {
@@ -756,7 +756,7 @@ bool RoomAnalyzer::check_x2yplane_alignment(const std::vector<geometry_msgs::Vec
       float dist = y_plane_points[i].x - x_plane2_points[j].x;
       if(dist < 0) {
         point_count++;
-        continue;
+        break;
       }
     }
     if(point_count > 50) {
@@ -775,7 +775,7 @@ bool RoomAnalyzer::check_y1xplane_alignment(const std::vector<geometry_msgs::Vec
       float dist = x_plane_points[i].y - y_plane1_points[j].y;
       if(dist > 0) {
         point_count++;
-        continue;
+        break;
       }
     }
     if(point_count > 50) {
@@ -783,7 +783,6 @@ bool RoomAnalyzer::check_y1xplane_alignment(const std::vector<geometry_msgs::Vec
       break;
     }
   }
-  std::cout << "point count " << point_count << std::endl;
   return valid_room_config;
 }
 
@@ -795,7 +794,7 @@ bool RoomAnalyzer::check_y2xplane_alignment(const std::vector<geometry_msgs::Vec
       float dist = x_plane_points[i].y - y_plane2_points[j].y;
       if(dist < 0) {
         point_count++;
-        continue;
+        break;
       }
     }
     if(point_count > 50) {
