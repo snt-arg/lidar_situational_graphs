@@ -311,13 +311,7 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
     y_plane2.nx = 0;
     y_plane2.ny = 0;
     y_plane1.nz = 0;
-    get_room_planes(current_x_vert_planes, current_y_vert_planes, p1, p2, cloud_hull, x_plane1, x_plane2, y_plane1, y_plane2, found_x1_plane, found_x2_plane, found_y1_plane, found_y2_plane);
-
-    // clear plane points which are not required now
-    x_plane1.plane_points.clear();
-    x_plane2.plane_points.clear();
-    y_plane1.plane_points.clear();
-    y_plane2.plane_points.clear();
+    get_room_planes(current_x_vert_planes, current_y_vert_planes, p1, p2, cloud_cluster, x_plane1, x_plane2, y_plane1, y_plane2, found_x1_plane, found_x2_plane, found_y1_plane, found_y2_plane);
 
     // if found all four planes its a room
     if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
@@ -332,6 +326,11 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
 
       if(x_plane_width < room_width_threshold || y_plane_width < room_width_threshold) {
         std::cout << "returning as the room is not sufficiently wide" << std::endl;
+        return;
+      }
+
+      if(!check_xy_plane_configuration(x_plane2.plane_points, y_plane1.plane_points) || !check_xy_plane_configuration(x_plane2.plane_points, y_plane2.plane_points)) {
+        std::cout << "returning as not a valid room configuration" << std::endl;
         return;
       }
 
@@ -434,6 +433,12 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
     } else {
       room_cluster_counter++;
     }
+
+    // clear plane points which are not required now
+    x_plane1.plane_points.clear();
+    x_plane2.plane_points.clear();
+    y_plane1.plane_points.clear();
+    y_plane2.plane_points.clear();
   }
 }
 
@@ -454,7 +459,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
   bool use_max_neighbours_algo = true;
   int max_x1_neighbours, max_x2_neighbours, max_y1_neighbours, max_y2_neighbours;
   max_x1_neighbours = max_x2_neighbours = max_y1_neighbours = max_y2_neighbours = 0;
-  int min_neighbors_thres = 2;
+  int min_neighbors_thres = 5;
 
   pcl::PointXY top_right, bottom_right, top_left, bottom_left;
   if(!compute_diagonal_points(cloud_hull, p_min, p_max, top_right, bottom_right, top_left, bottom_left)) {
@@ -706,6 +711,24 @@ bool RoomAnalyzer::compute_point_difference(const double plane1_point, const dou
   if((plane1_point - plane2_point) > 0) return false;
 
   return true;
+}
+
+bool RoomAnalyzer::check_xy_plane_configuration(const std::vector<geometry_msgs::Vector3> x_plane2_point, const std::vector<geometry_msgs::Vector3> y_plane_point) {
+  bool valid_room_config = false;
+  int point_count = 0;
+  for(int i = 0; i < y_plane_point.size(); ++i) {
+    for(int j = 0; j < x_plane2_point.size(); ++j) {
+      float dist = y_plane_point[i].x - x_plane2_point[j].x;
+      if(dist < 0) {
+        point_count++;
+      }
+    }
+    if(point_count > 10) {
+      valid_room_config = true;
+      break;
+    }
+  }
+  return valid_room_config;
 }
 
 bool RoomAnalyzer::compute_diagonal_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const pcl::PointXY min, const pcl::PointXY max, pcl::PointXY& top_right, pcl::PointXY& bottom_right, pcl::PointXY& top_left, pcl::PointXY& bottom_left) {
