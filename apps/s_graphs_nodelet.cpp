@@ -405,6 +405,7 @@ private:
 
         auto found = keyframe_hash.find(cloud_seg_msg.header.stamp);
         if(found == keyframe_hash.end()) {
+          // std::cout << "keyframe not found for the corresponding plane" << std::endl;
           continue;
         }
 
@@ -964,7 +965,7 @@ private:
   void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot, std::vector<VerticalPlanes> y_vert_planes_snapshot) {
     if(keyframes.empty()) return;
 
-    int keyframe_window_size = 5;
+    int keyframe_window_size = 3;
     std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
     std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
     for(std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin(); it != keyframe_window.rend(); ++it) {
