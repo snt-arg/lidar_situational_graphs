@@ -2,6 +2,7 @@
 #include <string>
 #include <cmath>
 #include <math.h>
+#include <boost/format.hpp>
 
 #include <s_graphs/PointClouds.h>
 
@@ -81,7 +82,7 @@ private:
     // if base_link_frame is defined, transform the input cloud to the frame
     if(!plane_extraction_frame_.empty()) {
       if(!tf_listener_.canTransform(plane_extraction_frame_, src_cloud->header.frame_id, ros::Time(0))) {
-        std::cerr << "failed to find transform between " << plane_extraction_frame_ << " and " << src_cloud->header.frame_id << std::endl;
+        std::cout << "failed to find transform between " << plane_extraction_frame_ << " and " << src_cloud->header.frame_id << std::endl;
       }
       tf::StampedTransform transform;
       tf_listener_.waitForTransform(plane_extraction_frame_, src_cloud->header.frame_id, ros::Time(0), ros::Duration(2.0));
@@ -92,7 +93,10 @@ private:
       transformed->header.frame_id = plane_extraction_frame_;
       transformed->header.stamp = src_cloud->header.stamp;
       // pcl::copyPointCloud(*src_cloud, *transformed);
+      auto t1 = ros::WallTime::now();
       this->segment_planes(transformed);
+      auto t2 = ros::WallTime::now();
+      // std::cout << "plane extraction took: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
     }
   }
 
@@ -112,7 +116,6 @@ private:
         seg.setModelType(pcl::SACMODEL_PLANE);
         seg.setMethodType(pcl::SAC_RANSAC);
         seg.setDistanceThreshold(0.01);
-        seg.setEpsAngle(pcl::deg2rad(2.0f));
         seg.setInputCloud(transformed_cloud);
         // seg.setInputNormals(normal_cloud);
         int model_type = seg.getModelType();
@@ -138,8 +141,8 @@ private:
         plane.head(3) = closest_point / closest_point.norm();
         plane(3) = closest_point.norm();
 
-        Eigen::Vector4f normals_flipped = normal.cast<float>();
-        pcl::flipNormalTowardsViewpoint(transformed_cloud->points[inliers->indices[0]], 0, 0, 0, normals_flipped);
+        // Eigen::Vector4f normals_flipped = normal.cast<float>();
+        // pcl::flipNormalTowardsViewpoint(transformed_cloud->points[inliers->indices[0]], 0, 0, 0, normals_flipped);
 
         // std::cout << "Model coefficients after " << std::to_string(i) << ": " << normals_flipped << std::endl;
 
@@ -208,7 +211,7 @@ private:
     tree->setInputCloud(extracted_cloud);
     std::vector<pcl::PointIndices> cluster_indices;
     pcl::EuclideanClusterExtraction<PointT> ec;
-    ec.setClusterTolerance(0.3);
+    ec.setClusterTolerance(0.5);
     ec.setMinClusterSize(10);
     ec.setMaxClusterSize(250000);
     ec.setSearchMethod(tree);
