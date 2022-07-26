@@ -329,11 +329,25 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
         return;
       }
 
-      if(!check_xy_plane_configuration(x_plane2.plane_points, y_plane1.plane_points) || !check_xy_plane_configuration(x_plane2.plane_points, y_plane2.plane_points)) {
+      if(!check_x1yplane_alignment(x_plane1.plane_points, y_plane1.plane_points) || !check_x1yplane_alignment(x_plane1.plane_points, y_plane2.plane_points)) {
         std::cout << "returning as not a valid room configuration" << std::endl;
         return;
       }
 
+      if(!check_x2yplane_alignment(x_plane2.plane_points, y_plane1.plane_points) || !check_x2yplane_alignment(x_plane2.plane_points, y_plane2.plane_points)) {
+        std::cout << "returning as not a valid room configuration" << std::endl;
+        return;
+      }
+
+      if(!check_y1xplane_alignment(y_plane1.plane_points, x_plane1.plane_points) || !check_y1xplane_alignment(y_plane1.plane_points, x_plane2.plane_points)) {
+        std::cout << "returning as not a valid room configuration" << std::endl;
+        return;
+      }
+
+      if(!check_y2xplane_alignment(y_plane2.plane_points, x_plane1.plane_points) || !check_y2xplane_alignment(y_plane2.plane_points, x_plane2.plane_points)) {
+        std::cout << "returning as not a valid room configuration" << std::endl;
+        return;
+      }
       geometry_msgs::Point room_center = get_room_center(p1, p2, x_plane1, x_plane2, y_plane1, y_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
@@ -462,9 +476,11 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
   int min_neighbors_thres = 5;
 
   pcl::PointXY top_right, bottom_right, top_left, bottom_left;
-  if(!compute_diagonal_points(cloud_hull, p_min, p_max, top_right, bottom_right, top_left, bottom_left)) {
-    std::cout << "didnt not get diagonal points" << std::endl;
-    return;
+  if(!use_max_neighbours_algo) {
+    if(!compute_diagonal_points(cloud_hull, p_min, p_max, top_right, bottom_right, top_left, bottom_left)) {
+      std::cout << "didnt not get diagonal points" << std::endl;
+      return;
+    }
   }
 
   for(const auto& x_plane : current_x_vert_planes) {
@@ -713,17 +729,71 @@ bool RoomAnalyzer::compute_point_difference(const double plane1_point, const dou
   return true;
 }
 
-bool RoomAnalyzer::check_xy_plane_configuration(const std::vector<geometry_msgs::Vector3> x_plane2_point, const std::vector<geometry_msgs::Vector3> y_plane_point) {
+bool RoomAnalyzer::check_x1yplane_alignment(const std::vector<geometry_msgs::Vector3> x_plane1_points, const std::vector<geometry_msgs::Vector3> y_plane_points) {
   bool valid_room_config = false;
   int point_count = 0;
-  for(int i = 0; i < y_plane_point.size(); ++i) {
-    for(int j = 0; j < x_plane2_point.size(); ++j) {
-      float dist = y_plane_point[i].x - x_plane2_point[j].x;
+  for(int i = 0; i < y_plane_points.size(); ++i) {
+    for(int j = 0; j < x_plane1_points.size(); ++j) {
+      float dist = y_plane_points[i].x - x_plane1_points[j].x;
+      if(dist > 0) {
+        point_count++;
+      }
+    }
+    if(point_count > 50) {
+      valid_room_config = true;
+      break;
+    }
+  }
+  return valid_room_config;
+}
+
+bool RoomAnalyzer::check_x2yplane_alignment(const std::vector<geometry_msgs::Vector3> x_plane2_points, const std::vector<geometry_msgs::Vector3> y_plane_points) {
+  bool valid_room_config = false;
+  int point_count = 0;
+  for(int i = 0; i < y_plane_points.size(); ++i) {
+    for(int j = 0; j < x_plane2_points.size(); ++j) {
+      float dist = y_plane_points[i].x - x_plane2_points[j].x;
       if(dist < 0) {
         point_count++;
       }
     }
-    if(point_count > 10) {
+    if(point_count > 50) {
+      valid_room_config = true;
+      break;
+    }
+  }
+  return valid_room_config;
+}
+
+bool RoomAnalyzer::check_y1xplane_alignment(const std::vector<geometry_msgs::Vector3> y_plane1_points, const std::vector<geometry_msgs::Vector3> x_plane_points) {
+  bool valid_room_config = false;
+  int point_count = 0;
+  for(int i = 0; i < x_plane_points.size(); ++i) {
+    for(int j = 0; j < y_plane1_points.size(); ++j) {
+      float dist = x_plane_points[i].y - y_plane1_points[j].y;
+      if(dist > 0) {
+        point_count++;
+      }
+    }
+    if(point_count > 50) {
+      valid_room_config = true;
+      break;
+    }
+  }
+  return valid_room_config;
+}
+
+bool RoomAnalyzer::check_y2xplane_alignment(const std::vector<geometry_msgs::Vector3> y_plane2_points, const std::vector<geometry_msgs::Vector3> x_plane_points) {
+  bool valid_room_config = false;
+  int point_count = 0;
+  for(int i = 0; i < x_plane_points.size(); ++i) {
+    for(int j = 0; j < y_plane2_points.size(); ++j) {
+      float dist = x_plane_points[i].y - y_plane2_points[j].y;
+      if(dist < 0) {
+        point_count++;
+      }
+    }
+    if(point_count > 50) {
       valid_room_config = true;
       break;
     }
