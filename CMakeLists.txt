@@ -143,6 +143,7 @@ add_dependencies(s_graphs_scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp 
 
 add_library(s_graphs_nodelet
   apps/s_graphs_nodelet.cpp
+  src/s_graphs/plane_analyzer.cpp
   src/s_graphs/graph_slam.cpp
   src/s_graphs/plane_mapper.cpp
   src/s_graphs/infinite_room_mapper.cpp
