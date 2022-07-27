@@ -740,7 +740,7 @@ bool RoomAnalyzer::check_x1yplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 50) {
+    if(point_count > 100) {
       valid_room_config = true;
       break;
     }
@@ -759,7 +759,7 @@ bool RoomAnalyzer::check_x2yplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 50) {
+    if(point_count > 100) {
       valid_room_config = true;
       break;
     }
@@ -778,7 +778,7 @@ bool RoomAnalyzer::check_y1xplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 50) {
+    if(point_count > 100) {
       valid_room_config = true;
       break;
     }
@@ -797,7 +797,7 @@ bool RoomAnalyzer::check_y2xplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 50) {
+    if(point_count > 100) {
       valid_room_config = true;
       break;
     }

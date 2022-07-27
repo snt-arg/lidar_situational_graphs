@@ -142,6 +142,7 @@ public:
     imu_orientation_edge_stddev = private_nh.param<double>("imu_orientation_edge_stddev", 0.1);
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
 
+    extract_planar_surfaces = private_nh.param<bool>("extract_planar_surfaces", true);
     plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
     plane_points_dist = private_nh.param<double>("plane_points_dist", 0.5);
     constant_covariance = private_nh.param<bool>("constant_covariance", true);
@@ -426,8 +427,10 @@ private:
       graph_slam->add_robust_kernel(edge, private_nh.param<std::string>("odometry_edge_robust_kernel", "NONE"), private_nh.param<double>("odometry_edge_robust_kernel_size", 1.0));
 
       // perform planar segmentation
-      std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(keyframe->cloud);
-      map_extracted_planes(keyframe, extracted_cloud_vec);
+      if(extract_planar_surfaces) {
+        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(keyframe->cloud);
+        map_extracted_planes(keyframe, extracted_cloud_vec);
+      }
     }
 
     std_msgs::Header read_until;
@@ -2493,6 +2496,7 @@ private:
   std::deque<s_graphs::FloorCoeffsConstPtr> floor_coeffs_queue;
 
   // vertical and horizontal planes
+  bool extract_planar_surfaces;
   double plane_dist_threshold;
   double plane_points_dist;
   bool constant_covariance;
