@@ -22,9 +22,16 @@ void PlaneAnalyzer::init_ros(ros::NodeHandle private_nh) {
   segmented_cloud_pub_ = private_nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
 }
 
-std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(pcl::PointCloud<PointT>::Ptr transformed_cloud) {
-  pcl::PointCloud<PointT>::Ptr segmented_cloud(new pcl::PointCloud<PointT>);
+std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud) {
+  pcl::PointCloud<PointNormal>::Ptr segmented_cloud(new pcl::PointCloud<PointNormal>);
   std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec;
+  pcl::PointCloud<PointT>::Ptr transformed_cloud(new pcl::PointCloud<PointT>);
+
+  transformed_cloud->header = cloud->header;
+  for(size_t i = 0; i < cloud->points.size(); ++i) {
+    transformed_cloud->points.push_back(cloud->points[i]);
+  }
+
   int i = 0;
   while(transformed_cloud->points.size() > min_seg_points_) {
     try {
@@ -65,19 +72,23 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(pcl::P
 
       // Eigen::Vector4f normals_flipped = normal.cast<float>();
       // pcl::flipNormalTowardsViewpoint(transformed_cloud->points[inliers->indices[0]], 0, 0, 0, normals_flipped);
-
       // std::cout << "Model coefficients after " << std::to_string(i) << ": " << normals_flipped << std::endl;
 
-      pcl::PointCloud<PointT>::Ptr extracted_cloud(new pcl::PointCloud<PointT>);
+      pcl::PointCloud<PointNormal>::Ptr extracted_cloud(new pcl::PointCloud<PointNormal>);
       for(const auto& idx : inliers->indices) {
-        extracted_cloud->push_back(transformed_cloud->points[idx]);
-        extracted_cloud->back().normal_x = plane(0);
-        extracted_cloud->back().normal_y = plane(1);
-        extracted_cloud->back().normal_z = plane(2);
-        extracted_cloud->back().curvature = plane(3);  // normalized value of the plane distance
+        PointNormal tmp_cloud;
+        tmp_cloud.x = transformed_cloud->points[idx].x;
+        tmp_cloud.y = transformed_cloud->points[idx].y;
+        tmp_cloud.z = transformed_cloud->points[idx].z;
+        tmp_cloud.normal_x = plane(0);
+        tmp_cloud.normal_y = plane(1);
+        tmp_cloud.normal_z = plane(2);
+        tmp_cloud.curvature = plane(3);
+
+        extracted_cloud->points.push_back(tmp_cloud);
       }
 
-      pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered;
+      pcl::PointCloud<PointNormal>::Ptr extracted_cloud_filtered;
       if(use_euclidean_filter_)
         extracted_cloud_filtered = compute_clusters(extracted_cloud);
       else if(use_shadow_filter_) {
@@ -123,11 +134,11 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(pcl::P
   return extracted_cloud_vec;
 }
 
-pcl::PointCloud<PointT>::Ptr PlaneAnalyzer::compute_clusters(const pcl::PointCloud<PointT>::Ptr& extracted_cloud) {
-  pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
+pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud) {
+  pcl::search::KdTree<PointNormal>::Ptr tree(new pcl::search::KdTree<PointNormal>);
   tree->setInputCloud(extracted_cloud);
   std::vector<pcl::PointIndices> cluster_indices;
-  pcl::EuclideanClusterExtraction<PointT> ec;
+  pcl::EuclideanClusterExtraction<PointNormal> ec;
   ec.setClusterTolerance(0.5);
   ec.setMinClusterSize(10);
   ec.setMaxClusterSize(250000);
@@ -137,7 +148,7 @@ pcl::PointCloud<PointT>::Ptr PlaneAnalyzer::compute_clusters(const pcl::PointClo
 
   // auto max_iterator = std::max_element(std::begin(cluster_indices), std::end(cluster_indices), [](const pcl::PointIndices& lhs, const pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
 
-  pcl::PointCloud<PointT>::Ptr cloud_cluster(new pcl::PointCloud<PointT>);
+  pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
   for(auto single_cluster : cluster_indices) {
     double r = rand() % 256;
     double g = rand() % 256;
@@ -160,10 +171,10 @@ pcl::PointCloud<PointT>::Ptr PlaneAnalyzer::compute_clusters(const pcl::PointClo
   return cloud_cluster;
 }
 
-pcl::PointCloud<pcl::Normal>::Ptr PlaneAnalyzer::compute_cloud_normals(const pcl::PointCloud<PointT>::Ptr& extracted_cloud) {
+pcl::PointCloud<pcl::Normal>::Ptr PlaneAnalyzer::compute_cloud_normals(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud) {
   pcl::PointCloud<pcl::Normal>::Ptr cloud_normals(new pcl::PointCloud<pcl::Normal>);
-  pcl::NormalEstimation<PointT, pcl::Normal> ne;
-  pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>());
+  pcl::NormalEstimation<PointNormal, pcl::Normal> ne;
+  pcl::search::KdTree<PointNormal>::Ptr tree(new pcl::search::KdTree<PointNormal>());
 
   ne.setInputCloud(extracted_cloud);
   ne.setSearchMethod(tree);
@@ -173,9 +184,9 @@ pcl::PointCloud<pcl::Normal>::Ptr PlaneAnalyzer::compute_cloud_normals(const pcl
   return cloud_normals;
 }
 
-pcl::PointCloud<PointT>::Ptr PlaneAnalyzer::shadow_filter(const pcl::PointCloud<PointT>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals) {
-  pcl::PointCloud<PointT>::Ptr extracted_cloud_filtered(new pcl::PointCloud<PointT>);
-  pcl::ShadowPoints<PointT, pcl::Normal> sp_filter;
+pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::shadow_filter(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals) {
+  pcl::PointCloud<PointNormal>::Ptr extracted_cloud_filtered(new pcl::PointCloud<PointNormal>);
+  pcl::ShadowPoints<PointNormal, pcl::Normal> sp_filter;
   sp_filter.setNormals(cloud_normals);
   sp_filter.setThreshold(0.1);
   sp_filter.setInputCloud(extracted_cloud);

@@ -71,6 +71,7 @@
 #include <s_graphs/room_mapper.hpp>
 #include <s_graphs/plane_mapper.hpp>
 #include <s_graphs/neighbour_mapper.hpp>
+#include <s_graphs/plane_analyzer.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_corridor.hpp>
@@ -119,6 +120,7 @@ public:
     floor_plane_node = nullptr;
     graph_slam.reset(new GraphSLAM(private_nh.param<std::string>("g2o_solver_type", "lm_var")));
     keyframe_updater.reset(new KeyframeUpdater(private_nh));
+    plane_analyzer.reset(new PlaneAnalyzer(private_nh));
     loop_detector.reset(new LoopDetector(private_nh));
     map_cloud_generator.reset(new MapCloudGenerator());
     inf_calclator.reset(new InformationMatrixCalculator(private_nh));
@@ -191,7 +193,6 @@ public:
     raw_odom_sub = nh.subscribe("/odom", 1, &SGraphsNodelet::raw_odom_callback, this);
     imu_sub = nh.subscribe("/gpsimu_driver/imu_data", 1024, &SGraphsNodelet::imu_callback, this);
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &SGraphsNodelet::floor_coeffs_callback, this);
-    cloud_seg_sub = nh.subscribe("/segmented_clouds", 32, &SGraphsNodelet::cloud_seg_callback, this);
     room_data_sub = nh.subscribe("/room_segmentation/room_data", 1, &SGraphsNodelet::room_data_callback, this);
     all_room_data_sub = nh.subscribe("/floor_plan/all_rooms_data", 1, &SGraphsNodelet::all_room_data_callback, this);
 
@@ -368,108 +369,6 @@ private:
   }
 
   /**
-   * @brief received segmented clouds pushed to be pushed #keyframe_queue
-   * @param clouds_seg_msg
-   */
-  void cloud_seg_callback(const s_graphs::PointClouds::Ptr& clouds_seg_msg) {
-    std::lock_guard<std::mutex> lock(cloud_seg_mutex);
-    clouds_seg_queue.push_back(clouds_seg_msg);
-  }
-
-  /**
-   * @brief flush the accumulated cloud seg queue
-   */
-  bool flush_clouds_seg_queue() {
-    std::lock_guard<std::mutex> lock(cloud_seg_mutex);
-
-    if(keyframes.empty()) {
-      std::cout << "No keyframes" << std::endl;
-      return false;
-    } else if(clouds_seg_queue.empty()) {
-      std::cout << "Clouds seg queue is empty" << std::endl;
-      return false;
-    }
-
-    const auto& latest_keyframe_stamp = keyframes.back()->stamp;
-
-    bool updated = false;
-    for(const auto& clouds_seg_msg : clouds_seg_queue) {
-      std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
-      std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
-
-      for(const auto& cloud_seg_msg : clouds_seg_msg->pointclouds) {
-        if(cloud_seg_msg.header.stamp > latest_keyframe_stamp) {
-          // std::cout << "cloud_seg time is greater than last keyframe stamp" << std::endl;
-          break;
-        }
-
-        auto found = keyframe_hash.find(cloud_seg_msg.header.stamp);
-        if(found == keyframe_hash.end()) {
-          // std::cout << "keyframe not found for the corresponding plane" << std::endl;
-          continue;
-        }
-
-        pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
-        pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
-
-        if(cloud_seg_body->points.size() < min_plane_points) continue;
-
-        auto& keyframe = found->second;
-        keyframe->cloud_seg_body = cloud_seg_body;
-
-        g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
-        bool found_corridor_candidates = false;
-        bool found_room_candidates = false;
-        plane_data_list plane_id_pair;
-
-        int plane_type = plane_mapper->map_detected_planes(graph_slam, keyframe, det_plane_body_frame, found_corridor_candidates, found_room_candidates, plane_id_pair, x_vert_planes, y_vert_planes, hort_planes);
-        switch(plane_type) {
-          case PlaneUtils::plane_class::X_VERT_PLANE: {
-            if(found_corridor_candidates) {
-              x_det_corridor_candidates.push_back(plane_id_pair);
-            }
-            if(found_room_candidates) {
-              x_det_room_candidates.push_back(plane_id_pair);
-            }
-            updated = true;
-            break;
-          }
-          case PlaneUtils::plane_class::Y_VERT_PLANE: {
-            if(found_corridor_candidates) {
-              y_det_corridor_candidates.push_back(plane_id_pair);
-            }
-            if(found_room_candidates) {
-              y_det_room_candidates.push_back(plane_id_pair);
-            }
-            updated = true;
-            break;
-          }
-          case PlaneUtils::plane_class::HORT_PLANE: {
-            updated = true;
-            break;
-          }
-          default: {
-            break;
-          }
-        }
-      }
-
-      if(use_corridor_constraint) {
-        inf_room_mapper->lookup_corridors(graph_slam, x_det_corridor_candidates, y_det_corridor_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
-      }
-
-      if(use_room_constraint) {
-        finite_room_mapper->lookup_rooms(graph_slam, x_det_room_candidates, y_det_room_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, rooms_vec);
-      }
-    }
-
-    auto remove_loc = std::upper_bound(clouds_seg_queue.begin(), clouds_seg_queue.end(), latest_keyframe_stamp, [=](const ros::Time& stamp, const s_graphs::PointClouds::Ptr& clouds_seg) { return stamp < clouds_seg->header.stamp; });
-    clouds_seg_queue.erase(clouds_seg_queue.begin(), remove_loc);
-
-    return updated;
-  }
-
-  /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph (odometry edges)
    * @return if true, at least one keyframe was added to the pose graph
    */
@@ -525,6 +424,10 @@ private:
       Eigen::MatrixXd information = inf_calclator->calc_information_matrix(keyframe->cloud, prev_keyframe->cloud, relative_pose);
       auto edge = graph_slam->add_se3_edge(keyframe->node, prev_keyframe->node, relative_pose, information);
       graph_slam->add_robust_kernel(edge, private_nh.param<std::string>("odometry_edge_robust_kernel", "NONE"), private_nh.param<double>("odometry_edge_robust_kernel_size", 1.0));
+
+      // perform planar segmentation
+      std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(keyframe->cloud);
+      map_extracted_planes(keyframe, extracted_cloud_vec);
     }
 
     std_msgs::Header read_until;
@@ -536,6 +439,59 @@ private:
 
     keyframe_queue.erase(keyframe_queue.begin(), keyframe_queue.begin() + num_processed + 1);
     return true;
+  }
+
+  void map_extracted_planes(KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec) {
+    std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
+    std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
+
+    for(const auto& cloud_seg_msg : extracted_cloud_vec) {
+      pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
+      pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
+
+      if(cloud_seg_body->points.size() < min_plane_points) continue;
+      keyframe->cloud_seg_body = cloud_seg_body;
+
+      g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
+      bool found_corridor_candidates = false;
+      bool found_room_candidates = false;
+      plane_data_list plane_id_pair;
+      int plane_type = plane_mapper->map_detected_planes(graph_slam, keyframe, det_plane_body_frame, found_corridor_candidates, found_room_candidates, plane_id_pair, x_vert_planes, y_vert_planes, hort_planes);
+      switch(plane_type) {
+        case PlaneUtils::plane_class::X_VERT_PLANE: {
+          if(found_corridor_candidates) {
+            x_det_corridor_candidates.push_back(plane_id_pair);
+          }
+          if(found_room_candidates) {
+            x_det_room_candidates.push_back(plane_id_pair);
+          }
+          break;
+        }
+        case PlaneUtils::plane_class::Y_VERT_PLANE: {
+          if(found_corridor_candidates) {
+            y_det_corridor_candidates.push_back(plane_id_pair);
+          }
+          if(found_room_candidates) {
+            y_det_room_candidates.push_back(plane_id_pair);
+          }
+          break;
+        }
+        case PlaneUtils::plane_class::HORT_PLANE: {
+          break;
+        }
+        default: {
+          break;
+        }
+      }
+    }
+
+    if(use_corridor_constraint) {
+      inf_room_mapper->lookup_corridors(graph_slam, x_det_corridor_candidates, y_det_corridor_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+    }
+
+    if(use_room_constraint) {
+      finite_room_mapper->lookup_rooms(graph_slam, x_det_room_candidates, y_det_room_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, rooms_vec);
+    }
   }
 
   void nmea_callback(const nmea_msgs::SentenceConstPtr& nmea_msg) {
@@ -879,7 +835,7 @@ private:
       read_until_pub.publish(read_until);
     }
 
-    if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue() & !flush_clouds_seg_queue()) {
+    if(!keyframe_updated & !flush_floor_queue() & !flush_gps_queue() & !flush_imu_queue()) {
       return;
     }
     // publish mapped planes
@@ -2474,7 +2430,6 @@ private:
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;
   std::unique_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
 
-  ros::Subscriber cloud_seg_sub;
   ros::Subscriber gps_sub;
   ros::Subscriber nmea_sub;
   ros::Subscriber navsat_sub;
@@ -2612,6 +2567,7 @@ private:
   std::unique_ptr<GraphSLAM> graph_slam;
   std::unique_ptr<LoopDetector> loop_detector;
   std::unique_ptr<KeyframeUpdater> keyframe_updater;
+  std::unique_ptr<PlaneAnalyzer> plane_analyzer;
   std::unique_ptr<NmeaSentenceParser> nmea_parser;
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
   std::unique_ptr<PlaneUtils> plane_utils;

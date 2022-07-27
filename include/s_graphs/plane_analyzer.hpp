@@ -27,12 +27,14 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/filters/shadowpoints.h>
 #include <pcl/features/normal_3d.h>
+#include <pcl/common/impl/io.hpp>
 
 #include <s_graphs/plane_utils.hpp>
 
 namespace s_graphs {
 
-typedef pcl::PointXYZRGBNormal PointT;
+typedef pcl::PointXYZI PointT;
+typedef pcl::PointXYZRGBNormal PointNormal;
 /**
  * @brief this class provides tools for different analysis over pointclouds to extract planar surfaces
  */
@@ -42,7 +44,7 @@ public:
   ~PlaneAnalyzer();
 
 public:
-  std::vector<sensor_msgs::PointCloud2> get_segmented_planes(pcl::PointCloud<PointT>::Ptr transformed_cloud);
+  std::vector<sensor_msgs::PointCloud2> get_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
 
 private:
   void init_ros(ros::NodeHandle private_nh);
@@ -51,9 +53,9 @@ private:
   ros::Publisher segmented_cloud_pub_;
 
 private:
-  pcl::PointCloud<PointT>::Ptr compute_clusters(const pcl::PointCloud<PointT>::Ptr& extracted_cloud);
-  pcl::PointCloud<pcl::Normal>::Ptr compute_cloud_normals(const pcl::PointCloud<PointT>::Ptr& extracted_cloud);
-  pcl::PointCloud<PointT>::Ptr shadow_filter(const pcl::PointCloud<PointT>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
+  pcl::PointCloud<PointNormal>::Ptr compute_clusters(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+  pcl::PointCloud<pcl::Normal>::Ptr compute_cloud_normals(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+  pcl::PointCloud<PointNormal>::Ptr shadow_filter(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
 
 private:
   int min_seg_points_;
