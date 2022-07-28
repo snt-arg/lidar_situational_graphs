@@ -219,7 +219,7 @@ public:
 
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
-    double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
+    double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 3.0);
     optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
     map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
   }
@@ -1970,38 +1970,48 @@ private:
       corr_x_line_marker.header.stamp = stamp;
       corr_x_line_marker.id = markers.markers.size() + 1;
       corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      corr_x_line_marker.color.r = 0;
-      corr_x_line_marker.color.g = 1;
-      corr_x_line_marker.color.b = 0;
+      corr_x_line_marker.color.r = color_r;
+      corr_x_line_marker.color.g = color_g;
+      corr_x_line_marker.color.b = color_b;
       corr_x_line_marker.color.a = 1.0;
       corr_x_line_marker.lifetime = ros::Duration(15.0);
+
       geometry_msgs::Point p1, p2, p3;
-
-      pcl::CentroidPoint<PointNormal> centroid_p1;
-      for(int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
-        centroid_p1.add((*found_plane1).cloud_seg_map->points[p]);
-      }
-
-      PointNormal cp1_pt;
-      centroid_p1.get(cp1_pt);
       p1.x = x_corridor_snapshot[i].node->estimate();
       p1.y = x_corridor_snapshot[i].keyframe_trans(1);
       p1.z = corridor_edge_h;
-      p2.x = cp1_pt.x;
-      p2.y = cp1_pt.y;
-      p2.z = plane_h;
+
+      float min_dist_plane1 = 100;
+      for(int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x = (*found_plane1).cloud_seg_map->points[p].x;
+        p_tmp.y = (*found_plane1).cloud_seg_map->points[p].y;
+        p_tmp.z = corridor_point_h;
+
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
+
+        if(norm < min_dist_plane1) {
+          min_dist_plane1 = norm;
+          p2 = p_tmp;
+        }
+      }
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p2);
 
-      pcl::CentroidPoint<PointNormal> centroid_p2;
+      float min_dist_plane2 = 100;
       for(int p = 0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
-        centroid_p2.add((*found_plane2).cloud_seg_map->points[p]);
+        geometry_msgs::Point p_tmp;
+        p_tmp.x = (*found_plane2).cloud_seg_map->points[p].x;
+        p_tmp.y = (*found_plane2).cloud_seg_map->points[p].y;
+        p_tmp.z = corridor_point_h;
+
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
+
+        if(norm < min_dist_plane2) {
+          min_dist_plane2 = norm;
+          p3 = p_tmp;
+        }
       }
-      PointNormal cp2_pt;
-      centroid_p2.get(cp2_pt);
-      p3.x = cp2_pt.x;
-      p3.y = cp2_pt.y;
-      p3.z = plane_h;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_x_line_marker);
@@ -2080,37 +2090,48 @@ private:
       corr_y_line_marker.header.stamp = stamp;
       corr_y_line_marker.id = markers.markers.size() + 1;
       corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      corr_y_line_marker.color.r = 0;
-      corr_y_line_marker.color.g = 1;
-      corr_y_line_marker.color.b = 0;
+      corr_y_line_marker.color.r = color_r;
+      corr_y_line_marker.color.g = color_g;
+      corr_y_line_marker.color.b = color_b;
       corr_y_line_marker.color.a = 1.0;
       corr_y_line_marker.lifetime = ros::Duration(15.0);
-      geometry_msgs::Point p1, p2, p3;
 
-      pcl::CentroidPoint<PointNormal> centroid_p1;
-      for(int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
-        centroid_p1.add((*found_plane1).cloud_seg_map->points[p]);
-      }
-      PointNormal cp1_pt;
-      centroid_p1.get(cp1_pt);
+      geometry_msgs::Point p1, p2, p3;
       p1.x = y_corridor_snapshot[i].keyframe_trans(0);
       p1.y = y_corridor_snapshot[i].node->estimate();
       p1.z = corridor_edge_h;
-      p2.x = cp1_pt.x;
-      p2.y = cp1_pt.y;
-      p2.z = plane_h;
+
+      float min_dist_plane1 = 100;
+      for(int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+        geometry_msgs::Point p_tmp;
+        p_tmp.x = (*found_plane1).cloud_seg_map->points[p].x;
+        p_tmp.y = (*found_plane1).cloud_seg_map->points[p].y;
+        p_tmp.z = corridor_point_h;
+
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
+
+        if(norm < min_dist_plane1) {
+          min_dist_plane1 = norm;
+          p2 = p_tmp;
+        }
+      }
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p2);
 
-      pcl::CentroidPoint<PointNormal> centroid_p2;
+      float min_dist_plane2 = 100;
       for(int p = 0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
-        centroid_p2.add((*found_plane2).cloud_seg_map->points[p]);
+        geometry_msgs::Point p_tmp;
+        p_tmp.x = (*found_plane2).cloud_seg_map->points[p].x;
+        p_tmp.y = (*found_plane2).cloud_seg_map->points[p].y;
+        p_tmp.z = corridor_point_h;
+
+        float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
+
+        if(norm < min_dist_plane2) {
+          min_dist_plane2 = norm;
+          p3 = p_tmp;
+        }
       }
-      PointNormal cp2_pt;
-      centroid_p2.get(cp2_pt);
-      p3.x = cp2_pt.x;
-      p3.y = cp2_pt.y;
-      p3.z = plane_h;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_y_line_marker);
@@ -2129,9 +2150,9 @@ private:
       corr_y_text_marker.pose.position.x = y_corridor_snapshot[i].keyframe_trans(0);
       corr_y_text_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
       corr_y_text_marker.pose.position.z = corridor_text_h;
-      corr_y_text_marker.color.r = 0;
-      corr_y_text_marker.color.g = 1;
-      corr_y_text_marker.color.b = 0;
+      corr_y_text_marker.color.r = color_r;
+      corr_y_text_marker.color.g = color_g;
+      corr_y_text_marker.color.b = color_b;
       corr_y_text_marker.color.a = 1;
       corr_y_text_marker.pose.orientation.w = 1.0;
       corr_y_text_marker.lifetime = ros::Duration(15.0);
@@ -2203,9 +2224,9 @@ private:
       room_text_marker.pose.position.x = room_snapshot[i].node->estimate()(0);
       room_text_marker.pose.position.y = room_snapshot[i].node->estimate()(1);
       room_text_marker.pose.position.z = room_text_h;
-      room_text_marker.color.r = 1;
-      room_text_marker.color.g = 0.07;
-      room_text_marker.color.b = 0.57;
+      room_text_marker.color.r = color_r;
+      room_text_marker.color.g = color_g;
+      room_text_marker.color.b = color_b;
       room_text_marker.color.a = 1;
       room_text_marker.pose.orientation.w = 1.0;
       room_text_marker.text = "Room" + std::to_string(i + 1);
@@ -2221,9 +2242,9 @@ private:
       room_line_marker.header.stamp = stamp;
       room_line_marker.id = markers.markers.size() + 1;
       room_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      room_line_marker.color.r = 1;
-      room_line_marker.color.g = 0.07;
-      room_line_marker.color.b = 0.57;
+      room_line_marker.color.r = color_r;
+      room_line_marker.color.g = color_g;
+      room_line_marker.color.b = color_b;
       room_line_marker.color.a = 1.0;
       room_line_marker.lifetime = ros::Duration(15.0);
       geometry_msgs::Point p1, p2, p3, p4, p5;
