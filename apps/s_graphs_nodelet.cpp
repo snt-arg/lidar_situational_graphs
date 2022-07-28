@@ -1375,6 +1375,9 @@ private:
     // markers.markers.resize(11);
 
     // node markers
+    double keyframe_h = 5.0;
+    double plane_h = 10;
+
     visualization_msgs::Marker traj_marker;
     traj_marker.header.frame_id = map_frame_id;
     traj_marker.header.stamp = stamp;
@@ -1400,7 +1403,7 @@ private:
       Eigen::Vector3d pos = keyframes[i]->node->estimate().translation();
       traj_marker.points[i].x = pos.x();
       traj_marker.points[i].y = pos.y();
-      traj_marker.points[i].z = pos.z();
+      traj_marker.points[i].z = pos.z() + keyframe_h;
 
       double p = static_cast<double>(i) / keyframes.size();
       traj_marker.colors[i].r = 1.0 - p;
@@ -1427,6 +1430,158 @@ private:
     }
     markers.markers.push_back(traj_marker);
     markers.markers.push_back(imu_marker);
+
+    // keyframe edge markers
+    visualization_msgs::Marker traj_edge_marker;
+    traj_edge_marker.header.frame_id = map_frame_id;
+    traj_edge_marker.header.stamp = stamp;
+    traj_edge_marker.ns = "keyframe_keyframe_edges";
+    traj_edge_marker.id = markers.markers.size();
+    traj_edge_marker.type = visualization_msgs::Marker::LINE_LIST;
+    traj_edge_marker.pose.orientation.w = 1.0;
+    traj_edge_marker.scale.x = 0.05;
+
+    auto traj_edge_itr = local_graph->edges().begin();
+    for(int i = 0; traj_edge_itr != local_graph->edges().end(); traj_edge_itr++, i++) {
+      g2o::HyperGraph::Edge* edge = *traj_edge_itr;
+      g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
+      if(edge_se3) {
+        g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]);
+        g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]);
+        Eigen::Vector3d pt1 = v1->estimate().translation();
+        Eigen::Vector3d pt2 = v2->estimate().translation();
+
+        geometry_msgs::Point point1, point2;
+        point1.x = pt1.x();
+        point1.y = pt1.y();
+        point1.z = pt1.z() + keyframe_h;
+
+        point2.x = pt2.x();
+        point2.y = pt2.y();
+        point2.z = pt2.z() + keyframe_h;
+        traj_edge_marker.points.push_back(point1);
+        traj_edge_marker.points.push_back(point2);
+
+        double p1 = static_cast<double>(v1->id()) / local_graph->vertices().size();
+        double p2 = static_cast<double>(v2->id()) / local_graph->vertices().size();
+
+        std_msgs::ColorRGBA color1, color2;
+        color1.r = 1.0 - p1;
+        color1.g = p1;
+        color1.a = 1.0;
+
+        color2.r = 1.0 - p2;
+        color2.g = p2;
+        color2.a = 1.0;
+        traj_edge_marker.colors.push_back(color1);
+        traj_edge_marker.colors.push_back(color2);
+
+        // if(std::abs(v1->id() - v2->id()) > 2) {
+        //   traj_edge_marker.points[i * 2].z += 0.5 + keyframe_h;
+        //   traj_edge_marker.points[i * 2 + 1].z += 0.5 + keyframe_h;
+        // }
+      }
+    }
+    markers.markers.push_back(traj_edge_marker);
+
+    // keyframe plane edge markers
+    visualization_msgs::Marker traj_plane_edge_marker;
+    traj_plane_edge_marker.header.frame_id = map_frame_id;
+    traj_plane_edge_marker.header.stamp = stamp;
+    traj_plane_edge_marker.ns = "keyframe_plane_edges";
+    traj_plane_edge_marker.id = markers.markers.size();
+    traj_plane_edge_marker.type = visualization_msgs::Marker::LINE_LIST;
+    traj_plane_edge_marker.pose.orientation.w = 1.0;
+    traj_plane_edge_marker.scale.x = 0.01;
+
+    auto traj_plane_edge_itr = local_graph->edges().begin();
+    for(int i = 0; traj_plane_edge_itr != local_graph->edges().end(); traj_plane_edge_itr++, i++) {
+      g2o::HyperGraph::Edge* edge = *traj_plane_edge_itr;
+      g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
+
+      if(edge_plane) {
+        g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
+        g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
+
+        if(!v1 || !v2) continue;
+
+        Eigen::Vector3d pt1 = v1->estimate().translation();
+        Eigen::Vector3d pt2;
+
+        float r = 0, g = 0, b = 0.0;
+        pcl::CentroidPoint<PointNormal> centroid;
+        if(fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(1)) && fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(2))) {
+          for(auto x_plane : x_plane_snapshot) {
+            if(x_plane.id == v2->id()) {
+              double x = 0, y = 0;
+              for(int p = 0; p < x_plane.cloud_seg_map->points.size(); ++p) {
+                x += x_plane.cloud_seg_map->points[p].x;
+                y += x_plane.cloud_seg_map->points[p].y;
+              }
+              x = x / x_plane.cloud_seg_map->points.size();
+              y = y / x_plane.cloud_seg_map->points.size();
+              pt2 = Eigen::Vector3d(x, y, 0.0);
+            }
+          }
+          r = 0.0;
+        } else if(fabs(v2->estimate().normal()(1)) > fabs(v2->estimate().normal()(0)) && fabs(v2->estimate().normal()(1)) > fabs(v2->estimate().normal()(2))) {
+          for(auto y_plane : y_plane_snapshot) {
+            if(y_plane.id == v2->id()) {
+              double x = 0, y = 0;
+              for(int p = 0; p < y_plane.cloud_seg_map->points.size(); ++p) {
+                x += y_plane.cloud_seg_map->points[p].x;
+                y += y_plane.cloud_seg_map->points[p].y;
+              }
+              x = x / y_plane.cloud_seg_map->points.size();
+              y = y / y_plane.cloud_seg_map->points.size();
+              pt2 = Eigen::Vector3d(x, y, 0.0);
+            }
+          }
+          b = 0.0;
+        } else if(fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(0)) && fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(1))) {
+          for(auto h_plane : hort_plane_snapshot) {
+            if(h_plane.id == v2->id()) {
+              double x = 0, y = 0;
+              for(int p = 0; p < h_plane.cloud_seg_map->points.size(); ++p) {
+                x += h_plane.cloud_seg_map->points[p].x;
+                y += h_plane.cloud_seg_map->points[p].y;
+              }
+              x = x / h_plane.cloud_seg_map->points.size();
+              y = y / h_plane.cloud_seg_map->points.size();
+              pt2 = Eigen::Vector3d(x, y, 0.0);
+            }
+          }
+          r = 0;
+          g = 0.0;
+        } else
+          continue;
+
+        geometry_msgs::Point point1, point2;
+        point1.x = pt1.x();
+        point1.y = pt1.y();
+        point1.z = pt1.z() + keyframe_h;
+
+        point2.x = pt2.x();
+        point2.y = pt2.y();
+        point2.z = pt2.z() + plane_h;
+        traj_plane_edge_marker.points.push_back(point1);
+        traj_plane_edge_marker.points.push_back(point2);
+
+        std_msgs::ColorRGBA color1, color2;
+        color1.r = 0;
+        color1.g = 0;
+        color1.b = 0;
+        color1.a = 1.0;
+
+        color2.r = 0;
+        color2.g = 0;
+        color2.b = 0;
+        color2.a = 1.0;
+        traj_plane_edge_marker.colors.push_back(color1);
+        traj_plane_edge_marker.colors.push_back(color2);
+      }
+    }
+    markers.markers.push_back(traj_plane_edge_marker);
 
     // edge markers
     visualization_msgs::Marker edge_marker;
@@ -1686,7 +1841,7 @@ private:
       Eigen::Vector3d pos = keyframes.back()->node->estimate().translation();
       sphere_marker.pose.position.x = pos.x();
       sphere_marker.pose.position.y = pos.y();
-      sphere_marker.pose.position.z = pos.z();
+      sphere_marker.pose.position.z = pos.z() + keyframe_h;
     }
     sphere_marker.pose.orientation.w = 1.0;
     sphere_marker.scale.x = sphere_marker.scale.y = sphere_marker.scale.z = loop_detector->get_distance_thresh() * 2.0;
@@ -1698,9 +1853,9 @@ private:
     // x vertical plane markers
     visualization_msgs::Marker x_vert_plane_marker;
     x_vert_plane_marker.pose.orientation.w = 1.0;
-    x_vert_plane_marker.scale.x = 0.05;
-    x_vert_plane_marker.scale.y = 0.05;
-    x_vert_plane_marker.scale.z = 0.05;
+    x_vert_plane_marker.scale.x = 0.03;
+    x_vert_plane_marker.scale.y = 0.03;
+    x_vert_plane_marker.scale.z = 0.03;
     // plane_marker.points.resize(vert_planes.size());
     x_vert_plane_marker.header.frame_id = map_frame_id;
     x_vert_plane_marker.header.stamp = stamp;
@@ -1719,7 +1874,7 @@ private:
         geometry_msgs::Point point;
         point.x = x_plane_snapshot[i].cloud_seg_map->points[j].x;
         point.y = x_plane_snapshot[i].cloud_seg_map->points[j].y;
-        point.z = x_plane_snapshot[i].cloud_seg_map->points[j].z + 5.0;
+        point.z = x_plane_snapshot[i].cloud_seg_map->points[j].z + plane_h;
         x_vert_plane_marker.points.push_back(point);
         x_vert_plane_marker.colors.push_back(color);
       }
@@ -1729,9 +1884,9 @@ private:
     // y vertical plane markers
     visualization_msgs::Marker y_vert_plane_marker;
     y_vert_plane_marker.pose.orientation.w = 1.0;
-    y_vert_plane_marker.scale.x = 0.05;
-    y_vert_plane_marker.scale.y = 0.05;
-    y_vert_plane_marker.scale.z = 0.05;
+    y_vert_plane_marker.scale.x = 0.03;
+    y_vert_plane_marker.scale.y = 0.03;
+    y_vert_plane_marker.scale.z = 0.03;
     // plane_marker.points.resize(vert_planes.size());
     y_vert_plane_marker.header.frame_id = map_frame_id;
     y_vert_plane_marker.header.stamp = stamp;
@@ -1750,7 +1905,7 @@ private:
         geometry_msgs::Point point;
         point.x = y_plane_snapshot[i].cloud_seg_map->points[j].x;
         point.y = y_plane_snapshot[i].cloud_seg_map->points[j].y;
-        point.z = y_plane_snapshot[i].cloud_seg_map->points[j].z + 5.0;
+        point.z = y_plane_snapshot[i].cloud_seg_map->points[j].z + plane_h;
         y_vert_plane_marker.points.push_back(point);
         y_vert_plane_marker.colors.push_back(color);
       }
@@ -1760,9 +1915,9 @@ private:
     // horizontal plane markers
     visualization_msgs::Marker hort_plane_marker;
     hort_plane_marker.pose.orientation.w = 1.0;
-    hort_plane_marker.scale.x = 0.05;
-    hort_plane_marker.scale.y = 0.05;
-    hort_plane_marker.scale.z = 0.05;
+    hort_plane_marker.scale.x = 0.03;
+    hort_plane_marker.scale.y = 0.03;
+    hort_plane_marker.scale.z = 0.03;
     // plane_marker.points.resize(vert_planes.size());
     hort_plane_marker.header.frame_id = map_frame_id;
     hort_plane_marker.header.stamp = stamp;
@@ -1775,7 +1930,7 @@ private:
         geometry_msgs::Point point;
         point.x = hort_plane_snapshot[i].cloud_seg_map->points[j].x;
         point.y = hort_plane_snapshot[i].cloud_seg_map->points[j].y;
-        point.z = hort_plane_snapshot[i].cloud_seg_map->points[j].z + 5.0;
+        point.z = hort_plane_snapshot[i].cloud_seg_map->points[j].z + plane_h;
         hort_plane_marker.points.push_back(point);
       }
       hort_plane_marker.color.r = 1;
@@ -1784,10 +1939,10 @@ private:
     }
     markers.markers.push_back(hort_plane_marker);
 
-    float corridor_node_h = 10.5;
-    float corridor_text_h = 10;
-    float corridor_edge_h = 9.5;
-    float corridor_point_h = 5.0;
+    float corridor_node_h = 15;
+    float corridor_text_h = 12;
+    float corridor_edge_h = 14.5;
+    float corridor_point_h = 10.0;
 
     for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
       bool overlapped_corridor = false;
@@ -1805,7 +1960,7 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker corr_x_line_marker;
-      corr_x_line_marker.scale.x = 0.05;
+      corr_x_line_marker.scale.x = 0.02;
       corr_x_line_marker.pose.orientation.w = 1.0;
       if(!overlapped_corridor)
         corr_x_line_marker.ns = "corridor_x_lines";
@@ -1815,10 +1970,10 @@ private:
       corr_x_line_marker.header.stamp = stamp;
       corr_x_line_marker.id = markers.markers.size() + 1;
       corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      corr_x_line_marker.color.r = color_r;
-      corr_x_line_marker.color.g = color_g;
-      corr_x_line_marker.color.b = color_b;
-      corr_x_line_marker.color.a = 0.8;
+      corr_x_line_marker.color.r = 0;
+      corr_x_line_marker.color.g = 1;
+      corr_x_line_marker.color.b = 0;
+      corr_x_line_marker.color.a = 1.0;
       corr_x_line_marker.lifetime = ros::Duration(15.0);
       geometry_msgs::Point p1, p2, p3;
 
@@ -1834,7 +1989,7 @@ private:
       p1.z = corridor_edge_h;
       p2.x = cp1_pt.x;
       p2.y = cp1_pt.y;
-      p2.z = 5.0;
+      p2.z = plane_h;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p2);
 
@@ -1846,7 +2001,7 @@ private:
       centroid_p2.get(cp2_pt);
       p3.x = cp2_pt.x;
       p3.y = cp2_pt.y;
-      p3.z = 5.0;
+      p3.z = plane_h;
       corr_x_line_marker.points.push_back(p1);
       corr_x_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_x_line_marker);
@@ -1865,9 +2020,9 @@ private:
       corr_x_text_marker.pose.position.x = x_corridor_snapshot[i].node->estimate();
       corr_x_text_marker.pose.position.y = x_corridor_snapshot[i].keyframe_trans(1);
       corr_x_text_marker.pose.position.z = corridor_text_h;
-      corr_x_text_marker.color.r = color_r;
-      corr_x_text_marker.color.g = color_g;
-      corr_x_text_marker.color.b = color_b;
+      corr_x_text_marker.color.r = 0;
+      corr_x_text_marker.color.g = 1;
+      corr_x_text_marker.color.b = 0;
       corr_x_text_marker.color.a = 1;
       corr_x_text_marker.pose.orientation.w = 1.0;
       corr_x_text_marker.lifetime = ros::Duration(15.0);
@@ -1915,7 +2070,7 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker corr_y_line_marker;
-      corr_y_line_marker.scale.x = 0.05;
+      corr_y_line_marker.scale.x = 0.02;
       corr_y_line_marker.pose.orientation.w = 1.0;
       if(!overlapped_corridor)
         corr_y_line_marker.ns = "corridor_y_lines";
@@ -1925,10 +2080,10 @@ private:
       corr_y_line_marker.header.stamp = stamp;
       corr_y_line_marker.id = markers.markers.size() + 1;
       corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      corr_y_line_marker.color.r = color_r;
-      corr_y_line_marker.color.g = color_g;
-      corr_y_line_marker.color.b = color_b;
-      corr_y_line_marker.color.a = 0.8;
+      corr_y_line_marker.color.r = 0;
+      corr_y_line_marker.color.g = 1;
+      corr_y_line_marker.color.b = 0;
+      corr_y_line_marker.color.a = 1.0;
       corr_y_line_marker.lifetime = ros::Duration(15.0);
       geometry_msgs::Point p1, p2, p3;
 
@@ -1943,7 +2098,7 @@ private:
       p1.z = corridor_edge_h;
       p2.x = cp1_pt.x;
       p2.y = cp1_pt.y;
-      p2.z = 5.0;
+      p2.z = plane_h;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p2);
 
@@ -1955,7 +2110,7 @@ private:
       centroid_p2.get(cp2_pt);
       p3.x = cp2_pt.x;
       p3.y = cp2_pt.y;
-      p3.z = 5.0;
+      p3.z = plane_h;
       corr_y_line_marker.points.push_back(p1);
       corr_y_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_y_line_marker);
@@ -1974,9 +2129,9 @@ private:
       corr_y_text_marker.pose.position.x = y_corridor_snapshot[i].keyframe_trans(0);
       corr_y_text_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
       corr_y_text_marker.pose.position.z = corridor_text_h;
-      corr_y_text_marker.color.r = color_r;
-      corr_y_text_marker.color.g = color_g;
-      corr_y_text_marker.color.b = color_b;
+      corr_y_text_marker.color.r = 0;
+      corr_y_text_marker.color.g = 1;
+      corr_y_text_marker.color.b = 0;
       corr_y_text_marker.color.a = 1;
       corr_y_text_marker.pose.orientation.w = 1.0;
       corr_y_text_marker.lifetime = ros::Duration(15.0);
@@ -2009,10 +2164,10 @@ private:
     }
 
     // room markers
-    float room_node_h = 10.5;
-    float room_text_h = 10;
-    float room_edge_h = 9.5;
-    float room_point_h = 5.0;
+    float room_node_h = 15;
+    float room_text_h = 12;
+    float room_edge_h = 14.5;
+    float room_point_h = 10.0;
     visualization_msgs::Marker room_marker;
     room_marker.pose.orientation.w = 1.0;
     room_marker.scale.x = 0.5;
@@ -2048,9 +2203,9 @@ private:
       room_text_marker.pose.position.x = room_snapshot[i].node->estimate()(0);
       room_text_marker.pose.position.y = room_snapshot[i].node->estimate()(1);
       room_text_marker.pose.position.z = room_text_h;
-      room_text_marker.color.r = color_r;
-      room_text_marker.color.g = color_g;
-      room_text_marker.color.b = color_b;
+      room_text_marker.color.r = 1;
+      room_text_marker.color.g = 0.07;
+      room_text_marker.color.b = 0.57;
       room_text_marker.color.a = 1;
       room_text_marker.pose.orientation.w = 1.0;
       room_text_marker.text = "Room" + std::to_string(i + 1);
@@ -2059,17 +2214,17 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker room_line_marker;
-      room_line_marker.scale.x = 0.05;
+      room_line_marker.scale.x = 0.02;
       room_line_marker.pose.orientation.w = 1.0;
       room_line_marker.ns = "rooms_lines";
       room_line_marker.header.frame_id = map_frame_id;
       room_line_marker.header.stamp = stamp;
       room_line_marker.id = markers.markers.size() + 1;
       room_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      room_line_marker.color.r = color_r;
-      room_line_marker.color.g = color_g;
-      room_line_marker.color.b = color_b;
-      room_line_marker.color.a = 0.8;
+      room_line_marker.color.r = 1;
+      room_line_marker.color.g = 0.07;
+      room_line_marker.color.b = 0.57;
+      room_line_marker.color.a = 1.0;
       room_line_marker.lifetime = ros::Duration(15.0);
       geometry_msgs::Point p1, p2, p3, p4, p5;
       p1.x = room_snapshot[i].node->estimate()(0);
@@ -2086,7 +2241,7 @@ private:
         geometry_msgs::Point p_tmp;
         p_tmp.x = (*found_planex1).cloud_seg_map->points[p].x;
         p_tmp.y = (*found_planex1).cloud_seg_map->points[p].y;
-        p_tmp.z = corridor_point_h;
+        p_tmp.z = room_point_h;
 
         float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
 
@@ -2103,7 +2258,7 @@ private:
         geometry_msgs::Point p_tmp;
         p_tmp.x = (*found_planex2).cloud_seg_map->points[p].x;
         p_tmp.y = (*found_planex2).cloud_seg_map->points[p].y;
-        p_tmp.z = corridor_point_h;
+        p_tmp.z = room_point_h;
 
         float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
 
@@ -2120,7 +2275,7 @@ private:
         geometry_msgs::Point p_tmp;
         p_tmp.x = (*found_planey1).cloud_seg_map->points[p].x;
         p_tmp.y = (*found_planey1).cloud_seg_map->points[p].y;
-        p_tmp.z = corridor_point_h;
+        p_tmp.z = room_point_h;
 
         float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
 
@@ -2137,7 +2292,7 @@ private:
         geometry_msgs::Point p_tmp;
         p_tmp.x = (*found_planey2).cloud_seg_map->points[p].x;
         p_tmp.y = (*found_planey2).cloud_seg_map->points[p].y;
-        p_tmp.z = corridor_point_h;
+        p_tmp.z = room_point_h;
 
         float norm = std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) + std::pow((p1.z - p_tmp.z), 2));
 
@@ -2155,7 +2310,7 @@ private:
 
     // check for xcorridor neighbours and draw lines between them
     visualization_msgs::Marker x_corr_neighbour_line_marker;
-    x_corr_neighbour_line_marker.scale.x = 0.05;
+    x_corr_neighbour_line_marker.scale.x = 0.02;
     x_corr_neighbour_line_marker.pose.orientation.w = 1.0;
     x_corr_neighbour_line_marker.ns = "x_corr_neighbour_lines";
     x_corr_neighbour_line_marker.header.frame_id = map_frame_id;
@@ -2165,7 +2320,7 @@ private:
     x_corr_neighbour_line_marker.color.r = 1;
     x_corr_neighbour_line_marker.color.g = 0;
     x_corr_neighbour_line_marker.color.b = 0;
-    x_corr_neighbour_line_marker.color.a = 0.8;
+    x_corr_neighbour_line_marker.color.a = 1.0;
     x_corr_neighbour_line_marker.lifetime = ros::Duration(15.0);
 
     for(const auto& x_corridor : x_corridor_snapshot) {
@@ -2211,7 +2366,7 @@ private:
 
     // check for ycorridor neighbours and draw lines between them
     visualization_msgs::Marker y_corr_neighbour_line_marker;
-    y_corr_neighbour_line_marker.scale.x = 0.05;
+    y_corr_neighbour_line_marker.scale.x = 0.02;
     y_corr_neighbour_line_marker.pose.orientation.w = 1.0;
     y_corr_neighbour_line_marker.ns = "y_corr_neighbour_lines";
     y_corr_neighbour_line_marker.header.frame_id = map_frame_id;
@@ -2221,7 +2376,7 @@ private:
     y_corr_neighbour_line_marker.color.r = 1;
     y_corr_neighbour_line_marker.color.g = 0;
     y_corr_neighbour_line_marker.color.b = 0;
-    y_corr_neighbour_line_marker.color.a = 0.8;
+    y_corr_neighbour_line_marker.color.a = 1.0;
     y_corr_neighbour_line_marker.lifetime = ros::Duration(15.0);
 
     for(const auto& y_corridor : y_corridor_snapshot) {
@@ -2267,7 +2422,7 @@ private:
 
     // check the neighbours for the rooms and draw lines between them
     visualization_msgs::Marker room_neighbour_line_marker;
-    room_neighbour_line_marker.scale.x = 0.05;
+    room_neighbour_line_marker.scale.x = 0.02;
     room_neighbour_line_marker.pose.orientation.w = 1.0;
     room_neighbour_line_marker.ns = "room_neighbour_lines";
     room_neighbour_line_marker.header.frame_id = map_frame_id;
@@ -2277,7 +2432,7 @@ private:
     room_neighbour_line_marker.color.r = 1;
     room_neighbour_line_marker.color.g = 0;
     room_neighbour_line_marker.color.b = 0;
-    room_neighbour_line_marker.color.a = 0.8;
+    room_neighbour_line_marker.color.a = 1.0;
     room_neighbour_line_marker.lifetime = ros::Duration(15.0);
 
     for(const auto& room : room_snapshot) {
