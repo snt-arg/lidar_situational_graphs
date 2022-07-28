@@ -268,15 +268,15 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         dupl_x_vert_planes.push_back(dupl_plane_pair);
       }
 
-      // std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-      // std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-      // std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+      std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+      std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
 
-      // std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
-      // std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
-      // std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
+      std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
+      std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
       if(use_parallel_plane_constraint && found_new_plane) {
         parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
@@ -376,15 +376,15 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         dupl_y_vert_planes.push_back(dupl_plane_pair);
       }
 
-      // std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-      // std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-      // std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+      std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+      std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
 
-      // std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
-      // std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
-      // std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
+      std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
+      std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
       if(use_parallel_plane_constraint && found_new_plane) {
         parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);

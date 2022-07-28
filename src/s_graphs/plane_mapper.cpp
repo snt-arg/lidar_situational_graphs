@@ -264,9 +264,9 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
           dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
           cloud_seg_detected->points.push_back(dst_pt);
         }
-        min_segment = plane_utils->get_min_segment(x_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
+        bool valid_neighbour = plane_utils->check_point_neighbours(x_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
 
-        if(min_segment > plane_points_dist) {
+        if(!valid_neighbour) {
           data_association.first = -1;
         }
       } else
@@ -301,9 +301,9 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
           dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
           cloud_seg_detected->points.push_back(dst_pt);
         }
-        min_segment = plane_utils->get_min_segment(y_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
+        bool valid_neighbour = plane_utils->check_point_neighbours(y_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
 
-        if(min_segment > plane_points_dist) {
+        if(!valid_neighbour) {
           data_association.first = -1;
         }
       } else

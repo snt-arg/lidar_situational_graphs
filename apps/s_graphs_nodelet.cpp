@@ -874,7 +874,7 @@ private:
 
     if((graph_slam->optimize(num_iterations)) > 0 && !constant_covariance) compute_plane_cov();
 
-    merge_duplicate_planes();
+    // merge_duplicate_planes();
 
     vert_plane_snapshot_mutex.lock();
     x_vert_planes_snapshot = x_vert_planes;
@@ -1042,7 +1042,22 @@ private:
    * @brief merge all the duplicate x and y planes detected by room/corridors
    */
   void merge_duplicate_planes() {
-    for(auto it = dupl_x_vert_planes.begin(); it != dupl_x_vert_planes.end(); ++it) {
+    std::deque<std::pair<VerticalPlanes, VerticalPlanes>> curr_dupl_x_vert_planes;
+    // check the number of occurances of the same duplicate planes
+    for(auto it_1 = dupl_x_vert_planes.begin(); it_1 != dupl_x_vert_planes.end(); ++it_1) {
+      int id_count = 0;
+      int current_id = (*it_1).second.id;
+      for(auto it_2 = dupl_x_vert_planes.begin(); it_2 != dupl_x_vert_planes.end(); ++it_2) {
+        if(current_id == (*it_2).second.id) {
+          id_count++;
+        }
+      }
+      if(id_count > 3) {
+        curr_dupl_x_vert_planes.push_back(*it_1);
+      }
+    }
+
+    for(auto it = curr_dupl_x_vert_planes.begin(); it != curr_dupl_x_vert_planes.end(); ++it) {
       std::set<g2o::HyperGraph::Edge*> edges = (*it).first.plane_node->edges();
 
       for(auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
@@ -1119,9 +1134,33 @@ private:
         std::cout << "removed x vert plane " << std::endl;
       }
     }
-    dupl_x_vert_planes.clear();
 
-    for(auto it = dupl_y_vert_planes.begin(); it != dupl_y_vert_planes.end(); ++it) {
+    // remove only the current detected duplicate planes
+    for(int i = 0; i < curr_dupl_x_vert_planes.size(); ++i) {
+      for(int j = 0; j < dupl_x_vert_planes.size();) {
+        if(curr_dupl_x_vert_planes[i].second.id == dupl_x_vert_planes[j].second.id) {
+          dupl_x_vert_planes.erase(dupl_x_vert_planes.begin() + j);
+        } else
+          ++j;
+      }
+    }
+
+    std::deque<std::pair<VerticalPlanes, VerticalPlanes>> curr_dupl_y_vert_planes;
+    // check the number of occurances of the same duplicate planes
+    for(auto it_1 = dupl_y_vert_planes.begin(); it_1 != dupl_y_vert_planes.end(); ++it_1) {
+      int id_count = 0;
+      int current_id = (*it_1).second.id;
+      for(auto it_2 = dupl_y_vert_planes.begin(); it_2 != dupl_y_vert_planes.end(); ++it_2) {
+        if(current_id == (*it_2).second.id) {
+          id_count++;
+        }
+      }
+      if(id_count > 3) {
+        curr_dupl_y_vert_planes.push_back(*it_1);
+      }
+    }
+
+    for(auto it = curr_dupl_y_vert_planes.begin(); it != curr_dupl_y_vert_planes.end(); ++it) {
       std::set<g2o::HyperGraph::Edge*> edges = (*it).first.plane_node->edges();
 
       for(auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
@@ -1194,7 +1233,16 @@ private:
         std::cout << "removed y vert plane " << std::endl;
       }
     }
-    dupl_y_vert_planes.clear();
+
+    // remove only the current detected duplicate planes
+    for(int i = 0; i < curr_dupl_y_vert_planes.size(); ++i) {
+      for(int j = 0; j < dupl_y_vert_planes.size();) {
+        if(curr_dupl_y_vert_planes[i].second.id == dupl_y_vert_planes[j].second.id) {
+          dupl_y_vert_planes.erase(dupl_y_vert_planes.begin() + j);
+        } else
+          ++j;
+      }
+    }
   }
 
   /**
