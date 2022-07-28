@@ -67,10 +67,10 @@ private:
     map_planes_sub = nh.subscribe("/s_graphs/map_planes", 100, &RoomSegmentationNodelet::map_planes_callback, this);
 
     cluster_cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_cloud", 1, true);
-    hull_cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/hull_cloud", 1, true);
     cluster_clouds_pub = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_clouds", 1, true);
     room_data_pub = nh.advertise<s_graphs::RoomsData>("/room_segmentation/room_data", 1, false);
     room_centers_pub = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_centers", 1, true);
+    refined_skeleton_graph_pub = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/refined_skeleton_graph", 1, true);
 
     room_detection_timer = nh.createWallTimer(ros::WallDuration(3.0), &RoomSegmentationNodelet::room_detection_callback, this);
   }
@@ -149,13 +149,16 @@ private:
    */
   void extract_rooms(std::vector<s_graphs::PlaneData> current_x_vert_planes, std::vector<s_graphs::PlaneData> current_y_vert_planes) {
     int room_cluster_counter = 0;
+    visualization_msgs::MarkerArray refined_skeleton_marker_array;
     std::vector<s_graphs::RoomData> room_candidates_vec;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->get_cloud_clusters();
     std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->get_connected_graph();
+    visualization_msgs::MarkerArray skeleton_marker_array = room_analyzer->get_makerarray_clusters();
 
+    int cluster_id = 0;
     for(const auto& cloud_cluster : curr_cloud_clusters) {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull(new pcl::PointCloud<pcl::PointXYZRGB>);
 
@@ -168,10 +171,15 @@ private:
         continue;
       }
 
-      room_analyzer->perform_room_segmentation(current_x_vert_planes, current_y_vert_planes, room_cluster_counter, cloud_cluster, cloud_hull, room_candidates_vec, connected_subgraph_map);
+      bool found_room = room_analyzer->perform_room_segmentation(current_x_vert_planes, current_y_vert_planes, room_cluster_counter, cloud_cluster, cloud_hull, room_candidates_vec, connected_subgraph_map);
+      if(found_room) {
+        refined_skeleton_marker_array.markers.push_back(skeleton_marker_array.markers[2 * cluster_id]);
+        refined_skeleton_marker_array.markers.push_back(skeleton_marker_array.markers[2 * cluster_id + 1]);
+      }
       for(int i = 0; i < cloud_cluster->points.size(); ++i) {
         cloud_visualizer->points.push_back(cloud_cluster->points[i]);
       }
+      cluster_id++;
     }
 
     s_graphs::RoomsData room_candidates_msg;
@@ -185,6 +193,8 @@ private:
     cloud_cluster_msg.header.stamp = ros::Time::now();
     cloud_cluster_msg.header.frame_id = "map";
     cluster_cloud_pub.publish(cloud_cluster_msg);
+
+    refined_skeleton_graph_pub.publish(refined_skeleton_marker_array);
   }
 
   void viz_room_centers(s_graphs::RoomsData room_vec) {
@@ -231,10 +241,10 @@ private:
   ros::Subscriber skeleton_graph_sub;
   ros::Subscriber map_planes_sub;
   ros::Publisher cluster_cloud_pub;
-  ros::Publisher hull_cloud_pub;
   ros::Publisher cluster_clouds_pub;
   ros::Publisher room_data_pub;
   ros::Publisher room_centers_pub;
+  ros::Publisher refined_skeleton_graph_pub;
 
   /* private variables */
 private:

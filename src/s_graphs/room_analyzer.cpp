@@ -21,6 +21,7 @@ void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray:
   cloud_clusters_.clear();
   connected_subgraphs_.clear();
 
+  visualization_msgs::MarkerArray curr_connected_clusters_marker_array;
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters;
   int subgraph_id = 0;
   std::vector<std::pair<int, int>> connected_subgraph_map;
@@ -45,7 +46,14 @@ void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray:
       // insert subgraph id in the seq
       tmp_cloud_cluster->header.seq = subgraph_id;
       curr_cloud_clusters.push_back(tmp_cloud_cluster);
+      curr_connected_clusters_marker_array.markers.push_back(single_graph);
       subgraph_id++;
+    }
+
+    std::string edge_string = "connected_edges_";
+    size_t edge_found = single_graph.ns.find(edge_string);
+    if(edge_found != std::string::npos) {
+      curr_connected_clusters_marker_array.markers.push_back(single_graph);
     }
 
     // get the connected subsgraphs
@@ -77,17 +85,10 @@ void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray:
 
   cloud_clusters_ = curr_cloud_clusters;
   connected_subgraphs_ = connected_subgraph_map;
+  connected_clusters_marker_array_ = curr_connected_clusters_marker_array;
   skeleton_graph_mutex.unlock();
 
   return;
-}
-
-std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> RoomAnalyzer::get_cloud_clusters() {
-  return cloud_clusters_;
-}
-
-std::vector<std::pair<int, int>> RoomAnalyzer::get_connected_graph() {
-  return connected_subgraphs_;
 }
 
 geometry_msgs::Point RoomAnalyzer::get_room_length(pcl::PointXY p1, pcl::PointXY p2) {
@@ -266,7 +267,7 @@ void RoomAnalyzer::get_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skelet
   return;
 }
 
-void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map) {
+bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map) {
   pcl::PointXY p1;
   pcl::PointXY p2;
   get_cluster_endpoints(cloud_cluster, p1, p2);
@@ -287,6 +288,7 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
   // TODO:HB check room width here
   if(room_length.x < 0.5 || room_length.y < 0.5) {
     room_cluster_counter++;
+    return false;
   } else {
     // check how many planes are extracted
     // if four planes are found its a bounded room
@@ -326,33 +328,33 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
 
       if(x_plane_width < room_width_threshold || y_plane_width < room_width_threshold) {
         std::cout << "returning as the room is not sufficiently wide" << std::endl;
-        return;
+        return false;
       }
 
       if(!check_x1yplane_alignment(x_plane1.plane_points, y_plane1.plane_points) || !check_x1yplane_alignment(x_plane1.plane_points, y_plane2.plane_points)) {
         std::cout << "returning as not a valid room configuration" << std::endl;
-        return;
+        return false;
       }
 
       if(!check_x2yplane_alignment(x_plane2.plane_points, y_plane1.plane_points) || !check_x2yplane_alignment(x_plane2.plane_points, y_plane2.plane_points)) {
         std::cout << "returning as not a valid room configuration" << std::endl;
-        return;
+        return false;
       }
 
       if(!check_y1xplane_alignment(y_plane1.plane_points, x_plane1.plane_points) || !check_y1xplane_alignment(y_plane1.plane_points, x_plane2.plane_points)) {
         std::cout << "returning as not a valid room configuration" << std::endl;
-        return;
+        return false;
       }
 
       if(!check_y2xplane_alignment(y_plane2.plane_points, x_plane1.plane_points) || !check_y2xplane_alignment(y_plane2.plane_points, x_plane2.plane_points)) {
         std::cout << "returning as not a valid room configuration" << std::endl;
-        return;
+        return false;
       }
       geometry_msgs::Point room_center = get_room_center(p1, p2, x_plane1, x_plane2, y_plane1, y_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         std::cout << "returning as the room center is outside the cluster" << std::endl;
-        return;
+        return false;
       }
 
       std::vector<int> neighbour_ids;
@@ -362,6 +364,13 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
         else if(connected_ids.second == cloud_cluster->header.seq)
           neighbour_ids.push_back(connected_ids.first);
       }
+
+      // clear plane points which are not required now
+      x_plane1.plane_points.clear();
+      x_plane2.plane_points.clear();
+      y_plane1.plane_points.clear();
+      y_plane2.plane_points.clear();
+
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
       room_candidate.neighbour_ids = neighbour_ids;
@@ -373,6 +382,7 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_candidate.y_planes.push_back(y_plane2);
       room_candidates_vec.push_back(room_candidate);
       room_cluster_counter++;
+      return true;
     }
     // if found only two x planes are found at x corridor
     else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
@@ -382,14 +392,14 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       float x_plane_width = plane_utils->width_between_planes(x_plane1, x_plane2);
       if(x_plane_width < room_width_threshold) {
         std::cout << "returning as the room is not sufficiently wide" << std::endl;
-        return;
+        return false;
       }
 
       geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         std::cout << "returning as the room center is outside the cluster" << std::endl;
-        return;
+        return false;
       }
 
       std::vector<int> neighbour_ids;
@@ -399,6 +409,12 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
         else if(connected_ids.second == cloud_cluster->header.seq)
           neighbour_ids.push_back(connected_ids.first);
       }
+
+      // clear plane points which are not required now
+      x_plane1.plane_points.clear();
+      x_plane2.plane_points.clear();
+      y_plane1.plane_points.clear();
+      y_plane2.plane_points.clear();
 
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
@@ -409,6 +425,7 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_candidate.x_planes.push_back(x_plane2);
       room_candidates_vec.push_back(room_candidate);
       room_cluster_counter++;
+      return true;
     }
     // if found only two y planes are found at y corridor
     else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
@@ -418,14 +435,14 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       float y_plane_width = plane_utils->width_between_planes(y_plane1, y_plane2);
       if(y_plane_width < room_width_threshold) {
         std::cout << "returning as the room is not sufficiently wide" << std::endl;
-        return;
+        return false;
       }
 
       geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         std::cout << "returning as the room center is outside the cluster" << std::endl;
-        return;
+        return false;
       }
 
       std::vector<int> neighbour_ids;
@@ -436,6 +453,12 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
           neighbour_ids.push_back(connected_ids.first);
       }
 
+      // clear plane points which are not required now
+      x_plane1.plane_points.clear();
+      x_plane2.plane_points.clear();
+      y_plane1.plane_points.clear();
+      y_plane2.plane_points.clear();
+
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
       room_candidate.neighbour_ids = neighbour_ids;
@@ -444,16 +467,13 @@ void RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_candidate.y_planes.push_back(y_plane1);
       room_candidate.y_planes.push_back(y_plane2);
       room_candidates_vec.push_back(room_candidate);
+      return true;
     } else {
       room_cluster_counter++;
+      return false;
     }
-
-    // clear plane points which are not required now
-    x_plane1.plane_points.clear();
-    x_plane2.plane_points.clear();
-    y_plane1.plane_points.clear();
-    y_plane2.plane_points.clear();
   }
+  return false;
 }
 
 void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
