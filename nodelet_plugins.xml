@@ -10,10 +10,6 @@
   <class name="s_graphs/PrefilteringNodelet" type="s_graphs::PrefilteringNodelet" base_class_type="nodelet::Nodelet" />
 </library>
 
-<library path="lib/libs_graphs_plane_segmentation_nodelet">
-  <class name="s_graphs/PlaneSegmentationNodelet" type="s_graphs::PlaneSegmentationNodelet" base_class_type="nodelet::Nodelet" />
-</library>
-
 <library path="lib/libs_graphs_room_segmentation_nodelet">
   <class name="s_graphs/RoomSegmentationNodelet" type="s_graphs::RoomSegmentationNodelet" base_class_type="nodelet::Nodelet" />
 </library>

@@ -97,13 +97,6 @@ target_link_libraries(s_graphs_prefiltering_nodelet
   ${PCL_LIBRARIES}
 )
 
-add_library(s_graphs_plane_segmentation_nodelet apps/plane_segmentation_nodelet.cpp)
-target_link_libraries(s_graphs_plane_segmentation_nodelet
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
-add_dependencies(s_graphs_plane_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
-
 add_library(s_graphs_room_segmentation_nodelet 
   apps/room_segmentation_nodelet.cpp 
   src/s_graphs/room_analyzer.cpp
