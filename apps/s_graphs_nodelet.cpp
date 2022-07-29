@@ -1853,9 +1853,9 @@ private:
     // x vertical plane markers
     visualization_msgs::Marker x_vert_plane_marker;
     x_vert_plane_marker.pose.orientation.w = 1.0;
-    x_vert_plane_marker.scale.x = 0.03;
-    x_vert_plane_marker.scale.y = 0.03;
-    x_vert_plane_marker.scale.z = 0.03;
+    x_vert_plane_marker.scale.x = 0.05;
+    x_vert_plane_marker.scale.y = 0.05;
+    x_vert_plane_marker.scale.z = 0.05;
     // plane_marker.points.resize(vert_planes.size());
     x_vert_plane_marker.header.frame_id = map_frame_id;
     x_vert_plane_marker.header.stamp = stamp;
@@ -1869,7 +1869,7 @@ private:
       color.r = x_plane_snapshot[i].color[0] / 255;
       color.g = x_plane_snapshot[i].color[1] / 255;
       color.b = x_plane_snapshot[i].color[2] / 255;
-      color.a = 1.0;
+      color.a = 0.5;
       for(size_t j = 0; j < x_plane_snapshot[i].cloud_seg_map->size(); ++j) {
         geometry_msgs::Point point;
         point.x = x_plane_snapshot[i].cloud_seg_map->points[j].x;
@@ -1884,9 +1884,9 @@ private:
     // y vertical plane markers
     visualization_msgs::Marker y_vert_plane_marker;
     y_vert_plane_marker.pose.orientation.w = 1.0;
-    y_vert_plane_marker.scale.x = 0.03;
-    y_vert_plane_marker.scale.y = 0.03;
-    y_vert_plane_marker.scale.z = 0.03;
+    y_vert_plane_marker.scale.x = 0.05;
+    y_vert_plane_marker.scale.y = 0.05;
+    y_vert_plane_marker.scale.z = 0.05;
     // plane_marker.points.resize(vert_planes.size());
     y_vert_plane_marker.header.frame_id = map_frame_id;
     y_vert_plane_marker.header.stamp = stamp;
@@ -1900,7 +1900,7 @@ private:
       color.r = y_plane_snapshot[i].color[0] / 255;
       color.g = y_plane_snapshot[i].color[1] / 255;
       color.b = y_plane_snapshot[i].color[2] / 255;
-      color.a = 1.0;
+      color.a = 0.5;
       for(size_t j = 0; j < y_plane_snapshot[i].cloud_seg_map->size(); ++j) {
         geometry_msgs::Point point;
         point.x = y_plane_snapshot[i].cloud_seg_map->points[j].x;
@@ -1915,9 +1915,9 @@ private:
     // horizontal plane markers
     visualization_msgs::Marker hort_plane_marker;
     hort_plane_marker.pose.orientation.w = 1.0;
-    hort_plane_marker.scale.x = 0.03;
-    hort_plane_marker.scale.y = 0.03;
-    hort_plane_marker.scale.z = 0.03;
+    hort_plane_marker.scale.x = 0.05;
+    hort_plane_marker.scale.y = 0.05;
+    hort_plane_marker.scale.z = 0.05;
     // plane_marker.points.resize(vert_planes.size());
     hort_plane_marker.header.frame_id = map_frame_id;
     hort_plane_marker.header.stamp = stamp;
@@ -1935,7 +1935,7 @@ private:
       }
       hort_plane_marker.color.r = 1;
       hort_plane_marker.color.g = 0.65;
-      hort_plane_marker.color.a = 1.0;
+      hort_plane_marker.color.a = 0.5;
     }
     markers.markers.push_back(hort_plane_marker);
 
@@ -1960,7 +1960,7 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker corr_x_line_marker;
-      corr_x_line_marker.scale.x = 0.04;
+      corr_x_line_marker.scale.x = 0.02;
       corr_x_line_marker.pose.orientation.w = 1.0;
       if(!overlapped_corridor)
         corr_x_line_marker.ns = "corridor_x_lines";
@@ -2080,7 +2080,7 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker corr_y_line_marker;
-      corr_y_line_marker.scale.x = 0.04;
+      corr_y_line_marker.scale.x = 0.02;
       corr_y_line_marker.pose.orientation.w = 1.0;
       if(!overlapped_corridor)
         corr_y_line_marker.ns = "corridor_y_lines";
@@ -2235,7 +2235,7 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker room_line_marker;
-      room_line_marker.scale.x = 0.04;
+      room_line_marker.scale.x = 0.02;
       room_line_marker.pose.orientation.w = 1.0;
       room_line_marker.ns = "rooms_lines";
       room_line_marker.header.frame_id = map_frame_id;
@@ -2331,7 +2331,7 @@ private:
 
     // check for xcorridor neighbours and draw lines between them
     visualization_msgs::Marker x_corr_neighbour_line_marker;
-    x_corr_neighbour_line_marker.scale.x = 0.04;
+    x_corr_neighbour_line_marker.scale.x = 0.02;
     x_corr_neighbour_line_marker.pose.orientation.w = 1.0;
     x_corr_neighbour_line_marker.ns = "x_corr_neighbour_lines";
     x_corr_neighbour_line_marker.header.frame_id = map_frame_id;
@@ -2387,7 +2387,7 @@ private:
 
     // check for ycorridor neighbours and draw lines between them
     visualization_msgs::Marker y_corr_neighbour_line_marker;
-    y_corr_neighbour_line_marker.scale.x = 0.04;
+    y_corr_neighbour_line_marker.scale.x = 0.02;
     y_corr_neighbour_line_marker.pose.orientation.w = 1.0;
     y_corr_neighbour_line_marker.ns = "y_corr_neighbour_lines";
     y_corr_neighbour_line_marker.header.frame_id = map_frame_id;
@@ -2443,7 +2443,7 @@ private:
 
     // check the neighbours for the rooms and draw lines between them
     visualization_msgs::Marker room_neighbour_line_marker;
-    room_neighbour_line_marker.scale.x = 0.04;
+    room_neighbour_line_marker.scale.x = 0.02;
     room_neighbour_line_marker.pose.orientation.w = 1.0;
     room_neighbour_line_marker.ns = "room_neighbour_lines";
     room_neighbour_line_marker.header.frame_id = map_frame_id;

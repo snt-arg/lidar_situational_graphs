@@ -110,6 +110,7 @@ add_dependencies(s_graphs_room_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PR
 add_library(s_graphs_floor_plan_nodelet 
   apps/floor_plan_nodelet.cpp
   src/s_graphs/room_analyzer.cpp
+  src/s_graphs/floor_analyzer.cpp
 )
 target_link_libraries(s_graphs_floor_plan_nodelet
   ${catkin_LIBRARIES}
@@ -117,7 +118,9 @@ target_link_libraries(s_graphs_floor_plan_nodelet
 )
 add_dependencies(s_graphs_floor_plan_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_library(s_graphs_floor_detection_nodelet apps/floor_detection_nodelet.cpp)
+add_library(s_graphs_floor_detection_nodelet 
+    apps/floor_detection_nodelet.cpp
+)
 target_link_libraries(s_graphs_floor_detection_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}

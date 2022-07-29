@@ -91,7 +91,7 @@ void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray:
   return;
 }
 
-geometry_msgs::Point RoomAnalyzer::get_room_length(pcl::PointXY p1, pcl::PointXY p2) {
+geometry_msgs::Point RoomAnalyzer::get_room_length(const pcl::PointXY& p1, const pcl::PointXY& p2) {
   geometry_msgs::Point length;
   if(fabs(p1.x) > fabs(p2.x)) {
     length.x = fabs(p1.x - p2.x);
@@ -108,9 +108,8 @@ geometry_msgs::Point RoomAnalyzer::get_room_length(pcl::PointXY p1, pcl::PointXY
   return length;
 }
 
-geometry_msgs::Point RoomAnalyzer::get_room_center(pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData x_plane1, s_graphs::PlaneData x_plane2, s_graphs::PlaneData y_plane1, s_graphs::PlaneData y_plane2) {
+geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
   geometry_msgs::Point center;
-
   if(fabs(x_plane1.d) > fabs(x_plane2.d)) {
     double size = x_plane1.d - x_plane2.d;
     center.x = (((size) / 2) + x_plane2.d);
@@ -133,7 +132,7 @@ geometry_msgs::Point RoomAnalyzer::get_room_center(pcl::PointXY p1, pcl::PointXY
 geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2) {
   geometry_msgs::Point center;
 
-  if(plane_type == plane_class::X_VERT_PLANE) {
+  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     if(fabs(plane1.d) > fabs(plane2.d)) {
       double size = plane1.d - plane2.d;
       center.x = (((size) / 2) + plane2.d);
@@ -151,7 +150,7 @@ geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::Poin
     }
   }
 
-  if(plane_type == plane_class::Y_VERT_PLANE) {
+  if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     if(fabs(plane1.d) > fabs(plane2.d)) {
       double size = plane1.d - plane2.d;
       center.y = (((size) / 2) + plane2.d);
@@ -350,7 +349,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
         std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
-      geometry_msgs::Point room_center = get_room_center(p1, p2, x_plane1, x_plane2, y_plane1, y_plane2);
+      geometry_msgs::Point room_center = get_room_center(x_plane1, x_plane2, y_plane1, y_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         std::cout << "returning as the room center is outside the cluster" << std::endl;
@@ -583,7 +582,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     if(use_max_neighbours_algo) {
       bool planes_placed_correctly = false;
       if(!x_plane1.plane_points.empty() && !x_plane2.plane_points.empty()) {
-        planes_placed_correctly = compute_point_difference(x_plane1.plane_points.back().x, x_plane2.plane_points.back().x);
+        planes_placed_correctly = plane_utils->compute_point_difference(x_plane1.plane_points.back().x, x_plane2.plane_points.back().x);
       }
 
       if(max_x1_neighbours >= min_neighbors_thres && planes_placed_correctly) {
@@ -707,7 +706,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     if(use_max_neighbours_algo) {
       bool planes_placed_correctly = false;
       if(!y_plane1.plane_points.empty() && !y_plane2.plane_points.empty()) {
-        planes_placed_correctly = compute_point_difference(y_plane1.plane_points.back().y, y_plane2.plane_points.back().y);
+        planes_placed_correctly = plane_utils->compute_point_difference(y_plane1.plane_points.back().y, y_plane2.plane_points.back().y);
       }
 
       if(max_y1_neighbours >= min_neighbors_thres && planes_placed_correctly) {
@@ -741,12 +740,6 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
       }
     }
   }
-}
-
-bool RoomAnalyzer::compute_point_difference(const double plane1_point, const double plane2_point) {
-  if((plane1_point - plane2_point) > 0) return false;
-
-  return true;
 }
 
 bool RoomAnalyzer::check_x1yplane_alignment(const std::vector<geometry_msgs::Vector3> x_plane1_points, const std::vector<geometry_msgs::Vector3> y_plane_points) {

@@ -11,6 +11,7 @@
 #include <s_graphs/PlanesData.h>
 #include <s_graphs/room_analyzer.hpp>
 #include <s_graphs/plane_utils.hpp>
+#include <s_graphs/floor_analyzer.hpp>
 
 #include <ros/ros.h>
 #include <ros/time.h>
@@ -38,6 +39,7 @@ private:
   void initialize_params() {
     plane_utils.reset(new PlaneUtils());
     room_analyzer.reset(new RoomAnalyzer(private_nh, plane_utils));
+    floor_analyzer.reset(new FloorAnalyzer(private_nh, plane_utils));
   }
 
   void init_ros() {
@@ -46,6 +48,7 @@ private:
 
     floor_plane_timer = nh.createWallTimer(ros::WallDuration(10.0), &FloorPlanNodelet::floor_plan_callback, this);
     all_rooms_data_pub = nh.advertise<s_graphs::RoomsData>("/floor_plan/all_rooms_data", 1, false);
+    floor_data_pub = nh.advertise<s_graphs::RoomData>("/floor_plan/floor_data", 1, false);
   }
 
   template<typename T>
@@ -112,6 +115,7 @@ private:
 
     auto t1 = ros::WallTime::now();
     extract_rooms(current_x_vert_planes, current_y_vert_planes);
+    extract_floors(current_x_vert_planes, current_y_vert_planes);
     auto t2 = ros::WallTime::now();
     std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
   }
@@ -143,18 +147,36 @@ private:
     }
   }
 
+  void extract_floors(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes) {
+    std::vector<s_graphs::PlaneData> floor_plane_candidates_vec;
+    floor_analyzer->perform_floor_segmentation(current_x_vert_planes, current_y_vert_planes, floor_plane_candidates_vec);
+
+    geometry_msgs::Point floor_center;
+    if(floor_plane_candidates_vec.size() == 4) {
+      floor_center = room_analyzer->get_room_center(floor_plane_candidates_vec[0], floor_plane_candidates_vec[1], floor_plane_candidates_vec[2], floor_plane_candidates_vec[3]);
+    }
+
+    s_graphs::RoomData floor_data_msg;
+    floor_data_msg.header.stamp = ros::Time::now();
+    floor_data_msg.id = 0;
+    floor_data_msg.room_center = floor_center;
+    floor_data_pub.publish(floor_data_msg);
+  }
+
 private:
   ros::NodeHandle nh;
   ros::NodeHandle private_nh;
   ros::Subscriber skeleton_graph_sub;
   ros::Subscriber map_planes_sub;
   ros::Publisher all_rooms_data_pub;
+  ros::Publisher floor_data_pub;
 
 private:
   ros::WallTimer floor_plane_timer;
 
 private:
   std::unique_ptr<RoomAnalyzer> room_analyzer;
+  std::unique_ptr<FloorAnalyzer> floor_analyzer;
   std::shared_ptr<PlaneUtils> plane_utils;
 
   std::mutex map_plane_mutex;

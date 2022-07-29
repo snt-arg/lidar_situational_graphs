@@ -189,6 +189,12 @@ public:
     }
     return valid_neighbour;
   }
+
+  bool compute_point_difference(const double plane1_point, const double plane2_point) {
+    if((plane1_point - plane2_point) > 0) return false;
+
+    return true;
+  }
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP

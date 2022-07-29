@@ -110,11 +110,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         std::vector<double> color;
-        if(keyframe->cloud_seg_body->back().r > 10)
-          color.push_back(keyframe->cloud_seg_body->back().r);  // red
-        else
-          color.push_back(255);  // red
-
+        color.push_back(255);  // red
         color.push_back(0.0);  // green
         color.push_back(0.0);  // blue
         vert_plane.color = color;
@@ -151,10 +147,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
         std::vector<double> color;
         color.push_back(0.0);  // red
         color.push_back(0.0);  // green
-        if(keyframe->cloud_seg_body->back().b > 10)
-          color.push_back(keyframe->cloud_seg_body->back().b);  // blue
-        else
-          color.push_back(255);  // blue
+        color.push_back(255);  // blue
         vert_plane.color = color;
         y_vert_planes.push_back(vert_plane);
         keyframe->y_plane_ids.push_back(vert_plane.id);
