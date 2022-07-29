@@ -113,7 +113,7 @@ public:
     trans_odom2map.setIdentity();
     odom_path_vec.clear();
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
-    previous_keyframe_size = 0;
+    floor_center_data.id = -1;
 
     anchor_node = nullptr;
     anchor_edge = nullptr;
@@ -196,6 +196,7 @@ public:
     floor_sub = nh.subscribe("/floor_detection/floor_coeffs", 1024, &SGraphsNodelet::floor_coeffs_callback, this);
     room_data_sub = nh.subscribe("/room_segmentation/room_data", 1, &SGraphsNodelet::room_data_callback, this);
     all_room_data_sub = nh.subscribe("/floor_plan/all_rooms_data", 1, &SGraphsNodelet::all_room_data_callback, this);
+    floor_data_sub = nh.subscribe("/floor_plan/floor_data", 1, &SGraphsNodelet::floor_data_callback, this);
 
     if(private_nh.param<bool>("enable_gps", true)) {
       gps_sub = mt_nh.subscribe("/gps/geopoint", 1024, &SGraphsNodelet::gps_callback, this);
@@ -268,6 +269,11 @@ private:
     std::lock_guard<std::mutex> lock(room_data_queue_mutex);
     room_data_queue.push_back(rooms_msg);
     // std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
+  }
+
+  void floor_data_callback(const s_graphs::RoomData floor_data_msg) {
+    std::lock_guard<std::mutex> lock(floor_data_mutex);
+    floor_center_data = floor_data_msg;
   }
 
   /**
@@ -1370,7 +1376,7 @@ private:
    * @param stamp
    * @return
    */
-  visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, const std::vector<Corridors>& x_corridor_snapshot, const std::vector<Corridors>& y_corridor_snapshot, const std::vector<Rooms>& room_snapshot) {
+  visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<Corridors> x_corridor_snapshot, std::vector<Corridors> y_corridor_snapshot, const std::vector<Rooms>& room_snapshot) {
     visualization_msgs::MarkerArray markers;
     // markers.markers.resize(11);
 
@@ -1964,8 +1970,10 @@ private:
       corr_x_line_marker.pose.orientation.w = 1.0;
       if(!overlapped_corridor)
         corr_x_line_marker.ns = "corridor_x_lines";
-      else
+      else {
+        x_corridor_snapshot[i].id = -1;
         corr_x_line_marker.ns = "overlapped_corridor_x_lines";
+      }
       corr_x_line_marker.header.frame_id = map_frame_id;
       corr_x_line_marker.header.stamp = stamp;
       corr_x_line_marker.id = markers.markers.size() + 1;
@@ -2084,8 +2092,10 @@ private:
       corr_y_line_marker.pose.orientation.w = 1.0;
       if(!overlapped_corridor)
         corr_y_line_marker.ns = "corridor_y_lines";
-      else
+      else {
+        y_corridor_snapshot[i].id = -1;
         corr_y_line_marker.ns = "overlapped_corridor_y_lines";
+      }
       corr_y_line_marker.header.frame_id = map_frame_id;
       corr_y_line_marker.header.stamp = stamp;
       corr_y_line_marker.id = markers.markers.size() + 1;
@@ -2495,63 +2505,82 @@ private:
     }
     markers.markers.push_back(room_neighbour_line_marker);
 
-    // final line markers for printing different layers for abstraction
-    visualization_msgs::Marker robot_layer_marker;
-    robot_layer_marker.scale.z = 1.5;
-    robot_layer_marker.ns = "layer_marker";
-    robot_layer_marker.header.frame_id = map_frame_id;
-    robot_layer_marker.header.stamp = stamp;
-    robot_layer_marker.id = markers.markers.size();
-    robot_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-    robot_layer_marker.pose.position.x = 0.0;
-    robot_layer_marker.pose.position.y = 30.0;
-    robot_layer_marker.pose.position.z = 0.0;
-    robot_layer_marker.color.a = 1;
-    robot_layer_marker.pose.orientation.w = 1.0;
-    robot_layer_marker.color.r = color_r;
-    robot_layer_marker.color.g = color_g;
-    robot_layer_marker.color.b = color_b;
-    robot_layer_marker.text = "Robot Tracking Layer";
-    markers.markers.push_back(robot_layer_marker);
+    if(floor_center_data.id != -1) {
+      float floor_node_h = 20;
+      float floor_edge_h = 19.5;
+      visualization_msgs::Marker floor_marker;
+      floor_marker.pose.orientation.w = 1.0;
+      floor_marker.scale.x = 0.5;
+      floor_marker.scale.y = 0.5;
+      floor_marker.scale.z = 0.5;
+      // plane_marker.points.resize(vert_planes.size());
+      floor_marker.header.frame_id = map_frame_id;
+      floor_marker.header.stamp = stamp;
+      floor_marker.ns = "floors";
+      floor_marker.id = markers.markers.size();
+      floor_marker.type = visualization_msgs::Marker::CUBE;
+      floor_marker.color.r = 0.49;
+      floor_marker.color.g = 0;
+      floor_marker.color.b = 1;
+      floor_marker.color.a = 1;
+      floor_marker.lifetime = ros::Duration(10.0);
 
-    if(!y_plane_snapshot.empty() || !x_plane_snapshot.empty()) {
-      visualization_msgs::Marker semantic_layer_marker;
-      semantic_layer_marker.scale.z = 1.5;
-      semantic_layer_marker.ns = "layer_marker";
-      semantic_layer_marker.header.frame_id = map_frame_id;
-      semantic_layer_marker.header.stamp = stamp;
-      semantic_layer_marker.id = markers.markers.size();
-      semantic_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      semantic_layer_marker.pose.position.x = 0.0;
-      semantic_layer_marker.pose.position.y = 30.0;
-      semantic_layer_marker.pose.position.z = 5.0;
-      semantic_layer_marker.color.r = color_r;
-      semantic_layer_marker.color.g = color_g;
-      semantic_layer_marker.color.b = color_b;
-      semantic_layer_marker.color.a = 1;
-      semantic_layer_marker.pose.orientation.w = 1.0;
-      semantic_layer_marker.text = "Metric-Semantic Layer";
-      markers.markers.push_back(semantic_layer_marker);
-    }
+      floor_marker.pose.position.x = floor_center_data.room_center.x;
+      floor_marker.pose.position.y = floor_center_data.room_center.y;
+      floor_marker.pose.position.z = floor_node_h;
 
-    if(!x_corridor_snapshot.empty() || !y_corridor_snapshot.empty() || !room_snapshot.empty()) {
-      visualization_msgs::Marker topological_layer_marker;
-      topological_layer_marker.scale.z = 1.5;
-      topological_layer_marker.ns = "layer_marker";
-      topological_layer_marker.header.frame_id = map_frame_id;
-      topological_layer_marker.header.stamp = stamp;
-      topological_layer_marker.id = markers.markers.size();
-      topological_layer_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      topological_layer_marker.pose.position.x = 0.0;
-      topological_layer_marker.pose.position.y = 30.0;
-      topological_layer_marker.pose.position.z = 12.0;
-      topological_layer_marker.color.r = color_r;
-      topological_layer_marker.color.g = color_g;
-      topological_layer_marker.color.b = color_b;
-      topological_layer_marker.color.a = 1;
-      topological_layer_marker.pose.orientation.w = 1.0;
-      topological_layer_marker.text = "Topological Layer";
-      markers.markers.push_back(topological_layer_marker);
+      // create line markers between floor and rooms/corridors
+      visualization_msgs::Marker floor_line_marker;
+      floor_line_marker.scale.x = 0.02;
+      floor_line_marker.pose.orientation.w = 1.0;
+      floor_line_marker.ns = "rooms_lines";
+      floor_line_marker.header.frame_id = map_frame_id;
+      floor_line_marker.header.stamp = stamp;
+      floor_line_marker.id = markers.markers.size() + 1;
+      floor_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+      floor_line_marker.color.r = color_r;
+      floor_line_marker.color.g = color_g;
+      floor_line_marker.color.b = color_b;
+      floor_line_marker.color.a = 1.0;
+      floor_line_marker.lifetime = ros::Duration(10.0);
+
+      for(const auto& room : room_snapshot) {
+        geometry_msgs::Point p1, p2;
+        p1.x = floor_marker.pose.position.x;
+        p1.y = floor_marker.pose.position.y;
+        p1.z = floor_node_h;
+        p2.x = room.node->estimate()(0);
+        p2.y = room.node->estimate()(1);
+        p2.z = room_node_h;
+        floor_line_marker.points.push_back(p1);
+        floor_line_marker.points.push_back(p2);
+      }
+      for(const auto& x_corridor : x_corridor_snapshot) {
+        if(x_corridor.id == -1) continue;
+        geometry_msgs::Point p1, p2;
+        p1.x = floor_marker.pose.position.x;
+        p1.y = floor_marker.pose.position.y;
+        p1.z = floor_node_h;
+        p2.x = x_corridor.node->estimate();
+        p2.y = x_corridor.keyframe_trans(1);
+        p2.z = corridor_node_h;
+        floor_line_marker.points.push_back(p1);
+        floor_line_marker.points.push_back(p2);
+      }
+      for(const auto& y_corridor : y_corridor_snapshot) {
+        if(y_corridor.id == -1) continue;
+        geometry_msgs::Point p1, p2;
+        p1.x = floor_marker.pose.position.x;
+        p1.y = floor_marker.pose.position.y;
+        p1.z = floor_node_h;
+        p2.x = y_corridor.keyframe_trans(0);
+        p2.y = y_corridor.node->estimate();
+        p2.z = corridor_node_h;
+        floor_line_marker.points.push_back(p1);
+        floor_line_marker.points.push_back(p2);
+      }
+      markers.markers.push_back(floor_marker);
+      markers.markers.push_back(floor_line_marker);
     }
 
     return markers;
@@ -2651,7 +2680,6 @@ private:
   ros::NodeHandle private_nh;
   ros::WallTimer optimization_timer;
   ros::WallTimer map_publish_timer;
-  ros::WallTimer topological_constraint_timer;
 
   std::unique_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;
@@ -2666,22 +2694,21 @@ private:
   ros::Subscriber floor_sub;
   ros::Subscriber room_data_sub;
   ros::Subscriber all_room_data_sub;
+  ros::Subscriber floor_data_sub;
+  ros::Subscriber init_odom2map_sub;
 
-  ros::Publisher markers_pub;
-
-  std::string map_frame_id;
-  std::string odom_frame_id;
-
-  bool wait_trans_odom2map, got_trans_odom2map;
   std::mutex trans_odom2map_mutex;
   Eigen::Matrix4f trans_odom2map;
+  bool wait_trans_odom2map, got_trans_odom2map;
+  std::vector<geometry_msgs::PoseStamped> odom_path_vec;
+  std::string map_frame_id;
+  std::string odom_frame_id;
+  std::string points_topic;
+
+  ros::Publisher markers_pub;
   ros::Publisher odom2map_pub;
   ros::Publisher odom_pose_corrected_pub;
   ros::Publisher odom_path_corrected_pub;
-  std::vector<geometry_msgs::PoseStamped> odom_path_vec;
-  ros::Subscriber init_odom2map_sub;
-
-  std::string points_topic;
   ros::Publisher read_until_pub;
   ros::Publisher map_points_pub;
   ros::Publisher map_planes_pub;
@@ -2768,6 +2795,9 @@ private:
   std::mutex all_room_data_queue_mutex;
   std::deque<s_graphs::RoomsData> all_room_data_queue;
 
+  std::mutex floor_data_mutex;
+  s_graphs::RoomData floor_center_data;
+
   // for map cloud generation
   std::atomic_bool graph_updated;
   double map_cloud_resolution;
@@ -2784,7 +2814,6 @@ private:
 
   int max_keyframes_per_update;
   std::deque<KeyFrame::Ptr> new_keyframes;
-  int previous_keyframe_size;
 
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;

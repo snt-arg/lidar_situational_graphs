@@ -114,7 +114,7 @@ private:
     }
 
     auto t1 = ros::WallTime::now();
-    extract_rooms(current_x_vert_planes, current_y_vert_planes);
+    // extract_rooms(current_x_vert_planes, current_y_vert_planes);
     extract_floors(current_x_vert_planes, current_y_vert_planes);
     auto t2 = ros::WallTime::now();
     std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
