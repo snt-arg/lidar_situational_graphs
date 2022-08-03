@@ -1954,8 +1954,12 @@ private:
       bool overlapped_corridor = false;
       float dist_room_x_corr = 100;
       for(const auto& room : room_snapshot) {
+        if((room.plane_x1_id == x_corridor_snapshot[i].plane1_id || room.plane_x1_id == x_corridor_snapshot[i].plane2_id) || (room.plane_x2_id == x_corridor_snapshot[i].plane1_id || room.plane_x2_id == x_corridor_snapshot[i].plane2_id)) {
+          overlapped_corridor = true;
+          break;
+        }
         dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate(), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].keyframe_trans(1), 2));
-        if(dist_room_x_corr < 0.5) {
+        if(dist_room_x_corr < 1.0) {
           overlapped_corridor = true;
           break;
         }
@@ -2076,6 +2080,10 @@ private:
       bool overlapped_corridor = false;
       float dist_room_y_corr = 100;
       for(const auto& room : room_snapshot) {
+        if((room.plane_y1_id == y_corridor_snapshot[i].plane1_id || room.plane_y1_id == y_corridor_snapshot[i].plane2_id) || (room.plane_y2_id == y_corridor_snapshot[i].plane1_id || room.plane_y2_id == y_corridor_snapshot[i].plane2_id)) {
+          overlapped_corridor = true;
+          break;
+        }
         dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].keyframe_trans(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate(), 2));
         if(dist_room_y_corr < 1.0) {
           overlapped_corridor = true;

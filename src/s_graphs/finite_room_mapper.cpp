@@ -37,6 +37,11 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   float min_dist_room_x_corr = 100;
   s_graphs::Corridors matched_x_corridor;
   for(const auto& current_x_corridor : x_corridors) {
+    if((room_data.x_planes[0].id == current_x_corridor.plane1_id || room_data.x_planes[0].id == current_x_corridor.plane2_id) && (room_data.x_planes[1].id == current_x_corridor.plane1_id || room_data.x_planes[1].id == current_x_corridor.plane2_id)) {
+      min_dist_room_x_corr = 0;
+      matched_x_corridor = current_x_corridor;
+      break;
+    }
     float dist_room_x_corr = sqrt(pow(room_data.room_center.x - current_x_corridor.node->estimate(), 2) + pow(room_data.room_center.y - current_x_corridor.keyframe_trans(1), 2));
     if(dist_room_x_corr < min_dist_room_x_corr) {
       min_dist_room_x_corr = dist_room_x_corr;
@@ -47,6 +52,12 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   float min_dist_room_y_corr = 100;
   s_graphs::Corridors matched_y_corridor;
   for(const auto& current_y_corridor : y_corridors) {
+    if((room_data.y_planes[0].id == current_y_corridor.plane1_id || room_data.y_planes[0].id == current_y_corridor.plane2_id) && (room_data.y_planes[1].id == current_y_corridor.plane1_id || room_data.y_planes[1].id == current_y_corridor.plane2_id)) {
+      min_dist_room_y_corr = 0;
+      matched_y_corridor = current_y_corridor;
+      break;
+    }
+
     float dist_room_y_corr = sqrt(pow(room_data.room_center.x - current_y_corridor.keyframe_trans(0), 2) + pow(room_data.room_center.y - current_y_corridor.node->estimate(), 2));
     if(dist_room_y_corr < min_dist_room_y_corr) {
       min_dist_room_y_corr = dist_room_y_corr;
@@ -54,14 +65,13 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
     }
   }
 
-  // TODO:HB the below implementation doesnt work, check if removing the existing corridor node will make sense?
-  if(min_dist_room_y_corr < 0.5 && min_dist_room_x_corr < 0.5) {
+  if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr < 1.0) {
     std::cout << "Adding a room using mapped x and y corridor planes " << std::endl;
     map_room_from_existing_corridors(graph_slam, room_data, matched_x_corridor, matched_y_corridor, rooms_vec);
-  } else if(min_dist_room_x_corr < 0.5 && min_dist_room_y_corr > 0.5) {
+  } else if(min_dist_room_x_corr < 1.0 && min_dist_room_y_corr > 1.0) {
     map_room_from_existing_x_corridor(graph_slam, room_data, matched_x_corridor, rooms_vec);
     std::cout << "Will add room using mapped x corridor planes " << std::endl;
-  } else if(min_dist_room_y_corr < 0.5 && min_dist_room_x_corr > 0.5) {
+  } else if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr > 1.0) {
     std::cout << "Will add room using mapped y corridor planes " << std::endl;
     map_room_from_existing_y_corridor(graph_slam, room_data, matched_y_corridor, rooms_vec);
   }

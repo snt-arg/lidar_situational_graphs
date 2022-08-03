@@ -40,15 +40,20 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     Rooms matched_room;
     float min_dist_x_corr_room = 100;
     for(const auto& current_room : rooms_vec) {
-      float dist_x_corr_room = sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) + pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
+      if((room_data.x_planes[0].id == current_room.plane_x1_id || room_data.x_planes[0].id == current_room.plane_x2_id) && (room_data.x_planes[1].id == current_room.plane_x1_id || room_data.x_planes[1].id == current_room.plane_x2_id)) {
+        min_dist_x_corr_room = 0;
+        matched_room = current_room;
+        break;
+      }
 
+      float dist_x_corr_room = sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) + pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
       if(dist_x_corr_room < min_dist_x_corr_room) {
         min_dist_x_corr_room = dist_x_corr_room;
         matched_room = current_room;
       }
     }
 
-    if(min_dist_x_corr_room < 0.5) {
+    if(min_dist_x_corr_room < 1.0) {
       std::cout << "Room already exists in the given location, inserting a x corridor using its x planes" << std::endl;
       map_corridor_from_existing_room(graph_slam, plane_type, room_data, matched_room, x_corridors, y_corridors);
     }
@@ -77,14 +82,19 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     float min_dist_y_corr_room = 100;
     Rooms matched_room;
     for(const auto& current_room : rooms_vec) {
-      float dist_y_corr_room = sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) + pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
+      if((room_data.y_planes[0].id == current_room.plane_y1_id || room_data.y_planes[0].id == current_room.plane_y2_id) && (room_data.y_planes[1].id == current_room.plane_y1_id || room_data.y_planes[1].id == current_room.plane_y2_id)) {
+        min_dist_y_corr_room = 0;
+        matched_room = current_room;
+        break;
+      }
 
+      float dist_y_corr_room = sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) + pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
       if(dist_y_corr_room < min_dist_y_corr_room) {
         min_dist_y_corr_room = dist_y_corr_room;
         matched_room = current_room;
       }
     }
-    if(min_dist_y_corr_room < 0.5) {
+    if(min_dist_y_corr_room < 1.0) {
       std::cout << "Room already exists in the given location, inserting a y corridor using its y planes" << std::endl;
       map_corridor_from_existing_room(graph_slam, plane_type, room_data, matched_room, x_corridors, y_corridors);
     }
