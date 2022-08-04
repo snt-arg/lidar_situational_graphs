@@ -55,7 +55,8 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
     if(min_dist_x_corr_room < 1.0) {
       std::cout << "Room already exists in the given location, inserting a x corridor using its x planes" << std::endl;
-      map_corridor_from_existing_room(graph_slam, plane_type, room_data, matched_room, x_corridors, y_corridors);
+      // map_corridor_from_existing_room(graph_slam, plane_type, room_data, matched_room, x_corridors, y_corridors);
+      return;
     }
 
     // factor the corridor here
@@ -96,7 +97,8 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     }
     if(min_dist_y_corr_room < 1.0) {
       std::cout << "Room already exists in the given location, inserting a y corridor using its y planes" << std::endl;
-      map_corridor_from_existing_room(graph_slam, plane_type, room_data, matched_room, x_corridors, y_corridors);
+      // map_corridor_from_existing_room(graph_slam, plane_type, room_data, matched_room, x_corridors, y_corridors);
+      return;
     }
 
     // factor the corridor here

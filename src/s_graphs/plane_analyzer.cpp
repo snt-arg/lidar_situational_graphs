@@ -46,8 +46,10 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(const 
       seg.setMethodType(pcl::SAC_RANSAC);
       seg.setDistanceThreshold(0.01);
       seg.setInputCloud(transformed_cloud);
+      seg.setNumberOfThreads(8);
+      seg.setMaxIterations(500);
       // seg.setInputNormals(normal_cloud);
-      int model_type = seg.getModelType();
+      // int model_type = seg.getModelType();
       seg.segment(*inliers, *coefficients);
       /* check if indicies are not empty for no crash */
       if(inliers->indices.empty()) {
