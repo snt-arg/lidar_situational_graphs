@@ -468,7 +468,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
   return false;
 }
 
-void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
+void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
   float room_dist_thres = 1.5;
   float plane_point_dist_thres = 1.5;
   float min_dist_x1 = 100;
@@ -493,6 +493,11 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
       std::cout << "didnt not get diagonal points" << std::endl;
       return;
     }
+  }
+
+  int point_cloud_size_thres = 500;
+  if(cloud_hull->points.size() > point_cloud_size_thres) {
+    downsample_cloud(cloud_hull);
   }
 
   for(const auto& x_plane : current_x_vert_planes) {
@@ -911,9 +916,17 @@ std::vector<float> RoomAnalyzer::find_plane_points(const pcl::PointXY& start_poi
   return plane_point_distances;
 }
 
+void RoomAnalyzer::downsample_cloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull) {
+  pcl::VoxelGrid<pcl::PointXYZRGB> sor;
+  sor.setInputCloud(cloud_hull);
+  sor.setLeafSize(0.1f, 0.1f, 0.1f);
+  sor.filter(*cloud_hull);
+}
+
 int RoomAnalyzer::find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane) {
   int num_neighbours = 0;
   double point_hull_dist_thres = 1.0;
+
   for(int i = 0; i < cloud_hull->points.size(); ++i) {
     double min_point_hull_dist = 1000;
     for(const auto& plane_point : plane.plane_points) {
