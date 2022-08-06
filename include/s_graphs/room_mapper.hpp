@@ -100,7 +100,7 @@ public:
 /**
  * @brief this class provides tools for different analysis over open space clusters to generate rooms
  */
-class InfiniteRoomMapper : MapperUtils {
+class InfiniteRoomMapper : public MapperUtils {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
 public:
@@ -152,7 +152,7 @@ private:
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
 };
 
-class FiniteRoomMapper : MapperUtils {
+class FiniteRoomMapper : public MapperUtils {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
 public:

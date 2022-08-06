@@ -19,6 +19,7 @@
 #include <pcl/common/common.h>
 #include <pcl/common/angles.h>
 #include <pcl/common/distances.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include <s_graphs/RoomData.h>
 #include <s_graphs/RoomsData.h>
@@ -48,7 +49,7 @@ public:
     return connected_clusters_marker_array_;
   }
 
-  void get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane);
+  void get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane);
   void get_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, float& area);
   void get_cluster_endpoints(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, pcl::PointXY& p1, pcl::PointXY& p2);
   bool get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, const pcl::PointXY& p1, const pcl::PointXY& p2);
@@ -58,6 +59,7 @@ public:
   geometry_msgs::Point get_room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2);
   geometry_msgs::Point get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2);
   bool perform_room_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map);
+  void downsample_cloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull);
 
 private:
   bool check_x1yplane_alignment(const std::vector<geometry_msgs::Vector3> x_plane1_points, const std::vector<geometry_msgs::Vector3> y_plane_points);

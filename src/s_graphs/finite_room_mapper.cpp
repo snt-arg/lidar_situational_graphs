@@ -115,8 +115,8 @@ std::vector<structure_data_list> FiniteRoomMapper::sort_rooms(const int& plane_t
     for(int j = i + 1; j < room_candidates.size(); ++j) {
       float room_width = plane_utils->width_between_planes(room_candidates[i].plane_unflipped.coeffs(), room_candidates[j].plane_unflipped.coeffs());
       float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length);
-      float start_point_diff = point_difference(plane_type, room_candidates[i].start_point, room_candidates[j].start_point);
-      float end_point_diff = point_difference(plane_type, room_candidates[i].end_point, room_candidates[j].end_point);
+      float start_point_diff = MapperUtils::point_difference(plane_type, room_candidates[i].start_point, room_candidates[j].start_point);
+      float end_point_diff = MapperUtils::point_difference(plane_type, room_candidates[i].end_point, room_candidates[j].end_point);
       float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
       ROS_DEBUG_NAMED("room planes", "room plane i coeffs %f %f %f %f", room_candidates[i].plane_unflipped.coeffs()(0), room_candidates[i].plane_unflipped.coeffs()(1), room_candidates[i].plane_unflipped.coeffs()(2), room_candidates[i].plane_unflipped.coeffs()(3));
       ROS_DEBUG_NAMED("room planes", "room plane j coeffs %f %f %f %f", room_candidates[j].plane_unflipped.coeffs()(0), room_candidates[j].plane_unflipped.coeffs()(1), room_candidates[j].plane_unflipped.coeffs()(2), room_candidates[j].plane_unflipped.coeffs()(3));
@@ -232,14 +232,14 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
 
     /* Add parallel and perpendicular constraints here */
     if(use_parallel_plane_constraint) {
-      parallel_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
-      parallel_plane_constraint(graph_slam, (*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
+      MapperUtils::parallel_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
+      MapperUtils::parallel_plane_constraint(graph_slam, (*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
     }
     if(use_perpendicular_plane_constraint) {
-      perpendicular_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_y_plane1).plane_node);
-      perpendicular_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_y_plane2).plane_node);
-      perpendicular_plane_constraint(graph_slam, (*found_x_plane2).plane_node, (*found_y_plane1).plane_node);
-      perpendicular_plane_constraint(graph_slam, (*found_x_plane2).plane_node, (*found_y_plane2).plane_node);
+      MapperUtils::perpendicular_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_y_plane1).plane_node);
+      MapperUtils::perpendicular_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_y_plane2).plane_node);
+      MapperUtils::perpendicular_plane_constraint(graph_slam, (*found_x_plane2).plane_node, (*found_y_plane1).plane_node);
+      MapperUtils::perpendicular_plane_constraint(graph_slam, (*found_x_plane2).plane_node, (*found_y_plane2).plane_node);
     }
 
   } else {
@@ -296,7 +296,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
     }
 
     if(use_parallel_plane_constraint && found_new_x_plane) {
-      parallel_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
+      MapperUtils::parallel_plane_constraint(graph_slam, (*found_x_plane1).plane_node, (*found_x_plane2).plane_node);
     }
 
     found_mapped_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[room_data_association.second].plane_y1_id);
@@ -343,7 +343,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
     }
 
     if(use_parallel_plane_constraint && found_new_y_plane) {
-      parallel_plane_constraint(graph_slam, (*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
+      MapperUtils::parallel_plane_constraint(graph_slam, (*found_y_plane1).plane_node, (*found_y_plane2).plane_node);
     }
   }
 

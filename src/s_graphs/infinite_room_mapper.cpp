@@ -129,8 +129,8 @@ std::vector<structure_data_list> InfiniteRoomMapper::sort_corridors(const int pl
     for(int j = i + 1; j < corridor_candidates.size(); ++j) {
       float corr_width = plane_utils->width_between_planes(corridor_candidates[i].plane_unflipped.coeffs(), corridor_candidates[j].plane_unflipped.coeffs());
       float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length);
-      float start_point_diff = point_difference(plane_type, corridor_candidates[i].start_point, corridor_candidates[j].start_point);
-      float end_point_diff = point_difference(plane_type, corridor_candidates[i].end_point, corridor_candidates[j].end_point);
+      float start_point_diff = MapperUtils::point_difference(plane_type, corridor_candidates[i].start_point, corridor_candidates[j].start_point);
+      float end_point_diff = MapperUtils::point_difference(plane_type, corridor_candidates[i].end_point, corridor_candidates[j].end_point);
       float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
       ROS_DEBUG_NAMED("corridor planes", "corr plane i coeffs %f %f %f %f", corridor_candidates[i].plane_unflipped.coeffs()(0), corridor_candidates[i].plane_unflipped.coeffs()(1), corridor_candidates[i].plane_unflipped.coeffs()(2),
                       corridor_candidates[i].plane_unflipped.coeffs()(3));
@@ -221,9 +221,10 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       meas_plane1 = corridor_measurement(plane_type, corr_pose(0), corr_plane1_pair.plane_unflipped.coeffs());
       meas_plane2 = corridor_measurement(plane_type, corr_pose(0), corr_plane2_pair.plane_unflipped.coeffs());
+
       /* Add parallel constraints here */
       if(use_parallel_plane_constraint) {
-        parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
 
     } else {
@@ -291,7 +292,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       // std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
       if(use_parallel_plane_constraint && found_new_plane) {
-        parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
     }
 
@@ -332,7 +333,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       meas_plane2 = corridor_measurement(plane_type, corr_pose(1), corr_plane2_pair.plane_unflipped.coeffs());
 
       if(use_parallel_plane_constraint) {
-        parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
 
     } else {
@@ -399,7 +400,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       // std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
       if(use_parallel_plane_constraint && found_new_plane) {
-        parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
     }
 
