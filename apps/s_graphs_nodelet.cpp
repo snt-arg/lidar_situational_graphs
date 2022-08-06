@@ -188,7 +188,7 @@ public:
     // subscribers
     odom_sub.reset(new message_filters::Subscriber<nav_msgs::Odometry>(mt_nh, "/odom", 256));
     cloud_sub.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(mt_nh, "/filtered_points", 32));
-    sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(64), *odom_sub, *cloud_sub));
+    sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), *odom_sub, *cloud_sub));
     sync->registerCallback(boost::bind(&SGraphsNodelet::cloud_callback, this, _1, _2));
 
     raw_odom_sub = nh.subscribe("/odom", 1, &SGraphsNodelet::raw_odom_callback, this);
@@ -344,8 +344,6 @@ private:
    * @param cloud_msg
    */
   void cloud_callback(const nav_msgs::OdometryConstPtr& odom_msg, const sensor_msgs::PointCloud2::ConstPtr& cloud_msg) {
-    std::cout << "inside cloud callback" << std::endl;
-
     const ros::Time& stamp = cloud_msg->header.stamp;
     Eigen::Isometry3d odom = odom2isometry(odom_msg);
 
@@ -884,7 +882,7 @@ private:
 
     if((graph_slam->optimize(num_iterations)) > 0 && !constant_covariance) compute_plane_cov();
 
-    merge_duplicate_planes();
+    // merge_duplicate_planes();
 
     vert_plane_snapshot_mutex.lock();
     x_vert_planes_snapshot = x_vert_planes;
