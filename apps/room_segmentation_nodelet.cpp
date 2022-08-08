@@ -72,7 +72,7 @@ private:
     room_centers_pub = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_centers", 1, true);
     refined_skeleton_graph_pub = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/refined_skeleton_graph", 1, true);
 
-    room_detection_timer = nh.createWallTimer(ros::WallDuration(3.0), &RoomSegmentationNodelet::room_detection_callback, this);
+    room_detection_timer = nh.createTimer(ros::Duration(1.0), &RoomSegmentationNodelet::room_detection_callback, this);
   }
 
   template<typename T>
@@ -84,7 +84,7 @@ private:
     return result;
   }
 
-  void room_detection_callback(const ros::WallTimerEvent& event) {
+  void room_detection_callback(const ros::TimerEvent& event) {
     std::vector<s_graphs::PlaneData> current_x_vert_planes, current_y_vert_planes;
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
@@ -93,9 +93,9 @@ private:
       return;
     }
 
-    auto t1 = ros::WallTime::now();
+    auto t1 = ros::Time::now();
     extract_rooms(current_x_vert_planes, current_y_vert_planes);
-    auto t2 = ros::WallTime::now();
+    auto t2 = ros::Time::now();
     std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
   }
 
@@ -248,7 +248,7 @@ private:
 
   /* private variables */
 private:
-  ros::WallTimer room_detection_timer;
+  ros::Timer room_detection_timer;
   std::mutex map_plane_mutex;
 
   // skeleton graph queue

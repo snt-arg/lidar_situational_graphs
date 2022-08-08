@@ -421,9 +421,11 @@ Eigen::Vector2d InfiniteRoomMapper::compute_corridor_pose(int plane_type, Eigen:
     if(fabs(v1(3)) > fabs(v2(3))) {
       double size = v1(3) - v2(3);
       corridor_pose(0) = ((size) / 2) + v2(3);
+      // corridor_pose(0) = corridor_pose(0) * fabs(v2(0));
     } else {
       double size = v2(3) - v1(3);
       corridor_pose(0) = ((size) / 2) + v1(3);
+      // corridor_pose(0) = corridor_pose(0) * fabs(v1(0));
     }
     corridor_pose(1) = keyframe_pose(1);
   }
@@ -432,9 +434,11 @@ Eigen::Vector2d InfiniteRoomMapper::compute_corridor_pose(int plane_type, Eigen:
     if(fabs(v1(3)) > fabs(v2(3))) {
       double size = v1(3) - v2(3);
       corridor_pose(1) = ((size) / 2) + v2(3);
+      // corridor_pose(1) = corridor_pose(1) * fabs(v2(1));
     } else {
       double size = v2(3) - v1(3);
       corridor_pose(1) = ((size) / 2) + v1(3);
+      // corridor_pose(1) = corridor_pose(1) * fabs(v1(1));
     }
     corridor_pose(0) = keyframe_pose(0);
   }

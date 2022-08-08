@@ -110,20 +110,25 @@ geometry_msgs::Point RoomAnalyzer::get_room_length(const pcl::PointXY& p1, const
 
 geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
   geometry_msgs::Point center;
+
   if(fabs(x_plane1.d) > fabs(x_plane2.d)) {
     double size = x_plane1.d - x_plane2.d;
     center.x = (((size) / 2) + x_plane2.d);
+    // center.x = center.x * fabs(x_plane2.nx);
   } else {
     double size = x_plane2.d - x_plane1.d;
     center.x = (((size) / 2) + x_plane1.d);
+    // center.x = center.x * fabs(x_plane1.nx);
   }
 
   if(fabs(y_plane1.d) > fabs(y_plane2.d)) {
     double size = y_plane1.d - y_plane2.d;
     center.y = (((size) / 2) + y_plane2.d);
+    // center.y = center.y * fabs(y_plane2.ny);
   } else {
     double size = y_plane2.d - y_plane1.d;
     center.y = (((size) / 2) + y_plane1.d);
+    // center.y = center.y * fabs(y_plane1.ny);
   }
 
   return center;
@@ -136,17 +141,19 @@ geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::Poin
     if(fabs(plane1.d) > fabs(plane2.d)) {
       double size = plane1.d - plane2.d;
       center.x = (((size) / 2) + plane2.d);
+      // center.x = center.x * plane2.nx;
     } else {
       double size = plane2.d - plane1.d;
       center.x = (((size) / 2) + plane1.d);
+      // center.x = center.x * plane1.nx;
     }
 
     if(fabs(p1.y) > fabs(p2.y)) {
       float size = p1.y - p2.y;
-      center.y = (size / 2) + p2.y;
+      // center.y = (size / 2) + p2.y;
     } else {
       float size = p2.y - p1.y;
-      center.y = (size / 2) + p1.y;
+      // center.y = (size / 2) + p1.y;
     }
   }
 
@@ -154,9 +161,11 @@ geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::Poin
     if(fabs(plane1.d) > fabs(plane2.d)) {
       double size = plane1.d - plane2.d;
       center.y = (((size) / 2) + plane2.d);
+      center.y = center.y * plane2.ny;
     } else {
       double size = plane2.d - plane1.d;
       center.y = (((size) / 2) + plane1.d);
+      center.y = center.y * plane1.ny;
     }
 
     if(fabs(p1.x) > fabs(p2.x)) {

@@ -388,20 +388,24 @@ Eigen::Vector2d FiniteRoomMapper::compute_room_pose(const std::vector<plane_data
   if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
     double size = x_plane1(3) - x_plane2(3);
     room_pose(0) = (((size) / 2) + x_plane2(3));
+    // room_pose(0) = room_pose(0) * fabs(x_plane2(0));
     // room_pose(2) = size;
   } else {
     double size = x_plane2(3) - x_plane1(3);
     room_pose(0) = (((size) / 2) + x_plane1(3));
+    // room_pose(0) = room_pose(0) * fabs(x_plane1(0));
     // room_pose(2) = size;
   }
 
   if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
     double size = y_plane1(3) - y_plane2(3);
     room_pose(1) = (((size) / 2) + y_plane2(3));
+    // room_pose(1) = room_pose(1) * fabs(y_plane2(1));
     // room_pose(3) = size;
   } else {
     double size = y_plane2(3) - y_plane1(3);
     room_pose(1) = (((size) / 2) + y_plane1(3));
+    // room_pose(1) = room_pose(1) * fabs(y_plane1(1));
     // room_pose(3) = size;
   }
 

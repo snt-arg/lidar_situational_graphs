@@ -221,8 +221,8 @@ public:
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
     double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
-    optimization_timer = mt_nh.createWallTimer(ros::WallDuration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
-    map_publish_timer = mt_nh.createWallTimer(ros::WallDuration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
+    optimization_timer = mt_nh.createTimer(ros::Duration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
+    map_publish_timer = mt_nh.createTimer(ros::Duration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
   }
 
 private:
@@ -770,7 +770,7 @@ private:
    * @brief generate map point cloud and publish it
    * @param event
    */
-  void map_points_publish_timer_callback(const ros::WallTimerEvent& event) {
+  void map_points_publish_timer_callback(const ros::TimerEvent& event) {
     if(!map_points_pub.getNumSubscribers() || !graph_updated || !markers_pub.getNumSubscribers()) {
       return;
     }
@@ -830,7 +830,7 @@ private:
    * @brief this methods adds all the data in the queues to the pose graph, and then optimizes the pose graph
    * @param event
    */
-  void optimization_timer_callback(const ros::WallTimerEvent& event) {
+  void optimization_timer_callback(const ros::TimerEvent& event) {
     std::lock_guard<std::mutex> lock(main_thread_mutex);
 
     // add keyframes and floor coeffs in the queues to the pose graph
@@ -2689,8 +2689,8 @@ private:
   ros::NodeHandle nh;
   ros::NodeHandle mt_nh;
   ros::NodeHandle private_nh;
-  ros::WallTimer optimization_timer;
-  ros::WallTimer map_publish_timer;
+  ros::Timer optimization_timer;
+  ros::Timer map_publish_timer;
 
   std::unique_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;

@@ -46,7 +46,7 @@ private:
     skeleton_graph_sub = nh.subscribe("/voxblox_skeletonizer/sparse_graph", 1, &FloorPlanNodelet::skeleton_graph_callback, this);
     map_planes_sub = nh.subscribe("/s_graphs/all_map_planes", 100, &FloorPlanNodelet::map_planes_callback, this);
 
-    floor_plane_timer = nh.createWallTimer(ros::WallDuration(10.0), &FloorPlanNodelet::floor_plan_callback, this);
+    floor_plane_timer = nh.createTimer(ros::Duration(10.0), &FloorPlanNodelet::floor_plan_callback, this);
     all_rooms_data_pub = nh.advertise<s_graphs::RoomsData>("/floor_plan/all_rooms_data", 1, false);
     floor_data_pub = nh.advertise<s_graphs::RoomData>("/floor_plan/floor_data", 1, false);
   }
@@ -104,7 +104,7 @@ private:
     }
   }
 
-  void floor_plan_callback(const ros::WallTimerEvent& event) {
+  void floor_plan_callback(const ros::TimerEvent& event) {
     std::vector<s_graphs::PlaneData> current_x_vert_planes, current_y_vert_planes;
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
@@ -113,10 +113,10 @@ private:
       return;
     }
 
-    auto t1 = ros::WallTime::now();
+    auto t1 = ros::Time::now();
     // extract_rooms(current_x_vert_planes, current_y_vert_planes);
     extract_floors(current_x_vert_planes, current_y_vert_planes);
-    auto t2 = ros::WallTime::now();
+    auto t2 = ros::Time::now();
     std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
   }
 
@@ -172,7 +172,7 @@ private:
   ros::Publisher floor_data_pub;
 
 private:
-  ros::WallTimer floor_plane_timer;
+  ros::Timer floor_plane_timer;
 
 private:
   std::unique_ptr<RoomAnalyzer> room_analyzer;
