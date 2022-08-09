@@ -39,6 +39,9 @@ void FloorAnalyzer::perform_floor_segmentation(const std::vector<s_graphs::Plane
       } else
         continue;
 
+      float dot_product = plane_utils->plane_dot_product(x_plane1, x_plane2);
+      if(abs(dot_product) < 0.9) continue;
+
       if(x_plane_width > max_xplane_width && planes_placed_correctly) {
         max_xplane_width = x_plane_width;
         floor_x_plane1 = x_plane1;
@@ -66,6 +69,9 @@ void FloorAnalyzer::perform_floor_segmentation(const std::vector<s_graphs::Plane
         planes_placed_correctly = plane_utils->compute_point_difference(y_plane1.plane_points.back().y, y_plane2.plane_points.back().y);
       } else
         continue;
+
+      float dot_product = plane_utils->plane_dot_product(y_plane1, y_plane2);
+      if(abs(dot_product) < 0.9) continue;
 
       if(y_plane_width > max_yplane_width && planes_placed_correctly) {
         max_yplane_width = y_plane_width;

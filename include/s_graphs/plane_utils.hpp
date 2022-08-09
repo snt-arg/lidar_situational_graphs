@@ -195,6 +195,11 @@ public:
 
     return true;
   }
+
+  float plane_dot_product(const s_graphs::PlaneData& plane1, const s_graphs::PlaneData& plane2) {
+    float dot_product = plane1.nx * plane2.nx + plane1.ny * plane2.ny + plane1.nz * plane2.nz;
+    return dot_product;
+  }
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP
