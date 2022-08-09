@@ -33,7 +33,6 @@
 #include <g2o/types/slam3d/vertex_se3.h>
 #include "g2o/vertex_room.hpp"
 #include "g2o/vertex_corridor.hpp"
-
 namespace g2o {
 
 class EdgeSE3Room : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB> {
@@ -104,9 +103,12 @@ public:
     Eigen::Vector2d trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    plane(3) = -1 * plane(3);
-    double p_norm = plane(0) / fabs(plane(0));
-    plane(3) = p_norm * plane(3);
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    }
 
     double est;
     if(fabs(trans(0)) > fabs(plane(3))) {
@@ -169,9 +171,12 @@ public:
     Eigen::Vector2d trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    plane(3) = -1 * plane(3);
-    double p_norm = plane(1) / fabs(plane(1));
-    plane(3) = p_norm * plane(3);
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    }
 
     double est;
     if(fabs(trans(1)) > fabs(plane(3))) {

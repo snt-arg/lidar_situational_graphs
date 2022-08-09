@@ -53,52 +53,53 @@ public:
   };
 
   inline float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
+    Eigen::Vector3d vec;
     float size = 0;
+
     if(fabs(v1(3)) > fabs(v2(3)))
-      size = fabs(v1(3) - v2(3));
+      vec = fabs(v1(3)) * v1.head(3) - fabs(v2(3)) * v2.head(3);
     else if(fabs(v2(3)) > fabs(v1(3)))
-      size = fabs(v2(3) - v1(3));
+      vec = fabs(v2(3)) * v2.head(3) - fabs(v1(3)) * v1.head(3);
+
+    size = vec(0) + vec(1);
 
     return size;
   }
 
   inline float width_between_planes(s_graphs::PlaneData& plane1, s_graphs::PlaneData& plane2) {
+    Eigen::Vector3d vec;
+    Eigen::Vector3d plane1_eigen, plane2_eigen;
+    plane1_eigen << plane1.nx, plane1.ny, plane1.nz;
+    plane2_eigen << plane2.nx, plane2.ny, plane2.nz;
     float size = 0;
-    float room_width_threshold = 1.0;
+    size = fabs(plane1.d - plane2.d);
+
     if(fabs(plane1.d) > fabs(plane2.d))
-      size = fabs(plane1.d - plane2.d);
+      vec = fabs(plane1.d) * plane1_eigen - fabs(plane2.d) * plane2_eigen;
     else if(fabs(plane2.d) > fabs(plane1.d))
-      size = fabs(plane2.d - plane1.d);
+      vec = fabs(plane2.d) * plane2_eigen - fabs(plane1.d) * plane1_eigen;
+
+    size = vec(0) + vec(1);
 
     return size;
   }
 
   void correct_plane_d(int plane_type, s_graphs::PlaneData& plane) {
-    if(plane_type == plane_class::X_VERT_PLANE) {
+    if(plane.d > 0) {
+      plane.nx = -1 * plane.nx;
+      plane.ny = -1 * plane.ny;
+      plane.nz = -1 * plane.nz;
       plane.d = -1 * plane.d;
-      double p_norm = plane.nx / fabs(plane.nx);
-      plane.d = p_norm * plane.d;
-    }
-
-    if(plane_type == plane_class::Y_VERT_PLANE) {
-      plane.d = -1 * plane.d;
-      double p_norm = plane.ny / fabs(plane.ny);
-      plane.d = p_norm * plane.d;
     }
     return;
   }
 
-  void correct_plane_d(int plane_type, Eigen::Vector4d& plane) {
-    if(plane_type == plane_class::X_VERT_PLANE) {
+  void correct_plane_d(int plane_type, Eigen::Vector4d& plane, double px, double py) {
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
       plane(3) = -1 * plane(3);
-      double p_norm = plane(0) / fabs(plane(0));
-      plane(3) = p_norm * plane(3);
-    }
-
-    if(plane_type == plane_class::Y_VERT_PLANE) {
-      plane(3) = -1 * plane(3);
-      double p_norm = plane(1) / fabs(plane(1));
-      plane(3) = p_norm * plane(3);
     }
     return;
   }

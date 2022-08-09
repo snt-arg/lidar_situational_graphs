@@ -243,8 +243,8 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       Eigen::Vector4d found_mapped_plane1_coeffs, found_mapped_plane2_coeffs;
       found_mapped_plane1_coeffs = (*found_mapped_plane1).plane_node->estimate().coeffs();
       found_mapped_plane2_coeffs = (*found_mapped_plane2).plane_node->estimate().coeffs();
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane2_coeffs);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs, (*found_mapped_plane1).cloud_seg_map->points.back().x, (*found_mapped_plane1).cloud_seg_map->points.back().y);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane2_coeffs, (*found_mapped_plane2).cloud_seg_map->points.back().x, (*found_mapped_plane2).cloud_seg_map->points.back().y);
 
       bool found_new_plane = false;
       if((*found_plane1).id == (*found_mapped_plane1).id)
@@ -351,8 +351,8 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       Eigen::Vector4d found_mapped_plane1_coeffs, found_mapped_plane2_coeffs;
       found_mapped_plane1_coeffs = (*found_mapped_plane1).plane_node->estimate().coeffs();
       found_mapped_plane2_coeffs = (*found_mapped_plane2).plane_node->estimate().coeffs();
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane2_coeffs);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs, (*found_mapped_plane1).cloud_seg_map->points.back().x, (*found_mapped_plane1).cloud_seg_map->points.back().y);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane2_coeffs, (*found_mapped_plane2).cloud_seg_map->points.back().x, (*found_mapped_plane2).cloud_seg_map->points.back().y);
 
       bool found_new_plane = false;
       if((*found_plane1).id == (*found_mapped_plane1).id)
@@ -416,31 +416,38 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
 Eigen::Vector2d InfiniteRoomMapper::compute_corridor_pose(int plane_type, Eigen::Vector3d keyframe_pose, Eigen::Vector4d v1, Eigen::Vector4d v2) {
   Eigen::Vector2d corridor_pose;
+  Eigen::Vector3d vec;
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     if(fabs(v1(3)) > fabs(v2(3))) {
-      double size = v1(3) - v2(3);
-      corridor_pose(0) = ((size) / 2) + v2(3);
+      // double size = v1(3) - v2(3);
+      // corridor_pose(0) = ((size) / 2) + v2(3);
       // corridor_pose(0) = corridor_pose(0) * fabs(v2(0));
+      vec = (0.5 * (fabs(v1(3)) * v1.head(3) - fabs(v2(3)) * v2.head(3))) + fabs(v2(3)) * v2.head(3);
     } else {
-      double size = v2(3) - v1(3);
-      corridor_pose(0) = ((size) / 2) + v1(3);
+      // double size = v2(3) - v1(3);
+      // corridor_pose(0) = ((size) / 2) + v1(3);
       // corridor_pose(0) = corridor_pose(0) * fabs(v1(0));
+      vec = (0.5 * (fabs(v2(3)) * v2.head(3) - fabs(v1(3)) * v1.head(3))) + fabs(v1(3)) * v1.head(3);
     }
+    corridor_pose(0) = vec(0);
     corridor_pose(1) = keyframe_pose(1);
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     if(fabs(v1(3)) > fabs(v2(3))) {
-      double size = v1(3) - v2(3);
-      corridor_pose(1) = ((size) / 2) + v2(3);
+      // double size = v1(3) - v2(3);
+      // corridor_pose(1) = ((size) / 2) + v2(3);
       // corridor_pose(1) = corridor_pose(1) * fabs(v2(1));
+      vec = (0.5 * (fabs(v1(3)) * v1.head(3) - fabs(v2(3)) * v2.head(3))) + fabs(v2(3)) * v2.head(3);
     } else {
-      double size = v2(3) - v1(3);
-      corridor_pose(1) = ((size) / 2) + v1(3);
+      // double size = v2(3) - v1(3);
+      // corridor_pose(1) = ((size) / 2) + v1(3);
       // corridor_pose(1) = corridor_pose(1) * fabs(v1(1));
+      vec = (0.5 * (fabs(v2(3)) * v2.head(3) - fabs(v1(3)) * v1.head(3))) + fabs(v1(3)) * v1.head(3);
     }
     corridor_pose(0) = keyframe_pose(0);
+    corridor_pose(1) = vec(1);
   }
 
   return corridor_pose;

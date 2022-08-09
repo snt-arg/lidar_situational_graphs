@@ -404,7 +404,10 @@ void PlaneMapper::get_plane_properties(const int& plane_type, const int& plane_i
       float length = plane_utils->plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
       ROS_DEBUG_NAMED("xplane information", "length x plane %f", length);
       Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-      plane_utils->correct_plane_d(plane_type, plane_unflipped);
+      PointNormal map_point;
+      Eigen::Matrix4f pose = keyframe->estimate().matrix().cast<float>();
+      map_point.getVector4fMap() = pose * keyframe->cloud_seg_body->points.back().getVector4fMap();
+      plane_utils->correct_plane_d(plane_type, plane_unflipped, map_point.x, map_point.y);
 
       // x_plane_id_pair.plane = det_plane_map_frame;
       // plane_id_pair.plane_local = det_plane_body_frame;
@@ -436,7 +439,10 @@ void PlaneMapper::get_plane_properties(const int& plane_type, const int& plane_i
       float length = plane_utils->plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
       ROS_DEBUG_NAMED("yplane information", "length y plane %f", length);
       Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-      plane_utils->correct_plane_d(plane_type, plane_unflipped);
+      PointNormal map_point;
+      Eigen::Matrix4f pose = keyframe->estimate().matrix().cast<float>();
+      map_point.getVector4fMap() = pose * keyframe->cloud_seg_body->points.back().getVector4fMap();
+      plane_utils->correct_plane_d(plane_type, plane_unflipped, map_point.x, map_point.y);
 
       // y_plane_id_pair.plane = det_plane_map_frame;
       // plane_id_pair.plane_local = det_plane_body_frame;

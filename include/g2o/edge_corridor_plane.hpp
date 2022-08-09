@@ -99,9 +99,12 @@ public:
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    plane(3) = -1 * plane(3);
-    double p_norm = plane(0) / fabs(plane(0));
-    plane(3) = p_norm * plane(3);
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    }
 
     double est;
     if(fabs(trans) > fabs(plane(3))) {
@@ -161,9 +164,12 @@ public:
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    plane(3) = -1 * plane(3);
-    double p_norm = plane(1) / fabs(plane(1));
-    plane(3) = p_norm * plane(3);
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    }
 
     double est;
     if(fabs(trans) > fabs(plane(3))) {

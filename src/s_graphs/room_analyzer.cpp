@@ -110,63 +110,92 @@ geometry_msgs::Point RoomAnalyzer::get_room_length(const pcl::PointXY& p1, const
 
 geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
   geometry_msgs::Point center;
+  Eigen::Vector3d vec_x, vec_y;
+  Eigen::Vector3d x_plane1_eigen, x_plane2_eigen;
+  Eigen::Vector3d y_plane1_eigen, y_plane2_eigen;
+
+  x_plane1_eigen << x_plane1.nx, x_plane1.ny, x_plane1.nz;
+  x_plane2_eigen << x_plane2.nx, x_plane2.ny, x_plane2.nz;
+
+  y_plane1_eigen << y_plane1.nx, y_plane1.ny, y_plane1.nz;
+  y_plane2_eigen << y_plane2.nx, y_plane2.ny, y_plane2.nz;
 
   if(fabs(x_plane1.d) > fabs(x_plane2.d)) {
-    double size = x_plane1.d - x_plane2.d;
-    center.x = (((size) / 2) + x_plane2.d);
+    // double size = x_plane1.d - x_plane2.d;
+    // center.x = (((size) / 2) + x_plane2.d);
     // center.x = center.x * fabs(x_plane2.nx);
+    vec_x = (0.5 * (fabs(x_plane1.d) * x_plane1_eigen - fabs(x_plane2.d) * x_plane2_eigen)) + fabs(x_plane2.d) * x_plane2_eigen;
   } else {
     double size = x_plane2.d - x_plane1.d;
-    center.x = (((size) / 2) + x_plane1.d);
+    // center.x = (((size) / 2) + x_plane1.d);
     // center.x = center.x * fabs(x_plane1.nx);
+    vec_x = (0.5 * (fabs(x_plane2.d) * x_plane2_eigen - fabs(x_plane1.d) * x_plane1_eigen)) + fabs(x_plane1.d) * x_plane1_eigen;
   }
 
   if(fabs(y_plane1.d) > fabs(y_plane2.d)) {
-    double size = y_plane1.d - y_plane2.d;
-    center.y = (((size) / 2) + y_plane2.d);
+    // double size = y_plane1.d - y_plane2.d;
+    // center.y = (((size) / 2) + y_plane2.d);
     // center.y = center.y * fabs(y_plane2.ny);
+    vec_y = (0.5 * (fabs(y_plane1.d) * y_plane1_eigen - fabs(y_plane2.d) * y_plane2_eigen)) + fabs(y_plane1.d) * y_plane1_eigen;
   } else {
-    double size = y_plane2.d - y_plane1.d;
-    center.y = (((size) / 2) + y_plane1.d);
+    // double size = y_plane2.d - y_plane1.d;
+    // center.y = (((size) / 2) + y_plane1.d);
     // center.y = center.y * fabs(y_plane1.ny);
+    vec_y = (0.5 * (fabs(y_plane2.d) * y_plane2_eigen - fabs(y_plane1.d) * y_plane1_eigen)) + fabs(y_plane1.d) * y_plane1_eigen;
   }
 
+  Eigen::Vector3d final_vec = vec_x + vec_y;
+  center.x = final_vec(0);
+  center.y = final_vec(1);
+
+  std::cout << "final room vec: " << center.x << ";" << center.y << std::endl;
   return center;
 }
 
 geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2) {
   geometry_msgs::Point center;
+  Eigen::Vector3d vec;
+  Eigen::Vector3d plane1_eigen, plane2_eigen;
+  plane1_eigen << plane1.nx, plane1.ny, plane1.nz;
+  plane2_eigen << plane2.nx, plane2.ny, plane2.nz;
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     if(fabs(plane1.d) > fabs(plane2.d)) {
-      double size = plane1.d - plane2.d;
-      center.x = (((size) / 2) + plane2.d);
+      // double size = plane1.d - plane2.d;
+      // center.x = (((size) / 2) + plane2.d);
       // center.x = center.x * plane2.nx;
+      vec = (0.5 * (fabs(plane1.d) * plane1_eigen - fabs(plane2.d) * plane2_eigen)) + fabs(plane2.d) * plane2_eigen;
     } else {
-      double size = plane2.d - plane1.d;
-      center.x = (((size) / 2) + plane1.d);
+      // double size = plane2.d - plane1.d;
+      // center.x = (((size) / 2) + plane1.d);
       // center.x = center.x * plane1.nx;
+      vec = (0.5 * (fabs(plane2.d) * plane2_eigen - fabs(plane1.d) * plane1_eigen)) + fabs(plane1.d) * plane1_eigen;
     }
+    center.x = vec(0);
 
     if(fabs(p1.y) > fabs(p2.y)) {
       float size = p1.y - p2.y;
-      // center.y = (size / 2) + p2.y;
+      center.y = (size / 2) + p2.y;
     } else {
       float size = p2.y - p1.y;
-      // center.y = (size / 2) + p1.y;
+      center.y = (size / 2) + p1.y;
     }
+    std::cout << "x corridor center:" << center.x << "; " << center.y << std::endl;
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     if(fabs(plane1.d) > fabs(plane2.d)) {
-      double size = plane1.d - plane2.d;
-      center.y = (((size) / 2) + plane2.d);
-      center.y = center.y * plane2.ny;
+      // double size = plane1.d - plane2.d;
+      // center.y = (((size) / 2) + plane2.d);
+      // center.y = center.y * plane2.ny;
+      vec = (0.5 * (fabs(plane1.d) * plane1_eigen - fabs(plane2.d) * plane2_eigen)) + fabs(plane2.d) * plane2_eigen;
     } else {
-      double size = plane2.d - plane1.d;
-      center.y = (((size) / 2) + plane1.d);
-      center.y = center.y * plane1.ny;
+      // double size = plane2.d - plane1.d;
+      // center.y = (((size) / 2) + plane1.d);
+      // center.y = center.y * plane1.ny;
+      vec = (0.5 * (fabs(plane2.d) * plane2_eigen - fabs(plane1.d) * plane1_eigen)) + fabs(plane1.d) * plane1_eigen;
     }
+    center.y = vec(1);
 
     if(fabs(p1.x) > fabs(p2.x)) {
       float size = p1.x - p2.x;
@@ -175,6 +204,7 @@ geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::Poin
       float size = p2.x - p1.x;
       center.x = (size / 2) + p1.x;
     }
+    std::cout << "y corridor center:" << center.x << "; " << center.y << std::endl;
   }
 
   return center;

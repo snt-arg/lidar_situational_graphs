@@ -1014,13 +1014,13 @@ private:
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      for(const auto& plane_point_data : (x_vert_plane).cloud_seg_map->points) {
-        geometry_msgs::Vector3 plane_point;
-        plane_point.x = plane_point_data.x;
-        plane_point.y = plane_point_data.y;
-        plane_point.z = plane_point_data.z;
-        plane_data.plane_points.push_back(plane_point);
-      }
+      // for(const auto& plane_point_data : (x_vert_plane).cloud_seg_map->points) {
+      //   geometry_msgs::Vector3 plane_point;
+      //   plane_point.x = plane_point_data.x;
+      //   plane_point.y = plane_point_data.y;
+      //   plane_point.z = plane_point_data.z;
+      //   plane_data.plane_points.push_back(plane_point);
+      // }
       vert_planes_data.x_planes.push_back(plane_data);
     }
 
@@ -1034,13 +1034,13 @@ private:
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      for(const auto& plane_point_data : (y_vert_plane).cloud_seg_map->points) {
-        geometry_msgs::Vector3 plane_point;
-        plane_point.x = plane_point_data.x;
-        plane_point.y = plane_point_data.y;
-        plane_point.z = plane_point_data.z;
-        plane_data.plane_points.push_back(plane_point);
-      }
+      // for(const auto& plane_point_data : (y_vert_plane).cloud_seg_map->points) {
+      //   geometry_msgs::Vector3 plane_point;
+      //   plane_point.x = plane_point_data.x;
+      //   plane_point.y = plane_point_data.y;
+      //   plane_point.z = plane_point_data.z;
+      //   plane_data.plane_points.push_back(plane_point);
+      // }
       vert_planes_data.y_planes.push_back(plane_data);
     }
     all_map_planes_pub.publish(vert_planes_data);
@@ -1099,7 +1099,7 @@ private:
           }
           /* Add edge between corridor and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
+          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
           double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
           auto edge_plane = graph_slam->add_corridor_xplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
@@ -1125,7 +1125,7 @@ private:
 
           /* Add edge between room and current mapped plane */
           Eigen::Vector4d found_mapped_x_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
+          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
           double x_plane1_meas = finite_room_mapper->room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_room_plane(room_information);
           auto edge_x_plane1 = graph_slam->add_room_xplane_edge(room_node, (*it).second.plane_node, x_plane1_meas, information_room_plane);
@@ -1200,7 +1200,7 @@ private:
 
           /* Add edge between corridor and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
+          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
           double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
           auto edge_plane = graph_slam->add_corridor_yplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
@@ -1224,7 +1224,7 @@ private:
 
           /* Add edge between room and current mapped plane */
           Eigen::Vector4d found_mapped_y_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs);
+          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
           double y_plane1_meas = finite_room_mapper->room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_room_plane(room_information);
           auto edge_y_plane1 = graph_slam->add_room_xplane_edge(room_node, (*it).second.plane_node, y_plane1_meas, information_room_plane);
