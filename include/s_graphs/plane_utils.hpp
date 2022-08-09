@@ -61,7 +61,7 @@ public:
     else if(fabs(v2(3)) > fabs(v1(3)))
       vec = fabs(v2(3)) * v2.head(3) - fabs(v1(3)) * v1.head(3);
 
-    size = vec(0) + vec(1);
+    size = fabs(vec(0) + vec(1));
 
     return size;
   }
@@ -72,14 +72,13 @@ public:
     plane1_eigen << plane1.nx, plane1.ny, plane1.nz;
     plane2_eigen << plane2.nx, plane2.ny, plane2.nz;
     float size = 0;
-    size = fabs(plane1.d - plane2.d);
 
     if(fabs(plane1.d) > fabs(plane2.d))
       vec = fabs(plane1.d) * plane1_eigen - fabs(plane2.d) * plane2_eigen;
     else if(fabs(plane2.d) > fabs(plane1.d))
       vec = fabs(plane2.d) * plane2_eigen - fabs(plane1.d) * plane1_eigen;
 
-    size = vec(0) + vec(1);
+    size = fabs(vec(0) + vec(1));
 
     return size;
   }

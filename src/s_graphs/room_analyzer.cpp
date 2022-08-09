@@ -136,7 +136,7 @@ geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_
     // double size = y_plane1.d - y_plane2.d;
     // center.y = (((size) / 2) + y_plane2.d);
     // center.y = center.y * fabs(y_plane2.ny);
-    vec_y = (0.5 * (fabs(y_plane1.d) * y_plane1_eigen - fabs(y_plane2.d) * y_plane2_eigen)) + fabs(y_plane1.d) * y_plane1_eigen;
+    vec_y = (0.5 * (fabs(y_plane1.d) * y_plane1_eigen - fabs(y_plane2.d) * y_plane2_eigen)) + fabs(y_plane2.d) * y_plane2_eigen;
   } else {
     // double size = y_plane2.d - y_plane1.d;
     // center.y = (((size) / 2) + y_plane1.d);
@@ -148,7 +148,7 @@ geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_
   center.x = final_vec(0);
   center.y = final_vec(1);
 
-  std::cout << "final room vec: " << center.x << ";" << center.y << std::endl;
+  std::cout << "final room vec: " << final_vec << std::endl;
   return center;
 }
 
