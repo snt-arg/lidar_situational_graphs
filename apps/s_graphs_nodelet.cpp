@@ -421,6 +421,12 @@ private:
         }
       }
 
+      // perform planar segmentation
+      if(extract_planar_surfaces) {
+        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(keyframe->cloud);
+        map_extracted_planes(keyframe, extracted_cloud_vec);
+      }
+
       if(i == 0 && keyframes.empty()) {
         continue;
       }
@@ -432,12 +438,6 @@ private:
       Eigen::MatrixXd information = inf_calclator->calc_information_matrix(keyframe->cloud, prev_keyframe->cloud, relative_pose);
       auto edge = graph_slam->add_se3_edge(keyframe->node, prev_keyframe->node, relative_pose, information);
       graph_slam->add_robust_kernel(edge, private_nh.param<std::string>("odometry_edge_robust_kernel", "NONE"), private_nh.param<double>("odometry_edge_robust_kernel_size", 1.0));
-
-      // perform planar segmentation
-      if(extract_planar_surfaces) {
-        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(keyframe->cloud);
-        map_extracted_planes(keyframe, extracted_cloud_vec);
-      }
     }
 
     std_msgs::Header read_until;
