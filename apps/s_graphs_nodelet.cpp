@@ -2030,28 +2030,6 @@ private:
       corr_x_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_x_line_marker);
 
-      // fill in the text marker
-      visualization_msgs::Marker corr_x_text_marker;
-      corr_x_text_marker.scale.z = 0.5;
-      if(!overlapped_corridor)
-        corr_x_text_marker.ns = "corridor_x_text";
-      else
-        corr_x_text_marker.ns = "corridor_x_text";
-      corr_x_text_marker.header.frame_id = map_frame_id;
-      corr_x_text_marker.header.stamp = stamp;
-      corr_x_text_marker.id = markers.markers.size() + 1;
-      corr_x_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_x_text_marker.pose.position.x = x_corridor_snapshot[i].node->estimate();
-      corr_x_text_marker.pose.position.y = x_corridor_snapshot[i].keyframe_trans(1);
-      corr_x_text_marker.pose.position.z = corridor_text_h;
-      corr_x_text_marker.color.r = 0;
-      corr_x_text_marker.color.g = 1;
-      corr_x_text_marker.color.b = 0;
-      corr_x_text_marker.color.a = 1;
-      corr_x_text_marker.pose.orientation.w = 1.0;
-      corr_x_text_marker.lifetime = ros::Duration(15.0);
-      corr_x_text_marker.text = "Corridor X" + std::to_string(i + 1);
-
       // x corridor cube
       visualization_msgs::Marker corridor_pose_marker;
       corridor_pose_marker.pose.orientation.w = 1.0;
@@ -2075,7 +2053,6 @@ private:
       corridor_pose_marker.pose.position.z = corridor_node_h;
       corridor_pose_marker.lifetime = ros::Duration(15.0);
       markers.markers.push_back(corridor_pose_marker);
-      markers.markers.push_back(corr_x_text_marker);
     }
 
     for(int i = 0; i < y_corridor_snapshot.size(); ++i) {
@@ -2156,28 +2133,6 @@ private:
       corr_y_line_marker.points.push_back(p3);
       markers.markers.push_back(corr_y_line_marker);
 
-      // fill in the text marker
-      visualization_msgs::Marker corr_y_text_marker;
-      corr_y_text_marker.scale.z = 0.5;
-      if(!overlapped_corridor)
-        corr_y_text_marker.ns = "corridor_y_text";
-      else
-        corr_y_text_marker.ns = "overlapped_corridor_y_text";
-      corr_y_text_marker.header.frame_id = map_frame_id;
-      corr_y_text_marker.header.stamp = stamp;
-      corr_y_text_marker.id = markers.markers.size() + 1;
-      corr_y_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      corr_y_text_marker.pose.position.x = y_corridor_snapshot[i].keyframe_trans(0);
-      corr_y_text_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
-      corr_y_text_marker.pose.position.z = corridor_text_h;
-      corr_y_text_marker.color.r = color_r;
-      corr_y_text_marker.color.g = color_g;
-      corr_y_text_marker.color.b = color_b;
-      corr_y_text_marker.color.a = 1;
-      corr_y_text_marker.pose.orientation.w = 1.0;
-      corr_y_text_marker.lifetime = ros::Duration(15.0);
-      corr_y_text_marker.text = "Corridor Y " + std::to_string(i + 1);
-
       // y corridor cube
       visualization_msgs::Marker corridor_pose_marker;
       corridor_pose_marker.pose.orientation.w = 1.0;
@@ -2202,7 +2157,6 @@ private:
       corridor_pose_marker.pose.position.z = corridor_node_h;
       corridor_pose_marker.lifetime = ros::Duration(15.0);
       markers.markers.push_back(corridor_pose_marker);
-      markers.markers.push_back(corr_y_text_marker);
     }
 
     // room markers
@@ -2233,26 +2187,6 @@ private:
       point.y = room_snapshot[i].node->estimate()(1);
       point.z = room_node_h;
       room_marker.points.push_back(point);
-
-      // fill in the text marker
-      visualization_msgs::Marker room_text_marker;
-      room_text_marker.scale.z = 0.5;
-      room_text_marker.ns = "rooms_text";
-      room_text_marker.header.frame_id = map_frame_id;
-      room_text_marker.header.stamp = stamp;
-      room_text_marker.id = markers.markers.size() + 1;
-      room_text_marker.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
-      room_text_marker.pose.position.x = room_snapshot[i].node->estimate()(0);
-      room_text_marker.pose.position.y = room_snapshot[i].node->estimate()(1);
-      room_text_marker.pose.position.z = room_text_h;
-      room_text_marker.color.r = color_r;
-      room_text_marker.color.g = color_g;
-      room_text_marker.color.b = color_b;
-      room_text_marker.color.a = 1;
-      room_text_marker.pose.orientation.w = 1.0;
-      room_text_marker.text = "Room" + std::to_string(i + 1);
-      room_text_marker.lifetime = ros::Duration(15.0);
-      markers.markers.push_back(room_text_marker);
 
       // fill in the line marker
       visualization_msgs::Marker room_line_marker;
