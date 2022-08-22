@@ -267,7 +267,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
       x_plane1_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane2_coeffs);
     else {
       std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-      if((*found_x_plane1).plane_node->estimate().coeffs().head(3).dot(found_mapped_x_plane1_coeffs.head(3)) > 0) {
+      if((*found_x_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_x_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
         x_plane1_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
         dupl_plane_pair = std::make_pair(*found_x_plane1, *found_mapped_x_plane1);
       } else {
@@ -284,7 +284,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
       x_plane2_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_pose, found_mapped_x_plane2_coeffs);
     else {
       std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-      if((*found_x_plane2).plane_node->estimate().coeffs().head(3).dot(found_mapped_x_plane1_coeffs.head(3)) > 0) {
+      if((*found_x_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_x_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
         x_plane2_meas = room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
         dupl_plane_pair = std::make_pair(*found_x_plane2, *found_mapped_x_plane1);
       } else {
@@ -314,7 +314,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
       y_plane1_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane2_coeffs);
     else {
       std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-      if((*found_y_plane1).plane_node->estimate().coeffs().head(3).dot(found_mapped_y_plane1_coeffs.head(3)) > 0) {
+      if((*found_y_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_y_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
         y_plane1_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
         dupl_plane_pair = std::make_pair(*found_y_plane1, *found_mapped_y_plane1);
       } else {
@@ -331,7 +331,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
       y_plane2_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_pose, found_mapped_y_plane2_coeffs);
     else {
       std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-      if((*found_y_plane2).plane_node->estimate().coeffs().head(3).dot(found_mapped_y_plane1_coeffs.head(3)) > 0) {
+      if((*found_y_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_y_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
         y_plane2_meas = room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
         dupl_plane_pair = std::make_pair(*found_y_plane2, *found_mapped_y_plane1);
       } else {

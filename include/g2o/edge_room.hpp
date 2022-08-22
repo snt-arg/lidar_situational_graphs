@@ -118,9 +118,6 @@ public:
     }
 
     _error[0] = est - _measurement;
-    // std::cout << "est: " << est << std::endl;
-    // std::cout << "_measurement: " << _measurement << std::endl;
-    // std::cout << "error X plane room: " << _error[0] << std::endl;
   }
 
   virtual bool read(std::istream& is) override {

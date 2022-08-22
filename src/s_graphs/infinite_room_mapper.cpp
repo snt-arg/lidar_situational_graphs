@@ -253,7 +253,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         meas_plane1 = corridor_measurement(plane_type, corr_pose(0), found_mapped_plane2_coeffs);
       else {
         std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0) {
+        if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
           meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
           dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane1);
         } else {
@@ -270,7 +270,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         meas_plane2 = corridor_measurement(plane_type, corr_pose(0), found_mapped_plane2_coeffs);
       else {
         std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0) {
+        if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
           meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
           dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane1);
         } else {
@@ -361,7 +361,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         meas_plane1 = corridor_measurement(plane_type, corr_pose(1), found_mapped_plane2_coeffs);
       else {
         std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0) {
+        if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
           meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
           dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane1);
         } else {
@@ -378,7 +378,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         meas_plane2 = corridor_measurement(plane_type, corr_pose(1), found_mapped_plane2_coeffs);
       else {
         std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot(found_mapped_plane1_coeffs.head(3)) > 0) {
+        if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
           meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
           dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane1);
         } else {
