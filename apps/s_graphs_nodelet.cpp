@@ -771,7 +771,7 @@ private:
    * @param event
    */
   void map_points_publish_timer_callback(const ros::TimerEvent& event) {
-    if(!map_points_pub.getNumSubscribers() || !graph_updated || !markers_pub.getNumSubscribers()) {
+    if(!map_points_pub.getNumSubscribers() || !graph_updated) {
       return;
     }
 
