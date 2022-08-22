@@ -89,10 +89,10 @@ public:
     _measurement = m;
   }
 };
-class EdgeRoomXPlane : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexPlane> {
+class EdgeRoomXPlane : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXPlane() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexPlane>() {
+  EdgeRoomXPlane() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexPlane>() {
     _information.setZero();
     _error.setZero();
   }
@@ -100,7 +100,7 @@ public:
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector2d trans = v1->estimate();
+    Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
     if(plane(3) > 0) {
@@ -110,19 +110,22 @@ public:
       plane(3) = -1 * plane(3);
     }
 
-    double est;
-    if(fabs(trans(0)) > fabs(plane(3))) {
-      est = trans(0) - plane(3);
+    Eigen::Vector2d est;
+    Eigen::Vector2d room_pose_transformed = room_pose.dot(plane.head(2)) * plane.head(2);
+    Eigen::Vector2d plane_vec = fabs(plane(3)) * plane.head(2);
+
+    if(fabs(room_pose(0)) > fabs(plane(3))) {
+      est = room_pose_transformed - plane_vec;
     } else {
-      est = plane(3) - trans(0);
+      est = plane_vec - room_pose_transformed;
     }
 
-    _error[0] = est - _measurement;
+    _error = est - _measurement;
   }
 
   virtual bool read(std::istream& is) override {
-    double v;
-    is >> v;
+    Eigen::Vector2d v;
+    is >> v(0) >> v(1);
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -148,24 +151,24 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
+  virtual void setMeasurement(const Eigen::Vector2d& m) override {
     _measurement = m;
   }
 
   virtual int measurementDimension() const override {
-    return 1;
+    return 2;
   }
 };
 
-class EdgeRoomYPlane : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
+class EdgeRoomYPlane : public BaseBinaryEdge<2, Eigen::Vector2d, VertexRoomXYLB, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomYPlane() : BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane>() {}
+  EdgeRoomYPlane() : BaseBinaryEdge<2, Eigen::Vector2d, VertexRoomXYLB, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    Eigen::Vector2d trans = v1->estimate();
+    Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
     if(plane(3) > 0) {
@@ -175,19 +178,22 @@ public:
       plane(3) = -1 * plane(3);
     }
 
-    double est;
-    if(fabs(trans(1)) > fabs(plane(3))) {
-      est = trans(1) - plane(3);
+    Eigen::Vector2d est;
+    Eigen::Vector2d room_pose_transformed = room_pose.dot(plane.head(2)) * plane.head(2);
+    Eigen::Vector2d plane_vec = fabs(plane(3)) * plane.head(2);
+
+    if(fabs(room_pose(1)) > fabs(plane(3))) {
+      est = room_pose_transformed - plane_vec;
     } else {
-      est = plane(3) - trans(1);
+      est = plane_vec - room_pose_transformed;
     }
 
-    _error[0] = est - _measurement;
+    _error = est - _measurement;
   }
 
   virtual bool read(std::istream& is) override {
-    double v;
-    is >> v;
+    Eigen::Vector2d v;
+    is >> v(0) >> v(1);
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -213,12 +219,12 @@ public:
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
+  virtual void setMeasurement(const Eigen::Vector2d& m) override {
     _measurement = m;
   }
 
   virtual int measurementDimension() const override {
-    return 1;
+    return 2;
   }
 };
 
