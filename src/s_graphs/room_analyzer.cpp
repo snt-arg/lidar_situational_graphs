@@ -126,7 +126,7 @@ geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_
     // center.x = center.x * fabs(x_plane2.nx);
     vec_x = (0.5 * (fabs(x_plane1.d) * x_plane1_eigen - fabs(x_plane2.d) * x_plane2_eigen)) + fabs(x_plane2.d) * x_plane2_eigen;
   } else {
-    double size = x_plane2.d - x_plane1.d;
+    // double size = x_plane2.d - x_plane1.d;
     // center.x = (((size) / 2) + x_plane1.d);
     // center.x = center.x * fabs(x_plane1.nx);
     vec_x = (0.5 * (fabs(x_plane2.d) * x_plane2_eigen - fabs(x_plane1.d) * x_plane1_eigen)) + fabs(x_plane1.d) * x_plane1_eigen;
@@ -790,7 +790,7 @@ bool RoomAnalyzer::check_x1yplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 100) {
+    if(point_count > 500) {
       valid_room_config = true;
       break;
     }
@@ -809,7 +809,7 @@ bool RoomAnalyzer::check_x2yplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 100) {
+    if(point_count > 500) {
       valid_room_config = true;
       break;
     }
@@ -828,7 +828,7 @@ bool RoomAnalyzer::check_y1xplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 100) {
+    if(point_count > 500) {
       valid_room_config = true;
       break;
     }
@@ -847,7 +847,7 @@ bool RoomAnalyzer::check_y2xplane_alignment(const std::vector<geometry_msgs::Vec
         break;
       }
     }
-    if(point_count > 100) {
+    if(point_count > 500) {
       valid_room_config = true;
       break;
     }
