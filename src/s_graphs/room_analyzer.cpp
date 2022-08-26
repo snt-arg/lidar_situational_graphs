@@ -344,7 +344,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
     y_plane2.nx = 0;
     y_plane2.ny = 0;
     y_plane1.nz = 0;
-    get_room_planes(current_x_vert_planes, current_y_vert_planes, p1, p2, cloud_cluster, x_plane1, x_plane2, y_plane1, y_plane2, found_x1_plane, found_x2_plane, found_y1_plane, found_y2_plane);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sub_cloud_hull = get_room_planes(current_x_vert_planes, current_y_vert_planes, p1, p2, cloud_cluster, x_plane1, x_plane2, y_plane1, y_plane2, found_x1_plane, found_x2_plane, found_y1_plane, found_y2_plane);
 
     // if found all four planes its a room
     if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
@@ -417,6 +417,8 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
     }
     // if found only two x planes are found at x corridor
     else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
+      if(sub_cloud_hull->points.size() > 0) get_cluster_endpoints(sub_cloud_hull, p1, p2);
+
       plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane1);
       plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane2);
 
@@ -460,6 +462,8 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
     }
     // if found only two y planes are found at y corridor
     else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
+      if(sub_cloud_hull->points.size() > 0) get_cluster_endpoints(sub_cloud_hull, p1, p2);
+
       plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1);
       plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane2);
 
@@ -507,7 +511,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
   return false;
 }
 
-void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
   float room_dist_thres = 1.5;
   float plane_point_dist_thres = 1.5;
   float min_dist_x1 = 100;
@@ -521,6 +525,12 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
   min_x2_plane_points_dist[0] = 100;
   min_x2_plane_points_dist[1] = 100;
 
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_x1(new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_x2(new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_y1(new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_y2(new pcl::PointCloud<pcl::PointXYZRGB>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr sub_cloud_hull(new pcl::PointCloud<pcl::PointXYZRGB>);
+
   bool use_max_neighbours_algo = true;
   int max_x1_neighbours, max_x2_neighbours, max_y1_neighbours, max_y2_neighbours;
   max_x1_neighbours = max_x2_neighbours = max_y1_neighbours = max_y2_neighbours = 0;
@@ -530,7 +540,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
   if(!use_max_neighbours_algo) {
     if(!compute_diagonal_points(cloud_hull, p_min, p_max, top_right, bottom_right, top_left, bottom_left)) {
       std::cout << "didnt not get diagonal points" << std::endl;
-      return;
+      return sub_cloud_hull;
     }
   }
 
@@ -551,7 +561,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
 
     // std::cout << "diff dist x1: " << diff_dist_x1 << std::endl;
     if(use_max_neighbours_algo) {
-      int x1_neighbours = find_plane_points(cloud_hull, x_plane);
+      int x1_neighbours = find_plane_points(cloud_hull, x_plane, cloud_hull_x1);
 
       if(x1_neighbours > max_x1_neighbours) {
         min_dist_x1 = diff_dist_x1;
@@ -582,7 +592,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
 
     // std::cout << "diff dist x2: " << diff_dist_x2 << std::endl;
     if(use_max_neighbours_algo) {
-      int x2_neighbours = find_plane_points(cloud_hull, x_plane);
+      int x2_neighbours = find_plane_points(cloud_hull, x_plane, cloud_hull_x2);
 
       if(x2_neighbours > max_x2_neighbours) {
         min_dist_x2 = diff_dist_x2;
@@ -676,7 +686,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     diff_dist_y1 = sqrt((dist_y1 - y_plane.d) * (dist_y1 - y_plane.d));
 
     if(use_max_neighbours_algo) {
-      int y1_neighbours = find_plane_points(cloud_hull, y_plane);
+      int y1_neighbours = find_plane_points(cloud_hull, y_plane, cloud_hull_y1);
 
       if(y1_neighbours > max_y1_neighbours) {
         min_dist_y1 = diff_dist_y1;
@@ -706,7 +716,7 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
     diff_dist_y2 = sqrt((dist_y2 - y_plane.d) * (dist_y2 - y_plane.d));
 
     if(use_max_neighbours_algo) {
-      int y2_neighbours = find_plane_points(cloud_hull, y_plane);
+      int y2_neighbours = find_plane_points(cloud_hull, y_plane, cloud_hull_y2);
 
       if(y2_neighbours > max_y2_neighbours) {
         min_dist_y2 = diff_dist_y2;
@@ -777,6 +787,21 @@ void RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& curre
       }
     }
   }
+
+  if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
+    for(int i = 0; i < cloud_hull_x1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x1->points[i]);
+    for(int i = 0; i < cloud_hull_x2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x2->points[i]);
+    for(int i = 0; i < cloud_hull_y1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y1->points[i]);
+    for(int i = 0; i < cloud_hull_y2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y2->points[i]);
+  } else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
+    for(int i = 0; i < cloud_hull_x1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x1->points[i]);
+    for(int i = 0; i < cloud_hull_x2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x2->points[i]);
+  } else if(found_y1_plane && found_y2_plane && (!found_y1_plane || !found_y2_plane)) {
+    for(int i = 0; i < cloud_hull_y1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y1->points[i]);
+    for(int i = 0; i < cloud_hull_y2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y2->points[i]);
+  }
+
+  return sub_cloud_hull;
 }
 
 bool RoomAnalyzer::check_x1yplane_alignment(const std::vector<geometry_msgs::Vector3> x_plane1_points, const std::vector<geometry_msgs::Vector3> y_plane_points) {
@@ -962,7 +987,7 @@ void RoomAnalyzer::downsample_cloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& clou
   sor.filter(*cloud_hull);
 }
 
-int RoomAnalyzer::find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane) {
+int RoomAnalyzer::find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_hull) {
   int num_neighbours = 0;
   double point_hull_dist_thres = 1.0;
 
@@ -974,7 +999,10 @@ int RoomAnalyzer::find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr
         min_point_hull_dist = point_hull_dist;
       }
     }
-    if(min_point_hull_dist < point_hull_dist_thres) num_neighbours++;
+    if(min_point_hull_dist < point_hull_dist_thres) {
+      num_neighbours++;
+      sub_cloud_hull->points.push_back(cloud_hull->points[i]);
+    }
   }
   // std::cout << "num nieghbours: " << num_neighbours << std::endl;
   return num_neighbours;
