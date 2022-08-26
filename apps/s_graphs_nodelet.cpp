@@ -142,7 +142,7 @@ public:
     imu_orientation_edge_stddev = private_nh.param<double>("imu_orientation_edge_stddev", 0.1);
     imu_acceleration_edge_stddev = private_nh.param<double>("imu_acceleration_edge_stddev", 3.0);
 
-    keyframe_window = private_nh.param<int>("keyframe_window", 1);
+    keyframe_window_size = private_nh.param<int>("keyframe_window_size", 1);
     extract_planar_surfaces = private_nh.param<bool>("extract_planar_surfaces", true);
     plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
     plane_points_dist = private_nh.param<double>("plane_points_dist", 0.5);
@@ -933,7 +933,7 @@ private:
   void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot, std::vector<VerticalPlanes> y_vert_planes_snapshot) {
     if(keyframes.empty()) return;
 
-    std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window), keyframes.end());
+    std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
     std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
     for(std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin(); it != keyframe_window.rend(); ++it) {
       for(const auto& x_plane_id : (*it)->x_plane_ids) {
@@ -2696,7 +2696,7 @@ private:
   std::deque<s_graphs::FloorCoeffsConstPtr> floor_coeffs_queue;
 
   // vertical and horizontal planes
-  int keyframe_window;
+  int keyframe_window_size;
   bool extract_planar_surfaces;
   double plane_dist_threshold;
   double plane_points_dist;
