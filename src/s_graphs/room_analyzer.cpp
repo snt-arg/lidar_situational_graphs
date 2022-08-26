@@ -762,7 +762,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
   } else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
     for(int i = 0; i < cloud_hull_x1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x1->points[i]);
     for(int i = 0; i < cloud_hull_x2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x2->points[i]);
-  } else if(found_y1_plane && found_y2_plane && (!found_y1_plane || !found_y2_plane)) {
+  } else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
     for(int i = 0; i < cloud_hull_y1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y1->points[i]);
     for(int i = 0; i < cloud_hull_y2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y2->points[i]);
   }
