@@ -384,6 +384,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
   graph_slam->add_robust_kernel(edge_y_plane2, "Huber", 1.0);
 }
 
+/*TODO:HB Move this to plane_utils.hpp */
 Eigen::Vector2d FiniteRoomMapper::compute_room_pose(const std::vector<plane_data_list>& x_room_pair_vec, const std::vector<plane_data_list>& y_room_pair_vec) {
   Eigen::Vector2d room_pose(0, 0);
   Eigen::Vector3d vec_x, vec_y;

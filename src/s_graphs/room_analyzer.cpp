@@ -108,6 +108,7 @@ geometry_msgs::Point RoomAnalyzer::get_room_length(const pcl::PointXY& p1, const
   return length;
 }
 
+/*TODO:HB Move this to plane_utils.hpp */
 geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
   geometry_msgs::Point center;
   Eigen::Vector3d vec_x, vec_y;
@@ -936,6 +937,7 @@ std::vector<float> RoomAnalyzer::find_plane_points(const pcl::PointXY& start_poi
       closest_end_plane_point = plane_point;
     }
   }
+
   plane_point_distances.push_back(min_start_point_plane_dist);
   plane_point_distances.push_back(min_end_point_plane_dist);
 
