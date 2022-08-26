@@ -132,7 +132,6 @@ private:
 
   std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
   std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
-  Eigen::Vector2d compute_corridor_pose(int plane_type, Eigen::Vector3d keyframe_pose, Eigen::Vector4d v1, Eigen::Vector4d v2);
 
   /**
    * @brief map a new corridor from mapped room planes

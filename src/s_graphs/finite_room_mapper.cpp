@@ -391,37 +391,20 @@ Eigen::Vector2d FiniteRoomMapper::compute_room_pose(const std::vector<plane_data
   Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane_unflipped.coeffs(), y_plane2 = y_room_pair_vec[1].plane_unflipped.coeffs();
 
   if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
-    // double size = x_plane1(3) - x_plane2(3);
-    // room_pose(0) = (((size) / 2) + x_plane2(3));
-    // room_pose(0) = room_pose(0) * fabs(x_plane2(0));
-    // room_pose(2) = size;
     vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
   } else {
-    // double size = x_plane2(3) - x_plane1(3);
-    // room_pose(0) = (((size) / 2) + x_plane1(3));
-    // room_pose(0) = room_pose(0) * fabs(x_plane1(0));
-    // room_pose(2) = size;
     vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
   }
 
   if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
-    // double size = y_plane1(3) - y_plane2(3);
-    // room_pose(1) = (((size) / 2) + y_plane2(3));
-    // room_pose(1) = room_pose(1) * fabs(y_plane2(1));
-    // room_pose(3) = size;
     vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
   } else {
-    // double size = y_plane2(3) - y_plane1(3);
-    // room_pose(1) = (((size) / 2) + y_plane1(3));
-    // room_pose(1) = room_pose(1) * fabs(y_plane1(1));
-    // room_pose(3) = size;
     vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
   }
 
   Eigen::Vector3d final_vec = vec_x + vec_y;
   room_pose(0) = final_vec(0);
   room_pose(1) = final_vec(1);
-  std::cout << "room pose in graph " << room_pose << std::endl;
 
   return room_pose;
 }

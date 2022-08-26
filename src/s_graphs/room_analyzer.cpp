@@ -121,26 +121,14 @@ geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_
   y_plane2_eigen << y_plane2.nx, y_plane2.ny, y_plane2.nz;
 
   if(fabs(x_plane1.d) > fabs(x_plane2.d)) {
-    // double size = x_plane1.d - x_plane2.d;
-    // center.x = (((size) / 2) + x_plane2.d);
-    // center.x = center.x * fabs(x_plane2.nx);
     vec_x = (0.5 * (fabs(x_plane1.d) * x_plane1_eigen - fabs(x_plane2.d) * x_plane2_eigen)) + fabs(x_plane2.d) * x_plane2_eigen;
   } else {
-    // double size = x_plane2.d - x_plane1.d;
-    // center.x = (((size) / 2) + x_plane1.d);
-    // center.x = center.x * fabs(x_plane1.nx);
     vec_x = (0.5 * (fabs(x_plane2.d) * x_plane2_eigen - fabs(x_plane1.d) * x_plane1_eigen)) + fabs(x_plane1.d) * x_plane1_eigen;
   }
 
   if(fabs(y_plane1.d) > fabs(y_plane2.d)) {
-    // double size = y_plane1.d - y_plane2.d;
-    // center.y = (((size) / 2) + y_plane2.d);
-    // center.y = center.y * fabs(y_plane2.ny);
     vec_y = (0.5 * (fabs(y_plane1.d) * y_plane1_eigen - fabs(y_plane2.d) * y_plane2_eigen)) + fabs(y_plane2.d) * y_plane2_eigen;
   } else {
-    // double size = y_plane2.d - y_plane1.d;
-    // center.y = (((size) / 2) + y_plane1.d);
-    // center.y = center.y * fabs(y_plane1.ny);
     vec_y = (0.5 * (fabs(y_plane2.d) * y_plane2_eigen - fabs(y_plane1.d) * y_plane1_eigen)) + fabs(y_plane1.d) * y_plane1_eigen;
   }
 
@@ -148,66 +136,47 @@ geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_
   center.x = final_vec(0);
   center.y = final_vec(1);
 
-  std::cout << "final room vec: " << final_vec << std::endl;
   return center;
 }
 
 geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2) {
-  geometry_msgs::Point center;
-  Eigen::Vector3d vec;
-  Eigen::Vector3d plane1_eigen, plane2_eigen;
-  plane1_eigen << plane1.nx, plane1.ny, plane1.nz;
-  plane2_eigen << plane2.nx, plane2.ny, plane2.nz;
+  geometry_msgs::Point corridor_center;
+  Eigen::Vector3d cluster_center;
+  Eigen::Vector4d plane1_eigen, plane2_eigen;
 
-  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    if(fabs(plane1.d) > fabs(plane2.d)) {
-      // double size = plane1.d - plane2.d;
-      // center.x = (((size) / 2) + plane2.d);
-      // center.x = center.x * plane2.nx;
-      vec = (0.5 * (fabs(plane1.d) * plane1_eigen - fabs(plane2.d) * plane2_eigen)) + fabs(plane2.d) * plane2_eigen;
-    } else {
-      // double size = plane2.d - plane1.d;
-      // center.x = (((size) / 2) + plane1.d);
-      // center.x = center.x * plane1.nx;
-      vec = (0.5 * (fabs(plane2.d) * plane2_eigen - fabs(plane1.d) * plane1_eigen)) + fabs(plane1.d) * plane1_eigen;
-    }
-    center.x = vec(0);
+  plane1_eigen << plane1.nx, plane1.ny, plane1.nz, plane1.d;
+  plane2_eigen << plane2.nx, plane2.ny, plane2.nz, plane2.d;
 
-    if(fabs(p1.y) > fabs(p2.y)) {
-      float size = p1.y - p2.y;
-      center.y = (size / 2) + p2.y;
-    } else {
-      float size = p2.y - p1.y;
-      center.y = (size / 2) + p1.y;
-    }
-    std::cout << "x corridor center:" << center.x << "; " << center.y << std::endl;
+  if(fabs(p1.x) > fabs(p2.x)) {
+    float size = p1.x - p2.x;
+    cluster_center(0) = (size / 2) + p2.x;
+  } else {
+    float size = p2.x - p1.x;
+    cluster_center(0) = (size / 2) + p1.x;
   }
 
-  if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    if(fabs(plane1.d) > fabs(plane2.d)) {
-      // double size = plane1.d - plane2.d;
-      // center.y = (((size) / 2) + plane2.d);
-      // center.y = center.y * plane2.ny;
-      vec = (0.5 * (fabs(plane1.d) * plane1_eigen - fabs(plane2.d) * plane2_eigen)) + fabs(plane2.d) * plane2_eigen;
-    } else {
-      // double size = plane2.d - plane1.d;
-      // center.y = (((size) / 2) + plane1.d);
-      // center.y = center.y * plane1.ny;
-      vec = (0.5 * (fabs(plane2.d) * plane2_eigen - fabs(plane1.d) * plane1_eigen)) + fabs(plane1.d) * plane1_eigen;
-    }
-    center.y = vec(1);
-
-    if(fabs(p1.x) > fabs(p2.x)) {
-      float size = p1.x - p2.x;
-      center.x = (size / 2) + p2.x;
-    } else {
-      float size = p2.x - p1.x;
-      center.x = (size / 2) + p1.x;
-    }
-    std::cout << "y corridor center:" << center.x << "; " << center.y << std::endl;
+  if(fabs(p1.y) > fabs(p2.y)) {
+    float size = p1.y - p2.y;
+    cluster_center(1) = (size / 2) + p2.y;
+  } else {
+    float size = p2.y - p1.y;
+    cluster_center(1) = (size / 2) + p1.y;
   }
 
-  return center;
+  Eigen::Vector3d vec, vec_normal, final_pose_vec;
+
+  if(fabs(plane1_eigen(3)) > fabs(plane2_eigen(3))) {
+    vec = (0.5 * (fabs(plane1_eigen(3)) * plane1_eigen.head(3) - fabs(plane2_eigen(3)) * plane2_eigen.head(3))) + fabs(plane2_eigen(3)) * plane2_eigen.head(3);
+  } else {
+    vec = (0.5 * (fabs(plane2_eigen(3)) * plane2_eigen.head(3) - fabs(plane1_eigen(3)) * plane1_eigen.head(3))) + fabs(plane1_eigen(3)) * plane1_eigen.head(3);
+  }
+
+  vec_normal = vec / vec.norm();
+  final_pose_vec = vec + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
+  corridor_center.x = final_pose_vec(0);
+  corridor_center.y = final_pose_vec(1);
+
+  return corridor_center;
 }
 
 void RoomAnalyzer::get_cluster_endpoints(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, pcl::PointXY& p1, pcl::PointXY& p2) {
@@ -309,11 +278,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
   pcl::PointXY p1;
   pcl::PointXY p2;
   get_cluster_endpoints(cloud_cluster, p1, p2);
-  // bool centroid_inside = room_analyzer->get_centroid_location(cloud_cluster, p1, p2);
   float room_width_threshold = 1.0;
-
-  // std::cout << "cluster " << room_cluster_counter << " has x min and x max: " << p1.x << ", " << p2.x << std::endl;
-  // std::cout << "cluster " << room_cluster_counter << " has y min and y max: " << p1.y << ", " << p2.y << std::endl;
   geometry_msgs::Point room_length = get_room_length(p1, p2);
 
   // TODO:HB check room width here
@@ -971,9 +936,6 @@ std::vector<float> RoomAnalyzer::find_plane_points(const pcl::PointXY& start_poi
       closest_end_plane_point = plane_point;
     }
   }
-
-  // std::cout << "closest_start_plane_point " << closest_start_plane_point.x << " ; " << closest_start_plane_point.y << std::endl;
-  // std::cout << "closest_end_plane_point " << closest_end_plane_point.x << " ; " << closest_end_plane_point.y << std::endl;
   plane_point_distances.push_back(min_start_point_plane_dist);
   plane_point_distances.push_back(min_end_point_plane_dist);
 

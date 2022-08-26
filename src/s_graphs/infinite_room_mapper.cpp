@@ -66,9 +66,11 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     plane_data_list x_plane1_data, x_plane2_data;
     x_plane1_data.plane_id = room_data.x_planes[0].id;
     x_plane1_data.plane_unflipped = x_plane1;
+    x_plane1_data.plane_centroid(0) = room_data.room_center.x;
     x_plane1_data.plane_centroid(1) = room_data.room_center.y;
     x_plane2_data.plane_id = room_data.x_planes[1].id;
     x_plane2_data.plane_unflipped = x_plane2;
+    x_plane2_data.plane_centroid(0) = room_data.room_center.x;
     x_plane2_data.plane_centroid(1) = room_data.room_center.y;
 
     x_plane1_data.connected_id = room_data.id;
@@ -109,9 +111,11 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     y_plane1_data.plane_id = room_data.y_planes[0].id;
     y_plane1_data.plane_unflipped = y_plane1;
     y_plane1_data.plane_centroid(0) = room_data.room_center.x;
+    y_plane1_data.plane_centroid(1) = room_data.room_center.y;
     y_plane2_data.plane_id = room_data.y_planes[1].id;
     y_plane2_data.plane_unflipped = y_plane2;
     y_plane2_data.plane_centroid(0) = room_data.room_center.x;
+    y_plane2_data.plane_centroid(1) = room_data.room_center.y;
 
     y_plane1_data.connected_id = room_data.id;
     // get the corridor neighbours
@@ -185,7 +189,8 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   std::pair<int, int> corr_data_association;
   double meas_plane1, meas_plane2;
   Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
-  Eigen::Vector2d corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
+  // Eigen::Vector2d corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
+  Eigen::Vector2d corr_pose(corr_plane1_pair.plane_centroid(0), corr_plane1_pair.plane_centroid(1));
   // double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
   ROS_DEBUG_NAMED("corridor planes", "final corridor plane 1 %f %f %f %f", corr_plane1_pair.plane_unflipped.coeffs()(0), corr_plane1_pair.plane_unflipped.coeffs()(1), corr_plane1_pair.plane_unflipped.coeffs()(2), corr_plane1_pair.plane_unflipped.coeffs()(3));
   ROS_DEBUG_NAMED("corridor planes", "final corridor plane 2 %f %f %f %f", corr_plane2_pair.plane_unflipped.coeffs()(0), corr_plane2_pair.plane_unflipped.coeffs()(1), corr_plane2_pair.plane_unflipped.coeffs()(2), corr_plane2_pair.plane_unflipped.coeffs()(3));
@@ -412,45 +417,6 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   }
 
   return;
-}
-
-Eigen::Vector2d InfiniteRoomMapper::compute_corridor_pose(int plane_type, Eigen::Vector3d keyframe_pose, Eigen::Vector4d v1, Eigen::Vector4d v2) {
-  Eigen::Vector2d corridor_pose;
-  Eigen::Vector3d vec;
-
-  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    if(fabs(v1(3)) > fabs(v2(3))) {
-      // double size = v1(3) - v2(3);
-      // corridor_pose(0) = ((size) / 2) + v2(3);
-      // corridor_pose(0) = corridor_pose(0) * fabs(v2(0));
-      vec = (0.5 * (fabs(v1(3)) * v1.head(3) - fabs(v2(3)) * v2.head(3))) + fabs(v2(3)) * v2.head(3);
-    } else {
-      // double size = v2(3) - v1(3);
-      // corridor_pose(0) = ((size) / 2) + v1(3);
-      // corridor_pose(0) = corridor_pose(0) * fabs(v1(0));
-      vec = (0.5 * (fabs(v2(3)) * v2.head(3) - fabs(v1(3)) * v1.head(3))) + fabs(v1(3)) * v1.head(3);
-    }
-    corridor_pose(0) = vec(0);
-    corridor_pose(1) = keyframe_pose(1);
-  }
-
-  if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    if(fabs(v1(3)) > fabs(v2(3))) {
-      // double size = v1(3) - v2(3);
-      // corridor_pose(1) = ((size) / 2) + v2(3);
-      // corridor_pose(1) = corridor_pose(1) * fabs(v2(1));
-      vec = (0.5 * (fabs(v1(3)) * v1.head(3) - fabs(v2(3)) * v2.head(3))) + fabs(v2(3)) * v2.head(3);
-    } else {
-      // double size = v2(3) - v1(3);
-      // corridor_pose(1) = ((size) / 2) + v1(3);
-      // corridor_pose(1) = corridor_pose(1) * fabs(v1(1));
-      vec = (0.5 * (fabs(v2(3)) * v2.head(3) - fabs(v1(3)) * v1.head(3))) + fabs(v1(3)) * v1.head(3);
-    }
-    corridor_pose(0) = keyframe_pose(0);
-    corridor_pose(1) = vec(1);
-  }
-
-  return corridor_pose;
 }
 
 std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors) {
