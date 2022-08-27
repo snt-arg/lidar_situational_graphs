@@ -232,6 +232,12 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
 
+      auto edge_plane1 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+      graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+
+      auto edge_plane2 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+      graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+
     } else {
       /* add the edge between detected planes and the corridor */
       corr_node = x_corridors[corr_data_association.second].node;
@@ -267,6 +273,13 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         }
         found_new_plane = true;
         dupl_x_vert_planes.push_back(dupl_plane_pair);
+
+        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane1).plane_node->edges();
+        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+          std::cout << "adding x1 plane edge with corridor " << std::endl;
+          auto edge_plane1 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+          graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+        }
       }
 
       if((*found_plane2).id == (*found_mapped_plane1).id)
@@ -284,6 +297,13 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         }
         found_new_plane = true;
         dupl_x_vert_planes.push_back(dupl_plane_pair);
+
+        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane2).plane_node->edges();
+        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+          std::cout << "adding x2 plane edge corridor " << std::endl;
+          auto edge_plane2 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+          graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+        }
       }
 
       // std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
@@ -300,12 +320,6 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
     }
-
-    auto edge_plane1 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
-    graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
-
-    auto edge_plane2 = graph_slam->add_corridor_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
-    graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
@@ -341,6 +355,12 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
 
+      auto edge_plane1 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+      graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+
+      auto edge_plane2 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+      graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+
     } else {
       /* add the edge between detected planes and the corridor */
       corr_node = y_corridors[corr_data_association.second].node;
@@ -375,6 +395,13 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         }
         found_new_plane = true;
         dupl_y_vert_planes.push_back(dupl_plane_pair);
+
+        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane1).plane_node->edges();
+        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+          std::cout << "adding y1 plane edge with corridor " << std::endl;
+          auto edge_plane1 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+          graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+        }
       }
 
       if((*found_plane2).id == (*found_mapped_plane1).id)
@@ -392,6 +419,13 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         }
         found_new_plane = true;
         dupl_y_vert_planes.push_back(dupl_plane_pair);
+
+        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane2).plane_node->edges();
+        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+          std::cout << "adding y2 plane edge corridor " << std::endl;
+          auto edge_plane2 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+          graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+        }
       }
 
       // std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
@@ -408,12 +442,6 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
     }
-
-    auto edge_plane1 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
-    graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
-
-    auto edge_plane2 = graph_slam->add_corridor_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
-    graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
   }
 
   return;
@@ -539,6 +567,27 @@ double InfiniteRoomMapper::corridor_measurement(int plane_type, double corr, con
   }
 
   return meas;
+}
+
+bool InfiniteRoomMapper::check_corridor_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexCorridor* corr_node) {
+  for(auto edge_itr = plane_edges.begin(); edge_itr != plane_edges.end(); ++edge_itr) {
+    if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+      g2o::EdgeCorridorXPlane* edge_corridor_xplane = dynamic_cast<g2o::EdgeCorridorXPlane*>(*edge_itr);
+      if(edge_corridor_xplane) {
+        g2o::VertexCorridor* found_corridor_node = dynamic_cast<g2o::VertexCorridor*>(edge_corridor_xplane->vertices()[0]);
+        if(found_corridor_node->id() == corr_node->id()) return true;
+      }
+    }
+
+    if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
+      g2o::EdgeCorridorYPlane* edge_corridor_yplane = dynamic_cast<g2o::EdgeCorridorYPlane*>(*edge_itr);
+      if(edge_corridor_yplane) {
+        g2o::VertexCorridor* found_corridor_node = dynamic_cast<g2o::VertexCorridor*>(edge_corridor_yplane->vertices()[0]);
+        if(found_corridor_node->id() == corr_node->id()) return true;
+      }
+    }
+  }
+  return false;
 }
 
 void InfiniteRoomMapper::map_corridor_from_existing_room(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData& det_room_data, const s_graphs::Rooms& matched_room, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
