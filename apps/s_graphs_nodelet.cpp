@@ -149,8 +149,8 @@ public:
     constant_covariance = private_nh.param<bool>("constant_covariance", true);
     min_plane_points = private_nh.param<double>("min_plane_points", 100);
     use_point_to_plane = private_nh.param<bool>("use_point_to_plane", false);
-    use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
-    use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
+    use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", false);
+    use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", false);
 
     use_corridor_constraint = private_nh.param<bool>("use_corridor_constraint", false);
     corridor_information = private_nh.param<double>("corridor_information", 0.01);

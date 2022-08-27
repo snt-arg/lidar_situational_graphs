@@ -6,6 +6,7 @@ namespace s_graphs {
 
 PlaneMapper::PlaneMapper(const ros::NodeHandle& private_nh) {
   use_point_to_plane = private_nh.param<bool>("use_point_to_plane", false);
+  plane_information = private_nh.param<double>("plane_information", 0.01);
   plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
   plane_points_dist = private_nh.param<double>("plane_points_dist", 0.5);
   corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
@@ -215,7 +216,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
     auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   } else {
-    Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
+    Eigen::Matrix3d information = Eigen::Matrix3d::Identity() * plane_information;
     auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   }

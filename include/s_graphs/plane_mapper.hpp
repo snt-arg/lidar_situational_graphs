@@ -66,6 +66,7 @@ private:
 
 private:
   bool use_point_to_plane;
+  double plane_information;
   double plane_dist_threshold;
   double plane_points_dist;
   double corridor_min_plane_length;
