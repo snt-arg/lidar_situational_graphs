@@ -173,9 +173,9 @@ public:
     room_point_diff_threshold = private_nh.param<double>("room_point_diff_threshold", 3.0);
     room_width_diff_threshold = private_nh.param<double>("room_width_diff_threshold", 2.5);
 
-    color_r = private_nh.param<double>("color_r", 1);
-    color_g = private_nh.param<double>("color_g", 1);
-    color_b = private_nh.param<double>("color_b", 1);
+    color_r = private_nh.param<double>("color_r", 0);
+    color_g = private_nh.param<double>("color_g", 0);
+    color_b = private_nh.param<double>("color_b", 0);
 
     points_topic = private_nh.param<std::string>("points_topic", "/velodyne_points");
 
