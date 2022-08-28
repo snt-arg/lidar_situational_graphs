@@ -38,10 +38,7 @@ namespace g2o {
 class EdgeSE3Corridor : public BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3Corridor() : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
+  EdgeSE3Corridor() : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor>() {}
 
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
@@ -92,10 +89,7 @@ public:
 class EdgeCorridorXPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorXPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
+  EdgeCorridorXPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
@@ -115,6 +109,10 @@ public:
       est = trans - plane(3);
     } else {
       est = plane(3) - trans;
+    }
+
+    if(est * _measurement < 0) {
+      est = -1 * est;
     }
 
     _error[0] = est - _measurement;
@@ -160,10 +158,7 @@ public:
 class EdgeCorridorYPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorYPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
+  EdgeCorridorYPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
@@ -183,6 +178,10 @@ public:
       est = trans - plane(3);
     } else {
       est = plane(3) - trans;
+    }
+
+    if(est * _measurement < 0) {
+      est = -1 * est;
     }
 
     _error[0] = est - _measurement;
