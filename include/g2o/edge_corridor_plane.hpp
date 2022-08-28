@@ -40,6 +40,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeSE3Corridor() : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor>() {
     _information.setIdentity();
+    _error.setZero();
   }
 
   void computeError() override {
@@ -93,6 +94,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeCorridorXPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {
     _information.setIdentity();
+    _error.setZero();
   }
 
   void computeError() override {
@@ -160,6 +162,7 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeCorridorYPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {
     _information.setIdentity();
+    _error.setZero();
   }
 
   void computeError() override {
