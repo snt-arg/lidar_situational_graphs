@@ -91,7 +91,9 @@ public:
 class EdgeCorridorXPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorXPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
+  EdgeCorridorXPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {
+    _information.setIdentity();
+  }
 
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
@@ -156,7 +158,9 @@ public:
 class EdgeCorridorYPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorYPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
+  EdgeCorridorYPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {
+    _information.setIdentity();
+  }
 
   void computeError() override {
     const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);

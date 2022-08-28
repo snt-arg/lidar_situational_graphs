@@ -1101,7 +1101,8 @@ private:
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
           double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
-          Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
+          Eigen::Matrix<double, 1, 1> information_corridor_plane;
+          information_corridor_plane = corridor_information;
           auto edge_plane = graph_slam->add_corridor_xplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
 
@@ -1204,7 +1205,8 @@ private:
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
           double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
-          Eigen::Matrix<double, 1, 1> information_corridor_plane(corridor_information);
+          Eigen::Matrix<double, 1, 1> information_corridor_plane;
+          information_corridor_plane = corridor_information;
           auto edge_plane = graph_slam->add_corridor_yplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
 
