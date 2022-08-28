@@ -38,10 +38,7 @@ namespace g2o {
 class EdgeSE3Room : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3Room() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
+  EdgeSE3Room() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB>() {}
 
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
@@ -92,10 +89,7 @@ public:
 class EdgeRoomXPlane : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXPlane() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexPlane>() {
-    _information.setZero();
-    _error.setZero();
-  }
+  EdgeRoomXPlane() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
@@ -118,6 +112,14 @@ public:
       est = room_pose_transformed - plane_vec;
     } else {
       est = plane_vec - room_pose_transformed;
+    }
+
+    if(est(0) * _measurement(0) < 0) {
+      est(0) = -1 * est(0);
+    }
+
+    if(est(1) * _measurement(1) < 0) {
+      est(1) = -1 * est(1);
     }
 
     _error = est - _measurement;
@@ -188,6 +190,14 @@ public:
       est = plane_vec - room_pose_transformed;
     }
 
+    if(est(0) * _measurement(0) < 0) {
+      est(0) = -1 * est(0);
+    }
+
+    if(est(1) * _measurement(1) < 0) {
+      est(1) = -1 * est(1);
+    }
+
     _error = est - _measurement;
   }
 
@@ -231,10 +241,7 @@ public:
 class EdgeRoomRoom : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomRoom() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
+  EdgeRoomRoom() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB>() {}
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
