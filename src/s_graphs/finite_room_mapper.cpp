@@ -42,7 +42,7 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
       matched_x_corridor = current_x_corridor;
       break;
     }
-    float dist_room_x_corr = sqrt(pow(room_data.room_center.x - current_x_corridor.node->estimate(), 2) + pow(room_data.room_center.y - current_x_corridor.keyframe_trans(1), 2));
+    float dist_room_x_corr = sqrt(pow(room_data.room_center.x - current_x_corridor.node->estimate()(0), 2) + pow(room_data.room_center.y - current_x_corridor.node->estimate()(1), 2));
     if(dist_room_x_corr < min_dist_room_x_corr) {
       min_dist_room_x_corr = dist_room_x_corr;
       matched_x_corridor = current_x_corridor;
@@ -58,7 +58,7 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
       break;
     }
 
-    float dist_room_y_corr = sqrt(pow(room_data.room_center.x - current_y_corridor.keyframe_trans(0), 2) + pow(room_data.room_center.y - current_y_corridor.node->estimate(), 2));
+    float dist_room_y_corr = sqrt(pow(room_data.room_center.x - current_y_corridor.node->estimate()(0), 2) + pow(room_data.room_center.y - current_y_corridor.node->estimate()(1), 2));
     if(dist_room_y_corr < min_dist_room_y_corr) {
       min_dist_room_y_corr = dist_room_y_corr;
       matched_y_corridor = current_y_corridor;

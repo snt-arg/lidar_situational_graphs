@@ -129,7 +129,6 @@ public:
     plane_mapper.reset(new PlaneMapper(private_nh));
     inf_room_mapper.reset(new InfiniteRoomMapper(private_nh));
     finite_room_mapper.reset(new FiniteRoomMapper(private_nh));
-    neighbour_mapper.reset(new NeighbourMapper(private_nh));
 
     gps_time_offset = private_nh.param<double>("gps_time_offset", 0.0);
     gps_edge_stddev_xy = private_nh.param<double>("gps_edge_stddev_xy", 10000.0);
@@ -332,8 +331,8 @@ private:
     }
 
     for(const auto& room_data_msg : all_room_data_queue) {
-      neighbour_mapper->detect_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
-      neighbour_mapper->factor_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
+      // neighbour_mapper->detect_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
+      // neighbour_mapper->factor_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
 
       all_room_data_queue.pop_front();
     }
@@ -1083,12 +1082,15 @@ private:
           continue;
         }
 
-        g2o::EdgeCorridorXPlane* edge_corridor_xplane = dynamic_cast<g2o::EdgeCorridorXPlane*>(*edge_itr);
+        g2o::EdgeRoomXPlane* edge_corridor_xplane = dynamic_cast<g2o::EdgeRoomXPlane*>(*edge_itr);
         if(edge_corridor_xplane) {
           /* remove the edge between the corridor and the duplicate found plane */
           /* get corridor id from the vertex */
-          g2o::VertexCorridor* corridor_node = dynamic_cast<g2o::VertexCorridor*>(edge_corridor_xplane->vertices()[0]);
+          g2o::VertexRoomXYLB* corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_xplane->vertices()[0]);
           auto found_x_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
+
+          if(found_x_corridor == x_corridors.end()) continue;
+
           /* if any of the mapped plane_id of the corridor equal to dupl plane id replace it */
           if((*found_x_corridor).plane1_id == (*it).first.id) {
             (*found_x_corridor).plane1_id = (*it).second.id;
@@ -1100,13 +1102,15 @@ private:
           /* Add edge between corridor and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
-          double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
-          Eigen::Matrix<double, 1, 1> information_corridor_plane;
+          Eigen::Vector2d meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
+          Eigen::Matrix<double, 2, 2> information_corridor_plane;
           information_corridor_plane(0, 0) = corridor_information;
-          auto edge_plane = graph_slam->add_corridor_xplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
+          information_corridor_plane(1, 1) = corridor_information;
+
+          auto edge_plane = graph_slam->add_room_xplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
 
-          if(graph_slam->remove_corridor_xplane_edge(edge_corridor_xplane)) std::cout << "removed edge - corridor xplane " << std::endl;
+          if(graph_slam->remove_room_xplane_edge(edge_corridor_xplane)) std::cout << "removed edge - corridor xplane " << std::endl;
           continue;
         }
         /* TODO: analyze if connecting room node with (*it).second.plane is necessary  */
@@ -1116,6 +1120,9 @@ private:
           /* get room id from the vertex */
           g2o::VertexRoomXYLB* room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_room_xplane->vertices()[0]);
           auto found_room = std::find_if(rooms_vec.begin(), rooms_vec.end(), boost::bind(&Rooms::id, _1) == room_node->id());
+
+          if(found_room == rooms_vec.end()) continue;
+
           if((*found_room).plane_x1_id == (*it).first.id) {
             (*found_room).plane_x1_id = (*it).second.id;
             (*found_room).plane_x1 = (*it).second.plane;
@@ -1138,6 +1145,7 @@ private:
           continue;
         }
       }
+
       /* finally remove the duplicate plane node */
       if(graph_slam->remove_plane_node((*it).first.plane_node)) {
         auto mapped_plane = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == (*it).first.id);
@@ -1188,11 +1196,13 @@ private:
           if(graph_slam->remove_se3_plane_edge(edge_se3_plane)) std::cout << "remove edge - pose se3 yplane " << std::endl;
           continue;
         }
-        g2o::EdgeCorridorYPlane* edge_corridor_yplane = dynamic_cast<g2o::EdgeCorridorYPlane*>(*edge_itr);
+        g2o::EdgeRoomYPlane* edge_corridor_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
         if(edge_corridor_yplane) {
           /* remove the edge between the corridor and the duplicate found plane */
-          g2o::VertexCorridor* corridor_node = dynamic_cast<g2o::VertexCorridor*>(edge_corridor_yplane->vertices()[0]);
+          g2o::VertexRoomXYLB* corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_yplane->vertices()[0]);
           auto found_y_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
+          if(found_y_corridor == y_corridors.end()) continue;
+
           if((*found_y_corridor).plane1_id == (*it).first.id) {
             (*found_y_corridor).plane1_id = (*it).second.id;
             (*found_y_corridor).plane1 = (*it).second.plane;
@@ -1204,13 +1214,15 @@ private:
           /* Add edge between corridor and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs, (*it).second.cloud_seg_map->points.back().x, (*it).second.cloud_seg_map->points.back().y);
-          double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
-          Eigen::Matrix<double, 1, 1> information_corridor_plane;
+          Eigen::Vector2d meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
+          Eigen::Matrix<double, 2, 2> information_corridor_plane;
           information_corridor_plane(0, 0) = corridor_information;
-          auto edge_plane = graph_slam->add_corridor_yplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
+          information_corridor_plane(1, 1) = corridor_information;
+
+          auto edge_plane = graph_slam->add_room_yplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
 
-          if(graph_slam->remove_corridor_yplane_edge(edge_corridor_yplane)) std::cout << "removed edge - corridor yplane " << std::endl;
+          if(graph_slam->remove_room_yplane_edge(edge_corridor_yplane)) std::cout << "removed edge - corridor yplane " << std::endl;
           continue;
         }
         g2o::EdgeRoomYPlane* edge_room_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
@@ -1218,6 +1230,8 @@ private:
           /* remove the edge between the room and the duplicate found plane */
           g2o::VertexRoomXYLB* room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_room_yplane->vertices()[0]);
           auto found_room = std::find_if(rooms_vec.begin(), rooms_vec.end(), boost::bind(&Rooms::id, _1) == room_node->id());
+          if(found_room == rooms_vec.end()) continue;
+
           if((*found_room).plane_y1_id == (*it).first.id) {
             (*found_room).plane_y1_id = (*it).second.id;
             (*found_room).plane_y1 = (*it).second.plane;
@@ -1720,7 +1734,7 @@ private:
           overlapped_corridor = true;
           break;
         }
-        dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate(), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].keyframe_trans(1), 2));
+        dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate()(0), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].node->estimate()(1), 2));
         if(dist_room_x_corr < 1.0) {
           overlapped_corridor = true;
           break;
@@ -1751,8 +1765,8 @@ private:
       corr_x_line_marker.lifetime = ros::Duration(15.0);
 
       geometry_msgs::Point p1, p2, p3;
-      p1.x = x_corridor_snapshot[i].node->estimate();
-      p1.y = x_corridor_snapshot[i].keyframe_trans(1);
+      p1.x = x_corridor_snapshot[i].node->estimate()(0);
+      p1.y = x_corridor_snapshot[i].node->estimate()(1);
       p1.z = corridor_edge_h;
 
       float min_dist_plane1 = 100;
@@ -1808,8 +1822,8 @@ private:
       corridor_pose_marker.color.r = 1;
       corridor_pose_marker.color.g = 0.64;
       corridor_pose_marker.color.a = 1;
-      corridor_pose_marker.pose.position.x = x_corridor_snapshot[i].node->estimate();
-      corridor_pose_marker.pose.position.y = x_corridor_snapshot[i].keyframe_trans(1);
+      corridor_pose_marker.pose.position.x = x_corridor_snapshot[i].node->estimate()(0);
+      corridor_pose_marker.pose.position.y = x_corridor_snapshot[i].node->estimate()(1);
       corridor_pose_marker.pose.position.z = corridor_node_h;
       corridor_pose_marker.lifetime = ros::Duration(15.0);
       markers.markers.push_back(corridor_pose_marker);
@@ -1823,7 +1837,7 @@ private:
           overlapped_corridor = true;
           break;
         }
-        dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].keyframe_trans(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate(), 2));
+        dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].node->estimate()(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate()(1), 2));
         if(dist_room_y_corr < 1.0) {
           overlapped_corridor = true;
           break;
@@ -1854,8 +1868,8 @@ private:
       corr_y_line_marker.lifetime = ros::Duration(15.0);
 
       geometry_msgs::Point p1, p2, p3;
-      p1.x = y_corridor_snapshot[i].keyframe_trans(0);
-      p1.y = y_corridor_snapshot[i].node->estimate();
+      p1.x = y_corridor_snapshot[i].node->estimate()(0);
+      p1.y = y_corridor_snapshot[i].node->estimate()(1);
       p1.z = corridor_edge_h;
 
       float min_dist_plane1 = 100;
@@ -1912,8 +1926,8 @@ private:
       corridor_pose_marker.color.g = 0.54;
       corridor_pose_marker.color.b = 0.13;
       corridor_pose_marker.color.a = 1;
-      corridor_pose_marker.pose.position.x = y_corridor_snapshot[i].keyframe_trans(0);
-      corridor_pose_marker.pose.position.y = y_corridor_snapshot[i].node->estimate();
+      corridor_pose_marker.pose.position.x = y_corridor_snapshot[i].node->estimate()(0);
+      corridor_pose_marker.pose.position.y = y_corridor_snapshot[i].node->estimate()(1);
       corridor_pose_marker.pose.position.z = corridor_node_h;
       corridor_pose_marker.lifetime = ros::Duration(15.0);
       markers.markers.push_back(corridor_pose_marker);
@@ -2062,8 +2076,8 @@ private:
     for(const auto& x_corridor : x_corridor_snapshot) {
       for(const auto& x_corridor_neighbour_id : x_corridor.neighbour_ids) {
         geometry_msgs::Point p1, p2;
-        p1.x = x_corridor.node->estimate();
-        p1.y = x_corridor.keyframe_trans(1);
+        p1.x = x_corridor.node->estimate()(0);
+        p1.y = x_corridor.node->estimate()(1);
         p1.z = corridor_node_h;
 
         auto found_neighbour_room = std::find_if(room_snapshot.begin(), room_snapshot.end(), boost::bind(&Rooms::id, _1) == x_corridor_neighbour_id);
@@ -2077,8 +2091,8 @@ private:
         } else {
           auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == x_corridor_neighbour_id);
           if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
-            p2.x = (*found_neighbour_x_corr).node->estimate();
-            p2.y = (*found_neighbour_x_corr).keyframe_trans(1);
+            p2.x = (*found_neighbour_x_corr).node->estimate()(0);
+            p2.y = (*found_neighbour_x_corr).node->estimate()(1);
             p2.z = corridor_node_h;
 
             x_corr_neighbour_line_marker.points.push_back(p1);
@@ -2086,8 +2100,8 @@ private:
           } else {
             auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == x_corridor_neighbour_id);
             if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
-              p2.x = (*found_neighbour_y_corr).keyframe_trans(0);
-              p2.y = (*found_neighbour_y_corr).node->estimate();
+              p2.x = (*found_neighbour_y_corr).node->estimate()(0);
+              p2.y = (*found_neighbour_y_corr).node->estimate()(1);
               p2.z = corridor_node_h;
 
               x_corr_neighbour_line_marker.points.push_back(p1);
@@ -2118,8 +2132,8 @@ private:
     for(const auto& y_corridor : y_corridor_snapshot) {
       for(const auto& y_corridor_neighbour_id : y_corridor.neighbour_ids) {
         geometry_msgs::Point p1, p2;
-        p1.x = y_corridor.keyframe_trans(0);
-        p1.y = y_corridor.node->estimate();
+        p1.x = y_corridor.node->estimate()(0);
+        p1.y = y_corridor.node->estimate()(1);
         p1.z = corridor_node_h;
 
         auto found_neighbour_room = std::find_if(room_snapshot.begin(), room_snapshot.end(), boost::bind(&Rooms::id, _1) == y_corridor_neighbour_id);
@@ -2133,8 +2147,8 @@ private:
         } else {
           auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == y_corridor_neighbour_id);
           if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
-            p2.x = (*found_neighbour_x_corr).node->estimate();
-            p2.y = (*found_neighbour_x_corr).keyframe_trans(1);
+            p2.x = (*found_neighbour_x_corr).node->estimate()(0);
+            p2.y = (*found_neighbour_x_corr).node->estimate()(1);
             p2.z = corridor_node_h;
 
             y_corr_neighbour_line_marker.points.push_back(p1);
@@ -2142,8 +2156,8 @@ private:
           } else {
             auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == y_corridor_neighbour_id);
             if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
-              p2.x = (*found_neighbour_y_corr).keyframe_trans(0);
-              p2.y = (*found_neighbour_y_corr).node->estimate();
+              p2.x = (*found_neighbour_y_corr).node->estimate()(0);
+              p2.y = (*found_neighbour_y_corr).node->estimate()(1);
               p2.z = corridor_node_h;
 
               y_corr_neighbour_line_marker.points.push_back(p1);
@@ -2189,16 +2203,16 @@ private:
         } else {
           auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == room_neighbour_id);
           if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
-            p2.x = (*found_neighbour_x_corr).node->estimate();
-            p2.y = (*found_neighbour_x_corr).keyframe_trans(1);
+            p2.x = (*found_neighbour_x_corr).node->estimate()(0);
+            p2.y = (*found_neighbour_x_corr).node->estimate()(1);
             p2.z = corridor_node_h;
             room_neighbour_line_marker.points.push_back(p1);
             room_neighbour_line_marker.points.push_back(p2);
           } else {
             auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == room_neighbour_id);
             if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
-              p2.x = (*found_neighbour_y_corr).keyframe_trans(0);
-              p2.y = (*found_neighbour_y_corr).node->estimate();
+              p2.x = (*found_neighbour_y_corr).node->estimate()(0);
+              p2.y = (*found_neighbour_y_corr).node->estimate()(1);
               p2.z = corridor_node_h;
               room_neighbour_line_marker.points.push_back(p1);
               room_neighbour_line_marker.points.push_back(p2);
@@ -2266,8 +2280,8 @@ private:
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
         p1.z = floor_node_h;
-        p2.x = x_corridor.node->estimate();
-        p2.y = x_corridor.keyframe_trans(1);
+        p2.x = x_corridor.node->estimate()(0);
+        p2.y = x_corridor.node->estimate()(1);
         p2.z = corridor_node_h;
         floor_line_marker.points.push_back(p1);
         floor_line_marker.points.push_back(p2);
@@ -2278,8 +2292,8 @@ private:
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
         p1.z = floor_node_h;
-        p2.x = y_corridor.keyframe_trans(0);
-        p2.y = y_corridor.node->estimate();
+        p2.x = y_corridor.node->estimate()(0);
+        p2.y = y_corridor.node->estimate()(1);
         p2.z = corridor_node_h;
         floor_line_marker.points.push_back(p1);
         floor_line_marker.points.push_back(p2);
@@ -2537,7 +2551,6 @@ private:
   std::unique_ptr<PlaneMapper> plane_mapper;
   std::unique_ptr<InfiniteRoomMapper> inf_room_mapper;
   std::unique_ptr<FiniteRoomMapper> finite_room_mapper;
-  std::unique_ptr<NeighbourMapper> neighbour_mapper;
 };
 
 }  // namespace s_graphs

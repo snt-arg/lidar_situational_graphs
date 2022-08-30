@@ -115,7 +115,7 @@ public:
   void lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_corridor_candidates, const std::vector<plane_data_list>& y_det_corridor_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors);
   void lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, const std::vector<Rooms>& rooms_vec);
 
-  double corridor_measurement(int plane_type, double corr, const Eigen::Vector4d& plane);
+  Eigen::Vector2d corridor_measurement(const int plane_type, const Eigen::Vector2d& corridor_pose, const Eigen::Vector4d& plane);
 
 private:
   /**
@@ -133,13 +133,7 @@ private:
   std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
   std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
 
-  bool check_corridor_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexCorridor* corr_node);
-
-  /**
-   * @brief map a new corridor from mapped room planes
-   *
-   */
-  void map_corridor_from_existing_room(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData& det_room_data, const s_graphs::Rooms& matched_room, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors);
+  bool check_corridor_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexRoomXYLB* corr_node);
 
 private:
   void parallel_plane_constraint(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node);

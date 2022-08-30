@@ -6,6 +6,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <g2o/vertex_corridor.hpp>
+#include <g2o/vertex_room.hpp>
 
 namespace g2o {
 class VertexSE3;
@@ -24,7 +25,7 @@ public:
   int plane1_id, plane2_id;
   Eigen::Vector3d keyframe_trans;
   std::vector<int> neighbour_ids;
-  g2o::VertexCorridor* node;  // node instance
+  g2o::VertexRoomXYLB* node;  // node instance
 };
 
 }  // namespace s_graphs
