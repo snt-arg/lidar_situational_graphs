@@ -51,7 +51,9 @@ G2O_REGISTER_TYPE(EDGE_CORRIDOR_XPLANE, EdgeCorridorXPlane)
 G2O_REGISTER_TYPE(EDGE_CORRIDOR_YPLANE, EdgeCorridorYPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_ROOM, EdgeSE3Room)
 G2O_REGISTER_TYPE(EDGE_ROOM_XPLANE, EdgeRoomXPlane)
+G2O_REGISTER_TYPE(EDGE_ROOM_XPRIOR, EdgeRoomXPrior)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPLANE, EdgeRoomYPlane)
+G2O_REGISTER_TYPE(EDGE_ROOM_YPRIOR, EdgeRoomYPrior)
 G2O_REGISTER_TYPE(EDGE_ROOM_ROOM, EdgeRoomRoom)
 G2O_REGISTER_TYPE(EDGE_ROOM_XCORRIDOR, EdgeRoomXCorridor)
 G2O_REGISTER_TYPE(EDGE_ROOM_YCORRIDOR, EdgeRoomYCorridor)
@@ -416,12 +418,32 @@ g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(g2o::VertexRoomXYLB* v_room
   return edge;
 }
 
+g2o::EdgeRoomXPrior* GraphSLAM::add_room_xprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomXPrior* edge(new g2o::EdgeRoomXPrior());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeRoomYPlane* edge(new g2o::EdgeRoomYPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_room;
   edge->vertices()[1] = v_plane2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeRoomYPrior* GraphSLAM::add_room_yprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomYPrior* edge(new g2o::EdgeRoomYPrior());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
   graph->addEdge(edge);
 
   return edge;

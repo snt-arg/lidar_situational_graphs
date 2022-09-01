@@ -381,5 +381,82 @@ public:
   }
 };
 
+class EdgeRoomXPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeRoomXPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>() {}
+
+  void computeError() override {
+    const g2o::VertexRoomXYLB* v1 = static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
+
+    Eigen::Vector2d estimate = v1->estimate();
+
+    _error[0] = estimate(0) - _measurement;
+  }
+
+  void setMeasurement(const double& m) override {
+    _measurement = m;
+  }
+
+  virtual bool read(std::istream& is) override {
+    double v;
+    is >> v;
+    setMeasurement(v);
+    for(int i = 0; i < information().rows(); ++i)
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) information()(j, i) = information()(i, j);
+      }
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    os << _measurement << " ";
+
+    for(int i = 0; i < information().rows(); ++i)
+      for(int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
+    return os.good();
+  }
+};
+
+class EdgeRoomYPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeRoomYPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>() {}
+
+  void computeError() override {
+    const g2o::VertexRoomXYLB* v1 = static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
+
+    Eigen::Vector2d estimate = v1->estimate();
+
+    _error[0] = estimate(1) - _measurement;
+  }
+
+  void setMeasurement(const double& m) override {
+    _measurement = m;
+  }
+
+  virtual bool read(std::istream& is) override {
+    double v;
+    is >> v;
+    setMeasurement(v);
+
+    for(int i = 0; i < information().rows(); ++i)
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) information()(j, i) = information()(i, j);
+      }
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    os << _measurement << " ";
+
+    for(int i = 0; i < information().rows(); ++i)
+      for(int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
+    return os.good();
+  }
+};
+
 }  // namespace g2o
 #endif  // EDGE_ROOM_PLANE_HPP

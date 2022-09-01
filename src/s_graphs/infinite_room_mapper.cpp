@@ -190,6 +190,9 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   information_corridor_plane(0, 0) = corridor_information;
   information_corridor_plane(1, 1) = corridor_information;
 
+  Eigen::Matrix<double, 1, 1> information_corridor_prior;
+  information_corridor_prior(0, 0) = 1;
+
   // Eigen::Vector2d corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
   Eigen::Vector2d corr_pose(corr_plane1_pair.plane_centroid(0), corr_plane1_pair.plane_centroid(1));
   // double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
@@ -212,6 +215,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
+      graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
       // corr_node->setFixed(true);
       Corridors det_corridor;
       det_corridor.id = corr_data_association.first;
@@ -336,6 +340,8 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
+      graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
+
       // corr_node->setFixed(true);
       Corridors det_corridor;
       det_corridor.id = corr_data_association.first;
