@@ -307,15 +307,15 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         }
       }
 
-      // std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-      // std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-      // std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+      std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+      std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
 
-      // std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
-      // std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
-      // std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
+      std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
+      std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
       if(use_parallel_plane_constraint && found_new_plane) {
         MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
@@ -429,15 +429,15 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
         }
       }
 
-      // std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-      // std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-      // std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+      std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+      std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
 
-      // std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
-      // std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
-      // std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
+      std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+      std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
+      std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
 
       if(use_parallel_plane_constraint && found_new_plane) {
         MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
@@ -450,7 +450,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
 std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors) {
   float min_dist = 100;
-  float plane1_min_segment = 100, plane2_min_segment = 100;
+  bool plane1_min_segment = false, plane2_min_segment = false;
 
   std::pair<int, int> data_association;
   data_association.first = -1;
@@ -463,20 +463,20 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
       auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
 
       if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
-        plane1_min_segment = 0.0;
+        plane1_min_segment = true;
       } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
       } else
-        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
 
       if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
-        plane2_min_segment = 0.0;
+        plane2_min_segment = true;
       } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
       } else
-        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
 
-      if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
+      if(dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
         data_association.first = x_corridors[i].id;
         data_association.second = i;
@@ -493,20 +493,20 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
       auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
 
       if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
-        plane1_min_segment = 0.0;
+        plane1_min_segment = true;
       } else if((plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane1).cloud_seg_map, plane1.cloud_seg_map);
       } else
-        plane1_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane2).cloud_seg_map, plane1.cloud_seg_map);
 
       if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
-        plane2_min_segment = 0.0;
+        plane2_min_segment = true;
       } else if((plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane1).cloud_seg_map, plane2.cloud_seg_map);
       } else
-        plane2_min_segment = plane_utils->get_min_segment((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_plane2).cloud_seg_map, plane2.cloud_seg_map);
 
-      if(dist < min_dist && (plane1_min_segment < corridor_min_seg_dist && plane2_min_segment < corridor_min_seg_dist)) {
+      if(dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
         data_association.first = y_corridors[i].id;
         data_association.second = i;

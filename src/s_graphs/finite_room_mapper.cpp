@@ -65,15 +65,20 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
     }
   }
 
+  auto found_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == room_data.x_planes[0].id);
+  auto found_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == room_data.x_planes[1].id);
+  auto found_y_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == room_data.y_planes[0].id);
+  auto found_y_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == room_data.y_planes[1].id);
+
   if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr < 1.0) {
     std::cout << "Adding a room using mapped x and y corridor planes " << std::endl;
-    map_room_from_existing_corridors(graph_slam, room_data, matched_x_corridor, matched_y_corridor, rooms_vec);
+    map_room_from_existing_corridors(graph_slam, room_data, matched_x_corridor, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
   } else if(min_dist_room_x_corr < 1.0 && min_dist_room_y_corr > 1.0) {
-    map_room_from_existing_x_corridor(graph_slam, room_data, matched_x_corridor, rooms_vec);
+    map_room_from_existing_x_corridor(graph_slam, room_data, matched_x_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
     std::cout << "Will add room using mapped x corridor planes " << std::endl;
   } else if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr > 1.0) {
     std::cout << "Will add room using mapped y corridor planes " << std::endl;
-    map_room_from_existing_y_corridor(graph_slam, room_data, matched_y_corridor, rooms_vec);
+    map_room_from_existing_y_corridor(graph_slam, room_data, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
   }
 
   Eigen::Vector4d x_plane1(room_data.x_planes[0].nx, room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
@@ -207,7 +212,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
   }
 
   Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
-  room_data_association = associate_rooms(room_pose, rooms_vec);
+  room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane2));
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "found room with pose " << room_pose << std::endl;
     room_data_association.first = graph_slam->num_vertices_local();
@@ -390,25 +395,25 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
     }
   }
 
-  // std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
-  // std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
-  // std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
-  // std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
+  std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
+  std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
 
-  // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
-  // std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
-  // std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
-  // std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
+  std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
+  std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
 
-  // std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
-  // std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
-  // std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
-  // std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
+  std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
+  std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
 
-  // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
-  // std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
-  // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
-  // std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
+  std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
+  std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
 }
 
 /*TODO:HB Move this to plane_utils.hpp */
@@ -437,10 +442,12 @@ Eigen::Vector2d FiniteRoomMapper::compute_room_pose(const std::vector<plane_data
   return room_pose;
 }
 
-std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& room_pose, const std::vector<Rooms>& rooms_vec) {
+std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& room_pose, const std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   float min_dist = 100;
   std::pair<int, int> data_association;
   data_association.first = -1;
+  bool x_plane1_min_segment = false, x_plane2_min_segment = false;
+  bool y_plane1_min_segment = false, y_plane2_min_segment = false;
 
   for(int i = 0; i < rooms_vec.size(); ++i) {
     float diff_x = room_pose(0) - rooms_vec[i].node->estimate()(0);
@@ -448,7 +455,45 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));
     ROS_DEBUG_NAMED("room planes", "dist room %f", dist);
 
-    if(dist < min_dist) {
+    auto found_mapped_xplane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x1_id);
+    auto found_mapped_xplane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x2_id);
+
+    if(x_plane1.id == (*found_mapped_xplane1).id || x_plane1.id == (*found_mapped_xplane2).id) {
+      x_plane1_min_segment = true;
+    } else if((x_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) > 0) {
+      x_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane1).cloud_seg_map, x_plane1.cloud_seg_map);
+    } else {
+      x_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane2).cloud_seg_map, x_plane1.cloud_seg_map);
+    }
+
+    if(x_plane2.id == (*found_mapped_xplane1).id || x_plane2.id == (*found_mapped_xplane2).id) {
+      x_plane2_min_segment = true;
+    } else if((x_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) > 0) {
+      x_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane1).cloud_seg_map, x_plane2.cloud_seg_map);
+    } else {
+      x_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane2).cloud_seg_map, x_plane2.cloud_seg_map);
+    }
+
+    auto found_mapped_yplane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y1_id);
+    auto found_mapped_yplane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y2_id);
+
+    if(y_plane1.id == (*found_mapped_yplane1).id || y_plane1.id == (*found_mapped_yplane2).id) {
+      y_plane1_min_segment = true;
+    } else if((y_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) > 0) {
+      y_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane1).cloud_seg_map, y_plane1.cloud_seg_map);
+    } else {
+      y_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane2).cloud_seg_map, y_plane1.cloud_seg_map);
+    }
+
+    if(y_plane2.id == (*found_mapped_yplane1).id || y_plane2.id == (*found_mapped_yplane2).id) {
+      y_plane2_min_segment = true;
+    } else if((y_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) > 0) {
+      y_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane1).cloud_seg_map, y_plane2.cloud_seg_map);
+    } else {
+      y_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane2).cloud_seg_map, y_plane2.cloud_seg_map);
+    }
+
+    if(dist < min_dist && (x_plane1_min_segment && x_plane2_min_segment && y_plane1_min_segment && y_plane2_min_segment)) {
       min_dist = dist;
       data_association.first = rooms_vec[i].id;
       data_association.second = i;
@@ -507,12 +552,12 @@ bool FiniteRoomMapper::check_room_ids(const int plane_type, const std::set<g2o::
   return false;
 }
 
-void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
   Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
-  room_data_association = associate_rooms(room_pose, rooms_vec);
+  room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, x_plane1, x_plane2, y_plane1, y_plane2);
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "Add a room using mapped x and y corridors at pose" << room_pose << std::endl;
     room_data_association.first = graph_slam->num_vertices_local();
@@ -536,12 +581,12 @@ void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLA
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
   Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
-  room_data_association = associate_rooms(room_pose, rooms_vec);
+  room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, x_plane1, x_plane2, y_plane1, y_plane2);
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "Add a room using mapped x corridors planes at pose" << room_pose << std::endl;
     room_data_association.first = graph_slam->num_vertices_local();
@@ -567,12 +612,12 @@ void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSL
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
   Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
-  room_data_association = associate_rooms(room_pose, rooms_vec);
+  room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, x_plane1, x_plane2, y_plane1, y_plane2);
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "Add a room using mapped y corridors planes at pose" << room_pose << std::endl;
     room_data_association.first = graph_slam->num_vertices_local();
