@@ -60,14 +60,15 @@ private:
   std::unique_ptr<PlaneUtils> plane_utils;
 
 public:
-  void lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec);
+  void lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
 
 private:
-  void factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec);
-  void update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data);
+  void factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
+  void update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
 
 private:
-  void factor_floor_room_nodes();
+  void factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, const Eigen::Vector2d& floor_pose, g2o::VertexRoomXYLB* floor_node, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
+  void remove_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node);
 };
 
 }  // namespace s_graphs

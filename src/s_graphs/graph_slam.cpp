@@ -476,6 +476,12 @@ g2o::EdgeRoomRoom* GraphSLAM::add_room_room_edge(g2o::VertexRoomXYLB* v_room1, g
   return edge;
 }
 
+bool GraphSLAM::remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge) {
+  bool ack = graph->removeEdge(room_room_edge);
+
+  return ack;
+}
+
 g2o::EdgeRoomXCorridor* GraphSLAM::add_room_x_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_xcorridor, const double& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeRoomXCorridor* edge(new g2o::EdgeRoomXCorridor());
   edge->setMeasurement(measurement);

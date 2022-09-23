@@ -278,7 +278,7 @@ private:
       return;
     }
     for(const auto& floor_data_msg : floor_data_queue) {
-      floor_mapper->lookup_floors(graph_slam, floor_data_msg, floors_vec);
+      floor_mapper->lookup_floors(graph_slam, floor_data_msg, floors_vec, rooms_vec, x_corridors, y_corridors);
 
       floor_data_queue.pop_front();
     }
