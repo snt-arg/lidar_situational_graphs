@@ -104,6 +104,13 @@ public:
   g2o::VertexRoomXYLB* add_room_node(const Eigen::Vector2d& room_pose);
 
   /**
+   * @brief add a floor node to the graph
+   * @param floor
+   * @return registered node
+   */
+  g2o::VertexRoomXYLB* add_floor_node(const Eigen::Vector2d& floor_pose);
+
+  /**
    * @brief add an edge between SE3 nodes
    * @param v1  node1
    * @param v2  node2

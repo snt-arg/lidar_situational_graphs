@@ -193,6 +193,16 @@ g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector2d& room_pose) 
   return vertex;
 }
 
+g2o::VertexRoomXYLB* GraphSLAM::add_floor_node(const Eigen::Vector2d& floor_pose) {
+  g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
+  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setEstimate(floor_pose);
+  graph->addVertex(vertex);
+  this->add_vertices();
+
+  return vertex;
+}
+
 g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1, g2o::VertexSE3* v2, const Eigen::Isometry3d& relative_pose, const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3* edge(new g2o::EdgeSE3());
   edge->setMeasurement(relative_pose);

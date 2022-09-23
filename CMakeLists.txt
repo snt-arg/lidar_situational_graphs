@@ -144,6 +144,7 @@ add_library(s_graphs_nodelet
   src/s_graphs/plane_mapper.cpp
   src/s_graphs/infinite_room_mapper.cpp
   src/s_graphs/finite_room_mapper.cpp
+  src/s_graphs/floor_mapper.cpp
   src/s_graphs/keyframe.cpp
   src/s_graphs/map_cloud_generator.cpp
   src/s_graphs/registrations.cpp
