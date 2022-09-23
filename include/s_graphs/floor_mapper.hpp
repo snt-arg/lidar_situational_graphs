@@ -60,8 +60,11 @@ private:
   std::unique_ptr<PlaneUtils> plane_utils;
 
 public:
-  void factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<s_graphs::floors>& floor_vec);
-  void update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data);
+  void lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec);
+
+private:
+  void factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec);
+  void update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data);
 
 private:
   void factor_floor_room_nodes();

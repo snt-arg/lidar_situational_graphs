@@ -154,13 +154,17 @@ private:
     geometry_msgs::Point floor_center;
     if(floor_plane_candidates_vec.size() == 4) {
       floor_center = room_analyzer->get_room_center(floor_plane_candidates_vec[0], floor_plane_candidates_vec[1], floor_plane_candidates_vec[2], floor_plane_candidates_vec[3]);
-    }
 
-    s_graphs::RoomData floor_data_msg;
-    floor_data_msg.header.stamp = ros::Time::now();
-    floor_data_msg.id = 0;
-    floor_data_msg.room_center = floor_center;
-    floor_data_pub.publish(floor_data_msg);
+      s_graphs::RoomData floor_data_msg;
+      floor_data_msg.header.stamp = ros::Time::now();
+      floor_data_msg.id = 0;
+      floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[0]);
+      floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[1]);
+      floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[2]);
+      floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[3]);
+      floor_data_msg.room_center = floor_center;
+      floor_data_pub.publish(floor_data_msg);
+    }
   }
 
 private:

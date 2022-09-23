@@ -14,9 +14,10 @@ class SparseOptimizer;
 
 namespace s_graphs {
 
-struct floors {
+struct Floors {
 public:
   int id;
+  int graph_id;
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   g2o::VertexRoomXYLB* node;  // node instance
 };

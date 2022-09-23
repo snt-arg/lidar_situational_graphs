@@ -62,6 +62,7 @@
 #include <s_graphs/planes.hpp>
 #include <s_graphs/corridors.hpp>
 #include <s_graphs/rooms.hpp>
+#include <s_graphs/floors.hpp>
 #include <s_graphs/keyframe_updater.hpp>
 #include <s_graphs/loop_detector.hpp>
 #include <s_graphs/information_matrix_calculator.hpp>
@@ -69,6 +70,7 @@
 #include <s_graphs/nmea_sentence_parser.hpp>
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/room_mapper.hpp>
+#include <s_graphs/floor_mapper.hpp>
 #include <s_graphs/plane_mapper.hpp>
 #include <s_graphs/neighbour_mapper.hpp>
 #include <s_graphs/plane_analyzer.hpp>
@@ -113,7 +115,6 @@ public:
     trans_odom2map.setIdentity();
     odom_path_vec.clear();
     max_keyframes_per_update = private_nh.param<int>("max_keyframes_per_update", 10);
-    floor_center_data.id = -1;
 
     anchor_node = nullptr;
     anchor_edge = nullptr;
@@ -129,6 +130,7 @@ public:
     plane_mapper.reset(new PlaneMapper(private_nh));
     inf_room_mapper.reset(new InfiniteRoomMapper(private_nh));
     finite_room_mapper.reset(new FiniteRoomMapper(private_nh));
+    floor_mapper.reset(new FloorMapper(private_nh));
 
     gps_time_offset = private_nh.param<double>("gps_time_offset", 0.0);
     gps_edge_stddev_xy = private_nh.param<double>("gps_edge_stddev_xy", 10000.0);
@@ -261,6 +263,27 @@ private:
     }
   }
 
+  void floor_data_callback(const s_graphs::RoomData floor_data_msg) {
+    std::lock_guard<std::mutex> lock(floor_data_mutex);
+    floor_data_queue.push_back(floor_data_msg);
+  }
+
+  void flush_floor_data_queue() {
+    std::lock_guard<std::mutex> lock(floor_data_mutex);
+
+    if(keyframes.empty()) {
+      return;
+    } else if(floor_data_queue.empty()) {
+      // std::cout << "floor data queue is empty" << std::endl;
+      return;
+    }
+    for(const auto& floor_data_msg : floor_data_queue) {
+      floor_mapper->lookup_floors(graph_slam, floor_data_msg, floors_vec);
+
+      floor_data_queue.pop_front();
+    }
+  }
+
   /**
    * @brief get the room data from room segmentation module
    *
@@ -269,11 +292,6 @@ private:
     std::lock_guard<std::mutex> lock(room_data_queue_mutex);
     room_data_queue.push_back(rooms_msg);
     // std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
-  }
-
-  void floor_data_callback(const s_graphs::RoomData floor_data_msg) {
-    std::lock_guard<std::mutex> lock(floor_data_mutex);
-    floor_center_data = floor_data_msg;
   }
 
   /**
@@ -854,6 +872,9 @@ private:
 
     // flush the room poses from room detector and no need to return if no rooms found
     flush_room_data_queue();
+
+    // flush the floor poses from the floor planner and no need to return if no floors found
+    flush_floor_data_queue();
 
     // flush all the rooms queue to map neighbours
     // flush_all_room_data_queue();
@@ -2224,82 +2245,84 @@ private:
     }
     markers.markers.push_back(room_neighbour_line_marker);
 
-    if(floor_center_data.id != -1) {
-      float floor_node_h = 20;
-      float floor_edge_h = 19.5;
-      visualization_msgs::Marker floor_marker;
-      floor_marker.pose.orientation.w = 1.0;
-      floor_marker.scale.x = 0.5;
-      floor_marker.scale.y = 0.5;
-      floor_marker.scale.z = 0.5;
-      // plane_marker.points.resize(vert_planes.size());
-      floor_marker.header.frame_id = map_frame_id;
-      floor_marker.header.stamp = stamp;
-      floor_marker.ns = "floors";
-      floor_marker.id = markers.markers.size();
-      floor_marker.type = visualization_msgs::Marker::CUBE;
-      floor_marker.color.r = 0.49;
-      floor_marker.color.g = 0;
-      floor_marker.color.b = 1;
-      floor_marker.color.a = 1;
-      floor_marker.lifetime = ros::Duration(10.0);
+    for(const auto& floor : floors_vec) {
+      if(floor.id != -1) {
+        float floor_node_h = 20;
+        float floor_edge_h = 19.5;
+        visualization_msgs::Marker floor_marker;
+        floor_marker.pose.orientation.w = 1.0;
+        floor_marker.scale.x = 0.5;
+        floor_marker.scale.y = 0.5;
+        floor_marker.scale.z = 0.5;
+        // plane_marker.points.resize(vert_planes.size());
+        floor_marker.header.frame_id = map_frame_id;
+        floor_marker.header.stamp = stamp;
+        floor_marker.ns = "floors";
+        floor_marker.id = markers.markers.size();
+        floor_marker.type = visualization_msgs::Marker::CUBE;
+        floor_marker.color.r = 0.49;
+        floor_marker.color.g = 0;
+        floor_marker.color.b = 1;
+        floor_marker.color.a = 1;
+        floor_marker.lifetime = ros::Duration(10.0);
 
-      floor_marker.pose.position.x = floor_center_data.room_center.x;
-      floor_marker.pose.position.y = floor_center_data.room_center.y;
-      floor_marker.pose.position.z = floor_node_h;
+        floor_marker.pose.position.x = floor.node->estimate()(0);
+        floor_marker.pose.position.y = floor.node->estimate()(1);
+        floor_marker.pose.position.z = floor_node_h;
 
-      // create line markers between floor and rooms/corridors
-      visualization_msgs::Marker floor_line_marker;
-      floor_line_marker.scale.x = 0.04;
-      floor_line_marker.pose.orientation.w = 1.0;
-      floor_line_marker.ns = "rooms_lines";
-      floor_line_marker.header.frame_id = map_frame_id;
-      floor_line_marker.header.stamp = stamp;
-      floor_line_marker.id = markers.markers.size() + 1;
-      floor_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      floor_line_marker.color.r = color_r;
-      floor_line_marker.color.g = color_g;
-      floor_line_marker.color.b = color_b;
-      floor_line_marker.color.a = 1.0;
-      floor_line_marker.lifetime = ros::Duration(10.0);
+        // create line markers between floor and rooms/corridors
+        visualization_msgs::Marker floor_line_marker;
+        floor_line_marker.scale.x = 0.04;
+        floor_line_marker.pose.orientation.w = 1.0;
+        floor_line_marker.ns = "rooms_lines";
+        floor_line_marker.header.frame_id = map_frame_id;
+        floor_line_marker.header.stamp = stamp;
+        floor_line_marker.id = markers.markers.size() + 1;
+        floor_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+        floor_line_marker.color.r = color_r;
+        floor_line_marker.color.g = color_g;
+        floor_line_marker.color.b = color_b;
+        floor_line_marker.color.a = 1.0;
+        floor_line_marker.lifetime = ros::Duration(10.0);
 
-      for(const auto& room : room_snapshot) {
-        geometry_msgs::Point p1, p2;
-        p1.x = floor_marker.pose.position.x;
-        p1.y = floor_marker.pose.position.y;
-        p1.z = floor_node_h;
-        p2.x = room.node->estimate()(0);
-        p2.y = room.node->estimate()(1);
-        p2.z = room_node_h;
-        floor_line_marker.points.push_back(p1);
-        floor_line_marker.points.push_back(p2);
+        for(const auto& room : room_snapshot) {
+          geometry_msgs::Point p1, p2;
+          p1.x = floor_marker.pose.position.x;
+          p1.y = floor_marker.pose.position.y;
+          p1.z = floor_node_h;
+          p2.x = room.node->estimate()(0);
+          p2.y = room.node->estimate()(1);
+          p2.z = room_node_h;
+          floor_line_marker.points.push_back(p1);
+          floor_line_marker.points.push_back(p2);
+        }
+        for(const auto& x_corridor : x_corridor_snapshot) {
+          if(x_corridor.id == -1) continue;
+          geometry_msgs::Point p1, p2;
+          p1.x = floor_marker.pose.position.x;
+          p1.y = floor_marker.pose.position.y;
+          p1.z = floor_node_h;
+          p2.x = x_corridor.node->estimate()(0);
+          p2.y = x_corridor.node->estimate()(1);
+          p2.z = corridor_node_h;
+          floor_line_marker.points.push_back(p1);
+          floor_line_marker.points.push_back(p2);
+        }
+        for(const auto& y_corridor : y_corridor_snapshot) {
+          if(y_corridor.id == -1) continue;
+          geometry_msgs::Point p1, p2;
+          p1.x = floor_marker.pose.position.x;
+          p1.y = floor_marker.pose.position.y;
+          p1.z = floor_node_h;
+          p2.x = y_corridor.node->estimate()(0);
+          p2.y = y_corridor.node->estimate()(1);
+          p2.z = corridor_node_h;
+          floor_line_marker.points.push_back(p1);
+          floor_line_marker.points.push_back(p2);
+        }
+        markers.markers.push_back(floor_marker);
+        markers.markers.push_back(floor_line_marker);
       }
-      for(const auto& x_corridor : x_corridor_snapshot) {
-        if(x_corridor.id == -1) continue;
-        geometry_msgs::Point p1, p2;
-        p1.x = floor_marker.pose.position.x;
-        p1.y = floor_marker.pose.position.y;
-        p1.z = floor_node_h;
-        p2.x = x_corridor.node->estimate()(0);
-        p2.y = x_corridor.node->estimate()(1);
-        p2.z = corridor_node_h;
-        floor_line_marker.points.push_back(p1);
-        floor_line_marker.points.push_back(p2);
-      }
-      for(const auto& y_corridor : y_corridor_snapshot) {
-        if(y_corridor.id == -1) continue;
-        geometry_msgs::Point p1, p2;
-        p1.x = floor_marker.pose.position.x;
-        p1.y = floor_marker.pose.position.y;
-        p1.z = floor_node_h;
-        p2.x = y_corridor.node->estimate()(0);
-        p2.y = y_corridor.node->estimate()(1);
-        p2.z = corridor_node_h;
-        floor_line_marker.points.push_back(p1);
-        floor_line_marker.points.push_back(p2);
-      }
-      markers.markers.push_back(floor_marker);
-      markers.markers.push_back(floor_line_marker);
     }
 
     return markers;
@@ -2490,6 +2513,7 @@ private:
   int vertex_count;
   std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes
   std::vector<Rooms> rooms_vec;                     // rooms segmented from planes
+  std::vector<Floors> floors_vec;
 
   std::mutex vert_plane_snapshot_mutex;
   std::vector<VerticalPlanes> x_vert_planes_snapshot, y_vert_planes_snapshot;  // snapshot of vertically segmented planes
@@ -2516,7 +2540,7 @@ private:
   std::deque<s_graphs::RoomsData> all_room_data_queue;
 
   std::mutex floor_data_mutex;
-  s_graphs::RoomData floor_center_data;
+  std::deque<s_graphs::RoomData> floor_data_queue;
 
   // for map cloud generation
   std::atomic_bool graph_updated;
@@ -2551,6 +2575,7 @@ private:
   std::unique_ptr<PlaneMapper> plane_mapper;
   std::unique_ptr<InfiniteRoomMapper> inf_room_mapper;
   std::unique_ptr<FiniteRoomMapper> finite_room_mapper;
+  std::unique_ptr<FloorMapper> floor_mapper;
 };
 
 }  // namespace s_graphs

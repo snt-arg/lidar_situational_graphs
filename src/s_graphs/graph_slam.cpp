@@ -203,6 +203,12 @@ g2o::VertexRoomXYLB* GraphSLAM::add_floor_node(const Eigen::Vector2d& floor_pose
   return vertex;
 }
 
+void GraphSLAM::update_floor_node(g2o::VertexRoomXYLB* floor_node, const Eigen::Vector2d& floor_pose) {
+  floor_node->setEstimate(floor_pose);
+
+  return;
+}
+
 g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1, g2o::VertexSE3* v2, const Eigen::Isometry3d& relative_pose, const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3* edge(new g2o::EdgeSE3());
   edge->setMeasurement(relative_pose);
