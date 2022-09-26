@@ -1,18 +1,21 @@
 <launch>
 
+  <arg name="env" default="$(optenv ENV real)" doc="Define whether we are running on an actual robot or on a virtual replica"/>
+  <arg name="use_free_space_graph" default="false" doc="Define whether to use free space cluster graph" />
+  <arg name="msf_enabled" default="false" />
+  <arg name="wait_odom_to_map_tf" default="false" />
+  <arg name="april_tag_enabled" default="false" />
+
   <!-- Inputs -->
   <arg name="imu_data_topic" default="/platform/imu/data" />
   <arg name="point_cloud_topic" default="/platform/velodyne_points" />
 
   <!-- Outputs -->
-  <arg name="slam_odometry_topic" default="/slam/s_graphs/odom_to_map" />
-  <arg name="slam_markers_topic" default="/slam/s_graphs/markers" />
-  <arg name="slam_map_points_topic" default="/slam/s_graphs/map_points" />
-  <arg name="wait_odom_to_map_tf" default="false" />
-
-  <arg name="msf_enabled" default="false" />
-  <arg name="april_tag_enabled" default="false" />
-  <arg name="base_link_frame" default="base_footprint" />
+  <arg name="slam_odometry_topic" default="/s_graphs/odom_to_map" />
+  <arg name="slam_markers_topic" default="/s_graphs/markers" />
+  <arg name="slam_map_points_topic" default="/s_graphs/map_points" />
+  <arg if="$(eval arg('env') == 'real')" name="base_link_frame" default="body" />
+  <arg if="$(eval arg('env') == 'virtual')" name="base_link_frame" default="base_footprint" />
 
   <arg name="min_seg_points" default="100" />
   <arg name="min_horizontal_inliers" default="800" />
@@ -33,11 +36,11 @@
 
   <!-- HDL SCAN MATCHING -->
   <node pkg="nodelet" type="nodelet" name="hdl_scan_matching_nodelet_manager" args="manager" output="screen" />
-  <node if="$(arg msf_enabled)" pkg="nodelet" type="nodelet" name="hdl_scan_matcher" args="load s_graphs/ScanMatchingOdometryNodelet hdl_scan_matching_nodelet_manager">
+  <node if="$(eval arg('env') == 'virtual')" pkg="nodelet" type="nodelet" name="hdl_scan_matcher" args="load s_graphs/ScanMatchingOdometryNodelet hdl_scan_matching_nodelet_manager">
     <rosparam command="load" file="$(find s_graphs)/config/hdl_scan_matching.yaml" />
     <param name="publish_tf" value="true" />
     <!-- Inputs -->
-    <remap from="/filtered_points" to="/slam/hdl_prefilter/filtered_point_cloud" />
+    <remap from="/filtered_points" to="/hdl_prefilter/filtered_point_cloud" />
     <!-- Outputs -->
     <remap from="/odom" to="hdl_scan_matcher/odometry" />
     <remap from="/scan_matching_odometry/transform" to="hdl_scan_matcher/transform" />
@@ -67,9 +70,9 @@
     <param name="min_horizontal_inliers" value="$(arg min_horizontal_inliers)" />
     <param name="min_vertical_inliers" value="$(arg min_vertical_inliers)" />
     <!-- Inputs -->
-    <remap from="/segmented_clouds" to="/slam/segmented_clouds" />
-    <remap from="/odom" to="/platform/odometry" />
-    <remap from="/filtered_points" to="/slam/hdl_prefilter/filtered_point_cloud" />
+    <remap if="$(eval arg('env') == 'real')" from="/odom" to="/platform/odometry" />
+    <remap if="$(eval arg('env') == 'virtual')" from="/odom" to="/slam/hdl_scan_matcher/odometry" />
+    <remap from="/filtered_points" to="/hdl_prefilter/filtered_point_cloud" />
     <remap from="/odom2map/initial_pose" to="/odom_to_map/initial_pose" />
     <!-- Outputs -->
     <remap from="/s_graphs/odom2map" to="$(arg slam_odometry_topic)" />
@@ -81,9 +84,11 @@
   <node pkg="s_graphs" name="map2odom_publisher" type="map2odom_publisher.py">
     <param name="odom_frame_id" value="odom" />
     <param name="map_frame_id" value="map" />
-    <remap from="/s_graphs/odom2map" to="/slam/s_graphs/odom_to_map" />
+    <remap from="/s_graphs/odom2map" to="/s_graphs/odom_to_map" />
   </node>
 
   <node pkg="tf" type="static_transform_publisher" name="body_to_body_elevated" args="0 0 10.0 0 0 0 body body_elevated 100" />
+
+  <include if='$(arg use_free_space_graph)' file="$(find voxblox_skeleton)/launch/skeletonize_map_realtime.launch"/>
 
 </launch>
