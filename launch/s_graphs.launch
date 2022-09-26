@@ -2,9 +2,9 @@
 
   <arg name="env" default="$(optenv ENV real)" doc="Define whether we are running on an actual robot or on a virtual replica"/>
   <arg name="use_free_space_graph" default="false" doc="Define whether to use free space cluster graph" />
-  <arg name="msf_enabled" default="false" />
   <arg name="wait_odom_to_map_tf" default="false" />
   <arg name="april_tag_enabled" default="false" />
+  <param name="/use_sim_time" value="true"/>
 
   <!-- Inputs -->
   <arg name="imu_data_topic" default="/platform/imu/data" />
