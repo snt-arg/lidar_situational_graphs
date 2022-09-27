@@ -215,7 +215,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
-      graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
+      // graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
       // corr_node->setFixed(true);
       Corridors det_corridor;
       det_corridor.id = corr_data_association.first;
@@ -340,7 +340,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
-      graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
+      // graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
 
       // corr_node->setFixed(true);
       Corridors det_corridor;
