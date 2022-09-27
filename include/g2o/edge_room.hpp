@@ -248,8 +248,8 @@ public:
     const VertexRoomXYLB* v2 = static_cast<const VertexRoomXYLB*>(_vertices[1]);
 
     Eigen::Vector2d est;
-    est(0) = pow(v1->estimate()(0) - v2->estimate()(0), 2);
-    est(1) = pow(v1->estimate()(1) - v2->estimate()(1), 2);
+    est(0) = v1->estimate()(0) - v2->estimate()(0);
+    est(1) = v1->estimate()(1) - v2->estimate()(1);
 
     _error = est - _measurement;
   }

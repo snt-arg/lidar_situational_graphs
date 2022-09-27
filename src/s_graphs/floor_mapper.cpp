@@ -60,8 +60,8 @@ void FloorMapper::factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam
 
   for(const auto& room : rooms_vec) {
     Eigen::Vector2d measurement;
-    measurement(0) = pow(floor_pose(0) - room.node->estimate()(0), 2);
-    measurement(1) = pow(floor_pose(1) - room.node->estimate()(1), 2);
+    measurement(0) = floor_pose(0) - room.node->estimate()(0);
+    measurement(1) = floor_pose(1) - room.node->estimate()(1);
 
     auto edge = graph_slam->add_room_room_edge(floor_node, room.node, measurement, information_floor);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
@@ -69,8 +69,8 @@ void FloorMapper::factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam
 
   for(const auto& x_corridor : x_corridors) {
     Eigen::Vector2d measurement;
-    measurement(0) = pow(floor_pose(0) - x_corridor.node->estimate()(0), 2);
-    measurement(1) = pow(floor_pose(1) - x_corridor.node->estimate()(1), 2);
+    measurement(0) = floor_pose(0) - x_corridor.node->estimate()(0);
+    measurement(1) = floor_pose(1) - x_corridor.node->estimate()(1);
 
     auto edge = graph_slam->add_room_room_edge(floor_node, x_corridor.node, measurement, information_floor);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
@@ -78,8 +78,8 @@ void FloorMapper::factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam
 
   for(const auto& y_corridor : y_corridors) {
     Eigen::Vector2d measurement;
-    measurement(0) = pow(floor_pose(0) - y_corridor.node->estimate()(0), 2);
-    measurement(1) = pow(floor_pose(1) - y_corridor.node->estimate()(1), 2);
+    measurement(0) = floor_pose(0) - y_corridor.node->estimate()(0);
+    measurement(1) = floor_pose(1) - y_corridor.node->estimate()(1);
 
     auto edge = graph_slam->add_room_room_edge(floor_node, y_corridor.node, measurement, information_floor);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
