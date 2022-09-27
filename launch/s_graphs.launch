@@ -1,10 +1,10 @@
 <launch>
 
-  <arg name="env" default="$(optenv ENV real)" doc="Define whether we are running on an actual robot or on a virtual replica"/>
+  <arg name="env" default="$(optenv ENV real)" doc="Define whether we are running on an actual robot or on a virtual replica" />
   <arg name="use_free_space_graph" default="false" doc="Define whether to use free space cluster graph" />
   <arg name="wait_odom_to_map_tf" default="false" />
   <arg name="april_tag_enabled" default="false" />
-  <param name="/use_sim_time" value="true"/>
+  <param name="/use_sim_time" value="true" />
 
   <!-- Inputs -->
   <arg name="imu_data_topic" default="/platform/imu/data" />
@@ -51,8 +51,7 @@
 
   <!--ROOM SEGMENTATION -->
   <node pkg="nodelet" type="nodelet" name="hdl_room_seg_nodelet_manager" args="manager" output="screen" />
-  <node pkg="nodelet" type="nodelet" name="hdl_room_segmentor" args="load s_graphs/RoomSegmentationNodelet hdl_room_seg_nodelet_manager">
-  </node>
+  <node pkg="nodelet" type="nodelet" name="hdl_room_segmentor" args="load s_graphs/RoomSegmentationNodelet hdl_room_seg_nodelet_manager"></node>
 
   <!-- GRAPH SLAM -->
   <node pkg="nodelet" type="nodelet" name="s_graphs_nodelet_manager" args="manager" output="screen" />
@@ -71,7 +70,7 @@
     <param name="min_vertical_inliers" value="$(arg min_vertical_inliers)" />
     <!-- Inputs -->
     <remap if="$(eval arg('env') == 'real')" from="/odom" to="/platform/odometry" />
-    <remap if="$(eval arg('env') == 'virtual')" from="/odom" to="/slam/hdl_scan_matcher/odometry" />
+    <remap if="$(eval arg('env') == 'virtual')" from="/odom" to="/hdl_scan_matcher/odometry" />
     <remap from="/filtered_points" to="/hdl_prefilter/filtered_point_cloud" />
     <remap from="/odom2map/initial_pose" to="/odom_to_map/initial_pose" />
     <!-- Outputs -->
@@ -89,6 +88,6 @@
 
   <node pkg="tf" type="static_transform_publisher" name="body_to_body_elevated" args="0 0 10.0 0 0 0 body body_elevated 100" />
 
-  <include if='$(arg use_free_space_graph)' file="$(find voxblox_skeleton)/launch/skeletonize_map_realtime.launch"/>
+  <include if='$(arg use_free_space_graph)' file="$(find voxblox_skeleton)/launch/skeletonize_map_realtime.launch" />
 
 </launch>
