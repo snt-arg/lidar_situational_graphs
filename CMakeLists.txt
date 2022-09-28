@@ -165,6 +165,27 @@ target_link_libraries(s_graphs_nodelet
 )
 add_dependencies(s_graphs_nodelet ${PROJECT_NAME}_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
+#############
+## Install ##
+#############
+
+install(TARGETS
+  s_graphs_nodelet s_graphs_floor_plan_nodelet s_graphs_room_segmentation_nodelet s_graphs_scan_matching_odometry_nodelet s_graphs_prefiltering_nodelet
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(
+  DIRECTORY launch config rviz
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
+
 catkin_install_python(
   PROGRAMS
     src/${PROJECT_NAME}/bag_player.py
