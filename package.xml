@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>s_graphs</name>
-  <version>0.0.0</version>
+  <version>2.0.0</version>
   <description>The s_graphs package</description>
 
-  <maintainer email="koide@aisl.cs.tut.ac.jp">hriday</maintainer>
+  <maintainer email="hriday.bavle@gmail.com">hriday</maintainer>
 
   <license>BSD</license>
 
