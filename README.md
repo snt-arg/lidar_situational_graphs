@@ -104,6 +104,105 @@ git clone https://github.com/SMRT-AIST/fast_gicp.git --recursive
 sudo pip install ProgressBar2
 ```
 
+## Installation Procedure
+---
+
+### Manual Installation
+
+---
+
+1. Create a workspace for S_Graphs
+
+```jsx
+mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
+```
+
+1. Clone the S_Graphs repository into the created workspace
+
+```jsx
+git clone https://github.com/snt-arg/s_graphs.git
+```
+
+1. Create a directory for external dependencies
+
+```jsx
+mkdir utils
+```
+
+1. Clone `mav_voxblox_planning` repository into utils directory
+
+```jsx
+cd utils && git clone https://github.com/snt-arg/mav_voxblox_planning
+```
+
+1. Install of `mav_voxblox_planning`
+
+```jsx
+wstool init . ./mav_voxblox_planning/install/install_https.rosinstall
+wstool update
+```
+
+1. Clone `ndt_omp` and `fast_gicp` ROS packages
+
+```jsx
+git clone https://github.com/koide3/ndt_omp.git
+git clone https://github.com/SMRT-AIST/fast_gicp.git --recursive
+```
+
+1. Install the required ROS dependencies
+
+```jsx
+cd ../../ && rosdep install --from-paths src --ignore-src -r -y
+```
+
+1. Build packages
+
+```jsx
+catking build
+```
+
+## Example on a dataset
+
+---
+
+**Note:** For each command below, please executed them in separate terminal windows!
+
+### For real environment dataset
+
+---
+
+```jsx
+roscore
+```
+
+```jsx
+roscd s_graphs && rviz -d rviz/s_graphs.rviz
+```
+
+```jsx
+roslaunch s_graphs s_graphs.launch use_free_space_graph:=true 2>/dev/null
+```
+
+```jsx
+rosbag PATH_TO_ROSBAG_DATASET --clock
+```
+
+### For virtual environment dataset
+
+---
+
+```jsx
+roscore
+```
+
+```jsx
+roscd s_graphs && rviz -d rviz/s_graphs.rviz
+```
+
+```jsx
+roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null
+```
+
 <!-- ## Example1 (Indoor)
 
 Bag file (recorded in a small room):
