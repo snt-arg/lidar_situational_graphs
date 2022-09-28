@@ -395,25 +395,25 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
     }
   }
 
-  std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
-  std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
-  std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
-  std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
+  // std::cout << "found xplane1 coeffs : " << (*found_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found xplane2 id : " << (*found_x_plane2).id << std::endl;
+  // std::cout << "found xplane2 coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
 
-  std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
-  std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
-  std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
-  std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
+  // std::cout << "found yplane1 coeffs : " << (*found_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "found yplane2 id : " << (*found_y_plane2).id << std::endl;
+  // std::cout << "found yplane2 coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
 
-  std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
-  std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
-  std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
-  std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
+  // std::cout << "mapped xplane1 coeffs : " << (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl;
+  // std::cout << "mapped xplane2 coeffs : " << (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
 
-  std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
-  std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
-  std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
-  std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
+  // std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
+  // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
+  // std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
 }
 
 /*TODO:HB Move this to plane_utils.hpp */

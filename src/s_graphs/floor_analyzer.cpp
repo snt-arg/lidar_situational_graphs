@@ -81,11 +81,10 @@ void FloorAnalyzer::perform_floor_segmentation(const std::vector<s_graphs::Plane
     }
   }
 
-  std::cout << "xplane1: " << floor_x_plane1.nx << ", " << floor_x_plane1.ny << ", " << floor_x_plane1.nz << ", " << floor_x_plane1.d << std::endl;
-  std::cout << "xplane2: " << floor_x_plane2.nx << ", " << floor_x_plane2.ny << ", " << floor_x_plane2.nz << ", " << floor_x_plane2.d << std::endl;
-
-  std::cout << "yplane1: " << floor_y_plane1.nx << ", " << floor_y_plane1.ny << ", " << floor_y_plane1.nz << ", " << floor_y_plane1.d << std::endl;
-  std::cout << "yplane2: " << floor_y_plane2.nx << ", " << floor_y_plane2.ny << ", " << floor_y_plane2.nz << ", " << floor_y_plane2.d << std::endl;
+  // std::cout << "xplane1: " << floor_x_plane1.nx << ", " << floor_x_plane1.ny << ", " << floor_x_plane1.nz << ", " << floor_x_plane1.d << std::endl;
+  // std::cout << "xplane2: " << floor_x_plane2.nx << ", " << floor_x_plane2.ny << ", " << floor_x_plane2.nz << ", " << floor_x_plane2.d << std::endl;
+  // std::cout << "yplane1: " << floor_y_plane1.nx << ", " << floor_y_plane1.ny << ", " << floor_y_plane1.nz << ", " << floor_y_plane1.d << std::endl;
+  // std::cout << "yplane2: " << floor_y_plane2.nx << ", " << floor_y_plane2.ny << ", " << floor_y_plane2.nz << ", " << floor_y_plane2.d << std::endl;
 
   if(floor_x_plane1.nx != -1) floor_plane_candidates_vec.push_back(floor_x_plane1);
   if(floor_x_plane2.nx != -1) floor_plane_candidates_vec.push_back(floor_x_plane2);
