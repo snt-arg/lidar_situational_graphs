@@ -86,7 +86,7 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
-1. Clone the S_Graphs repository into the created workspace
+2. Clone the S_Graphs repository into the created workspace
 
 ```sh
 git clone https://github.com/snt-arg/s_graphs.git
@@ -102,31 +102,33 @@ git clone https://github.com/snt-arg/s_graphs.git
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
-1. Clone the S_Graphs repository into the created workspace
+2. Clone the S_Graphs repository into the created workspace
 
 ```sh
 git clone https://github.com/snt-arg/s_graphs.git
 ```
 
+3. Install the required dependencies using vcstool
 ```sh
 vcs import --recursive ../ < .rosinstall
 ```
 
+4. Install the required ROS packages
 ```sh
 cd ../../ && rosdep install --from-paths src -ignore-src -y
 ```
+5. Build workspace
 
 ```sh
 catking build
 ```
 
+6. Source workspace
 ```sh
 source devel/setup.bash
 ```
 
 ## Example on a dataset
-
----
 
 **Note:** For each command below, please executed them in separate terminal windows!
 
