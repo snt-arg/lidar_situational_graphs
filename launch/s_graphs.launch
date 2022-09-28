@@ -21,7 +21,7 @@
   <arg name="min_horizontal_inliers" default="800" />
   <arg name="min_vertical_inliers" default="100" />
 
-  <!-- HDL PRE-FILTERING -->
+  <!-- PRE-FILTERING -->
   <node pkg="nodelet" type="nodelet" name="hdl_prefilter_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="hdl_prefilter" args="load s_graphs/PrefilteringNodelet hdl_prefilter_nodelet_manager">
     <rosparam command="load" file="$(find s_graphs)/config/hdl_prefiltering.yaml" />
@@ -34,7 +34,7 @@
     <remap from="/colored_points" to="hdl_prefilter/colored_point_cloud" />
   </node>
 
-  <!-- HDL SCAN MATCHING -->
+  <!-- SCAN MATCHING -->
   <node pkg="nodelet" type="nodelet" name="hdl_scan_matching_nodelet_manager" args="manager" output="screen" />
   <node if="$(eval arg('env') == 'virtual')" pkg="nodelet" type="nodelet" name="hdl_scan_matcher" args="load s_graphs/ScanMatchingOdometryNodelet hdl_scan_matching_nodelet_manager">
     <rosparam command="load" file="$(find s_graphs)/config/hdl_scan_matching.yaml" />
@@ -50,8 +50,13 @@
   </node>
 
   <!--ROOM SEGMENTATION -->
-  <node pkg="nodelet" type="nodelet" name="hdl_room_seg_nodelet_manager" args="manager" output="screen" />
-  <node pkg="nodelet" type="nodelet" name="hdl_room_segmentor" args="load s_graphs/RoomSegmentationNodelet hdl_room_seg_nodelet_manager"></node>
+  <node pkg="nodelet" type="nodelet" name="s_graphs_room_seg_nodelet_manager" args="manager" output="screen" />
+  <node pkg="nodelet" type="nodelet" name="s_graphs_room_segmentor" args="load s_graphs/RoomSegmentationNodelet s_graphs_room_seg_nodelet_manager"></node>
+
+  <!--Floor Planning -->
+  <node pkg="nodelet" type="nodelet" name="s_graphs_floor_plan_nodelet_manager" args="manager" output="screen" />
+  <node pkg="nodelet" type="nodelet" name="s_graphs_floor_planner" args="load s_graphs/FloorPlanNodelet s_graphs_floor_plan_nodelet_manager">
+  </node>
 
   <!-- GRAPH SLAM -->
   <node pkg="nodelet" type="nodelet" name="s_graphs_nodelet_manager" args="manager" output="screen" />
