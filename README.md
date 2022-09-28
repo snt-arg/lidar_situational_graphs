@@ -74,40 +74,6 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 - _/s_graphs/save_map_ (s_graphs/SaveMap)
   - save the generated map as a PCD file.
 
-## Requirements
-
-**_s_graphs_** requires the following libraries:
-
-- OpenMP
-- PCL
-- g2o
-- suitesparse
-
-The following ROS packages are required:
-
-- geodesy
-- nmea_msgs
-- pcl_ros
-- [ndt_omp](https://github.com/koide3/ndt_omp)
-- [fast_gicp](https://github.com/SMRT-AIST/fast_gicp)
-
-```bash
-# for melodic
-sudo apt-get install ros-melodic-geodesy ros-melodic-pcl-ros ros-melodic-nmea-msgs ros-melodic-libg2o
-# for noetic
-sudo apt-get install ros-noetic-geodesy ros-noetic-pcl-ros ros-noetic-nmea-msgs ros-noetic-libg2o
-
-cd catkin_ws/src
-git clone https://github.com/koide3/ndt_omp.git
-git clone https://github.com/SMRT-AIST/fast_gicp.git --recursive
-```
-
-**[optional]** _bag_player.py_ script requires ProgressBar2.
-
-```bash
-sudo pip install ProgressBar2
-```
-
 ## Installation Procedure
 
 ### Automated Install
@@ -116,13 +82,13 @@ sudo pip install ProgressBar2
 
 1. Create a workspace for S_Graphs
 
-```jsx
+```sh
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
 1. Clone the S_Graphs repository into the created workspace
 
-```jsx
+```sh
 git clone https://github.com/snt-arg/s_graphs.git
 ```
 
@@ -132,13 +98,13 @@ git clone https://github.com/snt-arg/s_graphs.git
 
 1. Create a workspace for S_Graphs
 
-```jsx
+```sh
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
 1. Clone the S_Graphs repository into the created workspace
 
-```jsx
+```sh
 git clone https://github.com/snt-arg/s_graphs.git
 ```
 
@@ -150,7 +116,7 @@ vcs import --recursive ../ < .rosinstall
 cd ../../ && rosdep install --from-paths src -ignore-src -y
 ```
 
-```jsx
+```sh
 catking build
 ```
 
@@ -168,19 +134,19 @@ source devel/setup.bash
 
 ---
 
-```jsx
+```sh
 roscore
 ```
 
-```jsx
+```sh
 roscd s_graphs && rviz -d rviz/s_graphs.rviz
 ```
 
-```jsx
+```sh
 roslaunch s_graphs s_graphs.launch use_free_space_graph:=true 2>/dev/null
 ```
 
-```jsx
+```sh
 rosbag PATH_TO_ROSBAG_DATASET --clock
 ```
 
@@ -188,15 +154,15 @@ rosbag PATH_TO_ROSBAG_DATASET --clock
 
 ---
 
-```jsx
+```sh
 roscore
 ```
 
-```jsx
+```sh
 roscd s_graphs && rviz -d rviz/s_graphs.rviz
 ```
 
-```jsx
+```sh
 roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null
 ```
 
