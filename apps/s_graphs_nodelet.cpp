@@ -1767,23 +1767,23 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker corr_x_line_marker;
-      corr_x_line_marker.scale.x = 0.04;
+      corr_x_line_marker.scale.x = 0.02;
       corr_x_line_marker.pose.orientation.w = 1.0;
-      if(!overlapped_corridor)
+      if(!overlapped_corridor) {
         corr_x_line_marker.ns = "corridor_x_lines";
-      else {
+        corr_x_line_marker.header.frame_id = map_frame_id;
+        corr_x_line_marker.header.stamp = stamp;
+        corr_x_line_marker.id = markers.markers.size() + 1;
+        corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+        corr_x_line_marker.color.r = color_r;
+        corr_x_line_marker.color.g = color_g;
+        corr_x_line_marker.color.b = color_b;
+        corr_x_line_marker.color.a = 1.0;
+        corr_x_line_marker.lifetime = ros::Duration(15.0);
+      } else {
         x_corridor_snapshot[i].id = -1;
         corr_x_line_marker.ns = "overlapped_corridor_x_lines";
       }
-      corr_x_line_marker.header.frame_id = map_frame_id;
-      corr_x_line_marker.header.stamp = stamp;
-      corr_x_line_marker.id = markers.markers.size() + 1;
-      corr_x_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      corr_x_line_marker.color.r = color_r;
-      corr_x_line_marker.color.g = color_g;
-      corr_x_line_marker.color.b = color_b;
-      corr_x_line_marker.color.a = 1.0;
-      corr_x_line_marker.lifetime = ros::Duration(15.0);
 
       geometry_msgs::Point p1, p2, p3;
       p1.x = x_corridor_snapshot[i].node->estimate()(0);
@@ -1834,20 +1834,20 @@ private:
       // plane_marker.points.resize(vert_planes.size());
       corridor_pose_marker.header.frame_id = map_frame_id;
       corridor_pose_marker.header.stamp = stamp;
-      if(!overlapped_corridor)
+      if(!overlapped_corridor) {
         corridor_pose_marker.ns = "x_corridor";
-      else
+        corridor_pose_marker.id = markers.markers.size();
+        corridor_pose_marker.type = visualization_msgs::Marker::CUBE;
+        corridor_pose_marker.color.r = 1;
+        corridor_pose_marker.color.g = 0.64;
+        corridor_pose_marker.color.a = 1;
+        corridor_pose_marker.pose.position.x = x_corridor_snapshot[i].node->estimate()(0);
+        corridor_pose_marker.pose.position.y = x_corridor_snapshot[i].node->estimate()(1);
+        corridor_pose_marker.pose.position.z = corridor_node_h;
+        corridor_pose_marker.lifetime = ros::Duration(15.0);
+        markers.markers.push_back(corridor_pose_marker);
+      } else
         corridor_pose_marker.ns = "overlapped_x_corridor";
-      corridor_pose_marker.id = markers.markers.size();
-      corridor_pose_marker.type = visualization_msgs::Marker::CUBE;
-      corridor_pose_marker.color.r = 1;
-      corridor_pose_marker.color.g = 0.64;
-      corridor_pose_marker.color.a = 1;
-      corridor_pose_marker.pose.position.x = x_corridor_snapshot[i].node->estimate()(0);
-      corridor_pose_marker.pose.position.y = x_corridor_snapshot[i].node->estimate()(1);
-      corridor_pose_marker.pose.position.z = corridor_node_h;
-      corridor_pose_marker.lifetime = ros::Duration(15.0);
-      markers.markers.push_back(corridor_pose_marker);
     }
 
     for(int i = 0; i < y_corridor_snapshot.size(); ++i) {
@@ -1870,23 +1870,23 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker corr_y_line_marker;
-      corr_y_line_marker.scale.x = 0.04;
+      corr_y_line_marker.scale.x = 0.02;
       corr_y_line_marker.pose.orientation.w = 1.0;
-      if(!overlapped_corridor)
+      if(!overlapped_corridor) {
         corr_y_line_marker.ns = "corridor_y_lines";
-      else {
+        corr_y_line_marker.header.frame_id = map_frame_id;
+        corr_y_line_marker.header.stamp = stamp;
+        corr_y_line_marker.id = markers.markers.size() + 1;
+        corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
+        corr_y_line_marker.color.r = color_r;
+        corr_y_line_marker.color.g = color_g;
+        corr_y_line_marker.color.b = color_b;
+        corr_y_line_marker.color.a = 1.0;
+        corr_y_line_marker.lifetime = ros::Duration(15.0);
+      } else {
         y_corridor_snapshot[i].id = -1;
         corr_y_line_marker.ns = "overlapped_corridor_y_lines";
       }
-      corr_y_line_marker.header.frame_id = map_frame_id;
-      corr_y_line_marker.header.stamp = stamp;
-      corr_y_line_marker.id = markers.markers.size() + 1;
-      corr_y_line_marker.type = visualization_msgs::Marker::LINE_LIST;
-      corr_y_line_marker.color.r = color_r;
-      corr_y_line_marker.color.g = color_g;
-      corr_y_line_marker.color.b = color_b;
-      corr_y_line_marker.color.a = 1.0;
-      corr_y_line_marker.lifetime = ros::Duration(15.0);
 
       geometry_msgs::Point p1, p2, p3;
       p1.x = y_corridor_snapshot[i].node->estimate()(0);
@@ -1937,21 +1937,21 @@ private:
       // plane_marker.points.resize(vert_planes.size());
       corridor_pose_marker.header.frame_id = map_frame_id;
       corridor_pose_marker.header.stamp = stamp;
-      if(!overlapped_corridor)
+      if(!overlapped_corridor) {
         corridor_pose_marker.ns = "y_corridor";
-      else
+        corridor_pose_marker.id = markers.markers.size();
+        corridor_pose_marker.type = visualization_msgs::Marker::CUBE;
+        corridor_pose_marker.color.r = 0.13;
+        corridor_pose_marker.color.g = 0.54;
+        corridor_pose_marker.color.b = 0.13;
+        corridor_pose_marker.color.a = 1;
+        corridor_pose_marker.pose.position.x = y_corridor_snapshot[i].node->estimate()(0);
+        corridor_pose_marker.pose.position.y = y_corridor_snapshot[i].node->estimate()(1);
+        corridor_pose_marker.pose.position.z = corridor_node_h;
+        corridor_pose_marker.lifetime = ros::Duration(15.0);
+        markers.markers.push_back(corridor_pose_marker);
+      } else
         corridor_pose_marker.ns = "overlapped_y_corridor";
-      corridor_pose_marker.id = markers.markers.size();
-      corridor_pose_marker.type = visualization_msgs::Marker::CUBE;
-      corridor_pose_marker.color.r = 0.13;
-      corridor_pose_marker.color.g = 0.54;
-      corridor_pose_marker.color.b = 0.13;
-      corridor_pose_marker.color.a = 1;
-      corridor_pose_marker.pose.position.x = y_corridor_snapshot[i].node->estimate()(0);
-      corridor_pose_marker.pose.position.y = y_corridor_snapshot[i].node->estimate()(1);
-      corridor_pose_marker.pose.position.z = corridor_node_h;
-      corridor_pose_marker.lifetime = ros::Duration(15.0);
-      markers.markers.push_back(corridor_pose_marker);
     }
 
     // room markers
@@ -1985,7 +1985,7 @@ private:
 
       // fill in the line marker
       visualization_msgs::Marker room_line_marker;
-      room_line_marker.scale.x = 0.04;
+      room_line_marker.scale.x = 0.02;
       room_line_marker.pose.orientation.w = 1.0;
       room_line_marker.ns = "rooms_lines";
       room_line_marker.header.frame_id = map_frame_id;
@@ -2272,7 +2272,7 @@ private:
 
         // create line markers between floor and rooms/corridors
         visualization_msgs::Marker floor_line_marker;
-        floor_line_marker.scale.x = 0.04;
+        floor_line_marker.scale.x = 0.02;
         floor_line_marker.pose.orientation.w = 1.0;
         floor_line_marker.ns = "rooms_lines";
         floor_line_marker.header.frame_id = map_frame_id;
