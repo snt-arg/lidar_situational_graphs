@@ -81,7 +81,7 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 1. Create a workspace for S-Graphs
 
 ```sh
-mkdir -p $Home/s-graphs_ws/src && cd $HOME/s-graphs_ws/src
+mkdir -p $Home/s-graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
 2. Clone the S-Graphs repository into the created workspace
