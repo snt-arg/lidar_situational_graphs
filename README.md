@@ -81,7 +81,7 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 1. Create a workspace for S-Graphs
 
 ```sh
-mkdir -p $Home/s-graphs_ws/src && cd $HOME/s_graphs_ws/src
+mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
 2. Clone the S-Graphs repository into the created workspace
@@ -90,7 +90,7 @@ mkdir -p $Home/s-graphs_ws/src && cd $HOME/s_graphs_ws/src
 git clone https://github.com/snt-arg/s_graphs.git
 ```
 
-3. Run the scrip setup.sh to install the required dependencies
+3. Run the script setup.sh to install the required dependencies
 
 `./s_graphs/setup.sh`
 
@@ -102,7 +102,7 @@ git clone https://github.com/snt-arg/s_graphs.git
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
-2. Clone the S_Graphs repository into the created workspace
+2. Clone the S-Graphs repository into the created workspace
 
 ```sh
 git clone https://github.com/snt-arg/s_graphs.git
