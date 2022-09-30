@@ -92,7 +92,9 @@ git clone https://github.com/snt-arg/s_graphs.git
 
 3. Run the script setup.sh to install the required dependencies
 
-`./s_graphs/setup.sh`
+```sh
+./s_graphs/setup.sh
+```
 
 ### Manual Installation
 
