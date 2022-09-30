@@ -78,25 +78,25 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 
 ### Automated Install
 
----
-
-1. Create a workspace for S_Graphs
+1. Create a workspace for S-Graphs
 
 ```sh
-mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
+mkdir -p $Home/s-graphs_ws/src && cd $HOME/s-graphs_ws/src
 ```
 
-2. Clone the S_Graphs repository into the created workspace
+2. Clone the S-Graphs repository into the created workspace
 
 ```sh
 git clone https://github.com/snt-arg/s_graphs.git
 ```
 
+3. Run the scrip setup.sh to install the required dependencies
+
+`./s_graphs/setup.sh`
+
 ### Manual Installation
 
----
-
-1. Create a workspace for S_Graphs
+1. Create a workspace for S-Graphs
 
 ```sh
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
@@ -109,21 +109,25 @@ git clone https://github.com/snt-arg/s_graphs.git
 ```
 
 3. Install the required dependencies using vcstool
+
 ```sh
 vcs import --recursive ../ < .rosinstall
 ```
 
 4. Install the required ROS packages
+
 ```sh
 cd ../../ && rosdep install --from-paths src -ignore-src -y
 ```
+
 5. Build workspace
 
 ```sh
-catking build
+catkin build
 ```
 
 6. Source workspace
+
 ```sh
 source devel/setup.bash
 ```
@@ -133,8 +137,6 @@ source devel/setup.bash
 **Note:** For each command below, please executed them in separate terminal windows!
 
 ### For real environment dataset
-
----
 
 ```sh
 roscore
@@ -153,8 +155,6 @@ rosbag PATH_TO_ROSBAG_DATASET --clock
 ```
 
 ### For virtual environment dataset
-
----
 
 ```sh
 roscore
