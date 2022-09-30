@@ -168,6 +168,10 @@ roscd s_graphs && rviz -d rviz/s_graphs.rviz
 roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null
 ```
 
+```sh
+rosbag PATH_TO_ROSBAG_DATASET --clock
+```
+
 <!-- ## Example1 (Indoor)
 
 Bag file (recorded in a small room):
