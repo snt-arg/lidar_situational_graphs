@@ -93,7 +93,7 @@ git clone https://github.com/snt-arg/s_graphs.git
 3. Run the script setup.sh to install the required dependencies
 
 ```sh
-./s_graphs/setup.sh
+cd s_graphs && ./setup.sh
 ```
 
 ### Manual Installation
@@ -113,7 +113,7 @@ git clone https://github.com/snt-arg/s_graphs.git
 3. Install the required dependencies using vcstool
 
 ```sh
-vcs import --recursive ../ < .rosinstall
+cd s_graphs && vcs import --recursive ../ < .rosinstall
 ```
 
 4. Install the required ROS packages
