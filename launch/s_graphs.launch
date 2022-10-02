@@ -53,7 +53,7 @@
   <node pkg="nodelet" type="nodelet" name="s_graphs_room_seg_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="s_graphs_room_segmentor" args="load s_graphs/RoomSegmentationNodelet s_graphs_room_seg_nodelet_manager"></node>
 
-  <!--Floor Planning -->
+  <!--FLOOR PLANNING -->
   <node pkg="nodelet" type="nodelet" name="s_graphs_floor_plan_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="s_graphs_floor_planner" args="load s_graphs/FloorPlanNodelet s_graphs_floor_plan_nodelet_manager">
   </node>

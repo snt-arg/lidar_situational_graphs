@@ -181,9 +181,9 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
-  Eigen::Matrix2d information_room_plane;
+  Eigen::Matrix<double, 1, 1> information_room_plane;
   information_room_plane(0, 0) = room_information;
-  information_room_plane(1, 1) = room_information;
+  // information_room_plane(1, 1) = room_information;
 
   auto found_x_plane1 = x_vert_planes.begin();
   auto found_x_plane2 = x_vert_planes.begin();
@@ -193,8 +193,8 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
   auto found_mapped_x_plane2 = x_vert_planes.begin();
   auto found_mapped_y_plane1 = y_vert_planes.begin();
   auto found_mapped_y_plane2 = y_vert_planes.begin();
-  Eigen::Vector2d x_plane1_meas, x_plane2_meas;
-  Eigen::Vector2d y_plane1_meas, y_plane2_meas;
+  double x_plane1_meas, x_plane2_meas;
+  double y_plane1_meas, y_plane2_meas;
 
   ROS_DEBUG_NAMED("room planes", "final room plane 1 %f %f %f %f", x_room_pair_vec[0].plane_unflipped.coeffs()(0), x_room_pair_vec[0].plane_unflipped.coeffs()(1), x_room_pair_vec[0].plane_unflipped.coeffs()(2), x_room_pair_vec[0].plane_unflipped.coeffs()(3));
   ROS_DEBUG_NAMED("room planes", "final room plane 2 %f %f %f %f", x_room_pair_vec[1].plane_unflipped.coeffs()(0), x_room_pair_vec[1].plane_unflipped.coeffs()(1), x_room_pair_vec[1].plane_unflipped.coeffs()(2), x_room_pair_vec[1].plane_unflipped.coeffs()(3));
@@ -506,27 +506,24 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
   return data_association;
 }
 
-Eigen::Vector2d FiniteRoomMapper::room_measurement(const int& plane_type, const Eigen::Vector2d& room_pose, const Eigen::Vector4d& plane) {
-  Eigen::Vector2d meas;
-  Eigen::Vector2d room_pose_transformed = room_pose.dot(plane.head(2)) * plane.head(2);
-  Eigen::Vector2d plane_vec = fabs(plane(3)) * plane.head(2);
+double FiniteRoomMapper::room_measurement(const int& plane_type, const Eigen::Vector2d& room_pose, const Eigen::Vector4d& plane) {
+  double meas;
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     if(fabs(room_pose(0)) > fabs(plane(3))) {
-      meas = room_pose_transformed - plane_vec;
+      meas = room_pose(0) - plane(3);
     } else {
-      meas = plane_vec - room_pose_transformed;
+      meas = plane(3) - room_pose(0);
     }
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     if(fabs(room_pose(1)) > fabs(plane(3))) {
-      meas = room_pose_transformed - plane_vec;
+      meas = room_pose(1) - plane(3);
     } else {
-      meas = plane_vec - room_pose_transformed;
+      meas = plane(3) - room_pose(1);
     }
   }
-
   return meas;
 }
 

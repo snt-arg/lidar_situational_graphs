@@ -22,14 +22,14 @@ fix_first_node_stddev: 1 1 1 1 1 1
 fix_first_node_adaptive: true
 
 # Loop closure
-distance_thresh: 1.0
-accum_distance_thresh: 3.0
-min_edge_interval: 5.0
-fitness_score_thresh: 2.5
+distance_thresh: 3.0
+accum_distance_thresh: 5.0
+min_edge_interval: 7.0
+fitness_score_thresh: 0.5
 
 # Scan matching
 registration_method: "FAST_GICP"
-reg_num_threads: 0
+reg_num_threads: 8
 reg_transformation_epsilon: 0.01
 reg_maximum_iterations: 64
 reg_max_correspondence_distance: 2.5
@@ -76,10 +76,11 @@ graph_update_interval: 3.0
 map_cloud_update_interval: 3.0
 map_cloud_resolution: 0.05
 
-keyframe_window_size:       1
+extract_planar_surfaces:    true
+keyframe_window_size:       3
 plane_information:          1.0
-room_information:           0.1
-corridor_information:       0.1
+room_information:           1.0
+corridor_information:       1.0
 plane_dist_threshold:       0.35
 plane_points_dist:          0.5
 constant_covariance:        true
