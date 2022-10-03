@@ -379,7 +379,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_cluster_counter++;
       return true;
     }
-    // if found only two x planes are found at x corridor
+    // if found only two x planes are found add x corridor
     else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
       if(sub_cloud_hull->points.size() > 0) get_cluster_endpoints(sub_cloud_hull, p1, p2);
 

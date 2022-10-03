@@ -295,6 +295,8 @@ private:
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
       plane(3) = -1 * plane(3);
+    } else {
+      plane = plane;
     }
   }
 };
@@ -376,6 +378,8 @@ private:
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
       plane(3) = -1 * plane(3);
+    } else {
+      plane = plane;
     }
   }
 };

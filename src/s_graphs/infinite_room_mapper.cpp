@@ -197,24 +197,19 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   std::pair<int, int> corr_data_association;
   double meas_plane1, meas_plane2;
 
-  Eigen::Matrix<double, 1, 1> information_corridor_plane;
-  Eigen::Matrix<double, 2, 2> information_corridor_planes;
-
   bool use_tri_edge = true;
-  if(use_tri_edge) {
-    information_corridor_planes(0, 0) = corridor_information;
-    information_corridor_planes(1, 1) = corridor_information;
-  } else {
-    information_corridor_plane(0, 0) = corridor_information;
-    // information_corridor_plane(1, 1) = corridor_information;
-  }
+  Eigen::Matrix<double, 2, 2> information_corridor_planes;
+  information_corridor_planes(0, 0) = corridor_information;
+  information_corridor_planes(1, 1) = corridor_information;
+
+  Eigen::Matrix<double, 1, 1> information_corridor_plane;
+  information_corridor_plane(0, 0) = corridor_information;
 
   Eigen::Matrix<double, 1, 1> information_corridor_prior;
   information_corridor_prior(0, 0) = 1e-5;
 
   // Eigen::Vector2d corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
   Eigen::Vector2d corr_pose(corr_plane1_pair.plane_centroid(0), corr_plane1_pair.plane_centroid(1));
-  // double corr_pose_local = corridor_pose_local(corr_plane1_pair.keyframe_node, corr_pose);
   ROS_DEBUG_NAMED("corridor planes", "final corridor plane 1 %f %f %f %f", corr_plane1_pair.plane_unflipped.coeffs()(0), corr_plane1_pair.plane_unflipped.coeffs()(1), corr_plane1_pair.plane_unflipped.coeffs()(2), corr_plane1_pair.plane_unflipped.coeffs()(3));
   ROS_DEBUG_NAMED("corridor planes", "final corridor plane 2 %f %f %f %f", corr_plane2_pair.plane_unflipped.coeffs()(0), corr_plane2_pair.plane_unflipped.coeffs()(1), corr_plane2_pair.plane_unflipped.coeffs()(2), corr_plane2_pair.plane_unflipped.coeffs()(3));
 
