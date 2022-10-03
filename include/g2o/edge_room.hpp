@@ -29,6 +29,7 @@
 
 #include <Eigen/Dense>
 #include <g2o/core/base_binary_edge.h>
+#include <g2o/core/base_multi_edge.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include "g2o/vertex_room.hpp"
@@ -222,6 +223,81 @@ public:
   virtual int measurementDimension() const override {
     return 1;
   }
+};
+
+class EdgeRoom2Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeRoom2Planes() : BaseMultiEdge<2, Eigen::Vector2d>() {
+    resize(3);
+  }
+
+  void computeError() override {
+    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
+    const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
+    Eigen::Vector2d room_pose = v1->estimate();
+    Eigen::Vector4d plane1 = v2->estimate().coeffs();
+    Eigen::Vector4d plane2 = v3->estimate().coeffs();
+
+    if(plane1(3) > 0) {
+      plane1(0) = -1 * plane1(0);
+      plane1(1) = -1 * plane1(1);
+      plane1(2) = -1 * plane1(2);
+      plane1(3) = -1 * plane1(3);
+    }
+
+    if(plane2(3) > 0) {
+      plane2(0) = -1 * plane2(0);
+      plane2(1) = -1 * plane2(1);
+      plane2(2) = -1 * plane2(2);
+      plane2(3) = -1 * plane2(3);
+    }
+
+    Eigen::Vector3d vec;
+    if(fabs(plane1(3)) > fabs(plane2(3))) {
+      vec = (0.5 * (fabs(plane1(3)) * plane1.head(3) - fabs(plane2(3)) * plane2.head(3))) + fabs(plane2(3)) * plane2.head(3);
+    } else {
+      vec = (0.5 * (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3))) + fabs(plane1(3)) * plane1.head(3);
+    }
+
+    Eigen::Vector2d vec_normal = vec.head(2) / vec.norm();
+    Eigen::Vector2d final_pose_vec = vec.head(2) + (_cluster_center - (_cluster_center.dot(vec_normal)) * vec_normal);
+
+    _error = room_pose - final_pose_vec;
+  }
+
+  virtual bool read(std::istream& is) override {
+    Eigen::Vector2d v;
+    is >> v(0) >> v(1);
+
+    setMeasurement(v);
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) {
+          information()(j, i) = information()(i, j);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    Eigen::Vector2d v = _measurement;
+    os << v(0) << " " << v(1) << " ";
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        os << " " << information()(i, j);
+      };
+    }
+    return os.good();
+  }
+
+public:
+  Eigen::Vector2d _cluster_center;
 };
 
 class EdgeRoomRoom : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB> {

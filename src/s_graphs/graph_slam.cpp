@@ -51,6 +51,7 @@ G2O_REGISTER_TYPE(EDGE_CORRIDOR_XPLANE, EdgeCorridorXPlane)
 G2O_REGISTER_TYPE(EDGE_CORRIDOR_YPLANE, EdgeCorridorYPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_ROOM, EdgeSE3Room)
 G2O_REGISTER_TYPE(EDGE_ROOM_XPLANE, EdgeRoomXPlane)
+G2O_REGISTER_TYPE(EDGE_ROOM_2XPLANES, EdgeRoom2Planes)
 G2O_REGISTER_TYPE(EDGE_ROOM_XPRIOR, EdgeRoomXPrior)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPLANE, EdgeRoomYPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPRIOR, EdgeRoomYPrior)
@@ -429,6 +430,18 @@ g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(g2o::VertexRoomXYLB* v_room
   edge->setInformation(information);
   edge->vertices()[0] = v_room;
   edge->vertices()[1] = v_plane2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector2d cluster_center, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoom2Planes* edge(new g2o::EdgeRoom2Planes());
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  edge->vertices()[1] = v_plane1;
+  edge->vertices()[2] = v_plane2;
+  edge->_cluster_center = cluster_center;
   graph->addEdge(edge);
 
   return edge;

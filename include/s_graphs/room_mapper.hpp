@@ -116,6 +116,7 @@ public:
   void lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, const std::vector<Rooms>& rooms_vec);
 
   double corridor_measurement(const int plane_type, const Eigen::Vector2d& corridor_pose, const Eigen::Vector4d& plane);
+  double corridor_measurement(const int plane_type, const Eigen::Vector2d& corridor_pose, const Eigen::Vector4d& plane1, const Eigen::Vector4d& plane2);
 
 private:
   /**

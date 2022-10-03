@@ -67,12 +67,17 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     x_plane1_data.plane_unflipped = x_plane1;
     x_plane1_data.plane_centroid(0) = room_data.room_center.x;
     x_plane1_data.plane_centroid(1) = room_data.room_center.y;
+    x_plane1_data.cluster_center(0) = room_data.cluster_center.x;
+    x_plane1_data.cluster_center(1) = room_data.cluster_center.y;
+
     x_plane2_data.plane_id = room_data.x_planes[1].id;
     x_plane2_data.plane_unflipped = x_plane2;
     x_plane2_data.plane_centroid(0) = room_data.room_center.x;
     x_plane2_data.plane_centroid(1) = room_data.room_center.y;
-
+    x_plane2_data.cluster_center(0) = room_data.cluster_center.x;
+    x_plane2_data.cluster_center(1) = room_data.cluster_center.y;
     x_plane1_data.connected_id = room_data.id;
+
     // get the corridor neighbours
     for(const auto& room_neighbour_id : room_data.neighbour_ids) {
       x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
@@ -110,12 +115,17 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     y_plane1_data.plane_unflipped = y_plane1;
     y_plane1_data.plane_centroid(0) = room_data.room_center.x;
     y_plane1_data.plane_centroid(1) = room_data.room_center.y;
+    y_plane1_data.cluster_center(0) = room_data.cluster_center.x;
+    y_plane1_data.cluster_center(1) = room_data.cluster_center.y;
+
     y_plane2_data.plane_id = room_data.y_planes[1].id;
     y_plane2_data.plane_unflipped = y_plane2;
     y_plane2_data.plane_centroid(0) = room_data.room_center.x;
     y_plane2_data.plane_centroid(1) = room_data.room_center.y;
-
+    y_plane2_data.cluster_center(0) = room_data.cluster_center.x;
+    y_plane2_data.cluster_center(1) = room_data.cluster_center.y;
     y_plane1_data.connected_id = room_data.id;
+
     // get the corridor neighbours
     for(const auto& room_neighbour_id : room_data.neighbour_ids) {
       y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
@@ -186,9 +196,18 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   g2o::VertexRoomXYLB* corr_node;
   std::pair<int, int> corr_data_association;
   double meas_plane1, meas_plane2;
+
   Eigen::Matrix<double, 1, 1> information_corridor_plane;
-  information_corridor_plane(0, 0) = corridor_information;
-  // information_corridor_plane(1, 1) = corridor_information;
+  Eigen::Matrix<double, 2, 2> information_corridor_planes;
+
+  bool use_tri_edge = true;
+  if(use_tri_edge) {
+    information_corridor_planes(0, 0) = corridor_information;
+    information_corridor_planes(1, 1) = corridor_information;
+  } else {
+    information_corridor_plane(0, 0) = corridor_information;
+    // information_corridor_plane(1, 1) = corridor_information;
+  }
 
   Eigen::Matrix<double, 1, 1> information_corridor_prior;
   information_corridor_prior(0, 0) = 1e-5;
@@ -215,7 +234,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
-      graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
+      // graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
       // corr_node->setFixed(true);
       Corridors det_corridor;
       det_corridor.id = corr_data_association.first;
@@ -223,25 +242,27 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
       det_corridor.plane1_id = corr_plane1_pair.plane_id;
       det_corridor.plane2_id = corr_plane2_pair.plane_id;
-      det_corridor.keyframe_trans = corr_plane1_pair.plane_centroid;
+      det_corridor.cluster_center = corr_plane1_pair.cluster_center;
       det_corridor.node = corr_node;
       det_corridor.connected_id = corr_plane1_pair.connected_id;
       det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
       x_corridors.push_back(det_corridor);
 
-      meas_plane1 = corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
-      meas_plane2 = corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
-
-      /* Add parallel constraints here */
-      if(use_parallel_plane_constraint) {
-        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+      if(use_tri_edge) {
+        auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, det_corridor.cluster_center, information_corridor_planes);
+        graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
+      } else {
+        meas_plane1 = corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
+        meas_plane2 = corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
+        /* Add parallel constraints here */
+        if(use_parallel_plane_constraint) {
+          MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+        }
+        auto edge_plane1 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+        graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+        auto edge_plane2 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+        graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
       }
-
-      auto edge_plane1 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
-      graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
-
-      auto edge_plane2 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
-      graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
 
     } else {
       /* add the edge between detected planes and the corridor */
@@ -262,67 +283,78 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs, (*found_mapped_plane1).cloud_seg_map->points.back().x, (*found_mapped_plane1).cloud_seg_map->points.back().y);
       plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane2_coeffs, (*found_mapped_plane2).cloud_seg_map->points.back().x, (*found_mapped_plane2).cloud_seg_map->points.back().y);
 
-      bool found_new_plane = false;
-      if((*found_plane1).id == (*found_mapped_plane1).id)
-        meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
-      else if((*found_plane1).id == (*found_mapped_plane2).id)
-        meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
-      else {
-        std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane1);
-        } else {
-          meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane2);
+      if(use_tri_edge) {
+        std::set<g2o::HyperGraph::Edge*> plane1_edges = (*found_plane1).plane_node->edges();
+        std::set<g2o::HyperGraph::Edge*> plane2_edges = (*found_plane2).plane_node->edges();
+
+        if(!check_corridor_ids(plane_type, plane1_edges, corr_node) || !check_corridor_ids(plane_type, plane2_edges, corr_node)) {
+          std::cout << "adding new x1 plane and x2 plane edges with corridor " << std::endl;
+          auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, x_corridors[corr_data_association.second].cluster_center, information_corridor_planes);
+          graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
         }
-        found_new_plane = true;
-        dupl_x_vert_planes.push_back(dupl_plane_pair);
+      } else {
+        bool found_new_plane = false;
+        if((*found_plane1).id == (*found_mapped_plane1).id)
+          meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
+        else if((*found_plane1).id == (*found_mapped_plane2).id)
+          meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
+        else {
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+            meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane1);
+          } else {
+            meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane2);
+          }
+          found_new_plane = true;
+          dupl_x_vert_planes.push_back(dupl_plane_pair);
 
-        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane1).plane_node->edges();
-        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
-          std::cout << "adding x1 plane edge with corridor " << std::endl;
-          auto edge_plane1 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
-          graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+          std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane1).plane_node->edges();
+          if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+            std::cout << "adding x1 plane edge with corridor " << std::endl;
+            auto edge_plane1 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+            graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+          }
         }
-      }
 
-      if((*found_plane2).id == (*found_mapped_plane1).id)
-        meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
-      else if((*found_plane2).id == (*found_mapped_plane2).id)
-        meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
-      else {
-        std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane1);
-        } else {
-          meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane2);
+        if((*found_plane2).id == (*found_mapped_plane1).id)
+          meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
+        else if((*found_plane2).id == (*found_mapped_plane2).id)
+          meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
+        else {
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+            meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane1);
+          } else {
+            meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane2);
+          }
+          found_new_plane = true;
+          dupl_x_vert_planes.push_back(dupl_plane_pair);
+
+          std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane2).plane_node->edges();
+          if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+            std::cout << "adding x2 plane edge corridor " << std::endl;
+            auto edge_plane2 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+            graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+          }
         }
-        found_new_plane = true;
-        dupl_x_vert_planes.push_back(dupl_plane_pair);
 
-        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane2).plane_node->edges();
-        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
-          std::cout << "adding x2 plane edge corridor " << std::endl;
-          auto edge_plane2 = graph_slam->add_room_xplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
-          graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+        // std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+        // std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+        // std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+
+        // std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
+        // std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
+        // std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+
+        if(use_parallel_plane_constraint && found_new_plane) {
+          MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
         }
-      }
-
-      // std::cout << "x mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-      // std::cout << "x mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "x mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-      // std::cout << "x mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
-
-      // std::cout << "x found plane1 id : " << (*found_plane1).id << std::endl;
-      // std::cout << "x found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "x found plane2 id : " << (*found_plane2).id << std::endl;
-      // std::cout << "x found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
-
-      if(use_parallel_plane_constraint && found_new_plane) {
-        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
     }
   }
@@ -340,7 +372,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
-      graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
+      // graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
 
       // corr_node->setFixed(true);
       Corridors det_corridor;
@@ -349,25 +381,29 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
       det_corridor.plane1_id = corr_plane1_pair.plane_id;
       det_corridor.plane2_id = corr_plane2_pair.plane_id;
-      det_corridor.keyframe_trans = corr_plane1_pair.plane_centroid;
+      det_corridor.cluster_center = corr_plane1_pair.cluster_center;
       det_corridor.node = corr_node;
       det_corridor.connected_id = corr_plane1_pair.connected_id;
       det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
       y_corridors.push_back(det_corridor);
 
-      meas_plane1 = corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
-      meas_plane2 = corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
+      if(use_tri_edge) {
+        auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, det_corridor.cluster_center, information_corridor_planes);
+        graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
+      } else {
+        meas_plane1 = corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
+        meas_plane2 = corridor_measurement(plane_type, corr_pose, corr_plane2_pair.plane_unflipped.coeffs());
 
-      if(use_parallel_plane_constraint) {
-        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+        if(use_parallel_plane_constraint) {
+          MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
+        }
+
+        auto edge_plane1 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+        graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+
+        auto edge_plane2 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+        graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
       }
-
-      auto edge_plane1 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
-      graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
-
-      auto edge_plane2 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
-      graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
-
     } else {
       /* add the edge between detected planes and the corridor */
       corr_node = y_corridors[corr_data_association.second].node;
@@ -386,67 +422,78 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs, (*found_mapped_plane1).cloud_seg_map->points.back().x, (*found_mapped_plane1).cloud_seg_map->points.back().y);
       plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane2_coeffs, (*found_mapped_plane2).cloud_seg_map->points.back().x, (*found_mapped_plane2).cloud_seg_map->points.back().y);
 
-      bool found_new_plane = false;
-      if((*found_plane1).id == (*found_mapped_plane1).id)
-        meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
-      else if((*found_plane1).id == (*found_mapped_plane2).id)
-        meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
-      else {
-        std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane1);
-        } else {
-          meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane2);
+      if(use_tri_edge) {
+        std::set<g2o::HyperGraph::Edge*> plane1_edges = (*found_plane1).plane_node->edges();
+        std::set<g2o::HyperGraph::Edge*> plane2_edges = (*found_plane2).plane_node->edges();
+
+        if(!check_corridor_ids(plane_type, plane1_edges, corr_node) || !check_corridor_ids(plane_type, plane2_edges, corr_node)) {
+          std::cout << "adding new y1 plane and y2 plane edges with corridor " << std::endl;
+          auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, y_corridors[corr_data_association.second].cluster_center, information_corridor_planes);
+          graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
         }
-        found_new_plane = true;
-        dupl_y_vert_planes.push_back(dupl_plane_pair);
+      } else {
+        bool found_new_plane = false;
+        if((*found_plane1).id == (*found_mapped_plane1).id)
+          meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
+        else if((*found_plane1).id == (*found_mapped_plane2).id)
+          meas_plane1 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
+        else {
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if(((*found_plane1).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+            meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane1);
+          } else {
+            meas_plane1 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane1, *found_mapped_plane2);
+          }
+          found_new_plane = true;
+          dupl_y_vert_planes.push_back(dupl_plane_pair);
 
-        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane1).plane_node->edges();
-        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
-          std::cout << "adding y1 plane edge with corridor " << std::endl;
-          auto edge_plane1 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
-          graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+          std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane1).plane_node->edges();
+          if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+            std::cout << "adding y1 plane edge with corridor " << std::endl;
+            auto edge_plane1 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane1).plane_node, meas_plane1, information_corridor_plane);
+            graph_slam->add_robust_kernel(edge_plane1, "Huber", 1.0);
+          }
         }
-      }
 
-      if((*found_plane2).id == (*found_mapped_plane1).id)
-        meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
-      else if((*found_plane2).id == (*found_mapped_plane2).id)
-        meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
-      else {
-        std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
-        if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
-          meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane1);
-        } else {
-          meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
-          dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane2);
+        if((*found_plane2).id == (*found_mapped_plane1).id)
+          meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane1_coeffs);
+        else if((*found_plane2).id == (*found_mapped_plane2).id)
+          meas_plane2 = corridor_measurement(plane_type, corr_pose, found_mapped_plane2_coeffs);
+        else {
+          std::pair<VerticalPlanes, VerticalPlanes> dupl_plane_pair;
+          if(((*found_plane2).plane_node->estimate().coeffs().head(3)).dot((*found_mapped_plane1).plane_node->estimate().coeffs().head(3)) > 0) {
+            meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane1_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane1);
+          } else {
+            meas_plane2 = corridor_measurement(plane_type, corr_node->estimate(), found_mapped_plane2_coeffs);
+            dupl_plane_pair = std::make_pair(*found_plane2, *found_mapped_plane2);
+          }
+          found_new_plane = true;
+          dupl_y_vert_planes.push_back(dupl_plane_pair);
+
+          std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane2).plane_node->edges();
+          if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
+            std::cout << "adding y2 plane edge corridor " << std::endl;
+            auto edge_plane2 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
+            graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+          }
         }
-        found_new_plane = true;
-        dupl_y_vert_planes.push_back(dupl_plane_pair);
 
-        std::set<g2o::HyperGraph::Edge*> plane_edges = (*found_plane2).plane_node->edges();
-        if(!check_corridor_ids(plane_type, plane_edges, corr_node)) {
-          std::cout << "adding y2 plane edge corridor " << std::endl;
-          auto edge_plane2 = graph_slam->add_room_yplane_edge(corr_node, (*found_plane2).plane_node, meas_plane2, information_corridor_plane);
-          graph_slam->add_robust_kernel(edge_plane2, "Huber", 1.0);
+        // std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
+        // std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
+        // std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
+
+        // std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
+        // std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
+        // std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
+        // std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
+
+        if(use_parallel_plane_constraint && found_new_plane) {
+          MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
         }
-      }
-
-      // std::cout << "y mapped plane1 id : " << (*found_mapped_plane1).id << std::endl;
-      // std::cout << "y mapped plane1 coeffs : " << (*found_mapped_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "y mapped plane2 id : " << (*found_mapped_plane2).id << std::endl;
-      // std::cout << "y mapped plane2 coeffs : " << (*found_mapped_plane2).plane_node->estimate().coeffs() << std::endl;
-
-      // std::cout << "y found plane1 id : " << (*found_plane1).id << std::endl;
-      // std::cout << "y found plane1 coeffs : " << (*found_plane1).plane_node->estimate().coeffs() << std::endl;
-      // std::cout << "y found plane2 id : " << (*found_plane2).id << std::endl;
-      // std::cout << "y found plane2 coeffs : " << (*found_plane2).plane_node->estimate().coeffs() << std::endl;
-
-      if(use_parallel_plane_constraint && found_new_plane) {
-        MapperUtils::parallel_plane_constraint(graph_slam, (*found_plane1).plane_node, (*found_plane2).plane_node);
       }
     }
   }
@@ -586,20 +633,49 @@ double InfiniteRoomMapper::corridor_measurement(const int plane_type, const Eige
   return meas;
 }
 
+double InfiniteRoomMapper::corridor_measurement(const int plane_type, const Eigen::Vector2d& corridor_pose, const Eigen::Vector4d& plane1, const Eigen::Vector4d& plane2) {
+  double meas;
+  double plane_diff;
+
+  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+    if(fabs(plane1(3)) > fabs(plane2(3))) {
+      double size = plane1(3) - plane2(3);
+      plane_diff = ((size) / 2) + plane2(3);
+    } else {
+      double size = plane2(3) - plane1(3);
+      plane_diff = ((size) / 2) + plane1(3);
+    }
+    meas = corridor_pose(0) - plane_diff;
+  }
+
+  if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
+    if(fabs(plane1(3)) > fabs(plane2(3))) {
+      double size = plane1(3) - plane2(3);
+      plane_diff = ((size) / 2) + plane2(3);
+    } else {
+      double size = plane2(3) - plane1(3);
+      plane_diff = ((size) / 2) + plane1(3);
+    }
+    meas = corridor_pose(1) - plane_diff;
+  }
+
+  return meas;
+}
+
 bool InfiniteRoomMapper::check_corridor_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexRoomXYLB* corr_node) {
   for(auto edge_itr = plane_edges.begin(); edge_itr != plane_edges.end(); ++edge_itr) {
     if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-      g2o::EdgeRoomXPlane* edge_corridor_xplane = dynamic_cast<g2o::EdgeRoomXPlane*>(*edge_itr);
-      if(edge_corridor_xplane) {
-        g2o::VertexRoomXYLB* found_corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_xplane->vertices()[0]);
+      g2o::EdgeRoom2Planes* edge_corridor_planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
+      if(edge_corridor_planes) {
+        g2o::VertexRoomXYLB* found_corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_planes->vertices()[0]);
         if(found_corridor_node->id() == corr_node->id()) return true;
       }
     }
 
     if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-      g2o::EdgeRoomYPlane* edge_corridor_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
-      if(edge_corridor_yplane) {
-        g2o::VertexRoomXYLB* found_corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_yplane->vertices()[0]);
+      g2o::EdgeRoom2Planes* edge_corridor_planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
+      if(edge_corridor_planes) {
+        g2o::VertexRoomXYLB* found_corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_planes->vertices()[0]);
         if(found_corridor_node->id() == corr_node->id()) return true;
       }
     }

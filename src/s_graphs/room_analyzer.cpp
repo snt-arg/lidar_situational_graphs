@@ -140,11 +140,9 @@ geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_
   return center;
 }
 
-geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2) {
+geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2, Eigen::Vector3d& cluster_center) {
   geometry_msgs::Point corridor_center;
-  Eigen::Vector3d cluster_center;
   Eigen::Vector4d plane1_eigen, plane2_eigen;
-
   plane1_eigen << plane1.nx, plane1.ny, plane1.nz, plane1.d;
   plane2_eigen << plane2.nx, plane2.ny, plane2.nz, plane2.d;
 
@@ -394,7 +392,8 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
         return false;
       }
 
-      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2);
+      Eigen::Vector3d cluster_center;
+      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2, cluster_center);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         std::cout << "returning as the room center is outside the cluster" << std::endl;
@@ -420,6 +419,8 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_candidate.neighbour_ids = neighbour_ids;
       room_candidate.room_length = room_length;
       room_candidate.room_center = room_center;
+      room_candidate.cluster_center.x = cluster_center(0);
+      room_candidate.cluster_center.y = cluster_center(1);
       room_candidate.x_planes.push_back(x_plane1);
       room_candidate.x_planes.push_back(x_plane2);
       room_candidates_vec.push_back(room_candidate);
@@ -439,7 +440,8 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
         return false;
       }
 
-      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2);
+      Eigen::Vector3d cluster_center;
+      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2, cluster_center);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         std::cout << "returning as the room center is outside the cluster" << std::endl;
@@ -465,6 +467,8 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_candidate.neighbour_ids = neighbour_ids;
       room_candidate.room_length = room_length;
       room_candidate.room_center = room_center;
+      room_candidate.cluster_center.x = cluster_center(0);
+      room_candidate.cluster_center.y = cluster_center(1);
       room_candidate.y_planes.push_back(y_plane1);
       room_candidate.y_planes.push_back(y_plane2);
       room_candidates_vec.push_back(room_candidate);

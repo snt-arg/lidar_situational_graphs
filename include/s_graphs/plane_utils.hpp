@@ -28,6 +28,7 @@ struct plane_data_list {
   float plane_length;
   g2o::VertexSE3* keyframe_node;
   Eigen::Vector3d plane_centroid;
+  Eigen::Vector2d cluster_center;
 };
 
 struct structure_data_list {
