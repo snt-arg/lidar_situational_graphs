@@ -240,19 +240,8 @@ public:
     Eigen::Vector4d plane1 = v2->estimate().coeffs();
     Eigen::Vector4d plane2 = v3->estimate().coeffs();
 
-    if(plane1(3) > 0) {
-      plane1(0) = -1 * plane1(0);
-      plane1(1) = -1 * plane1(1);
-      plane1(2) = -1 * plane1(2);
-      plane1(3) = -1 * plane1(3);
-    }
-
-    if(plane2(3) > 0) {
-      plane2(0) = -1 * plane2(0);
-      plane2(1) = -1 * plane2(1);
-      plane2(2) = -1 * plane2(2);
-      plane2(3) = -1 * plane2(3);
-    }
+    correct_plane_d(plane1);
+    correct_plane_d(plane2);
 
     Eigen::Vector3d vec;
     if(fabs(plane1(3)) > fabs(plane2(3))) {
@@ -298,6 +287,97 @@ public:
 
 public:
   Eigen::Vector2d _cluster_center;
+
+private:
+  void correct_plane_d(Eigen::Vector4d& plane) {
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    }
+  }
+};
+
+class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeRoom4Planes() : BaseMultiEdge<2, Eigen::Vector2d>() {
+    resize(5);
+  }
+  void computeError() override {
+    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
+    const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
+    const VertexPlane* v4 = static_cast<const VertexPlane*>(_vertices[3]);
+    const VertexPlane* v5 = static_cast<const VertexPlane*>(_vertices[4]);
+
+    Eigen::Vector2d room_pose = v1->estimate();
+    Eigen::Vector4d x_plane1 = v2->estimate().coeffs();
+    Eigen::Vector4d x_plane2 = v3->estimate().coeffs();
+    Eigen::Vector4d y_plane1 = v4->estimate().coeffs();
+    Eigen::Vector4d y_plane2 = v5->estimate().coeffs();
+
+    correct_plane_d(x_plane1);
+    correct_plane_d(x_plane2);
+    correct_plane_d(y_plane1);
+    correct_plane_d(y_plane2);
+
+    Eigen::Vector3d vec_x, vec_y;
+    if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
+      vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
+    } else {
+      vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
+    }
+
+    if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
+      vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
+    } else {
+      vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
+    }
+
+    Eigen::Vector2d final_vec = vec_x.head(2) + vec_y.head(2);
+    _error = room_pose - final_vec;
+  }
+
+  virtual bool read(std::istream& is) override {
+    Eigen::Vector2d v;
+    is >> v(0) >> v(1);
+
+    setMeasurement(v);
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) {
+          information()(j, i) = information()(i, j);
+        }
+      }
+    }
+
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    Eigen::Vector2d v = _measurement;
+    os << v(0) << " " << v(1) << " ";
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        os << " " << information()(i, j);
+      };
+    }
+    return os.good();
+  }
+
+private:
+  void correct_plane_d(Eigen::Vector4d& plane) {
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    }
+  }
 };
 
 class EdgeRoomRoom : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB> {

@@ -32,6 +32,7 @@ class EdgeCorridorYPlane;
 class EdgeSE3Room;
 class EdgeRoomXPlane;
 class EdgeRoom2Planes;
+class EdgeRoom4Planes;
 class EdgeRoomXPrior;
 class EdgeRoomYPlane;
 class EdgeRoomYPrior;
@@ -202,6 +203,8 @@ public:
   g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeRoom2Planes* add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector2d cluster_center, const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoom4Planes* add_room_4planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_xplane1, g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1, g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information);
 
   g2o::EdgeRoomXPrior* add_room_xprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information);
 
