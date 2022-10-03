@@ -72,13 +72,13 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
 
   if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr < 1.0) {
     std::cout << "Adding a room using mapped x and y corridor planes " << std::endl;
-    map_room_from_existing_corridors(graph_slam, room_data, matched_x_corridor, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
+    // map_room_from_existing_corridors(graph_slam, room_data, matched_x_corridor, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
   } else if(min_dist_room_x_corr < 1.0 && min_dist_room_y_corr > 1.0) {
-    map_room_from_existing_x_corridor(graph_slam, room_data, matched_x_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
+    // map_room_from_existing_x_corridor(graph_slam, room_data, matched_x_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
     std::cout << "Will add room using mapped x corridor planes " << std::endl;
   } else if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr > 1.0) {
     std::cout << "Will add room using mapped y corridor planes " << std::endl;
-    map_room_from_existing_y_corridor(graph_slam, room_data, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
+    // map_room_from_existing_y_corridor(graph_slam, room_data, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
   }
 
   Eigen::Vector4d x_plane1(room_data.x_planes[0].nx, room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
