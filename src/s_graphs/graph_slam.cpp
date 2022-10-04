@@ -436,13 +436,13 @@ g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(g2o::VertexRoomXYLB* v_room
   return edge;
 }
 
-g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector2d cluster_center, const Eigen::MatrixXd& information) {
+g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, g2o::VertexRoomXYLB* v_cluster_center, const Eigen::MatrixXd& information) {
   g2o::EdgeRoom2Planes* edge(new g2o::EdgeRoom2Planes());
   edge->setInformation(information);
   edge->vertices()[0] = v_room;
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
-  edge->_cluster_center = cluster_center;
+  edge->vertices()[3] = v_cluster_center;
   graph->addEdge(edge);
 
   return edge;

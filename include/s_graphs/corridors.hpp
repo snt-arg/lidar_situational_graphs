@@ -23,8 +23,8 @@ public:
   std::vector<int> connected_neighbour_ids;
   g2o::Plane3D plane1, plane2;
   int plane1_id, plane2_id;
-  Eigen::Vector2d cluster_center;
   std::vector<int> neighbour_ids;
+  g2o::VertexRoomXYLB* cluster_center_node;
   g2o::VertexRoomXYLB* node;  // node instance
 };
 

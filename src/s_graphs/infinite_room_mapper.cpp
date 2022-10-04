@@ -194,6 +194,7 @@ std::vector<plane_data_list> InfiniteRoomMapper::refine_corridors(const std::vec
 
 void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
   g2o::VertexRoomXYLB* corr_node;
+  g2o::VertexRoomXYLB* cluster_center_node;
   std::pair<int, int> corr_data_association;
   double meas_plane1, meas_plane2;
 
@@ -229,22 +230,23 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
+      cluster_center_node = graph_slam->add_room_node(corr_plane1_pair.cluster_center);
+      cluster_center_node->setFixed(true);
       // graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
-      // corr_node->setFixed(true);
       Corridors det_corridor;
       det_corridor.id = corr_data_association.first;
       det_corridor.plane1 = corr_plane1_pair.plane_unflipped;
       det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
       det_corridor.plane1_id = corr_plane1_pair.plane_id;
       det_corridor.plane2_id = corr_plane2_pair.plane_id;
-      det_corridor.cluster_center = corr_plane1_pair.cluster_center;
+      det_corridor.cluster_center_node = cluster_center_node;
       det_corridor.node = corr_node;
       det_corridor.connected_id = corr_plane1_pair.connected_id;
       det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
       x_corridors.push_back(det_corridor);
 
       if(use_tri_edge) {
-        auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, det_corridor.cluster_center, information_corridor_planes);
+        auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, cluster_center_node, information_corridor_planes);
         graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
       } else {
         meas_plane1 = corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
@@ -284,7 +286,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
         if(!check_corridor_ids(plane_type, plane1_edges, corr_node) || !check_corridor_ids(plane_type, plane2_edges, corr_node)) {
           std::cout << "adding new x1 plane and x2 plane edges with corridor " << std::endl;
-          auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, x_corridors[corr_data_association.second].cluster_center, information_corridor_planes);
+          auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, x_corridors[corr_data_association.second].cluster_center_node, information_corridor_planes);
           graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
         }
       } else {
@@ -367,23 +369,24 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
+      cluster_center_node = graph_slam->add_room_node(corr_plane1_pair.cluster_center);
+      cluster_center_node->setFixed(true);
       // graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
 
-      // corr_node->setFixed(true);
       Corridors det_corridor;
       det_corridor.id = corr_data_association.first;
       det_corridor.plane1 = corr_plane1_pair.plane_unflipped;
       det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
       det_corridor.plane1_id = corr_plane1_pair.plane_id;
       det_corridor.plane2_id = corr_plane2_pair.plane_id;
-      det_corridor.cluster_center = corr_plane1_pair.cluster_center;
+      det_corridor.cluster_center_node = cluster_center_node;
       det_corridor.node = corr_node;
       det_corridor.connected_id = corr_plane1_pair.connected_id;
       det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
       y_corridors.push_back(det_corridor);
 
       if(use_tri_edge) {
-        auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, det_corridor.cluster_center, information_corridor_planes);
+        auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, cluster_center_node, information_corridor_planes);
         graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
       } else {
         meas_plane1 = corridor_measurement(plane_type, corr_pose, corr_plane1_pair.plane_unflipped.coeffs());
@@ -423,7 +426,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
         if(!check_corridor_ids(plane_type, plane1_edges, corr_node) || !check_corridor_ids(plane_type, plane2_edges, corr_node)) {
           std::cout << "adding new y1 plane and y2 plane edges with corridor " << std::endl;
-          auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, y_corridors[corr_data_association.second].cluster_center, information_corridor_planes);
+          auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, y_corridors[corr_data_association.second].cluster_center_node, information_corridor_planes);
           graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
         }
       } else {

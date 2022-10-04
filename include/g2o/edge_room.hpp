@@ -229,16 +229,19 @@ class EdgeRoom2Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoom2Planes() : BaseMultiEdge<2, Eigen::Vector2d>() {
-    resize(3);
+    resize(4);
   }
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
+    const VertexRoomXYLB* v4 = static_cast<const VertexRoomXYLB*>(_vertices[3]);
+
     Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane1 = v2->estimate().coeffs();
     Eigen::Vector4d plane2 = v3->estimate().coeffs();
+    Eigen::Vector2d cluster_center = v4->estimate();
 
     correct_plane_d(plane1);
     correct_plane_d(plane2);
@@ -251,7 +254,7 @@ public:
     }
 
     Eigen::Vector2d vec_normal = vec.head(2) / vec.norm();
-    Eigen::Vector2d final_pose_vec = vec.head(2) + (_cluster_center - (_cluster_center.dot(vec_normal)) * vec_normal);
+    Eigen::Vector2d final_pose_vec = vec.head(2) + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
 
     _error = room_pose - final_pose_vec;
   }
@@ -284,9 +287,6 @@ public:
     }
     return os.good();
   }
-
-public:
-  Eigen::Vector2d _cluster_center;
 
 private:
   void correct_plane_d(Eigen::Vector4d& plane) {
