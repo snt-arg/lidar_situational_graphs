@@ -208,7 +208,7 @@ bool RoomAnalyzer::get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>
   }
 
   if(min_dist > 0.5) {
-    std::cout << "centroid outside the cluster! Do something " << std::endl;
+    // std::cout << "centroid outside the cluster! Do something " << std::endl;
     return false;
   }
 
@@ -228,7 +228,7 @@ bool RoomAnalyzer::get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>
   }
 
   if(min_dist > 0.5) {
-    std::cout << "centroid outside the cluster! Discarding the found room " << std::endl;
+    // std::cout << "centroid outside the cluster! Discarding the found room " << std::endl;
     return false;
   }
 
@@ -322,33 +322,33 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       float y_plane_width = plane_utils->width_between_planes(y_plane1, y_plane2);
 
       if(x_plane_width < room_width_threshold || y_plane_width < room_width_threshold) {
-        std::cout << "returning as the room is not sufficiently wide" << std::endl;
+        // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
       }
 
       if(!check_x1yplane_alignment(x_plane1.plane_points, y_plane1.plane_points) || !check_x1yplane_alignment(x_plane1.plane_points, y_plane2.plane_points)) {
-        std::cout << "returning as not a valid room configuration" << std::endl;
+        // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
 
       if(!check_x2yplane_alignment(x_plane2.plane_points, y_plane1.plane_points) || !check_x2yplane_alignment(x_plane2.plane_points, y_plane2.plane_points)) {
-        std::cout << "returning as not a valid room configuration" << std::endl;
+        // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
 
       if(!check_y1xplane_alignment(y_plane1.plane_points, x_plane1.plane_points) || !check_y1xplane_alignment(y_plane1.plane_points, x_plane2.plane_points)) {
-        std::cout << "returning as not a valid room configuration" << std::endl;
+        // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
 
       if(!check_y2xplane_alignment(y_plane2.plane_points, x_plane1.plane_points) || !check_y2xplane_alignment(y_plane2.plane_points, x_plane2.plane_points)) {
-        std::cout << "returning as not a valid room configuration" << std::endl;
+        // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
       geometry_msgs::Point room_center = get_room_center(x_plane1, x_plane2, y_plane1, y_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
-        std::cout << "returning as the room center is outside the cluster" << std::endl;
+        // std::cout << "returning as the room center is outside the cluster" << std::endl;
         return false;
       }
 
@@ -388,7 +388,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
 
       float x_plane_width = plane_utils->width_between_planes(x_plane1, x_plane2);
       if(x_plane_width < room_width_threshold) {
-        std::cout << "returning as the room is not sufficiently wide" << std::endl;
+        // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
       }
 
@@ -396,7 +396,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2, cluster_center);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
-        std::cout << "returning as the room center is outside the cluster" << std::endl;
+        // std::cout << "returning as the room center is outside the cluster" << std::endl;
         return false;
       }
 
@@ -436,7 +436,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
 
       float y_plane_width = plane_utils->width_between_planes(y_plane1, y_plane2);
       if(y_plane_width < room_width_threshold) {
-        std::cout << "returning as the room is not sufficiently wide" << std::endl;
+        // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
       }
 
@@ -444,7 +444,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2, cluster_center);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
-        std::cout << "returning as the room center is outside the cluster" << std::endl;
+        // std::cout << "returning as the room center is outside the cluster" << std::endl;
         return false;
       }
 
@@ -509,7 +509,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
   pcl::PointXY top_right, bottom_right, top_left, bottom_left;
   if(!use_max_neighbours_algo) {
     if(!compute_diagonal_points(cloud_hull, p_min, p_max, top_right, bottom_right, top_left, bottom_left)) {
-      std::cout << "didnt not get diagonal points" << std::endl;
+      // std::cout << "didnt not get diagonal points" << std::endl;
       return sub_cloud_hull;
     }
   }
