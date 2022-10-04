@@ -304,7 +304,7 @@ private:
     if(keyframes.empty()) {
       return;
     } else if(room_data_queue.empty()) {
-      std::cout << "room data queue is empty" << std::endl;
+      // std::cout << "room data queue is empty" << std::endl;
       return;
     }
 
@@ -401,7 +401,7 @@ private:
     std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
 
     if(keyframe_queue.empty()) {
-      std::cout << "keyframe_queue is empty " << std::endl;
+      // std::cout << "keyframe_queue is empty " << std::endl;
       return false;
     }
 

@@ -89,7 +89,7 @@ private:
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
-      std::cout << "Did not receive any mapped planes" << std::endl;
+      // std::cout << "Did not receive any mapped planes" << std::endl;
       return;
     }
 
@@ -167,7 +167,7 @@ private:
       float hull_area;
       room_analyzer->get_convex_hull(cloud_cluster, cloud_hull, hull_area);
       if(hull_area < 1.5) {
-        std::cout << "subgraph area too small to be a room " << std::endl;
+        // std::cout << "subgraph area too small to be a room " << std::endl;
         continue;
       }
 

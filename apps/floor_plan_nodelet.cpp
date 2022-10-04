@@ -109,7 +109,7 @@ private:
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
-      std::cout << "Did not receive any mapped planes" << std::endl;
+      // std::cout << "Did not receive any mapped planes" << std::endl;
       return;
     }
 
@@ -117,7 +117,7 @@ private:
     // extract_rooms(current_x_vert_planes, current_y_vert_planes);
     extract_floors(current_x_vert_planes, current_y_vert_planes);
     auto t2 = ros::Time::now();
-    std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
+    // std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
   }
 
   void extract_rooms(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes) {
