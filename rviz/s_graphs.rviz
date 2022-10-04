@@ -7,7 +7,7 @@ Panels:
         - /MarkerArray1/Namespaces1
         - /MarkerArray3/Namespaces1
       Splitter Ratio: 0.6893491148948669
-    Tree Height: 1732
+    Tree Height: 865
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -172,17 +172,11 @@ Visualization Manager:
       Marker Topic: /s_graphs/markers
       Name: MarkerArray
       Namespaces:
-        corridor_x_lines: true
-        corridor_y_lines: true
-        floors: true
         keyframe_keyframe_edges: true
         keyframe_plane_edges: true
         loop_close_radius: true
         nodes: true
-        rooms_lines: true
-        x_corridor: true
         x_vert_planes: true
-        y_corridor: true
         y_vert_planes: true
       Queue Size: 100
       Value: true
@@ -242,69 +236,22 @@ Visualization Manager:
         closed_spaces: false
         connected_edges_0: true
         connected_edges_1: true
-        connected_edges_10: true
         connected_edges_2: true
         connected_edges_3: true
         connected_edges_4: true
-        connected_edges_5: true
-        connected_edges_6: true
-        connected_edges_7: true
-        connected_edges_8: true
-        connected_edges_9: true
         connected_vertices_0: true
         connected_vertices_1: true
-        connected_vertices_10: true
         connected_vertices_2: true
         connected_vertices_3: true
         connected_vertices_4: true
-        connected_vertices_5: true
-        connected_vertices_6: true
-        connected_vertices_7: true
-        connected_vertices_8: true
-        connected_vertices_9: true
         edges: true
-        subgraph_edges_0_1: true
-        subgraph_edges_0_2: true
-        subgraph_edges_0_3: true
-        subgraph_edges_0_4: true
-        subgraph_edges_0_5: true
-        subgraph_edges_0_6: true
-        subgraph_edges_0_7: true
-        subgraph_edges_10_9: true
-        subgraph_edges_1_0: true
         subgraph_edges_1_2: true
-        subgraph_edges_2_0: true
         subgraph_edges_2_1: true
-        subgraph_edges_3_0: true
         subgraph_edges_3_4: true
-        subgraph_edges_4_0: true
         subgraph_edges_4_3: true
-        subgraph_edges_4_5: true
-        subgraph_edges_4_6: true
-        subgraph_edges_4_7: true
-        subgraph_edges_5_0: true
-        subgraph_edges_5_4: true
-        subgraph_edges_5_6: true
-        subgraph_edges_5_8: true
-        subgraph_edges_5_9: true
-        subgraph_edges_6_0: true
-        subgraph_edges_6_4: true
-        subgraph_edges_6_5: true
-        subgraph_edges_7_0: true
-        subgraph_edges_7_4: true
-        subgraph_edges_8_5: true
-        subgraph_edges_9_10: true
-        subgraph_edges_9_5: true
         vertices: false
       Queue Size: 100
       Value: true
-    - Class: voxblox_rviz_plugin/VoxbloxMesh
-      Enabled: false
-      Name: VoxbloxMesh
-      Queue Size: 1
-      Topic: /voxblox_skeletonizer/mesh
-      Unreliable: false
-      Value: false
     - Class: rviz/Camera
       Enabled: false
       Image Rendering: background and overlay
@@ -325,7 +272,6 @@ Visualization Manager:
         RobotModel: true
         TF: true
         Value: true
-        VoxbloxMesh: true
       Zoom Factor: 1
     - Alpha: 1
       Class: rviz/Axes
@@ -388,10 +334,10 @@ Window Geometry:
     collapsed: false
   Displays:
     collapsed: false
-  Height: 1883
+  Height: 1016
   Hide Left Dock: false
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd00000004000000000000022900000701fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000701000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065000000019b000002400000000000000000fb0000000c00430061006d0065007200610000000673000000cb0000001600ffffff000000010000011000000701fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000701000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007380000004cfc0100000002fb0000000800540069006d0065000000000000000738000004f300fffffffb0000000800540069006d00650100000000000004500000000000000000000002090000070100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002290000039efc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000039e000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000a0049006d006100670065000000019b000002400000000000000000fb0000000c00430061006d0065007200610000000673000000cb0000001600ffffff000000010000011000000701fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000701000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007380000004cfc0100000002fb0000000800540069006d0065000000000000000738000004f300fffffffb0000000800540069006d00650100000000000004500000000000000000000002090000039e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -401,5 +347,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1080
-  X: 1920
-  Y: 0
+  X: 1992
+  Y: 27
