@@ -226,7 +226,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_corridors, y_corridors);
 
     if((x_corridors.empty() || corr_data_association.first == -1)) {
-      std::cout << "found an X corridor with pre pose " << corr_pose << " between plane id " << corr_plane1_pair.plane_id << " and plane id " << corr_plane2_pair.plane_id << std::endl;
+      std::cout << "found an X corridor with pre pose " << corr_pose << " between plane " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
@@ -365,7 +365,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_corridors, y_corridors);
 
     if((y_corridors.empty() || corr_data_association.first == -1)) {
-      std::cout << "found an Y corridor with pre pose " << corr_pose << " between plane id " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane id " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
+      std::cout << "found an Y corridor with pre pose " << corr_pose << " between plane " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
       corr_data_association.first = graph_slam->num_vertices_local();
       corr_node = graph_slam->add_room_node(corr_pose);
