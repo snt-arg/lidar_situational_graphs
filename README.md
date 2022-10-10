@@ -4,7 +4,22 @@
 
 [<img src="imgs/s_graphs.png" width="640pix" height="480pix"/>](https://www.youtube.com/watch?v=eoWrBTY04Oc)
 
-## Paper
+## Table of contents
+
+- [Citation](#citation)
+- [Nodelets](#nodelets)
+- [Installation](#installation)
+  - [Automated Installation](#automated-installation)
+  - [Manua Installation](#manual-installation)
+- [Example on Datasets](#example-on-datasets)
+  - [Real Dataset](#real-dataset)
+  - [Virtual Dataset](#virtual-dataset)
+- [Using Docker](#using-docker)
+  - [Running Datasets Using Docker](#running-datasets-using-docker)
+- [Instructions](#instructions)
+- [License](#license)
+
+## Citation
 
 ```latex
 @misc{bavle2022situational,
@@ -74,25 +89,25 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 - _/s_graphs/save_map_ (s_graphs/SaveMap)
   - save the generated map as a PCD file.
 
-## Installation Procedure
+## Installation
 
-### Automated Install
+### Automated Installation
 
 1. Create a workspace for S-Graphs
 
-```sh
+```bash
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
 2. Clone the S-Graphs repository into the created workspace
 
-```sh
+```bash
 git clone https://github.com/snt-arg/s_graphs.git
 ```
 
 3. Run the script setup.sh to install the required dependencies
 
-```sh
+```bash
 cd s_graphs && ./setup.sh
 ```
 
@@ -100,79 +115,108 @@ cd s_graphs && ./setup.sh
 
 1. Create a workspace for S-Graphs
 
-```sh
+```bash
 mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
 2. Clone the S-Graphs repository into the created workspace
 
-```sh
+```bash
 git clone https://github.com/snt-arg/s_graphs.git
 ```
 
 3. Install the required dependencies using vcstool
 
-```sh
+```bash
 cd s_graphs && vcs import --recursive ../ < .rosinstall
 ```
 
 4. Install the required ROS packages
 
-```sh
+```bash
 cd ../../ && rosdep install --from-paths src -ignore-src -y
 ```
 
 5. Build workspace
 
-```sh
+```bash
 catkin build
 ```
 
 6. Source workspace
 
-```sh
+```bash
 source devel/setup.bash
 ```
 
-## Example on a dataset
+## Example on Datasets
 
 **Note:** For each command below, please executed them in separate terminal windows!
 
-### For real environment dataset
+### Real Dataset
 
-```sh
-roscore
-```
-
-```sh
+```bash
 roscd s_graphs && rviz -d rviz/s_graphs.rviz
 ```
 
-```sh
+```bash
 roslaunch s_graphs s_graphs.launch use_free_space_graph:=true 2>/dev/null
 ```
 
-```sh
+```bash
 rosbag PATH_TO_ROSBAG_DATASET --clock
 ```
 
-### For virtual environment dataset
+### Virtual Dataset
 
-```sh
-roscore
-```
-
-```sh
+```bash
 roscd s_graphs && rviz -d rviz/s_graphs.rviz
 ```
 
-```sh
+```bash
 roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null
 ```
 
-```sh
-rosbag PATH_TO_ROSBAG_DATASET --clock
+```bash
+rosbag play PATH_TO_ROSBAG_DATASET --clock
 ```
+
+## Using Docker
+
+A docker image is provided with s_graphs. This image is all set and is just pull and play. Follow the instructions below in order to use s_graphs via docker.
+
+1. Pull the docker image from DockerHub
+
+```bash
+docker pull pedros235/s_graphs:latest
+```
+
+2. Create a container for the s_graphs image.
+
+```bash
+docker run -dit --net host --name s_graphs_container s_graphs
+```
+
+This command also incorporates the flags `d`, which makes the container run in the detached mode and `net`, which gives the container the access of the host interfaces.
+
+3. Execute the container
+
+```bash
+docker exec -ti s_graphs_container bash
+```
+
+4. Source the s_graphs worspace
+
+```bash
+source devel/setup.bash
+```
+
+**Note:** Once the worspace is sourced once, it will no longer be required to resourced it again.
+
+### Running Datasets using docker
+
+In order to run datasets using docker, one just needs to use the command `roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null` inside docker.
+The other 2 commands should be executed outside docker. Additionally, the `env` parameter should be changed accordingly to the type of dataset.
 
 <!-- ## Example1 (Indoor)
 
@@ -245,13 +289,13 @@ rosrun s_graphs bag_player.py dataset-2.bag
 
 <img src="imgs/ford1.png" height="200pix"/> <img src="imgs/ford2.png" height="200pix"/> <img src="imgs/ford3.png" height="200pix"/> -->
 
-## Use S-Graphs on your system
+## Instructions
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see line #11, s_graphs.launch). All the sensor data will be transformed into the common base_link frame, and then fed to the SLAM algorithm.
 
 2. Remap the point cloud topic of **_prefiltering_nodelet_**. Like:
 
-```bash
+```xml
   <node pkg="nodelet" type="nodelet" name="prefiltering_nodelet" ...
     <remap from="/velodyne_points" to="/rslidar_points"/>
   ...
