@@ -6,9 +6,9 @@ namespace s_graphs {
 
 GraphVisualizer::GraphVisualizer(const ros::NodeHandle& private_nh) {
   map_frame_id = private_nh.param<std::string>("map_frame_id", "map");
-  color_r = private_nh.param<double>("color_r", 1);
-  color_g = private_nh.param<double>("color_g", 1);
-  color_b = private_nh.param<double>("color_b", 1);
+  color_r = private_nh.param<double>("color_r", 0);
+  color_g = private_nh.param<double>("color_g", 0);
+  color_b = private_nh.param<double>("color_b", 0);
 }
 
 GraphVisualizer::~GraphVisualizer() {}
