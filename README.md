@@ -10,7 +10,7 @@
 - [Nodelets](#nodelets)
 - [Installation](#installation)
   - [Automated Installation](#automated-installation)
-  - [Manua Installation](#manual-installation)
+  - [Manual Installation](#manual-installation)
 - [Example on Datasets](#example-on-datasets)
   - [Real Dataset](#real-dataset)
   - [Virtual Dataset](#virtual-dataset)
