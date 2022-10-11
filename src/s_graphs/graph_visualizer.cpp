@@ -873,7 +873,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       visualization_msgs::Marker floor_line_marker;
       floor_line_marker.scale.x = 0.02;
       floor_line_marker.pose.orientation.w = 1.0;
-      floor_line_marker.ns = "rooms_lines";
+      floor_line_marker.ns = "floor_lines";
       floor_line_marker.header.frame_id = map_frame_id;
       floor_line_marker.header.stamp = stamp;
       floor_line_marker.id = markers.markers.size() + 1;
