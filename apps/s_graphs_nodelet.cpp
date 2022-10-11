@@ -150,12 +150,10 @@ public:
     plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
     plane_points_dist = private_nh.param<double>("plane_points_dist", 0.5);
     constant_covariance = private_nh.param<bool>("constant_covariance", true);
-    min_plane_points = private_nh.param<double>("min_plane_points", 100);
     use_point_to_plane = private_nh.param<bool>("use_point_to_plane", false);
     use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", false);
     use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", false);
 
-    use_corridor_constraint = private_nh.param<bool>("use_corridor_constraint", false);
     corridor_information = private_nh.param<double>("corridor_information", 0.01);
     corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 1.0);
     corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
@@ -165,7 +163,6 @@ public:
     corridor_point_diff_threshold = private_nh.param<double>("corridor_point_diff_threshold", 3.0);
     corridor_min_seg_dist = private_nh.param<double>("corridor_min_seg_dist", 1.5);
 
-    use_room_constraint = private_nh.param<bool>("use_room_constraint", false);
     room_information = private_nh.param<double>("room_information", 0.01);
     room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
     room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
@@ -444,7 +441,7 @@ private:
       // perform planar segmentation
       if(extract_planar_surfaces) {
         std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(keyframe->cloud);
-        map_extracted_planes(keyframe, extracted_cloud_vec);
+        plane_mapper->map_extracted_planes(graph_slam, keyframe, extracted_cloud_vec, x_vert_planes, y_vert_planes, hort_planes);
       }
 
       if(i == 0 && keyframes.empty()) {
@@ -469,59 +466,6 @@ private:
 
     keyframe_queue.erase(keyframe_queue.begin(), keyframe_queue.begin() + num_processed + 1);
     return true;
-  }
-
-  void map_extracted_planes(KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec) {
-    std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
-    std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
-
-    for(const auto& cloud_seg_msg : extracted_cloud_vec) {
-      pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
-      pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
-
-      if(cloud_seg_body->points.size() < min_plane_points) continue;
-      keyframe->cloud_seg_body = cloud_seg_body;
-
-      g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
-      bool found_corridor_candidates = false;
-      bool found_room_candidates = false;
-      plane_data_list plane_id_pair;
-      int plane_type = plane_mapper->map_detected_planes(graph_slam, keyframe, det_plane_body_frame, found_corridor_candidates, found_room_candidates, plane_id_pair, x_vert_planes, y_vert_planes, hort_planes);
-      switch(plane_type) {
-        case PlaneUtils::plane_class::X_VERT_PLANE: {
-          if(found_corridor_candidates) {
-            x_det_corridor_candidates.push_back(plane_id_pair);
-          }
-          if(found_room_candidates) {
-            x_det_room_candidates.push_back(plane_id_pair);
-          }
-          break;
-        }
-        case PlaneUtils::plane_class::Y_VERT_PLANE: {
-          if(found_corridor_candidates) {
-            y_det_corridor_candidates.push_back(plane_id_pair);
-          }
-          if(found_room_candidates) {
-            y_det_room_candidates.push_back(plane_id_pair);
-          }
-          break;
-        }
-        case PlaneUtils::plane_class::HORT_PLANE: {
-          break;
-        }
-        default: {
-          break;
-        }
-      }
-    }
-
-    if(use_corridor_constraint) {
-      inf_room_mapper->lookup_corridors(graph_slam, x_det_corridor_candidates, y_det_corridor_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
-    }
-
-    if(use_room_constraint) {
-      finite_room_mapper->lookup_rooms(graph_slam, x_det_room_candidates, y_det_room_candidates, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, rooms_vec);
-    }
   }
 
   void nmea_callback(const nmea_msgs::SentenceConstPtr& nmea_msg) {
@@ -1585,7 +1529,6 @@ private:
   double min_plane_points;
   bool use_point_to_plane;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
-  bool use_corridor_constraint, use_room_constraint;
   double corridor_information;
   double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
   double corridor_plane_length_diff_threshold, corridor_point_diff_threshold;

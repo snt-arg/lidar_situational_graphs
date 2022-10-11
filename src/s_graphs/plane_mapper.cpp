@@ -12,19 +12,38 @@ PlaneMapper::PlaneMapper(const ros::NodeHandle& private_nh) {
   corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
   room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
   room_max_plane_length = private_nh.param<double>("room_max_plane_length", 6.0);
+  min_plane_points = private_nh.param<double>("min_plane_points", 100);
+  use_corridor_constraint = private_nh.param<bool>("use_corridor_constraint", false);
+  use_room_constraint = private_nh.param<bool>("use_room_constraint", false);
 }
 
 PlaneMapper::~PlaneMapper() {}
+
+void PlaneMapper::map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
+  std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
+  std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
+
+  for(const auto& cloud_seg_msg : extracted_cloud_vec) {
+    pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
+    pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
+
+    if(cloud_seg_body->points.size() < min_plane_points) continue;
+    keyframe->cloud_seg_body = cloud_seg_body;
+
+    g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(cloud_seg_body->back().normal_x, cloud_seg_body->back().normal_y, cloud_seg_body->back().normal_z, cloud_seg_body->back().curvature);
+    int plane_type = add_planes_to_graph(graph_slam, keyframe, det_plane_body_frame, x_vert_planes, y_vert_planes, hort_planes);
+  }
+}
 
 /**
  * @brief detected plane mapping
  *
  */
-int PlaneMapper::map_detected_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
+int PlaneMapper::add_planes_to_graph(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
   int plane_id;
   int plane_type = -1;
 
-  g2o::Plane3D det_plane_map_frame = plane_in_map_frame(keyframe, det_plane_body_frame);
+  g2o::Plane3D det_plane_map_frame = convert_plane_to_map_frame(keyframe, det_plane_body_frame);
 
   /* Get the plane type based on the largest value of the normal orientation x,y and z */
   if(fabs(det_plane_map_frame.coeffs()(0)) > fabs(det_plane_map_frame.coeffs()(1)) && fabs(det_plane_map_frame.coeffs()(0)) > fabs(det_plane_map_frame.coeffs()(2)))
@@ -35,7 +54,6 @@ int PlaneMapper::map_detected_planes(std::unique_ptr<GraphSLAM>& graph_slam, Key
     plane_type = PlaneUtils::plane_class::HORT_PLANE;
 
   plane_id = sort_planes(graph_slam, plane_type, keyframe, det_plane_map_frame, det_plane_body_frame, x_vert_planes, y_vert_planes, hort_planes);
-  get_plane_properties(plane_type, plane_id, keyframe, det_plane_map_frame, found_corridor, found_room, plane_id_pair);
 
   return plane_type;
 }
@@ -43,7 +61,7 @@ int PlaneMapper::map_detected_planes(std::unique_ptr<GraphSLAM>& graph_slam, Key
 /**
  * @brief convert body plane coefficients to map frame
  */
-g2o::Plane3D PlaneMapper::plane_in_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame) {
+g2o::Plane3D PlaneMapper::convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame) {
   g2o::Plane3D det_plane_map_frame;
   Eigen::Vector4d map_coeffs;
 
@@ -390,91 +408,6 @@ void PlaneMapper::convert_plane_points_to_map(std::vector<VerticalPlanes>& x_ver
       }
     }
     hort_planes[i].cloud_seg_map = cloud_seg_map;
-  }
-}
-
-/**
- * @brief get the plane length and add potential candidates for room/corridors function 1
- *
- */
-void PlaneMapper::get_plane_properties(const int& plane_type, const int& plane_id, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair) {
-  switch(plane_type) {
-    case PlaneUtils::plane_class::X_VERT_PLANE: {
-      /* check for potential x corridor and room candidates */
-      pcl::PointXY start_point, end_point;
-      float length = plane_utils->plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
-      ROS_DEBUG_NAMED("xplane information", "length x plane %f", length);
-      Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-      PointNormal map_point;
-      Eigen::Matrix4f pose = keyframe->estimate().matrix().cast<float>();
-      map_point.getVector4fMap() = pose * keyframe->cloud_seg_body->points.back().getVector4fMap();
-      plane_utils->correct_plane_d(plane_type, plane_unflipped, map_point.x, map_point.y);
-
-      // x_plane_id_pair.plane = det_plane_map_frame;
-      // plane_id_pair.plane_local = det_plane_body_frame;
-      plane_id_pair.plane_unflipped = plane_unflipped;
-      plane_id_pair.plane_length = length;
-      if(start_point.y < end_point.y) {
-        plane_id_pair.start_point = start_point;
-        plane_id_pair.end_point = end_point;
-      } else {
-        plane_id_pair.start_point = end_point;
-        plane_id_pair.end_point = start_point;
-      }
-      plane_id_pair.plane_id = plane_id;
-      plane_id_pair.keyframe_node = keyframe->node;
-
-      if(length >= corridor_min_plane_length) {
-        ROS_DEBUG_NAMED("yplane information", "Added y plane as corridor");
-        found_corridor = true;
-      }
-      if(length >= room_min_plane_length && length <= room_max_plane_length) {
-        ROS_DEBUG_NAMED("yplane information", "Added y plane as room");
-        found_room = true;
-      }
-      break;
-    }
-    case PlaneUtils::plane_class::Y_VERT_PLANE: {
-      /* check for potential y corridor and room candidates */
-      pcl::PointXY start_point, end_point;
-      float length = plane_utils->plane_length(keyframe->cloud_seg_body, start_point, end_point, keyframe->node);
-      ROS_DEBUG_NAMED("yplane information", "length y plane %f", length);
-      Eigen::Vector4d plane_unflipped = det_plane_map_frame.coeffs();
-      PointNormal map_point;
-      Eigen::Matrix4f pose = keyframe->estimate().matrix().cast<float>();
-      map_point.getVector4fMap() = pose * keyframe->cloud_seg_body->points.back().getVector4fMap();
-      plane_utils->correct_plane_d(plane_type, plane_unflipped, map_point.x, map_point.y);
-
-      // y_plane_id_pair.plane = det_plane_map_frame;
-      // plane_id_pair.plane_local = det_plane_body_frame;
-      plane_id_pair.plane_unflipped = plane_unflipped;
-      if(start_point.x < end_point.x) {
-        plane_id_pair.start_point = start_point;
-        plane_id_pair.end_point = end_point;
-      } else {
-        plane_id_pair.start_point = end_point;
-        plane_id_pair.end_point = start_point;
-      }
-      plane_id_pair.plane_length = length;
-      plane_id_pair.plane_id = plane_id;
-      plane_id_pair.keyframe_node = keyframe->node;
-
-      if(length >= corridor_min_plane_length) {
-        ROS_DEBUG_NAMED("yplane information", "Added y plane as corridor");
-        found_corridor = true;
-      }
-      if(length >= room_min_plane_length && length <= room_max_plane_length) {
-        ROS_DEBUG_NAMED("yplane information", "Added y plane as room");
-        found_room = true;
-      }
-      break;
-    }
-    case PlaneUtils::plane_class::HORT_PLANE: {
-      break;
-    }
-    default:
-      std::cout << "No planes found for mapping " << std::endl;
-      break;
   }
 }
 
