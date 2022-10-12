@@ -6,8 +6,9 @@
 
 ## Table of contents
 
-- [Citation](#citation)
-- [Nodelets](#nodelets)
+- [Published Papers](#published-papers)
+- [About S-Graphs](#about-s-graphs)
+  - [Architecture](#architecture)
 - [Installation](#installation)
   - [Automated Installation](#automated-installation)
   - [Manual Installation](#manual-installation)
@@ -16,32 +17,39 @@
   - [Virtual Dataset](#virtual-dataset)
 - [Using Docker](#using-docker)
   - [Running Datasets Using Docker](#running-datasets-using-docker)
+- [ROS Related](#ros-related)
+  - [Nodelets](#nodelets)
+  - [Subscribed Topics](#subscribed-topics)
+  - [Published Topics](#published-topics)
+  - [Published TFs](#published-tfs)
+  - [Services](#services)
+  - [Parameters](#parameters)
 - [Instructions](#instructions)
 - [License](#license)
+- [Related Packages](#related-packages)
+- [Contact](#contact)
 
-## Citation
+## Published Papers
 
-```latex
-@misc{bavle2022situational,
-      title={Situational Graphs for Robot Navigation in Structured Indoor Environments},
-      author={Hriday Bavle and Jose Luis Sanchez-Lopez and Muhammad Shaheer and Javier Civera and Holger Voos},
-      year={2022},
-      eprint={2202.12197},
-      archivePrefix={arXiv},
-      primaryClass={cs.RO}
-}
-```
+1. [Situational Graphs for Robot Navigation in Structured Indoor Environments
+   ](https://arxiv.org/abs/2202.12197)
+   - **Citation**
+     ```latex
+     @misc{bavle2022situational,
+           title={Situational Graphs for Robot Navigation in Structured Indoor Environments},
+           author={Hriday Bavle and Jose Luis Sanchez-Lopez and Muhammad Shaheer and Javier Civera and Holger Voos},
+           year={2022},
+           eprint={2202.12197},
+           archivePrefix={arXiv},
+           primaryClass={cs.RO}
+     }
+     ```
 
-## Nodelets
+## About S-Graphs
 
-**S-Graphs** consists of four nodelets.
+### Architecture
 
-- _prefiltering_nodelet_
-- _scan_matching_odometry_nodelet_
-- _plane_segmentation_nodelet_
-- _s_graphs_nodelet_
-
-The input point cloud is first downsampled by _prefiltering_nodelet_, and then passed to the next nodelets. While _scan_matching_odometry_nodelet_ (optional module and can be replaced by an other odometry module) estimates the sensor pose by iteratively applying a scan matching between consecutive frames (i.e., odometry estimation), _plane_segmentation_nodelet_ detects vertical and horizontal planes by RANSAC. The estimated odometry and the planes are sent to _s_graphs_. To compensate the accumulated error of the scan matching, it performs loop detection and optimizes a pose graph which takes various constraints into account.
+![S-Graphs Architecture](imgs/s_graphs_architecture.png)
 
 ## Constraints (Edges)
 
@@ -77,17 +85,6 @@ This constraint rotates each pose node so that the acceleration vector associate
   - _/gpsimu_driver/imu_data_ (sensor_msgs/Imu)
 
   If your IMU has a reliable magnetic orientation sensor, you can add orientation data to the graph as 3D rotation constraints. Note that, magnetic orientation sensors can be affected by external magnetic disturbances. In such cases, this constraint should be disabled.
-
-## Parameters
-
-All the configurable parameters are listed in _launch/s_graphs.launch_ as ros params.
-
-## Services
-
-- _/s_graphs/dump_ (s_graphs/DumpGraph)
-  - save all the internal data (point clouds, floor coeffs, odoms, and pose graph) to a directory.
-- _/s_graphs/save_map_ (s_graphs/SaveMap)
-  - save the generated map as a PCD file.
 
 ## Installation
 
@@ -289,6 +286,49 @@ rosrun s_graphs bag_player.py dataset-2.bag
 
 <img src="imgs/ford1.png" height="200pix"/> <img src="imgs/ford2.png" height="200pix"/> <img src="imgs/ford3.png" height="200pix"/> -->
 
+## ROS Related
+
+### Nodelets
+
+**S-Graphs** consists of four nodelets.
+
+- `s_graphs_nodelet`
+- `s_graphs_floor_plan_nodelet_manager`
+- `s_graphs_floor_planner_nodelet`
+- `s_graphs_nodelet_manager`
+- `s_graphs_room_seg_nodelet_manager`
+- `s_graphs_room_segmentor_nodelet`
+- `hdl_prefilter_nodelet`
+- `hdl_prefilter_nodelet_manager`
+
+<!-- The input point cloud is first downsampled by _prefiltering_nodelet_, and then passed to the next nodelets. While _scan_matching_odometry_nodelet_ (optional module and can be replaced by an other odometry module) estimates the sensor pose by iteratively applying a scan matching between consecutive frames (i.e., odometry estimation), _plane_segmentation_nodelet_ detects vertical and horizontal planes by RANSAC. The estimated odometry and the planes are sent to _s_graphs_. To compensate the accumulated error of the scan matching, it performs loop detection and optimizes a pose graph which takes various constraints into account. -->
+
+### Subscribed Topics
+
+- `/s_graphs_nodelet_manager/bond`([bond/status](http://docs.ros.org/en/noetic/api/bond/html/msg/Status.html))
+- /clock
+
+### Published Topics
+
+- `/s_graphs_nodelet_manager/bond`([bond/status](http://docs.ros.org/en/noetic/api/bond/html/msg/Status.html))
+
+### Published TFs
+
+Here comes the different published tfs
+
+### Services
+
+- `/s_graphs/dump` (s_graphs/DumpGraph)
+
+  - save all the internal data (point clouds, floor coeffs, odoms, and pose graph) to a directory.
+
+- `/s_graphs/save_map` (s_graphs/SaveMap)
+  - save the generated map as a PCD file.
+
+### Parameters
+
+All the configurable parameters are listed in _launch/s_graphs.launch_ as ros params.
+
 ## Instructions
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see line #11, s_graphs.launch). All the sensor data will be transformed into the common base_link frame, and then fed to the SLAM algorithm.
@@ -301,40 +341,22 @@ rosrun s_graphs bag_player.py dataset-2.bag
   ...
 ```
 
-<!--
-## Common Problems -->
-
-<!-- ### Parameter tuning guide
-
-The mapping result deeply depends on the parameter setting. In particular, scan matching parameters have a big impact on the result. Tune the parameters accoding to the following instruction:
-
-- ***registration_method***
-   **In short, use GICP for 16-line LIDARs and NDT_OMP for other ones**.  This parameter allows to change the registration method to be used for odometry estimation and loop detection. If you use a LIDAR with many scan lines (32, 64, or more lines), NDT_OMP could be a good choice. It is fast and accurate for dense point clouds. If you use a 16-line LIDAR, NDT-based methods may not work well because it is not very robust to sparse point clouds. In that case, choose GICP or GICP_OMP. GICP variants are slightly slower than NDT, but more accurate and robust to sparse point clouds.
-  Note that GICP in PCL1.7 (ROS kinetic) or earlier has a bug in the initial guess handling. **If you are on ROS kinectic or earlier, do not use GICP**.
-
-- ***ndt_resolution***
-  This parameter decides the voxel size of NDT. Typically larger values are good for outdoor environements (0.5 - 2.0 [m] for indoor, 2.0 - 10.0 [m] for outdoor). If you chose NDT or NDT_OMP, tweak this parameter so you can obtain a good odometry estimation result.
-
-- ***other parameters***
-  All the configurable parameters are available in the launch file. Copy a template launch file (s_graphs_501.launch for indoor, s_graphs_400.launch for outdoor) and tweak parameters in the launch file to adapt it to your application. -->
-
 ## License
 
-This package is released under the BSD-2-Clause License.
+This package is released under the **BSD-2-Clause** License.
 
 Note that the cholmod solver in g2o is licensed under GPL. You may need to build g2o without cholmod dependency to avoid the GPL.
 
-<!-- ## Related packages
+## Related packages
 
 - [interactive_slam](https://github.com/koide3/interactive_slam)
-- [s_graphs](https://github.com/koide3/s_graphs)
 - [hdl_localization](https://github.com/koide3/hdl_localization)
 - [hdl_people_tracking](https://github.com/koide3/hdl_people_tracking)
 
-<img src="imgs/packages.png"/> -->
+## Contact
 
-<!-- ## Contact
-Kenji Koide, k.koide@aist.go.jp, https://staff.aist.go.jp/k.koide
-
-Active Intelligent Systems Laboratory, Toyohashi University of Technology, Japan [\[URL\]](http://www.aisl.cs.tut.ac.jp)
-Mobile Robotics Research Team, National Institute of Advanced Industrial Science and Technology (AIST), Japan  [\[URL\]](https://unit.aist.go.jp/rirc/en/team/smart_mobility.html) -->
+- <ins>**Hriday Bavle**</ins>
+  - **Email:** hriday.bavle@uni.lu
+  - **Website:** https://www.hriday.bavle.com/
+- <ins>**Muhammad Shaheer**</ins>
+  - **Email:** muhamad.shaheer@uni.lu
