@@ -18,7 +18,7 @@ GraphVisualizer::~GraphVisualizer() {}
  * @param stamp
  * @return
  */
-visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<Corridors> x_corridor_snapshot, std::vector<Corridors> y_corridor_snapshot, const std::vector<Rooms>& room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec) {
+visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<Corridors> x_corridor_snapshot, std::vector<Corridors> y_corridor_snapshot, std::vector<Rooms> room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec) {
   visualization_msgs::MarkerArray markers;
   // markers.markers.resize(11);
 
@@ -576,6 +576,20 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   room_marker.lifetime = ros::Duration(15.0);
 
   for(int i = 0; i < room_snapshot.size(); ++i) {
+    room_snapshot[i].sub_room = false;
+  }
+
+  for(int i = 0; i < room_snapshot.size(); ++i) {
+    if(room_snapshot[i].sub_room) continue;
+
+    for(auto room : room_snapshot) {
+      if(room.id == room_snapshot[i].id) continue;
+      float dist_room_room = sqrt(pow(room.node->estimate()(0) - room_snapshot[i].node->estimate()(0), 2) + pow(room.node->estimate()(1) - room_snapshot[i].node->estimate()(1), 2));
+      if(dist_room_room < 1.0 && room.sub_room == false) {
+        room.sub_room = true;
+      }
+    }
+
     geometry_msgs::Point point;
     point.x = room_snapshot[i].node->estimate()(0);
     point.y = room_snapshot[i].node->estimate()(1);
