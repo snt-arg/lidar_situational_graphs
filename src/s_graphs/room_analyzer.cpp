@@ -7,19 +7,20 @@ namespace s_graphs {
 RoomAnalyzer::RoomAnalyzer(const ros::NodeHandle& private_nh, std::shared_ptr<PlaneUtils> plane_utils_ptr) {
   nh = private_nh;
   plane_utils = plane_utils_ptr;
-  cloud_clusters_.clear();
-  connected_subgraphs_.clear();
+  cloud_clusters.clear();
+  connected_subgraphs.clear();
+  vertex_neigh_thres = private_nh.param<int>("vertex_neigh_thres", 5);
 }
 
 RoomAnalyzer::~RoomAnalyzer() {
-  cloud_clusters_.clear();
-  connected_subgraphs_.clear();
+  cloud_clusters.clear();
+  connected_subgraphs.clear();
 }
 
 void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray::Ptr& skeleton_graph_msg) {
   skeleton_graph_mutex.lock();
-  cloud_clusters_.clear();
-  connected_subgraphs_.clear();
+  cloud_clusters.clear();
+  connected_subgraphs.clear();
 
   visualization_msgs::MarkerArray curr_connected_clusters_marker_array;
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters;
@@ -83,9 +84,9 @@ void RoomAnalyzer::analyze_skeleton_graph(const visualization_msgs::MarkerArray:
     }
   }
 
-  cloud_clusters_ = curr_cloud_clusters;
-  connected_subgraphs_ = connected_subgraph_map;
-  connected_clusters_marker_array_ = curr_connected_clusters_marker_array;
+  cloud_clusters = curr_cloud_clusters;
+  connected_subgraphs = connected_subgraph_map;
+  connected_clusters_marker_array = curr_connected_clusters_marker_array;
   skeleton_graph_mutex.unlock();
 
   return;
@@ -504,7 +505,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
   bool use_max_neighbours_algo = true;
   int max_x1_neighbours, max_x2_neighbours, max_y1_neighbours, max_y2_neighbours;
   max_x1_neighbours = max_x2_neighbours = max_y1_neighbours = max_y2_neighbours = 0;
-  int min_neighbors_thres = 5;
+  int min_neighbors_thres = vertex_neigh_thres;
 
   pcl::PointXY top_right, bottom_right, top_left, bottom_left;
   if(!use_max_neighbours_algo) {
