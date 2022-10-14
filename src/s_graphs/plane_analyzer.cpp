@@ -151,10 +151,12 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(const pcl::Poi
   // auto max_iterator = std::max_element(std::begin(cluster_indices), std::end(cluster_indices), [](const pcl::PointIndices& lhs, const pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
 
   pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
+  int cluster_id = 0;
   for(auto single_cluster : cluster_indices) {
-    double r = rand() % 256;
-    double g = rand() % 256;
-    double b = rand() % 256;
+    std_msgs::ColorRGBA color = rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
+    double r = color.r;
+    double g = color.g;
+    double b = color.b;
     for(const auto& idx : (single_cluster).indices) {
       cloud_cluster->push_back(extracted_cloud->points[idx]);
       cloud_cluster->width = cloud_cluster->size();
@@ -168,6 +170,7 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(const pcl::Poi
       cloud_cluster->back().g = g;
       cloud_cluster->back().b = b;
     }
+    cluster_id++;
   }
 
   return cloud_cluster;
@@ -195,6 +198,75 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::shadow_filter(const pcl::PointC
   sp_filter.filter(*extracted_cloud_filtered);
 
   return extracted_cloud_filtered;
+}
+
+std_msgs::ColorRGBA PlaneAnalyzer::rainbow_color_map(double h) {
+  std_msgs::ColorRGBA color;
+  color.a = 255;
+  // blend over HSV-values (more colors)
+
+  double s = 1.0;
+  double v = 1.0;
+
+  h -= floor(h);
+  h *= 6;
+  int i;
+  double m, n, f;
+
+  i = floor(h);
+  f = h - i;
+  if(!(i & 1)) f = 1 - f;  // if i is even
+  m = v * (1 - s);
+  n = v * (1 - s * f);
+
+  switch(i) {
+    case 6:
+    case 0:
+      color.r = 255 * v;
+      color.g = 255 * n;
+      color.b = 255 * m;
+      break;
+    case 1:
+      color.r = 255 * n;
+      color.g = 255 * v;
+      color.b = 255 * m;
+      break;
+    case 2:
+      color.r = 255 * m;
+      color.g = 255 * v;
+      color.b = 255 * n;
+      break;
+    case 3:
+      color.r = 255 * m;
+      color.g = 255 * n;
+      color.b = 255 * v;
+      break;
+    case 4:
+      color.r = 255 * n;
+      color.g = 255 * m;
+      color.b = 255 * v;
+      break;
+    case 5:
+      color.r = 255 * v;
+      color.g = 255 * m;
+      color.b = 255 * n;
+      break;
+    default:
+      color.r = 255;
+      color.g = 127;
+      color.b = 127;
+      break;
+  }
+  return color;
+}
+
+std_msgs::ColorRGBA PlaneAnalyzer::random_color() {
+  std_msgs::ColorRGBA color;
+  color.r = rand() % 256;
+  color.b = rand() % 256;
+  color.g = rand() % 256;
+
+  return color;
 }
 
 }  // namespace s_graphs

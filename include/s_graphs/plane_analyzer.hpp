@@ -15,6 +15,7 @@
 #include <pcl_ros/point_cloud.h>
 #include <tf/transform_listener.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <std_msgs/ColorRGBA.h>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -56,6 +57,13 @@ private:
   pcl::PointCloud<PointNormal>::Ptr compute_clusters(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
   pcl::PointCloud<pcl::Normal>::Ptr compute_cloud_normals(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
   pcl::PointCloud<PointNormal>::Ptr shadow_filter(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
+
+  /**
+   * Maps an input h from a value between 0.0 and 1.0 into a rainbow. Copied from
+   * OctomapProvider in octomap.
+   */
+  std_msgs::ColorRGBA rainbow_color_map(double h);
+  std_msgs::ColorRGBA random_color();
 
 private:
   int min_seg_points_;
