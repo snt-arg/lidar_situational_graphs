@@ -23,8 +23,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   // markers.markers.resize(11);
 
   // node markers
-  double keyframe_h = 5.0;
-  double plane_h = 10;
+  double keyframe_h = 7.0;
+  double plane_h = 15;
 
   visualization_msgs::Marker traj_marker;
   traj_marker.header.frame_id = map_frame_id;
@@ -341,10 +341,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   }
   markers.markers.push_back(hort_plane_marker);
 
-  float corridor_node_h = 15;
-  float corridor_text_h = 12;
-  float corridor_edge_h = 14.5;
-  float corridor_point_h = 10.0;
+  float corridor_node_h = 22;
+  float corridor_edge_h = 21.5;
+  float corridor_point_h = plane_h;
 
   for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
     bool overlapped_corridor = false;
@@ -554,10 +553,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   }
 
   // room markers
-  float room_node_h = 15;
-  float room_text_h = 12;
-  float room_edge_h = 14.5;
-  float room_point_h = 10.0;
+  float room_node_h = corridor_node_h;
+  float room_edge_h = corridor_edge_h;
+  float room_point_h = plane_h;
   visualization_msgs::Marker room_marker;
   room_marker.pose.orientation.w = 1.0;
   room_marker.scale.x = 0.5;
@@ -860,8 +858,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
 
   for(const auto& floor : floors_vec) {
     if(floor.id != -1) {
-      float floor_node_h = 20;
-      float floor_edge_h = 19.5;
+      float floor_node_h = 25;
+      float floor_edge_h = 24.5;
       visualization_msgs::Marker floor_marker;
       floor_marker.pose.orientation.w = 1.0;
       floor_marker.scale.x = 0.5;
