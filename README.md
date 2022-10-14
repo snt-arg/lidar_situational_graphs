@@ -2,7 +2,7 @@
 
 **Situational graphs (S-Graphs)** is a ROS package for generating in real-time three-layered hierarchical factor graphs representing a scene graph including the lowest **_Robot Tracking Layer_** registring the robot poses, **_Metric-Semantic Layer_** which maps planar features and **_Topological Layer_** constraining the planar features using room/corridor factors. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
-[<img src="imgs/s_graphs.png" width="640pix" height="480pix"/>](https://www.youtube.com/watch?v=eoWrBTY04Oc)
+![S-Graphs Banner](./imgs/banner.png)
 
 ## Table of contents
 
@@ -19,15 +19,12 @@
   - [Running Datasets Using Docker](#running-datasets-using-docker)
 - [ROS Related](#ros-related)
   - [Nodelets](#nodelets)
-  - [Subscribed Topics](#subscribed-topics)
-  - [Published Topics](#published-topics)
   - [Published TFs](#published-tfs)
   - [Services](#services)
   - [Parameters](#parameters)
-- [Instructions](#instructions)
+- [Instructions To Use S-Graphs](#instructions-to-use-s-graphs)
 - [License](#license)
-- [Related Packages](#related-packages)
-- [Contact](#contact)
+- [Maintainers](#maintainers)
 
 ## Published Papers
 
@@ -49,42 +46,7 @@
 
 ### Architecture
 
-![S-Graphs Architecture](imgs/s_graphs_architecture.png)
-
-## Constraints (Edges)
-
-You can enable/disable each constraint by changing params in the launch file, and you can also change the weight (\*\_stddev) and the robust kernel (\*\_robust_kernel) of each constraint.
-
-- **_Odometry_**
-
-- **_Planar_**
-  - _segmented_clouds_ (vector of sensor_msgs/PointCloud)
-
-This constraint maps the vertical and horizontal planar surfaces using the planar surfaces detected from the _plane_extraction_nodelet_.
-
-- **_Room/Corridor_**
-
-This constraint parses the mapped vertical planar surfaces to further detect rooms and corridors and create their respective node with edges connecting the room/corridor node with corresponding planar surfaces.
-
-- **_Loop closure_**
-
-- **_GPS_**
-  - _/gps/geopoint_ (geographic_msgs/GeoPointStamped)
-  - _/gps/navsat_ (sensor_msgs/NavSatFix)
-  - _/gpsimu_driver/nmea_sentence_ (nmea_msgs/Sentence)
-
-s*graphs supports several GPS message types. All the supported types contain (latitude, longitude, and altitude). s_graphs converts them into [the UTM coordinate](http://wiki.ros.org/geodesy), and adds them into the graph as 3D position constraints. If altitude is set to NaN, the GPS data is treated as a 2D constrait. GeoPoint is the most basic one, which consists of only (lat, lon, alt). Although NavSatFix provides many information, we use only (lat, lon, alt) and ignore all other data. If you're using HDL32e, you can directly connect \_s_graphs* with _velodyne_driver_ via _/gpsimu_driver/nmea_sentence_.
-
-- **_IMU acceleration (gravity vector)_**
-  - _/gpsimu_driver/imu_data_ (sensor_msgs/Imu)
-
-This constraint rotates each pose node so that the acceleration vector associated with the node becomes vertical (as the gravity vector). This is useful to compensate for accumulated tilt rotation errors of the scan matching. Since we ignore acceleration by sensor motion, you should not give a big weight for this constraint.
-
-- **_IMU orientation (magnetic sensor)_**
-
-  - _/gpsimu_driver/imu_data_ (sensor_msgs/Imu)
-
-  If your IMU has a reliable magnetic orientation sensor, you can add orientation data to the graph as 3D rotation constraints. Note that, magnetic orientation sensors can be affected by external magnetic disturbances. In such cases, this constraint should be disabled.
+![S-Graphs Architecture](./imgs/system_architecture.png)
 
 ## Installation
 
@@ -215,106 +177,66 @@ source devel/setup.bash
 In order to run datasets using docker, one just needs to use the command `roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null` inside docker.
 The other 2 commands should be executed outside docker. Additionally, the `env` parameter should be changed accordingly to the type of dataset.
 
-<!-- ## Example1 (Indoor)
-
-Bag file (recorded in a small room):
-
-- [hdl_501.bag.tar.gz](http://www.aisl.cs.tut.ac.jp/databases/s_graphs/hdl_501.bag.tar.gz) (raw data, 344MB)
-- [hdl_501_filtered.bag.tar.gz](http://www.aisl.cs.tut.ac.jp/databases/s_graphs/hdl_501_filtered.bag.tar.gz) (downsampled data, 57MB, **Recommended!**)
-
-```bash
-rosparam set use_sim_time true
-roslaunch s_graphs s_graphs_501.launch
-```
-
-```bash
-roscd s_graphs/rviz
-rviz -d s_graphs.rviz
-```
-
-```bash
-rosbag play --clock hdl_501_filtered.bag
-```
-
-We also provide bag_player.py which adjusts the playback speed according to the processing speed. It allows to process data as fast as possible.
-
-```bash
-rosrun s_graphs bag_player.py hdl_501_filtered.bag
-```
-
-You'll see a point cloud like:
-
-<img src="imgs/top.png" height="256pix" /> <img src="imgs/birds.png" height="256pix" />
-
-You can save the generated map by:
-```bash
-rosservice call /s_graphs/save_map "resolution: 0.05
-destination: '/full_path_directory/map.pcd'"
-```
-
-## Example2 (Outdoor)
-
-Bag file (recorded in an outdoor environment):
-- [hdl_400.bag.tar.gz](http://www.aisl.cs.tut.ac.jp/databases/s_graphs/hdl_400.bag.tar.gz) (raw data, about 900MB)
-
-```bash
-rosparam set use_sim_time true
-roslaunch s_graphs s_graphs_400.launch
-```
-
-```bash
-roscd s_graphs/rviz
-rviz -d s_graphs.rviz
-```
-
-```bash
-rosbag play --clock hdl_400.bag
-```
-
-<img src="imgs/hdl_400_points.png" height="256pix" /> <img src="imgs/hdl_400_graph.png" height="256pix" />
-
-## Example with GPS
-Ford Campus Vision and Lidar Data Set [\[URL\]](http://robots.engin.umich.edu/SoftwareData/Ford)
-
-The following script converts the Ford Lidar Dataset to a rosbag and plays it. In this example, ***s_graphs*** utilizes the GPS data to correct the pose graph.
-
-```bash
-cd IJRR-Dataset-2
-rosrun s_graphs ford2bag.py dataset-2.bag
-rosrun s_graphs bag_player.py dataset-2.bag
-```
-
-<img src="imgs/ford1.png" height="200pix"/> <img src="imgs/ford2.png" height="200pix"/> <img src="imgs/ford3.png" height="200pix"/> -->
-
 ## ROS Related
 
 ### Nodelets
 
-**S-Graphs** consists of four nodelets.
+> s_graphs is composed of **3** main nodelets.
 
-- `s_graphs_nodelet`
-- `s_graphs_floor_plan_nodelet_manager`
-- `s_graphs_floor_planner_nodelet`
-- `s_graphs_nodelet_manager`
-- `s_graphs_room_seg_nodelet_manager`
-- `s_graphs_room_segmentor_nodelet`
-- `hdl_prefilter_nodelet`
-- `hdl_prefilter_nodelet_manager`
+- **s_graphs_nodelet**
 
-<!-- The input point cloud is first downsampled by _prefiltering_nodelet_, and then passed to the next nodelets. While _scan_matching_odometry_nodelet_ (optional module and can be replaced by an other odometry module) estimates the sensor pose by iteratively applying a scan matching between consecutive frames (i.e., odometry estimation), _plane_segmentation_nodelet_ detects vertical and horizontal planes by RANSAC. The estimated odometry and the planes are sent to _s_graphs_. To compensate the accumulated error of the scan matching, it performs loop detection and optimizes a pose graph which takes various constraints into account. -->
+  - Subscribed Topics
 
-### Subscribed Topics
+    - `/odom` ([nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
+      - The odometry from the robot.
+    - `/filtered_points` ([sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html))
+      - TODO
 
-- `/s_graphs_nodelet_manager/bond`([bond/status](http://docs.ros.org/en/noetic/api/bond/html/msg/Status.html))
-- /clock
+  - Published Topics
 
-### Published Topics
+    - `/s_graphs/markers` ([visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html))
+      - TODO
+    - `/s_graphs/odom2map` ([geometry_msgs/TransformStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/TransformStamped.html))
+      - TODO
+    - `/s_graphs/odom_pose_corrected` ([geometry_msgs/PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
+      - TODO
+    - `/s_graphs/odom_path_corrected` ([nav_msgs/Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 
-- `/s_graphs_nodelet_manager/bond`([bond/status](http://docs.ros.org/en/noetic/api/bond/html/msg/Status.html))
+      - TODO
 
-### Published TFs
+    - `/s_graphs/map_points` ([sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html))
+      - TODO
+    - `/s_graphs/map_planes` (s_graphs/PlanesData)
+      - TODO
+    - `/s_graphs/all_map_planes` (s_graphs/PlanesData)
+      - TODO
+    - `/s_graphs/save_map` (s_graphs/SaveMap)
+      - TODO
 
-Here comes the different published tfs
+- **room_segmentation_nodelet**
+
+  - Subscribed Topics
+
+    - `/voxblox_skeletonizer/sparse_graph` ([visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html))
+      - TODO
+    - `/s_graphs/map_planes` (s_graphs/PlanesData)
+      - TODO
+
+  - Published Topics
+
+    - `/room_segmentation/room_data` (s_graphs/RoomsData)
+      - TODO
+
+- **floor_plane_nodelet**
+
+  - Subscribed Topics
+
+    - `/s_graphs/all_map_planes` ([visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html))
+      - TODO
+
+  - Published Topics
+
+    - `/floor_plan/floor_data` (s_graphs/RoomData): TODO
 
 ### Services
 
@@ -329,7 +251,14 @@ Here comes the different published tfs
 
 All the configurable parameters are listed in _launch/s_graphs.launch_ as ros params.
 
-## Instructions
+### Published TFs
+
+- `map2odom`: The transform published between the map frame and the odom frame after the corrections have been applied.
+- `map_to_map_elevated`: The transform published between the map frame and the elevated map frame (also mentioned as the walls in the first picture of this document)
+
+![Tf Tree](./imgs/Tf-tree.png)
+
+## Instructions To Use S-Graphs
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see line #11, s_graphs.launch). All the sensor data will be transformed into the common base_link frame, and then fed to the SLAM algorithm.
 
@@ -347,16 +276,12 @@ This package is released under the **BSD-2-Clause** License.
 
 Note that the cholmod solver in g2o is licensed under GPL. You may need to build g2o without cholmod dependency to avoid the GPL.
 
-## Related packages
-
-- [interactive_slam](https://github.com/koide3/interactive_slam)
-- [hdl_localization](https://github.com/koide3/hdl_localization)
-- [hdl_people_tracking](https://github.com/koide3/hdl_people_tracking)
-
-## Contact
+## Maintainers
 
 - <ins>**Hriday Bavle**</ins>
   - **Email:** hriday.bavle@uni.lu
   - **Website:** https://www.hriday.bavle.com/
 - <ins>**Muhammad Shaheer**</ins>
   - **Email:** muhamad.shaheer@uni.lu
+- <ins>**Pedro Soares**</ins>
+  - **Email:** pedro.soares@uni.lu
