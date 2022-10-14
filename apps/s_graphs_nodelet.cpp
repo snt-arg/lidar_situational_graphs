@@ -75,6 +75,7 @@
 #include <s_graphs/neighbour_mapper.hpp>
 #include <s_graphs/plane_analyzer.hpp>
 #include <s_graphs/graph_visualizer.hpp>
+#include <s_graphs/keyframe_mapper.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_corridor.hpp>
@@ -133,6 +134,7 @@ public:
     finite_room_mapper.reset(new FiniteRoomMapper(private_nh));
     floor_mapper.reset(new FloorMapper(private_nh));
     graph_visualizer.reset(new GraphVisualizer(private_nh));
+    keyframe_mapper.reset(new KeyframeMapper(private_nh));
 
     gps_time_offset = private_nh.param<double>("gps_time_offset", 0.0);
     gps_edge_stddev_xy = private_nh.param<double>("gps_edge_stddev_xy", 10000.0);
@@ -408,55 +410,16 @@ private:
     Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
     trans_odom2map_mutex.unlock();
 
-    int num_processed = 0;
-    for(int i = 0; i < std::min<int>(keyframe_queue.size(), max_keyframes_per_update); i++) {
-      num_processed = i;
+    int num_processed = keyframe_mapper->map_keyframes(graph_slam, odom2map, keyframe_queue, keyframes, new_keyframes, anchor_node, anchor_edge, keyframe_hash);
 
-      const auto& keyframe = keyframe_queue[i];
-      // new_keyframes will be tested later for loop closure
-      new_keyframes.push_back(keyframe);
-
-      // add pose node
-      Eigen::Isometry3d odom = odom2map * keyframe->odom;
-      keyframe->node = graph_slam->add_se3_node(odom);
-      keyframe_hash[keyframe->stamp] = keyframe;
-
-      // fix the first node
-      if(keyframes.empty() && new_keyframes.size() == 1) {
-        if(private_nh.param<bool>("fix_first_node", false)) {
-          Eigen::MatrixXd inf = Eigen::MatrixXd::Identity(6, 6);
-          std::stringstream sst(private_nh.param<std::string>("fix_first_node_stddev", "1 1 1 1 1 1"));
-          for(int i = 0; i < 6; i++) {
-            double stddev = 1.0;
-            sst >> stddev;
-            inf(i, i) = 1.0 / stddev;
-          }
-
-          anchor_node = graph_slam->add_se3_node(Eigen::Isometry3d::Identity());
-          anchor_node->setFixed(true);
-          anchor_edge = graph_slam->add_se3_edge(anchor_node, keyframe->node, Eigen::Isometry3d::Identity(), inf);
-        }
-      }
-
+    // perform planar segmentation
+    for(int i = 0; i < new_keyframes.size(); i++) {
       // perform planar segmentation
       if(extract_planar_surfaces) {
-        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(keyframe->cloud);
-        plane_mapper->map_extracted_planes(graph_slam, keyframe, extracted_cloud_vec, x_vert_planes, y_vert_planes, hort_planes);
+        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(new_keyframes[i]->cloud);
+        plane_mapper->map_extracted_planes(graph_slam, new_keyframes[i], extracted_cloud_vec, x_vert_planes, y_vert_planes, hort_planes);
       }
-
-      if(i == 0 && keyframes.empty()) {
-        continue;
-      }
-
-      // add edge between consecutive keyframes
-      const auto& prev_keyframe = i == 0 ? keyframes.back() : keyframe_queue[i - 1];
-
-      Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
-      Eigen::MatrixXd information = inf_calclator->calc_information_matrix(keyframe->cloud, prev_keyframe->cloud, relative_pose);
-      auto edge = graph_slam->add_se3_edge(keyframe->node, prev_keyframe->node, relative_pose, information);
-      graph_slam->add_robust_kernel(edge, private_nh.param<std::string>("odometry_edge_robust_kernel", "NONE"), private_nh.param<double>("odometry_edge_robust_kernel_size", 1.0));
     }
-
     std_msgs::Header read_until;
     read_until.stamp = keyframe_queue[num_processed]->stamp + ros::Duration(10, 0);
     read_until.frame_id = points_topic;
@@ -1608,6 +1571,7 @@ private:
   std::unique_ptr<FiniteRoomMapper> finite_room_mapper;
   std::unique_ptr<FloorMapper> floor_mapper;
   std::unique_ptr<GraphVisualizer> graph_visualizer;
+  std::unique_ptr<KeyframeMapper> keyframe_mapper;
 };
 
 }  // namespace s_graphs
