@@ -1,4 +1,4 @@
-FROM ros:noetic-robot
+FROM ros:noetic
 
 # - ssh keys to get the s_graphs repo (only temporary)
 ARG ssh_prv_key
@@ -43,7 +43,7 @@ RUN catkin config --extend /opt/ros/noetic/ && catkin build
 # RUN catkin config --install
 
 # - Removing cpp source files from s_graphs
-RUN rm src/s_graphs/src/s_graphs/*.cpp && rm src/s_graphs/apps/*.cpp
+RUN rm src/s_graphs/src/s_graphs/*.cpp && rm -rf src/s_graphs/apps
 
 # Remove SSH keys
 RUN rm -rf /root/.ssh/
