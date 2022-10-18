@@ -147,13 +147,13 @@ A docker image is provided with s_graphs. This image is all set and is just pull
 1. Pull the docker image from DockerHub
 
 ```bash
-docker pull pedros235/s_graphs:latest
+docker pull sntarg/s_graphs:latest
 ```
 
 2. Create a container for the s_graphs image.
 
 ```bash
-docker run -dit --net host --name s_graphs_container s_graphs
+docker run -dit --net host --name s_graphs_container sntarg/s_graphs
 ```
 
 This command also incorporates the flags `d`, which makes the container run in the detached mode and `net`, which gives the container the access of the host interfaces.
