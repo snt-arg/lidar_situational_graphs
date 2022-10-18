@@ -110,7 +110,7 @@ source devel/setup.bash
 
 ## Example on Datasets
 
-**Note:** For each command below, please executed them in separate terminal windows!
+**Note:** For each command below, please execute them in separate terminal windows!
 
 ### Real Dataset
 
