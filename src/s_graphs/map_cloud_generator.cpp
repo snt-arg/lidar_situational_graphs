@@ -33,8 +33,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(cons
   cloud->height = 1;
   cloud->is_dense = false;
 
-  if (resolution <=0.0)
-    return cloud; // To get unfiltered point cloud with intensity
+  if(resolution <= 0.0) return cloud;  // To get unfiltered point cloud with intensity
 
   pcl::octree::OctreePointCloud<PointT> octree(resolution);
   octree.setInputCloud(cloud);
@@ -48,6 +47,22 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(cons
   filtered->is_dense = false;
 
   return filtered;
+}
+
+pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(const Eigen::Matrix4f& pose, const pcl::PointCloud<PointT>::Ptr& cloud) const {
+  pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
+  map_cloud->reserve(cloud->size());
+  for(const auto& src_pt : cloud->points) {
+    PointT dst_pt;
+    dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+    dst_pt.intensity = src_pt.intensity;
+    map_cloud->push_back(dst_pt);
+
+    map_cloud->width = cloud->size();
+    map_cloud->height = 1;
+    map_cloud->is_dense = false;
+  }
+  return map_cloud;
 }
 
 }  // namespace s_graphs

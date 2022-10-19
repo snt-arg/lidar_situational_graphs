@@ -58,6 +58,10 @@ add_message_files(FILES
   FloorCoeffs.msg
   ScanMatchingStatus.msg
   PointClouds.msg
+  RoomData.msg
+  RoomsData.msg
+  PlaneData.msg
+  PlanesData.msg
 )
 
 add_service_files(FILES
@@ -93,14 +97,30 @@ target_link_libraries(s_graphs_prefiltering_nodelet
   ${PCL_LIBRARIES}
 )
 
-add_library(s_graphs_plane_segmentation_nodelet apps/plane_segmentation_nodelet.cpp)
-target_link_libraries(s_graphs_plane_segmentation_nodelet
+add_library(s_graphs_room_segmentation_nodelet 
+  apps/room_segmentation_nodelet.cpp 
+  src/s_graphs/room_analyzer.cpp
+)
+target_link_libraries(s_graphs_room_segmentation_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
 )
-add_dependencies(s_graphs_plane_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
+add_dependencies(s_graphs_room_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
 
-add_library(s_graphs_floor_detection_nodelet apps/floor_detection_nodelet.cpp)
+add_library(s_graphs_floor_plan_nodelet 
+  apps/floor_plan_nodelet.cpp
+  src/s_graphs/room_analyzer.cpp
+  src/s_graphs/floor_analyzer.cpp
+)
+target_link_libraries(s_graphs_floor_plan_nodelet
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+add_dependencies(s_graphs_floor_plan_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
+
+add_library(s_graphs_floor_detection_nodelet 
+    apps/floor_detection_nodelet.cpp
+)
 target_link_libraries(s_graphs_floor_detection_nodelet
   ${catkin_LIBRARIES}
   ${PCL_LIBRARIES}
@@ -119,11 +139,18 @@ add_dependencies(s_graphs_scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp 
 
 add_library(s_graphs_nodelet
   apps/s_graphs_nodelet.cpp
+  src/s_graphs/plane_analyzer.cpp
   src/s_graphs/graph_slam.cpp
+  src/s_graphs/plane_mapper.cpp
+  src/s_graphs/infinite_room_mapper.cpp
+  src/s_graphs/finite_room_mapper.cpp
+  src/s_graphs/floor_mapper.cpp
   src/s_graphs/keyframe.cpp
+  src/s_graphs/graph_visualizer.cpp
   src/s_graphs/map_cloud_generator.cpp
   src/s_graphs/registrations.cpp
   src/s_graphs/information_matrix_calculator.cpp
+  src/s_graphs/keyframe_mapper.cpp
   src/g2o/robust_kernel_io.cpp
 )
 target_link_libraries(s_graphs_nodelet
@@ -139,6 +166,27 @@ target_link_libraries(s_graphs_nodelet
   ${G2O_TYPES_SLAM3D_ADDONS}
 )
 add_dependencies(s_graphs_nodelet ${PROJECT_NAME}_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
+
+#############
+## Install ##
+#############
+
+install(TARGETS
+  s_graphs_nodelet s_graphs_floor_plan_nodelet s_graphs_room_segmentation_nodelet s_graphs_scan_matching_odometry_nodelet s_graphs_prefiltering_nodelet
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(
+  DIRECTORY launch config rviz
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
+
 
 catkin_install_python(
   PROGRAMS

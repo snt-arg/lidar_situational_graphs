@@ -251,10 +251,9 @@ private:
       prev_trans.setIdentity();
     }
 
-    if (aligned_points_pub.getNumSubscribers() > 0)
-    {
-      pcl::transformPointCloud (*cloud, *aligned, odom);
-      aligned->header.frame_id=odom_frame_id;
+    if(aligned_points_pub.getNumSubscribers() > 0) {
+      pcl::transformPointCloud(*cloud, *aligned, odom);
+      aligned->header.frame_id = odom_frame_id;
       aligned_points_pub.publish(aligned);
     }
 
@@ -272,8 +271,7 @@ private:
     trans_pub.publish(odom_trans);
 
     // broadcast the transform over tf
-    if(publish_tf)
-      odom_broadcaster.sendTransform(odom_trans);
+    if(publish_tf) odom_broadcaster.sendTransform(odom_trans);
 
     // publish the transform
     nav_msgs::Odometry odom;
@@ -312,7 +310,7 @@ private:
     int num_inliers = 0;
     std::vector<int> k_indices;
     std::vector<float> k_sq_dists;
-    for(int i=0; i<aligned->size(); i++) {
+    for(int i = 0; i < aligned->size(); i++) {
       const auto& pt = aligned->at(i);
       registration->getSearchMethodTarget()->nearestKSearch(pt, 1, k_indices, k_sq_dists);
       if(k_sq_dists[0] < max_correspondence_dist * max_correspondence_dist) {
@@ -356,7 +354,7 @@ private:
   std::string odom_frame_id;
   std::string robot_odom_frame_id;
   ros::Publisher read_until_pub;
-  
+
   // keyframe parameters
   double keyframe_delta_trans;  // minimum distance between keyframes
   double keyframe_delta_angle;  //
@@ -370,7 +368,7 @@ private:
   // odometry calculation
   geometry_msgs::PoseWithCovarianceStampedConstPtr msf_pose;
   geometry_msgs::PoseWithCovarianceStampedConstPtr msf_pose_after_update;
-  bool publish_tf; 
+  bool publish_tf;
 
   ros::Time prev_time;
   Eigen::Matrix4f prev_trans;                  // previous estimated transform from keyframe

@@ -1,6 +1,6 @@
 
 map_frame_id: "map"
-odom_frame_id: "odom_reset"
+odom_frame_id: "odom"
 
 # Optimization params
 g2o_solver_type: "lm_var_cholmod" # gn_var, gn_fix6_3, gn_var_cholmod, lm_var, lm_fix6_3, lm_var_cholmod
@@ -29,7 +29,7 @@ fitness_score_thresh: 0.5
 
 # Scan matching
 registration_method: "FAST_GICP"
-reg_num_threads: 0
+reg_num_threads: 8
 reg_transformation_epsilon: 0.01
 reg_maximum_iterations: 64
 reg_max_correspondence_distance: 2.5
@@ -37,7 +37,7 @@ reg_max_optimizer_iterations: 20
 reg_use_reciprocal_correspondences: false
 reg_correspondence_randomness: 20
 reg_resolution: 1.0
-reg_nn_search_method: "DIRECT7"
+reg_nn_search_method: "DIRECT1"
     
 # Edge parameters
     
@@ -60,7 +60,7 @@ floor_edge_robust_kernel: "NONE"
 floor_edge_stddev: 10.0
 
 # Scan matching
-odometry_edge_robust_kernel: "NONE" # NONE, Cauchy, DCS, Fair, GemanMcClure, Huber, PseudoHuber, Saturated, Tukey, Welsch
+odometry_edge_robust_kernel: "Huber" # NONE, Cauchy, DCS, Fair, GemanMcClure, Huber, PseudoHuber, Saturated, Tukey, Welsch
 odometry_edge_robust_kernel_size: 1.0
 loop_closure_edge_robust_kernel: "Huber"
 loop_closure_edge_robust_kernel_size: 1.0
@@ -70,33 +70,21 @@ const_stddev_q: 0.1
 var_gain_a: 20.0
 min_stddev_x: 0.1
 max_stddev_x: 5.0
-min_stddev_q: 0.05
-max_stddev_q: 0.2
+min_stddev_q: 0.1
+max_stddev_q: 0.4
 graph_update_interval: 3.0
-map_cloud_update_interval: 10.0
+map_cloud_update_interval: 3.0
 map_cloud_resolution: 0.05
 
-plane_dist_threshold:       0.20
-use_point_to_plane:         false 
-use_parallel_plane_constraint: true 
-use_perpendicular_plane_constraint: true
-use_corridor_constraint:              true
-corridor_information:                 0.01       
-corridor_dist_threshold:              0.5
-corridor_min_plane_length:            5.0 
-corridor_min_width:                   1.5 
-corridor_max_width:                   2.5
-corridor_plane_length_diff_threshold: 3.0
-corridor_point_diff_threshold:        3.5
-use_room_constraint:                  true      
-room_information:                     0.01       
-room_dist_threshold:                  1.0 
-room_min_plane_length:                2.0
-room_max_plane_length:                10.0 
-room_min_width:                       2.5 
-room_plane_length_diff_threshold:     3.0 
-room_point_diff_threshold:            2.5
-room_width_diff_threshold:            2.5
-color_r:                              0.0
-color_g:                              0.0
-color_b:                              0.0
+extract_planar_surfaces:    true
+vertex_neigh_thres:         5
+keyframe_window_size:       1
+plane_information:          1.0
+room_information:           1.0
+corridor_information:       1.0
+plane_dist_threshold:       0.35
+plane_points_dist:          0.5
+constant_covariance:        true
+min_plane_points:           100
+use_parallel_plane_constraint: false 
+use_perpendicular_plane_constraint: false

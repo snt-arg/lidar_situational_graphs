@@ -1,2 +1,7 @@
 imgui.ini
-rviz/*
+
+# - IDEs Folder
+.vscode
+
+# - Clangd
+compile_commands.json

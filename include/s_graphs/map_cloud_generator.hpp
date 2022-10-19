@@ -27,6 +27,7 @@ public:
    * @return generated map point cloud
    */
   pcl::PointCloud<PointT>::Ptr generate(const std::vector<KeyFrameSnapshot::Ptr>& keyframes, double resolution) const;
+  pcl::PointCloud<PointT>::Ptr generate(const Eigen::Matrix4f& pose, const pcl::PointCloud<PointT>::Ptr& cloud) const;
 };
 
 }  // namespace s_graphs

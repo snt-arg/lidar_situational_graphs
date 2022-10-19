@@ -1,6 +1,6 @@
 # S-Graphs
-**Situational graphs (S-Graphs)** is a ROS package for generating in real-time three-layered hierarchical factor graphs representing a scene graph including the lowest ***Robot Tracking Layer*** registring the robot poses, ***Metric-Semantic Layer*** which maps planar features and ***Topological Layer*** constraining the planar features using room/corridor factors. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
+**Situational graphs (S-Graphs)** is a ROS package for generating in real-time three-layered hierarchical factor graphs representing a scene graph including the lowest **_Robot Tracking Layer_** registring the robot poses, **_Metric-Semantic Layer_** which maps planar features and **_Topological Layer_** constraining the planar features using room/corridor factors. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
 [<img src="imgs/s_graphs.png" width="640pix" height="480pix"/>](https://www.youtube.com/watch?v=eoWrBTY04Oc)
 
@@ -8,7 +8,7 @@
 
 ```latex
 @misc{bavle2022situational,
-      title={Situational Graphs for Robot Navigation in Structured Indoor Environments}, 
+      title={Situational Graphs for Robot Navigation in Structured Indoor Environments},
       author={Hriday Bavle and Jose Luis Sanchez-Lopez and Muhammad Shaheer and Javier Civera and Holger Voos},
       year={2022},
       eprint={2202.12197},
@@ -18,90 +18,160 @@
 ```
 
 ## Nodelets
+
 **S-Graphs** consists of four nodelets.
 
-- *prefiltering_nodelet*
-- *scan_matching_odometry_nodelet*
-- *plane_segmentation_nodelet*
-- *s_graphs_nodelet*
+- _prefiltering_nodelet_
+- _scan_matching_odometry_nodelet_
+- _plane_segmentation_nodelet_
+- _s_graphs_nodelet_
 
-The input point cloud is first downsampled by *prefiltering_nodelet*, and then passed to the next nodelets. While *scan_matching_odometry_nodelet* (optional module and can be replaced by an other odometry module) estimates the sensor pose by iteratively applying a scan matching between consecutive frames (i.e., odometry estimation), *plane_segmentation_nodelet* detects vertical and horizontal planes by RANSAC. The estimated odometry and the planes are sent to *s_graphs*. To compensate the accumulated error of the scan matching, it performs loop detection and optimizes a pose graph which takes various constraints into account.
+The input point cloud is first downsampled by _prefiltering_nodelet_, and then passed to the next nodelets. While _scan_matching_odometry_nodelet_ (optional module and can be replaced by an other odometry module) estimates the sensor pose by iteratively applying a scan matching between consecutive frames (i.e., odometry estimation), _plane_segmentation_nodelet_ detects vertical and horizontal planes by RANSAC. The estimated odometry and the planes are sent to _s_graphs_. To compensate the accumulated error of the scan matching, it performs loop detection and optimizes a pose graph which takes various constraints into account.
 
 ## Constraints (Edges)
 
-You can enable/disable each constraint by changing params in the launch file, and you can also change the weight (\*_stddev) and the robust kernel (\*_robust_kernel) of each constraint.
+You can enable/disable each constraint by changing params in the launch file, and you can also change the weight (\*\_stddev) and the robust kernel (\*\_robust_kernel) of each constraint.
 
-- ***Odometry***
+- **_Odometry_**
 
+- **_Planar_**
+  - _segmented_clouds_ (vector of sensor_msgs/PointCloud)
 
-- ***Planar***
-  - *segmented_clouds* (vector of sensor_msgs/PointCloud)
+This constraint maps the vertical and horizontal planar surfaces using the planar surfaces detected from the _plane_extraction_nodelet_.
 
-This constraint maps the vertical and horizontal planar surfaces using the planar surfaces detected from the *plane_extraction_nodelet*. 
+- **_Room/Corridor_**
 
-- ***Room/Corridor***
+This constraint parses the mapped vertical planar surfaces to further detect rooms and corridors and create their respective node with edges connecting the room/corridor node with corresponding planar surfaces.
 
-This constraint parses the mapped vertical planar surfaces to further detect rooms and corridors and create their respective node with edges connecting the room/corridor node with corresponding planar surfaces. 
+- **_Loop closure_**
 
-- ***Loop closure***
+- **_GPS_**
+  - _/gps/geopoint_ (geographic_msgs/GeoPointStamped)
+  - _/gps/navsat_ (sensor_msgs/NavSatFix)
+  - _/gpsimu_driver/nmea_sentence_ (nmea_msgs/Sentence)
 
-- ***GPS***
-  - */gps/geopoint* (geographic_msgs/GeoPointStamped)
-  - */gps/navsat* (sensor_msgs/NavSatFix)
-  - */gpsimu_driver/nmea_sentence* (nmea_msgs/Sentence)
+s*graphs supports several GPS message types. All the supported types contain (latitude, longitude, and altitude). s_graphs converts them into [the UTM coordinate](http://wiki.ros.org/geodesy), and adds them into the graph as 3D position constraints. If altitude is set to NaN, the GPS data is treated as a 2D constrait. GeoPoint is the most basic one, which consists of only (lat, lon, alt). Although NavSatFix provides many information, we use only (lat, lon, alt) and ignore all other data. If you're using HDL32e, you can directly connect \_s_graphs* with _velodyne_driver_ via _/gpsimu_driver/nmea_sentence_.
 
-s_graphs supports several GPS message types. All the supported types contain (latitude, longitude, and altitude). s_graphs converts them into [the UTM coordinate](http://wiki.ros.org/geodesy), and adds them into the graph as 3D position constraints. If altitude is set to NaN, the GPS data is treated as a 2D constrait. GeoPoint is the most basic one, which consists of only (lat, lon, alt). Although NavSatFix provides many information, we use only (lat, lon, alt) and ignore all other data. If you're using HDL32e, you can directly connect *s_graphs* with *velodyne_driver* via */gpsimu_driver/nmea_sentence*.
-
-- ***IMU acceleration (gravity vector)***
-  - */gpsimu_driver/imu_data* (sensor_msgs/Imu)
+- **_IMU acceleration (gravity vector)_**
+  - _/gpsimu_driver/imu_data_ (sensor_msgs/Imu)
 
 This constraint rotates each pose node so that the acceleration vector associated with the node becomes vertical (as the gravity vector). This is useful to compensate for accumulated tilt rotation errors of the scan matching. Since we ignore acceleration by sensor motion, you should not give a big weight for this constraint.
 
-- ***IMU orientation (magnetic sensor)***
-  - */gpsimu_driver/imu_data* (sensor_msgs/Imu)
+- **_IMU orientation (magnetic sensor)_**
+
+  - _/gpsimu_driver/imu_data_ (sensor_msgs/Imu)
 
   If your IMU has a reliable magnetic orientation sensor, you can add orientation data to the graph as 3D rotation constraints. Note that, magnetic orientation sensors can be affected by external magnetic disturbances. In such cases, this constraint should be disabled.
 
-
 ## Parameters
-All the configurable parameters are listed in *launch/s_graphs.launch* as ros params.
+
+All the configurable parameters are listed in _launch/s_graphs.launch_ as ros params.
 
 ## Services
-- */s_graphs/dump*  (s_graphs/DumpGraph)
+
+- _/s_graphs/dump_ (s_graphs/DumpGraph)
   - save all the internal data (point clouds, floor coeffs, odoms, and pose graph) to a directory.
-- */s_graphs/save_map*  (s_graphs/SaveMap)
+- _/s_graphs/save_map_ (s_graphs/SaveMap)
   - save the generated map as a PCD file.
 
-## Requirements
-***s_graphs*** requires the following libraries:
+## Installation Procedure
 
-- OpenMP
-- PCL
-- g2o
-- suitesparse
+### Automated Install
 
-The following ROS packages are required:
+1. Create a workspace for S-Graphs
 
-- geodesy
-- nmea_msgs
-- pcl_ros
-- [ndt_omp](https://github.com/koide3/ndt_omp)
-- [fast_gicp](https://github.com/SMRT-AIST/fast_gicp)
-
-```bash
-# for melodic
-sudo apt-get install ros-melodic-geodesy ros-melodic-pcl-ros ros-melodic-nmea-msgs ros-melodic-libg2o
-# for noetic
-sudo apt-get install ros-noetic-geodesy ros-noetic-pcl-ros ros-noetic-nmea-msgs ros-noetic-libg2o
-
-cd catkin_ws/src
-git clone https://github.com/koide3/ndt_omp.git
-git clone https://github.com/SMRT-AIST/fast_gicp.git --recursive
+```sh
+mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
 ```
 
-**[optional]** *bag_player.py* script requires ProgressBar2.
-```bash
-sudo pip install ProgressBar2
+2. Clone the S-Graphs repository into the created workspace
+
+```sh
+git clone https://github.com/snt-arg/s_graphs.git
+```
+
+3. Run the script setup.sh to install the required dependencies
+
+```sh
+cd s_graphs && ./setup.sh
+```
+
+### Manual Installation
+
+1. Create a workspace for S-Graphs
+
+```sh
+mkdir -p $Home/s_graphs_ws/src && cd $HOME/s_graphs_ws/src
+```
+
+2. Clone the S-Graphs repository into the created workspace
+
+```sh
+git clone https://github.com/snt-arg/s_graphs.git
+```
+
+3. Install the required dependencies using vcstool
+
+```sh
+cd s_graphs && vcs import --recursive ../ < .rosinstall
+```
+
+4. Install the required ROS packages
+
+```sh
+cd ../../ && rosdep install --from-paths src -ignore-src -y
+```
+
+5. Build workspace
+
+```sh
+catkin build
+```
+
+6. Source workspace
+
+```sh
+source devel/setup.bash
+```
+
+## Example on a dataset
+
+**Note:** For each command below, please executed them in separate terminal windows!
+
+### For real environment dataset
+
+```sh
+roscore
+```
+
+```sh
+roscd s_graphs && rviz -d rviz/s_graphs.rviz
+```
+
+```sh
+roslaunch s_graphs s_graphs.launch use_free_space_graph:=true 2>/dev/null
+```
+
+```sh
+rosbag play PATH_TO_ROSBAG_DATASET --clock
+```
+
+### For virtual environment dataset
+
+```sh
+roscore
+```
+
+```sh
+roscd s_graphs && rviz -d rviz/s_graphs.rviz
+```
+
+```sh
+roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null
+```
+
+```sh
+rosbag play PATH_TO_ROSBAG_DATASET --clock
 ```
 
 <!-- ## Example1 (Indoor)
@@ -179,14 +249,15 @@ rosrun s_graphs bag_player.py dataset-2.bag
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see line #11, s_graphs.launch). All the sensor data will be transformed into the common base_link frame, and then fed to the SLAM algorithm.
 
-2. Remap the point cloud topic of ***prefiltering_nodelet***. Like:
+2. Remap the point cloud topic of **_prefiltering_nodelet_**. Like:
 
 ```bash
   <node pkg="nodelet" type="nodelet" name="prefiltering_nodelet" ...
     <remap from="/velodyne_points" to="/rslidar_points"/>
   ...
 ```
-<!-- 
+
+<!--
 ## Common Problems -->
 
 <!-- ### Parameter tuning guide
@@ -207,7 +278,6 @@ The mapping result deeply depends on the parameter setting. In particular, scan 
 
 This package is released under the BSD-2-Clause License.
 
-
 Note that the cholmod solver in g2o is licensed under GPL. You may need to build g2o without cholmod dependency to avoid the GPL.
 
 <!-- ## Related packages
@@ -222,5 +292,5 @@ Note that the cholmod solver in g2o is licensed under GPL. You may need to build
 <!-- ## Contact
 Kenji Koide, k.koide@aist.go.jp, https://staff.aist.go.jp/k.koide
 
-Active Intelligent Systems Laboratory, Toyohashi University of Technology, Japan [\[URL\]](http://www.aisl.cs.tut.ac.jp)  
+Active Intelligent Systems Laboratory, Toyohashi University of Technology, Japan [\[URL\]](http://www.aisl.cs.tut.ac.jp)
 Mobile Robotics Research Team, National Institute of Advanced Industrial Science and Technology (AIST), Japan  [\[URL\]](https://unit.aist.go.jp/rirc/en/team/smart_mobility.html) -->

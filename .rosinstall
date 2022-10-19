@@ -1,0 +1,73 @@
+repositories:
+  s_graphs_utils/mav_voxblox_planning:
+    type: git
+    url: https://github.com/snt-arg/mav_voxblox_planning.git
+    version: master
+  s_graphs_utils/catkin_boost_python_buildtool:
+    type: git
+    url: https://github.com/ethz-asl/catkin_boost_python_buildtool.git
+    version: master
+  s_graphs_utils/catkin_simple:
+    type: git
+    url: https://github.com/catkin/catkin_simple.git
+    version: master
+  s_graphs_utils/ceres_catkin:
+    type: git
+    url: https://github.com/ethz-asl/ceres_catkin.git
+    version: master
+  s_graphs_utils/eigen_catkin:
+    type: git
+    url: https://github.com/ethz-asl/eigen_catkin.git
+    version: master
+  s_graphs_utils/eigen_checks:
+    type: git
+    url: https://github.com/ethz-asl/eigen_checks.git
+    version: master
+  s_graphs_utils/gflags_catkin:
+    type: git
+    url: https://github.com/ethz-asl/gflags_catkin.git
+    version: master
+  s_graphs_utils/glog_catkin:
+    type: git
+    url: https://github.com/ethz-asl/glog_catkin.git
+    version: master
+  s_graphs_utils/mav_comm:
+    type: git
+    url: https://github.com/ethz-asl/mav_comm.git
+    version: master
+  s_graphs_utils/mav_trajectory_generation:
+    type: git
+    url: https://github.com/ethz-asl/mav_trajectory_generation.git
+    version: master
+  s_graphs_utils/minkindr:
+    type: git
+    url: https://github.com/ethz-asl/minkindr.git
+    version: master
+  s_graphs_utils/minkindr_ros:
+    type: git
+    url: https://github.com/ethz-asl/minkindr_ros.git
+    version: master
+  s_graphs_utils/nlopt:
+    type: git
+    url: https://github.com/ethz-asl/nlopt.git
+    version: master
+  s_graphs_utils/numpy_eigen:
+    type: git
+    url: https://github.com/ethz-asl/numpy_eigen.git
+    version: master
+  s_graphs_utils/protobuf_catkin:
+    type: git
+    url: https://github.com/ethz-asl/protobuf_catkin.git
+    version: master
+  s_graphs_utils/voxblox:
+    type: git
+    url: https://github.com/ethz-asl/voxblox.git
+    version: master
+  s_graphs_utils/fast_gicp:
+    type: git
+    url: https://github.com/SMRT-AIST/fast_gicp.git
+    version: master
+  s_graphs_utils/ndt_omp:
+    type: git
+    url: https://github.com/koide3/ndt_omp.git
+    version: master
