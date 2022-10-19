@@ -273,7 +273,7 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
           data_association.second = i;
         }
       }
-      if(vert_min_maha_dist < plane_dist_threshold) {
+      if(vert_min_maha_dist < plane_dist_threshold && !x_vert_planes[data_association.second].cloud_seg_map->empty()) {
         float min_segment = std::numeric_limits<float>::max();
         pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
         Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
@@ -310,7 +310,7 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
           data_association.second = i;
         }
       }
-      if(vert_min_maha_dist < plane_dist_threshold) {
+      if(vert_min_maha_dist < plane_dist_threshold && !y_vert_planes[data_association.second].cloud_seg_map->empty()) {
         float min_segment = std::numeric_limits<float>::max();
         pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
         Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
