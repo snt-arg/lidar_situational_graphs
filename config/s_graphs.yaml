@@ -70,8 +70,8 @@ const_stddev_q: 0.1
 var_gain_a: 20.0
 min_stddev_x: 0.1
 max_stddev_x: 5.0
-min_stddev_q: 0.05
-max_stddev_q: 0.2
+min_stddev_q: 0.1
+max_stddev_q: 0.4
 graph_update_interval: 3.0
 map_cloud_update_interval: 3.0
 map_cloud_resolution: 0.05
