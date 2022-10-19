@@ -153,7 +153,8 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(const pcl::Poi
   pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
   int cluster_id = 0;
   for(auto single_cluster : cluster_indices) {
-    std_msgs::ColorRGBA color = rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
+    // std_msgs::ColorRGBA color = rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
+    std_msgs::ColorRGBA color = random_color();
     double r = color.r;
     double g = color.g;
     double b = color.b;
