@@ -190,53 +190,52 @@ The other 2 commands should be executed outside docker. Additionally, the `env` 
     - `/odom` ([nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html))
       - The odometry from the robot.
     - `/filtered_points` ([sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html))
-      - TODO
+      - The data from the Lidar sensor.
 
   - Published Topics
 
     - `/s_graphs/markers` ([visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html))
-      - TODO
-    - `/s_graphs/odom2map` ([geometry_msgs/TransformStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/TransformStamped.html))
-      - TODO
+      - The markers represents the different s_graphs layers.
+    - `/s_graphs/odom2map` ([geometry_msgs/TransformStamped](http://docs.ros.org/en/api/geometry_msgs/html/msg/TransformStamped.html))
+      - Sets where the robot pose is within the map (world).
     - `/s_graphs/odom_pose_corrected` ([geometry_msgs/PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html))
-      - TODO
+      - The pose of the robot once odom2map is applied.
     - `/s_graphs/odom_path_corrected` ([nav_msgs/Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html))
 
-      - TODO
+      - The path of the robot once the odom2map is applied.
 
     - `/s_graphs/map_points` ([sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html))
-      - TODO
+      - The points that represent the first layer of S-Graphs.
     - `/s_graphs/map_planes` (s_graphs/PlanesData)
-      - TODO
+      - Current planes seen by the robot.
     - `/s_graphs/all_map_planes` (s_graphs/PlanesData)
-      - TODO
-    - `/s_graphs/save_map` (s_graphs/SaveMap)
-      - TODO
+      - All the planes that were seen by the robot.
 
 - **room_segmentation_nodelet**
 
   - Subscribed Topics
 
     - `/voxblox_skeletonizer/sparse_graph` ([visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html))
-      - TODO
+      - Represents the free space where the robot can go to. This is also knonw as free-space clusters.
     - `/s_graphs/map_planes` (s_graphs/PlanesData)
-      - TODO
+      - Current planes seen by the robot.
 
   - Published Topics
 
     - `/room_segmentation/room_data` (s_graphs/RoomsData)
-      - TODO
+      - Contains all the necessary information about the rooms in a floor.
 
 - **floor_plane_nodelet**
 
   - Subscribed Topics
 
     - `/s_graphs/all_map_planes` ([visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html))
-      - TODO
+      - All the planes that were seen by the robot.
 
   - Published Topics
 
-    - `/floor_plan/floor_data` (s_graphs/RoomData): TODO
+    - `/floor_plan/floor_data` (s_graphs/RoomData):
+      - Constains all the necessary information about each floor.
 
 ### Services
 
@@ -254,7 +253,6 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 ### Published TFs
 
 - `map2odom`: The transform published between the map frame and the odom frame after the corrections have been applied.
-- `map_to_map_elevated`: The transform published between the map frame and the elevated map frame (also mentioned as the walls in the first picture of this document)
 
 ![Tf Tree](./imgs/Tf-tree.png)
 
