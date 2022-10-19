@@ -162,6 +162,7 @@ geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::Poin
     float size = p2.y - p1.y;
     cluster_center(1) = (size / 2) + p1.y;
   }
+  cluster_center(2) = 0;
 
   Eigen::Vector3d vec, vec_normal, final_pose_vec;
 
