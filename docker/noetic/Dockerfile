@@ -27,7 +27,7 @@ RUN echo "$ssh_prv_key" > /root/.ssh/id_rsa && \
 # - Creating S-Graphs working space
 RUN mkdir -p /root/s_graphs_ws/src
 WORKDIR /root/s_graphs_ws/src
-RUN git clone git@github.com:snt-arg/s_graphs.git && cd ./s_graphs && git checkout feature/s_graphs_2.0
+RUN git clone git@github.com:snt-arg/s_graphs.git
 
 # - Installing S-Graphs dependencies
 WORKDIR /root/s_graphs_ws/src/s_graphs
@@ -39,7 +39,7 @@ RUN rosdep install --from-paths src --ignore-src -r -y
 RUN rosdep update
 
 # - Catkin build
-RUN catkin config --extend /opt/ros/noetic/ && catkin build
+RUN catkin config --extend /opt/ros/noetic/ && catkin build -j10
 # RUN catkin config --install
 
 # - Removing cpp source files from s_graphs
