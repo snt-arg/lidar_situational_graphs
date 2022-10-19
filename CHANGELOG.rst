@@ -2,8 +2,8 @@
 Changelog for package s_graphs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+2.0.0 (2022-10-19)
+------------------
 * Switch to random color in plane visualization
 * Increase floor node height
 * Bug fix room analyzer throwing nan
