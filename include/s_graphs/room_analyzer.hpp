@@ -40,13 +40,13 @@ public:
   void analyze_skeleton_graph(const visualization_msgs::MarkerArray::Ptr& skeleton_graph_msg);
 
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> get_cloud_clusters() {
-    return cloud_clusters_;
+    return cloud_clusters;
   }
   std::vector<std::pair<int, int>> get_connected_graph() {
-    return connected_subgraphs_;
+    return connected_subgraphs;
   }
   visualization_msgs::MarkerArray get_makerarray_clusters() {
-    return connected_clusters_marker_array_;
+    return connected_clusters_marker_array;
   }
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane);
@@ -71,11 +71,12 @@ private:
 private:
   ros::NodeHandle nh;
   std::shared_ptr<PlaneUtils> plane_utils;
+  int vertex_neigh_thres;
 
   std::mutex skeleton_graph_mutex;
-  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters_;
-  std::vector<std::pair<int, int>> connected_subgraphs_;
-  visualization_msgs::MarkerArray connected_clusters_marker_array_;
+  std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> cloud_clusters;
+  std::vector<std::pair<int, int>> connected_subgraphs;
+  visualization_msgs::MarkerArray connected_clusters_marker_array;
 
 private:
   bool compute_diagonal_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const pcl::PointXY min, const pcl::PointXY max, pcl::PointXY& top_right, pcl::PointXY& bottom_right, pcl::PointXY& top_left, pcl::PointXY& bottom_left);

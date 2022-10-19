@@ -4,12 +4,12 @@ FROM ros:noetic
 ARG ssh_prv_key
 ARG ssh_pub_key
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update && apt-get install -y --no-install-recommends libtool \
     wget nano vim build-essential libomp-dev clang lld git\
     ros-noetic-geodesy ros-noetic-pcl-ros ros-noetic-nmea-msgs \
     ros-noetic-rviz ros-noetic-tf-conversions ros-noetic-libg2o \
     python3 python3-pip python3-vcstool git \
-    openssh-server libmysqlclient-dev libtool
+    openssh-server libmysqlclient-dev
 
 RUN pip3 install -U catkin_tools
 
@@ -35,10 +35,15 @@ RUN vcs import --recursive ../ < .rosinstall
 WORKDIR /root/s_graphs_ws
 RUN rosdep install --from-paths src --ignore-src -r -y
 
+# - Updating rosdep
+RUN rosdep update
+
 # - Catkin build
-RUN catkin config --extend /opt/ros/noetic/
-# RUN catkin config --install && catkin build
-RUN catkin build
+RUN catkin config --extend /opt/ros/noetic/ && catkin build
+# RUN catkin config --install
+
+# - Removing cpp source files from s_graphs
+RUN rm src/s_graphs/src/s_graphs/*.cpp && rm -rf src/s_graphs/apps
 
 # Remove SSH keys
 RUN rm -rf /root/.ssh/
