@@ -858,8 +858,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
 
   for(const auto& floor : floors_vec) {
     if(floor.id != -1) {
-      float floor_node_h = 25;
-      float floor_edge_h = 24.5;
+      float floor_node_h = 27;
+      float floor_edge_h = 26.5;
       visualization_msgs::Marker floor_marker;
       floor_marker.pose.orientation.w = 1.0;
       floor_marker.scale.x = 0.5;
