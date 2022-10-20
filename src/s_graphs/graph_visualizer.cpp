@@ -618,6 +618,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
     auto found_planey1 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_y1_id);
     auto found_planey2 = std::find_if(y_plane_snapshot.begin(), y_plane_snapshot.end(), boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_y2_id);
 
+    if((*found_planex1).cloud_seg_map->points.empty() || (*found_planex2).cloud_seg_map->points.empty() || (*found_planey1).cloud_seg_map->points.empty() || (*found_planey2).cloud_seg_map->points.empty()) continue;
+
     float min_dist_x1 = 100;
     for(int p = 0; p < (*found_planex1).cloud_seg_map->points.size(); ++p) {
       geometry_msgs::Point p_tmp;
