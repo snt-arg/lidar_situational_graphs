@@ -149,6 +149,9 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
         ROS_DEBUG_NAMED("xplane association", "matched x vert plane with coeffs %f %f %f %f to mapped x vert plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2),
                         det_plane_map_frame.coeffs()(3), x_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), x_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
                         x_vert_planes[data_association.second].plane_node->estimate().coeffs()(2), x_vert_planes[data_association.second].plane_node->estimate().coeffs()(3));
+        std::cout << "xplane association : matched x vert plane with coeffs " << det_plane_map_frame.coeffs()(0) << " " << det_plane_map_frame.coeffs()(1) << " " << det_plane_map_frame.coeffs()(2) << " " << det_plane_map_frame.coeffs()(3) << "  to mapped x vert plane of coeffs "
+                  << x_vert_planes[data_association.second].plane_node->estimate().coeffs()(0) << " " << x_vert_planes[data_association.second].plane_node->estimate().coeffs()(1) << " " << x_vert_planes[data_association.second].plane_node->estimate().coeffs()(2) << " "
+                  << x_vert_planes[data_association.second].plane_node->estimate().coeffs()(3) << " and Id. : " << x_vert_planes[data_association.second].id << std::endl;
       }
       break;
     }
@@ -186,6 +189,9 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
         ROS_DEBUG_NAMED("yplane association", "matched y vert plane with coeffs %f %f %f %f to mapped y vert plane of coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2),
                         det_plane_map_frame.coeffs()(3), y_vert_planes[data_association.second].plane_node->estimate().coeffs()(0), y_vert_planes[data_association.second].plane_node->estimate().coeffs()(1),
                         y_vert_planes[data_association.second].plane_node->estimate().coeffs()(2), y_vert_planes[data_association.second].plane_node->estimate().coeffs()(3));
+        std::cout << "yplane association : matched y vert plane with coeffs " << det_plane_map_frame.coeffs()(0) << " " << det_plane_map_frame.coeffs()(1) << " " << det_plane_map_frame.coeffs()(2) << " " << det_plane_map_frame.coeffs()(3) << "  to mapped y vert plane of coeffs "
+                  << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(0) << " " << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(1) << " " << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(2) << " "
+                  << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(3) << " and Id. : " << y_vert_planes[data_association.second].id << std::endl;
       }
       break;
     }
@@ -287,8 +293,7 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
         if(!valid_neighbour) {
           data_association.first = -1;
         }
-      } else
-        data_association.first = -1;
+      }
       break;
     }
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
@@ -324,8 +329,7 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
         if(!valid_neighbour) {
           data_association.first = -1;
         }
-      } else
-        data_association.first = -1;
+      }
       break;
     }
     case PlaneUtils::plane_class::HORT_PLANE: {
