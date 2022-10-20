@@ -273,20 +273,24 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
           data_association.second = i;
         }
       }
-      if(vert_min_maha_dist < plane_dist_threshold && !x_vert_planes[data_association.second].cloud_seg_map->empty()) {
-        float min_segment = std::numeric_limits<float>::max();
-        pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
-        Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
-        for(size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
-          PointNormal dst_pt;
-          dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
-          cloud_seg_detected->points.push_back(dst_pt);
-        }
-        bool valid_neighbour = plane_utils->check_point_neighbours(x_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
+      if(vert_min_maha_dist < plane_dist_threshold) {
+        if(!x_vert_planes[data_association.second].cloud_seg_map->empty()) {
+          float min_segment = std::numeric_limits<float>::max();
+          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
+          Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
+          for(size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
+            PointNormal dst_pt;
+            dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
+            cloud_seg_detected->points.push_back(dst_pt);
+          }
+          bool valid_neighbour = plane_utils->check_point_neighbours(x_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
 
-        if(!valid_neighbour) {
-          data_association.first = -1;
+          if(!valid_neighbour) {
+            data_association.first = -1;
+          }
         }
+      } else {
+        data_association.first = -1;
       }
       break;
     }
@@ -309,20 +313,24 @@ std::pair<int, int> PlaneMapper::associate_plane(const int& plane_type, const Ke
           data_association.second = i;
         }
       }
-      if(vert_min_maha_dist < plane_dist_threshold && !y_vert_planes[data_association.second].cloud_seg_map->empty()) {
-        float min_segment = std::numeric_limits<float>::max();
-        pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
-        Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
-        for(size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
-          PointNormal dst_pt;
-          dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
-          cloud_seg_detected->points.push_back(dst_pt);
-        }
-        bool valid_neighbour = plane_utils->check_point_neighbours(y_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
+      if(vert_min_maha_dist < plane_dist_threshold) {
+        if(!y_vert_planes[data_association.second].cloud_seg_map->empty()) {
+          float min_segment = std::numeric_limits<float>::max();
+          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(new pcl::PointCloud<PointNormal>());
+          Eigen::Matrix4f current_keyframe_pose = keyframe->estimate().matrix().cast<float>();
+          for(size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
+            PointNormal dst_pt;
+            dst_pt.getVector4fMap() = current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
+            cloud_seg_detected->points.push_back(dst_pt);
+          }
+          bool valid_neighbour = plane_utils->check_point_neighbours(y_vert_planes[data_association.second].cloud_seg_map, cloud_seg_detected);
 
-        if(!valid_neighbour) {
-          data_association.first = -1;
+          if(!valid_neighbour) {
+            data_association.first = -1;
+          }
         }
+      } else {
+        data_association.first = -1;
       }
       break;
     }
