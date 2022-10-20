@@ -94,6 +94,17 @@ public:
     return;
   }
 
+  void correct_plane_d(int plane_type, Eigen::Vector4d& plane) {
+    if(plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    }
+    return;
+  }
+
+  /* TODO: Function depricated remove it */
   void correct_plane_d(int plane_type, Eigen::Vector4d& plane, double px, double py) {
     if(plane(3) > 0) {
       plane(0) = -1 * plane(0);
@@ -102,6 +113,29 @@ public:
       plane(3) = -1 * plane(3);
     }
     return;
+  }
+
+  Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1, const Eigen::Vector4d& x_plane2, const Eigen::Vector4d& y_plane1, const Eigen::Vector4d& y_plane2) {
+    Eigen::Vector2d center;
+    Eigen::Vector3d vec_x, vec_y;
+
+    if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
+      vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
+    } else {
+      vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
+    }
+
+    if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
+      vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
+    } else {
+      vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
+    }
+
+    Eigen::Vector3d final_vec = vec_x + vec_y;
+    center(0) = final_vec(0);
+    center(1) = final_vec(1);
+
+    return center;
   }
 
   float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2, g2o::VertexSE3* keyframe_node) {
