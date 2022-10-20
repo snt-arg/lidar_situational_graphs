@@ -119,7 +119,7 @@ roscd s_graphs && rviz -d rviz/s_graphs.rviz
 ```
 
 ```bash
-roslaunch s_graphs s_graphs.launch use_free_space_graph:=true 2>/dev/null
+roslaunch s_graphs s_graphs.launch env:=real use_free_space_graph:=true 2>/dev/null
 ```
 
 ```bash
@@ -133,7 +133,7 @@ roscd s_graphs && rviz -d rviz/s_graphs.rviz
 ```
 
 ```bash
-roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null
+roslaunch s_graphs s_graphs.launch env:=virtual use_free_space_graph:=true 2>/dev/null
 ```
 
 ```bash
