@@ -76,6 +76,7 @@ public:
    * @return registered node
    */
   g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs);
+  g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs, const int id);
 
   /**
    * @brief remove a plane node from the graph

@@ -159,6 +159,16 @@ g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs)
   return vertex;
 }
 
+g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs, const int id) {
+  g2o::VertexPlane* vertex(new g2o::VertexPlane());
+  vertex->setId(id);
+  vertex->setEstimate(plane_coeffs);
+  graph->addVertex(vertex);
+  this->add_vertices();
+
+  return vertex;
+}
+
 bool GraphSLAM::remove_plane_node(g2o::VertexPlane* plane_vertex) {
   bool ack = graph->removeVertex(plane_vertex);
 
