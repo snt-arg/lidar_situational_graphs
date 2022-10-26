@@ -5,3 +5,4 @@ imgui.ini
 
 # - Clangd
 compile_commands.json
+.cache
