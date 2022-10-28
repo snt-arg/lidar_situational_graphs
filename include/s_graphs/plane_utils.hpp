@@ -107,17 +107,6 @@ public:
     return;
   }
 
-  /* TODO: Function depricated remove it */
-  void correct_plane_d(int plane_type, Eigen::Vector4d& plane, double px, double py) {
-    if(plane(3) > 0) {
-      plane(0) = -1 * plane(0);
-      plane(1) = -1 * plane(1);
-      plane(2) = -1 * plane(2);
-      plane(3) = -1 * plane(3);
-    }
-    return;
-  }
-
   Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1, const Eigen::Vector4d& x_plane2, const Eigen::Vector4d& y_plane1, const Eigen::Vector4d& y_plane2) {
     Eigen::Vector2d center;
     Eigen::Vector3d vec_x, vec_y;

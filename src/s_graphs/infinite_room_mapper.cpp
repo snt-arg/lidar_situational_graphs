@@ -277,8 +277,8 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       Eigen::Vector4d found_mapped_plane1_coeffs, found_mapped_plane2_coeffs;
       found_mapped_plane1_coeffs = (*found_mapped_plane1).plane_node->estimate().coeffs();
       found_mapped_plane2_coeffs = (*found_mapped_plane2).plane_node->estimate().coeffs();
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs, (*found_mapped_plane1).cloud_seg_map->points.back().x, (*found_mapped_plane1).cloud_seg_map->points.back().y);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane2_coeffs, (*found_mapped_plane2).cloud_seg_map->points.back().x, (*found_mapped_plane2).cloud_seg_map->points.back().y);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane2_coeffs);
 
       if(use_tri_edge) {
         std::set<g2o::HyperGraph::Edge*> plane1_edges = (*found_plane1).plane_node->edges();
@@ -417,8 +417,8 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       Eigen::Vector4d found_mapped_plane1_coeffs, found_mapped_plane2_coeffs;
       found_mapped_plane1_coeffs = (*found_mapped_plane1).plane_node->estimate().coeffs();
       found_mapped_plane2_coeffs = (*found_mapped_plane2).plane_node->estimate().coeffs();
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs, (*found_mapped_plane1).cloud_seg_map->points.back().x, (*found_mapped_plane1).cloud_seg_map->points.back().y);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane2_coeffs, (*found_mapped_plane2).cloud_seg_map->points.back().x, (*found_mapped_plane2).cloud_seg_map->points.back().y);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane2_coeffs);
 
       if(use_tri_edge) {
         std::set<g2o::HyperGraph::Edge*> plane1_edges = (*found_plane1).plane_node->edges();
