@@ -218,7 +218,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
     return;
   }
 
-  // Eigen::Vector2d room_pose = compute_room_pose(x_room_pair_vec, y_room_pair_vec);
+  // Eigen::Vector2d room_pose = plane_utils->compute_room_pose(x_room_pair_vec, y_room_pair_vec);
   Eigen::Vector2d room_pose(x_room_pair_vec[0].plane_centroid(0), x_room_pair_vec[0].plane_centroid(1));
   room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane2));
   if((rooms_vec.empty() || room_data_association.first == -1)) {
@@ -438,32 +438,6 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
   // std::cout << "mapped yplane1 coeffs : " << (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl;
   // std::cout << "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl;
   // std::cout << "mapped yplane2 coeffs : " << (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
-}
-
-/*TODO:HB Move this to plane_utils.hpp */
-Eigen::Vector2d FiniteRoomMapper::compute_room_pose(const std::vector<plane_data_list>& x_room_pair_vec, const std::vector<plane_data_list>& y_room_pair_vec) {
-  Eigen::Vector2d room_pose(0, 0);
-  Eigen::Vector3d vec_x, vec_y;
-  Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane_unflipped.coeffs(), x_plane2 = x_room_pair_vec[1].plane_unflipped.coeffs();
-  Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane_unflipped.coeffs(), y_plane2 = y_room_pair_vec[1].plane_unflipped.coeffs();
-
-  if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
-    vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
-  } else {
-    vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
-  }
-
-  if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
-    vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
-  } else {
-    vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
-  }
-
-  Eigen::Vector3d final_vec = vec_x + vec_y;
-  room_pose(0) = final_vec(0);
-  room_pose(1) = final_vec(1);
-
-  return room_pose;
 }
 
 std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& room_pose, const std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {

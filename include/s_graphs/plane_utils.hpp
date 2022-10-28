@@ -269,6 +269,31 @@ public:
     float dot_product = plane1.nx * plane2.nx + plane1.ny * plane2.ny + plane1.nz * plane2.nz;
     return dot_product;
   }
+
+  Eigen::Vector2d compute_room_pose(const std::vector<plane_data_list>& x_room_pair_vec, const std::vector<plane_data_list>& y_room_pair_vec) {
+    Eigen::Vector2d room_pose(0, 0);
+    Eigen::Vector3d vec_x, vec_y;
+    Eigen::Vector4d x_plane1 = x_room_pair_vec[0].plane_unflipped.coeffs(), x_plane2 = x_room_pair_vec[1].plane_unflipped.coeffs();
+    Eigen::Vector4d y_plane1 = y_room_pair_vec[0].plane_unflipped.coeffs(), y_plane2 = y_room_pair_vec[1].plane_unflipped.coeffs();
+
+    if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
+      vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
+    } else {
+      vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
+    }
+
+    if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
+      vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
+    } else {
+      vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
+    }
+
+    Eigen::Vector3d final_vec = vec_x + vec_y;
+    room_pose(0) = final_vec(0);
+    room_pose(1) = final_vec(1);
+
+    return room_pose;
+  }
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP
