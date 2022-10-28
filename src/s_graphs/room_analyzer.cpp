@@ -109,38 +109,6 @@ geometry_msgs::Point RoomAnalyzer::get_room_length(const pcl::PointXY& p1, const
   return length;
 }
 
-/*TODO:HB Move this to plane_utils.hpp */
-geometry_msgs::Point RoomAnalyzer::get_room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
-  geometry_msgs::Point center;
-  Eigen::Vector3d vec_x, vec_y;
-  Eigen::Vector3d x_plane1_eigen, x_plane2_eigen;
-  Eigen::Vector3d y_plane1_eigen, y_plane2_eigen;
-
-  x_plane1_eigen << x_plane1.nx, x_plane1.ny, x_plane1.nz;
-  x_plane2_eigen << x_plane2.nx, x_plane2.ny, x_plane2.nz;
-
-  y_plane1_eigen << y_plane1.nx, y_plane1.ny, y_plane1.nz;
-  y_plane2_eigen << y_plane2.nx, y_plane2.ny, y_plane2.nz;
-
-  if(fabs(x_plane1.d) > fabs(x_plane2.d)) {
-    vec_x = (0.5 * (fabs(x_plane1.d) * x_plane1_eigen - fabs(x_plane2.d) * x_plane2_eigen)) + fabs(x_plane2.d) * x_plane2_eigen;
-  } else {
-    vec_x = (0.5 * (fabs(x_plane2.d) * x_plane2_eigen - fabs(x_plane1.d) * x_plane1_eigen)) + fabs(x_plane1.d) * x_plane1_eigen;
-  }
-
-  if(fabs(y_plane1.d) > fabs(y_plane2.d)) {
-    vec_y = (0.5 * (fabs(y_plane1.d) * y_plane1_eigen - fabs(y_plane2.d) * y_plane2_eigen)) + fabs(y_plane2.d) * y_plane2_eigen;
-  } else {
-    vec_y = (0.5 * (fabs(y_plane2.d) * y_plane2_eigen - fabs(y_plane1.d) * y_plane1_eigen)) + fabs(y_plane1.d) * y_plane1_eigen;
-  }
-
-  Eigen::Vector3d final_vec = vec_x + vec_y;
-  center.x = final_vec(0);
-  center.y = final_vec(1);
-
-  return center;
-}
-
 geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2, Eigen::Vector2d& cluster_center) {
   geometry_msgs::Point corridor_center;
   Eigen::Vector4d plane1_eigen, plane2_eigen;
@@ -347,7 +315,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
         // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
-      geometry_msgs::Point room_center = get_room_center(x_plane1, x_plane2, y_plane1, y_plane2);
+      geometry_msgs::Point room_center = plane_utils->room_center(x_plane1, x_plane2, y_plane1, y_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         // std::cout << "returning as the room center is outside the cluster" << std::endl;
