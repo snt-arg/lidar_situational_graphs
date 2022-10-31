@@ -9,8 +9,8 @@
   <!-- Inputs -->
   <!-- <arg name="imu_data_topic" default="/platform/imu/data" />
   <arg name="point_cloud_topic" default="/platform/velodyne_points" /> -->
-  <arg name="imu_data_topic" default="os/cloud_node/imu" />
-  <arg name="point_cloud_topic" default="os_cloud_node/points" />
+  <arg name="imu_data_topic" default="/os_cloud_node/imu" />
+  <arg name="point_cloud_topic" default="/os_cloud_node/points" />
 
   <!-- Outputs -->
   <arg name="slam_odometry_topic" default="/s_graphs/odom_to_map" />
@@ -94,7 +94,7 @@
   </node>
 
   <node pkg="tf" type="static_transform_publisher" name="body_to_body_elevated" args="0 0 10.0 0 0 0 body body_elevated 100" />
-  <node pkg="tf" type="static_transform_publisher" name="static_transform" args="0 0 0 0 0 0 base_footprint  100" />
+  <node pkg="tf" type="static_transform_publisher" name="static_transform" args="0 0 0 0 0 0 base_footprint os_sensor 100" />
 
   <include if='$(arg use_free_space_graph)' file="$(find voxblox_skeleton)/launch/skeletonize_map_realtime.launch" />
 
