@@ -56,7 +56,6 @@ public:
   bool get_centroid_location(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud, const geometry_msgs::Point& room_center);
 
   geometry_msgs::Point get_room_length(const pcl::PointXY& p1, const pcl::PointXY& p2);
-  geometry_msgs::Point get_room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2);
   geometry_msgs::Point get_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2, Eigen::Vector2d& cluster_center);
   bool perform_room_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map);
   void downsample_cloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull);
@@ -79,7 +78,6 @@ private:
   visualization_msgs::MarkerArray connected_clusters_marker_array;
 
 private:
-  bool compute_diagonal_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const pcl::PointXY min, const pcl::PointXY max, pcl::PointXY& top_right, pcl::PointXY& bottom_right, pcl::PointXY& top_left, pcl::PointXY& bottom_left);
   std::vector<float> find_plane_points(const pcl::PointXY& start_point, const pcl::PointXY& end_point, const s_graphs::PlaneData& plane);
   int find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_hull);
   pcl::PointXYZRGB compute_centroid(const pcl::PointXYZRGB& p1, const pcl::PointXYZRGB& p2);

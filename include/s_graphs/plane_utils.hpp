@@ -13,6 +13,9 @@
 #include <pcl/common/common.h>
 #include <pcl/common/angles.h>
 #include <pcl/common/distances.h>
+
+#include <geometry_msgs/Point.h>
+
 namespace s_graphs {
 
 struct plane_data_list {
@@ -104,17 +107,6 @@ public:
     return;
   }
 
-  /* TODO: Function depricated remove it */
-  void correct_plane_d(int plane_type, Eigen::Vector4d& plane, double px, double py) {
-    if(plane(3) > 0) {
-      plane(0) = -1 * plane(0);
-      plane(1) = -1 * plane(1);
-      plane(2) = -1 * plane(2);
-      plane(3) = -1 * plane(3);
-    }
-    return;
-  }
-
   Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1, const Eigen::Vector4d& x_plane2, const Eigen::Vector4d& y_plane1, const Eigen::Vector4d& y_plane2) {
     Eigen::Vector2d center;
     Eigen::Vector3d vec_x, vec_y;
@@ -134,6 +126,37 @@ public:
     Eigen::Vector3d final_vec = vec_x + vec_y;
     center(0) = final_vec(0);
     center(1) = final_vec(1);
+
+    return center;
+  }
+
+  geometry_msgs::Point room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
+    geometry_msgs::Point center;
+    Eigen::Vector3d vec_x, vec_y;
+    Eigen::Vector3d x_plane1_eigen, x_plane2_eigen;
+    Eigen::Vector3d y_plane1_eigen, y_plane2_eigen;
+
+    x_plane1_eigen << x_plane1.nx, x_plane1.ny, x_plane1.nz;
+    x_plane2_eigen << x_plane2.nx, x_plane2.ny, x_plane2.nz;
+
+    y_plane1_eigen << y_plane1.nx, y_plane1.ny, y_plane1.nz;
+    y_plane2_eigen << y_plane2.nx, y_plane2.ny, y_plane2.nz;
+
+    if(fabs(x_plane1.d) > fabs(x_plane2.d)) {
+      vec_x = (0.5 * (fabs(x_plane1.d) * x_plane1_eigen - fabs(x_plane2.d) * x_plane2_eigen)) + fabs(x_plane2.d) * x_plane2_eigen;
+    } else {
+      vec_x = (0.5 * (fabs(x_plane2.d) * x_plane2_eigen - fabs(x_plane1.d) * x_plane1_eigen)) + fabs(x_plane1.d) * x_plane1_eigen;
+    }
+
+    if(fabs(y_plane1.d) > fabs(y_plane2.d)) {
+      vec_y = (0.5 * (fabs(y_plane1.d) * y_plane1_eigen - fabs(y_plane2.d) * y_plane2_eigen)) + fabs(y_plane2.d) * y_plane2_eigen;
+    } else {
+      vec_y = (0.5 * (fabs(y_plane2.d) * y_plane2_eigen - fabs(y_plane1.d) * y_plane1_eigen)) + fabs(y_plane1.d) * y_plane1_eigen;
+    }
+
+    Eigen::Vector3d final_vec = vec_x + vec_y;
+    center.x = final_vec(0);
+    center.y = final_vec(1);
 
     return center;
   }
