@@ -218,7 +218,6 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
     return;
   }
 
-  // Eigen::Vector2d room_pose = plane_utils->compute_room_pose(x_room_pair_vec, y_room_pair_vec);
   Eigen::Vector2d room_pose(x_room_pair_vec[0].plane_centroid(0), x_room_pair_vec[0].plane_centroid(1));
   room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane2));
   if((rooms_vec.empty() || room_data_association.first == -1)) {
