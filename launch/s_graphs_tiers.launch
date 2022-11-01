@@ -4,13 +4,12 @@
   <arg name="use_free_space_graph" default="false" doc="Define whether to use free space cluster graph" />
   <arg name="wait_odom_to_map_tf" default="false" />
   <arg name="april_tag_enabled" default="false" />
+  <arg name="compute_odom" default="false" />
   <param name="/use_sim_time" value="true" />
 
   <!-- Inputs -->
-  <!-- <arg name="imu_data_topic" default="/platform/imu/data" />
-  <arg name="point_cloud_topic" default="/platform/velodyne_points" /> -->
-  <arg name="imu_data_topic" default="/os_cloud_node/imu" />
-  <arg name="point_cloud_topic" default="/os_cloud_node/points" />
+  <arg name="imu_data_topic" default="/platform/imu/data" />
+  <arg name="point_cloud_topic" default="/velodyne_points" />
 
   <!-- Outputs -->
   <arg name="slam_odometry_topic" default="/s_graphs/odom_to_map" />
@@ -38,7 +37,7 @@
 
   <!-- SCAN MATCHING -->
   <node pkg="nodelet" type="nodelet" name="hdl_scan_matching_nodelet_manager" args="manager" output="screen" />
-  <node if="$(eval arg('env') == 'virtual')" pkg="nodelet" type="nodelet" name="hdl_scan_matcher" args="load s_graphs/ScanMatchingOdometryNodelet hdl_scan_matching_nodelet_manager">
+  <node if="$(arg compute_odom)" pkg="nodelet" type="nodelet" name="hdl_scan_matcher" args="load s_graphs/ScanMatchingOdometryNodelet hdl_scan_matching_nodelet_manager">
     <rosparam command="load" file="$(find s_graphs)/config/hdl_scan_matching.yaml" />
     <param name="publish_tf" value="true" />
     <!-- Inputs -->
@@ -76,8 +75,8 @@
     <param name="min_horizontal_inliers" value="$(arg min_horizontal_inliers)" />
     <param name="min_vertical_inliers" value="$(arg min_vertical_inliers)" />
     <!-- Inputs -->
-    <remap if="$(eval arg('env') == 'real')" from="/odom" to="/platform/odometry" />
-    <remap if="$(eval arg('env') == 'virtual')" from="/odom" to="/hdl_scan_matcher/odometry" />
+    <remap unless="$(arg compute_odom)" from="/odom" to="/platform/odometry"/>
+    <remap if="$(arg compute_odom)" from="/odom" to="/hdl_scan_matcher/odometry" />
     <remap from="/filtered_points" to="/hdl_prefilter/filtered_point_cloud" />
     <remap from="/odom2map/initial_pose" to="/odom_to_map/initial_pose" />
     <!-- Outputs -->
@@ -94,7 +93,7 @@
   </node>
 
   <node pkg="tf" type="static_transform_publisher" name="body_to_body_elevated" args="0 0 10.0 0 0 0 body body_elevated 100" />
-  <node pkg="tf" type="static_transform_publisher" name="static_transform" args="0 0 0 0 0 0 base_footprint os_sensor 100" />
+  <node pkg="tf" type="static_transform_publisher" name="static_transform" args="0 0 0 0 0 0 body velodyne 100" />
 
   <include if='$(arg use_free_space_graph)' file="$(find voxblox_skeleton)/launch/skeletonize_map_realtime.launch" />
 

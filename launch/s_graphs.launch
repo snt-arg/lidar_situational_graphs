@@ -4,6 +4,7 @@
   <arg name="use_free_space_graph" default="false" doc="Define whether to use free space cluster graph" />
   <arg name="wait_odom_to_map_tf" default="false" />
   <arg name="april_tag_enabled" default="false" />
+  <arg name="compute_odom" default="false" />
   <param name="/use_sim_time" value="true" />
 
   <!-- Inputs -->
@@ -36,7 +37,7 @@
 
   <!-- SCAN MATCHING -->
   <node pkg="nodelet" type="nodelet" name="hdl_scan_matching_nodelet_manager" args="manager" output="screen" />
-  <node if="$(eval arg('env') == 'virtual')" pkg="nodelet" type="nodelet" name="hdl_scan_matcher" args="load s_graphs/ScanMatchingOdometryNodelet hdl_scan_matching_nodelet_manager">
+  <node if="$(arg compute_odom)" pkg="nodelet" type="nodelet" name="hdl_scan_matcher" args="load s_graphs/ScanMatchingOdometryNodelet hdl_scan_matching_nodelet_manager">
     <rosparam command="load" file="$(find s_graphs)/config/hdl_scan_matching.yaml" />
     <param name="publish_tf" value="true" />
     <!-- Inputs -->
@@ -74,8 +75,8 @@
     <param name="min_horizontal_inliers" value="$(arg min_horizontal_inliers)" />
     <param name="min_vertical_inliers" value="$(arg min_vertical_inliers)" />
     <!-- Inputs -->
-    <remap if="$(eval arg('env') == 'real')" from="/odom" to="/platform/odometry" />
-    <remap if="$(eval arg('env') == 'virtual')" from="/odom" to="/hdl_scan_matcher/odometry" />
+    <remap unless="$(arg compute_odom)" from="/odom" to="/platform/odometry"/>
+    <remap if="$(arg compute_odom)" from="/odom" to="/hdl_scan_matcher/odometry" />
     <remap from="/filtered_points" to="/hdl_prefilter/filtered_point_cloud" />
     <remap from="/odom2map/initial_pose" to="/odom_to_map/initial_pose" />
     <!-- Outputs -->
