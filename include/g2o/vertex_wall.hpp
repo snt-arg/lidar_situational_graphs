@@ -59,7 +59,7 @@ public:
   }
 
   virtual int estimateDimension() const {
-    return 2;
+    return 3;
   }
 
   virtual bool setMinimalEstimateDataImpl(const number_t* est) {
@@ -74,7 +74,7 @@ public:
   }
 
   virtual int minimalEstimateDimension() const {
-    return 2;
+    return 3;
   }
 
   virtual void oplusImpl(const number_t* update) {
