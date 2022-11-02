@@ -221,6 +221,16 @@ void GraphSLAM::update_floor_node(g2o::VertexRoomXYLB* floor_node, const Eigen::
   return;
 }
 
+g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center) {
+  g2o::VertexWallXYZ* vertex(new g2o::g2o::VertexWallXYZ());
+  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setEstimate(wall_center);
+  graph->addVertex(vertex);
+  this->add_vertices();
+
+  return vertex;
+}
+
 g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1, g2o::VertexSE3* v2, const Eigen::Isometry3d& relative_pose, const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3* edge(new g2o::EdgeSE3());
   edge->setMeasurement(relative_pose);
