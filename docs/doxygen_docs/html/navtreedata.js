@@ -23,6 +23,31 @@ for the JavaScript code in this file
 var NAVTREE =
 [
   [ "S-Graphs", "index.html", [
+    [ "Table of contents", "index.html#autotoc_md1", null ],
+    [ "Published Papers", "index.html#autotoc_md2", null ],
+    [ "About S-Graphs", "index.html#autotoc_md3", [
+      [ "Architecture", "index.html#autotoc_md4", null ]
+    ] ],
+    [ "Installation", "index.html#autotoc_md5", [
+      [ "Automated Installation", "index.html#autotoc_md6", null ],
+      [ "Manual Installation", "index.html#autotoc_md7", null ]
+    ] ],
+    [ "Example on Datasets", "index.html#autotoc_md8", [
+      [ "Real Dataset", "index.html#autotoc_md9", null ],
+      [ "Virtual Dataset", "index.html#autotoc_md10", null ]
+    ] ],
+    [ "Using Docker", "index.html#autotoc_md11", [
+      [ "Running Datasets using docker", "index.html#autotoc_md12", null ]
+    ] ],
+    [ "ROS Related", "index.html#autotoc_md13", [
+      [ "Nodelets", "index.html#autotoc_md14", null ],
+      [ "Services", "index.html#autotoc_md15", null ],
+      [ "Parameters", "index.html#autotoc_md16", null ],
+      [ "Published TFs", "index.html#autotoc_md17", null ]
+    ] ],
+    [ "Instructions To Use S-Graphs", "index.html#autotoc_md18", null ],
+    [ "License", "index.html#autotoc_md19", null ],
+    [ "Maintainers", "index.html#autotoc_md20", null ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -31,11 +56,11 @@ var NAVTREE =
         [ "Typedefs", "namespacemembers_type.html", null ]
       ] ]
     ] ],
-    [ "Classes", "annotated.html", [
-      [ "Class List", "annotated.html", "annotated_dup" ],
-      [ "Class Index", "classes.html", null ],
+    [ "Data Structures", "annotated.html", [
+      [ "Data Structures", "annotated.html", "annotated_dup" ],
+      [ "Data Structure Index", "classes.html", null ],
       [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
-      [ "Class Members", "functions.html", [
+      [ "Data Fields", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
         [ "Functions", "functions_func.html", "functions_func" ],
         [ "Variables", "functions_vars.html", null ],
@@ -54,7 +79,7 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "classs__graphs_1_1GraphSLAM.html#ab02b656cd4e63edacc8b29b17c502be5",
-"loop__detector_8hpp_source.html"
+"index.html#autotoc_md18"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

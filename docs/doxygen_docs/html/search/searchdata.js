@@ -8,7 +8,8 @@ var indexSectionsWithContent =
   5: "acdefghiklmnoprstuvwxy",
   6: "ap",
   7: "p",
-  8: "hxy"
+  8: "hxy",
+  9: "s"
 };
 
 var indexSectionNames =
@@ -21,19 +22,21 @@ var indexSectionNames =
   5: "variables",
   6: "typedefs",
   7: "enums",
-  8: "enumvalues"
+  8: "enumvalues",
+  9: "pages"
 };
 
 var indexSectionLabels =
 {
   0: "All",
-  1: "Classes",
+  1: "Data Structures",
   2: "Namespaces",
   3: "Files",
   4: "Functions",
   5: "Variables",
   6: "Typedefs",
   7: "Enumerations",
-  8: "Enumerator"
+  8: "Enumerator",
+  9: "Pages"
 };
 
