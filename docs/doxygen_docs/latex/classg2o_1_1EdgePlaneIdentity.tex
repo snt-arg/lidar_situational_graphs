@@ -1,0 +1,203 @@
+\hypertarget{classg2o_1_1EdgePlaneIdentity}{}\doxysection{g2o\+::Edge\+Plane\+Identity Class Reference}
+\label{classg2o_1_1EdgePlaneIdentity}\index{g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}}
+
+
+A modified version of g2o\+::\+Edge\+Plane. This class takes care of flipped plane normals.  
+
+
+
+
+{\ttfamily \#include $<$edge\+\_\+plane\+\_\+identity.\+hpp$>$}
+
+
+
+Inheritance diagram for g2o\+::Edge\+Plane\+Identity\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=244pt]{classg2o_1_1EdgePlaneIdentity__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for g2o\+::Edge\+Plane\+Identity\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=244pt]{classg2o_1_1EdgePlaneIdentity__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity_a2a7c625b13115122441209b57625faad}{Edge\+Plane\+Identity}} ()
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity_a74f2e91198a5cab407702eff1981458b}{compute\+Error}} ()
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity_a8687710e9da08523281afbc397e1e334}{read}} (std\+::istream \&is) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity_a90b67990fb1a7e9cb9baf9baa7d07d4b}{write}} (std\+::ostream \&os) const override
+\item 
+virtual void \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity_a3a5ff1f97e22380f718ea86bc23d3774}{set\+Measurement}} (const Eigen\+::\+Vector4d \&m) override
+\item 
+virtual int \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity_a0cca6665dbdee071b949c800c74023d6}{measurement\+Dimension}} () const override
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+A modified version of g2o\+::\+Edge\+Plane. This class takes care of flipped plane normals. 
+
+
+
+Definition at line 40 of file edge\+\_\+plane\+\_\+identity.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgePlaneIdentity_a2a7c625b13115122441209b57625faad}\label{classg2o_1_1EdgePlaneIdentity_a2a7c625b13115122441209b57625faad}} 
+\index{g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}!EdgePlaneIdentity@{EdgePlaneIdentity}}
+\index{EdgePlaneIdentity@{EdgePlaneIdentity}!g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}}
+\doxysubsubsection{\texorpdfstring{EdgePlaneIdentity()}{EdgePlaneIdentity()}}
+{\footnotesize\ttfamily E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW g2o\+::\+Edge\+Plane\+Identity\+::\+Edge\+Plane\+Identity (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 43 of file edge\+\_\+plane\+\_\+identity.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{43                       : BaseBinaryEdge<4, Eigen::Vector4d, VertexPlane, VertexPlane>() \{}
+\DoxyCodeLine{44     \_information.setIdentity();}
+\DoxyCodeLine{45     \_error.setZero();}
+\DoxyCodeLine{46   \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgePlaneIdentity_a74f2e91198a5cab407702eff1981458b}\label{classg2o_1_1EdgePlaneIdentity_a74f2e91198a5cab407702eff1981458b}} 
+\index{g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}!computeError@{computeError}}
+\index{computeError@{computeError}!g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}}
+\doxysubsubsection{\texorpdfstring{computeError()}{computeError()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+Plane\+Identity\+::compute\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 47 of file edge\+\_\+plane\+\_\+identity.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{47                       \{}
+\DoxyCodeLine{48     \textcolor{keyword}{const} VertexPlane* v1 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[0]);}
+\DoxyCodeLine{49     \textcolor{keyword}{const} VertexPlane* v2 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[1]);}
+\DoxyCodeLine{50 }
+\DoxyCodeLine{51     Eigen::Vector4d p1 = v1-\/>estimate().toVector();}
+\DoxyCodeLine{52     Eigen::Vector4d p2 = v2-\/>estimate().toVector();}
+\DoxyCodeLine{53 }
+\DoxyCodeLine{54     \textcolor{keywordflow}{if}(p1.dot(p2) < 0.0) \{}
+\DoxyCodeLine{55       p2 = -\/p2;}
+\DoxyCodeLine{56     \}}
+\DoxyCodeLine{57 }
+\DoxyCodeLine{58     \_error = (p2 -\/ p1) -\/ \_measurement;}
+\DoxyCodeLine{59   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlaneIdentity_a0cca6665dbdee071b949c800c74023d6}\label{classg2o_1_1EdgePlaneIdentity_a0cca6665dbdee071b949c800c74023d6}} 
+\index{g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}!measurementDimension@{measurementDimension}}
+\index{measurementDimension@{measurementDimension}!g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}}
+\doxysubsubsection{\texorpdfstring{measurementDimension()}{measurementDimension()}}
+{\footnotesize\ttfamily virtual int g2o\+::\+Edge\+Plane\+Identity\+::measurement\+Dimension (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 96 of file edge\+\_\+plane\+\_\+identity.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{96                                                     \{}
+\DoxyCodeLine{97     \textcolor{keywordflow}{return} 4;}
+\DoxyCodeLine{98   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlaneIdentity_a8687710e9da08523281afbc397e1e334}\label{classg2o_1_1EdgePlaneIdentity_a8687710e9da08523281afbc397e1e334}} 
+\index{g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}!read@{read}}
+\index{read@{read}!g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Plane\+Identity\+::read (\begin{DoxyParamCaption}\item[{std\+::istream \&}]{is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 60 of file edge\+\_\+plane\+\_\+identity.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{60                                              \{}
+\DoxyCodeLine{61     Eigen::Vector4d v;}
+\DoxyCodeLine{62     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 4; ++i) \{}
+\DoxyCodeLine{63       is >> v[i];}
+\DoxyCodeLine{64     \}}
+\DoxyCodeLine{65 }
+\DoxyCodeLine{66     \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity_a3a5ff1f97e22380f718ea86bc23d3774}{setMeasurement}}(v);}
+\DoxyCodeLine{67     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{68       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{69         is >> information()(i, j);}
+\DoxyCodeLine{70         \textcolor{keywordflow}{if}(i != j) \{}
+\DoxyCodeLine{71           information()(j, i) = information()(i, j);}
+\DoxyCodeLine{72         \}}
+\DoxyCodeLine{73       \}}
+\DoxyCodeLine{74     \}}
+\DoxyCodeLine{75 }
+\DoxyCodeLine{76     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{77   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlaneIdentity_a3a5ff1f97e22380f718ea86bc23d3774}\label{classg2o_1_1EdgePlaneIdentity_a3a5ff1f97e22380f718ea86bc23d3774}} 
+\index{g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}!setMeasurement@{setMeasurement}}
+\index{setMeasurement@{setMeasurement}!g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}}
+\doxysubsubsection{\texorpdfstring{setMeasurement()}{setMeasurement()}}
+{\footnotesize\ttfamily virtual void g2o\+::\+Edge\+Plane\+Identity\+::set\+Measurement (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector4d \&}]{m }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 92 of file edge\+\_\+plane\+\_\+identity.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{92                                                                \{}
+\DoxyCodeLine{93     \_measurement = m;}
+\DoxyCodeLine{94   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlaneIdentity_a90b67990fb1a7e9cb9baf9baa7d07d4b}\label{classg2o_1_1EdgePlaneIdentity_a90b67990fb1a7e9cb9baf9baa7d07d4b}} 
+\index{g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}!write@{write}}
+\index{write@{write}!g2o::EdgePlaneIdentity@{g2o::EdgePlaneIdentity}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Plane\+Identity\+::write (\begin{DoxyParamCaption}\item[{std\+::ostream \&}]{os }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 79 of file edge\+\_\+plane\+\_\+identity.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{79                                                     \{}
+\DoxyCodeLine{80     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 4; ++i) \{}
+\DoxyCodeLine{81       os << \_measurement[i] << \textcolor{stringliteral}{" "};}
+\DoxyCodeLine{82     \}}
+\DoxyCodeLine{83 }
+\DoxyCodeLine{84     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{85       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{86         os << \textcolor{stringliteral}{" "} << information()(i, j);}
+\DoxyCodeLine{87       \};}
+\DoxyCodeLine{88     \}}
+\DoxyCodeLine{89     \textcolor{keywordflow}{return} os.good();}
+\DoxyCodeLine{90   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/g2o/\mbox{\hyperlink{edge__plane__identity_8hpp}{edge\+\_\+plane\+\_\+identity.\+hpp}}\end{DoxyCompactItemize}

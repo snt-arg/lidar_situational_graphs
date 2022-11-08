@@ -1,0 +1,99 @@
+\hypertarget{classs__graphs_1_1NmeaSentenceParser}{}\doxysection{s\+\_\+graphs\+::Nmea\+Sentence\+Parser Class Reference}
+\label{classs__graphs_1_1NmeaSentenceParser}\index{s\_graphs::NmeaSentenceParser@{s\_graphs::NmeaSentenceParser}}
+
+
+{\ttfamily \#include $<$nmea\+\_\+sentence\+\_\+parser.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classs__graphs_1_1NmeaSentenceParser_a5fc4e4e2d3b226701d3205f60f69de4a}{Nmea\+Sentence\+Parser}} ()
+\item 
+\mbox{\hyperlink{classs__graphs_1_1NmeaSentenceParser_a0fd32e143fb777b0a71c997a7f136ae1}{$\sim$\+Nmea\+Sentence\+Parser}} ()
+\item 
+\mbox{\hyperlink{structs__graphs_1_1GPRMC}{G\+P\+R\+MC}} \mbox{\hyperlink{classs__graphs_1_1NmeaSentenceParser_a98827154dc37afb4044852d0745c4559}{parse}} (const std\+::string \&sentence) const
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 77 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1NmeaSentenceParser_a5fc4e4e2d3b226701d3205f60f69de4a}\label{classs__graphs_1_1NmeaSentenceParser_a5fc4e4e2d3b226701d3205f60f69de4a}} 
+\index{s\_graphs::NmeaSentenceParser@{s\_graphs::NmeaSentenceParser}!NmeaSentenceParser@{NmeaSentenceParser}}
+\index{NmeaSentenceParser@{NmeaSentenceParser}!s\_graphs::NmeaSentenceParser@{s\_graphs::NmeaSentenceParser}}
+\doxysubsubsection{\texorpdfstring{NmeaSentenceParser()}{NmeaSentenceParser()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Nmea\+Sentence\+Parser\+::\+Nmea\+Sentence\+Parser (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 79 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{79 \{\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1NmeaSentenceParser_a0fd32e143fb777b0a71c997a7f136ae1}\label{classs__graphs_1_1NmeaSentenceParser_a0fd32e143fb777b0a71c997a7f136ae1}} 
+\index{s\_graphs::NmeaSentenceParser@{s\_graphs::NmeaSentenceParser}!````~NmeaSentenceParser@{$\sim$NmeaSentenceParser}}
+\index{````~NmeaSentenceParser@{$\sim$NmeaSentenceParser}!s\_graphs::NmeaSentenceParser@{s\_graphs::NmeaSentenceParser}}
+\doxysubsubsection{\texorpdfstring{$\sim$NmeaSentenceParser()}{~NmeaSentenceParser()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Nmea\+Sentence\+Parser\+::$\sim$\+Nmea\+Sentence\+Parser (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 80 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{80 \{\}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1NmeaSentenceParser_a98827154dc37afb4044852d0745c4559}\label{classs__graphs_1_1NmeaSentenceParser_a98827154dc37afb4044852d0745c4559}} 
+\index{s\_graphs::NmeaSentenceParser@{s\_graphs::NmeaSentenceParser}!parse@{parse}}
+\index{parse@{parse}!s\_graphs::NmeaSentenceParser@{s\_graphs::NmeaSentenceParser}}
+\doxysubsubsection{\texorpdfstring{parse()}{parse()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{structs__graphs_1_1GPRMC}{G\+P\+R\+MC}} s\+\_\+graphs\+::\+Nmea\+Sentence\+Parser\+::parse (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{sentence }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 82 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{82                                                \{}
+\DoxyCodeLine{83     \textcolor{keywordtype}{int} checksum\_loc = sentence.find(\textcolor{charliteral}{'*'});}
+\DoxyCodeLine{84     \textcolor{keywordflow}{if}(checksum\_loc == std::string::npos) \{}
+\DoxyCodeLine{85       \textcolor{keywordflow}{return} GPRMC();}
+\DoxyCodeLine{86     \}}
+\DoxyCodeLine{87 }
+\DoxyCodeLine{88     \textcolor{keywordtype}{int} checksum = std::stoul(sentence.substr(checksum\_loc + 1), \textcolor{keyword}{nullptr}, 16);}
+\DoxyCodeLine{89 }
+\DoxyCodeLine{90     std::string substr = sentence.substr(1, checksum\_loc -\/ 1);}
+\DoxyCodeLine{91     \textcolor{keywordtype}{int} sum = std::accumulate(substr.begin(), substr.end(), \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char}\textcolor{keyword}{>}(0), [=](\textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} n, \textcolor{keywordtype}{unsigned} \textcolor{keywordtype}{char} c) \{ return n \string^ c; \});}
+\DoxyCodeLine{92 }
+\DoxyCodeLine{93     \textcolor{keywordflow}{if}(checksum != (sum \& 0xf)) \{}
+\DoxyCodeLine{94       std::cerr << \textcolor{stringliteral}{"checksum doesn't match!!"} << std::endl;}
+\DoxyCodeLine{95       std::cerr << sentence << \textcolor{stringliteral}{" "} << sum << std::endl;}
+\DoxyCodeLine{96       \textcolor{keywordflow}{return} GPRMC();}
+\DoxyCodeLine{97     \}}
+\DoxyCodeLine{98 }
+\DoxyCodeLine{99     std::vector<std::string> tokens;}
+\DoxyCodeLine{100     boost::split(tokens, sentence, boost::is\_any\_of(\textcolor{stringliteral}{","}));}
+\DoxyCodeLine{101 }
+\DoxyCodeLine{102     \textcolor{keywordflow}{return} GPRMC(tokens);}
+\DoxyCodeLine{103   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{nmea__sentence__parser_8hpp}{nmea\+\_\+sentence\+\_\+parser.\+hpp}}\end{DoxyCompactItemize}

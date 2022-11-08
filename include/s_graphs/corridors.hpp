@@ -16,6 +16,9 @@ class SparseOptimizer;
 
 namespace s_graphs {
 
+/**
+ * Just a test
+  */
 struct Corridors {
 public:
   int id;

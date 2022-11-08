@@ -1,0 +1,263 @@
+\hypertarget{structs__graphs_1_1GPRMC}{}\doxysection{s\+\_\+graphs\+::G\+P\+R\+MC Struct Reference}
+\label{structs__graphs_1_1GPRMC}\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+
+
+{\ttfamily \#include $<$nmea\+\_\+sentence\+\_\+parser.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structs__graphs_1_1GPRMC_ae032e7cb2d761170d8568b9b2928ad78}{G\+P\+R\+MC}} ()
+\item 
+\mbox{\hyperlink{structs__graphs_1_1GPRMC_a630ba047d52a9467ca8747a9fe7f8ab4}{G\+P\+R\+MC}} (const std\+::vector$<$ std\+::string $>$ \&tokens)
+\item 
+double \mbox{\hyperlink{structs__graphs_1_1GPRMC_aeb57c89a4b0ba10c3e182655c5caeaec}{degmin2deg}} (double degmin)
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+char \mbox{\hyperlink{structs__graphs_1_1GPRMC_aa29533090c80936ddfd185b72672faa0}{status}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1GPRMC_a683007c2bf56bf92528fcbb666586269}{hour}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1GPRMC_a91989c055d0a04145cfd9f82c6805bd1}{minute}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1GPRMC_a6e1e89b87f0b5fe12bbe7915540c3c83}{second}}
+\item 
+double \mbox{\hyperlink{structs__graphs_1_1GPRMC_ad0a2af34a28280bbba0665b972805c0e}{latitude}}
+\item 
+double \mbox{\hyperlink{structs__graphs_1_1GPRMC_a2a0f20e2d9d20044102285519ec369ff}{longitude}}
+\item 
+double \mbox{\hyperlink{structs__graphs_1_1GPRMC_a37c9260157f8b821a0d7b2befbee34b6}{speed\+\_\+knots}}
+\item 
+double \mbox{\hyperlink{structs__graphs_1_1GPRMC_ab37d5a9645751d3c32d107fa5152bd33}{track\+\_\+angle\+\_\+degree}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1GPRMC_a4b48cebba5b045b100a1ceb2d373ad53}{year}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1GPRMC_ac27dd392b428ec9c8f82709ce9441476}{month}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1GPRMC_aaf8380260d63cc92ea8cff8b1d9cbb1a}{day}}
+\item 
+double \mbox{\hyperlink{structs__graphs_1_1GPRMC_a6c7472571363419103a5b4c334305d26}{magnetic\+\_\+variation}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 14 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_ae032e7cb2d761170d8568b9b2928ad78}\label{structs__graphs_1_1GPRMC_ae032e7cb2d761170d8568b9b2928ad78}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!GPRMC@{GPRMC}}
+\index{GPRMC@{GPRMC}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{GPRMC()}{GPRMC()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::\+G\+P\+R\+MC (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 16 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{16           \{}
+\DoxyCodeLine{17     \mbox{\hyperlink{structs__graphs_1_1GPRMC_aa29533090c80936ddfd185b72672faa0}{status}} = \textcolor{charliteral}{'V'};}
+\DoxyCodeLine{18   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a630ba047d52a9467ca8747a9fe7f8ab4}\label{structs__graphs_1_1GPRMC_a630ba047d52a9467ca8747a9fe7f8ab4}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!GPRMC@{GPRMC}}
+\index{GPRMC@{GPRMC}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{GPRMC()}{GPRMC()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::\+G\+P\+R\+MC (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ std\+::string $>$ \&}]{tokens }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 20 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{20                                             \{}
+\DoxyCodeLine{21     \textcolor{keywordflow}{if}(tokens[0] != \textcolor{stringliteral}{"\$GPRMC"} || tokens.size() < 12) \{}
+\DoxyCodeLine{22       \mbox{\hyperlink{structs__graphs_1_1GPRMC_aa29533090c80936ddfd185b72672faa0}{status}} = \textcolor{charliteral}{'V'};}
+\DoxyCodeLine{23       \textcolor{keywordflow}{return};}
+\DoxyCodeLine{24     \}}
+\DoxyCodeLine{25 }
+\DoxyCodeLine{26     \textcolor{keywordtype}{long} time = std::stol(tokens[1]);}
+\DoxyCodeLine{27     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a683007c2bf56bf92528fcbb666586269}{hour}} = time / 10000;}
+\DoxyCodeLine{28     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a91989c055d0a04145cfd9f82c6805bd1}{minute}} = (time \% 10000) / 100;}
+\DoxyCodeLine{29     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a6e1e89b87f0b5fe12bbe7915540c3c83}{second}} = time \% 100;}
+\DoxyCodeLine{30 }
+\DoxyCodeLine{31     \mbox{\hyperlink{structs__graphs_1_1GPRMC_aa29533090c80936ddfd185b72672faa0}{status}} = tokens[2][0];}
+\DoxyCodeLine{32 }
+\DoxyCodeLine{33     \mbox{\hyperlink{structs__graphs_1_1GPRMC_ad0a2af34a28280bbba0665b972805c0e}{latitude}} = \mbox{\hyperlink{structs__graphs_1_1GPRMC_aeb57c89a4b0ba10c3e182655c5caeaec}{degmin2deg}}(std::stod(tokens[3]));}
+\DoxyCodeLine{34     \mbox{\hyperlink{structs__graphs_1_1GPRMC_ad0a2af34a28280bbba0665b972805c0e}{latitude}} = tokens[4] == \textcolor{stringliteral}{"N"} ? \mbox{\hyperlink{structs__graphs_1_1GPRMC_ad0a2af34a28280bbba0665b972805c0e}{latitude}} : -\/\mbox{\hyperlink{structs__graphs_1_1GPRMC_ad0a2af34a28280bbba0665b972805c0e}{latitude}};}
+\DoxyCodeLine{35 }
+\DoxyCodeLine{36     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a2a0f20e2d9d20044102285519ec369ff}{longitude}} = \mbox{\hyperlink{structs__graphs_1_1GPRMC_aeb57c89a4b0ba10c3e182655c5caeaec}{degmin2deg}}(std::stod(tokens[5]));}
+\DoxyCodeLine{37     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a2a0f20e2d9d20044102285519ec369ff}{longitude}} = tokens[6] == \textcolor{stringliteral}{"E"} ? \mbox{\hyperlink{structs__graphs_1_1GPRMC_a2a0f20e2d9d20044102285519ec369ff}{longitude}} : -\/\mbox{\hyperlink{structs__graphs_1_1GPRMC_a2a0f20e2d9d20044102285519ec369ff}{longitude}};}
+\DoxyCodeLine{38 }
+\DoxyCodeLine{39     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a37c9260157f8b821a0d7b2befbee34b6}{speed\_knots}} = std::stod(tokens[7]);}
+\DoxyCodeLine{40     \mbox{\hyperlink{structs__graphs_1_1GPRMC_ab37d5a9645751d3c32d107fa5152bd33}{track\_angle\_degree}} = std::stod(tokens[8]);}
+\DoxyCodeLine{41 }
+\DoxyCodeLine{42     \textcolor{keywordtype}{long} date = std::stol(tokens[9]);}
+\DoxyCodeLine{43     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a4b48cebba5b045b100a1ceb2d373ad53}{year}} = date \% 100;}
+\DoxyCodeLine{44     \mbox{\hyperlink{structs__graphs_1_1GPRMC_ac27dd392b428ec9c8f82709ce9441476}{month}} = (date / 100) \% 100;}
+\DoxyCodeLine{45     \mbox{\hyperlink{structs__graphs_1_1GPRMC_aaf8380260d63cc92ea8cff8b1d9cbb1a}{day}} = (date / 10000) \% 100;}
+\DoxyCodeLine{46 }
+\DoxyCodeLine{47     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a6c7472571363419103a5b4c334305d26}{magnetic\_variation}} = std::stod(tokens[10]);}
+\DoxyCodeLine{48     \mbox{\hyperlink{structs__graphs_1_1GPRMC_a6c7472571363419103a5b4c334305d26}{magnetic\_variation}} = tokens[11][0] == \textcolor{charliteral}{'E'} ? \mbox{\hyperlink{structs__graphs_1_1GPRMC_a6c7472571363419103a5b4c334305d26}{magnetic\_variation}} : -\/\mbox{\hyperlink{structs__graphs_1_1GPRMC_a6c7472571363419103a5b4c334305d26}{magnetic\_variation}};}
+\DoxyCodeLine{49   \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_aeb57c89a4b0ba10c3e182655c5caeaec}\label{structs__graphs_1_1GPRMC_aeb57c89a4b0ba10c3e182655c5caeaec}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!degmin2deg@{degmin2deg}}
+\index{degmin2deg@{degmin2deg}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{degmin2deg()}{degmin2deg()}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::degmin2deg (\begin{DoxyParamCaption}\item[{double}]{degmin }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 51 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{51                                    \{}
+\DoxyCodeLine{52     \textcolor{keywordtype}{double} d = std::floor(degmin / 100.0);}
+\DoxyCodeLine{53     \textcolor{keywordtype}{double} m = (degmin -\/ d * 100.0) / 60.0;}
+\DoxyCodeLine{54     \textcolor{keywordflow}{return} d + m;}
+\DoxyCodeLine{55   \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_aaf8380260d63cc92ea8cff8b1d9cbb1a}\label{structs__graphs_1_1GPRMC_aaf8380260d63cc92ea8cff8b1d9cbb1a}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!day@{day}}
+\index{day@{day}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{day}{day}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::day}
+
+
+
+Definition at line 72 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a683007c2bf56bf92528fcbb666586269}\label{structs__graphs_1_1GPRMC_a683007c2bf56bf92528fcbb666586269}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!hour@{hour}}
+\index{hour@{hour}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{hour}{hour}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::hour}
+
+
+
+Definition at line 60 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_ad0a2af34a28280bbba0665b972805c0e}\label{structs__graphs_1_1GPRMC_ad0a2af34a28280bbba0665b972805c0e}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!latitude@{latitude}}
+\index{latitude@{latitude}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{latitude}{latitude}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::latitude}
+
+
+
+Definition at line 64 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a2a0f20e2d9d20044102285519ec369ff}\label{structs__graphs_1_1GPRMC_a2a0f20e2d9d20044102285519ec369ff}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!longitude@{longitude}}
+\index{longitude@{longitude}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{longitude}{longitude}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::longitude}
+
+
+
+Definition at line 65 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a6c7472571363419103a5b4c334305d26}\label{structs__graphs_1_1GPRMC_a6c7472571363419103a5b4c334305d26}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!magnetic\_variation@{magnetic\_variation}}
+\index{magnetic\_variation@{magnetic\_variation}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{magnetic\_variation}{magnetic\_variation}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::magnetic\+\_\+variation}
+
+
+
+Definition at line 74 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a91989c055d0a04145cfd9f82c6805bd1}\label{structs__graphs_1_1GPRMC_a91989c055d0a04145cfd9f82c6805bd1}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!minute@{minute}}
+\index{minute@{minute}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{minute}{minute}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::minute}
+
+
+
+Definition at line 61 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_ac27dd392b428ec9c8f82709ce9441476}\label{structs__graphs_1_1GPRMC_ac27dd392b428ec9c8f82709ce9441476}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!month@{month}}
+\index{month@{month}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{month}{month}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::month}
+
+
+
+Definition at line 71 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a6e1e89b87f0b5fe12bbe7915540c3c83}\label{structs__graphs_1_1GPRMC_a6e1e89b87f0b5fe12bbe7915540c3c83}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!second@{second}}
+\index{second@{second}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{second}{second}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::second}
+
+
+
+Definition at line 62 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a37c9260157f8b821a0d7b2befbee34b6}\label{structs__graphs_1_1GPRMC_a37c9260157f8b821a0d7b2befbee34b6}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!speed\_knots@{speed\_knots}}
+\index{speed\_knots@{speed\_knots}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{speed\_knots}{speed\_knots}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::speed\+\_\+knots}
+
+
+
+Definition at line 67 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_aa29533090c80936ddfd185b72672faa0}\label{structs__graphs_1_1GPRMC_aa29533090c80936ddfd185b72672faa0}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!status@{status}}
+\index{status@{status}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{status}{status}}
+{\footnotesize\ttfamily char s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::status}
+
+
+
+Definition at line 58 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_ab37d5a9645751d3c32d107fa5152bd33}\label{structs__graphs_1_1GPRMC_ab37d5a9645751d3c32d107fa5152bd33}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!track\_angle\_degree@{track\_angle\_degree}}
+\index{track\_angle\_degree@{track\_angle\_degree}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{track\_angle\_degree}{track\_angle\_degree}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::track\+\_\+angle\+\_\+degree}
+
+
+
+Definition at line 68 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1GPRMC_a4b48cebba5b045b100a1ceb2d373ad53}\label{structs__graphs_1_1GPRMC_a4b48cebba5b045b100a1ceb2d373ad53}} 
+\index{s\_graphs::GPRMC@{s\_graphs::GPRMC}!year@{year}}
+\index{year@{year}!s\_graphs::GPRMC@{s\_graphs::GPRMC}}
+\doxysubsubsection{\texorpdfstring{year}{year}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+G\+P\+R\+M\+C\+::year}
+
+
+
+Definition at line 70 of file nmea\+\_\+sentence\+\_\+parser.\+hpp.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{nmea__sentence__parser_8hpp}{nmea\+\_\+sentence\+\_\+parser.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,96 @@
+\hypertarget{s__graphs__nodelet_8cpp}{}\doxysection{/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/apps/s\+\_\+graphs\+\_\+nodelet.cpp File Reference}
+\label{s__graphs__nodelet_8cpp}\index{/home/ghost/ros\_ws/s\_graphs\_ws/src/s\_graphs/apps/s\_graphs\_nodelet.cpp@{/home/ghost/ros\_ws/s\_graphs\_ws/src/s\_graphs/apps/s\_graphs\_nodelet.cpp}}
+{\ttfamily \#include $<$ctime$>$}\newline
+{\ttfamily \#include $<$mutex$>$}\newline
+{\ttfamily \#include $<$atomic$>$}\newline
+{\ttfamily \#include $<$memory$>$}\newline
+{\ttfamily \#include $<$iomanip$>$}\newline
+{\ttfamily \#include $<$iostream$>$}\newline
+{\ttfamily \#include $<$iterator$>$}\newline
+{\ttfamily \#include $<$unordered\+\_\+map$>$}\newline
+{\ttfamily \#include $<$boost/format.\+hpp$>$}\newline
+{\ttfamily \#include $<$boost/thread.\+hpp$>$}\newline
+{\ttfamily \#include $<$boost/filesystem.\+hpp$>$}\newline
+{\ttfamily \#include $<$boost/algorithm/string.\+hpp$>$}\newline
+{\ttfamily \#include $<$Eigen/\+Dense$>$}\newline
+{\ttfamily \#include $<$pcl/io/pcd\+\_\+io.\+h$>$}\newline
+{\ttfamily \#include $<$pcl/common/distances.\+h$>$}\newline
+{\ttfamily \#include $<$pcl/common/centroid.\+h$>$}\newline
+{\ttfamily \#include $<$pcl/common/io.\+h$>$}\newline
+{\ttfamily \#include $<$ros/ros.\+h$>$}\newline
+{\ttfamily \#include $<$geodesy/utm.\+h$>$}\newline
+{\ttfamily \#include $<$geodesy/wgs84.\+h$>$}\newline
+{\ttfamily \#include $<$pcl\+\_\+ros/point\+\_\+cloud.\+h$>$}\newline
+{\ttfamily \#include $<$pcl\+\_\+ros/transforms.\+h$>$}\newline
+{\ttfamily \#include $<$message\+\_\+filters/subscriber.\+h$>$}\newline
+{\ttfamily \#include $<$message\+\_\+filters/time\+\_\+synchronizer.\+h$>$}\newline
+{\ttfamily \#include $<$message\+\_\+filters/sync\+\_\+policies/approximate\+\_\+time.\+h$>$}\newline
+{\ttfamily \#include $<$tf\+\_\+conversions/tf\+\_\+eigen.\+h$>$}\newline
+{\ttfamily \#include $<$tf/transform\+\_\+listener.\+h$>$}\newline
+{\ttfamily \#include $<$geometry\+\_\+msgs/\+Vector3.\+h$>$}\newline
+{\ttfamily \#include $<$std\+\_\+msgs/\+Time.\+h$>$}\newline
+{\ttfamily \#include $<$nav\+\_\+msgs/\+Odometry.\+h$>$}\newline
+{\ttfamily \#include $<$nmea\+\_\+msgs/\+Sentence.\+h$>$}\newline
+{\ttfamily \#include $<$sensor\+\_\+msgs/\+Imu.\+h$>$}\newline
+{\ttfamily \#include $<$sensor\+\_\+msgs/\+Nav\+Sat\+Fix.\+h$>$}\newline
+{\ttfamily \#include $<$sensor\+\_\+msgs/\+Point\+Cloud2.\+h$>$}\newline
+{\ttfamily \#include $<$geographic\+\_\+msgs/\+Geo\+Point\+Stamped.\+h$>$}\newline
+{\ttfamily \#include $<$visualization\+\_\+msgs/\+Marker\+Array.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Floor\+Coeffs.\+h$>$}\newline
+{\ttfamily \#include $<$geometry\+\_\+msgs/\+Pose\+Stamped.\+h$>$}\newline
+{\ttfamily \#include $<$nav\+\_\+msgs/\+Path.\+h$>$}\newline
+{\ttfamily \#include $<$std\+\_\+msgs/\+Color\+R\+G\+B\+A.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Save\+Map.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Dump\+Graph.\+h$>$}\newline
+{\ttfamily \#include $<$nodelet/nodelet.\+h$>$}\newline
+{\ttfamily \#include $<$pluginlib/class\+\_\+list\+\_\+macros.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/ros\+\_\+utils.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/ros\+\_\+time\+\_\+hash.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Point\+Clouds.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Room\+Data.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Rooms\+Data.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Plane\+Data.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/\+Planes\+Data.\+h$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/graph\+\_\+slam.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/keyframe.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/planes.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/corridors.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/rooms.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/floors.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/keyframe\+\_\+updater.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/loop\+\_\+detector.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/information\+\_\+matrix\+\_\+calculator.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/map\+\_\+cloud\+\_\+generator.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/nmea\+\_\+sentence\+\_\+parser.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/plane\+\_\+utils.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/room\+\_\+mapper.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/floor\+\_\+mapper.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/plane\+\_\+mapper.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/neighbour\+\_\+mapper.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/plane\+\_\+analyzer.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/graph\+\_\+visualizer.\+hpp$>$}\newline
+{\ttfamily \#include $<$s\+\_\+graphs/keyframe\+\_\+mapper.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/vertex\+\_\+room.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/vertex\+\_\+corridor.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/types/slam3d/edge\+\_\+se3.\+h$>$}\newline
+{\ttfamily \#include $<$g2o/types/slam3d/vertex\+\_\+se3.\+h$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+se3\+\_\+plane.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+se3\+\_\+priorxy.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+se3\+\_\+priorxyz.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+se3\+\_\+priorvec.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+se3\+\_\+priorquat.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/types/slam3d\+\_\+addons/vertex\+\_\+plane.\+h$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+se3\+\_\+point\+\_\+to\+\_\+plane.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+plane\+\_\+parallel.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+corridor\+\_\+plane.\+hpp$>$}\newline
+{\ttfamily \#include $<$g2o/edge\+\_\+room.\+hpp$>$}\newline
+\doxysubsection*{Classes}
+\begin{DoxyCompactItemize}
+\item 
+class \mbox{\hyperlink{classs__graphs_1_1SGraphsNodelet}{s\+\_\+graphs\+::\+S\+Graphs\+Nodelet}}
+\end{DoxyCompactItemize}
+\doxysubsection*{Namespaces}
+\begin{DoxyCompactItemize}
+\item 
+ \mbox{\hyperlink{namespaces__graphs}{s\+\_\+graphs}}
+\end{DoxyCompactItemize}

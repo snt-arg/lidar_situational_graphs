@@ -1,0 +1,192 @@
+\hypertarget{classg2o_1_1EdgePlanePerpendicular}{}\doxysection{g2o\+::Edge\+Plane\+Perpendicular Class Reference}
+\label{classg2o_1_1EdgePlanePerpendicular}\index{g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}}
+
+
+{\ttfamily \#include $<$edge\+\_\+plane\+\_\+parallel.\+hpp$>$}
+
+
+
+Inheritance diagram for g2o\+::Edge\+Plane\+Perpendicular\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=244pt]{classg2o_1_1EdgePlanePerpendicular__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for g2o\+::Edge\+Plane\+Perpendicular\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=244pt]{classg2o_1_1EdgePlanePerpendicular__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular_aabed3b421f4a47e5c79c4653f3d97537}{Edge\+Plane\+Perpendicular}} ()
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular_aee179cb27b83491f446b13f0f929fdcb}{compute\+Error}} () override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular_a1ffc306625c4a6ea256eca81d760b43e}{read}} (std\+::istream \&is) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular_a0d1494157bbbd82f8f34ad4672399f08}{write}} (std\+::ostream \&os) const override
+\item 
+virtual void \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular_ae287c3b28d6ad45667b85b2fc32c058e}{set\+Measurement}} (const Eigen\+::\+Vector3d \&m) override
+\item 
+virtual int \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular_ade51adf05bdd3ddc0e2b847e1fd07d57}{measurement\+Dimension}} () const override
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 94 of file edge\+\_\+plane\+\_\+parallel.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgePlanePerpendicular_aabed3b421f4a47e5c79c4653f3d97537}\label{classg2o_1_1EdgePlanePerpendicular_aabed3b421f4a47e5c79c4653f3d97537}} 
+\index{g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}!EdgePlanePerpendicular@{EdgePlanePerpendicular}}
+\index{EdgePlanePerpendicular@{EdgePlanePerpendicular}!g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}}
+\doxysubsubsection{\texorpdfstring{EdgePlanePerpendicular()}{EdgePlanePerpendicular()}}
+{\footnotesize\ttfamily E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW g2o\+::\+Edge\+Plane\+Perpendicular\+::\+Edge\+Plane\+Perpendicular (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 97 of file edge\+\_\+plane\+\_\+parallel.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{97                            : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() \{}
+\DoxyCodeLine{98     \_information.setIdentity();}
+\DoxyCodeLine{99     \_error.setZero();}
+\DoxyCodeLine{100   \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgePlanePerpendicular_aee179cb27b83491f446b13f0f929fdcb}\label{classg2o_1_1EdgePlanePerpendicular_aee179cb27b83491f446b13f0f929fdcb}} 
+\index{g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}!computeError@{computeError}}
+\index{computeError@{computeError}!g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}}
+\doxysubsubsection{\texorpdfstring{computeError()}{computeError()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+Plane\+Perpendicular\+::compute\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 102 of file edge\+\_\+plane\+\_\+parallel.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{102                                \{}
+\DoxyCodeLine{103     \textcolor{keyword}{const} VertexPlane* v1 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[0]);}
+\DoxyCodeLine{104     \textcolor{keyword}{const} VertexPlane* v2 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[1]);}
+\DoxyCodeLine{105 }
+\DoxyCodeLine{106     Eigen::Vector3d normal1 = v1-\/>estimate().normal().normalized();}
+\DoxyCodeLine{107     Eigen::Vector3d normal2 = v2-\/>estimate().normal().normalized();}
+\DoxyCodeLine{108 }
+\DoxyCodeLine{109     \_error[0] = normal1.dot(normal2);}
+\DoxyCodeLine{110   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlanePerpendicular_ade51adf05bdd3ddc0e2b847e1fd07d57}\label{classg2o_1_1EdgePlanePerpendicular_ade51adf05bdd3ddc0e2b847e1fd07d57}} 
+\index{g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}!measurementDimension@{measurementDimension}}
+\index{measurementDimension@{measurementDimension}!g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}}
+\doxysubsubsection{\texorpdfstring{measurementDimension()}{measurementDimension()}}
+{\footnotesize\ttfamily virtual int g2o\+::\+Edge\+Plane\+Perpendicular\+::measurement\+Dimension (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 148 of file edge\+\_\+plane\+\_\+parallel.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{148                                                     \{}
+\DoxyCodeLine{149     \textcolor{keywordflow}{return} 3;}
+\DoxyCodeLine{150   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlanePerpendicular_a1ffc306625c4a6ea256eca81d760b43e}\label{classg2o_1_1EdgePlanePerpendicular_a1ffc306625c4a6ea256eca81d760b43e}} 
+\index{g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}!read@{read}}
+\index{read@{read}!g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Plane\+Perpendicular\+::read (\begin{DoxyParamCaption}\item[{std\+::istream \&}]{is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 112 of file edge\+\_\+plane\+\_\+parallel.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{112                                              \{}
+\DoxyCodeLine{113     Eigen::Vector3d v;}
+\DoxyCodeLine{114     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 3; ++i) \{}
+\DoxyCodeLine{115       is >> v[i];}
+\DoxyCodeLine{116     \}}
+\DoxyCodeLine{117 }
+\DoxyCodeLine{118     \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular_ae287c3b28d6ad45667b85b2fc32c058e}{setMeasurement}}(v);}
+\DoxyCodeLine{119     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{120       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{121         is >> information()(i, j);}
+\DoxyCodeLine{122         \textcolor{keywordflow}{if}(i != j) \{}
+\DoxyCodeLine{123           information()(j, i) = information()(i, j);}
+\DoxyCodeLine{124         \}}
+\DoxyCodeLine{125       \}}
+\DoxyCodeLine{126     \}}
+\DoxyCodeLine{127 }
+\DoxyCodeLine{128     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{129   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlanePerpendicular_ae287c3b28d6ad45667b85b2fc32c058e}\label{classg2o_1_1EdgePlanePerpendicular_ae287c3b28d6ad45667b85b2fc32c058e}} 
+\index{g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}!setMeasurement@{setMeasurement}}
+\index{setMeasurement@{setMeasurement}!g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}}
+\doxysubsubsection{\texorpdfstring{setMeasurement()}{setMeasurement()}}
+{\footnotesize\ttfamily virtual void g2o\+::\+Edge\+Plane\+Perpendicular\+::set\+Measurement (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector3d \&}]{m }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 144 of file edge\+\_\+plane\+\_\+parallel.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{144                                                                \{}
+\DoxyCodeLine{145     \_measurement = m;}
+\DoxyCodeLine{146   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgePlanePerpendicular_a0d1494157bbbd82f8f34ad4672399f08}\label{classg2o_1_1EdgePlanePerpendicular_a0d1494157bbbd82f8f34ad4672399f08}} 
+\index{g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}!write@{write}}
+\index{write@{write}!g2o::EdgePlanePerpendicular@{g2o::EdgePlanePerpendicular}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Plane\+Perpendicular\+::write (\begin{DoxyParamCaption}\item[{std\+::ostream \&}]{os }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 131 of file edge\+\_\+plane\+\_\+parallel.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{131                                                     \{}
+\DoxyCodeLine{132     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < 3; ++i) \{}
+\DoxyCodeLine{133       os << \_measurement[i] << \textcolor{stringliteral}{" "};}
+\DoxyCodeLine{134     \}}
+\DoxyCodeLine{135 }
+\DoxyCodeLine{136     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{137       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{138         os << \textcolor{stringliteral}{" "} << information()(i, j);}
+\DoxyCodeLine{139       \};}
+\DoxyCodeLine{140     \}}
+\DoxyCodeLine{141     \textcolor{keywordflow}{return} os.good();}
+\DoxyCodeLine{142   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/g2o/\mbox{\hyperlink{edge__plane__parallel_8hpp}{edge\+\_\+plane\+\_\+parallel.\+hpp}}\end{DoxyCompactItemize}

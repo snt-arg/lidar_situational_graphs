@@ -1,0 +1,169 @@
+\hypertarget{structs__graphs_1_1plane__data__list}{}\doxysection{s\+\_\+graphs\+::plane\+\_\+data\+\_\+list Struct Reference}
+\label{structs__graphs_1_1plane__data__list}\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+
+
+{\ttfamily \#include $<$plane\+\_\+utils.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structs__graphs_1_1plane__data__list_ae4a912e3457b73068398f59aa2a7a5db}{plane\+\_\+data\+\_\+list}} ()
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+g2o\+::\+Plane3D \mbox{\hyperlink{structs__graphs_1_1plane__data__list_a4b73594676cda2175b862db381ebcb97}{plane\+\_\+unflipped}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1plane__data__list_a444fc1f87c9ef121e48080366f7052cc}{plane\+\_\+id}}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1plane__data__list_a5fd1cf50c785d5897509e408247d0e8b}{connected\+\_\+id}}
+\item 
+std\+::vector$<$ int $>$ \mbox{\hyperlink{structs__graphs_1_1plane__data__list_aca447249709c960089f439f552aa73d8}{connected\+\_\+neighbour\+\_\+ids}}
+\item 
+pcl\+::\+Point\+XY \mbox{\hyperlink{structs__graphs_1_1plane__data__list_a9151cc064e335a1348b8cf1714dc11a3}{start\+\_\+point}}
+\item 
+pcl\+::\+Point\+XY \mbox{\hyperlink{structs__graphs_1_1plane__data__list_aa03e1c5acec1fe310341da664e013c28}{end\+\_\+point}}
+\item 
+float \mbox{\hyperlink{structs__graphs_1_1plane__data__list_a560ff936f00fb80a14ef21fdff77ea58}{plane\+\_\+length}}
+\item 
+g2o\+::\+Vertex\+S\+E3 $\ast$ \mbox{\hyperlink{structs__graphs_1_1plane__data__list_a40af4bf2ae31e4eaba556a0edad91ba6}{keyframe\+\_\+node}}
+\item 
+Eigen\+::\+Vector3d \mbox{\hyperlink{structs__graphs_1_1plane__data__list_af037c9b8929c20976b26c3e99656d8b9}{plane\+\_\+centroid}}
+\item 
+Eigen\+::\+Vector2d \mbox{\hyperlink{structs__graphs_1_1plane__data__list_ae586ca8ae0d880ada05fda1824b508d4}{cluster\+\_\+center}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 21 of file plane\+\_\+utils.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_ae4a912e3457b73068398f59aa2a7a5db}\label{structs__graphs_1_1plane__data__list_ae4a912e3457b73068398f59aa2a7a5db}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!plane\_data\_list@{plane\_data\_list}}
+\index{plane\_data\_list@{plane\_data\_list}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{plane\_data\_list()}{plane\_data\_list()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::plane\+\_\+data\+\_\+list (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 22 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{22                     : \mbox{\hyperlink{structs__graphs_1_1plane__data__list_af037c9b8929c20976b26c3e99656d8b9}{plane\_centroid}}(0, 0, 0), \mbox{\hyperlink{structs__graphs_1_1plane__data__list_a5fd1cf50c785d5897509e408247d0e8b}{connected\_id}}(-\/1) \{}
+\DoxyCodeLine{23     \mbox{\hyperlink{structs__graphs_1_1plane__data__list_aca447249709c960089f439f552aa73d8}{connected\_neighbour\_ids}}.clear();}
+\DoxyCodeLine{24   \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_ae586ca8ae0d880ada05fda1824b508d4}\label{structs__graphs_1_1plane__data__list_ae586ca8ae0d880ada05fda1824b508d4}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!cluster\_center@{cluster\_center}}
+\index{cluster\_center@{cluster\_center}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{cluster\_center}{cluster\_center}}
+{\footnotesize\ttfamily Eigen\+::\+Vector2d s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::cluster\+\_\+center}
+
+
+
+Definition at line 34 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_a5fd1cf50c785d5897509e408247d0e8b}\label{structs__graphs_1_1plane__data__list_a5fd1cf50c785d5897509e408247d0e8b}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!connected\_id@{connected\_id}}
+\index{connected\_id@{connected\_id}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{connected\_id}{connected\_id}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::connected\+\_\+id}
+
+
+
+Definition at line 28 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_aca447249709c960089f439f552aa73d8}\label{structs__graphs_1_1plane__data__list_aca447249709c960089f439f552aa73d8}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!connected\_neighbour\_ids@{connected\_neighbour\_ids}}
+\index{connected\_neighbour\_ids@{connected\_neighbour\_ids}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{connected\_neighbour\_ids}{connected\_neighbour\_ids}}
+{\footnotesize\ttfamily std\+::vector$<$int$>$ s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::connected\+\_\+neighbour\+\_\+ids}
+
+
+
+Definition at line 29 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_aa03e1c5acec1fe310341da664e013c28}\label{structs__graphs_1_1plane__data__list_aa03e1c5acec1fe310341da664e013c28}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!end\_point@{end\_point}}
+\index{end\_point@{end\_point}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{end\_point}{end\_point}}
+{\footnotesize\ttfamily pcl\+::\+Point\+XY s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::end\+\_\+point}
+
+
+
+Definition at line 30 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_a40af4bf2ae31e4eaba556a0edad91ba6}\label{structs__graphs_1_1plane__data__list_a40af4bf2ae31e4eaba556a0edad91ba6}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!keyframe\_node@{keyframe\_node}}
+\index{keyframe\_node@{keyframe\_node}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{keyframe\_node}{keyframe\_node}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+S\+E3$\ast$ s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::keyframe\+\_\+node}
+
+
+
+Definition at line 32 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_af037c9b8929c20976b26c3e99656d8b9}\label{structs__graphs_1_1plane__data__list_af037c9b8929c20976b26c3e99656d8b9}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!plane\_centroid@{plane\_centroid}}
+\index{plane\_centroid@{plane\_centroid}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{plane\_centroid}{plane\_centroid}}
+{\footnotesize\ttfamily Eigen\+::\+Vector3d s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::plane\+\_\+centroid}
+
+
+
+Definition at line 33 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_a444fc1f87c9ef121e48080366f7052cc}\label{structs__graphs_1_1plane__data__list_a444fc1f87c9ef121e48080366f7052cc}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!plane\_id@{plane\_id}}
+\index{plane\_id@{plane\_id}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{plane\_id}{plane\_id}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::plane\+\_\+id}
+
+
+
+Definition at line 27 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_a560ff936f00fb80a14ef21fdff77ea58}\label{structs__graphs_1_1plane__data__list_a560ff936f00fb80a14ef21fdff77ea58}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!plane\_length@{plane\_length}}
+\index{plane\_length@{plane\_length}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{plane\_length}{plane\_length}}
+{\footnotesize\ttfamily float s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::plane\+\_\+length}
+
+
+
+Definition at line 31 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_a4b73594676cda2175b862db381ebcb97}\label{structs__graphs_1_1plane__data__list_a4b73594676cda2175b862db381ebcb97}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!plane\_unflipped@{plane\_unflipped}}
+\index{plane\_unflipped@{plane\_unflipped}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{plane\_unflipped}{plane\_unflipped}}
+{\footnotesize\ttfamily g2o\+::\+Plane3D s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::plane\+\_\+unflipped}
+
+
+
+Definition at line 26 of file plane\+\_\+utils.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1plane__data__list_a9151cc064e335a1348b8cf1714dc11a3}\label{structs__graphs_1_1plane__data__list_a9151cc064e335a1348b8cf1714dc11a3}} 
+\index{s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}!start\_point@{start\_point}}
+\index{start\_point@{start\_point}!s\_graphs::plane\_data\_list@{s\_graphs::plane\_data\_list}}
+\doxysubsubsection{\texorpdfstring{start\_point}{start\_point}}
+{\footnotesize\ttfamily pcl\+::\+Point\+XY s\+\_\+graphs\+::plane\+\_\+data\+\_\+list\+::start\+\_\+point}
+
+
+
+Definition at line 30 of file plane\+\_\+utils.\+hpp.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{plane__utils_8hpp}{plane\+\_\+utils.\+hpp}}\end{DoxyCompactItemize}

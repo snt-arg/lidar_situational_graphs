@@ -1,0 +1,175 @@
+\hypertarget{classg2o_1_1EdgeRoom4Planes}{}\doxysection{g2o\+::Edge\+Room4\+Planes Class Reference}
+\label{classg2o_1_1EdgeRoom4Planes}\index{g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}}
+
+
+{\ttfamily \#include $<$edge\+\_\+room.\+hpp$>$}
+
+
+
+Inheritance diagram for g2o\+::Edge\+Room4\+Planes\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=220pt]{classg2o_1_1EdgeRoom4Planes__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for g2o\+::Edge\+Room4\+Planes\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=220pt]{classg2o_1_1EdgeRoom4Planes__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW \mbox{\hyperlink{classg2o_1_1EdgeRoom4Planes_ad5bef9370585021bcc79099c194e5393}{Edge\+Room4\+Planes}} ()
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeRoom4Planes_a21243e156b30992366dcccc3c86088af}{compute\+Error}} () override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeRoom4Planes_ae4abffae11b6b8c69d840ea6e79ddc11}{read}} (std\+::istream \&is) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeRoom4Planes_a0135257410faa1c41075d1fa5e78eec6}{write}} (std\+::ostream \&os) const override
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 304 of file edge\+\_\+room.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoom4Planes_ad5bef9370585021bcc79099c194e5393}\label{classg2o_1_1EdgeRoom4Planes_ad5bef9370585021bcc79099c194e5393}} 
+\index{g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}!EdgeRoom4Planes@{EdgeRoom4Planes}}
+\index{EdgeRoom4Planes@{EdgeRoom4Planes}!g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}}
+\doxysubsubsection{\texorpdfstring{EdgeRoom4Planes()}{EdgeRoom4Planes()}}
+{\footnotesize\ttfamily E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW g2o\+::\+Edge\+Room4\+Planes\+::\+Edge\+Room4\+Planes (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 307 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{307                     : BaseMultiEdge<2, Eigen::Vector2d>() \{}
+\DoxyCodeLine{308     resize(5);}
+\DoxyCodeLine{309   \}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoom4Planes_a21243e156b30992366dcccc3c86088af}\label{classg2o_1_1EdgeRoom4Planes_a21243e156b30992366dcccc3c86088af}} 
+\index{g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}!computeError@{computeError}}
+\index{computeError@{computeError}!g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}}
+\doxysubsubsection{\texorpdfstring{computeError()}{computeError()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+Room4\+Planes\+::compute\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 310 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{310                                \{}
+\DoxyCodeLine{311     \textcolor{keyword}{const} VertexRoomXYLB* v1 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexRoomXYLB*\textcolor{keyword}{>}(\_vertices[0]);}
+\DoxyCodeLine{312     \textcolor{keyword}{const} VertexPlane* v2 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[1]);}
+\DoxyCodeLine{313     \textcolor{keyword}{const} VertexPlane* v3 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[2]);}
+\DoxyCodeLine{314     \textcolor{keyword}{const} VertexPlane* v4 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[3]);}
+\DoxyCodeLine{315     \textcolor{keyword}{const} VertexPlane* v5 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[4]);}
+\DoxyCodeLine{316 }
+\DoxyCodeLine{317     Eigen::Vector2d room\_pose = v1-\/>estimate();}
+\DoxyCodeLine{318     Eigen::Vector4d x\_plane1 = v2-\/>estimate().coeffs();}
+\DoxyCodeLine{319     Eigen::Vector4d x\_plane2 = v3-\/>estimate().coeffs();}
+\DoxyCodeLine{320     Eigen::Vector4d y\_plane1 = v4-\/>estimate().coeffs();}
+\DoxyCodeLine{321     Eigen::Vector4d y\_plane2 = v5-\/>estimate().coeffs();}
+\DoxyCodeLine{322 }
+\DoxyCodeLine{323     correct\_plane\_d(x\_plane1);}
+\DoxyCodeLine{324     correct\_plane\_d(x\_plane2);}
+\DoxyCodeLine{325     correct\_plane\_d(y\_plane1);}
+\DoxyCodeLine{326     correct\_plane\_d(y\_plane2);}
+\DoxyCodeLine{327 }
+\DoxyCodeLine{328     Eigen::Vector3d vec\_x, vec\_y;}
+\DoxyCodeLine{329     \textcolor{keywordflow}{if}(fabs(x\_plane1(3)) > fabs(x\_plane2(3))) \{}
+\DoxyCodeLine{330       vec\_x = (0.5 * (fabs(x\_plane1(3)) * x\_plane1.head(3) -\/ fabs(x\_plane2(3)) * x\_plane2.head(3))) + fabs(x\_plane2(3)) * x\_plane2.head(3);}
+\DoxyCodeLine{331     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{332       vec\_x = (0.5 * (fabs(x\_plane2(3)) * x\_plane2.head(3) -\/ fabs(x\_plane1(3)) * x\_plane1.head(3))) + fabs(x\_plane1(3)) * x\_plane1.head(3);}
+\DoxyCodeLine{333     \}}
+\DoxyCodeLine{334 }
+\DoxyCodeLine{335     \textcolor{keywordflow}{if}(fabs(y\_plane1(3)) > fabs(y\_plane2(3))) \{}
+\DoxyCodeLine{336       vec\_y = (0.5 * (fabs(y\_plane1(3)) * y\_plane1.head(3) -\/ fabs(y\_plane2(3)) * y\_plane2.head(3))) + fabs(y\_plane2(3)) * y\_plane2.head(3);}
+\DoxyCodeLine{337     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{338       vec\_y = (0.5 * (fabs(y\_plane2(3)) * y\_plane2.head(3) -\/ fabs(y\_plane1(3)) * y\_plane1.head(3))) + fabs(y\_plane1(3)) * y\_plane1.head(3);}
+\DoxyCodeLine{339     \}}
+\DoxyCodeLine{340 }
+\DoxyCodeLine{341     Eigen::Vector2d final\_vec = vec\_x.head(2) + vec\_y.head(2);}
+\DoxyCodeLine{342     \_error = room\_pose -\/ final\_vec;}
+\DoxyCodeLine{343   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoom4Planes_ae4abffae11b6b8c69d840ea6e79ddc11}\label{classg2o_1_1EdgeRoom4Planes_ae4abffae11b6b8c69d840ea6e79ddc11}} 
+\index{g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}!read@{read}}
+\index{read@{read}!g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Room4\+Planes\+::read (\begin{DoxyParamCaption}\item[{std\+::istream \&}]{is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 345 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{345                                              \{}
+\DoxyCodeLine{346     Eigen::Vector2d v;}
+\DoxyCodeLine{347     is >> v(0) >> v(1);}
+\DoxyCodeLine{348 }
+\DoxyCodeLine{349     setMeasurement(v);}
+\DoxyCodeLine{350     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{351       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{352         is >> information()(i, j);}
+\DoxyCodeLine{353         \textcolor{keywordflow}{if}(i != j) \{}
+\DoxyCodeLine{354           information()(j, i) = information()(i, j);}
+\DoxyCodeLine{355         \}}
+\DoxyCodeLine{356       \}}
+\DoxyCodeLine{357     \}}
+\DoxyCodeLine{358 }
+\DoxyCodeLine{359     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{360   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoom4Planes_a0135257410faa1c41075d1fa5e78eec6}\label{classg2o_1_1EdgeRoom4Planes_a0135257410faa1c41075d1fa5e78eec6}} 
+\index{g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}!write@{write}}
+\index{write@{write}!g2o::EdgeRoom4Planes@{g2o::EdgeRoom4Planes}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Room4\+Planes\+::write (\begin{DoxyParamCaption}\item[{std\+::ostream \&}]{os }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 362 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{362                                                     \{}
+\DoxyCodeLine{363     Eigen::Vector2d v = \_measurement;}
+\DoxyCodeLine{364     os << v(0) << \textcolor{stringliteral}{" "} << v(1) << \textcolor{stringliteral}{" "};}
+\DoxyCodeLine{365 }
+\DoxyCodeLine{366     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{367       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{368         os << \textcolor{stringliteral}{" "} << information()(i, j);}
+\DoxyCodeLine{369       \};}
+\DoxyCodeLine{370     \}}
+\DoxyCodeLine{371     \textcolor{keywordflow}{return} os.good();}
+\DoxyCodeLine{372   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/g2o/\mbox{\hyperlink{edge__room_8hpp}{edge\+\_\+room.\+hpp}}\end{DoxyCompactItemize}

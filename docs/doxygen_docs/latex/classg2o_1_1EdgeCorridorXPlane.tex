@@ -1,0 +1,202 @@
+\hypertarget{classg2o_1_1EdgeCorridorXPlane}{}\doxysection{g2o\+::Edge\+Corridor\+X\+Plane Class Reference}
+\label{classg2o_1_1EdgeCorridorXPlane}\index{g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}}
+
+
+{\ttfamily \#include $<$edge\+\_\+corridor\+\_\+plane.\+hpp$>$}
+
+
+
+Inheritance diagram for g2o\+::Edge\+Corridor\+X\+Plane\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=237pt]{classg2o_1_1EdgeCorridorXPlane__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for g2o\+::Edge\+Corridor\+X\+Plane\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=237pt]{classg2o_1_1EdgeCorridorXPlane__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane_a506c3fad3a5f86645694b1a7b3ac63e9}{Edge\+Corridor\+X\+Plane}} ()
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane_ae6c3e8606bfd5a8a09094caff87d6f21}{compute\+Error}} () override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane_ac190693d206be1655e95b554f8dc8fea}{read}} (std\+::istream \&is) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane_aa929a6132a48f43053f4d9a07fc971db}{write}} (std\+::ostream \&os) const override
+\item 
+virtual void \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane_a056561e2ed5f5c6862e1dabc0e9c6fdb}{set\+Measurement}} (const double \&m) override
+\item 
+virtual int \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane_af7626b709241277bf7f03057de0dabae}{measurement\+Dimension}} () const override
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 89 of file edge\+\_\+corridor\+\_\+plane.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeCorridorXPlane_a506c3fad3a5f86645694b1a7b3ac63e9}\label{classg2o_1_1EdgeCorridorXPlane_a506c3fad3a5f86645694b1a7b3ac63e9}} 
+\index{g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}!EdgeCorridorXPlane@{EdgeCorridorXPlane}}
+\index{EdgeCorridorXPlane@{EdgeCorridorXPlane}!g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}}
+\doxysubsubsection{\texorpdfstring{EdgeCorridorXPlane()}{EdgeCorridorXPlane()}}
+{\footnotesize\ttfamily E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW g2o\+::\+Edge\+Corridor\+X\+Plane\+::\+Edge\+Corridor\+X\+Plane (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 92 of file edge\+\_\+corridor\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{92 : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() \{\}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeCorridorXPlane_ae6c3e8606bfd5a8a09094caff87d6f21}\label{classg2o_1_1EdgeCorridorXPlane_ae6c3e8606bfd5a8a09094caff87d6f21}} 
+\index{g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}!computeError@{computeError}}
+\index{computeError@{computeError}!g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}}
+\doxysubsubsection{\texorpdfstring{computeError()}{computeError()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+Corridor\+X\+Plane\+::compute\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 94 of file edge\+\_\+corridor\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{94                                \{}
+\DoxyCodeLine{95     \textcolor{keyword}{const} VertexCorridor* v1 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexCorridor*\textcolor{keyword}{>}(\_vertices[0]);}
+\DoxyCodeLine{96     \textcolor{keyword}{const} VertexPlane* v2 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }VertexPlane*\textcolor{keyword}{>}(\_vertices[1]);}
+\DoxyCodeLine{97     \textcolor{keywordtype}{double} trans = v1-\/>estimate();}
+\DoxyCodeLine{98     Eigen::Vector4d plane = v2-\/>estimate().coeffs();}
+\DoxyCodeLine{99 }
+\DoxyCodeLine{100     \textcolor{keywordflow}{if}(plane(3) > 0) \{}
+\DoxyCodeLine{101       plane(0) = -\/1 * plane(0);}
+\DoxyCodeLine{102       plane(1) = -\/1 * plane(1);}
+\DoxyCodeLine{103       plane(2) = -\/1 * plane(2);}
+\DoxyCodeLine{104       plane(3) = -\/1 * plane(3);}
+\DoxyCodeLine{105     \}}
+\DoxyCodeLine{106 }
+\DoxyCodeLine{107     \textcolor{keywordtype}{double} est;}
+\DoxyCodeLine{108     \textcolor{keywordflow}{if}(fabs(trans) > fabs(plane(3))) \{}
+\DoxyCodeLine{109       est = trans -\/ plane(3);}
+\DoxyCodeLine{110     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{111       est = plane(3) -\/ trans;}
+\DoxyCodeLine{112     \}}
+\DoxyCodeLine{113 }
+\DoxyCodeLine{114     \textcolor{keywordflow}{if}(est * \_measurement < 0) \{}
+\DoxyCodeLine{115       est = -\/1 * est;}
+\DoxyCodeLine{116     \}}
+\DoxyCodeLine{117 }
+\DoxyCodeLine{118     \_error[0] = est -\/ \_measurement;}
+\DoxyCodeLine{119   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeCorridorXPlane_af7626b709241277bf7f03057de0dabae}\label{classg2o_1_1EdgeCorridorXPlane_af7626b709241277bf7f03057de0dabae}} 
+\index{g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}!measurementDimension@{measurementDimension}}
+\index{measurementDimension@{measurementDimension}!g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}}
+\doxysubsubsection{\texorpdfstring{measurementDimension()}{measurementDimension()}}
+{\footnotesize\ttfamily virtual int g2o\+::\+Edge\+Corridor\+X\+Plane\+::measurement\+Dimension (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 153 of file edge\+\_\+corridor\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{153                                                     \{}
+\DoxyCodeLine{154     \textcolor{keywordflow}{return} 1;}
+\DoxyCodeLine{155   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeCorridorXPlane_ac190693d206be1655e95b554f8dc8fea}\label{classg2o_1_1EdgeCorridorXPlane_ac190693d206be1655e95b554f8dc8fea}} 
+\index{g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}!read@{read}}
+\index{read@{read}!g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Corridor\+X\+Plane\+::read (\begin{DoxyParamCaption}\item[{std\+::istream \&}]{is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 121 of file edge\+\_\+corridor\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{121                                              \{}
+\DoxyCodeLine{122     \textcolor{keywordtype}{double} v;}
+\DoxyCodeLine{123     is >> v;}
+\DoxyCodeLine{124 }
+\DoxyCodeLine{125     \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane_a056561e2ed5f5c6862e1dabc0e9c6fdb}{setMeasurement}}(v);}
+\DoxyCodeLine{126     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{127       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{128         is >> information()(i, j);}
+\DoxyCodeLine{129         \textcolor{keywordflow}{if}(i != j) \{}
+\DoxyCodeLine{130           information()(j, i) = information()(i, j);}
+\DoxyCodeLine{131         \}}
+\DoxyCodeLine{132       \}}
+\DoxyCodeLine{133     \}}
+\DoxyCodeLine{134 }
+\DoxyCodeLine{135     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{136   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeCorridorXPlane_a056561e2ed5f5c6862e1dabc0e9c6fdb}\label{classg2o_1_1EdgeCorridorXPlane_a056561e2ed5f5c6862e1dabc0e9c6fdb}} 
+\index{g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}!setMeasurement@{setMeasurement}}
+\index{setMeasurement@{setMeasurement}!g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}}
+\doxysubsubsection{\texorpdfstring{setMeasurement()}{setMeasurement()}}
+{\footnotesize\ttfamily virtual void g2o\+::\+Edge\+Corridor\+X\+Plane\+::set\+Measurement (\begin{DoxyParamCaption}\item[{const double \&}]{m }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 149 of file edge\+\_\+corridor\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{149                                                         \{}
+\DoxyCodeLine{150     \_measurement = m;}
+\DoxyCodeLine{151   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeCorridorXPlane_aa929a6132a48f43053f4d9a07fc971db}\label{classg2o_1_1EdgeCorridorXPlane_aa929a6132a48f43053f4d9a07fc971db}} 
+\index{g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}!write@{write}}
+\index{write@{write}!g2o::EdgeCorridorXPlane@{g2o::EdgeCorridorXPlane}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Corridor\+X\+Plane\+::write (\begin{DoxyParamCaption}\item[{std\+::ostream \&}]{os }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 138 of file edge\+\_\+corridor\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{138                                                     \{}
+\DoxyCodeLine{139     os << \_measurement << \textcolor{stringliteral}{" "};}
+\DoxyCodeLine{140 }
+\DoxyCodeLine{141     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i) \{}
+\DoxyCodeLine{142       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{143         os << \textcolor{stringliteral}{" "} << information()(i, j);}
+\DoxyCodeLine{144       \};}
+\DoxyCodeLine{145     \}}
+\DoxyCodeLine{146     \textcolor{keywordflow}{return} os.good();}
+\DoxyCodeLine{147   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/g2o/\mbox{\hyperlink{edge__corridor__plane_8hpp}{edge\+\_\+corridor\+\_\+plane.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,51 @@
+\hypertarget{classs__graphs_1_1GraphVisualizer}{}\doxysection{s\+\_\+graphs\+::Graph\+Visualizer Class Reference}
+\label{classs__graphs_1_1GraphVisualizer}\index{s\_graphs::GraphVisualizer@{s\_graphs::GraphVisualizer}}
+
+
+{\ttfamily \#include $<$graph\+\_\+visualizer.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classs__graphs_1_1GraphVisualizer_a9623e128421ad0d357bb16a50ca3ba42}{Graph\+Visualizer}} (const ros\+::\+Node\+Handle \&private\+\_\+nh)
+\item 
+\mbox{\hyperlink{classs__graphs_1_1GraphVisualizer_a7703b185587dd7a7300b6262d8c5dae6}{$\sim$\+Graph\+Visualizer}} ()
+\item 
+visualization\+\_\+msgs\+::\+Marker\+Array \mbox{\hyperlink{classs__graphs_1_1GraphVisualizer_a7a4aead575d0f92f04e0d4426896da66}{create\+\_\+marker\+\_\+array}} (const ros\+::\+Time \&stamp, const g2o\+::\+Sparse\+Optimizer $\ast$local\+\_\+graph, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&x\+\_\+plane\+\_\+snapshot, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&y\+\_\+plane\+\_\+snapshot, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes}{Horizontal\+Planes}} $>$ \&hort\+\_\+plane\+\_\+snapshot, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ x\+\_\+corridor\+\_\+snapshot, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ y\+\_\+corridor\+\_\+snapshot, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$ room\+\_\+snapshot, double loop\+\_\+detector\+\_\+radius, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}{Key\+Frame\+::\+Ptr}} $>$ keyframes, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Floors}{Floors}} $>$ floors\+\_\+vec)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 56 of file graph\+\_\+visualizer.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1GraphVisualizer_a9623e128421ad0d357bb16a50ca3ba42}\label{classs__graphs_1_1GraphVisualizer_a9623e128421ad0d357bb16a50ca3ba42}} 
+\index{s\_graphs::GraphVisualizer@{s\_graphs::GraphVisualizer}!GraphVisualizer@{GraphVisualizer}}
+\index{GraphVisualizer@{GraphVisualizer}!s\_graphs::GraphVisualizer@{s\_graphs::GraphVisualizer}}
+\doxysubsubsection{\texorpdfstring{GraphVisualizer()}{GraphVisualizer()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Graph\+Visualizer\+::\+Graph\+Visualizer (\begin{DoxyParamCaption}\item[{const ros\+::\+Node\+Handle \&}]{private\+\_\+nh }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphVisualizer_a7703b185587dd7a7300b6262d8c5dae6}\label{classs__graphs_1_1GraphVisualizer_a7703b185587dd7a7300b6262d8c5dae6}} 
+\index{s\_graphs::GraphVisualizer@{s\_graphs::GraphVisualizer}!````~GraphVisualizer@{$\sim$GraphVisualizer}}
+\index{````~GraphVisualizer@{$\sim$GraphVisualizer}!s\_graphs::GraphVisualizer@{s\_graphs::GraphVisualizer}}
+\doxysubsubsection{\texorpdfstring{$\sim$GraphVisualizer()}{~GraphVisualizer()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Graph\+Visualizer\+::$\sim$\+Graph\+Visualizer (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1GraphVisualizer_a7a4aead575d0f92f04e0d4426896da66}\label{classs__graphs_1_1GraphVisualizer_a7a4aead575d0f92f04e0d4426896da66}} 
+\index{s\_graphs::GraphVisualizer@{s\_graphs::GraphVisualizer}!create\_marker\_array@{create\_marker\_array}}
+\index{create\_marker\_array@{create\_marker\_array}!s\_graphs::GraphVisualizer@{s\_graphs::GraphVisualizer}}
+\doxysubsubsection{\texorpdfstring{create\_marker\_array()}{create\_marker\_array()}}
+{\footnotesize\ttfamily visualization\+\_\+msgs\+::\+Marker\+Array s\+\_\+graphs\+::\+Graph\+Visualizer\+::create\+\_\+marker\+\_\+array (\begin{DoxyParamCaption}\item[{const ros\+::\+Time \&}]{stamp,  }\item[{const g2o\+::\+Sparse\+Optimizer $\ast$}]{local\+\_\+graph,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&}]{x\+\_\+plane\+\_\+snapshot,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&}]{y\+\_\+plane\+\_\+snapshot,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes}{Horizontal\+Planes}} $>$ \&}]{hort\+\_\+plane\+\_\+snapshot,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$}]{x\+\_\+corridor\+\_\+snapshot,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$}]{y\+\_\+corridor\+\_\+snapshot,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$}]{room\+\_\+snapshot,  }\item[{double}]{loop\+\_\+detector\+\_\+radius,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}{Key\+Frame\+::\+Ptr}} $>$}]{keyframes,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Floors}{Floors}} $>$}]{floors\+\_\+vec }\end{DoxyParamCaption})}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{graph__visualizer_8hpp}{graph\+\_\+visualizer.\+hpp}}\end{DoxyCompactItemize}

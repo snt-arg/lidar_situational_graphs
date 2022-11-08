@@ -1,0 +1,96 @@
+\hypertarget{classs__graphs_1_1MapCloudGenerator}{}\doxysection{s\+\_\+graphs\+::Map\+Cloud\+Generator Class Reference}
+\label{classs__graphs_1_1MapCloudGenerator}\index{s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}}
+
+
+this class generates a map point cloud from registered keyframes  
+
+
+
+
+{\ttfamily \#include $<$map\+\_\+cloud\+\_\+generator.\+hpp$>$}
+
+\doxysubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{PointT}} = pcl\+::\+Point\+X\+Y\+ZI
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_acc4ada1b7e9ba0447824164172be1844}{Map\+Cloud\+Generator}} ()
+\item 
+\mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_aaeab988b4bd5659918a5328eeda32f7d}{$\sim$\+Map\+Cloud\+Generator}} ()
+\item 
+pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{PointT}} $>$\+::Ptr \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_a476e371ab8e6e405b713c26f88bebe67}{generate}} (const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrameSnapshot_aa08c3c1be55a8813b3d8fdd687d34e80}{Key\+Frame\+Snapshot\+::\+Ptr}} $>$ \&keyframes, double resolution) const
+\begin{DoxyCompactList}\small\item\em generates a map point cloud \end{DoxyCompactList}\item 
+pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{PointT}} $>$\+::Ptr \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ac260dc7e3bd7d9fe02a6465a700a1a92}{generate}} (const Eigen\+::\+Matrix4f \&pose, const pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{PointT}} $>$\+::Ptr \&cloud) const
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+this class generates a map point cloud from registered keyframes 
+
+Definition at line 16 of file map\+\_\+cloud\+\_\+generator.\+hpp.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}\label{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}} 
+\index{s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}!PointT@{PointT}}
+\index{PointT@{PointT}!s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}}
+\doxysubsubsection{\texorpdfstring{PointT}{PointT}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{s\+\_\+graphs\+::\+Map\+Cloud\+Generator\+::\+PointT}} =  pcl\+::\+Point\+X\+Y\+ZI}
+
+
+
+Definition at line 18 of file map\+\_\+cloud\+\_\+generator.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1MapCloudGenerator_acc4ada1b7e9ba0447824164172be1844}\label{classs__graphs_1_1MapCloudGenerator_acc4ada1b7e9ba0447824164172be1844}} 
+\index{s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}!MapCloudGenerator@{MapCloudGenerator}}
+\index{MapCloudGenerator@{MapCloudGenerator}!s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}}
+\doxysubsubsection{\texorpdfstring{MapCloudGenerator()}{MapCloudGenerator()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Map\+Cloud\+Generator\+::\+Map\+Cloud\+Generator (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1MapCloudGenerator_aaeab988b4bd5659918a5328eeda32f7d}\label{classs__graphs_1_1MapCloudGenerator_aaeab988b4bd5659918a5328eeda32f7d}} 
+\index{s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}!````~MapCloudGenerator@{$\sim$MapCloudGenerator}}
+\index{````~MapCloudGenerator@{$\sim$MapCloudGenerator}!s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}}
+\doxysubsubsection{\texorpdfstring{$\sim$MapCloudGenerator()}{~MapCloudGenerator()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Map\+Cloud\+Generator\+::$\sim$\+Map\+Cloud\+Generator (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1MapCloudGenerator_ac260dc7e3bd7d9fe02a6465a700a1a92}\label{classs__graphs_1_1MapCloudGenerator_ac260dc7e3bd7d9fe02a6465a700a1a92}} 
+\index{s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}!generate@{generate}}
+\index{generate@{generate}!s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}}
+\doxysubsubsection{\texorpdfstring{generate()}{generate()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily pcl\+::\+Point\+Cloud$<$\mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{PointT}}$>$\+::Ptr s\+\_\+graphs\+::\+Map\+Cloud\+Generator\+::generate (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Matrix4f \&}]{pose,  }\item[{const pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{PointT}} $>$\+::Ptr \&}]{cloud }\end{DoxyParamCaption}) const}
+
+\mbox{\Hypertarget{classs__graphs_1_1MapCloudGenerator_a476e371ab8e6e405b713c26f88bebe67}\label{classs__graphs_1_1MapCloudGenerator_a476e371ab8e6e405b713c26f88bebe67}} 
+\index{s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}!generate@{generate}}
+\index{generate@{generate}!s\_graphs::MapCloudGenerator@{s\_graphs::MapCloudGenerator}}
+\doxysubsubsection{\texorpdfstring{generate()}{generate()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily pcl\+::\+Point\+Cloud$<$\mbox{\hyperlink{classs__graphs_1_1MapCloudGenerator_ae3ba5cb70a56457fafb8eeb6c8597ba8}{PointT}}$>$\+::Ptr s\+\_\+graphs\+::\+Map\+Cloud\+Generator\+::generate (\begin{DoxyParamCaption}\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrameSnapshot_aa08c3c1be55a8813b3d8fdd687d34e80}{Key\+Frame\+Snapshot\+::\+Ptr}} $>$ \&}]{keyframes,  }\item[{double}]{resolution }\end{DoxyParamCaption}) const}
+
+
+
+generates a map point cloud 
+
+
+\begin{DoxyParams}{Parameters}
+{\em keyframes} & snapshots of keyframes \\
+\hline
+{\em resolution} & resolution of generated map \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+generated map point cloud 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{map__cloud__generator_8hpp}{map\+\_\+cloud\+\_\+generator.\+hpp}}\end{DoxyCompactItemize}

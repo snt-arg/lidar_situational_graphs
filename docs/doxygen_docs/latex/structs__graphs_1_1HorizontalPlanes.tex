@@ -1,0 +1,174 @@
+\hypertarget{structs__graphs_1_1HorizontalPlanes}{}\doxysection{s\+\_\+graphs\+::Horizontal\+Planes Struct Reference}
+\label{structs__graphs_1_1HorizontalPlanes}\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+
+
+{\ttfamily \#include $<$planes.\+hpp$>$}
+
+\doxysubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{Point\+Normal}} = pcl\+::\+Point\+X\+Y\+Z\+R\+G\+B\+Normal
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+int \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a107a2607b023dd747e09ead3384f36a4}{id}}
+\item 
+g2o\+::\+Plane3D \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a9b7c3fa77ebc11da2efa05bf49dd3538}{plane}}
+\item 
+pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{Point\+Normal}} $>$\+::Ptr \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_aeb9be81efa433d8fd70231d5564bbbbe}{cloud\+\_\+seg\+\_\+body}}
+\item 
+std\+::vector$<$ pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{Point\+Normal}} $>$\+::Ptr $>$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_ac8bc27f71936ba2cf41f7d7fb4ef73e2}{cloud\+\_\+seg\+\_\+body\+\_\+vec}}
+\item 
+pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{Point\+Normal}} $>$\+::Ptr \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a91c38a74e840c4338f38a10074f1053c}{cloud\+\_\+seg\+\_\+map}}
+\item 
+Eigen\+::\+Matrix3d \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a0ab388b4484ffa1011955ea97c432c81}{covariance}}
+\item 
+bool \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_ac6baea9fa9a5f5645c09ab8b23943f4a}{parallel\+\_\+pair}}
+\item 
+g2o\+::\+Vertex\+S\+E3 $\ast$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_af3352f2b8b3703e26bff9e8621e9c69c}{keyframe\+\_\+node}}
+\item 
+std\+::vector$<$ g2o\+::\+Vertex\+S\+E3 $\ast$ $>$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a15cdc205bb02bbf8dce62fe9e1d10467}{keyframe\+\_\+node\+\_\+vec}}
+\item 
+g2o\+::\+Vertex\+Plane $\ast$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a9c764ba31ee03385c98b700a7d729f5b}{plane\+\_\+node}}
+\item 
+std\+::vector$<$ double $>$ \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a7c280e34c54f079819cb0f48b78e0982}{color}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 36 of file planes.\+hpp.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}\label{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!PointNormal@{PointNormal}}
+\index{PointNormal@{PointNormal}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{PointNormal}{PointNormal}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{s\+\_\+graphs\+::\+Horizontal\+Planes\+::\+Point\+Normal}} =  pcl\+::\+Point\+X\+Y\+Z\+R\+G\+B\+Normal}
+
+
+
+Definition at line 38 of file planes.\+hpp.
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_aeb9be81efa433d8fd70231d5564bbbbe}\label{structs__graphs_1_1HorizontalPlanes_aeb9be81efa433d8fd70231d5564bbbbe}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!cloud\_seg\_body@{cloud\_seg\_body}}
+\index{cloud\_seg\_body@{cloud\_seg\_body}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{cloud\_seg\_body}{cloud\_seg\_body}}
+{\footnotesize\ttfamily pcl\+::\+Point\+Cloud$<$\mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{Point\+Normal}}$>$\+::Ptr s\+\_\+graphs\+::\+Horizontal\+Planes\+::cloud\+\_\+seg\+\_\+body}
+
+
+
+Definition at line 43 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_ac8bc27f71936ba2cf41f7d7fb4ef73e2}\label{structs__graphs_1_1HorizontalPlanes_ac8bc27f71936ba2cf41f7d7fb4ef73e2}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!cloud\_seg\_body\_vec@{cloud\_seg\_body\_vec}}
+\index{cloud\_seg\_body\_vec@{cloud\_seg\_body\_vec}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{cloud\_seg\_body\_vec}{cloud\_seg\_body\_vec}}
+{\footnotesize\ttfamily std\+::vector$<$pcl\+::\+Point\+Cloud$<$\mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{Point\+Normal}}$>$\+::Ptr$>$ s\+\_\+graphs\+::\+Horizontal\+Planes\+::cloud\+\_\+seg\+\_\+body\+\_\+vec}
+
+
+
+Definition at line 44 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a91c38a74e840c4338f38a10074f1053c}\label{structs__graphs_1_1HorizontalPlanes_a91c38a74e840c4338f38a10074f1053c}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!cloud\_seg\_map@{cloud\_seg\_map}}
+\index{cloud\_seg\_map@{cloud\_seg\_map}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{cloud\_seg\_map}{cloud\_seg\_map}}
+{\footnotesize\ttfamily pcl\+::\+Point\+Cloud$<$\mbox{\hyperlink{structs__graphs_1_1HorizontalPlanes_a94bc68d872048c3ce169818babc7f256}{Point\+Normal}}$>$\+::Ptr s\+\_\+graphs\+::\+Horizontal\+Planes\+::cloud\+\_\+seg\+\_\+map}
+
+
+
+Definition at line 45 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a7c280e34c54f079819cb0f48b78e0982}\label{structs__graphs_1_1HorizontalPlanes_a7c280e34c54f079819cb0f48b78e0982}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!color@{color}}
+\index{color@{color}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{color}{color}}
+{\footnotesize\ttfamily std\+::vector$<$double$>$ s\+\_\+graphs\+::\+Horizontal\+Planes\+::color}
+
+
+
+Definition at line 51 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a0ab388b4484ffa1011955ea97c432c81}\label{structs__graphs_1_1HorizontalPlanes_a0ab388b4484ffa1011955ea97c432c81}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!covariance@{covariance}}
+\index{covariance@{covariance}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{covariance}{covariance}}
+{\footnotesize\ttfamily Eigen\+::\+Matrix3d s\+\_\+graphs\+::\+Horizontal\+Planes\+::covariance}
+
+
+
+Definition at line 46 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a107a2607b023dd747e09ead3384f36a4}\label{structs__graphs_1_1HorizontalPlanes_a107a2607b023dd747e09ead3384f36a4}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!id@{id}}
+\index{id@{id}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{id}{id}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Horizontal\+Planes\+::id}
+
+
+
+Definition at line 41 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_af3352f2b8b3703e26bff9e8621e9c69c}\label{structs__graphs_1_1HorizontalPlanes_af3352f2b8b3703e26bff9e8621e9c69c}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!keyframe\_node@{keyframe\_node}}
+\index{keyframe\_node@{keyframe\_node}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{keyframe\_node}{keyframe\_node}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+S\+E3$\ast$ s\+\_\+graphs\+::\+Horizontal\+Planes\+::keyframe\+\_\+node}
+
+
+
+Definition at line 48 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a15cdc205bb02bbf8dce62fe9e1d10467}\label{structs__graphs_1_1HorizontalPlanes_a15cdc205bb02bbf8dce62fe9e1d10467}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!keyframe\_node\_vec@{keyframe\_node\_vec}}
+\index{keyframe\_node\_vec@{keyframe\_node\_vec}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{keyframe\_node\_vec}{keyframe\_node\_vec}}
+{\footnotesize\ttfamily std\+::vector$<$g2o\+::\+Vertex\+S\+E3$\ast$$>$ s\+\_\+graphs\+::\+Horizontal\+Planes\+::keyframe\+\_\+node\+\_\+vec}
+
+
+
+Definition at line 49 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_ac6baea9fa9a5f5645c09ab8b23943f4a}\label{structs__graphs_1_1HorizontalPlanes_ac6baea9fa9a5f5645c09ab8b23943f4a}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!parallel\_pair@{parallel\_pair}}
+\index{parallel\_pair@{parallel\_pair}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{parallel\_pair}{parallel\_pair}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Horizontal\+Planes\+::parallel\+\_\+pair}
+
+
+
+Definition at line 47 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a9b7c3fa77ebc11da2efa05bf49dd3538}\label{structs__graphs_1_1HorizontalPlanes_a9b7c3fa77ebc11da2efa05bf49dd3538}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!plane@{plane}}
+\index{plane@{plane}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{plane}{plane}}
+{\footnotesize\ttfamily g2o\+::\+Plane3D s\+\_\+graphs\+::\+Horizontal\+Planes\+::plane}
+
+
+
+Definition at line 42 of file planes.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1HorizontalPlanes_a9c764ba31ee03385c98b700a7d729f5b}\label{structs__graphs_1_1HorizontalPlanes_a9c764ba31ee03385c98b700a7d729f5b}} 
+\index{s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}!plane\_node@{plane\_node}}
+\index{plane\_node@{plane\_node}!s\_graphs::HorizontalPlanes@{s\_graphs::HorizontalPlanes}}
+\doxysubsubsection{\texorpdfstring{plane\_node}{plane\_node}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+Plane$\ast$ s\+\_\+graphs\+::\+Horizontal\+Planes\+::plane\+\_\+node}
+
+
+
+Definition at line 50 of file planes.\+hpp.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{planes_8hpp}{planes.\+hpp}}\end{DoxyCompactItemize}

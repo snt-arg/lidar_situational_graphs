@@ -1,0 +1,503 @@
+\hypertarget{classs__graphs_1_1PlaneUtils}{}\doxysection{s\+\_\+graphs\+::Plane\+Utils Class Reference}
+\label{classs__graphs_1_1PlaneUtils}\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+
+
+{\ttfamily \#include $<$plane\+\_\+utils.\+hpp$>$}
+
+\doxysubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+enum \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7}{plane\+\_\+class}} \+: uint8\+\_\+t \{ \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7a39843ffca716a4fb25352811db960a1e}{X\+\_\+\+V\+E\+R\+T\+\_\+\+P\+L\+A\+NE}} = 0, 
+\mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7aff220f4394d368b50c78b86cf21ff1da}{Y\+\_\+\+V\+E\+R\+T\+\_\+\+P\+L\+A\+NE}} = 1, 
+\mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7ab7f562187a32eed0520a5392283ef7bc}{H\+O\+R\+T\+\_\+\+P\+L\+A\+NE}} = 2
+ \}
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4c33b909abb73c0339fca0d5653587d9}{Plane\+Utils}} ()
+\item 
+\mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a7999732c3c67f56745545ebcf269927d}{$\sim$\+Plane\+Utils}} ()
+\item 
+float \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a130d2baf07d320f622836aed344a91ce}{width\+\_\+between\+\_\+planes}} (Eigen\+::\+Vector4d v1, Eigen\+::\+Vector4d v2)
+\item 
+float \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a359edc4ec05af847d76d258bd196af43}{width\+\_\+between\+\_\+planes}} (s\+\_\+graphs\+::\+Plane\+Data \&plane1, s\+\_\+graphs\+::\+Plane\+Data \&plane2)
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a25f9f9ab3f85a4325f88027e3ca004b8}{correct\+\_\+plane\+\_\+d}} (int plane\+\_\+type, s\+\_\+graphs\+::\+Plane\+Data \&plane)
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a325eb7863d89b68c52b0edc82185ad1a}{correct\+\_\+plane\+\_\+d}} (int plane\+\_\+type, Eigen\+::\+Vector4d \&plane)
+\item 
+Eigen\+::\+Vector2d \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_ad1c129f7b1c4b5f7f874e39cb98f49fb}{room\+\_\+center}} (const Eigen\+::\+Vector4d \&x\+\_\+plane1, const Eigen\+::\+Vector4d \&x\+\_\+plane2, const Eigen\+::\+Vector4d \&y\+\_\+plane1, const Eigen\+::\+Vector4d \&y\+\_\+plane2)
+\item 
+geometry\+\_\+msgs\+::\+Point \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a552a8488082bc0f14a8c93b25028a8fe}{room\+\_\+center}} (const s\+\_\+graphs\+::\+Plane\+Data \&x\+\_\+plane1, const s\+\_\+graphs\+::\+Plane\+Data \&x\+\_\+plane2, const s\+\_\+graphs\+::\+Plane\+Data \&y\+\_\+plane1, const s\+\_\+graphs\+::\+Plane\+Data \&y\+\_\+plane2)
+\item 
+float \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a3711a0c265f447bef9338695369b0730}{plane\+\_\+length}} (pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr cloud\+\_\+seg, pcl\+::\+Point\+XY \&p1, pcl\+::\+Point\+XY \&p2, g2o\+::\+Vertex\+S\+E3 $\ast$keyframe\+\_\+node)
+\item 
+float \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_abafd8b8e5e3c50d8e6cc5a67a43a8dd4}{plane\+\_\+length}} (pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr cloud\+\_\+seg, pcl\+::\+Point\+XY \&p1, pcl\+::\+Point\+XY \&p2)
+\item 
+pcl\+::\+Point\+XY \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a11a0249dc736cecd3ad4faf6dab84357}{convert\+\_\+point\+\_\+to\+\_\+map}} (pcl\+::\+Point\+XY point\+\_\+local, Eigen\+::\+Matrix4d keyframe\+\_\+pose)
+\item 
+float \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a21401a3641644e43119815b5f2344a95}{get\+\_\+min\+\_\+segment}} (const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&cloud\+\_\+1, const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&cloud\+\_\+2)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a55b91876dc6b59ffe22106489a70e49d}{check\+\_\+point\+\_\+neighbours}} (const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&cloud\+\_\+1, const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&cloud\+\_\+2)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a52ed7f627fb600833067ca500f101b23}{compute\+\_\+point\+\_\+difference}} (const double plane1\+\_\+point, const double plane2\+\_\+point)
+\item 
+float \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a733acd5b7e9f933827ab84fe72eb7de8}{plane\+\_\+dot\+\_\+product}} (const s\+\_\+graphs\+::\+Plane\+Data \&plane1, const s\+\_\+graphs\+::\+Plane\+Data \&plane2)
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 45 of file plane\+\_\+utils.\+hpp.
+
+
+
+\doxysubsection{Member Enumeration Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7}\label{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!plane\_class@{plane\_class}}
+\index{plane\_class@{plane\_class}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{plane\_class}{plane\_class}}
+{\footnotesize\ttfamily enum \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7}{s\+\_\+graphs\+::\+Plane\+Utils\+::plane\+\_\+class}} \+: uint8\+\_\+t}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{X\_VERT\_PLANE@{X\_VERT\_PLANE}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!X\_VERT\_PLANE@{X\_VERT\_PLANE}}}\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7a39843ffca716a4fb25352811db960a1e}\label{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7a39843ffca716a4fb25352811db960a1e}} 
+X\+\_\+\+V\+E\+R\+T\+\_\+\+P\+L\+A\+NE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{Y\_VERT\_PLANE@{Y\_VERT\_PLANE}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!Y\_VERT\_PLANE@{Y\_VERT\_PLANE}}}\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7aff220f4394d368b50c78b86cf21ff1da}\label{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7aff220f4394d368b50c78b86cf21ff1da}} 
+Y\+\_\+\+V\+E\+R\+T\+\_\+\+P\+L\+A\+NE&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{HORT\_PLANE@{HORT\_PLANE}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!HORT\_PLANE@{HORT\_PLANE}}}\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7ab7f562187a32eed0520a5392283ef7bc}\label{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7ab7f562187a32eed0520a5392283ef7bc}} 
+H\+O\+R\+T\+\_\+\+P\+L\+A\+NE&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 53 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{53                    : uint8\_t \{}
+\DoxyCodeLine{54     \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7a39843ffca716a4fb25352811db960a1e}{X\_VERT\_PLANE}} = 0,}
+\DoxyCodeLine{55     \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7aff220f4394d368b50c78b86cf21ff1da}{Y\_VERT\_PLANE}} = 1,}
+\DoxyCodeLine{56     \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a4a0d0f80dae555d4160db37eb052a6e7ab7f562187a32eed0520a5392283ef7bc}{HORT\_PLANE}} = 2,}
+\DoxyCodeLine{57   \};}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a4c33b909abb73c0339fca0d5653587d9}\label{classs__graphs_1_1PlaneUtils_a4c33b909abb73c0339fca0d5653587d9}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!PlaneUtils@{PlaneUtils}}
+\index{PlaneUtils@{PlaneUtils}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{PlaneUtils()}{PlaneUtils()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Plane\+Utils\+::\+Plane\+Utils (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 49 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{49 \{\}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a7999732c3c67f56745545ebcf269927d}\label{classs__graphs_1_1PlaneUtils_a7999732c3c67f56745545ebcf269927d}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!````~PlaneUtils@{$\sim$PlaneUtils}}
+\index{````~PlaneUtils@{$\sim$PlaneUtils}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{$\sim$PlaneUtils()}{~PlaneUtils()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Plane\+Utils\+::$\sim$\+Plane\+Utils (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 50 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{50 \{\}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a55b91876dc6b59ffe22106489a70e49d}\label{classs__graphs_1_1PlaneUtils_a55b91876dc6b59ffe22106489a70e49d}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!check\_point\_neighbours@{check\_point\_neighbours}}
+\index{check\_point\_neighbours@{check\_point\_neighbours}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{check\_point\_neighbours()}{check\_point\_neighbours()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Plane\+Utils\+::check\+\_\+point\+\_\+neighbours (\begin{DoxyParamCaption}\item[{const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&}]{cloud\+\_\+1,  }\item[{const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&}]{cloud\+\_\+2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 229 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{229                                                                                                                           \{}
+\DoxyCodeLine{230     \textcolor{keywordtype}{bool} valid\_neighbour = \textcolor{keyword}{false};}
+\DoxyCodeLine{231     \textcolor{keywordtype}{int} point\_count = 0;}
+\DoxyCodeLine{232     \textcolor{keywordtype}{float} min\_dist = 0.5;}
+\DoxyCodeLine{233 }
+\DoxyCodeLine{234     \textcolor{keywordflow}{for}(std::size\_t i = 0; i < cloud\_1-\/>points.size(); ++i) \{}
+\DoxyCodeLine{235       \textcolor{keywordflow}{for}(std::size\_t j = 0; j < cloud\_2-\/>points.size(); ++j) \{}
+\DoxyCodeLine{236         \textcolor{comment}{// Compute the distance}}
+\DoxyCodeLine{237         \textcolor{keywordtype}{float} dist = (cloud\_1-\/>points[i].getVector4fMap() -\/ cloud\_2-\/>points[j].getVector4fMap()).squaredNorm();}
+\DoxyCodeLine{238         \textcolor{keywordflow}{if}(dist < min\_dist) \{}
+\DoxyCodeLine{239           point\_count++;}
+\DoxyCodeLine{240           \textcolor{keywordflow}{break};}
+\DoxyCodeLine{241         \}}
+\DoxyCodeLine{242       \}}
+\DoxyCodeLine{243       \textcolor{keywordflow}{if}(point\_count > 100) \{}
+\DoxyCodeLine{244         valid\_neighbour = \textcolor{keyword}{true};}
+\DoxyCodeLine{245         \textcolor{keywordflow}{break};}
+\DoxyCodeLine{246       \}}
+\DoxyCodeLine{247     \}}
+\DoxyCodeLine{248     \textcolor{keywordflow}{return} valid\_neighbour;}
+\DoxyCodeLine{249   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a52ed7f627fb600833067ca500f101b23}\label{classs__graphs_1_1PlaneUtils_a52ed7f627fb600833067ca500f101b23}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!compute\_point\_difference@{compute\_point\_difference}}
+\index{compute\_point\_difference@{compute\_point\_difference}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{compute\_point\_difference()}{compute\_point\_difference()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Plane\+Utils\+::compute\+\_\+point\+\_\+difference (\begin{DoxyParamCaption}\item[{const double}]{plane1\+\_\+point,  }\item[{const double}]{plane2\+\_\+point }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 251 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{251                                                                                       \{}
+\DoxyCodeLine{252     \textcolor{keywordflow}{if}((plane1\_point -\/ plane2\_point) > 0) \textcolor{keywordflow}{return} \textcolor{keyword}{false};}
+\DoxyCodeLine{253 }
+\DoxyCodeLine{254     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{255   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a11a0249dc736cecd3ad4faf6dab84357}\label{classs__graphs_1_1PlaneUtils_a11a0249dc736cecd3ad4faf6dab84357}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!convert\_point\_to\_map@{convert\_point\_to\_map}}
+\index{convert\_point\_to\_map@{convert\_point\_to\_map}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{convert\_point\_to\_map()}{convert\_point\_to\_map()}}
+{\footnotesize\ttfamily pcl\+::\+Point\+XY s\+\_\+graphs\+::\+Plane\+Utils\+::convert\+\_\+point\+\_\+to\+\_\+map (\begin{DoxyParamCaption}\item[{pcl\+::\+Point\+XY}]{point\+\_\+local,  }\item[{Eigen\+::\+Matrix4d}]{keyframe\+\_\+pose }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 194 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{194                                                                                        \{}
+\DoxyCodeLine{195     pcl::PointXY point\_map;}
+\DoxyCodeLine{196 }
+\DoxyCodeLine{197     Eigen::Vector4d point\_map\_eigen, point\_local\_eigen;}
+\DoxyCodeLine{198     point\_local\_eigen = point\_map\_eigen.setZero();}
+\DoxyCodeLine{199     point\_local\_eigen(3) = point\_map\_eigen(3) = 1;}
+\DoxyCodeLine{200     point\_local\_eigen(0) = point\_local.x;}
+\DoxyCodeLine{201     point\_local\_eigen(1) = point\_local.y;}
+\DoxyCodeLine{202     point\_map\_eigen = keyframe\_pose * point\_local\_eigen;}
+\DoxyCodeLine{203 }
+\DoxyCodeLine{204     point\_map.x = point\_map\_eigen(0);}
+\DoxyCodeLine{205     point\_map.y = point\_map\_eigen(1);}
+\DoxyCodeLine{206     \textcolor{keywordflow}{return} point\_map;}
+\DoxyCodeLine{207   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a325eb7863d89b68c52b0edc82185ad1a}\label{classs__graphs_1_1PlaneUtils_a325eb7863d89b68c52b0edc82185ad1a}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!correct\_plane\_d@{correct\_plane\_d}}
+\index{correct\_plane\_d@{correct\_plane\_d}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{correct\_plane\_d()}{correct\_plane\_d()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Plane\+Utils\+::correct\+\_\+plane\+\_\+d (\begin{DoxyParamCaption}\item[{int}]{plane\+\_\+type,  }\item[{Eigen\+::\+Vector4d \&}]{plane }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 100 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{100                                                              \{}
+\DoxyCodeLine{101     \textcolor{keywordflow}{if}(plane(3) > 0) \{}
+\DoxyCodeLine{102       plane(0) = -\/1 * plane(0);}
+\DoxyCodeLine{103       plane(1) = -\/1 * plane(1);}
+\DoxyCodeLine{104       plane(2) = -\/1 * plane(2);}
+\DoxyCodeLine{105       plane(3) = -\/1 * plane(3);}
+\DoxyCodeLine{106     \}}
+\DoxyCodeLine{107     \textcolor{keywordflow}{return};}
+\DoxyCodeLine{108   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a25f9f9ab3f85a4325f88027e3ca004b8}\label{classs__graphs_1_1PlaneUtils_a25f9f9ab3f85a4325f88027e3ca004b8}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!correct\_plane\_d@{correct\_plane\_d}}
+\index{correct\_plane\_d@{correct\_plane\_d}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{correct\_plane\_d()}{correct\_plane\_d()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Plane\+Utils\+::correct\+\_\+plane\+\_\+d (\begin{DoxyParamCaption}\item[{int}]{plane\+\_\+type,  }\item[{s\+\_\+graphs\+::\+Plane\+Data \&}]{plane }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 90 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{90                                                                  \{}
+\DoxyCodeLine{91     \textcolor{keywordflow}{if}(plane.d > 0) \{}
+\DoxyCodeLine{92       plane.nx = -\/1 * plane.nx;}
+\DoxyCodeLine{93       plane.ny = -\/1 * plane.ny;}
+\DoxyCodeLine{94       plane.nz = -\/1 * plane.nz;}
+\DoxyCodeLine{95       plane.d = -\/1 * plane.d;}
+\DoxyCodeLine{96     \}}
+\DoxyCodeLine{97     \textcolor{keywordflow}{return};}
+\DoxyCodeLine{98   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a21401a3641644e43119815b5f2344a95}\label{classs__graphs_1_1PlaneUtils_a21401a3641644e43119815b5f2344a95}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!get\_min\_segment@{get\_min\_segment}}
+\index{get\_min\_segment@{get\_min\_segment}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{get\_min\_segment()}{get\_min\_segment()}}
+{\footnotesize\ttfamily float s\+\_\+graphs\+::\+Plane\+Utils\+::get\+\_\+min\+\_\+segment (\begin{DoxyParamCaption}\item[{const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&}]{cloud\+\_\+1,  }\item[{const pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr \&}]{cloud\+\_\+2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 209 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{209                                                                                                                     \{}
+\DoxyCodeLine{210     \textcolor{keywordtype}{float} min\_dist = std::numeric\_limits<float>::max();}
+\DoxyCodeLine{211     \textcolor{keyword}{const} \textcolor{keyword}{auto} token = std::numeric\_limits<std::size\_t>::max();}
+\DoxyCodeLine{212     std::size\_t i\_min = token, i\_max = token;}
+\DoxyCodeLine{213 }
+\DoxyCodeLine{214     \textcolor{keywordflow}{for}(std::size\_t i = 0; i < cloud\_1-\/>points.size(); ++i) \{}
+\DoxyCodeLine{215       \textcolor{keywordflow}{for}(std::size\_t j = 0; j < cloud\_2-\/>points.size(); ++j) \{}
+\DoxyCodeLine{216         \textcolor{comment}{// Compute the distance}}
+\DoxyCodeLine{217         \textcolor{keywordtype}{float} dist = (cloud\_1-\/>points[i].getVector4fMap() -\/ cloud\_2-\/>points[j].getVector4fMap()).squaredNorm();}
+\DoxyCodeLine{218         \textcolor{keywordflow}{if}(dist >= min\_dist) \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{219 }
+\DoxyCodeLine{220         min\_dist = dist;}
+\DoxyCodeLine{221         i\_min = i;}
+\DoxyCodeLine{222         i\_max = j;}
+\DoxyCodeLine{223       \}}
+\DoxyCodeLine{224     \}}
+\DoxyCodeLine{225 }
+\DoxyCodeLine{226     \textcolor{keywordflow}{return} (std::sqrt(min\_dist));}
+\DoxyCodeLine{227   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a733acd5b7e9f933827ab84fe72eb7de8}\label{classs__graphs_1_1PlaneUtils_a733acd5b7e9f933827ab84fe72eb7de8}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!plane\_dot\_product@{plane\_dot\_product}}
+\index{plane\_dot\_product@{plane\_dot\_product}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{plane\_dot\_product()}{plane\_dot\_product()}}
+{\footnotesize\ttfamily float s\+\_\+graphs\+::\+Plane\+Utils\+::plane\+\_\+dot\+\_\+product (\begin{DoxyParamCaption}\item[{const s\+\_\+graphs\+::\+Plane\+Data \&}]{plane1,  }\item[{const s\+\_\+graphs\+::\+Plane\+Data \&}]{plane2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 257 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{257                                                                                             \{}
+\DoxyCodeLine{258     \textcolor{keywordtype}{float} dot\_product = plane1.nx * plane2.nx + plane1.ny * plane2.ny + plane1.nz * plane2.nz;}
+\DoxyCodeLine{259     \textcolor{keywordflow}{return} dot\_product;}
+\DoxyCodeLine{260   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_abafd8b8e5e3c50d8e6cc5a67a43a8dd4}\label{classs__graphs_1_1PlaneUtils_abafd8b8e5e3c50d8e6cc5a67a43a8dd4}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!plane\_length@{plane\_length}}
+\index{plane\_length@{plane\_length}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{plane\_length()}{plane\_length()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily float s\+\_\+graphs\+::\+Plane\+Utils\+::plane\+\_\+length (\begin{DoxyParamCaption}\item[{pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr}]{cloud\+\_\+seg,  }\item[{pcl\+::\+Point\+XY \&}]{p1,  }\item[{pcl\+::\+Point\+XY \&}]{p2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 182 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{182                                                                                               \{}
+\DoxyCodeLine{183     PointNormal pmin, pmax;}
+\DoxyCodeLine{184     pcl::getMaxSegment(*cloud\_seg, pmin, pmax);}
+\DoxyCodeLine{185     p1.x = pmin.x;}
+\DoxyCodeLine{186     p1.y = pmin.y;}
+\DoxyCodeLine{187     p2.x = pmax.x;}
+\DoxyCodeLine{188     p2.y = pmax.y;}
+\DoxyCodeLine{189     \textcolor{keywordtype}{float} length = pcl::euclideanDistance(p1, p2);}
+\DoxyCodeLine{190 }
+\DoxyCodeLine{191     \textcolor{keywordflow}{return} length;}
+\DoxyCodeLine{192   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a3711a0c265f447bef9338695369b0730}\label{classs__graphs_1_1PlaneUtils_a3711a0c265f447bef9338695369b0730}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!plane\_length@{plane\_length}}
+\index{plane\_length@{plane\_length}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{plane\_length()}{plane\_length()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily float s\+\_\+graphs\+::\+Plane\+Utils\+::plane\+\_\+length (\begin{DoxyParamCaption}\item[{pcl\+::\+Point\+Cloud$<$ Point\+Normal $>$\+::Ptr}]{cloud\+\_\+seg,  }\item[{pcl\+::\+Point\+XY \&}]{p1,  }\item[{pcl\+::\+Point\+XY \&}]{p2,  }\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{keyframe\+\_\+node }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 164 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{164                                                                                                                            \{}
+\DoxyCodeLine{165     PointNormal pmin, pmax;}
+\DoxyCodeLine{166     pcl::getMaxSegment(*cloud\_seg, pmin, pmax);}
+\DoxyCodeLine{167     p1.x = pmin.x;}
+\DoxyCodeLine{168     p1.y = pmin.y;}
+\DoxyCodeLine{169     p2.x = pmax.x;}
+\DoxyCodeLine{170     p2.y = pmax.y;}
+\DoxyCodeLine{171     \textcolor{keywordtype}{float} length = pcl::euclideanDistance(p1, p2);}
+\DoxyCodeLine{172 }
+\DoxyCodeLine{173     pcl::PointXY p1\_map, p2\_map;}
+\DoxyCodeLine{174     p1\_map = \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a11a0249dc736cecd3ad4faf6dab84357}{convert\_point\_to\_map}}(p1, keyframe\_node-\/>estimate().matrix());}
+\DoxyCodeLine{175     p2\_map = \mbox{\hyperlink{classs__graphs_1_1PlaneUtils_a11a0249dc736cecd3ad4faf6dab84357}{convert\_point\_to\_map}}(p2, keyframe\_node-\/>estimate().matrix());}
+\DoxyCodeLine{176     p1 = p1\_map;}
+\DoxyCodeLine{177     p2 = p2\_map;}
+\DoxyCodeLine{178 }
+\DoxyCodeLine{179     \textcolor{keywordflow}{return} length;}
+\DoxyCodeLine{180   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_ad1c129f7b1c4b5f7f874e39cb98f49fb}\label{classs__graphs_1_1PlaneUtils_ad1c129f7b1c4b5f7f874e39cb98f49fb}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!room\_center@{room\_center}}
+\index{room\_center@{room\_center}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{room\_center()}{room\_center()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily Eigen\+::\+Vector2d s\+\_\+graphs\+::\+Plane\+Utils\+::room\+\_\+center (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector4d \&}]{x\+\_\+plane1,  }\item[{const Eigen\+::\+Vector4d \&}]{x\+\_\+plane2,  }\item[{const Eigen\+::\+Vector4d \&}]{y\+\_\+plane1,  }\item[{const Eigen\+::\+Vector4d \&}]{y\+\_\+plane2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 110 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{110                                                                                                                                                         \{}
+\DoxyCodeLine{111     Eigen::Vector2d center;}
+\DoxyCodeLine{112     Eigen::Vector3d vec\_x, vec\_y;}
+\DoxyCodeLine{113 }
+\DoxyCodeLine{114     \textcolor{keywordflow}{if}(fabs(x\_plane1(3)) > fabs(x\_plane2(3))) \{}
+\DoxyCodeLine{115       vec\_x = (0.5 * (fabs(x\_plane1(3)) * x\_plane1.head(3) -\/ fabs(x\_plane2(3)) * x\_plane2.head(3))) + fabs(x\_plane2(3)) * x\_plane2.head(3);}
+\DoxyCodeLine{116     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{117       vec\_x = (0.5 * (fabs(x\_plane2(3)) * x\_plane2.head(3) -\/ fabs(x\_plane1(3)) * x\_plane1.head(3))) + fabs(x\_plane1(3)) * x\_plane1.head(3);}
+\DoxyCodeLine{118     \}}
+\DoxyCodeLine{119 }
+\DoxyCodeLine{120     \textcolor{keywordflow}{if}(fabs(y\_plane1(3)) > fabs(y\_plane2(3))) \{}
+\DoxyCodeLine{121       vec\_y = (0.5 * (fabs(y\_plane1(3)) * y\_plane1.head(3) -\/ fabs(y\_plane2(3)) * y\_plane2.head(3))) + fabs(y\_plane2(3)) * y\_plane2.head(3);}
+\DoxyCodeLine{122     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{123       vec\_y = (0.5 * (fabs(y\_plane2(3)) * y\_plane2.head(3) -\/ fabs(y\_plane1(3)) * y\_plane1.head(3))) + fabs(y\_plane1(3)) * y\_plane1.head(3);}
+\DoxyCodeLine{124     \}}
+\DoxyCodeLine{125 }
+\DoxyCodeLine{126     Eigen::Vector3d final\_vec = vec\_x + vec\_y;}
+\DoxyCodeLine{127     center(0) = final\_vec(0);}
+\DoxyCodeLine{128     center(1) = final\_vec(1);}
+\DoxyCodeLine{129 }
+\DoxyCodeLine{130     \textcolor{keywordflow}{return} center;}
+\DoxyCodeLine{131   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a552a8488082bc0f14a8c93b25028a8fe}\label{classs__graphs_1_1PlaneUtils_a552a8488082bc0f14a8c93b25028a8fe}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!room\_center@{room\_center}}
+\index{room\_center@{room\_center}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{room\_center()}{room\_center()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily geometry\+\_\+msgs\+::\+Point s\+\_\+graphs\+::\+Plane\+Utils\+::room\+\_\+center (\begin{DoxyParamCaption}\item[{const s\+\_\+graphs\+::\+Plane\+Data \&}]{x\+\_\+plane1,  }\item[{const s\+\_\+graphs\+::\+Plane\+Data \&}]{x\+\_\+plane2,  }\item[{const s\+\_\+graphs\+::\+Plane\+Data \&}]{y\+\_\+plane1,  }\item[{const s\+\_\+graphs\+::\+Plane\+Data \&}]{y\+\_\+plane2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 133 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{133                                                                                                                                                                              \{}
+\DoxyCodeLine{134     geometry\_msgs::Point center;}
+\DoxyCodeLine{135     Eigen::Vector3d vec\_x, vec\_y;}
+\DoxyCodeLine{136     Eigen::Vector3d x\_plane1\_eigen, x\_plane2\_eigen;}
+\DoxyCodeLine{137     Eigen::Vector3d y\_plane1\_eigen, y\_plane2\_eigen;}
+\DoxyCodeLine{138 }
+\DoxyCodeLine{139     x\_plane1\_eigen << x\_plane1.nx, x\_plane1.ny, x\_plane1.nz;}
+\DoxyCodeLine{140     x\_plane2\_eigen << x\_plane2.nx, x\_plane2.ny, x\_plane2.nz;}
+\DoxyCodeLine{141 }
+\DoxyCodeLine{142     y\_plane1\_eigen << y\_plane1.nx, y\_plane1.ny, y\_plane1.nz;}
+\DoxyCodeLine{143     y\_plane2\_eigen << y\_plane2.nx, y\_plane2.ny, y\_plane2.nz;}
+\DoxyCodeLine{144 }
+\DoxyCodeLine{145     \textcolor{keywordflow}{if}(fabs(x\_plane1.d) > fabs(x\_plane2.d)) \{}
+\DoxyCodeLine{146       vec\_x = (0.5 * (fabs(x\_plane1.d) * x\_plane1\_eigen -\/ fabs(x\_plane2.d) * x\_plane2\_eigen)) + fabs(x\_plane2.d) * x\_plane2\_eigen;}
+\DoxyCodeLine{147     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{148       vec\_x = (0.5 * (fabs(x\_plane2.d) * x\_plane2\_eigen -\/ fabs(x\_plane1.d) * x\_plane1\_eigen)) + fabs(x\_plane1.d) * x\_plane1\_eigen;}
+\DoxyCodeLine{149     \}}
+\DoxyCodeLine{150 }
+\DoxyCodeLine{151     \textcolor{keywordflow}{if}(fabs(y\_plane1.d) > fabs(y\_plane2.d)) \{}
+\DoxyCodeLine{152       vec\_y = (0.5 * (fabs(y\_plane1.d) * y\_plane1\_eigen -\/ fabs(y\_plane2.d) * y\_plane2\_eigen)) + fabs(y\_plane2.d) * y\_plane2\_eigen;}
+\DoxyCodeLine{153     \} \textcolor{keywordflow}{else} \{}
+\DoxyCodeLine{154       vec\_y = (0.5 * (fabs(y\_plane2.d) * y\_plane2\_eigen -\/ fabs(y\_plane1.d) * y\_plane1\_eigen)) + fabs(y\_plane1.d) * y\_plane1\_eigen;}
+\DoxyCodeLine{155     \}}
+\DoxyCodeLine{156 }
+\DoxyCodeLine{157     Eigen::Vector3d final\_vec = vec\_x + vec\_y;}
+\DoxyCodeLine{158     center.x = final\_vec(0);}
+\DoxyCodeLine{159     center.y = final\_vec(1);}
+\DoxyCodeLine{160 }
+\DoxyCodeLine{161     \textcolor{keywordflow}{return} center;}
+\DoxyCodeLine{162   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a130d2baf07d320f622836aed344a91ce}\label{classs__graphs_1_1PlaneUtils_a130d2baf07d320f622836aed344a91ce}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!width\_between\_planes@{width\_between\_planes}}
+\index{width\_between\_planes@{width\_between\_planes}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{width\_between\_planes()}{width\_between\_planes()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily float s\+\_\+graphs\+::\+Plane\+Utils\+::width\+\_\+between\+\_\+planes (\begin{DoxyParamCaption}\item[{Eigen\+::\+Vector4d}]{v1,  }\item[{Eigen\+::\+Vector4d}]{v2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 59 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{59                                                                         \{}
+\DoxyCodeLine{60     Eigen::Vector3d vec;}
+\DoxyCodeLine{61     \textcolor{keywordtype}{float} size = 0;}
+\DoxyCodeLine{62 }
+\DoxyCodeLine{63     \textcolor{keywordflow}{if}(fabs(v1(3)) > fabs(v2(3)))}
+\DoxyCodeLine{64       vec = fabs(v1(3)) * v1.head(3) -\/ fabs(v2(3)) * v2.head(3);}
+\DoxyCodeLine{65     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(fabs(v2(3)) > fabs(v1(3)))}
+\DoxyCodeLine{66       vec = fabs(v2(3)) * v2.head(3) -\/ fabs(v1(3)) * v1.head(3);}
+\DoxyCodeLine{67 }
+\DoxyCodeLine{68     size = fabs(vec(0) + vec(1));}
+\DoxyCodeLine{69 }
+\DoxyCodeLine{70     \textcolor{keywordflow}{return} size;}
+\DoxyCodeLine{71   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classs__graphs_1_1PlaneUtils_a359edc4ec05af847d76d258bd196af43}\label{classs__graphs_1_1PlaneUtils_a359edc4ec05af847d76d258bd196af43}} 
+\index{s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}!width\_between\_planes@{width\_between\_planes}}
+\index{width\_between\_planes@{width\_between\_planes}!s\_graphs::PlaneUtils@{s\_graphs::PlaneUtils}}
+\doxysubsubsection{\texorpdfstring{width\_between\_planes()}{width\_between\_planes()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily float s\+\_\+graphs\+::\+Plane\+Utils\+::width\+\_\+between\+\_\+planes (\begin{DoxyParamCaption}\item[{s\+\_\+graphs\+::\+Plane\+Data \&}]{plane1,  }\item[{s\+\_\+graphs\+::\+Plane\+Data \&}]{plane2 }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 73 of file plane\+\_\+utils.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{73                                                                                           \{}
+\DoxyCodeLine{74     Eigen::Vector3d vec;}
+\DoxyCodeLine{75     Eigen::Vector3d plane1\_eigen, plane2\_eigen;}
+\DoxyCodeLine{76     plane1\_eigen << plane1.nx, plane1.ny, plane1.nz;}
+\DoxyCodeLine{77     plane2\_eigen << plane2.nx, plane2.ny, plane2.nz;}
+\DoxyCodeLine{78     \textcolor{keywordtype}{float} size = 0;}
+\DoxyCodeLine{79 }
+\DoxyCodeLine{80     \textcolor{keywordflow}{if}(fabs(plane1.d) > fabs(plane2.d))}
+\DoxyCodeLine{81       vec = fabs(plane1.d) * plane1\_eigen -\/ fabs(plane2.d) * plane2\_eigen;}
+\DoxyCodeLine{82     \textcolor{keywordflow}{else} \textcolor{keywordflow}{if}(fabs(plane2.d) > fabs(plane1.d))}
+\DoxyCodeLine{83       vec = fabs(plane2.d) * plane2\_eigen -\/ fabs(plane1.d) * plane1\_eigen;}
+\DoxyCodeLine{84 }
+\DoxyCodeLine{85     size = fabs(vec(0) + vec(1));}
+\DoxyCodeLine{86 }
+\DoxyCodeLine{87     \textcolor{keywordflow}{return} size;}
+\DoxyCodeLine{88   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{plane__utils_8hpp}{plane\+\_\+utils.\+hpp}}\end{DoxyCompactItemize}

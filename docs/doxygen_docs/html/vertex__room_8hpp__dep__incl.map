@@ -1,0 +1,12 @@
+<map id="/home/ghost/ros_ws/s_graphs_ws/src/s_graphs/include/g2o/vertex_room.hpp" name="/home/ghost/ros_ws/s_graphs_ws/src/s_graphs/include/g2o/vertex_room.hpp">
+<area shape="rect" id="node1" title=" " alt="" coords="634,5,850,61"/>
+<area shape="rect" id="node2" href="$corridors_8hpp.html" title=" " alt="" coords="405,109,629,165"/>
+<area shape="rect" id="node3" href="$floor__mapper_8hpp.html" title=" " alt="" coords="31,213,226,284"/>
+<area shape="rect" id="node4" href="$graph__visualizer_8hpp.html" title=" " alt="" coords="617,332,811,403"/>
+<area shape="rect" id="node5" href="$s__graphs__nodelet_8cpp.html" title=" " alt="" coords="613,451,815,507"/>
+<area shape="rect" id="node7" href="$neighbour__mapper_8hpp.html" title=" " alt="" coords="251,213,455,284"/>
+<area shape="rect" id="node8" href="$plane__mapper_8hpp.html" title=" " alt="" coords="581,213,775,284"/>
+<area shape="rect" id="node9" href="$room__mapper_8hpp.html" title=" " alt="" coords="850,221,1109,277"/>
+<area shape="rect" id="node10" href="$edge__room_8hpp.html" title=" " alt="" coords="709,109,916,165"/>
+<area shape="rect" id="node6" href="$keyframe__mapper_8hpp.html" title=" " alt="" coords="391,332,592,403"/>
+</map>

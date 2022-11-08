@@ -1,0 +1,743 @@
+\hypertarget{classs__graphs_1_1GraphSLAM}{}\doxysection{s\+\_\+graphs\+::Graph\+S\+L\+AM Class Reference}
+\label{classs__graphs_1_1GraphSLAM}\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+
+
+{\ttfamily \#include $<$graph\+\_\+slam.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a0c38a1c2e5f5ed619430f3de078ee7c9}{Graph\+S\+L\+AM}} (const std\+::string \&solver\+\_\+type=\char`\"{}lm\+\_\+var\char`\"{})
+\item 
+virtual \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_aeb5753d55b3959afb9fc84a534fd7432}{$\sim$\+Graph\+S\+L\+AM}} ()
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ac9b50e00939fdf47c43c9b17033bb1de}{num\+\_\+vertices}} () const
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_aa872309c5e0234b0bef694216382581c}{num\+\_\+edges}} () const
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_af96f5f5b1c8671d3beb06fbeea613fef}{num\+\_\+vertices\+\_\+local}} () const
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a167507b28bb7426185b29fc990d04423}{num\+\_\+edges\+\_\+local}} () const
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ab4fa77e490b844ee39515fe50935f885}{add\+\_\+vertices}} ()
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a7f3a770e34239fb598afe5b8b4ae2057}{set\+\_\+solver}} (const std\+::string \&solver\+\_\+type)
+\item 
+g2o\+::\+Vertex\+S\+E3 $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ac72e463da1bd5c483b68507018137843}{add\+\_\+se3\+\_\+node}} (const Eigen\+::\+Isometry3d \&pose)
+\begin{DoxyCompactList}\small\item\em add a S\+E3 node to the graph \end{DoxyCompactList}\item 
+g2o\+::\+Vertex\+Plane $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a5b699ec66a3de723d3d3d9df0a1805b6}{add\+\_\+plane\+\_\+node}} (const Eigen\+::\+Vector4d \&plane\+\_\+coeffs)
+\begin{DoxyCompactList}\small\item\em add a plane node to the graph \end{DoxyCompactList}\item 
+g2o\+::\+Vertex\+Plane $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ad528543000886bc9e5d2c9e5eb7e1d81}{add\+\_\+plane\+\_\+node}} (const Eigen\+::\+Vector4d \&plane\+\_\+coeffs, const int id)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a2f589f7402c6450a525953771de06cb0}{remove\+\_\+plane\+\_\+node}} (g2o\+::\+Vertex\+Plane $\ast$plane\+\_\+vertex)
+\begin{DoxyCompactList}\small\item\em remove a plane node from the graph \end{DoxyCompactList}\item 
+g2o\+::\+Vertex\+Point\+X\+YZ $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a0d294257f773394f6f2c546e3e16aa1d}{add\+\_\+point\+\_\+xyz\+\_\+node}} (const Eigen\+::\+Vector3d \&xyz)
+\begin{DoxyCompactList}\small\item\em add a point\+\_\+xyz node to the graph \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a2314c21dd0008cdba19753773f406670}{add\+\_\+corridor\+\_\+node}} (const double \&corridor\+\_\+pose)
+\begin{DoxyCompactList}\small\item\em add a corridor node to the graph \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_aa39267b97b4621af06c608a9a2107b9f}{add\+\_\+room\+\_\+node}} (const Eigen\+::\+Vector2d \&room\+\_\+pose)
+\begin{DoxyCompactList}\small\item\em add a room node to the graph \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_aa2ca17e79d471d8d8e0b3c7671a1416b}{add\+\_\+floor\+\_\+node}} (const Eigen\+::\+Vector2d \&floor\+\_\+pose)
+\begin{DoxyCompactList}\small\item\em add a floor node to the graph \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a0f80e092695726f5bddbb62e54691e7c}{update\+\_\+floor\+\_\+node}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$floor\+\_\+node, const Eigen\+::\+Vector2d \&floor\+\_\+pose)
+\begin{DoxyCompactList}\small\item\em update the floor node estimate in the graph \end{DoxyCompactList}\item 
+g2o\+::\+Edge\+S\+E3 $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_afa6af2e7aea5b4347a4b437ecb19da05}{add\+\_\+se3\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v1, g2o\+::\+Vertex\+S\+E3 $\ast$v2, const Eigen\+::\+Isometry3d \&relative\+\_\+pose, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\begin{DoxyCompactList}\small\item\em add an edge between S\+E3 nodes \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3Plane}{g2o\+::\+Edge\+S\+E3\+Plane}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ab03e279259800321ce524f98c3fe3677}{add\+\_\+se3\+\_\+plane\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane, const Eigen\+::\+Vector4d \&plane\+\_\+coeffs, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\begin{DoxyCompactList}\small\item\em add an edge between an S\+E3 node and a plane node \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ad1a5ca850f11f1b13fe8751dfa3401b7}{remove\+\_\+se3\+\_\+plane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1EdgeSE3Plane}{g2o\+::\+Edge\+S\+E3\+Plane}} $\ast$se3\+\_\+plane\+\_\+edge)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3PointToPlane}{g2o\+::\+Edge\+S\+E3\+Point\+To\+Plane}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ab02b656cd4e63edacc8b29b17c502be5}{add\+\_\+se3\+\_\+point\+\_\+to\+\_\+plane\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane, const Eigen\+::\+Matrix4d \&points\+\_\+matrix, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\begin{DoxyCompactList}\small\item\em add an edge between an S\+E3 node and to a plane using point to plane distances \end{DoxyCompactList}\item 
+g2o\+::\+Edge\+S\+E3\+Point\+X\+YZ $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ac18b46eb76d33e496afbd1bbc3faeff3}{add\+\_\+se3\+\_\+point\+\_\+xyz\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, g2o\+::\+Vertex\+Point\+X\+YZ $\ast$v\+\_\+xyz, const Eigen\+::\+Vector3d \&xyz, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\begin{DoxyCompactList}\small\item\em add an edge between an S\+E3 node and a point\+\_\+xyz node \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classg2o_1_1EdgePlanePriorNormal}{g2o\+::\+Edge\+Plane\+Prior\+Normal}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ac5aebcae7ea946669190b8bb07623317}{add\+\_\+plane\+\_\+normal\+\_\+prior\+\_\+edge}} (g2o\+::\+Vertex\+Plane $\ast$v, const Eigen\+::\+Vector3d \&normal, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\begin{DoxyCompactList}\small\item\em add a prior edge to an S\+E3 node \end{DoxyCompactList}\item 
+\mbox{\hyperlink{classg2o_1_1EdgePlanePriorDistance}{g2o\+::\+Edge\+Plane\+Prior\+Distance}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a43dc82be59486cda9afcdda973a08ff1}{add\+\_\+plane\+\_\+distance\+\_\+prior\+\_\+edge}} (g2o\+::\+Vertex\+Plane $\ast$v, double distance, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY}{g2o\+::\+Edge\+S\+E3\+Prior\+XY}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a45d42d93d4473fee2cb240e0287556af}{add\+\_\+se3\+\_\+prior\+\_\+xy\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, const Eigen\+::\+Vector2d \&xy, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXYZ}{g2o\+::\+Edge\+S\+E3\+Prior\+X\+YZ}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ad0dfd7f254f850327cab75043238b718}{add\+\_\+se3\+\_\+prior\+\_\+xyz\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, const Eigen\+::\+Vector3d \&xyz, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3PriorQuat}{g2o\+::\+Edge\+S\+E3\+Prior\+Quat}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a54b879ac6cb92c5abaa271358b12d8a2}{add\+\_\+se3\+\_\+prior\+\_\+quat\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, const Eigen\+::\+Quaterniond \&quat, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3PriorVec}{g2o\+::\+Edge\+S\+E3\+Prior\+Vec}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ac4ff36135cd03746e41d44725e6eed43}{add\+\_\+se3\+\_\+prior\+\_\+vec\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, const Eigen\+::\+Vector3d \&direction, const Eigen\+::\+Vector3d \&measurement, const Eigen\+::\+Matrix\+Xd \&information\+\_\+matrix)
+\item 
+g2o\+::\+Edge\+Plane $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ae18454a402367761b9428622f761ab32}{add\+\_\+plane\+\_\+edge}} (g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane1, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const Eigen\+::\+Vector4d \&measurement, const Eigen\+::\+Matrix4d \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity}{g2o\+::\+Edge\+Plane\+Identity}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ad77e992e776adaa8ad43f5072d2ff84f}{add\+\_\+plane\+\_\+identity\+\_\+edge}} (g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane1, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const Eigen\+::\+Vector4d \&measurement, const Eigen\+::\+Matrix4d \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgePlaneParallel}{g2o\+::\+Edge\+Plane\+Parallel}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a07a9d65eff60fb1cc38aa312a5b44a72}{add\+\_\+plane\+\_\+parallel\+\_\+edge}} (g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane1, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const Eigen\+::\+Vector3d \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular}{g2o\+::\+Edge\+Plane\+Perpendicular}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a59ecce1ed18ebf579e8ad0ddf490a98d}{add\+\_\+plane\+\_\+perpendicular\+\_\+edge}} (g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane1, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const Eigen\+::\+Vector3d \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3Corridor}{g2o\+::\+Edge\+S\+E3\+Corridor}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ad95b2cf928ee87ca97948a7fea2ec082}{add\+\_\+se3\+\_\+corridor\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, \mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+corridor, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane}{g2o\+::\+Edge\+Corridor\+X\+Plane}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_acdce0b2e5f57bd3cb932150c8fa1886e}{add\+\_\+corridor\+\_\+xplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+corridor, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeCorridorYPlane}{g2o\+::\+Edge\+Corridor\+Y\+Plane}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a872c770d294f8a4fdd4e56d8b36f16d7}{add\+\_\+corridor\+\_\+yplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+corridor, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a5ddcf60bcd9db888f04bab6f212062f2}{remove\+\_\+corridor\+\_\+xplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane}{g2o\+::\+Edge\+Corridor\+X\+Plane}} $\ast$corridor\+\_\+xplane\+\_\+edge)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a3431741b761bbbfde1e7858ddffeb378}{remove\+\_\+corridor\+\_\+yplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1EdgeCorridorYPlane}{g2o\+::\+Edge\+Corridor\+Y\+Plane}} $\ast$corridor\+\_\+yplane\+\_\+edge)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeSE3Room}{g2o\+::\+Edge\+S\+E3\+Room}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a2aeaa04c8b1dfb9c11f9397502486a29}{add\+\_\+se3\+\_\+room\+\_\+edge}} (g2o\+::\+Vertex\+S\+E3 $\ast$v\+\_\+se3, \mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, const Eigen\+::\+Vector2d \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoomXPlane}{g2o\+::\+Edge\+Room\+X\+Plane}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a913645d04ab7dd35545071f43de4a4b2}{add\+\_\+room\+\_\+xplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoom2Planes}{g2o\+::\+Edge\+Room2\+Planes}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ad2957116d7dd1e54f686a6d5ea3051cd}{add\+\_\+room\+\_\+2planes\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane1, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, \mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+cluster\+\_\+center, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoom4Planes}{g2o\+::\+Edge\+Room4\+Planes}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ae73d4a194a48382cd84d90d176894e40}{add\+\_\+room\+\_\+4planes\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+xplane1, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+xplane2, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+yplane1, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+yplane2, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoomXPrior}{g2o\+::\+Edge\+Room\+X\+Prior}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a71dad35b41cc409b12191b121be8824e}{add\+\_\+room\+\_\+xprior\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoomYPlane}{g2o\+::\+Edge\+Room\+Y\+Plane}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ad8da254b07424773606bfe1dfeeec8bf}{add\+\_\+room\+\_\+yplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, g2o\+::\+Vertex\+Plane $\ast$v\+\_\+plane2, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior}{g2o\+::\+Edge\+Room\+Y\+Prior}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a0848879751f60da51bf46d38fc396969}{add\+\_\+room\+\_\+yprior\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoomRoom}{g2o\+::\+Edge\+Room\+Room}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_addf667375aff28ab12af4620037182f9}{add\+\_\+room\+\_\+room\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room1, \mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room2, const Eigen\+::\+Vector2d \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a04d538e7d066997c083b6d68a9b4e9d7}{remove\+\_\+room\+\_\+room\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1EdgeRoomRoom}{g2o\+::\+Edge\+Room\+Room}} $\ast$room\+\_\+room\+\_\+edge)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoomXCorridor}{g2o\+::\+Edge\+Room\+X\+Corridor}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ac87f5ece7cfcd5532de528a2e1db009a}{add\+\_\+room\+\_\+x\+\_\+corridor\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, \mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+xcorridor, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeRoomYCorridor}{g2o\+::\+Edge\+Room\+Y\+Corridor}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a06dde7c2477b14b80587ebf5d53422fd}{add\+\_\+room\+\_\+y\+\_\+corridor\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$v\+\_\+room, \mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+ycorridor, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeXCorridorXCorridor}{g2o\+::\+Edge\+X\+Corridor\+X\+Corridor}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a8512cc529a9c743ecd73d5fc92a3ff7a}{add\+\_\+x\+\_\+corridor\+\_\+x\+\_\+corridor\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+xcorr1, \mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+xcorr2, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+\mbox{\hyperlink{classg2o_1_1EdgeYCorridorYCorridor}{g2o\+::\+Edge\+Y\+Corridor\+Y\+Corridor}} $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_aea9c76772f6d84b0fea6738f585b567d}{add\+\_\+y\+\_\+corridor\+\_\+y\+\_\+corridor\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+ycorr1, \mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$v\+\_\+ycorr2, const double \&measurement, const Eigen\+::\+Matrix\+Xd \&information)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a032d4752a500f70c0031ff58c04121ce}{remove\+\_\+room\+\_\+xplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1EdgeRoomXPlane}{g2o\+::\+Edge\+Room\+X\+Plane}} $\ast$room\+\_\+xplane\+\_\+edge)
+\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a7744fafa7f413b2029987f8e64ed63e3}{remove\+\_\+room\+\_\+yplane\+\_\+edge}} (\mbox{\hyperlink{classg2o_1_1EdgeRoomYPlane}{g2o\+::\+Edge\+Room\+Y\+Plane}} $\ast$room\+\_\+yplane\+\_\+edge)
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a0c265f947c39883e7c0b2ef584d4386c}{add\+\_\+robust\+\_\+kernel}} (g2o\+::\+Hyper\+Graph\+::\+Edge $\ast$edge, const std\+::string \&kernel\+\_\+type, double kernel\+\_\+size)
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_acd4a22a9c2ed8b0fed45745de80402fe}{optimize}} (int num\+\_\+iterations)
+\begin{DoxyCompactList}\small\item\em perform graph optimization \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a884a96a419adc3c7024601dbaff72ee5}{compute\+\_\+landmark\+\_\+marginals}} (g2o\+::\+Sparse\+Block\+Matrix$<$ Eigen\+::\+Matrix\+Xd $>$ \&spinv, std\+::vector$<$ std\+::pair$<$ int, int $>$$>$ vert\+\_\+pairs\+\_\+vec)
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ae122763c552443a26a6c7b5fd040f27d}{save}} (const std\+::string \&filename)
+\begin{DoxyCompactList}\small\item\em save the pose graph to a file \end{DoxyCompactList}\item 
+bool \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a75733f104033aaa53b08935151bf82c0}{load}} (const std\+::string \&filename)
+\begin{DoxyCompactList}\small\item\em load the pose graph from file \end{DoxyCompactList}\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+g2o\+::\+Robust\+Kernel\+Factory $\ast$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a833bdc367fd3d8222e3d33da7ff3eaf1}{robust\+\_\+kernel\+\_\+factory}}
+\item 
+std\+::unique\+\_\+ptr$<$ g2o\+::\+Sparse\+Optimizer $>$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ae28be578d622b465b1dbe202152ef6ac}{graph}}
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_ae05c69e562b366e327d030b938c94cd1}{vertex\+\_\+count}}
+\item 
+int \mbox{\hyperlink{classs__graphs_1_1GraphSLAM_a1a3fda4209fb6161a4e74503b4609825}{edge\+\_\+count}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 53 of file graph\+\_\+slam.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a0c38a1c2e5f5ed619430f3de078ee7c9}\label{classs__graphs_1_1GraphSLAM_a0c38a1c2e5f5ed619430f3de078ee7c9}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!GraphSLAM@{GraphSLAM}}
+\index{GraphSLAM@{GraphSLAM}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{GraphSLAM()}{GraphSLAM()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::\+Graph\+S\+L\+AM (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{solver\+\_\+type = {\ttfamily \char`\"{}lm\+\_\+var\char`\"{}} }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_aeb5753d55b3959afb9fc84a534fd7432}\label{classs__graphs_1_1GraphSLAM_aeb5753d55b3959afb9fc84a534fd7432}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!````~GraphSLAM@{$\sim$GraphSLAM}}
+\index{````~GraphSLAM@{$\sim$GraphSLAM}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{$\sim$GraphSLAM()}{~GraphSLAM()}}
+{\footnotesize\ttfamily virtual s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::$\sim$\+Graph\+S\+L\+AM (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a2314c21dd0008cdba19753773f406670}\label{classs__graphs_1_1GraphSLAM_a2314c21dd0008cdba19753773f406670}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_corridor\_node@{add\_corridor\_node}}
+\index{add\_corridor\_node@{add\_corridor\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_corridor\_node()}{add\_corridor\_node()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+corridor\+\_\+node (\begin{DoxyParamCaption}\item[{const double \&}]{corridor\+\_\+pose }\end{DoxyParamCaption})}
+
+
+
+add a corridor node to the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em corridor} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered node 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_acdce0b2e5f57bd3cb932150c8fa1886e}\label{classs__graphs_1_1GraphSLAM_acdce0b2e5f57bd3cb932150c8fa1886e}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_corridor\_xplane\_edge@{add\_corridor\_xplane\_edge}}
+\index{add\_corridor\_xplane\_edge@{add\_corridor\_xplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_corridor\_xplane\_edge()}{add\_corridor\_xplane\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane}{g2o\+::\+Edge\+Corridor\+X\+Plane}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+corridor\+\_\+xplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+corridor,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a872c770d294f8a4fdd4e56d8b36f16d7}\label{classs__graphs_1_1GraphSLAM_a872c770d294f8a4fdd4e56d8b36f16d7}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_corridor\_yplane\_edge@{add\_corridor\_yplane\_edge}}
+\index{add\_corridor\_yplane\_edge@{add\_corridor\_yplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_corridor\_yplane\_edge()}{add\_corridor\_yplane\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeCorridorYPlane}{g2o\+::\+Edge\+Corridor\+Y\+Plane}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+corridor\+\_\+yplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+corridor,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_aa2ca17e79d471d8d8e0b3c7671a1416b}\label{classs__graphs_1_1GraphSLAM_aa2ca17e79d471d8d8e0b3c7671a1416b}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_floor\_node@{add\_floor\_node}}
+\index{add\_floor\_node@{add\_floor\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_floor\_node()}{add\_floor\_node()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+floor\+\_\+node (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector2d \&}]{floor\+\_\+pose }\end{DoxyParamCaption})}
+
+
+
+add a floor node to the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em floor} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered node 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a43dc82be59486cda9afcdda973a08ff1}\label{classs__graphs_1_1GraphSLAM_a43dc82be59486cda9afcdda973a08ff1}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_distance\_prior\_edge@{add\_plane\_distance\_prior\_edge}}
+\index{add\_plane\_distance\_prior\_edge@{add\_plane\_distance\_prior\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_distance\_prior\_edge()}{add\_plane\_distance\_prior\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgePlanePriorDistance}{g2o\+::\+Edge\+Plane\+Prior\+Distance}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+distance\+\_\+prior\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v,  }\item[{double}]{distance,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ae18454a402367761b9428622f761ab32}\label{classs__graphs_1_1GraphSLAM_ae18454a402367761b9428622f761ab32}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_edge@{add\_plane\_edge}}
+\index{add\_plane\_edge@{add\_plane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_edge()}{add\_plane\_edge()}}
+{\footnotesize\ttfamily g2o\+::\+Edge\+Plane$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane1,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const Eigen\+::\+Vector4d \&}]{measurement,  }\item[{const Eigen\+::\+Matrix4d \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ad77e992e776adaa8ad43f5072d2ff84f}\label{classs__graphs_1_1GraphSLAM_ad77e992e776adaa8ad43f5072d2ff84f}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_identity\_edge@{add\_plane\_identity\_edge}}
+\index{add\_plane\_identity\_edge@{add\_plane\_identity\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_identity\_edge()}{add\_plane\_identity\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgePlaneIdentity}{g2o\+::\+Edge\+Plane\+Identity}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+identity\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane1,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const Eigen\+::\+Vector4d \&}]{measurement,  }\item[{const Eigen\+::\+Matrix4d \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a5b699ec66a3de723d3d3d9df0a1805b6}\label{classs__graphs_1_1GraphSLAM_a5b699ec66a3de723d3d3d9df0a1805b6}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_node@{add\_plane\_node}}
+\index{add\_plane\_node@{add\_plane\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_node()}{add\_plane\_node()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+Plane$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+node (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector4d \&}]{plane\+\_\+coeffs }\end{DoxyParamCaption})}
+
+
+
+add a plane node to the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em plane\+\_\+coeffs} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered node 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ad528543000886bc9e5d2c9e5eb7e1d81}\label{classs__graphs_1_1GraphSLAM_ad528543000886bc9e5d2c9e5eb7e1d81}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_node@{add\_plane\_node}}
+\index{add\_plane\_node@{add\_plane\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_node()}{add\_plane\_node()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+Plane$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+node (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector4d \&}]{plane\+\_\+coeffs,  }\item[{const int}]{id }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ac5aebcae7ea946669190b8bb07623317}\label{classs__graphs_1_1GraphSLAM_ac5aebcae7ea946669190b8bb07623317}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_normal\_prior\_edge@{add\_plane\_normal\_prior\_edge}}
+\index{add\_plane\_normal\_prior\_edge@{add\_plane\_normal\_prior\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_normal\_prior\_edge()}{add\_plane\_normal\_prior\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgePlanePriorNormal}{g2o\+::\+Edge\+Plane\+Prior\+Normal}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+normal\+\_\+prior\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v,  }\item[{const Eigen\+::\+Vector3d \&}]{normal,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+
+
+add a prior edge to an S\+E3 node 
+
+
+\begin{DoxyParams}{Parameters}
+{\em v\+\_\+se3} & \\
+\hline
+{\em xy} & \\
+\hline
+{\em information\+\_\+matrix} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a07a9d65eff60fb1cc38aa312a5b44a72}\label{classs__graphs_1_1GraphSLAM_a07a9d65eff60fb1cc38aa312a5b44a72}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_parallel\_edge@{add\_plane\_parallel\_edge}}
+\index{add\_plane\_parallel\_edge@{add\_plane\_parallel\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_parallel\_edge()}{add\_plane\_parallel\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgePlaneParallel}{g2o\+::\+Edge\+Plane\+Parallel}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+parallel\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane1,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const Eigen\+::\+Vector3d \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a59ecce1ed18ebf579e8ad0ddf490a98d}\label{classs__graphs_1_1GraphSLAM_a59ecce1ed18ebf579e8ad0ddf490a98d}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_plane\_perpendicular\_edge@{add\_plane\_perpendicular\_edge}}
+\index{add\_plane\_perpendicular\_edge@{add\_plane\_perpendicular\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_plane\_perpendicular\_edge()}{add\_plane\_perpendicular\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgePlanePerpendicular}{g2o\+::\+Edge\+Plane\+Perpendicular}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+plane\+\_\+perpendicular\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane1,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const Eigen\+::\+Vector3d \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a0d294257f773394f6f2c546e3e16aa1d}\label{classs__graphs_1_1GraphSLAM_a0d294257f773394f6f2c546e3e16aa1d}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_point\_xyz\_node@{add\_point\_xyz\_node}}
+\index{add\_point\_xyz\_node@{add\_point\_xyz\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_point\_xyz\_node()}{add\_point\_xyz\_node()}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+Point\+X\+YZ$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+point\+\_\+xyz\+\_\+node (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector3d \&}]{xyz }\end{DoxyParamCaption})}
+
+
+
+add a point\+\_\+xyz node to the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em xyz} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered node 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a0c265f947c39883e7c0b2ef584d4386c}\label{classs__graphs_1_1GraphSLAM_a0c265f947c39883e7c0b2ef584d4386c}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_robust\_kernel@{add\_robust\_kernel}}
+\index{add\_robust\_kernel@{add\_robust\_kernel}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_robust\_kernel()}{add\_robust\_kernel()}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+robust\+\_\+kernel (\begin{DoxyParamCaption}\item[{g2o\+::\+Hyper\+Graph\+::\+Edge $\ast$}]{edge,  }\item[{const std\+::string \&}]{kernel\+\_\+type,  }\item[{double}]{kernel\+\_\+size }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ad2957116d7dd1e54f686a6d5ea3051cd}\label{classs__graphs_1_1GraphSLAM_ad2957116d7dd1e54f686a6d5ea3051cd}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_2planes\_edge@{add\_room\_2planes\_edge}}
+\index{add\_room\_2planes\_edge@{add\_room\_2planes\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_2planes\_edge()}{add\_room\_2planes\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoom2Planes}{g2o\+::\+Edge\+Room2\+Planes}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+2planes\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane1,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+cluster\+\_\+center,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ae73d4a194a48382cd84d90d176894e40}\label{classs__graphs_1_1GraphSLAM_ae73d4a194a48382cd84d90d176894e40}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_4planes\_edge@{add\_room\_4planes\_edge}}
+\index{add\_room\_4planes\_edge@{add\_room\_4planes\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_4planes\_edge()}{add\_room\_4planes\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoom4Planes}{g2o\+::\+Edge\+Room4\+Planes}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+4planes\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+xplane1,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+xplane2,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+yplane1,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+yplane2,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_aa39267b97b4621af06c608a9a2107b9f}\label{classs__graphs_1_1GraphSLAM_aa39267b97b4621af06c608a9a2107b9f}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_node@{add\_room\_node}}
+\index{add\_room\_node@{add\_room\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_node()}{add\_room\_node()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+node (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector2d \&}]{room\+\_\+pose }\end{DoxyParamCaption})}
+
+
+
+add a room node to the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em room} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered node 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_addf667375aff28ab12af4620037182f9}\label{classs__graphs_1_1GraphSLAM_addf667375aff28ab12af4620037182f9}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_room\_edge@{add\_room\_room\_edge}}
+\index{add\_room\_room\_edge@{add\_room\_room\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_room\_edge()}{add\_room\_room\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoomRoom}{g2o\+::\+Edge\+Room\+Room}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+room\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room1,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room2,  }\item[{const Eigen\+::\+Vector2d \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ac87f5ece7cfcd5532de528a2e1db009a}\label{classs__graphs_1_1GraphSLAM_ac87f5ece7cfcd5532de528a2e1db009a}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_x\_corridor\_edge@{add\_room\_x\_corridor\_edge}}
+\index{add\_room\_x\_corridor\_edge@{add\_room\_x\_corridor\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_x\_corridor\_edge()}{add\_room\_x\_corridor\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoomXCorridor}{g2o\+::\+Edge\+Room\+X\+Corridor}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+x\+\_\+corridor\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+xcorridor,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a913645d04ab7dd35545071f43de4a4b2}\label{classs__graphs_1_1GraphSLAM_a913645d04ab7dd35545071f43de4a4b2}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_xplane\_edge@{add\_room\_xplane\_edge}}
+\index{add\_room\_xplane\_edge@{add\_room\_xplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_xplane\_edge()}{add\_room\_xplane\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoomXPlane}{g2o\+::\+Edge\+Room\+X\+Plane}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+xplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a71dad35b41cc409b12191b121be8824e}\label{classs__graphs_1_1GraphSLAM_a71dad35b41cc409b12191b121be8824e}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_xprior\_edge@{add\_room\_xprior\_edge}}
+\index{add\_room\_xprior\_edge@{add\_room\_xprior\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_xprior\_edge()}{add\_room\_xprior\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoomXPrior}{g2o\+::\+Edge\+Room\+X\+Prior}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+xprior\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a06dde7c2477b14b80587ebf5d53422fd}\label{classs__graphs_1_1GraphSLAM_a06dde7c2477b14b80587ebf5d53422fd}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_y\_corridor\_edge@{add\_room\_y\_corridor\_edge}}
+\index{add\_room\_y\_corridor\_edge@{add\_room\_y\_corridor\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_y\_corridor\_edge()}{add\_room\_y\_corridor\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoomYCorridor}{g2o\+::\+Edge\+Room\+Y\+Corridor}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+y\+\_\+corridor\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+ycorridor,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ad8da254b07424773606bfe1dfeeec8bf}\label{classs__graphs_1_1GraphSLAM_ad8da254b07424773606bfe1dfeeec8bf}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_yplane\_edge@{add\_room\_yplane\_edge}}
+\index{add\_room\_yplane\_edge@{add\_room\_yplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_yplane\_edge()}{add\_room\_yplane\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoomYPlane}{g2o\+::\+Edge\+Room\+Y\+Plane}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+yplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane2,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a0848879751f60da51bf46d38fc396969}\label{classs__graphs_1_1GraphSLAM_a0848879751f60da51bf46d38fc396969}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_room\_yprior\_edge@{add\_room\_yprior\_edge}}
+\index{add\_room\_yprior\_edge@{add\_room\_yprior\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_room\_yprior\_edge()}{add\_room\_yprior\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior}{g2o\+::\+Edge\+Room\+Y\+Prior}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+room\+\_\+yprior\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ad95b2cf928ee87ca97948a7fea2ec082}\label{classs__graphs_1_1GraphSLAM_ad95b2cf928ee87ca97948a7fea2ec082}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_corridor\_edge@{add\_se3\_corridor\_edge}}
+\index{add\_se3\_corridor\_edge@{add\_se3\_corridor\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_corridor\_edge()}{add\_se3\_corridor\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3Corridor}{g2o\+::\+Edge\+S\+E3\+Corridor}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+corridor\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+corridor,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_afa6af2e7aea5b4347a4b437ecb19da05}\label{classs__graphs_1_1GraphSLAM_afa6af2e7aea5b4347a4b437ecb19da05}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_edge@{add\_se3\_edge}}
+\index{add\_se3\_edge@{add\_se3\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_edge()}{add\_se3\_edge()}}
+{\footnotesize\ttfamily g2o\+::\+Edge\+S\+E3$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v1,  }\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v2,  }\item[{const Eigen\+::\+Isometry3d \&}]{relative\+\_\+pose,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+
+
+add an edge between S\+E3 nodes 
+
+
+\begin{DoxyParams}{Parameters}
+{\em v1} & node1 \\
+\hline
+{\em v2} & node2 \\
+\hline
+{\em relative\+\_\+pose} & relative pose between node1 and node2 \\
+\hline
+{\em information\+\_\+matrix} & information matrix (it must be 6x6) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered edge 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ac72e463da1bd5c483b68507018137843}\label{classs__graphs_1_1GraphSLAM_ac72e463da1bd5c483b68507018137843}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_node@{add\_se3\_node}}
+\index{add\_se3\_node@{add\_se3\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_node()}{add\_se3\_node()}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+S\+E3$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+node (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Isometry3d \&}]{pose }\end{DoxyParamCaption})}
+
+
+
+add a S\+E3 node to the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em pose} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered node 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ab03e279259800321ce524f98c3fe3677}\label{classs__graphs_1_1GraphSLAM_ab03e279259800321ce524f98c3fe3677}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_plane\_edge@{add\_se3\_plane\_edge}}
+\index{add\_se3\_plane\_edge@{add\_se3\_plane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_plane\_edge()}{add\_se3\_plane\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3Plane}{g2o\+::\+Edge\+S\+E3\+Plane}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+plane\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane,  }\item[{const Eigen\+::\+Vector4d \&}]{plane\+\_\+coeffs,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+
+
+add an edge between an S\+E3 node and a plane node 
+
+
+\begin{DoxyParams}{Parameters}
+{\em v\+\_\+se3} & S\+E3 node \\
+\hline
+{\em v\+\_\+plane} & plane node \\
+\hline
+{\em plane\+\_\+coeffs} & plane coefficients w.\+r.\+t. v\+\_\+se3 \\
+\hline
+{\em information\+\_\+matrix} & information matrix (it must be 3x3) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered edge 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ab02b656cd4e63edacc8b29b17c502be5}\label{classs__graphs_1_1GraphSLAM_ab02b656cd4e63edacc8b29b17c502be5}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_point\_to\_plane\_edge@{add\_se3\_point\_to\_plane\_edge}}
+\index{add\_se3\_point\_to\_plane\_edge@{add\_se3\_point\_to\_plane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_point\_to\_plane\_edge()}{add\_se3\_point\_to\_plane\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3PointToPlane}{g2o\+::\+Edge\+S\+E3\+Point\+To\+Plane}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+point\+\_\+to\+\_\+plane\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{g2o\+::\+Vertex\+Plane $\ast$}]{v\+\_\+plane,  }\item[{const Eigen\+::\+Matrix4d \&}]{points\+\_\+matrix,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+
+
+add an edge between an S\+E3 node and to a plane using point to plane distances 
+
+
+\begin{DoxyParams}{Parameters}
+{\em v\+\_\+se3} & S\+E3 node \\
+\hline
+{\em v\+\_\+plane} & plane node \\
+\hline
+{\em plane\+\_\+coeffs} & plane coefficients w.\+r.\+t. v\+\_\+se3 \\
+\hline
+{\em information\+\_\+matrix} & information matrix (it must be 1x1) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered edge 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ac18b46eb76d33e496afbd1bbc3faeff3}\label{classs__graphs_1_1GraphSLAM_ac18b46eb76d33e496afbd1bbc3faeff3}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_point\_xyz\_edge@{add\_se3\_point\_xyz\_edge}}
+\index{add\_se3\_point\_xyz\_edge@{add\_se3\_point\_xyz\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_point\_xyz\_edge()}{add\_se3\_point\_xyz\_edge()}}
+{\footnotesize\ttfamily g2o\+::\+Edge\+S\+E3\+Point\+X\+YZ$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+point\+\_\+xyz\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{g2o\+::\+Vertex\+Point\+X\+YZ $\ast$}]{v\+\_\+xyz,  }\item[{const Eigen\+::\+Vector3d \&}]{xyz,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+
+
+add an edge between an S\+E3 node and a point\+\_\+xyz node 
+
+
+\begin{DoxyParams}{Parameters}
+{\em v\+\_\+se3} & S\+E3 node \\
+\hline
+{\em v\+\_\+xyz} & point\+\_\+xyz node \\
+\hline
+{\em xyz} & xyz coordinate \\
+\hline
+{\em information} & information\+\_\+matrix (it must be 3x3) \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered edge 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a54b879ac6cb92c5abaa271358b12d8a2}\label{classs__graphs_1_1GraphSLAM_a54b879ac6cb92c5abaa271358b12d8a2}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_prior\_quat\_edge@{add\_se3\_prior\_quat\_edge}}
+\index{add\_se3\_prior\_quat\_edge@{add\_se3\_prior\_quat\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_prior\_quat\_edge()}{add\_se3\_prior\_quat\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorQuat}{g2o\+::\+Edge\+S\+E3\+Prior\+Quat}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+prior\+\_\+quat\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{const Eigen\+::\+Quaterniond \&}]{quat,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ac4ff36135cd03746e41d44725e6eed43}\label{classs__graphs_1_1GraphSLAM_ac4ff36135cd03746e41d44725e6eed43}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_prior\_vec\_edge@{add\_se3\_prior\_vec\_edge}}
+\index{add\_se3\_prior\_vec\_edge@{add\_se3\_prior\_vec\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_prior\_vec\_edge()}{add\_se3\_prior\_vec\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorVec}{g2o\+::\+Edge\+S\+E3\+Prior\+Vec}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+prior\+\_\+vec\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{const Eigen\+::\+Vector3d \&}]{direction,  }\item[{const Eigen\+::\+Vector3d \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a45d42d93d4473fee2cb240e0287556af}\label{classs__graphs_1_1GraphSLAM_a45d42d93d4473fee2cb240e0287556af}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_prior\_xy\_edge@{add\_se3\_prior\_xy\_edge}}
+\index{add\_se3\_prior\_xy\_edge@{add\_se3\_prior\_xy\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_prior\_xy\_edge()}{add\_se3\_prior\_xy\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY}{g2o\+::\+Edge\+S\+E3\+Prior\+XY}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+prior\+\_\+xy\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{const Eigen\+::\+Vector2d \&}]{xy,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ad0dfd7f254f850327cab75043238b718}\label{classs__graphs_1_1GraphSLAM_ad0dfd7f254f850327cab75043238b718}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_prior\_xyz\_edge@{add\_se3\_prior\_xyz\_edge}}
+\index{add\_se3\_prior\_xyz\_edge@{add\_se3\_prior\_xyz\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_prior\_xyz\_edge()}{add\_se3\_prior\_xyz\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXYZ}{g2o\+::\+Edge\+S\+E3\+Prior\+X\+YZ}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+prior\+\_\+xyz\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{const Eigen\+::\+Vector3d \&}]{xyz,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information\+\_\+matrix }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a2aeaa04c8b1dfb9c11f9397502486a29}\label{classs__graphs_1_1GraphSLAM_a2aeaa04c8b1dfb9c11f9397502486a29}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_se3\_room\_edge@{add\_se3\_room\_edge}}
+\index{add\_se3\_room\_edge@{add\_se3\_room\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_se3\_room\_edge()}{add\_se3\_room\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeSE3Room}{g2o\+::\+Edge\+S\+E3\+Room}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+se3\+\_\+room\+\_\+edge (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+S\+E3 $\ast$}]{v\+\_\+se3,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{v\+\_\+room,  }\item[{const Eigen\+::\+Vector2d \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ab4fa77e490b844ee39515fe50935f885}\label{classs__graphs_1_1GraphSLAM_ab4fa77e490b844ee39515fe50935f885}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_vertices@{add\_vertices}}
+\index{add\_vertices@{add\_vertices}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_vertices()}{add\_vertices()}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+vertices (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a8512cc529a9c743ecd73d5fc92a3ff7a}\label{classs__graphs_1_1GraphSLAM_a8512cc529a9c743ecd73d5fc92a3ff7a}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_x\_corridor\_x\_corridor\_edge@{add\_x\_corridor\_x\_corridor\_edge}}
+\index{add\_x\_corridor\_x\_corridor\_edge@{add\_x\_corridor\_x\_corridor\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_x\_corridor\_x\_corridor\_edge()}{add\_x\_corridor\_x\_corridor\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeXCorridorXCorridor}{g2o\+::\+Edge\+X\+Corridor\+X\+Corridor}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+x\+\_\+corridor\+\_\+x\+\_\+corridor\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+xcorr1,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+xcorr2,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_aea9c76772f6d84b0fea6738f585b567d}\label{classs__graphs_1_1GraphSLAM_aea9c76772f6d84b0fea6738f585b567d}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!add\_y\_corridor\_y\_corridor\_edge@{add\_y\_corridor\_y\_corridor\_edge}}
+\index{add\_y\_corridor\_y\_corridor\_edge@{add\_y\_corridor\_y\_corridor\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{add\_y\_corridor\_y\_corridor\_edge()}{add\_y\_corridor\_y\_corridor\_edge()}}
+{\footnotesize\ttfamily \mbox{\hyperlink{classg2o_1_1EdgeYCorridorYCorridor}{g2o\+::\+Edge\+Y\+Corridor\+Y\+Corridor}}$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::add\+\_\+y\+\_\+corridor\+\_\+y\+\_\+corridor\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+ycorr1,  }\item[{\mbox{\hyperlink{classg2o_1_1VertexCorridor}{g2o\+::\+Vertex\+Corridor}} $\ast$}]{v\+\_\+ycorr2,  }\item[{const double \&}]{measurement,  }\item[{const Eigen\+::\+Matrix\+Xd \&}]{information }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a884a96a419adc3c7024601dbaff72ee5}\label{classs__graphs_1_1GraphSLAM_a884a96a419adc3c7024601dbaff72ee5}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!compute\_landmark\_marginals@{compute\_landmark\_marginals}}
+\index{compute\_landmark\_marginals@{compute\_landmark\_marginals}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{compute\_landmark\_marginals()}{compute\_landmark\_marginals()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::compute\+\_\+landmark\+\_\+marginals (\begin{DoxyParamCaption}\item[{g2o\+::\+Sparse\+Block\+Matrix$<$ Eigen\+::\+Matrix\+Xd $>$ \&}]{spinv,  }\item[{std\+::vector$<$ std\+::pair$<$ int, int $>$$>$}]{vert\+\_\+pairs\+\_\+vec }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a75733f104033aaa53b08935151bf82c0}\label{classs__graphs_1_1GraphSLAM_a75733f104033aaa53b08935151bf82c0}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!load@{load}}
+\index{load@{load}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{load()}{load()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::load (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{filename }\end{DoxyParamCaption})}
+
+
+
+load the pose graph from file 
+
+
+\begin{DoxyParams}{Parameters}
+{\em filename} & output filename \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_aa872309c5e0234b0bef694216382581c}\label{classs__graphs_1_1GraphSLAM_aa872309c5e0234b0bef694216382581c}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!num\_edges@{num\_edges}}
+\index{num\_edges@{num\_edges}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{num\_edges()}{num\_edges()}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::num\+\_\+edges (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a167507b28bb7426185b29fc990d04423}\label{classs__graphs_1_1GraphSLAM_a167507b28bb7426185b29fc990d04423}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!num\_edges\_local@{num\_edges\_local}}
+\index{num\_edges\_local@{num\_edges\_local}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{num\_edges\_local()}{num\_edges\_local()}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::num\+\_\+edges\+\_\+local (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ac9b50e00939fdf47c43c9b17033bb1de}\label{classs__graphs_1_1GraphSLAM_ac9b50e00939fdf47c43c9b17033bb1de}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!num\_vertices@{num\_vertices}}
+\index{num\_vertices@{num\_vertices}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{num\_vertices()}{num\_vertices()}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::num\+\_\+vertices (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_af96f5f5b1c8671d3beb06fbeea613fef}\label{classs__graphs_1_1GraphSLAM_af96f5f5b1c8671d3beb06fbeea613fef}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!num\_vertices\_local@{num\_vertices\_local}}
+\index{num\_vertices\_local@{num\_vertices\_local}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{num\_vertices\_local()}{num\_vertices\_local()}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::num\+\_\+vertices\+\_\+local (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_acd4a22a9c2ed8b0fed45745de80402fe}\label{classs__graphs_1_1GraphSLAM_acd4a22a9c2ed8b0fed45745de80402fe}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!optimize@{optimize}}
+\index{optimize@{optimize}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{optimize()}{optimize()}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::optimize (\begin{DoxyParamCaption}\item[{int}]{num\+\_\+iterations }\end{DoxyParamCaption})}
+
+
+
+perform graph optimization 
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a5ddcf60bcd9db888f04bab6f212062f2}\label{classs__graphs_1_1GraphSLAM_a5ddcf60bcd9db888f04bab6f212062f2}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!remove\_corridor\_xplane\_edge@{remove\_corridor\_xplane\_edge}}
+\index{remove\_corridor\_xplane\_edge@{remove\_corridor\_xplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{remove\_corridor\_xplane\_edge()}{remove\_corridor\_xplane\_edge()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::remove\+\_\+corridor\+\_\+xplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1EdgeCorridorXPlane}{g2o\+::\+Edge\+Corridor\+X\+Plane}} $\ast$}]{corridor\+\_\+xplane\+\_\+edge }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a3431741b761bbbfde1e7858ddffeb378}\label{classs__graphs_1_1GraphSLAM_a3431741b761bbbfde1e7858ddffeb378}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!remove\_corridor\_yplane\_edge@{remove\_corridor\_yplane\_edge}}
+\index{remove\_corridor\_yplane\_edge@{remove\_corridor\_yplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{remove\_corridor\_yplane\_edge()}{remove\_corridor\_yplane\_edge()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::remove\+\_\+corridor\+\_\+yplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1EdgeCorridorYPlane}{g2o\+::\+Edge\+Corridor\+Y\+Plane}} $\ast$}]{corridor\+\_\+yplane\+\_\+edge }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a2f589f7402c6450a525953771de06cb0}\label{classs__graphs_1_1GraphSLAM_a2f589f7402c6450a525953771de06cb0}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!remove\_plane\_node@{remove\_plane\_node}}
+\index{remove\_plane\_node@{remove\_plane\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{remove\_plane\_node()}{remove\_plane\_node()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::remove\+\_\+plane\+\_\+node (\begin{DoxyParamCaption}\item[{g2o\+::\+Vertex\+Plane $\ast$}]{plane\+\_\+vertex }\end{DoxyParamCaption})}
+
+
+
+remove a plane node from the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em plane} & id \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+success or failure 
+\end{DoxyReturn}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a04d538e7d066997c083b6d68a9b4e9d7}\label{classs__graphs_1_1GraphSLAM_a04d538e7d066997c083b6d68a9b4e9d7}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!remove\_room\_room\_edge@{remove\_room\_room\_edge}}
+\index{remove\_room\_room\_edge@{remove\_room\_room\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{remove\_room\_room\_edge()}{remove\_room\_room\_edge()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::remove\+\_\+room\+\_\+room\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1EdgeRoomRoom}{g2o\+::\+Edge\+Room\+Room}} $\ast$}]{room\+\_\+room\+\_\+edge }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a032d4752a500f70c0031ff58c04121ce}\label{classs__graphs_1_1GraphSLAM_a032d4752a500f70c0031ff58c04121ce}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!remove\_room\_xplane\_edge@{remove\_room\_xplane\_edge}}
+\index{remove\_room\_xplane\_edge@{remove\_room\_xplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{remove\_room\_xplane\_edge()}{remove\_room\_xplane\_edge()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::remove\+\_\+room\+\_\+xplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1EdgeRoomXPlane}{g2o\+::\+Edge\+Room\+X\+Plane}} $\ast$}]{room\+\_\+xplane\+\_\+edge }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a7744fafa7f413b2029987f8e64ed63e3}\label{classs__graphs_1_1GraphSLAM_a7744fafa7f413b2029987f8e64ed63e3}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!remove\_room\_yplane\_edge@{remove\_room\_yplane\_edge}}
+\index{remove\_room\_yplane\_edge@{remove\_room\_yplane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{remove\_room\_yplane\_edge()}{remove\_room\_yplane\_edge()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::remove\+\_\+room\+\_\+yplane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1EdgeRoomYPlane}{g2o\+::\+Edge\+Room\+Y\+Plane}} $\ast$}]{room\+\_\+yplane\+\_\+edge }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ad1a5ca850f11f1b13fe8751dfa3401b7}\label{classs__graphs_1_1GraphSLAM_ad1a5ca850f11f1b13fe8751dfa3401b7}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!remove\_se3\_plane\_edge@{remove\_se3\_plane\_edge}}
+\index{remove\_se3\_plane\_edge@{remove\_se3\_plane\_edge}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{remove\_se3\_plane\_edge()}{remove\_se3\_plane\_edge()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::remove\+\_\+se3\+\_\+plane\+\_\+edge (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1EdgeSE3Plane}{g2o\+::\+Edge\+S\+E3\+Plane}} $\ast$}]{se3\+\_\+plane\+\_\+edge }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ae122763c552443a26a6c7b5fd040f27d}\label{classs__graphs_1_1GraphSLAM_ae122763c552443a26a6c7b5fd040f27d}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!save@{save}}
+\index{save@{save}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{save()}{save()}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::save (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{filename }\end{DoxyParamCaption})}
+
+
+
+save the pose graph to a file 
+
+
+\begin{DoxyParams}{Parameters}
+{\em filename} & output filename \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a7f3a770e34239fb598afe5b8b4ae2057}\label{classs__graphs_1_1GraphSLAM_a7f3a770e34239fb598afe5b8b4ae2057}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!set\_solver@{set\_solver}}
+\index{set\_solver@{set\_solver}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{set\_solver()}{set\_solver()}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::set\+\_\+solver (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{solver\+\_\+type }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a0f80e092695726f5bddbb62e54691e7c}\label{classs__graphs_1_1GraphSLAM_a0f80e092695726f5bddbb62e54691e7c}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!update\_floor\_node@{update\_floor\_node}}
+\index{update\_floor\_node@{update\_floor\_node}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{update\_floor\_node()}{update\_floor\_node()}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::update\+\_\+floor\+\_\+node (\begin{DoxyParamCaption}\item[{\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o\+::\+Vertex\+Room\+X\+Y\+LB}} $\ast$}]{floor\+\_\+node,  }\item[{const Eigen\+::\+Vector2d \&}]{floor\+\_\+pose }\end{DoxyParamCaption})}
+
+
+
+update the floor node estimate in the graph 
+
+
+\begin{DoxyParams}{Parameters}
+{\em floor} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+registered node 
+\end{DoxyReturn}
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a1a3fda4209fb6161a4e74503b4609825}\label{classs__graphs_1_1GraphSLAM_a1a3fda4209fb6161a4e74503b4609825}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!edge\_count@{edge\_count}}
+\index{edge\_count@{edge\_count}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{edge\_count}{edge\_count}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::edge\+\_\+count}
+
+
+
+Definition at line 257 of file graph\+\_\+slam.\+hpp.
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ae28be578d622b465b1dbe202152ef6ac}\label{classs__graphs_1_1GraphSLAM_ae28be578d622b465b1dbe202152ef6ac}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!graph@{graph}}
+\index{graph@{graph}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{graph}{graph}}
+{\footnotesize\ttfamily std\+::unique\+\_\+ptr$<$g2o\+::\+Sparse\+Optimizer$>$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::graph}
+
+
+
+Definition at line 255 of file graph\+\_\+slam.\+hpp.
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_a833bdc367fd3d8222e3d33da7ff3eaf1}\label{classs__graphs_1_1GraphSLAM_a833bdc367fd3d8222e3d33da7ff3eaf1}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!robust\_kernel\_factory@{robust\_kernel\_factory}}
+\index{robust\_kernel\_factory@{robust\_kernel\_factory}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{robust\_kernel\_factory}{robust\_kernel\_factory}}
+{\footnotesize\ttfamily g2o\+::\+Robust\+Kernel\+Factory$\ast$ s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::robust\+\_\+kernel\+\_\+factory}
+
+
+
+Definition at line 254 of file graph\+\_\+slam.\+hpp.
+
+\mbox{\Hypertarget{classs__graphs_1_1GraphSLAM_ae05c69e562b366e327d030b938c94cd1}\label{classs__graphs_1_1GraphSLAM_ae05c69e562b366e327d030b938c94cd1}} 
+\index{s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}!vertex\_count@{vertex\_count}}
+\index{vertex\_count@{vertex\_count}!s\_graphs::GraphSLAM@{s\_graphs::GraphSLAM}}
+\doxysubsubsection{\texorpdfstring{vertex\_count}{vertex\_count}}
+{\footnotesize\ttfamily int s\+\_\+graphs\+::\+Graph\+S\+L\+A\+M\+::vertex\+\_\+count}
+
+
+
+Definition at line 256 of file graph\+\_\+slam.\+hpp.
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{graph__slam_8hpp}{graph\+\_\+slam.\+hpp}}\end{DoxyCompactItemize}

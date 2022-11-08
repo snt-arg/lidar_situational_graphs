@@ -1,0 +1,157 @@
+\hypertarget{classg2o_1_1EdgeSE3Plane}{}\doxysection{g2o\+::Edge\+S\+E3\+Plane Class Reference}
+\label{classg2o_1_1EdgeSE3Plane}\index{g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}}
+
+
+{\ttfamily \#include $<$edge\+\_\+se3\+\_\+plane.\+hpp$>$}
+
+
+
+Inheritance diagram for g2o\+::Edge\+S\+E3\+Plane\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=253pt]{classg2o_1_1EdgeSE3Plane__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for g2o\+::Edge\+S\+E3\+Plane\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=253pt]{classg2o_1_1EdgeSE3Plane__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW \mbox{\hyperlink{classg2o_1_1EdgeSE3Plane_a62c29ecc792eaada750ef727d6ca2f0a}{Edge\+S\+E3\+Plane}} ()
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeSE3Plane_a33c5541712078004ac8b3543a75e0072}{compute\+Error}} () override
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeSE3Plane_a8c61d3bd8c32c1c52099cb21f1fbf42c}{set\+Measurement}} (const g2o\+::\+Plane3D \&m) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeSE3Plane_a0701eb64037b7906c3b66146c02e716b}{read}} (std\+::istream \&is) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeSE3Plane_a545b04fb533ad156a5758fd814e7a454}{write}} (std\+::ostream \&os) const override
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 35 of file edge\+\_\+se3\+\_\+plane.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3Plane_a62c29ecc792eaada750ef727d6ca2f0a}\label{classg2o_1_1EdgeSE3Plane_a62c29ecc792eaada750ef727d6ca2f0a}} 
+\index{g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}!EdgeSE3Plane@{EdgeSE3Plane}}
+\index{EdgeSE3Plane@{EdgeSE3Plane}!g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}}
+\doxysubsubsection{\texorpdfstring{EdgeSE3Plane()}{EdgeSE3Plane()}}
+{\footnotesize\ttfamily E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW g2o\+::\+Edge\+S\+E3\+Plane\+::\+Edge\+S\+E3\+Plane (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 38 of file edge\+\_\+se3\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{38 : BaseBinaryEdge<3, g2o::Plane3D, g2o::VertexSE3, g2o::VertexPlane>() \{\}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3Plane_a33c5541712078004ac8b3543a75e0072}\label{classg2o_1_1EdgeSE3Plane_a33c5541712078004ac8b3543a75e0072}} 
+\index{g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}!computeError@{computeError}}
+\index{computeError@{computeError}!g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}}
+\doxysubsubsection{\texorpdfstring{computeError()}{computeError()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+S\+E3\+Plane\+::compute\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 40 of file edge\+\_\+se3\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{40                                \{}
+\DoxyCodeLine{41     \textcolor{keyword}{const} g2o::VertexSE3* v1 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }g2o::VertexSE3*\textcolor{keyword}{>}(\_vertices[0]);}
+\DoxyCodeLine{42     \textcolor{keyword}{const} g2o::VertexPlane* v2 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }g2o::VertexPlane*\textcolor{keyword}{>}(\_vertices[1]);}
+\DoxyCodeLine{43 }
+\DoxyCodeLine{44     Eigen::Isometry3d w2n = v1-\/>estimate().inverse();}
+\DoxyCodeLine{45     Plane3D local\_plane = w2n * v2-\/>estimate();}
+\DoxyCodeLine{46     \_error = local\_plane.ominus(\_measurement);}
+\DoxyCodeLine{47   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3Plane_a0701eb64037b7906c3b66146c02e716b}\label{classg2o_1_1EdgeSE3Plane_a0701eb64037b7906c3b66146c02e716b}} 
+\index{g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}!read@{read}}
+\index{read@{read}!g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+S\+E3\+Plane\+::read (\begin{DoxyParamCaption}\item[{std\+::istream \&}]{is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 53 of file edge\+\_\+se3\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{53                                              \{}
+\DoxyCodeLine{54     Eigen::Vector4d v;}
+\DoxyCodeLine{55     is >> v(0) >> v(1) >> v(2) >> v(3);}
+\DoxyCodeLine{56     \mbox{\hyperlink{classg2o_1_1EdgeSE3Plane_a8c61d3bd8c32c1c52099cb21f1fbf42c}{setMeasurement}}(Plane3D(v));}
+\DoxyCodeLine{57     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i)}
+\DoxyCodeLine{58       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{59         is >> information()(i, j);}
+\DoxyCodeLine{60         \textcolor{keywordflow}{if}(i != j) information()(j, i) = information()(i, j);}
+\DoxyCodeLine{61       \}}
+\DoxyCodeLine{62     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{63   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3Plane_a8c61d3bd8c32c1c52099cb21f1fbf42c}\label{classg2o_1_1EdgeSE3Plane_a8c61d3bd8c32c1c52099cb21f1fbf42c}} 
+\index{g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}!setMeasurement@{setMeasurement}}
+\index{setMeasurement@{setMeasurement}!g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}}
+\doxysubsubsection{\texorpdfstring{setMeasurement()}{setMeasurement()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+S\+E3\+Plane\+::set\+Measurement (\begin{DoxyParamCaption}\item[{const g2o\+::\+Plane3D \&}]{m }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 49 of file edge\+\_\+se3\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{49                                                     \{}
+\DoxyCodeLine{50     \_measurement = m;}
+\DoxyCodeLine{51   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3Plane_a545b04fb533ad156a5758fd814e7a454}\label{classg2o_1_1EdgeSE3Plane_a545b04fb533ad156a5758fd814e7a454}} 
+\index{g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}!write@{write}}
+\index{write@{write}!g2o::EdgeSE3Plane@{g2o::EdgeSE3Plane}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+S\+E3\+Plane\+::write (\begin{DoxyParamCaption}\item[{std\+::ostream \&}]{os }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 64 of file edge\+\_\+se3\+\_\+plane.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{64                                                     \{}
+\DoxyCodeLine{65     Eigen::Vector4d v = \_measurement.toVector();}
+\DoxyCodeLine{66     os << v(0) << \textcolor{stringliteral}{" "} << v(1) << \textcolor{stringliteral}{" "} << v(2) << \textcolor{stringliteral}{" "} << v(3) << \textcolor{stringliteral}{" "};}
+\DoxyCodeLine{67     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i)}
+\DoxyCodeLine{68       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) os << \textcolor{stringliteral}{" "} << information()(i, j);}
+\DoxyCodeLine{69     \textcolor{keywordflow}{return} os.good();}
+\DoxyCodeLine{70   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/g2o/\mbox{\hyperlink{edge__se3__plane_8hpp}{edge\+\_\+se3\+\_\+plane.\+hpp}}\end{DoxyCompactItemize}

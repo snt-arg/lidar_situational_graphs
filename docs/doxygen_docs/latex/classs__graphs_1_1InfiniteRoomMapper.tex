@@ -1,0 +1,99 @@
+\hypertarget{classs__graphs_1_1InfiniteRoomMapper}{}\doxysection{s\+\_\+graphs\+::Infinite\+Room\+Mapper Class Reference}
+\label{classs__graphs_1_1InfiniteRoomMapper}\index{s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}}
+
+
+this class provides tools for different analysis over open space clusters to generate rooms  
+
+
+
+
+{\ttfamily \#include $<$room\+\_\+mapper.\+hpp$>$}
+
+
+
+Inheritance diagram for s\+\_\+graphs\+::Infinite\+Room\+Mapper\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=246pt]{classs__graphs_1_1InfiniteRoomMapper__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for s\+\_\+graphs\+::Infinite\+Room\+Mapper\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=246pt]{classs__graphs_1_1InfiniteRoomMapper__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classs__graphs_1_1InfiniteRoomMapper_a87dd557139f22023cd1ef8b34bc616e2}{Infinite\+Room\+Mapper}} (const ros\+::\+Node\+Handle \&private\+\_\+nh)
+\item 
+\mbox{\hyperlink{classs__graphs_1_1InfiniteRoomMapper_a4926a8ecb4fc22717fd8311b87642914}{$\sim$\+Infinite\+Room\+Mapper}} ()
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1InfiniteRoomMapper_a45c9f7f32493c5960c8a3a0e8d7cba3e}{lookup\+\_\+corridors}} (std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&graph\+\_\+slam, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1plane__data__list}{plane\+\_\+data\+\_\+list}} $>$ \&x\+\_\+det\+\_\+corridor\+\_\+candidates, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1plane__data__list}{plane\+\_\+data\+\_\+list}} $>$ \&y\+\_\+det\+\_\+corridor\+\_\+candidates, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&x\+\_\+vert\+\_\+planes, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&y\+\_\+vert\+\_\+planes, std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&dupl\+\_\+x\+\_\+vert\+\_\+planes, std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&dupl\+\_\+y\+\_\+vert\+\_\+planes, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&x\+\_\+corridors, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&y\+\_\+corridors)
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1InfiniteRoomMapper_af9e3263ed65433df6b40685f70079bc9}{lookup\+\_\+corridors}} (std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&graph\+\_\+slam, const int \&plane\+\_\+type, const s\+\_\+graphs\+::\+Room\+Data room\+\_\+data, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&x\+\_\+vert\+\_\+planes, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&y\+\_\+vert\+\_\+planes, std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&dupl\+\_\+x\+\_\+vert\+\_\+planes, std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&dupl\+\_\+y\+\_\+vert\+\_\+planes, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&x\+\_\+corridors, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&y\+\_\+corridors, const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$ \&rooms\+\_\+vec)
+\item 
+double \mbox{\hyperlink{classs__graphs_1_1InfiniteRoomMapper_a0529985398ab59aa8534c90fcfdd5299}{corridor\+\_\+measurement}} (const int plane\+\_\+type, const Eigen\+::\+Vector2d \&corridor\+\_\+pose, const Eigen\+::\+Vector4d \&plane)
+\item 
+double \mbox{\hyperlink{classs__graphs_1_1InfiniteRoomMapper_a2e7b3e67ef3f63013e22772e865f623e}{corridor\+\_\+measurement}} (const int plane\+\_\+type, const Eigen\+::\+Vector2d \&corridor\+\_\+pose, const Eigen\+::\+Vector4d \&plane1, const Eigen\+::\+Vector4d \&plane2)
+\end{DoxyCompactItemize}
+\doxysubsection*{Additional Inherited Members}
+
+
+\doxysubsection{Detailed Description}
+this class provides tools for different analysis over open space clusters to generate rooms 
+
+Definition at line 103 of file room\+\_\+mapper.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1InfiniteRoomMapper_a87dd557139f22023cd1ef8b34bc616e2}\label{classs__graphs_1_1InfiniteRoomMapper_a87dd557139f22023cd1ef8b34bc616e2}} 
+\index{s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}!InfiniteRoomMapper@{InfiniteRoomMapper}}
+\index{InfiniteRoomMapper@{InfiniteRoomMapper}!s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}}
+\doxysubsubsection{\texorpdfstring{InfiniteRoomMapper()}{InfiniteRoomMapper()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Infinite\+Room\+Mapper\+::\+Infinite\+Room\+Mapper (\begin{DoxyParamCaption}\item[{const ros\+::\+Node\+Handle \&}]{private\+\_\+nh }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1InfiniteRoomMapper_a4926a8ecb4fc22717fd8311b87642914}\label{classs__graphs_1_1InfiniteRoomMapper_a4926a8ecb4fc22717fd8311b87642914}} 
+\index{s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}!````~InfiniteRoomMapper@{$\sim$InfiniteRoomMapper}}
+\index{````~InfiniteRoomMapper@{$\sim$InfiniteRoomMapper}!s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}}
+\doxysubsubsection{\texorpdfstring{$\sim$InfiniteRoomMapper()}{~InfiniteRoomMapper()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Infinite\+Room\+Mapper\+::$\sim$\+Infinite\+Room\+Mapper (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1InfiniteRoomMapper_a0529985398ab59aa8534c90fcfdd5299}\label{classs__graphs_1_1InfiniteRoomMapper_a0529985398ab59aa8534c90fcfdd5299}} 
+\index{s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}!corridor\_measurement@{corridor\_measurement}}
+\index{corridor\_measurement@{corridor\_measurement}!s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}}
+\doxysubsubsection{\texorpdfstring{corridor\_measurement()}{corridor\_measurement()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+Infinite\+Room\+Mapper\+::corridor\+\_\+measurement (\begin{DoxyParamCaption}\item[{const int}]{plane\+\_\+type,  }\item[{const Eigen\+::\+Vector2d \&}]{corridor\+\_\+pose,  }\item[{const Eigen\+::\+Vector4d \&}]{plane }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1InfiniteRoomMapper_a2e7b3e67ef3f63013e22772e865f623e}\label{classs__graphs_1_1InfiniteRoomMapper_a2e7b3e67ef3f63013e22772e865f623e}} 
+\index{s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}!corridor\_measurement@{corridor\_measurement}}
+\index{corridor\_measurement@{corridor\_measurement}!s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}}
+\doxysubsubsection{\texorpdfstring{corridor\_measurement()}{corridor\_measurement()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+Infinite\+Room\+Mapper\+::corridor\+\_\+measurement (\begin{DoxyParamCaption}\item[{const int}]{plane\+\_\+type,  }\item[{const Eigen\+::\+Vector2d \&}]{corridor\+\_\+pose,  }\item[{const Eigen\+::\+Vector4d \&}]{plane1,  }\item[{const Eigen\+::\+Vector4d \&}]{plane2 }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1InfiniteRoomMapper_af9e3263ed65433df6b40685f70079bc9}\label{classs__graphs_1_1InfiniteRoomMapper_af9e3263ed65433df6b40685f70079bc9}} 
+\index{s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}!lookup\_corridors@{lookup\_corridors}}
+\index{lookup\_corridors@{lookup\_corridors}!s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}}
+\doxysubsubsection{\texorpdfstring{lookup\_corridors()}{lookup\_corridors()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Infinite\+Room\+Mapper\+::lookup\+\_\+corridors (\begin{DoxyParamCaption}\item[{std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&}]{graph\+\_\+slam,  }\item[{const int \&}]{plane\+\_\+type,  }\item[{const s\+\_\+graphs\+::\+Room\+Data}]{room\+\_\+data,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&}]{x\+\_\+vert\+\_\+planes,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&}]{y\+\_\+vert\+\_\+planes,  }\item[{std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&}]{dupl\+\_\+x\+\_\+vert\+\_\+planes,  }\item[{std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&}]{dupl\+\_\+y\+\_\+vert\+\_\+planes,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{x\+\_\+corridors,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{y\+\_\+corridors,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$ \&}]{rooms\+\_\+vec }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1InfiniteRoomMapper_a45c9f7f32493c5960c8a3a0e8d7cba3e}\label{classs__graphs_1_1InfiniteRoomMapper_a45c9f7f32493c5960c8a3a0e8d7cba3e}} 
+\index{s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}!lookup\_corridors@{lookup\_corridors}}
+\index{lookup\_corridors@{lookup\_corridors}!s\_graphs::InfiniteRoomMapper@{s\_graphs::InfiniteRoomMapper}}
+\doxysubsubsection{\texorpdfstring{lookup\_corridors()}{lookup\_corridors()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Infinite\+Room\+Mapper\+::lookup\+\_\+corridors (\begin{DoxyParamCaption}\item[{std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&}]{graph\+\_\+slam,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1plane__data__list}{plane\+\_\+data\+\_\+list}} $>$ \&}]{x\+\_\+det\+\_\+corridor\+\_\+candidates,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1plane__data__list}{plane\+\_\+data\+\_\+list}} $>$ \&}]{y\+\_\+det\+\_\+corridor\+\_\+candidates,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&}]{x\+\_\+vert\+\_\+planes,  }\item[{const std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$ \&}]{y\+\_\+vert\+\_\+planes,  }\item[{std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&}]{dupl\+\_\+x\+\_\+vert\+\_\+planes,  }\item[{std\+::deque$<$ std\+::pair$<$ \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}}, \mbox{\hyperlink{structs__graphs_1_1VerticalPlanes}{Vertical\+Planes}} $>$$>$ \&}]{dupl\+\_\+y\+\_\+vert\+\_\+planes,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{x\+\_\+corridors,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{y\+\_\+corridors }\end{DoxyParamCaption})}
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{room__mapper_8hpp}{room\+\_\+mapper.\+hpp}}\end{DoxyCompactItemize}

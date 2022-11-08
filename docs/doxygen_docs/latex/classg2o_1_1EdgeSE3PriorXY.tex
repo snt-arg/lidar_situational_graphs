@@ -1,0 +1,155 @@
+\hypertarget{classg2o_1_1EdgeSE3PriorXY}{}\doxysection{g2o\+::Edge\+S\+E3\+Prior\+XY Class Reference}
+\label{classg2o_1_1EdgeSE3PriorXY}\index{g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}}
+
+
+{\ttfamily \#include $<$edge\+\_\+se3\+\_\+priorxy.\+hpp$>$}
+
+
+
+Inheritance diagram for g2o\+::Edge\+S\+E3\+Prior\+XY\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=199pt]{classg2o_1_1EdgeSE3PriorXY__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for g2o\+::Edge\+S\+E3\+Prior\+XY\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=199pt]{classg2o_1_1EdgeSE3PriorXY__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY_ab1a565e47a3d376dd4a71aeb9e1459cc}{Edge\+S\+E3\+Prior\+XY}} ()
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY_a0afdd2d0e288084a99cdb051480cb33b}{compute\+Error}} () override
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY_acef8e327f099b5570715c2fc2162fb64}{set\+Measurement}} (const Eigen\+::\+Vector2d \&m) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY_af28c7a0878f3ca5a435e082bbe3fd0dd}{read}} (std\+::istream \&is) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY_aaad719b7242cd323817e091d6ba0553a}{write}} (std\+::ostream \&os) const override
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 34 of file edge\+\_\+se3\+\_\+priorxy.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3PriorXY_ab1a565e47a3d376dd4a71aeb9e1459cc}\label{classg2o_1_1EdgeSE3PriorXY_ab1a565e47a3d376dd4a71aeb9e1459cc}} 
+\index{g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}!EdgeSE3PriorXY@{EdgeSE3PriorXY}}
+\index{EdgeSE3PriorXY@{EdgeSE3PriorXY}!g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}}
+\doxysubsubsection{\texorpdfstring{EdgeSE3PriorXY()}{EdgeSE3PriorXY()}}
+{\footnotesize\ttfamily E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW g2o\+::\+Edge\+S\+E3\+Prior\+X\+Y\+::\+Edge\+S\+E3\+Prior\+XY (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 37 of file edge\+\_\+se3\+\_\+priorxy.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{37 : g2o::BaseUnaryEdge<2, Eigen::Vector2d, g2o::VertexSE3>() \{\}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3PriorXY_a0afdd2d0e288084a99cdb051480cb33b}\label{classg2o_1_1EdgeSE3PriorXY_a0afdd2d0e288084a99cdb051480cb33b}} 
+\index{g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}!computeError@{computeError}}
+\index{computeError@{computeError}!g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}}
+\doxysubsubsection{\texorpdfstring{computeError()}{computeError()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+S\+E3\+Prior\+X\+Y\+::compute\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 39 of file edge\+\_\+se3\+\_\+priorxy.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{39                                \{}
+\DoxyCodeLine{40     \textcolor{keyword}{const} g2o::VertexSE3* v1 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }g2o::VertexSE3*\textcolor{keyword}{>}(\_vertices[0]);}
+\DoxyCodeLine{41 }
+\DoxyCodeLine{42     Eigen::Vector2d estimate = v1-\/>estimate().translation().head<2>();}
+\DoxyCodeLine{43     \_error = estimate -\/ \_measurement;}
+\DoxyCodeLine{44   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3PriorXY_af28c7a0878f3ca5a435e082bbe3fd0dd}\label{classg2o_1_1EdgeSE3PriorXY_af28c7a0878f3ca5a435e082bbe3fd0dd}} 
+\index{g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}!read@{read}}
+\index{read@{read}!g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+S\+E3\+Prior\+X\+Y\+::read (\begin{DoxyParamCaption}\item[{std\+::istream \&}]{is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 50 of file edge\+\_\+se3\+\_\+priorxy.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{50                                              \{}
+\DoxyCodeLine{51     Eigen::Vector2d v;}
+\DoxyCodeLine{52     is >> v(0) >> v(1);}
+\DoxyCodeLine{53     \mbox{\hyperlink{classg2o_1_1EdgeSE3PriorXY_acef8e327f099b5570715c2fc2162fb64}{setMeasurement}}(v);}
+\DoxyCodeLine{54     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i)}
+\DoxyCodeLine{55       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{56         is >> information()(i, j);}
+\DoxyCodeLine{57         \textcolor{keywordflow}{if}(i != j) information()(j, i) = information()(i, j);}
+\DoxyCodeLine{58       \}}
+\DoxyCodeLine{59     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{60   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3PriorXY_acef8e327f099b5570715c2fc2162fb64}\label{classg2o_1_1EdgeSE3PriorXY_acef8e327f099b5570715c2fc2162fb64}} 
+\index{g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}!setMeasurement@{setMeasurement}}
+\index{setMeasurement@{setMeasurement}!g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}}
+\doxysubsubsection{\texorpdfstring{setMeasurement()}{setMeasurement()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+S\+E3\+Prior\+X\+Y\+::set\+Measurement (\begin{DoxyParamCaption}\item[{const Eigen\+::\+Vector2d \&}]{m }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 46 of file edge\+\_\+se3\+\_\+priorxy.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{46                                                        \{}
+\DoxyCodeLine{47     \_measurement = m;}
+\DoxyCodeLine{48   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeSE3PriorXY_aaad719b7242cd323817e091d6ba0553a}\label{classg2o_1_1EdgeSE3PriorXY_aaad719b7242cd323817e091d6ba0553a}} 
+\index{g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}!write@{write}}
+\index{write@{write}!g2o::EdgeSE3PriorXY@{g2o::EdgeSE3PriorXY}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+S\+E3\+Prior\+X\+Y\+::write (\begin{DoxyParamCaption}\item[{std\+::ostream \&}]{os }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 61 of file edge\+\_\+se3\+\_\+priorxy.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{61                                                     \{}
+\DoxyCodeLine{62     Eigen::Vector2d v = \_measurement;}
+\DoxyCodeLine{63     os << v(0) << \textcolor{stringliteral}{" "} << v(1) << \textcolor{stringliteral}{" "};}
+\DoxyCodeLine{64     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i)}
+\DoxyCodeLine{65       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) os << \textcolor{stringliteral}{" "} << information()(i, j);}
+\DoxyCodeLine{66     \textcolor{keywordflow}{return} os.good();}
+\DoxyCodeLine{67   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/g2o/\mbox{\hyperlink{edge__se3__priorxy_8hpp}{edge\+\_\+se3\+\_\+priorxy.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,157 @@
+\hypertarget{classg2o_1_1EdgeRoomYPrior}{}\doxysection{g2o\+::Edge\+Room\+Y\+Prior Class Reference}
+\label{classg2o_1_1EdgeRoomYPrior}\index{g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}}
+
+
+{\ttfamily \#include $<$edge\+\_\+room.\+hpp$>$}
+
+
+
+Inheritance diagram for g2o\+::Edge\+Room\+Y\+Prior\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=244pt]{classg2o_1_1EdgeRoomYPrior__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for g2o\+::Edge\+Room\+Y\+Prior\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=244pt]{classg2o_1_1EdgeRoomYPrior__coll__graph}
+\end{center}
+\end{figure}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW \mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior_afbff67a7cfca0091ddd2b590496f7f42}{Edge\+Room\+Y\+Prior}} ()
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior_a5f1794afc3c6a970ae5858d5abb5963c}{compute\+Error}} () override
+\item 
+void \mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior_a1c871ff97bc3d51f4125ac72ded6c565}{set\+Measurement}} (const double \&m) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior_ad5b3589727779caec63ba7459db8912c}{read}} (std\+::istream \&is) override
+\item 
+virtual bool \mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior_ab08efb62df22114a9a041091db9d5b43}{write}} (std\+::ostream \&os) const override
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 568 of file edge\+\_\+room.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoomYPrior_afbff67a7cfca0091ddd2b590496f7f42}\label{classg2o_1_1EdgeRoomYPrior_afbff67a7cfca0091ddd2b590496f7f42}} 
+\index{g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}!EdgeRoomYPrior@{EdgeRoomYPrior}}
+\index{EdgeRoomYPrior@{EdgeRoomYPrior}!g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}}
+\doxysubsubsection{\texorpdfstring{EdgeRoomYPrior()}{EdgeRoomYPrior()}}
+{\footnotesize\ttfamily E\+I\+G\+E\+N\+\_\+\+M\+A\+K\+E\+\_\+\+A\+L\+I\+G\+N\+E\+D\+\_\+\+O\+P\+E\+R\+A\+T\+O\+R\+\_\+\+N\+EW g2o\+::\+Edge\+Room\+Y\+Prior\+::\+Edge\+Room\+Y\+Prior (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}}
+
+
+
+Definition at line 571 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{571 : g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>() \{\}}
+
+\end{DoxyCode}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoomYPrior_a5f1794afc3c6a970ae5858d5abb5963c}\label{classg2o_1_1EdgeRoomYPrior_a5f1794afc3c6a970ae5858d5abb5963c}} 
+\index{g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}!computeError@{computeError}}
+\index{computeError@{computeError}!g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}}
+\doxysubsubsection{\texorpdfstring{computeError()}{computeError()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+Room\+Y\+Prior\+::compute\+Error (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 573 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{573                                \{}
+\DoxyCodeLine{574     \textcolor{keyword}{const} \mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o::VertexRoomXYLB}}* v1 = \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const }\mbox{\hyperlink{classg2o_1_1VertexRoomXYLB}{g2o::VertexRoomXYLB}}*\textcolor{keyword}{>}(\_vertices[0]);}
+\DoxyCodeLine{575 }
+\DoxyCodeLine{576     Eigen::Vector2d estimate = v1-\/>estimate();}
+\DoxyCodeLine{577 }
+\DoxyCodeLine{578     \_error[0] = estimate(1) -\/ \_measurement;}
+\DoxyCodeLine{579   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoomYPrior_ad5b3589727779caec63ba7459db8912c}\label{classg2o_1_1EdgeRoomYPrior_ad5b3589727779caec63ba7459db8912c}} 
+\index{g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}!read@{read}}
+\index{read@{read}!g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}}
+\doxysubsubsection{\texorpdfstring{read()}{read()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Room\+Y\+Prior\+::read (\begin{DoxyParamCaption}\item[{std\+::istream \&}]{is }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 585 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{585                                              \{}
+\DoxyCodeLine{586     \textcolor{keywordtype}{double} v;}
+\DoxyCodeLine{587     is >> v;}
+\DoxyCodeLine{588     \mbox{\hyperlink{classg2o_1_1EdgeRoomYPrior_a1c871ff97bc3d51f4125ac72ded6c565}{setMeasurement}}(v);}
+\DoxyCodeLine{589 }
+\DoxyCodeLine{590     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i)}
+\DoxyCodeLine{591       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) \{}
+\DoxyCodeLine{592         is >> information()(i, j);}
+\DoxyCodeLine{593         \textcolor{keywordflow}{if}(i != j) information()(j, i) = information()(i, j);}
+\DoxyCodeLine{594       \}}
+\DoxyCodeLine{595     \textcolor{keywordflow}{return} \textcolor{keyword}{true};}
+\DoxyCodeLine{596   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoomYPrior_a1c871ff97bc3d51f4125ac72ded6c565}\label{classg2o_1_1EdgeRoomYPrior_a1c871ff97bc3d51f4125ac72ded6c565}} 
+\index{g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}!setMeasurement@{setMeasurement}}
+\index{setMeasurement@{setMeasurement}!g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}}
+\doxysubsubsection{\texorpdfstring{setMeasurement()}{setMeasurement()}}
+{\footnotesize\ttfamily void g2o\+::\+Edge\+Room\+Y\+Prior\+::set\+Measurement (\begin{DoxyParamCaption}\item[{const double \&}]{m }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}}
+
+
+
+Definition at line 581 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{581                                                 \{}
+\DoxyCodeLine{582     \_measurement = m;}
+\DoxyCodeLine{583   \}}
+
+\end{DoxyCode}
+\mbox{\Hypertarget{classg2o_1_1EdgeRoomYPrior_ab08efb62df22114a9a041091db9d5b43}\label{classg2o_1_1EdgeRoomYPrior_ab08efb62df22114a9a041091db9d5b43}} 
+\index{g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}!write@{write}}
+\index{write@{write}!g2o::EdgeRoomYPrior@{g2o::EdgeRoomYPrior}}
+\doxysubsubsection{\texorpdfstring{write()}{write()}}
+{\footnotesize\ttfamily virtual bool g2o\+::\+Edge\+Room\+Y\+Prior\+::write (\begin{DoxyParamCaption}\item[{std\+::ostream \&}]{os }\end{DoxyParamCaption}) const\hspace{0.3cm}{\ttfamily [inline]}, {\ttfamily [override]}, {\ttfamily [virtual]}}
+
+
+
+Definition at line 598 of file edge\+\_\+room.\+hpp.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{598                                                     \{}
+\DoxyCodeLine{599     os << \_measurement << \textcolor{stringliteral}{" "};}
+\DoxyCodeLine{600 }
+\DoxyCodeLine{601     \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} i = 0; i < information().rows(); ++i)}
+\DoxyCodeLine{602       \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int} j = i; j < information().cols(); ++j) os << \textcolor{stringliteral}{" "} << information()(i, j);}
+\DoxyCodeLine{603     \textcolor{keywordflow}{return} os.good();}
+\DoxyCodeLine{604   \}}
+
+\end{DoxyCode}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/g2o/\mbox{\hyperlink{edge__room_8hpp}{edge\+\_\+room.\+hpp}}\end{DoxyCompactItemize}

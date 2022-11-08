@@ -1,0 +1,8 @@
+<map id="/home/ghost/ros_ws/s_graphs_ws/src/s_graphs/include/s_graphs/registrations.hpp" name="/home/ghost/ros_ws/s_graphs_ws/src/s_graphs/include/s_graphs/registrations.hpp">
+<area shape="rect" id="node1" title=" " alt="" coords="246,5,495,61"/>
+<area shape="rect" id="node2" href="$loop__detector_8hpp.html" title=" " alt="" coords="109,117,365,173"/>
+<area shape="rect" id="node6" href="$scan__matching__odometry__nodelet_8cpp.html" title=" " alt="" coords="389,109,619,180"/>
+<area shape="rect" id="node3" href="$graph__visualizer_8hpp.html" title=" " alt="" coords="5,228,200,299"/>
+<area shape="rect" id="node4" href="$s__graphs__nodelet_8cpp.html" title=" " alt="" coords="136,347,339,403"/>
+<area shape="rect" id="node5" href="$keyframe__mapper_8hpp.html" title=" " alt="" coords="275,228,477,299"/>
+</map>

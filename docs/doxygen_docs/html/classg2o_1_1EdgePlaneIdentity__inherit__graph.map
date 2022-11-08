@@ -1,0 +1,4 @@
+<map id="g2o::EdgePlaneIdentity" name="g2o::EdgePlaneIdentity">
+<area shape="rect" id="node1" title="A modified version of g2o::EdgePlane. This class takes care of flipped plane normals." alt="" coords="29,109,201,136"/>
+<area shape="rect" id="node2" title=" " alt="" coords="5,5,224,61"/>
+</map>

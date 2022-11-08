@@ -1,0 +1,292 @@
+\hypertarget{structs__graphs_1_1KeyFrame}{}\doxysection{s\+\_\+graphs\+::Key\+Frame Struct Reference}
+\label{structs__graphs_1_1KeyFrame}\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+
+
+\mbox{\hyperlink{structs__graphs_1_1KeyFrame}{Key\+Frame}} (pose node)  
+
+
+
+
+{\ttfamily \#include $<$keyframe.\+hpp$>$}
+
+\doxysubsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+using \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}{PointT}} = pcl\+::\+Point\+X\+Y\+ZI
+\item 
+using \mbox{\hyperlink{structs__graphs_1_1KeyFrame_aefbdc7f03ac07f57ab7887741803a277}{Point\+Normal}} = pcl\+::\+Point\+X\+Y\+Z\+R\+G\+B\+Normal
+\item 
+using \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}{Ptr}} = std\+::shared\+\_\+ptr$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame}{Key\+Frame}} $>$
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{structs__graphs_1_1KeyFrame_a0f5b44e2b3e8c7eedab704723179e6b5}{Key\+Frame}} (const ros\+::\+Time \&\mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab15d054128a31659eda32d1e395ab608}{stamp}}, const Eigen\+::\+Isometry3d \&\mbox{\hyperlink{structs__graphs_1_1KeyFrame_a8d78283461ec967676fdc1807c16cdd8}{odom}}, double \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a5ab978228e35cfe29fb2e0a1751bd146}{accum\+\_\+distance}}, const pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}{PointT}} $>$\+::Const\+Ptr \&\mbox{\hyperlink{structs__graphs_1_1KeyFrame_ad0eec0abef801b910ba80cf3f1123565}{cloud}})
+\item 
+\mbox{\hyperlink{structs__graphs_1_1KeyFrame_af2e38270bbb56fe1827ddcb546547fcb}{Key\+Frame}} (const std\+::string \&directory, g2o\+::\+Hyper\+Graph $\ast$graph)
+\item 
+virtual \mbox{\hyperlink{structs__graphs_1_1KeyFrame_af74d457f93c82753320277d8b0ecfd4a}{$\sim$\+Key\+Frame}} ()
+\item 
+void \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a7a856751ba7f9b73f1c37ea60d0ca8c7}{save}} (const std\+::string \&directory)
+\item 
+bool \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ad8bedb5175a8b27ef358f03f29f90eb7}{load}} (const std\+::string \&directory, g2o\+::\+Hyper\+Graph $\ast$graph)
+\item 
+long \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ad90dca8a7f9cf25d8f7128e439a1a51f}{id}} () const
+\item 
+Eigen\+::\+Isometry3d \mbox{\hyperlink{structs__graphs_1_1KeyFrame_af09f7a468a47c7669a1148b5c9bfef9e}{estimate}} () const
+\end{DoxyCompactItemize}
+\doxysubsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+ros\+::\+Time \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab15d054128a31659eda32d1e395ab608}{stamp}}
+\item 
+Eigen\+::\+Isometry3d \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a8d78283461ec967676fdc1807c16cdd8}{odom}}
+\item 
+double \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a5ab978228e35cfe29fb2e0a1751bd146}{accum\+\_\+distance}}
+\item 
+pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}{PointT}} $>$\+::Const\+Ptr \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ad0eec0abef801b910ba80cf3f1123565}{cloud}}
+\item 
+pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_aefbdc7f03ac07f57ab7887741803a277}{Point\+Normal}} $>$\+::\mbox{\hyperlink{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}{Ptr}} \mbox{\hyperlink{structs__graphs_1_1KeyFrame_aee74d9ecbc17d7e189790693ddc4774b}{cloud\+\_\+seg\+\_\+body}}
+\item 
+std\+::vector$<$ int $>$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a7ad110b1c6d6892cc12816bf42f8922a}{x\+\_\+plane\+\_\+ids}}
+\item 
+std\+::vector$<$ int $>$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ac0ff3f7e3fc679c8b91024519f1c7894}{y\+\_\+plane\+\_\+ids}}
+\item 
+std\+::vector$<$ int $>$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ae041b842d5d24514803a616c88161551}{hort\+\_\+plane\+\_\+ids}}
+\item 
+boost\+::optional$<$ Eigen\+::\+Vector4d $>$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a2fdf9a4ba5861ee7e687ba675815547f}{floor\+\_\+coeffs}}
+\item 
+boost\+::optional$<$ Eigen\+::\+Vector3d $>$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_af5b4471d1d0c30d32aacabbb6bcffa8f}{utm\+\_\+coord}}
+\item 
+boost\+::optional$<$ Eigen\+::\+Vector3d $>$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a197be05b5221fb1f3a76d10bb72a1ed8}{acceleration}}
+\item 
+boost\+::optional$<$ Eigen\+::\+Quaterniond $>$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a8e57c8db559498d97112b45288e2f03d}{orientation}}
+\item 
+g2o\+::\+Vertex\+S\+E3 $\ast$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_a8a09b3ddd26462c1de9b804b28a2b7de}{node}}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\mbox{\hyperlink{structs__graphs_1_1KeyFrame}{Key\+Frame}} (pose node) 
+
+Definition at line 24 of file keyframe.\+hpp.
+
+
+
+\doxysubsection{Member Typedef Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_aefbdc7f03ac07f57ab7887741803a277}\label{structs__graphs_1_1KeyFrame_aefbdc7f03ac07f57ab7887741803a277}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!PointNormal@{PointNormal}}
+\index{PointNormal@{PointNormal}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{PointNormal}{PointNormal}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{structs__graphs_1_1KeyFrame_aefbdc7f03ac07f57ab7887741803a277}{s\+\_\+graphs\+::\+Key\+Frame\+::\+Point\+Normal}} =  pcl\+::\+Point\+X\+Y\+Z\+R\+G\+B\+Normal}
+
+
+
+Definition at line 28 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}\label{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!PointT@{PointT}}
+\index{PointT@{PointT}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{PointT}{PointT}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}{s\+\_\+graphs\+::\+Key\+Frame\+::\+PointT}} =  pcl\+::\+Point\+X\+Y\+ZI}
+
+
+
+Definition at line 27 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}\label{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!Ptr@{Ptr}}
+\index{Ptr@{Ptr}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{Ptr}{Ptr}}
+{\footnotesize\ttfamily using \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}{s\+\_\+graphs\+::\+Key\+Frame\+::\+Ptr}} =  std\+::shared\+\_\+ptr$<$\mbox{\hyperlink{structs__graphs_1_1KeyFrame}{Key\+Frame}}$>$}
+
+
+
+Definition at line 30 of file keyframe.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a0f5b44e2b3e8c7eedab704723179e6b5}\label{structs__graphs_1_1KeyFrame_a0f5b44e2b3e8c7eedab704723179e6b5}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!KeyFrame@{KeyFrame}}
+\index{KeyFrame@{KeyFrame}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{KeyFrame()}{KeyFrame()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Key\+Frame\+::\+Key\+Frame (\begin{DoxyParamCaption}\item[{const ros\+::\+Time \&}]{stamp,  }\item[{const Eigen\+::\+Isometry3d \&}]{odom,  }\item[{double}]{accum\+\_\+distance,  }\item[{const pcl\+::\+Point\+Cloud$<$ \mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}{PointT}} $>$\+::Const\+Ptr \&}]{cloud }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_af2e38270bbb56fe1827ddcb546547fcb}\label{structs__graphs_1_1KeyFrame_af2e38270bbb56fe1827ddcb546547fcb}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!KeyFrame@{KeyFrame}}
+\index{KeyFrame@{KeyFrame}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{KeyFrame()}{KeyFrame()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Key\+Frame\+::\+Key\+Frame (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{directory,  }\item[{g2o\+::\+Hyper\+Graph $\ast$}]{graph }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_af74d457f93c82753320277d8b0ecfd4a}\label{structs__graphs_1_1KeyFrame_af74d457f93c82753320277d8b0ecfd4a}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!````~KeyFrame@{$\sim$KeyFrame}}
+\index{````~KeyFrame@{$\sim$KeyFrame}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{$\sim$KeyFrame()}{~KeyFrame()}}
+{\footnotesize\ttfamily virtual s\+\_\+graphs\+::\+Key\+Frame\+::$\sim$\+Key\+Frame (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [virtual]}}
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_af09f7a468a47c7669a1148b5c9bfef9e}\label{structs__graphs_1_1KeyFrame_af09f7a468a47c7669a1148b5c9bfef9e}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!estimate@{estimate}}
+\index{estimate@{estimate}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{estimate()}{estimate()}}
+{\footnotesize\ttfamily Eigen\+::\+Isometry3d s\+\_\+graphs\+::\+Key\+Frame\+::estimate (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ad90dca8a7f9cf25d8f7128e439a1a51f}\label{structs__graphs_1_1KeyFrame_ad90dca8a7f9cf25d8f7128e439a1a51f}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!id@{id}}
+\index{id@{id}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{id()}{id()}}
+{\footnotesize\ttfamily long s\+\_\+graphs\+::\+Key\+Frame\+::id (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption}) const}
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ad8bedb5175a8b27ef358f03f29f90eb7}\label{structs__graphs_1_1KeyFrame_ad8bedb5175a8b27ef358f03f29f90eb7}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!load@{load}}
+\index{load@{load}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{load()}{load()}}
+{\footnotesize\ttfamily bool s\+\_\+graphs\+::\+Key\+Frame\+::load (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{directory,  }\item[{g2o\+::\+Hyper\+Graph $\ast$}]{graph }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a7a856751ba7f9b73f1c37ea60d0ca8c7}\label{structs__graphs_1_1KeyFrame_a7a856751ba7f9b73f1c37ea60d0ca8c7}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!save@{save}}
+\index{save@{save}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{save()}{save()}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Key\+Frame\+::save (\begin{DoxyParamCaption}\item[{const std\+::string \&}]{directory }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Data Documentation}
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a197be05b5221fb1f3a76d10bb72a1ed8}\label{structs__graphs_1_1KeyFrame_a197be05b5221fb1f3a76d10bb72a1ed8}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!acceleration@{acceleration}}
+\index{acceleration@{acceleration}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{acceleration}{acceleration}}
+{\footnotesize\ttfamily boost\+::optional$<$Eigen\+::\+Vector3d$>$ s\+\_\+graphs\+::\+Key\+Frame\+::acceleration}
+
+
+
+Definition at line 53 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a5ab978228e35cfe29fb2e0a1751bd146}\label{structs__graphs_1_1KeyFrame_a5ab978228e35cfe29fb2e0a1751bd146}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!accum\_distance@{accum\_distance}}
+\index{accum\_distance@{accum\_distance}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{accum\_distance}{accum\_distance}}
+{\footnotesize\ttfamily double s\+\_\+graphs\+::\+Key\+Frame\+::accum\+\_\+distance}
+
+
+
+Definition at line 45 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ad0eec0abef801b910ba80cf3f1123565}\label{structs__graphs_1_1KeyFrame_ad0eec0abef801b910ba80cf3f1123565}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!cloud@{cloud}}
+\index{cloud@{cloud}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{cloud}{cloud}}
+{\footnotesize\ttfamily pcl\+::\+Point\+Cloud$<$\mbox{\hyperlink{structs__graphs_1_1KeyFrame_ab0a150dbe12c7c07980987bec44c05f9}{PointT}}$>$\+::Const\+Ptr s\+\_\+graphs\+::\+Key\+Frame\+::cloud}
+
+
+
+Definition at line 46 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_aee74d9ecbc17d7e189790693ddc4774b}\label{structs__graphs_1_1KeyFrame_aee74d9ecbc17d7e189790693ddc4774b}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!cloud\_seg\_body@{cloud\_seg\_body}}
+\index{cloud\_seg\_body@{cloud\_seg\_body}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{cloud\_seg\_body}{cloud\_seg\_body}}
+{\footnotesize\ttfamily pcl\+::\+Point\+Cloud$<$\mbox{\hyperlink{structs__graphs_1_1KeyFrame_aefbdc7f03ac07f57ab7887741803a277}{Point\+Normal}}$>$\+::\mbox{\hyperlink{structs__graphs_1_1KeyFrame_ae9570d948cab9b5fde3cb15eafb0d942}{Ptr}} s\+\_\+graphs\+::\+Key\+Frame\+::cloud\+\_\+seg\+\_\+body}
+
+
+
+Definition at line 47 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a2fdf9a4ba5861ee7e687ba675815547f}\label{structs__graphs_1_1KeyFrame_a2fdf9a4ba5861ee7e687ba675815547f}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!floor\_coeffs@{floor\_coeffs}}
+\index{floor\_coeffs@{floor\_coeffs}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{floor\_coeffs}{floor\_coeffs}}
+{\footnotesize\ttfamily boost\+::optional$<$Eigen\+::\+Vector4d$>$ s\+\_\+graphs\+::\+Key\+Frame\+::floor\+\_\+coeffs}
+
+
+
+Definition at line 50 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ae041b842d5d24514803a616c88161551}\label{structs__graphs_1_1KeyFrame_ae041b842d5d24514803a616c88161551}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!hort\_plane\_ids@{hort\_plane\_ids}}
+\index{hort\_plane\_ids@{hort\_plane\_ids}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{hort\_plane\_ids}{hort\_plane\_ids}}
+{\footnotesize\ttfamily std\+::vector$<$int$>$ s\+\_\+graphs\+::\+Key\+Frame\+::hort\+\_\+plane\+\_\+ids}
+
+
+
+Definition at line 48 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a8a09b3ddd26462c1de9b804b28a2b7de}\label{structs__graphs_1_1KeyFrame_a8a09b3ddd26462c1de9b804b28a2b7de}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!node@{node}}
+\index{node@{node}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{node}{node}}
+{\footnotesize\ttfamily g2o\+::\+Vertex\+S\+E3$\ast$ s\+\_\+graphs\+::\+Key\+Frame\+::node}
+
+
+
+Definition at line 56 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a8d78283461ec967676fdc1807c16cdd8}\label{structs__graphs_1_1KeyFrame_a8d78283461ec967676fdc1807c16cdd8}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!odom@{odom}}
+\index{odom@{odom}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{odom}{odom}}
+{\footnotesize\ttfamily Eigen\+::\+Isometry3d s\+\_\+graphs\+::\+Key\+Frame\+::odom}
+
+
+
+Definition at line 44 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a8e57c8db559498d97112b45288e2f03d}\label{structs__graphs_1_1KeyFrame_a8e57c8db559498d97112b45288e2f03d}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!orientation@{orientation}}
+\index{orientation@{orientation}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{orientation}{orientation}}
+{\footnotesize\ttfamily boost\+::optional$<$Eigen\+::\+Quaterniond$>$ s\+\_\+graphs\+::\+Key\+Frame\+::orientation}
+
+
+
+Definition at line 54 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ab15d054128a31659eda32d1e395ab608}\label{structs__graphs_1_1KeyFrame_ab15d054128a31659eda32d1e395ab608}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!stamp@{stamp}}
+\index{stamp@{stamp}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{stamp}{stamp}}
+{\footnotesize\ttfamily ros\+::\+Time s\+\_\+graphs\+::\+Key\+Frame\+::stamp}
+
+
+
+Definition at line 43 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_af5b4471d1d0c30d32aacabbb6bcffa8f}\label{structs__graphs_1_1KeyFrame_af5b4471d1d0c30d32aacabbb6bcffa8f}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!utm\_coord@{utm\_coord}}
+\index{utm\_coord@{utm\_coord}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{utm\_coord}{utm\_coord}}
+{\footnotesize\ttfamily boost\+::optional$<$Eigen\+::\+Vector3d$>$ s\+\_\+graphs\+::\+Key\+Frame\+::utm\+\_\+coord}
+
+
+
+Definition at line 51 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_a7ad110b1c6d6892cc12816bf42f8922a}\label{structs__graphs_1_1KeyFrame_a7ad110b1c6d6892cc12816bf42f8922a}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!x\_plane\_ids@{x\_plane\_ids}}
+\index{x\_plane\_ids@{x\_plane\_ids}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{x\_plane\_ids}{x\_plane\_ids}}
+{\footnotesize\ttfamily std\+::vector$<$int$>$ s\+\_\+graphs\+::\+Key\+Frame\+::x\+\_\+plane\+\_\+ids}
+
+
+
+Definition at line 48 of file keyframe.\+hpp.
+
+\mbox{\Hypertarget{structs__graphs_1_1KeyFrame_ac0ff3f7e3fc679c8b91024519f1c7894}\label{structs__graphs_1_1KeyFrame_ac0ff3f7e3fc679c8b91024519f1c7894}} 
+\index{s\_graphs::KeyFrame@{s\_graphs::KeyFrame}!y\_plane\_ids@{y\_plane\_ids}}
+\index{y\_plane\_ids@{y\_plane\_ids}!s\_graphs::KeyFrame@{s\_graphs::KeyFrame}}
+\doxysubsubsection{\texorpdfstring{y\_plane\_ids}{y\_plane\_ids}}
+{\footnotesize\ttfamily std\+::vector$<$int$>$ s\+\_\+graphs\+::\+Key\+Frame\+::y\+\_\+plane\+\_\+ids}
+
+
+
+Definition at line 48 of file keyframe.\+hpp.
+
+
+
+The documentation for this struct was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{keyframe_8hpp}{keyframe.\+hpp}}\end{DoxyCompactItemize}

@@ -1,0 +1,67 @@
+\hypertarget{classs__graphs_1_1NeighbourMapper}{}\doxysection{s\+\_\+graphs\+::Neighbour\+Mapper Class Reference}
+\label{classs__graphs_1_1NeighbourMapper}\index{s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}}
+
+
+{\ttfamily \#include $<$neighbour\+\_\+mapper.\+hpp$>$}
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{classs__graphs_1_1NeighbourMapper_a3c69288e1e358bc5a9e1513052d87f88}{Neighbour\+Mapper}} (const ros\+::\+Node\+Handle \&private\+\_\+nh)
+\item 
+\mbox{\hyperlink{classs__graphs_1_1NeighbourMapper_a1b52a2ca628eee2ea7ef6c8f4c1757ae}{$\sim$\+Neighbour\+Mapper}} ()
+\item 
+void \mbox{\hyperlink{classs__graphs_1_1NeighbourMapper_aae5ed1880b4eda72ba6f646d2b4381b2}{detect\+\_\+room\+\_\+neighbours}} (std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&graph\+\_\+slam, const s\+\_\+graphs\+::\+Rooms\+Data \&room\+\_\+msg, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&x\+\_\+corridors, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&y\+\_\+corridors, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$ \&rooms\+\_\+vec)
+\begin{DoxyCompactList}\small\item\em detect all the room neighbours from all room data \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{classs__graphs_1_1NeighbourMapper_ae0202e0d0585b57f3c0cabb53d5b34c3}{factor\+\_\+room\+\_\+neighbours}} (std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&graph\+\_\+slam, const s\+\_\+graphs\+::\+Rooms\+Data \&room\+\_\+msg, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&x\+\_\+corridors, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&y\+\_\+corridors, std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$ \&rooms\+\_\+vec)
+\begin{DoxyCompactList}\small\item\em factor the room neighbours between two rooms/corridors \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+
+
+Definition at line 49 of file neighbour\+\_\+mapper.\+hpp.
+
+
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1NeighbourMapper_a3c69288e1e358bc5a9e1513052d87f88}\label{classs__graphs_1_1NeighbourMapper_a3c69288e1e358bc5a9e1513052d87f88}} 
+\index{s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}!NeighbourMapper@{NeighbourMapper}}
+\index{NeighbourMapper@{NeighbourMapper}!s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}}
+\doxysubsubsection{\texorpdfstring{NeighbourMapper()}{NeighbourMapper()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Neighbour\+Mapper\+::\+Neighbour\+Mapper (\begin{DoxyParamCaption}\item[{const ros\+::\+Node\+Handle \&}]{private\+\_\+nh }\end{DoxyParamCaption})}
+
+\mbox{\Hypertarget{classs__graphs_1_1NeighbourMapper_a1b52a2ca628eee2ea7ef6c8f4c1757ae}\label{classs__graphs_1_1NeighbourMapper_a1b52a2ca628eee2ea7ef6c8f4c1757ae}} 
+\index{s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}!````~NeighbourMapper@{$\sim$NeighbourMapper}}
+\index{````~NeighbourMapper@{$\sim$NeighbourMapper}!s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}}
+\doxysubsubsection{\texorpdfstring{$\sim$NeighbourMapper()}{~NeighbourMapper()}}
+{\footnotesize\ttfamily s\+\_\+graphs\+::\+Neighbour\+Mapper\+::$\sim$\+Neighbour\+Mapper (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})}
+
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{classs__graphs_1_1NeighbourMapper_aae5ed1880b4eda72ba6f646d2b4381b2}\label{classs__graphs_1_1NeighbourMapper_aae5ed1880b4eda72ba6f646d2b4381b2}} 
+\index{s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}!detect\_room\_neighbours@{detect\_room\_neighbours}}
+\index{detect\_room\_neighbours@{detect\_room\_neighbours}!s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}}
+\doxysubsubsection{\texorpdfstring{detect\_room\_neighbours()}{detect\_room\_neighbours()}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Neighbour\+Mapper\+::detect\+\_\+room\+\_\+neighbours (\begin{DoxyParamCaption}\item[{std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&}]{graph\+\_\+slam,  }\item[{const s\+\_\+graphs\+::\+Rooms\+Data \&}]{room\+\_\+msg,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{x\+\_\+corridors,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{y\+\_\+corridors,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$ \&}]{rooms\+\_\+vec }\end{DoxyParamCaption})}
+
+
+
+detect all the room neighbours from all room data 
+
+\mbox{\Hypertarget{classs__graphs_1_1NeighbourMapper_ae0202e0d0585b57f3c0cabb53d5b34c3}\label{classs__graphs_1_1NeighbourMapper_ae0202e0d0585b57f3c0cabb53d5b34c3}} 
+\index{s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}!factor\_room\_neighbours@{factor\_room\_neighbours}}
+\index{factor\_room\_neighbours@{factor\_room\_neighbours}!s\_graphs::NeighbourMapper@{s\_graphs::NeighbourMapper}}
+\doxysubsubsection{\texorpdfstring{factor\_room\_neighbours()}{factor\_room\_neighbours()}}
+{\footnotesize\ttfamily void s\+\_\+graphs\+::\+Neighbour\+Mapper\+::factor\+\_\+room\+\_\+neighbours (\begin{DoxyParamCaption}\item[{std\+::unique\+\_\+ptr$<$ \mbox{\hyperlink{classs__graphs_1_1GraphSLAM}{Graph\+S\+L\+AM}} $>$ \&}]{graph\+\_\+slam,  }\item[{const s\+\_\+graphs\+::\+Rooms\+Data \&}]{room\+\_\+msg,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{x\+\_\+corridors,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Corridors}{Corridors}} $>$ \&}]{y\+\_\+corridors,  }\item[{std\+::vector$<$ \mbox{\hyperlink{structs__graphs_1_1Rooms}{Rooms}} $>$ \&}]{rooms\+\_\+vec }\end{DoxyParamCaption})}
+
+
+
+factor the room neighbours between two rooms/corridors 
+
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+/home/ghost/ros\+\_\+ws/s\+\_\+graphs\+\_\+ws/src/s\+\_\+graphs/include/s\+\_\+graphs/\mbox{\hyperlink{neighbour__mapper_8hpp}{neighbour\+\_\+mapper.\+hpp}}\end{DoxyCompactItemize}
