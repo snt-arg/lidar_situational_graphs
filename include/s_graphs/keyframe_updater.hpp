@@ -17,6 +17,7 @@ public:
 
   /**
    * @brief constructor
+   *
    * @param pnh
    */
   KeyframeUpdater(ros::NodeHandle& pnh) : is_first(true), prev_keypose(Eigen::Isometry3d::Identity()) {
@@ -28,6 +29,7 @@ public:
 
   /**
    * @brief decide if a new frame should be registered to the graph
+   *
    * @param pose  pose of the frame
    * @return  if true, the frame should be registered
    */
@@ -56,6 +58,7 @@ public:
 
   /**
    * @brief the last keyframe's accumulated distance from the first keyframe
+   *
    * @return accumulated distance
    */
   double get_accum_distance() const {

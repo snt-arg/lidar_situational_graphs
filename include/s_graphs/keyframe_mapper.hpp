@@ -26,6 +26,9 @@
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 class KeyframeMapper {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
@@ -34,6 +37,12 @@ public:
   ~KeyframeMapper();
 
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int map_keyframes(std::unique_ptr<GraphSLAM>& graph_slam, Eigen::Isometry3d odom2map, std::deque<KeyFrame::Ptr>& keyframe_queue, std::vector<KeyFrame::Ptr>& keyframes, std::deque<KeyFrame::Ptr>& new_keyframes, g2o::VertexSE3*& anchor_node, g2o::EdgeSE3*& anchor_edge, std::unordered_map<ros::Time, KeyFrame::Ptr, RosTimeHash>& keyframe_hash);
 
 private:

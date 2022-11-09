@@ -14,6 +14,12 @@ class SparseOptimizer;
 
 namespace s_graphs {
 
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 struct Rooms {
 public:
   int id;

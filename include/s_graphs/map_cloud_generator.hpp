@@ -17,11 +17,18 @@ class MapCloudGenerator {
 public:
   using PointT = pcl::PointXYZI;
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   MapCloudGenerator();
   ~MapCloudGenerator();
 
   /**
    * @brief generates a map point cloud
+   *
    * @param keyframes   snapshots of keyframes
    * @param resolution  resolution of generated map
    * @return generated map point cloud

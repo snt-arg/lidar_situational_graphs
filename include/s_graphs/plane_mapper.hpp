@@ -50,23 +50,86 @@
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 class PlaneMapper {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   PlaneMapper(const ros::NodeHandle& private_nh);
   ~PlaneMapper();
 
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
 
 private:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int add_planes_to_graph(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::Plane3D convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int sort_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   std::pair<int, int> associate_plane(const int& plane_type, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane, const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<HorizontalPlanes>& hort_planes);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void convert_plane_points_to_map(std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void get_plane_properties(const int& plane_type, const int& plane_id, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair);
 
 private:

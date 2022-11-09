@@ -11,12 +11,27 @@
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 struct GPRMC {
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   GPRMC() {
     status = 'V';
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   GPRMC(const std::vector<std::string>& tokens) {
     if(tokens[0] != "$GPRMC" || tokens.size() < 12) {
       status = 'V';
@@ -74,11 +89,26 @@ public:
   double magnetic_variation;
 };
 
+/**
+ * @brief
+ */
 class NmeaSentenceParser {
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   NmeaSentenceParser() {}
   ~NmeaSentenceParser() {}
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   GPRMC parse(const std::string& sentence) const {
     int checksum_loc = sentence.find('*');
     if(checksum_loc == std::string::npos) {

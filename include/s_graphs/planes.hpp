@@ -15,6 +15,9 @@ class SparseOptimizer;
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 struct VerticalPlanes {
 public:
   using PointNormal = pcl::PointXYZRGBNormal;
@@ -33,6 +36,9 @@ public:
   std::vector<double> color;
 };
 
+/**
+ * @brief
+ */
 struct HorizontalPlanes {
 public:
   using PointNormal = pcl::PointXYZRGBNormal;

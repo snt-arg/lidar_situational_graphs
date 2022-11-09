@@ -46,10 +46,19 @@
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 class NeighbourMapper {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   NeighbourMapper(const ros::NodeHandle& private_nh);
   ~NeighbourMapper();
 
@@ -57,12 +66,14 @@ public:
   /**
    * @brief detect all the room neighbours from all room data
    *
+   * @param
    */
   void detect_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec);
 
   /**
    * @brief factor the room neighbours between two rooms/corridors
    *
+   * @param
    */
   void factor_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec);
 
@@ -70,46 +81,107 @@ private:
   /**
    * @brief get the current pose between the two rooms
    *
+   * @param
    */
   Eigen::Vector2d room_room_measurement(const s_graphs::RoomData& room_msg_1, const s_graphs::RoomData& room_msg_2);
 
   /**
    * @brief get the current pose between the room and x_corridor
    *
+   * @param
    */
   double room_x_corridor_measurement(const s_graphs::RoomData& room_msg, const s_graphs::RoomData& x_corridor_msg);
 
   /**
    * @brief get the current pose between the room and y_corridor
    *
+   * @param
    */
   double room_y_corridor_measurement(const s_graphs::RoomData& room_msg, const s_graphs::RoomData& y_corridor_msg);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   double x_corridor_x_corridor_measurement(const s_graphs::RoomData& x_corridor_msg1, const s_graphs::RoomData& x_corridor_msg2);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   double y_corridor_y_corridor_measurement(const s_graphs::RoomData& y_corridor_msg1, const s_graphs::RoomData& y_corridor_msg2);
 
   /**
    * @brief factor edges between neighbouring rooms
    *
+   * @param
    */
   void factor_room_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room1, const s_graphs::Rooms& room2, Eigen::Vector2d room_room_meas);
 
   /**
    * @brief factor edges between room x_corridor
    *
+   * @param
    */
   void factor_room_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::Corridors& x_corridor, double room_x_corr_meas);
 
   /**
    * @brief factor edges between room and y corridor
    *
+   * @param
    */
   void factor_room_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::Corridors& y_corridor, double room_y_corr_meas);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void factor_x_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor, const s_graphs::Rooms& room, double x_corr_room_meas);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void factor_x_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor1, const s_graphs::Corridors& x_corridor2, double x_corr_x_corr_meas);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void factor_x_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor, const s_graphs::Corridors& y_corridor);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void factor_y_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor, const s_graphs::Rooms& room, double y_corr_room_meas);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void factor_y_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor, const s_graphs::Corridors& x_corridor);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void factor_y_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor1, const s_graphs::Corridors& y_corridor2, double y_corr_y_corr_meas);
 };
 

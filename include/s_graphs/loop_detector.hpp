@@ -12,11 +12,20 @@
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 struct Loop {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = std::shared_ptr<Loop>;
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   Loop(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Matrix4f& relpose) : key1(key1), key2(key2), relative_pose(relpose) {}
 
 public:
@@ -34,6 +43,7 @@ public:
 
   /**
    * @brief constructor
+   *
    * @param pnh
    */
   LoopDetector(ros::NodeHandle& pnh) {
@@ -50,6 +60,7 @@ public:
 
   /**
    * @brief detect loops and add them to the pose graph
+   *
    * @param keyframes       keyframes
    * @param new_keyframes   newly registered keyframes
    * @param graph_slam      pose graph
@@ -67,6 +78,12 @@ public:
     return detected_loops;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   double get_distance_thresh() const {
     return distance_thresh;
   }
@@ -74,6 +91,7 @@ public:
 private:
   /**
    * @brief find loop candidates. A detected loop begins at one of #keyframes and ends at #new_keyframe
+   *
    * @param keyframes      candidate keyframes of loop start
    * @param new_keyframe   loop end keyframe
    * @return loop candidates
@@ -110,6 +128,7 @@ private:
 
   /**
    * @brief To validate a loop candidate this function applies a scan matching between keyframes consisting the loop. If they are matched well, the loop is added to the pose graph
+   *
    * @param candidate_keyframes  candidate keyframes of loop start
    * @param new_keyframe         loop end keyframe
    * @param graph_slam           graph slam

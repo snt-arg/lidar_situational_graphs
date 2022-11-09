@@ -36,33 +36,82 @@ namespace s_graphs {
 
 typedef pcl::PointXYZI PointT;
 typedef pcl::PointXYZRGBNormal PointNormal;
+
 /**
  * @brief this class provides tools for different analysis over pointclouds to extract planar surfaces
  */
 class PlaneAnalyzer {
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   PlaneAnalyzer(ros::NodeHandle private_nh);
   ~PlaneAnalyzer();
 
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   std::vector<sensor_msgs::PointCloud2> get_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
 
 private:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void init_ros(ros::NodeHandle private_nh);
 
 private:
   ros::Publisher segmented_cloud_pub_;
 
 private:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   pcl::PointCloud<PointNormal>::Ptr compute_clusters(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   pcl::PointCloud<pcl::Normal>::Ptr compute_cloud_normals(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   pcl::PointCloud<PointNormal>::Ptr shadow_filter(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
 
   /**
-   * Maps an input h from a value between 0.0 and 1.0 into a rainbow. Copied from
-   * OctomapProvider in octomap.
+   * @brief Maps an input h from a value between 0.0 and 1.0 into a rainbow.
+   * References OctomapProvider in octomap
+   *
+   * @param
+   * @return
    */
   std_msgs::ColorRGBA rainbow_color_map(double h);
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   std_msgs::ColorRGBA random_color();
 
 private:

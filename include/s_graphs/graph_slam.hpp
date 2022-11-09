@@ -50,21 +50,71 @@ class VertexRoomXYLB;
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 class GraphSLAM {
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   GraphSLAM(const std::string& solver_type = "lm_var");
   virtual ~GraphSLAM();
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int num_vertices() const;
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int num_edges() const;
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int num_vertices_local() const;
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int num_edges_local() const;
+
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   int add_vertices();
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void set_solver(const std::string& solver_type);
 
   /**
    * @brief add a SE3 node to the graph
+   *
    * @param pose
    * @return registered node
    */
@@ -72,6 +122,7 @@ public:
 
   /**
    * @brief add a plane node to the graph
+   *
    * @param plane_coeffs
    * @return registered node
    */
@@ -80,6 +131,7 @@ public:
 
   /**
    * @brief remove a plane node from the graph
+   *
    * @param plane id
    * @return success or failure
    */
@@ -87,6 +139,7 @@ public:
 
   /**
    * @brief add a point_xyz node to the graph
+   *
    * @param xyz
    * @return registered node
    */
@@ -94,6 +147,7 @@ public:
 
   /**
    * @brief add a corridor node to the graph
+   *
    * @param corridor
    * @return registered node
    */
@@ -101,6 +155,7 @@ public:
 
   /**
    * @brief add a room node to the graph
+   *
    * @param room
    * @return registered node
    */
@@ -108,6 +163,7 @@ public:
 
   /**
    * @brief add a floor node to the graph
+   *
    * @param floor
    * @return registered node
    */
@@ -115,6 +171,7 @@ public:
 
   /**
    * @brief update the floor node estimate in the graph
+   *
    * @param floor
    * @return registered node
    */
@@ -122,6 +179,7 @@ public:
 
   /**
    * @brief add an edge between SE3 nodes
+   *
    * @param v1  node1
    * @param v2  node2
    * @param relative_pose  relative pose between node1 and node2
@@ -132,6 +190,7 @@ public:
 
   /**
    * @brief add an edge between an SE3 node and a plane node
+   *
    * @param v_se3    SE3 node
    * @param v_plane  plane node
    * @param plane_coeffs  plane coefficients w.r.t. v_se3
@@ -144,6 +203,7 @@ public:
 
   /**
    * @brief add an edge between an SE3 node and to a plane using point to plane distances
+   *
    * @param v_se3    SE3 node
    * @param v_plane  plane node
    * @param plane_coeffs  plane coefficients w.r.t. v_se3
@@ -154,6 +214,7 @@ public:
 
   /**
    * @brief add an edge between an SE3 node and a point_xyz node
+   *
    * @param v_se3        SE3 node
    * @param v_xyz        point_xyz node
    * @param xyz          xyz coordinate
@@ -164,6 +225,7 @@ public:
 
   /**
    * @brief add a prior edge to an SE3 node
+   *
    * @param v_se3
    * @param xy
    * @param information_matrix
@@ -171,81 +233,272 @@ public:
    */
   g2o::EdgePlanePriorNormal* add_plane_normal_prior_edge(g2o::VertexPlane* v, const Eigen::Vector3d& normal, const Eigen::MatrixXd& information_matrix);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgePlanePriorDistance* add_plane_distance_prior_edge(g2o::VertexPlane* v, double distance, const Eigen::MatrixXd& information_matrix);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeSE3PriorXY* add_se3_prior_xy_edge(g2o::VertexSE3* v_se3, const Eigen::Vector2d& xy, const Eigen::MatrixXd& information_matrix);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeSE3PriorXYZ* add_se3_prior_xyz_edge(g2o::VertexSE3* v_se3, const Eigen::Vector3d& xyz, const Eigen::MatrixXd& information_matrix);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeSE3PriorQuat* add_se3_prior_quat_edge(g2o::VertexSE3* v_se3, const Eigen::Quaterniond& quat, const Eigen::MatrixXd& information_matrix);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeSE3PriorVec* add_se3_prior_vec_edge(g2o::VertexSE3* v_se3, const Eigen::Vector3d& direction, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information_matrix);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgePlane* add_plane_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector4d& measurement, const Eigen::Matrix4d& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgePlaneIdentity* add_plane_identity_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector4d& measurement, const Eigen::Matrix4d& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgePlaneParallel* add_plane_parallel_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeSE3Corridor* add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeCorridorXPlane* add_corridor_xplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeCorridorYPlane* add_corridor_yplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoom2Planes* add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, g2o::VertexRoomXYLB* v_cluster_center, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoom4Planes* add_room_4planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_xplane1, g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1, g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoomXPrior* add_room_xprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoomYPrior* add_room_yprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoomRoom* add_room_room_edge(g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoomXCorridor* add_room_x_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_xcorridor, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeRoomYCorridor* add_room_y_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_ycorridor, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeXCorridorXCorridor* add_x_corridor_x_corridor_edge(g2o::VertexCorridor* v_xcorr1, g2o::VertexCorridor* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   g2o::EdgeYCorridorYCorridor* add_y_corridor_y_corridor_edge(g2o::VertexCorridor* v_ycorr1, g2o::VertexCorridor* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool remove_room_xplane_edge(g2o::EdgeRoomXPlane* room_xplane_edge);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size);
 
   /**
    * @brief perform graph optimization
+   *
+   * @param
+   * @return
    */
   int optimize(int num_iterations);
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
 
   /**
    * @brief save the pose graph to a file
+   *
    * @param filename  output filename
    */
   void save(const std::string& filename);
 
   /**
    * @brief load the pose graph from file
+   *
    * @param filename  output filename
    */
   bool load(const std::string& filename);

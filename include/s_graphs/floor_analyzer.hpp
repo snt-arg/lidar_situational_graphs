@@ -42,13 +42,31 @@ typedef pcl::PointXYZRGBNormal PointNormal;
  */
 class FloorAnalyzer {
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   FloorAnalyzer(ros::NodeHandle private_nh, std::shared_ptr<PlaneUtils> plane_utils_ptr);
   ~FloorAnalyzer();
 
 public:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void perform_floor_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, std::vector<s_graphs::PlaneData>& floor_plane_candidates_vec);
 
 private:
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   std::shared_ptr<PlaneUtils> plane_utils;
 };
 }  // namespace s_graphs
