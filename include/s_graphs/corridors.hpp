@@ -17,10 +17,16 @@ class SparseOptimizer;
 namespace s_graphs {
 
 /**
- * @brief
+ * @brief Struct that holds information about a corridor type.
  *
- * @param
- * @return
+ * @var id
+ * @var connected_id
+ * @var connected_neighbour_ids
+ * @var plane1, plane2
+ * @var plane1_id, plane2_id
+ * @var neighbour_ids
+ * @var cluster_center_node
+ * @var node
  */
 struct Corridors {
 public:

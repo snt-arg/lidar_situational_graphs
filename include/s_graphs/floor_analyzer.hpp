@@ -38,15 +38,16 @@ namespace s_graphs {
 typedef pcl::PointXYZI PointT;
 typedef pcl::PointXYZRGBNormal PointNormal;
 /**
- * @brief this class provides tools for different analysis over pointclouds to extract the floor surfaces
+ * @brief Class that provides tools for different analysis over
+ * pointclouds to extract the floor surfaces.
  */
 class FloorAnalyzer {
 public:
   /**
-   * @brief
+   * @brief Constructor for FloorAnalyzer.
    *
-   * @param
-   * @return
+   * @param private_nh
+   * @param plane_utils_ptr
    */
   FloorAnalyzer(ros::NodeHandle private_nh, std::shared_ptr<PlaneUtils> plane_utils_ptr);
   ~FloorAnalyzer();
@@ -55,18 +56,13 @@ public:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param current_x_vert_planes
+   * @param current_y_vert_planes
+   * @param floor_plane_candidates_vec
    */
   void perform_floor_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, std::vector<s_graphs::PlaneData>& floor_plane_candidates_vec);
 
 private:
-  /**
-   * @brief
-   *
-   * @param
-   * @return
-   */
   std::shared_ptr<PlaneUtils> plane_utils;
 };
 }  // namespace s_graphs

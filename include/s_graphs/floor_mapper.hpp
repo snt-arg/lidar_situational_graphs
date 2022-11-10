@@ -56,10 +56,9 @@ class FloorMapper {
 
 public:
   /**
-   * @brief
+   * @brief Constructor for the class FloorMapper
    *
-   * @param
-   * @return
+   * @param private_nh
    */
   FloorMapper(const ros::NodeHandle& private_nh);
   ~FloorMapper();
@@ -72,8 +71,12 @@ public:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param room_data
+   * @param floors_vec
+   * @param rooms_vec
+   * @param x_corridors
+   * @param y_corridors
    */
   void lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
 
@@ -81,16 +84,24 @@ private:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param room_data
+   * @param floors_vec
+   * @param rooms_vec
+   * @param x_corridors
+   * @param y_corridors
    */
   void factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param floor_node
+   * @param room_data
+   * @param rooms_vec
+   * @param x_corridors
+   * @param y_corridors
    */
   void update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
 
@@ -98,16 +109,20 @@ private:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param floor_pose
+   * @param floor_node
+   * @param rooms_vec
+   * @param x_corridors
+   * @param y_corridors
    */
   void factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, const Eigen::Vector2d& floor_pose, g2o::VertexRoomXYLB* floor_node, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param floor_node
    */
   void remove_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node);
 };
