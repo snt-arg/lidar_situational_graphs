@@ -1,5 +1,5 @@
 var namespaces_dup =
 [
-    [ "g2o", "namespaceg2o.html", null ],
-    [ "s_graphs", "namespaces__graphs.html", null ]
+    [ "g2o", "namespaceg2o.html", "namespaceg2o" ],
+    [ "s_graphs", "namespaces__graphs.html", "namespaces__graphs" ]
 ];

@@ -1,0 +1,9 @@
+digraph "Graphical Class Hierarchy"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node0 [label="s_graphs::LoopDetector",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classs__graphs_1_1LoopDetector.html",tooltip="this class finds loops by scam matching and adds them to the pose graph"];
+}

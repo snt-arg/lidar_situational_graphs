@@ -1,0 +1,26 @@
+digraph "/Users/pedros235/code/github/aerolab/s_graphs/include/g2o/edge_corridor_plane.hpp"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="/Users/pedros235/code\l/github/aerolab/s_graphs\l/include/g2o/edge_corridor\l_plane.hpp",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [color="steelblue1",style="solid"];
+  Node2 [label="Eigen/Dense",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node1 -> Node3 [color="steelblue1",style="solid"];
+  Node3 [label="g2o/core/base_binary\l_edge.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node1 -> Node4 [color="steelblue1",style="solid"];
+  Node4 [label="g2o/types/slam3d_addons\l/vertex_plane.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node1 -> Node5 [color="steelblue1",style="solid"];
+  Node5 [label="g2o/types/slam3d/vertex\l_se3.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node1 -> Node6 [color="steelblue1",style="solid"];
+  Node6 [label="g2o/vertex_corridor.hpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$vertex__corridor_8hpp.html",tooltip=" "];
+  Node6 -> Node7 [color="steelblue1",style="solid"];
+  Node7 [label="g2o/types/slam3d/g2o\l_types_slam3d_api.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node6 -> Node8 [color="steelblue1",style="solid"];
+  Node8 [label="g2o/core/base_vertex.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node6 -> Node9 [color="steelblue1",style="solid"];
+  Node9 [label="g2o/core/hyper_graph\l_action.h",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node6 -> Node10 [color="steelblue1",style="solid"];
+  Node10 [label="Eigen/Core",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+}

@@ -27,5 +27,8 @@ var namespaceg2o =
     [ "EdgeXCorridorXCorridor", "classg2o_1_1EdgeXCorridorXCorridor.html", "classg2o_1_1EdgeXCorridorXCorridor" ],
     [ "EdgeYCorridorYCorridor", "classg2o_1_1EdgeYCorridorYCorridor.html", "classg2o_1_1EdgeYCorridorYCorridor" ],
     [ "VertexCorridor", "classg2o_1_1VertexCorridor.html", "classg2o_1_1VertexCorridor" ],
-    [ "VertexRoomXYLB", "classg2o_1_1VertexRoomXYLB.html", "classg2o_1_1VertexRoomXYLB" ]
+    [ "VertexRoomXYLB", "classg2o_1_1VertexRoomXYLB.html", "classg2o_1_1VertexRoomXYLB" ],
+    [ "kernel_type", "namespaceg2o.html#a5eebf4224d62275c1a9dce37d0e9c304", null ],
+    [ "load_robust_kernels", "namespaceg2o.html#ad8ef02d9dbc3026de6477b192e79615e", null ],
+    [ "save_robust_kernels", "namespaceg2o.html#a848f2cd272538f93466d46bf2e2f26de", null ]
 ];

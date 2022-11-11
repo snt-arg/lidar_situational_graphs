@@ -1,0 +1,16 @@
+digraph "/Users/pedros235/code/github/aerolab/s_graphs/include/s_graphs/keyframe_updater.hpp"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  Node1 [label="/Users/pedros235/code\l/github/aerolab/s_graphs\l/include/s_graphs/keyframe\l_updater.hpp",height=0.2,width=0.4,color="gray40", fillcolor="grey60", style="filled", fontcolor="black",tooltip=" "];
+  Node1 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="/Users/pedros235/code\l/github/aerolab/s_graphs\l/apps/s_graphs_nodelet.cpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$s__graphs__nodelet_8cpp.html",tooltip=" "];
+  Node1 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="/Users/pedros235/code\l/github/aerolab/s_graphs\l/include/s_graphs/graph\l_visualizer.hpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$graph__visualizer_8hpp.html",tooltip=" "];
+  Node3 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node1 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="/Users/pedros235/code\l/github/aerolab/s_graphs\l/include/s_graphs/keyframe\l_mapper.hpp",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$keyframe__mapper_8hpp.html",tooltip=" "];
+  Node4 -> Node2 [dir="back",color="steelblue1",style="solid"];
+}

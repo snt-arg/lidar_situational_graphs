@@ -34,5 +34,8 @@ var namespaces__graphs =
     [ "ScanMatchingOdometryNodelet", "classs__graphs_1_1ScanMatchingOdometryNodelet.html", "classs__graphs_1_1ScanMatchingOdometryNodelet" ],
     [ "SGraphsNodelet", "classs__graphs_1_1SGraphsNodelet.html", "classs__graphs_1_1SGraphsNodelet" ],
     [ "structure_data_list", "structs__graphs_1_1structure__data__list.html", "structs__graphs_1_1structure__data__list" ],
-    [ "VerticalPlanes", "structs__graphs_1_1VerticalPlanes.html", "structs__graphs_1_1VerticalPlanes" ]
+    [ "VerticalPlanes", "structs__graphs_1_1VerticalPlanes.html", "structs__graphs_1_1VerticalPlanes" ],
+    [ "PointNormal", "namespaces__graphs.html#a98c66a09a1f611672a6503be234abf23", null ],
+    [ "PointT", "namespaces__graphs.html#a67ab63cebb9bdc7cde7c248b7f369d28", null ],
+    [ "select_registration_method", "namespaces__graphs.html#a9d2e7a72cbe5be6b5e453a03da53346a", null ]
 ];

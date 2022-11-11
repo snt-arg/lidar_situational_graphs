@@ -1,0 +1,31 @@
+digraph "Graphical Class Hierarchy"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node0 [label="BaseBinaryEdge",height=0.2,width=0.4,color="grey60", fillcolor="#E0E0E0", style="filled",tooltip=" "];
+  Node0 -> Node1 [dir="back",color="steelblue1",style="solid"];
+  Node1 [label="g2o::EdgeCorridorXPlane",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeCorridorXPlane.html",tooltip=" "];
+  Node0 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="g2o::EdgeCorridorYPlane",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeCorridorYPlane.html",tooltip=" "];
+  Node0 -> Node3 [dir="back",color="steelblue1",style="solid"];
+  Node3 [label="g2o::EdgePlaneIdentity",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgePlaneIdentity.html",tooltip="A modified version of g2o::EdgePlane. This class takes care of flipped plane normals."];
+  Node0 -> Node4 [dir="back",color="steelblue1",style="solid"];
+  Node4 [label="g2o::EdgePlaneParallel",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgePlaneParallel.html",tooltip=" "];
+  Node0 -> Node5 [dir="back",color="steelblue1",style="solid"];
+  Node5 [label="g2o::EdgePlanePerpendicular",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgePlanePerpendicular.html",tooltip=" "];
+  Node0 -> Node6 [dir="back",color="steelblue1",style="solid"];
+  Node6 [label="g2o::EdgeRoomRoom",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeRoomRoom.html",tooltip=" "];
+  Node0 -> Node7 [dir="back",color="steelblue1",style="solid"];
+  Node7 [label="g2o::EdgeRoomXCorridor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeRoomXCorridor.html",tooltip=" "];
+  Node0 -> Node8 [dir="back",color="steelblue1",style="solid"];
+  Node8 [label="g2o::EdgeRoomXPlane",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeRoomXPlane.html",tooltip=" "];
+  Node0 -> Node9 [dir="back",color="steelblue1",style="solid"];
+  Node9 [label="g2o::EdgeRoomYCorridor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeRoomYCorridor.html",tooltip=" "];
+  Node0 -> Node10 [dir="back",color="steelblue1",style="solid"];
+  Node10 [label="g2o::EdgeRoomYPlane",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeRoomYPlane.html",tooltip=" "];
+  Node0 -> Node11 [dir="back",color="steelblue1",style="solid"];
+  Node11 [label="g2o::EdgeSE3Corridor",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classg2o_1_1EdgeSE3Corridor.html",tooltip=" "];
+}

@@ -11,20 +11,20 @@ var hierarchy =
       [ "g2o::EdgeRoomXPlane", "classg2o_1_1EdgeRoomXPlane.html", null ],
       [ "g2o::EdgeRoomYCorridor", "classg2o_1_1EdgeRoomYCorridor.html", null ],
       [ "g2o::EdgeRoomYPlane", "classg2o_1_1EdgeRoomYPlane.html", null ],
-      [ "g2o::EdgeSE3Corridor", "classg2o_1_1EdgeSE3Corridor.html", null ],
+      [ "g2o::EdgeSE3Corridor", "classg2o_1_1EdgeSE3Corridor.html", null ]
+    ] ],
+    [ "g2o::BaseBinaryEdge", null, [
+      [ "g2o::EdgeSE3Plane", "classg2o_1_1EdgeSE3Plane.html", null ],
+      [ "g2o::EdgeSE3PointToPlane", "classg2o_1_1EdgeSE3PointToPlane.html", null ],
       [ "g2o::EdgeSE3Room", "classg2o_1_1EdgeSE3Room.html", null ],
       [ "g2o::EdgeXCorridorXCorridor", "classg2o_1_1EdgeXCorridorXCorridor.html", null ],
       [ "g2o::EdgeYCorridorYCorridor", "classg2o_1_1EdgeYCorridorYCorridor.html", null ]
-    ] ],
-    [ "BaseBinaryEdge", null, [
-      [ "g2o::EdgeSE3Plane", "classg2o_1_1EdgeSE3Plane.html", null ],
-      [ "g2o::EdgeSE3PointToPlane", "classg2o_1_1EdgeSE3PointToPlane.html", null ]
     ] ],
     [ "BaseMultiEdge", null, [
       [ "g2o::EdgeRoom2Planes", "classg2o_1_1EdgeRoom2Planes.html", null ],
       [ "g2o::EdgeRoom4Planes", "classg2o_1_1EdgeRoom4Planes.html", null ]
     ] ],
-    [ "BaseUnaryEdge", null, [
+    [ "g2o::BaseUnaryEdge", null, [
       [ "g2o::EdgePlanePriorDistance", "classg2o_1_1EdgePlanePriorDistance.html", null ],
       [ "g2o::EdgePlanePriorNormal", "classg2o_1_1EdgePlanePriorNormal.html", null ],
       [ "g2o::EdgeRoomXPrior", "classg2o_1_1EdgeRoomXPrior.html", null ],
@@ -60,13 +60,13 @@ var hierarchy =
     ] ],
     [ "s_graphs::NeighbourMapper", "classs__graphs_1_1NeighbourMapper.html", null ],
     [ "s_graphs::NmeaSentenceParser", "classs__graphs_1_1NmeaSentenceParser.html", null ],
-    [ "Nodelet", null, [
+    [ "nodelet::Nodelet", null, [
       [ "s_graphs::FloorDetectionNodelet", "classs__graphs_1_1FloorDetectionNodelet.html", null ],
       [ "s_graphs::FloorPlanNodelet", "classs__graphs_1_1FloorPlanNodelet.html", null ],
       [ "s_graphs::PrefilteringNodelet", "classs__graphs_1_1PrefilteringNodelet.html", null ],
       [ "s_graphs::RoomSegmentationNodelet", "classs__graphs_1_1RoomSegmentationNodelet.html", null ],
-      [ "s_graphs::ScanMatchingOdometryNodelet", "classs__graphs_1_1ScanMatchingOdometryNodelet.html", null ],
-      [ "s_graphs::SGraphsNodelet", "classs__graphs_1_1SGraphsNodelet.html", null ]
+      [ "s_graphs::SGraphsNodelet", "classs__graphs_1_1SGraphsNodelet.html", null ],
+      [ "s_graphs::ScanMatchingOdometryNodelet", "classs__graphs_1_1ScanMatchingOdometryNodelet.html", null ]
     ] ],
     [ "s_graphs::plane_data_list", "structs__graphs_1_1plane__data__list.html", null ],
     [ "s_graphs::PlaneAnalyzer", "classs__graphs_1_1PlaneAnalyzer.html", null ],

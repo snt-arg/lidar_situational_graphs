@@ -1,0 +1,13 @@
+digraph "Graphical Class Hierarchy"
+{
+ // LATEX_PDF_SIZE
+  bgcolor="transparent";
+  edge [fontname=Helvetica,fontsize=10,labelfontname=Helvetica,labelfontsize=10];
+  node [fontname=Helvetica,fontsize=10,shape=box,height=0.2,width=0.4];
+  rankdir="LR";
+  Node0 [label="s_graphs::MapperUtils",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classs__graphs_1_1MapperUtils.html",tooltip=" "];
+  Node0 -> Node1 [dir="back",color="steelblue1",style="solid"];
+  Node1 [label="s_graphs::FiniteRoomMapper",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classs__graphs_1_1FiniteRoomMapper.html",tooltip=" "];
+  Node0 -> Node2 [dir="back",color="steelblue1",style="solid"];
+  Node2 [label="s_graphs::InfiniteRoomMapper",height=0.2,width=0.4,color="grey40", fillcolor="white", style="filled",URL="$classs__graphs_1_1InfiniteRoomMapper.html",tooltip="this class provides tools for different analysis over open space clusters to generate rooms"];
+}
