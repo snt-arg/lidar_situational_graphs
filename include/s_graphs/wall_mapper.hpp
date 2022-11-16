@@ -34,6 +34,7 @@
 #include <s_graphs/keyframe.hpp>
 
 #include <g2o/vertex_room.hpp>
+#include <g2o/vertex_wall.hpp>
 #include <g2o/vertex_corridor.hpp>
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d/vertex_se3.h>
@@ -47,6 +48,7 @@
 #include <g2o/edge_plane_parallel.hpp>
 #include <g2o/edge_corridor_plane.hpp>
 #include <g2o/edge_room.hpp>
+#include <g2o/edge_wall_two_planes.hpp>
 
 namespace s_graphs {
 
