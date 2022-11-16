@@ -37,10 +37,10 @@ namespace g2o {
 
 /*   Define Wall edge with wall surfaces here*/
 
-class EdgeWall2Planes : public BaseMultiEdge<2, Eigen::Vector3d> {
+class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeWall2Planes() : BaseMultiEdge<2, Eigen::Vector3d>() {
+  EdgeWall2Planes() : BaseMultiEdge<3, Eigen::Vector3d>() {
     resize(3);
   }
 
@@ -67,8 +67,8 @@ public:
   }
 
   virtual bool read(std::istream& is) override {
-    Eigen::Vector2d v;
-    is >> v(0) >> v(1);
+    Eigen::Vector3d v;
+    is >> v(0) >> v(1) >> v(2);
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -84,8 +84,8 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    Eigen::Vector2d v = _measurement;
-    os << v(0) << " " << v(1) << " ";
+    Eigen::Vector3d v = _measurement;
+    os << v(0) << " " << v(1) << " " << v(2) << " ";
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
