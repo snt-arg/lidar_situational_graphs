@@ -78,7 +78,7 @@ public:
   }
 
   virtual void oplusImpl(const number_t* update) {
-    for(int i = 0; i < 3; i++) _estimate[i] += update_[i];
+    for(int i = 0; i < 3; i++) _estimate[i] += update[i];
   }
 
   virtual bool read(std::istream& is) {
