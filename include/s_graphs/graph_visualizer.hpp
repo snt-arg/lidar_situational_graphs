@@ -61,20 +61,25 @@ class GraphVisualizer {
 
 public:
   /**
-   * @brief
+   * @brief Constructor for class GraphVisualizer.
    *
-   * @param
-   * @return
+   * @param private_nh
    */
   GraphVisualizer(const ros::NodeHandle& private_nh);
   ~GraphVisualizer();
 
 public:
   /**
-   * @brief
+   * @brief Creates a marker array
    *
-   * @param
-   * @return
+   * @param stamp
+   * @param local_graph
+   * @param x_plane_snapshot
+   * @param y_plane_snapshot
+   * @param loop_detector_radius
+   * @param keyframes
+   * @param floors_vec
+   * @return A MarkerArray message.
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<Corridors> x_corridor_snapshot, std::vector<Corridors> y_corridor_snapshot, std::vector<Rooms> room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec);
 

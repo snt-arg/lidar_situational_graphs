@@ -284,215 +284,276 @@ public:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_se3
+   * @param direction
+   * @param measurement
+   * @param information_matrix
+   * @return registered edge
    */
   g2o::EdgeSE3PriorVec* add_se3_prior_vec_edge(g2o::VertexSE3* v_se3, const Eigen::Vector3d& direction, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information_matrix);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_plane1
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgePlane* add_plane_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector4d& measurement, const Eigen::Matrix4d& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_plane1
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgePlaneIdentity* add_plane_identity_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector4d& measurement, const Eigen::Matrix4d& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_plane1
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgePlaneParallel* add_plane_parallel_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_plane1
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_se3
+   * @param v_corridor
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeSE3Corridor* add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_corridor
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeCorridorXPlane* add_corridor_xplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_corridor
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeCorridorYPlane* add_corridor_yplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param corridor_xplane_edge
+   * @return Success or failure
    */
   bool remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param corridor_yplane_edge
+   * @return Success or failure
    */
   bool remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_se3
+   * @param v_room
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param v_plane1
+   * @param v_plane2
+   * @param v_cluster_center
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoom2Planes* add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, g2o::VertexRoomXYLB* v_cluster_center, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param v_plane1
+   * @param v_plane2
+   * @param v_yplane1
+   * @param v_yplane2
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoom4Planes* add_room_4planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_xplane1, g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1, g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoomXPrior* add_room_xprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoomYPrior* add_room_yprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room1
+   * @param v_room2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoomRoom* add_room_room_edge(g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param room_room_edge
+   * @return Succes or failure
    */
   bool remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param v_xcorridor
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoomXCorridor* add_room_x_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_xcorridor, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_room
+   * @param v_ycorridor
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeRoomYCorridor* add_room_y_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_ycorridor, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_xcorr1
+   * @param v_xcorr2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeXCorridorXCorridor* add_x_corridor_x_corridor_edge(g2o::VertexCorridor* v_xcorr1, g2o::VertexCorridor* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param v_ycorr1
+   * @param v_ycorr2
+   * @param measurement
+   * @param information
+   * @return registered edge
    */
   g2o::EdgeYCorridorYCorridor* add_y_corridor_y_corridor_edge(g2o::VertexCorridor* v_ycorr1, g2o::VertexCorridor* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param room_xplane_edge
+   * @return Success or failure
    */
   bool remove_room_xplane_edge(g2o::EdgeRoomXPlane* room_xplane_edge);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param room_yplane_edge
+   * @return Success or failure
    */
   bool remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param edge
+   * @param kernel_type
+   * @param kernel_size
    */
   void add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size);
 
   /**
    * @brief Perform graph optimization
    *
-   * @param
+   * @param num_iterations
    * @return
    */
   int optimize(int num_iterations);
@@ -500,8 +561,9 @@ public:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param spinv
+   * @param vert_pairs_vec
+   * @return Success or failure
    */
   bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
 

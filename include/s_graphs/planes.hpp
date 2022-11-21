@@ -14,9 +14,20 @@ class SparseOptimizer;
 }  // namespace g2o
 
 namespace s_graphs {
-
 /**
  * @brief
+ *
+ * @param id
+ * @param plane
+ * @param cloud_seg_body
+ * @param cloud_seg_body_vec
+ * @param cloud_seg_map
+ * @param covariance
+ * @param parallel_pair
+ * @param keyframe_node
+ * @param keyframe_node_vec
+ * @param plane_node
+ * @param color
  */
 struct VerticalPlanes {
 public:
@@ -38,6 +49,18 @@ public:
 
 /**
  * @brief
+ *
+ * @param id
+ * @param plane
+ * @param cloud_seg_body
+ * @param cloud_seg_body_vec
+ * @param cloud_seg_map
+ * @param covariance
+ * @param parallel_pair
+ * @param keyframe_node
+ * @param keyframe_node_vec
+ * @param plane_node
+ * @param color
  */
 struct HorizontalPlanes {
 public:

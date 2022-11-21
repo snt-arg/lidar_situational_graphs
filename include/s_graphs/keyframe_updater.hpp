@@ -9,14 +9,14 @@
 namespace s_graphs {
 
 /**
- * @brief this class decides if a new frame should be registered to the pose graph as a keyframe
+ * @brief This class decides if a new frame should be registered to the pose graph as a keyframe
  */
 class KeyframeUpdater {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief constructor
+   * @brief Constructor for class KeyframeUpdater
    *
    * @param pnh
    */
@@ -28,9 +28,9 @@ public:
   }
 
   /**
-   * @brief decide if a new frame should be registered to the graph
+   * @brief Decide if a new frame should be registered to the graph
    *
-   * @param pose  pose of the frame
+   * @param pose: pose of the frame
    * @return  if true, the frame should be registered
    */
   bool update(const Eigen::Isometry3d& pose) {

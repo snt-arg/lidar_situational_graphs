@@ -17,8 +17,14 @@ namespace s_graphs {
 /**
  * @brief
  *
- * @param
- * @return
+ * @param id
+ * @param connected_id
+ * @param connected_neighbour_ids
+ * @param plane_x1, plane_x2, plane_y1, plane_y2
+ * @param plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id
+ * @param neighbour_ids
+ * @param node
+ * @param sub_room
  */
 struct Rooms {
 public:

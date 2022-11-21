@@ -13,7 +13,7 @@
 namespace s_graphs {
 
 /**
- * @brief
+ * @brief Struct Loop
  */
 struct Loop {
 public:
@@ -21,10 +21,11 @@ public:
   using Ptr = std::shared_ptr<Loop>;
 
   /**
-   * @brief
+   * @brief Constructor of struct Loop
    *
-   * @param
-   * @return
+   * @param key1
+   * @param key2
+   * @param relpose
    */
   Loop(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Matrix4f& relpose) : key1(key1), key2(key2), relative_pose(relpose) {}
 
@@ -35,14 +36,14 @@ public:
 };
 
 /**
- * @brief this class finds loops by scam matching and adds them to the pose graph
+ * @brief This class finds loops by scam matching and adds them to the pose graph
  */
 class LoopDetector {
 public:
   typedef pcl::PointXYZI PointT;
 
   /**
-   * @brief constructor
+   * @brief Constructor of the class LoopDetector
    *
    * @param pnh
    */
@@ -59,11 +60,15 @@ public:
   }
 
   /**
-   * @brief detect loops and add them to the pose graph
+   * @brief Detect loops and add them to the pose graph
    *
-   * @param keyframes       keyframes
-   * @param new_keyframes   newly registered keyframes
-   * @param graph_slam      pose graph
+   * @param keyframes
+   *          Keyframes
+   * @param new_keyframes
+   *          Newly registered keyframes
+   * @param graph_slam
+   *          Pose graph
+   * @return Loop vector
    */
   std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes, const std::deque<KeyFrame::Ptr>& new_keyframes, s_graphs::GraphSLAM& graph_slam) {
     std::vector<Loop::Ptr> detected_loops;
@@ -81,8 +86,7 @@ public:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @return Distance treshold
    */
   double get_distance_thresh() const {
     return distance_thresh;
@@ -90,11 +94,13 @@ public:
 
 private:
   /**
-   * @brief find loop candidates. A detected loop begins at one of #keyframes and ends at #new_keyframe
+   * @brief Find loop candidates. A detected loop begins at one of #keyframes and ends at #new_keyframe
    *
-   * @param keyframes      candidate keyframes of loop start
-   * @param new_keyframe   loop end keyframe
-   * @return loop candidates
+   * @param keyframes
+   *          Candidate keyframes of loop start
+   * @param new_keyframe
+   *          Loop end keyframe
+   * @return Loop candidates
    */
   std::vector<KeyFrame::Ptr> find_candidates(const std::vector<KeyFrame::Ptr>& keyframes, const KeyFrame::Ptr& new_keyframe) const {
     // too close to the last registered loop edge
@@ -129,9 +135,13 @@ private:
   /**
    * @brief To validate a loop candidate this function applies a scan matching between keyframes consisting the loop. If they are matched well, the loop is added to the pose graph
    *
-   * @param candidate_keyframes  candidate keyframes of loop start
-   * @param new_keyframe         loop end keyframe
-   * @param graph_slam           graph slam
+   * @param candidate_keyframes
+   *          candidate keyframes of loop start
+   * @param new_keyframe
+   *          loop end keyframe
+   * @param graph_slam
+   *          graph slam
+   * @return Loop pointer
    */
   Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes, const KeyFrame::Ptr& new_keyframe, s_graphs::GraphSLAM& graph_slam) {
     if(candidate_keyframes.empty()) {

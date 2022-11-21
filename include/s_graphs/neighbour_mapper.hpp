@@ -54,55 +54,69 @@ class NeighbourMapper {
 
 public:
   /**
-   * @brief
+   * @brief Contructor of class NeighbourMapper
    *
-   * @param
-   * @return
+   * @param private_nh
    */
   NeighbourMapper(const ros::NodeHandle& private_nh);
   ~NeighbourMapper();
 
 public:
   /**
-   * @brief detect all the room neighbours from all room data
+   * @brief Detect all the room neighbours from all room data
    *
-   * @param
+   * @param graph_slam
+   * @param room_msg
+   * @param x_corridors
+   * @param y_corridors
+   * @param rooms_vec
    */
   void detect_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec);
 
   /**
-   * @brief factor the room neighbours between two rooms/corridors
+   * @brief Factor the room neighbours between two rooms/corridors
    *
-   * @param
+   * @param graph_slam
+   * @param room_msg
+   * @param x_corridors
+   * @param y_corridors
+   * @param rooms_vec
    */
   void factor_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec);
 
 private:
   /**
-   * @brief get the current pose between the two rooms
+   * @brief Get the current pose between the two rooms
    *
-   * @param
+   * @param room_msg_1
+   * @param room_msg_2
+   * @return
    */
   Eigen::Vector2d room_room_measurement(const s_graphs::RoomData& room_msg_1, const s_graphs::RoomData& room_msg_2);
 
   /**
-   * @brief get the current pose between the room and x_corridor
+   * @brief Get the current pose between the room and x_corridor
    *
-   * @param
+   * @param room_msg
+   * @param x_corridor_msg
+   * @return
    */
   double room_x_corridor_measurement(const s_graphs::RoomData& room_msg, const s_graphs::RoomData& x_corridor_msg);
 
   /**
-   * @brief get the current pose between the room and y_corridor
+   * @brief Get the current pose between the room and y_corridor
    *
-   * @param
+   * @param room_msg
+   * @param y_corridor_msg
+   * @return
    */
   double room_y_corridor_measurement(const s_graphs::RoomData& room_msg, const s_graphs::RoomData& y_corridor_msg);
 
   /**
    * @brief
    *
-   * @param
+   * @param x_corridor_msg1
+   * @param x_corridor_msg2
    * @return
    */
   double x_corridor_x_corridor_measurement(const s_graphs::RoomData& x_corridor_msg1, const s_graphs::RoomData& x_corridor_msg2);
@@ -110,77 +124,97 @@ private:
   /**
    * @brief
    *
-   * @param
+   * @param y_corridor_msg1
+   * @param y_corridor_msg2
    * @return
    */
   double y_corridor_y_corridor_measurement(const s_graphs::RoomData& y_corridor_msg1, const s_graphs::RoomData& y_corridor_msg2);
 
   /**
-   * @brief factor edges between neighbouring rooms
+   * @brief Factor edges between neighbouring rooms
    *
-   * @param
+   * @param graph_slam
+   * @param room1
+   * @param room2
+   * @param room_room_meas
    */
   void factor_room_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room1, const s_graphs::Rooms& room2, Eigen::Vector2d room_room_meas);
 
   /**
    * @brief factor edges between room x_corridor
    *
-   * @param
+   * @param graph_slam
+   * @param room
+   * @param x_corridor
+   * @param room_x_corr_meas
    */
   void factor_room_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::Corridors& x_corridor, double room_x_corr_meas);
 
   /**
    * @brief factor edges between room and y corridor
    *
-   * @param
+   * @param graph_slam
+   * @param room
+   * @param y_corridor
+   * @param room_y_corr_meas
    */
   void factor_room_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::Corridors& y_corridor, double room_y_corr_meas);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param x_corridor
+   * @param room
+   * @param x_corr_room_meas
    */
   void factor_x_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor, const s_graphs::Rooms& room, double x_corr_room_meas);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param x_corridor1
+   * @param x_corridor2
+   * @param x_corr_x_corr_meas
    */
   void factor_x_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor1, const s_graphs::Corridors& x_corridor2, double x_corr_x_corr_meas);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param x_corridor
+   * @param y_corridor
    */
   void factor_x_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor, const s_graphs::Corridors& y_corridor);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param y_corridor
+   * @param room
+   * @param y_corr_room_meas
    */
   void factor_y_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor, const s_graphs::Rooms& room, double y_corr_room_meas);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param y_corridor
+   * @param x_corridor
    */
   void factor_y_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor, const s_graphs::Corridors& x_corridor);
 
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param graph_slam
+   * @param y_corridor1
+   * @param y_corridor2
+   * @param y_corr_y_corr_meas
    */
   void factor_y_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor1, const s_graphs::Corridors& y_corridor2, double y_corr_y_corr_meas);
 };

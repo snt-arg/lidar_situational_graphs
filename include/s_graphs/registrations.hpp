@@ -10,7 +10,7 @@
 namespace s_graphs {
 
 /**
- * @brief select a scan matching algorithm according to rosparams
+ * @brief Select a scan matching algorithm according to rosparams.
  *
  * @param pnh
  * @return selected scan matching

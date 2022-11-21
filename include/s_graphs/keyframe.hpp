@@ -29,30 +29,46 @@ public:
 
   using Ptr = std::shared_ptr<KeyFrame>;
 
+  /**
+   * @brief Constructor for class KeyFrame
+   *
+   * @param stamp
+   * @param odom
+   * @param accum_distance
+   * @param cloud
+   * @return
+   */
   KeyFrame(const ros::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud);
+
+  /**
+   * @brief Constructor for class KeyFrame
+   *
+   *
+   * @param directory
+   * @param graph
+   */
   KeyFrame(const std::string& directory, g2o::HyperGraph* graph);
   virtual ~KeyFrame();
 
   /**
-   * @brief
+   * @brief Saves the keyframe into a given directory.
    *
-   * @param
-   * @return
+   * @param directory
    */
   void save(const std::string& directory);
 
   /**
-   * @brief
+   * @brief Loads the keyframes from a directory into the graph pointer.
    *
-   * @param
-   * @return
+   * @param directory
+   * @param graph
+   * @return Success or failure
    */
   bool load(const std::string& directory, g2o::HyperGraph* graph);
 
   /**
    * @brief
    *
-   * @param
    * @return
    */
   long id() const;
@@ -60,7 +76,6 @@ public:
   /**
    * @brief
    *
-   * @param
    * @return
    */
   Eigen::Isometry3d estimate() const;
@@ -92,7 +107,18 @@ public:
   using PointT = KeyFrame::PointT;
   using Ptr = std::shared_ptr<KeyFrameSnapshot>;
 
+  /**
+   * @brief Constructor for class KeyFramesnapshot
+   *
+   * @param key
+   */
   KeyFrameSnapshot(const KeyFrame::Ptr& key);
+
+  /**
+   * @brief Constructor for class KeyFramesnapshot
+   *
+   * @param key
+   */
   KeyFrameSnapshot(const Eigen::Isometry3d& pose, const pcl::PointCloud<PointT>::ConstPtr& cloud);
 
   ~KeyFrameSnapshot();

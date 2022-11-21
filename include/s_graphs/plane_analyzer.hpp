@@ -38,15 +38,14 @@ typedef pcl::PointXYZI PointT;
 typedef pcl::PointXYZRGBNormal PointNormal;
 
 /**
- * @brief this class provides tools for different analysis over pointclouds to extract planar surfaces
+ * @brief This class provides tools for different analysis over pointclouds to extract planar surfaces.
  */
 class PlaneAnalyzer {
 public:
   /**
-   * @brief
+   * @brief Constructor of class PlaneAnalyzer
    *
-   * @param
-   * @return
+   * @param private_nh
    */
   PlaneAnalyzer(ros::NodeHandle private_nh);
   ~PlaneAnalyzer();
@@ -55,17 +54,16 @@ public:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param cloud
+   * @return Segmented planes found in the point cloud
    */
   std::vector<sensor_msgs::PointCloud2> get_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
 
 private:
   /**
-   * @brief
+   * @brief Initializes ros related jobs.
    *
-   * @param
-   * @return
+   * @param private_nh
    */
   void init_ros(ros::NodeHandle private_nh);
 
@@ -76,7 +74,7 @@ private:
   /**
    * @brief
    *
-   * @param
+   * @param extracted_cloud
    * @return
    */
   pcl::PointCloud<PointNormal>::Ptr compute_clusters(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
@@ -84,7 +82,7 @@ private:
   /**
    * @brief
    *
-   * @param
+   * @param extracted_cloud
    * @return
    */
   pcl::PointCloud<pcl::Normal>::Ptr compute_cloud_normals(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
@@ -92,25 +90,26 @@ private:
   /**
    * @brief
    *
-   * @param
+   * @param extracted_cloud
+   * @param cloud_normals
    * @return
    */
   pcl::PointCloud<PointNormal>::Ptr shadow_filter(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
 
   /**
    * @brief Maps an input h from a value between 0.0 and 1.0 into a rainbow.
-   * References OctomapProvider in octomap
+   * References OctomapProvider in octomap.
    *
-   * @param
-   * @return
+   * @param h
+   *          Value between 0.0 and 1.0.
+   * @return RGB color
    */
   std_msgs::ColorRGBA rainbow_color_map(double h);
 
   /**
-   * @brief
+   * @brief Generates a random RGB color.
    *
-   * @param
-   * @return
+   * @return RGB color
    */
   std_msgs::ColorRGBA random_color();
 

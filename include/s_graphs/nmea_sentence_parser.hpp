@@ -17,20 +17,16 @@ namespace s_graphs {
 struct GPRMC {
 public:
   /**
-   * @brief
-   *
-   * @param
-   * @return
+   * @brief Contructor of class GPRMC
    */
   GPRMC() {
     status = 'V';
   }
 
   /**
-   * @brief
+   * @brief Contructor of class GPRMC
    *
-   * @param
-   * @return
+   * @param tokens
    */
   GPRMC(const std::vector<std::string>& tokens) {
     if(tokens[0] != "$GPRMC" || tokens.size() < 12) {
@@ -95,10 +91,8 @@ public:
 class NmeaSentenceParser {
 public:
   /**
-   * @brief
+   * @brief Contructor of class NmeaSentenceParser.
    *
-   * @param
-   * @return
    */
   NmeaSentenceParser() {}
   ~NmeaSentenceParser() {}
@@ -106,8 +100,8 @@ public:
   /**
    * @brief
    *
-   * @param
-   * @return
+   * @param sentence
+   * @return Instance of GPRMC.
    */
   GPRMC parse(const std::string& sentence) const {
     int checksum_loc = sentence.find('*');
