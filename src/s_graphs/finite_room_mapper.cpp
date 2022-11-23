@@ -187,6 +187,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
   information_room_plane(0, 0) = room_information;
 
   Eigen::Matrix<double, 2, 2> information_room_planes;
+  information_room_planes.setZero();
   information_room_planes(0, 0) = room_information;
   information_room_planes(1, 1) = room_information;
 

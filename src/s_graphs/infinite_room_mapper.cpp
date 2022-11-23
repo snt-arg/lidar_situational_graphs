@@ -200,6 +200,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
   bool use_tri_edge = true;
   Eigen::Matrix<double, 2, 2> information_corridor_planes;
+  information_corridor_planes.setZero();
   information_corridor_planes(0, 0) = corridor_information;
   information_corridor_planes(1, 1) = corridor_information;
 
