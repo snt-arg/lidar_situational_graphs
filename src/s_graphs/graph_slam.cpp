@@ -608,7 +608,7 @@ int GraphSLAM::optimize(int num_iterations) {
   graph->setVerbose(true);
 
   double chi2 = graph->chi2();
-  if(std::isnan(graph->chi2()) || std::isinf(graph->chi2())) std::cout << "\033[1;31m GRAPH RETURNED A NAN/INF RE-RUN THE EXPERIMENT \033[0m\n" << std::endl;
+  if(std::isnan(graph->chi2())) std::cout << "\033[1;31mGRAPH RETURNED A NAN/INF RE-RUN THE EXPERIMENT \033[0m\n" << std::endl;
 
   std::cout << "optimize!!" << std::endl;
   auto t1 = ros::Time::now();
