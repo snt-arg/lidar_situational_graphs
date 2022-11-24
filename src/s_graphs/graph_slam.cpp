@@ -608,7 +608,9 @@ int GraphSLAM::optimize(int num_iterations) {
   graph->setVerbose(true);
 
   double chi2 = graph->chi2();
-  if(std::isnan(graph->chi2())) std::cout << "\033[1;31mGRAPH RETURNED A NAN/INF RE-RUN THE EXPERIMENT \033[0m\n" << std::endl;
+  if(std::isnan(graph->chi2())) {
+    std::cout << "GRAPH RETURNED A NAN WAITING AFTER OPTIMIZATION" << std::endl;
+  }
 
   std::cout << "optimize!!" << std::endl;
   auto t1 = ros::Time::now();
@@ -618,6 +620,10 @@ int GraphSLAM::optimize(int num_iterations) {
   std::cout << "iterations: " << iterations << " / " << num_iterations << std::endl;
   std::cout << "chi2: (before)" << chi2 << " -> (after)" << graph->chi2() << std::endl;
   std::cout << "time: " << boost::format("%.3f") % (t2 - t1).toSec() << "[sec]" << std::endl;
+
+  if(std::isnan(graph->chi2())) {
+    throw std::invalid_argument("GRAPH RETURNED A NAN...STOPPING THE EXPERIMENT");
+  }
 
   return iterations;
 }

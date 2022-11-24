@@ -810,8 +810,12 @@ private:
     // optimize the pose graph
     int num_iterations = private_nh.param<int>("g2o_solver_num_iterations", 1024);
 
-    if((graph_slam->optimize(num_iterations)) > 0 && !constant_covariance) compute_plane_cov();
-
+    try {
+      if((graph_slam->optimize(num_iterations)) > 0 && !constant_covariance) compute_plane_cov();
+    } catch(std::invalid_argument& e) {
+      std::cout << e.what() << std::endl;
+      throw 1;
+    }
     // merge_duplicate_planes();
 
     vert_plane_snapshot_mutex.lock();
