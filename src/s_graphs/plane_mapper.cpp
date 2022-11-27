@@ -116,7 +116,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
   switch(plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       if(x_vert_planes.empty() || data_association.first == -1) {
-        data_association.first = graph_slam->num_vertices_local();
+        data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association.first;
@@ -154,7 +154,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
     }
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
       if(y_vert_planes.empty() || data_association.first == -1) {
-        data_association.first = graph_slam->num_vertices_local();
+        data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association.first;
@@ -191,7 +191,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
     }
     case PlaneUtils::plane_class::HORT_PLANE: {
       if(hort_planes.empty() || data_association.first == -1) {
-        data_association.first = graph_slam->num_vertices_local();
+        data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         HorizontalPlanes hort_plane;
         hort_plane.id = data_association.first;

@@ -165,7 +165,7 @@ private:
    * @param found_room
    * @param plane_id_pair
    */
-  void get_plane_properties(const int& plane_type, const int& plane_id, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair);
+  void retrieve_plane_properties(const int& plane_type, const int& plane_id, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair);
 
 private:
   bool use_point_to_plane;

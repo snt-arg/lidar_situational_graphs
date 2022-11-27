@@ -78,7 +78,7 @@ public:
    * @param x_corridors
    * @param y_corridors
    */
-  void lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
+  void lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Infinite_rooms>& x_corridors, const std::vector<s_graphs::Infinite_rooms>& y_corridors);
 
 private:
   /**
@@ -91,7 +91,7 @@ private:
    * @param x_corridors
    * @param y_corridors
    */
-  void factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
+  void factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Infinite_rooms>& x_corridors, const std::vector<s_graphs::Infinite_rooms>& y_corridors);
 
   /**
    * @brief
@@ -103,7 +103,7 @@ private:
    * @param x_corridors
    * @param y_corridors
    */
-  void update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
+  void update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Infinite_rooms>& x_corridors, const std::vector<s_graphs::Infinite_rooms>& y_corridors);
 
 private:
   /**
@@ -116,7 +116,7 @@ private:
    * @param x_corridors
    * @param y_corridors
    */
-  void factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, const Eigen::Vector2d& floor_pose, g2o::VertexRoomXYLB* floor_node, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Corridors>& x_corridors, const std::vector<s_graphs::Corridors>& y_corridors);
+  void factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, const Eigen::Vector2d& floor_pose, g2o::VertexRoomXYLB* floor_node, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::Infinite_rooms>& x_corridors, const std::vector<s_graphs::Infinite_rooms>& y_corridors);
 
   /**
    * @brief

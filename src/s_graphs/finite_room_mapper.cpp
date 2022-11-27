@@ -33,9 +33,9 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   }
 }
 
-void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, const std::vector<Infinite_rooms>& x_corridors, const std::vector<Infinite_rooms>& y_corridors, std::vector<Rooms>& rooms_vec) {
   float min_dist_room_x_corr = 100;
-  s_graphs::Corridors matched_x_corridor;
+  s_graphs::Infinite_rooms matched_x_corridor;
   for(const auto& current_x_corridor : x_corridors) {
     if((room_data.x_planes[0].id == current_x_corridor.plane1_id || room_data.x_planes[0].id == current_x_corridor.plane2_id) && (room_data.x_planes[1].id == current_x_corridor.plane1_id || room_data.x_planes[1].id == current_x_corridor.plane2_id)) {
       min_dist_room_x_corr = 0;
@@ -50,7 +50,7 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   }
 
   float min_dist_room_y_corr = 100;
-  s_graphs::Corridors matched_y_corridor;
+  s_graphs::Infinite_rooms matched_y_corridor;
   for(const auto& current_y_corridor : y_corridors) {
     if((room_data.y_planes[0].id == current_y_corridor.plane1_id || room_data.y_planes[0].id == current_y_corridor.plane2_id) && (room_data.y_planes[1].id == current_y_corridor.plane1_id || room_data.y_planes[1].id == current_y_corridor.plane2_id)) {
       min_dist_room_y_corr = 0;
@@ -222,7 +222,7 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
   room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane2));
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "found room with pose " << room_pose << std::endl;
-    room_data_association.first = graph_slam->num_vertices_local();
+    room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
     room_node = graph_slam->add_room_node(room_pose);
     // room_node->setFixed(true);
     Rooms det_room;
@@ -546,7 +546,7 @@ bool FiniteRoomMapper::check_room_ids(const int plane_type, const std::set<g2o::
   return false;
 }
 
-void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Infinite_rooms& matched_x_corridor, const s_graphs::Infinite_rooms& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -554,7 +554,7 @@ void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLA
   room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, x_plane1, x_plane2, y_plane1, y_plane2);
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "Add a room using mapped x and y corridors at pose" << room_pose << std::endl;
-    room_data_association.first = graph_slam->num_vertices_local();
+    room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
     room_node = graph_slam->add_room_node(room_pose);
     Rooms det_room;
     det_room.id = room_data_association.first;
@@ -575,7 +575,7 @@ void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLA
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Infinite_rooms& matched_x_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -583,7 +583,7 @@ void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSL
   room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, x_plane1, x_plane2, y_plane1, y_plane2);
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "Add a room using mapped x corridors planes at pose" << room_pose << std::endl;
-    room_data_association.first = graph_slam->num_vertices_local();
+    room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
     room_node = graph_slam->add_room_node(room_pose);
     Rooms det_room;
     det_room.id = room_data_association.first;
@@ -606,7 +606,7 @@ void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSL
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Infinite_rooms& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -614,7 +614,7 @@ void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSL
   room_data_association = associate_rooms(room_pose, rooms_vec, x_vert_planes, y_vert_planes, x_plane1, x_plane2, y_plane1, y_plane2);
   if((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "Add a room using mapped y corridors planes at pose" << room_pose << std::endl;
-    room_data_association.first = graph_slam->num_vertices_local();
+    room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
     room_node = graph_slam->add_room_node(room_pose);
     Rooms det_room;
     det_room.id = room_data_association.first;

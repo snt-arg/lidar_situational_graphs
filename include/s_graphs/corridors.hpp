@@ -17,18 +17,18 @@ class SparseOptimizer;
 namespace s_graphs {
 
 /**
- * @brief Struct that holds information about a corridor type.
+ * @brief Struct that holds information about an infinite room (corridor).
  *
- * @var id
+ * @var id: Unique Id of the infinite room.
  * @var connected_id
  * @var connected_neighbour_ids
- * @var plane1, plane2
- * @var plane1_id, plane2_id
+ * @var plane1, plane2: Planes that form the inifite room
+ * @var plane1_id, plane2_id: Planes unique ids
  * @var neighbour_ids
  * @var cluster_center_node
  * @var node
  */
-struct Corridors {
+struct Infinite_rooms {
 public:
   int id;
   int connected_id;

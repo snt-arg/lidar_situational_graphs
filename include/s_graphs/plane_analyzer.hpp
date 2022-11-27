@@ -57,7 +57,7 @@ public:
    * @param cloud
    * @return Segmented planes found in the point cloud
    */
-  std::vector<sensor_msgs::PointCloud2> get_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
+  std::vector<sensor_msgs::PointCloud2> extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
 
 private:
   /**
@@ -68,7 +68,7 @@ private:
   void init_ros(ros::NodeHandle private_nh);
 
 private:
-  ros::Publisher segmented_cloud_pub_;
+  ros::Publisher segmented_cloud_pub;
 
 private:
   /**
@@ -115,9 +115,9 @@ private:
 
 private:
   int min_seg_points_;
-  int min_horizontal_inliers_, min_vertical_inliers_;
-  bool use_euclidean_filter_, use_shadow_filter_;
-  std::string plane_extraction_frame_, plane_visualization_frame_;
+  int min_horizontal_inliers, min_vertical_inliers;
+  bool use_euclidean_filter, use_shadow_filter;
+  std::string plane_extraction_frame, plane_visualization_frame;
 };
 }  // namespace s_graphs
 

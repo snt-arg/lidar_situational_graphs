@@ -46,15 +46,15 @@ public:
   /**
    * @brief Constructor for FloorAnalyzer.
    *
-   * @param private_nh
-   * @param plane_utils_ptr
+   * @param private_nh: private ros node handler.
+   * @param plane_utils_ptr: a pointer containing utils for planes manipulation.
    */
   FloorAnalyzer(ros::NodeHandle private_nh, std::shared_ptr<PlaneUtils> plane_utils_ptr);
   ~FloorAnalyzer();
 
 public:
   /**
-   * @brief
+   * @brief Splits current data into multiples floors nodes if available.
    *
    * @param current_x_vert_planes
    * @param current_y_vert_planes

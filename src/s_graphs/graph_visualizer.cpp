@@ -18,7 +18,7 @@ GraphVisualizer::~GraphVisualizer() {}
  * @param stamp
  * @return
  */
-visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<Corridors> x_corridor_snapshot, std::vector<Corridors> y_corridor_snapshot, std::vector<Rooms> room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec) {
+visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<Infinite_rooms> x_corridor_snapshot, std::vector<Infinite_rooms> y_corridor_snapshot, std::vector<Rooms> room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec) {
   visualization_msgs::MarkerArray markers;
   // markers.markers.resize(11);
 
@@ -721,7 +721,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
         x_corr_neighbour_line_marker.points.push_back(p1);
         x_corr_neighbour_line_marker.points.push_back(p2);
       } else {
-        auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == x_corridor_neighbour_id);
+        auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Infinite_rooms::id, _1) == x_corridor_neighbour_id);
         if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
           p2.x = (*found_neighbour_x_corr).node->estimate()(0);
           p2.y = (*found_neighbour_x_corr).node->estimate()(1);
@@ -730,7 +730,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
           x_corr_neighbour_line_marker.points.push_back(p1);
           x_corr_neighbour_line_marker.points.push_back(p2);
         } else {
-          auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == x_corridor_neighbour_id);
+          auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Infinite_rooms::id, _1) == x_corridor_neighbour_id);
           if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
             p2.x = (*found_neighbour_y_corr).node->estimate()(0);
             p2.y = (*found_neighbour_y_corr).node->estimate()(1);
@@ -777,7 +777,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
         y_corr_neighbour_line_marker.points.push_back(p1);
         y_corr_neighbour_line_marker.points.push_back(p2);
       } else {
-        auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == y_corridor_neighbour_id);
+        auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Infinite_rooms::id, _1) == y_corridor_neighbour_id);
         if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
           p2.x = (*found_neighbour_x_corr).node->estimate()(0);
           p2.y = (*found_neighbour_x_corr).node->estimate()(1);
@@ -786,7 +786,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
           y_corr_neighbour_line_marker.points.push_back(p1);
           y_corr_neighbour_line_marker.points.push_back(p2);
         } else {
-          auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == y_corridor_neighbour_id);
+          auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Infinite_rooms::id, _1) == y_corridor_neighbour_id);
           if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
             p2.x = (*found_neighbour_y_corr).node->estimate()(0);
             p2.y = (*found_neighbour_y_corr).node->estimate()(1);
@@ -833,7 +833,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
         room_neighbour_line_marker.points.push_back(p1);
         room_neighbour_line_marker.points.push_back(p2);
       } else {
-        auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == room_neighbour_id);
+        auto found_neighbour_x_corr = std::find_if(x_corridor_snapshot.begin(), x_corridor_snapshot.end(), boost::bind(&Infinite_rooms::id, _1) == room_neighbour_id);
         if(found_neighbour_x_corr != x_corridor_snapshot.end()) {
           p2.x = (*found_neighbour_x_corr).node->estimate()(0);
           p2.y = (*found_neighbour_x_corr).node->estimate()(1);
@@ -841,7 +841,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
           room_neighbour_line_marker.points.push_back(p1);
           room_neighbour_line_marker.points.push_back(p2);
         } else {
-          auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Corridors::id, _1) == room_neighbour_id);
+          auto found_neighbour_y_corr = std::find_if(y_corridor_snapshot.begin(), y_corridor_snapshot.end(), boost::bind(&Infinite_rooms::id, _1) == room_neighbour_id);
           if(found_neighbour_y_corr != y_corridor_snapshot.end()) {
             p2.x = (*found_neighbour_y_corr).node->estimate()(0);
             p2.y = (*found_neighbour_y_corr).node->estimate()(1);

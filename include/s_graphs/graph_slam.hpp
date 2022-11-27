@@ -68,42 +68,42 @@ public:
    *
    * @return Number of vertices in the graph.
    */
-  int num_vertices() const;
+  int retrieve_total_nbr_of_vertices() const;
 
   /**
    * @brief Counts the number of edges in the graph.
    *
    * @return Number of edges in the graph.
    */
-  int num_edges() const;
+  int retrive_total_nbr_of_edges() const;
 
   /**
    * @brief Counts the number of vertices in the graph that are local.
    *
    * @return Number of vertices in the graph that are local.
    */
-  int num_vertices_local() const;
+  int retrieve_local_nbr_of_vertices() const;
 
   /**
    * @brief Counts the number of edges in the graph that are local.
    *
    * @return Number of edges in the graph that are local.
    */
-  int num_edges_local() const;
+  int retrieve_local_nbr_of_edges() const;
 
   /**
    * @brief
    *
    * @return
    */
-  int add_vertices();
+  int increment_local_nbr_of_vertices();
 
   /**
    * @brief Set the current solver type
    *
    * @param solver_type
    */
-  void set_solver(const std::string& solver_type);
+  void select_solver_type(const std::string& solver_type);
 
   /**
    * @brief Add a SE3 node to the graph.
@@ -584,8 +584,8 @@ public:
 public:
   g2o::RobustKernelFactory* robust_kernel_factory;
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
-  int vertex_count;
-  int edge_count;
+  int nbr_of_vertices;
+  int nbr_of_edges;
 };
 
 }  // namespace s_graphs
