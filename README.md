@@ -140,6 +140,20 @@ roslaunch s_graphs s_graphs.launch env:=virtual use_free_space_graph:=true 2>/de
 rosbag play PATH_TO_ROSBAG_DATASET --clock
 ```
 
+### Dataset only using a Velodyne
+
+```bash
+roscd s_graphs && rviz -d rviz/s_graphs.rviz
+```
+
+```bash
+roslaunch s_graphs s_graphs.launch use_free_space_graph:=true compute_odom:=true 2>/dev/null
+```
+
+```bash
+rosbag play PATH_TO_ROSBAG_DATASET --clock
+```
+
 ## Using Docker
 
 A docker image is provided with s_graphs. This image is all set and is just pull and play. Follow the instructions below in order to use s_graphs via docker.
