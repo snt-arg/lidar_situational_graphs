@@ -235,9 +235,9 @@ private:
    */
   void raw_odom_callback(const nav_msgs::OdometryConstPtr& odom_msg) {
     Eigen::Isometry3d odom = odom2isometry(odom_msg);
-    // trans_odom2map_mutex.lock();
+    trans_odom2map_mutex.lock();
     Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
-    // trans_odom2map_mutex.unlock();
+    trans_odom2map_mutex.unlock();
 
     geometry_msgs::PoseStamped pose_stamped_corrected = matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id);
     publish_corrected_odom(pose_stamped_corrected);
@@ -300,8 +300,6 @@ private:
    *
    */
   void flush_room_data_queue() {
-    std::lock_guard<std::mutex> lock(room_data_queue_mutex);
-
     if(keyframes.empty()) {
       return;
     } else if(room_data_queue.empty()) {
@@ -326,7 +324,9 @@ private:
         }
       }
 
+      room_data_queue_mutex.lock();
       room_data_queue.pop_front();
+      room_data_queue_mutex.unlock();
     }
   }
 
