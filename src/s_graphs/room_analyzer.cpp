@@ -140,7 +140,7 @@ geometry_msgs::Point RoomAnalyzer::get_corridor_center(int plane_type, pcl::Poin
     vec = (0.5 * (fabs(plane2_eigen(3)) * plane2_eigen.head(3) - fabs(plane1_eigen(3)) * plane1_eigen.head(3))) + fabs(plane1_eigen(3)) * plane1_eigen.head(3);
   }
 
-  vec_normal = vec.head(2) / vec.norm();
+  vec_normal = vec.head(2) / vec.head(2).norm();
   final_pose_vec = vec.head(2) + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
   corridor_center.x = final_pose_vec(0);
   corridor_center.y = final_pose_vec(1);
