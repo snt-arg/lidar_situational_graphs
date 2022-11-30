@@ -95,6 +95,20 @@ public:
     auto edge = graph_slam->add_plane_perpendicular_edge(plane1_node, plane2_node, meas, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   }
+
+  bool check_plane_ids(const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexPlane* plane_node) {
+    for(auto edge_itr = plane_edges.begin(); edge_itr != plane_edges.end(); ++edge_itr) {
+      g2o::Edge2Planes* edge_2planes = dynamic_cast<g2o::Edge2Planes*>(*edge_itr);
+      if(edge_2planes) {
+        g2o::VertexPlane* found_plane1_node = dynamic_cast<g2o::VertexPlane*>(edge_2planes->vertices()[0]);
+        g2o::VertexPlane* found_plane2_node = dynamic_cast<g2o::VertexPlane*>(edge_2planes->vertices()[1]);
+
+        if(found_plane1_node->id() == plane_node->id() || found_plane2_node->id() == plane_node->id()) return true;
+      }
+    }
+
+    return false;
+  }
 };
 
 /**
@@ -132,7 +146,7 @@ private:
   void factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors);
 
   std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
-  std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors);
+  std::pair<int, int> associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors, std::vector<std::pair<VerticalPlanes, VerticalPlanes>>& detected_mapped_plane_pairs);
 
   bool check_corridor_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexRoomXYLB* corr_node);
 
@@ -179,9 +193,9 @@ private:
    * @brief this method creates the room vertex and adds edges between the vertex and detected planes
    */
   void factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec);
-  std::pair<int, int> associate_rooms(const Eigen::Vector2d& room_pose, const std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
+  std::pair<int, int> associate_rooms(const Eigen::Vector2d& room_pose, const std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2, std::vector<std::pair<VerticalPlanes, VerticalPlanes>>& detected_mapped_plane_pairs);
   bool check_room_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexRoomXYLB* room_node);
-
+  bool check_plane_ids(const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexPlane* plane_node);
   /**
    * @brief map a new room from mapped corridor planes
    *
@@ -199,6 +213,12 @@ private:
    *
    */
   void map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
+
+  /**
+   * @brief remove the corridor overlapped by a room
+   *
+   */
+  void remove_mapped_corridor(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors matched_corridor);
 
 private:
   double room_width_diff_threshold;

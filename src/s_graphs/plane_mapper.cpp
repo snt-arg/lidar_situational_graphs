@@ -234,8 +234,10 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
     auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   } else {
-    Eigen::Matrix3d information = Eigen::Matrix3d::Identity() * plane_information;
-    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
+    Eigen::Matrix3d plane_information_mat = Eigen::Matrix3d::Identity() * plane_information;
+    plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
+
+    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), plane_information_mat);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   }
 
