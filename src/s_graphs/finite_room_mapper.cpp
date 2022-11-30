@@ -33,7 +33,7 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   }
 }
 
-void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec) {
   float min_dist_room_x_corr = 100;
   s_graphs::Corridors matched_x_corridor;
   for(const auto& current_x_corridor : x_corridors) {
@@ -73,13 +73,16 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr < 1.0) {
     std::cout << "Adding a room using mapped x and y corridor planes " << std::endl;
     map_room_from_existing_corridors(graph_slam, room_data, matched_x_corridor, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
-
+    remove_mapped_corridor(PlaneUtils::plane_class::X_VERT_PLANE, graph_slam, matched_x_corridor, x_corridors, y_corridors);
+    remove_mapped_corridor(PlaneUtils::plane_class::Y_VERT_PLANE, graph_slam, matched_y_corridor, x_corridors, y_corridors);
   } else if(min_dist_room_x_corr < 1.0 && min_dist_room_y_corr > 1.0) {
     map_room_from_existing_x_corridor(graph_slam, room_data, matched_x_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
     std::cout << "Will add room using mapped x corridor planes " << std::endl;
+    remove_mapped_corridor(PlaneUtils::plane_class::X_VERT_PLANE, graph_slam, matched_x_corridor, x_corridors, y_corridors);
   } else if(min_dist_room_y_corr < 1.0 && min_dist_room_x_corr > 1.0) {
     std::cout << "Will add room using mapped y corridor planes " << std::endl;
     map_room_from_existing_y_corridor(graph_slam, room_data, matched_y_corridor, rooms_vec, x_vert_planes, y_vert_planes, (*found_x_plane1), (*found_x_plane2), (*found_y_plane1), (*found_y_plane1));
+    remove_mapped_corridor(PlaneUtils::plane_class::Y_VERT_PLANE, graph_slam, matched_y_corridor, x_corridors, y_corridors);
   }
 
   Eigen::Vector4d x_plane1(room_data.x_planes[0].nx, room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
@@ -545,11 +548,29 @@ void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSL
     return;
 }
 
-void FiniteRoomMapper::remove_mapped_corridor(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors matched_corridor) {
-  // if(graph_slam->remove_room_node(matched_corridor.node)) {
-  //   auto mapped_plane = std::find_if(x_ve.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == (*it).first.id);
-  //   x_vert_planes.erase(mapped_plane);
-  // }
+void FiniteRoomMapper::remove_mapped_corridor(const int plane_type, std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors matched_corridor, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
+  std::set<g2o::HyperGraph::Edge*> edges = matched_corridor.node->edges();
+  for(auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
+    g2o::EdgeRoom2Planes* edge_room_2planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
+    if(edge_room_2planes) {
+      if(graph_slam->remove_room_2planes_edge(edge_room_2planes)) std::cout << "removed edge - room-2planes " << std::endl;
+      continue;
+    }
+  }
+
+  if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+    if(graph_slam->remove_room_node(matched_corridor.node)) {
+      auto mapped_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&Corridors::id, _1) == matched_corridor.id);
+      x_corridors.erase(mapped_corridor);
+      std::cout << "removed overlapped x-corridor " << std::endl;
+    }
+  } else if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
+    if(graph_slam->remove_room_node(matched_corridor.node)) {
+      auto mapped_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&Corridors::id, _1) == matched_corridor.id);
+      y_corridors.erase(mapped_corridor);
+      std::cout << "removed overlapped y-corridor " << std::endl;
+    }
+  }
 }
 
 }  // namespace s_graphs

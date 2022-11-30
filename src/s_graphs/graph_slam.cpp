@@ -475,7 +475,7 @@ g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(g2o::VertexRoomXYLB* v_ro
   return edge;
 }
 
-bool GraphSLAM::remove_room_plane_edge(g2o::EdgeRoom2Planes* room_plane_edge) {
+bool GraphSLAM::remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge) {
   bool ack = graph->removeEdge(room_plane_edge);
 
   return ack;
