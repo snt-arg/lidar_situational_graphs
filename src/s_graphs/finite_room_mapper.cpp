@@ -8,11 +8,11 @@ FiniteRoomMapper::FiniteRoomMapper(const ros::NodeHandle& private_nh) {
   plane_utils.reset(new PlaneUtils());
 
   room_information = private_nh.param<double>("room_information", 0.01);
-
   room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
   room_point_diff_threshold = private_nh.param<double>("room_point_diff_threshold", 3.0);
   room_width_diff_threshold = private_nh.param<double>("room_width_diff_threshold", 2.5);
   room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
+  dupl_plane_matching_information = private_nh.param<double>("dupl_plane_matching_information", 0.01);
 
   room_min_width = private_nh.param<double>("room_min_width", 2.5);
   room_max_width = private_nh.param<double>("room_max_width", 6.0);
@@ -197,9 +197,9 @@ void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std:
 
   Eigen::Matrix<double, 3, 3> information_2planes;
   information_2planes.setZero();
-  information_2planes(0, 0) = room_information;
-  information_2planes(1, 1) = room_information;
-  information_2planes(2, 2) = room_information;
+  information_2planes(0, 0) = dupl_plane_matching_information;
+  information_2planes(1, 1) = dupl_plane_matching_information;
+  information_2planes(2, 2) = dupl_plane_matching_information;
 
   auto found_x_plane1 = x_vert_planes.begin();
   auto found_x_plane2 = x_vert_planes.begin();
@@ -326,6 +326,7 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));
     ROS_DEBUG_NAMED("room planes", "dist room %f", dist);
 
+    std::vector<std::pair<VerticalPlanes, VerticalPlanes>> current_detected_mapped_plane_pairs;
     auto found_mapped_xplane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x1_id);
     auto found_mapped_xplane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x2_id);
     std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
@@ -345,7 +346,7 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       x1_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
     }
 
-    detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
+    current_detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
 
     if(x_plane2.id == (*found_mapped_xplane1).id || x_plane2.id == (*found_mapped_xplane2).id) {
       x_plane2_min_segment = true;
@@ -360,8 +361,7 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
     }
-
-    detected_mapped_plane_pairs.push_back(x2_detected_mapped_plane_pair);
+    current_detected_mapped_plane_pairs.push_back(x2_detected_mapped_plane_pair);
 
     auto found_mapped_yplane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y1_id);
     auto found_mapped_yplane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y2_id);
@@ -381,7 +381,7 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
     }
-    detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
+    current_detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
 
     if(y_plane2.id == (*found_mapped_yplane1).id || y_plane2.id == (*found_mapped_yplane2).id) {
       y_plane2_min_segment = true;
@@ -396,12 +396,13 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
     }
-    detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
+    current_detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
 
     if(dist < min_dist && (x_plane1_min_segment && x_plane2_min_segment && y_plane1_min_segment && y_plane2_min_segment)) {
       min_dist = dist;
       data_association.first = rooms_vec[i].id;
       data_association.second = i;
+      detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
     }
   }
 

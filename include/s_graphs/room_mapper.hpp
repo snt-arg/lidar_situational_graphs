@@ -160,6 +160,7 @@ private:
   double corridor_dist_threshold;
   double corridor_min_seg_dist;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
+  double dupl_plane_matching_information;
 };
 
 class FiniteRoomMapper : public MapperUtils {
@@ -227,6 +228,7 @@ private:
   double room_information;
   double room_dist_threshold;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
+  double dupl_plane_matching_information;
 };
 
 }  // namespace s_graphs

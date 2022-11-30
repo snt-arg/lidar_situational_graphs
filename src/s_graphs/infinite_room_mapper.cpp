@@ -17,6 +17,7 @@ InfiniteRoomMapper::InfiniteRoomMapper(const ros::NodeHandle& private_nh) {
   use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
   corridor_min_seg_dist = private_nh.param<double>("corridor_min_seg_dist", 1.5);
+  dupl_plane_matching_information = private_nh.param<double>("dupl_plane_matching_information", 0.01);
 
   plane_utils.reset(new PlaneUtils());
 }
@@ -212,9 +213,9 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
 
   Eigen::Matrix<double, 3, 3> information_2planes;
   information_2planes.setZero();
-  information_2planes(0, 0) = corridor_information;
-  information_2planes(1, 1) = corridor_information;
-  information_2planes(2, 2) = corridor_information;
+  information_2planes(0, 0) = dupl_plane_matching_information;
+  information_2planes(1, 1) = dupl_plane_matching_information;
+  information_2planes(2, 2) = dupl_plane_matching_information;
 
   // Eigen::Vector2d corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
   Eigen::Vector2d corr_pose(corr_plane1_pair.plane_centroid(0), corr_plane1_pair.plane_centroid(1));
@@ -352,6 +353,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
     for(int i = 0; i < x_corridors.size(); ++i) {
       float dist = sqrt(pow(corr_pose(0) - x_corridors[i].node->estimate()(0), 2));
 
+      std::vector<std::pair<VerticalPlanes, VerticalPlanes>> current_detected_mapped_plane_pairs;
       std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
       std::pair<VerticalPlanes, VerticalPlanes> x2_detected_mapped_plane_pair;
       auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
@@ -370,7 +372,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
         x1_detected_mapped_plane_pair.first = plane1;
         x1_detected_mapped_plane_pair.second = (*found_mapped_plane2);
       }
-      detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
+      current_detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
 
       if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
         plane2_min_segment = true;
@@ -385,12 +387,13 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
         x2_detected_mapped_plane_pair.first = plane2;
         x2_detected_mapped_plane_pair.second = (*found_mapped_plane2);
       }
-      detected_mapped_plane_pairs.push_back(x2_detected_mapped_plane_pair);
+      current_detected_mapped_plane_pairs.push_back(x2_detected_mapped_plane_pair);
 
       if(dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
         data_association.first = x_corridors[i].id;
         data_association.second = i;
+        detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
         ROS_DEBUG_NAMED("corridor planes", "dist x corr %f", dist);
       }
     }
@@ -400,6 +403,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
     for(int i = 0; i < y_corridors.size(); ++i) {
       float dist = sqrt(pow(corr_pose(1) - y_corridors[i].node->estimate()(1), 2));
 
+      std::vector<std::pair<VerticalPlanes, VerticalPlanes>> current_detected_mapped_plane_pairs;
       std::pair<VerticalPlanes, VerticalPlanes> y1_detected_mapped_plane_pair;
       std::pair<VerticalPlanes, VerticalPlanes> y2_detected_mapped_plane_pair;
       auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
@@ -418,6 +422,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
         y1_detected_mapped_plane_pair.first = plane1;
         y1_detected_mapped_plane_pair.second = (*found_mapped_plane2);
       }
+      current_detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
 
       if(plane2.id == (*found_mapped_plane1).id || plane2.id == (*found_mapped_plane2).id) {
         plane2_min_segment = true;
@@ -432,13 +437,13 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
         y2_detected_mapped_plane_pair.first = plane2;
         y2_detected_mapped_plane_pair.second = (*found_mapped_plane2);
       }
-      detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
-      detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
+      current_detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
 
       if(dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
         data_association.first = y_corridors[i].id;
         data_association.second = i;
+        detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
         ROS_DEBUG_NAMED("corridor planes", "dist y corr %f", dist);
       }
     }
