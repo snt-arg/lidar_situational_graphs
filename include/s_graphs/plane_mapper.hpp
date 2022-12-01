@@ -59,10 +59,10 @@ public:
 
 public:
   void map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+  g2o::Plane3D convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame);
 
 private:
   int add_planes_to_graph(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
-  g2o::Plane3D convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame);
   int sort_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
   int factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
   std::pair<int, int> associate_plane(const int& plane_type, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane, const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<HorizontalPlanes>& hort_planes);
