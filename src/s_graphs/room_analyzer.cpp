@@ -243,7 +243,7 @@ void RoomAnalyzer::get_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skelet
   return;
 }
 
-bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map) {
+bool RoomAnalyzer::perform_room_segmentation(RoomInfo& room_info, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map) {
   pcl::PointXY p1;
   pcl::PointXY p2;
   get_cluster_endpoints(cloud_cluster, p1, p2);
@@ -258,10 +258,6 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
     // check how many planes are extracted
     // if four planes are found its a bounded room
     // if 2 parallel planes are found it an ifnite corridor
-    bool found_x1_plane = false;
-    bool found_x2_plane = false;
-    bool found_y1_plane = false;
-    bool found_y2_plane = false;
     s_graphs::PlaneData x_plane1;
     x_plane1.nx = 0;
     x_plane1.ny = 0;
@@ -278,44 +274,45 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
     y_plane2.nx = 0;
     y_plane2.ny = 0;
     y_plane1.nz = 0;
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sub_cloud_hull = get_room_planes(current_x_vert_planes, current_y_vert_planes, p1, p2, cloud_cluster, x_plane1, x_plane2, y_plane1, y_plane2, found_x1_plane, found_x2_plane, found_y1_plane, found_y2_plane);
+    RoomPlanes room_planes = {x_plane1, x_plane2, y_plane1, y_plane2, false, false, false, false};
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr sub_cloud_hull = get_room_planes(room_info, room_planes, p1, p2);
 
     // if found all four planes its a room
-    if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane1);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane2);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane2);
+    if(room_planes.found_x1_plane && room_planes.found_x2_plane && room_planes.found_y1_plane && room_planes.found_y2_plane) {
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, room_planes.x_plane1);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, room_planes.x_plane2);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, room_planes.y_plane1);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, room_planes.y_plane2);
 
       // first check the width of the rooms
-      float x_plane_width = plane_utils->width_between_planes(x_plane1, x_plane2);
-      float y_plane_width = plane_utils->width_between_planes(y_plane1, y_plane2);
+      float x_plane_width = plane_utils->width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
+      float y_plane_width = plane_utils->width_between_planes(room_planes.y_plane1, room_planes.y_plane2);
 
       if(x_plane_width < room_width_threshold || y_plane_width < room_width_threshold) {
         // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
       }
 
-      if(!check_x1yplane_alignment(x_plane1.plane_points, y_plane1.plane_points) || !check_x1yplane_alignment(x_plane1.plane_points, y_plane2.plane_points)) {
+      if(!check_x1yplane_alignment(room_planes.x_plane1.plane_points, room_planes.y_plane1.plane_points) || !check_x1yplane_alignment(room_planes.x_plane1.plane_points, room_planes.y_plane2.plane_points)) {
         // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
 
-      if(!check_x2yplane_alignment(x_plane2.plane_points, y_plane1.plane_points) || !check_x2yplane_alignment(x_plane2.plane_points, y_plane2.plane_points)) {
+      if(!check_x2yplane_alignment(room_planes.x_plane2.plane_points, room_planes.y_plane1.plane_points) || !check_x2yplane_alignment(room_planes.x_plane2.plane_points, room_planes.y_plane2.plane_points)) {
         // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
 
-      if(!check_y1xplane_alignment(y_plane1.plane_points, x_plane1.plane_points) || !check_y1xplane_alignment(y_plane1.plane_points, x_plane2.plane_points)) {
+      if(!check_y1xplane_alignment(room_planes.y_plane1.plane_points, room_planes.x_plane1.plane_points) || !check_y1xplane_alignment(room_planes.y_plane1.plane_points, room_planes.x_plane2.plane_points)) {
         // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
 
-      if(!check_y2xplane_alignment(y_plane2.plane_points, x_plane1.plane_points) || !check_y2xplane_alignment(y_plane2.plane_points, x_plane2.plane_points)) {
+      if(!check_y2xplane_alignment(room_planes.y_plane2.plane_points, room_planes.x_plane1.plane_points) || !check_y2xplane_alignment(room_planes.y_plane2.plane_points, room_planes.x_plane2.plane_points)) {
         // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
-      geometry_msgs::Point room_center = plane_utils->room_center(x_plane1, x_plane2, y_plane1, y_plane2);
+      geometry_msgs::Point room_center = plane_utils->room_center(room_planes.x_plane1, room_planes.x_plane2, room_planes.y_plane1, room_planes.y_plane2);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         // std::cout << "returning as the room center is outside the cluster" << std::endl;
@@ -331,39 +328,39 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       }
 
       // clear plane points which are not required now
-      x_plane1.plane_points.clear();
-      x_plane2.plane_points.clear();
-      y_plane1.plane_points.clear();
-      y_plane2.plane_points.clear();
+      room_planes.x_plane1.plane_points.clear();
+      room_planes.x_plane2.plane_points.clear();
+      room_planes.y_plane1.plane_points.clear();
+      room_planes.y_plane2.plane_points.clear();
 
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
       room_candidate.neighbour_ids = neighbour_ids;
       room_candidate.room_length = room_length;
       room_candidate.room_center = room_center;
-      room_candidate.x_planes.push_back(x_plane1);
-      room_candidate.x_planes.push_back(x_plane2);
-      room_candidate.y_planes.push_back(y_plane1);
-      room_candidate.y_planes.push_back(y_plane2);
+      room_candidate.x_planes.push_back(room_planes.x_plane1);
+      room_candidate.x_planes.push_back(room_planes.x_plane2);
+      room_candidate.y_planes.push_back(room_planes.y_plane1);
+      room_candidate.y_planes.push_back(room_planes.y_plane2);
       room_candidates_vec.push_back(room_candidate);
       room_cluster_counter++;
       return true;
     }
     // if found only two x planes are found add x corridor
-    else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
+    else if(room_planes.found_x1_plane && room_planes.found_x2_plane && (!room_planes.found_y1_plane || !room_planes.found_y2_plane)) {
       if(sub_cloud_hull->points.size() > 0) get_cluster_endpoints(sub_cloud_hull, p1, p2);
 
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane1);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, x_plane2);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, room_planes.x_plane1);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, room_planes.x_plane2);
 
-      float x_plane_width = plane_utils->width_between_planes(x_plane1, x_plane2);
+      float x_plane_width = plane_utils->width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
       if(x_plane_width < room_width_threshold) {
         // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
       }
 
       Eigen::Vector2d cluster_center;
-      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::X_VERT_PLANE, p1, p2, x_plane1, x_plane2, cluster_center);
+      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::X_VERT_PLANE, p1, p2, room_planes.x_plane1, room_planes.x_plane2, cluster_center);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         // std::cout << "returning as the room center is outside the cluster" << std::endl;
@@ -379,10 +376,10 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       }
 
       // clear plane points which are not required now
-      x_plane1.plane_points.clear();
-      x_plane2.plane_points.clear();
-      y_plane1.plane_points.clear();
-      y_plane2.plane_points.clear();
+      room_planes.x_plane1.plane_points.clear();
+      room_planes.x_plane2.plane_points.clear();
+      room_planes.y_plane1.plane_points.clear();
+      room_planes.y_plane2.plane_points.clear();
 
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
@@ -391,27 +388,27 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_candidate.room_center = room_center;
       room_candidate.cluster_center.x = cluster_center(0);
       room_candidate.cluster_center.y = cluster_center(1);
-      room_candidate.x_planes.push_back(x_plane1);
-      room_candidate.x_planes.push_back(x_plane2);
+      room_candidate.x_planes.push_back(room_planes.x_plane1);
+      room_candidate.x_planes.push_back(room_planes.x_plane2);
       room_candidates_vec.push_back(room_candidate);
       room_cluster_counter++;
       return true;
     }
     // if found only two y planes are found at y corridor
-    else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
+    else if(room_planes.found_y1_plane && room_planes.found_y2_plane && (!room_planes.found_x1_plane || !room_planes.found_x2_plane)) {
       if(sub_cloud_hull->points.size() > 0) get_cluster_endpoints(sub_cloud_hull, p1, p2);
 
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1);
-      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, y_plane2);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, room_planes.y_plane1);
+      plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, room_planes.y_plane2);
 
-      float y_plane_width = plane_utils->width_between_planes(y_plane1, y_plane2);
+      float y_plane_width = plane_utils->width_between_planes(room_planes.y_plane1, room_planes.y_plane2);
       if(y_plane_width < room_width_threshold) {
         // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
       }
 
       Eigen::Vector2d cluster_center;
-      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::Y_VERT_PLANE, p1, p2, y_plane1, y_plane2, cluster_center);
+      geometry_msgs::Point room_center = get_corridor_center(PlaneUtils::plane_class::Y_VERT_PLANE, p1, p2, room_planes.y_plane1, room_planes.y_plane2, cluster_center);
       bool centroid_inside = get_centroid_location(cloud_cluster, room_center);
       if(!centroid_inside) {
         // std::cout << "returning as the room center is outside the cluster" << std::endl;
@@ -427,10 +424,10 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       }
 
       // clear plane points which are not required now
-      x_plane1.plane_points.clear();
-      x_plane2.plane_points.clear();
-      y_plane1.plane_points.clear();
-      y_plane2.plane_points.clear();
+      room_planes.x_plane1.plane_points.clear();
+      room_planes.x_plane2.plane_points.clear();
+      room_planes.y_plane1.plane_points.clear();
+      room_planes.y_plane2.plane_points.clear();
 
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
@@ -439,8 +436,8 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_candidate.room_center = room_center;
       room_candidate.cluster_center.x = cluster_center(0);
       room_candidate.cluster_center.y = cluster_center(1);
-      room_candidate.y_planes.push_back(y_plane1);
-      room_candidate.y_planes.push_back(y_plane2);
+      room_candidate.y_planes.push_back(room_planes.y_plane1);
+      room_candidate.y_planes.push_back(room_planes.y_plane2);
       room_candidates_vec.push_back(room_candidate);
       return true;
     } else {
@@ -451,7 +448,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
   return false;
 }
 
-pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane) {
+pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(RoomInfo& room_info, RoomPlanes& room_planes, pcl::PointXY p_min, pcl::PointXY p_max) {
   float room_dist_thres = 1.5;
   float plane_point_dist_thres = 1.5;
   float min_dist_x1 = 100;
@@ -478,11 +475,11 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
   pcl::PointXY top_right, bottom_right, top_left, bottom_left;
 
   int point_cloud_size_thres = 500;
-  if(cloud_hull->points.size() > point_cloud_size_thres) {
-    downsample_cloud(cloud_hull);
+  if(room_info.cloud_hull->points.size() > point_cloud_size_thres) {
+    downsample_cloud(room_info.cloud_hull);
   }
 
-  for(const auto& x_plane : current_x_vert_planes) {
+  for(const auto& x_plane : room_info.current_x_vert_planes) {
     if(x_plane.nx < 0) {
       continue;
     }
@@ -493,16 +490,16 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
     diff_dist_x1 = sqrt((dist_x1 - x_plane.d) * (dist_x1 - x_plane.d));
 
     // std::cout << "diff dist x1: " << diff_dist_x1 << std::endl;
-    int x1_neighbours = find_plane_points(cloud_hull, x_plane, cloud_hull_x1);
+    int x1_neighbours = find_plane_points(room_info.cloud_hull, x_plane, cloud_hull_x1);
 
     if(x1_neighbours > max_x1_neighbours) {
       min_dist_x1 = diff_dist_x1;
       max_x1_neighbours = x1_neighbours;
-      x_plane1 = x_plane;
+      room_planes.x_plane1 = x_plane;
     }
   }
 
-  for(const auto& x_plane : current_x_vert_planes) {
+  for(const auto& x_plane : room_info.current_x_vert_planes) {
     if(x_plane.nx > 0) {
       continue;
     }
@@ -513,12 +510,12 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
     diff_dist_x2 = sqrt((dist_x2 - x_plane.d) * (dist_x2 - x_plane.d));
 
     // std::cout << "diff dist x2: " << diff_dist_x2 << std::endl;
-    int x2_neighbours = find_plane_points(cloud_hull, x_plane, cloud_hull_x2);
+    int x2_neighbours = find_plane_points(room_info.cloud_hull, x_plane, cloud_hull_x2);
 
     if(x2_neighbours > max_x2_neighbours) {
       min_dist_x2 = diff_dist_x2;
       max_x2_neighbours = x2_neighbours;
-      x_plane2 = x_plane;
+      room_planes.x_plane2 = x_plane;
     }
   }
 
@@ -532,29 +529,29 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
   // std::cout << "min_x2_plane_points_dist[0] : " << min_x2_plane_points_dist[0] << std::endl;
   // std::cout << "min_x2_plane_points_dist[1] : " << min_x2_plane_points_dist[1] << std::endl;
 
-  if(x_plane1.nx * x_plane2.nx >= 0) {
+  if(room_planes.x_plane1.nx * room_planes.x_plane2.nx >= 0) {
     // std::cout << "no xplane1 found " << std::endl;
     // std::cout << "no xplane2 found " << std::endl;
-    found_x1_plane = false, found_x2_plane = false;
+    room_planes.found_x1_plane = false, room_planes.found_x2_plane = false;
   } else {
     bool planes_placed_correctly = false;
-    if(!x_plane1.plane_points.empty() && !x_plane2.plane_points.empty()) {
-      planes_placed_correctly = plane_utils->compute_point_difference(x_plane1.plane_points.back().x, x_plane2.plane_points.back().x);
+    if(!room_planes.x_plane1.plane_points.empty() && !room_planes.x_plane2.plane_points.empty()) {
+      planes_placed_correctly = plane_utils->compute_point_difference(room_planes.x_plane1.plane_points.back().x, room_planes.x_plane2.plane_points.back().x);
     }
 
     if(max_x1_neighbours >= min_neighbors_thres && planes_placed_correctly) {
       // std::cout << "room has xplane1: " << x_plane1.nx << ", " << x_plane1.ny << ", " << x_plane1.nz << ", " << x_plane1.d << std::endl;
-      found_x1_plane = true;
+      room_planes.found_x1_plane = true;
     } else {
       // std::cout << "no xplane1 found " << std::endl;
-      found_x1_plane = false;
+      room_planes.found_x1_plane = false;
     }
     if(max_x2_neighbours >= min_neighbors_thres && planes_placed_correctly) {
       // std::cout << "room has xplane2: " << x_plane2.nx << ", " << x_plane2.ny << ", " << x_plane2.nz << ", " << x_plane2.d << std::endl;
-      found_x2_plane = true;
+      room_planes.found_x2_plane = true;
     } else {
       // std::cout << "no xplane2 found " << std::endl;
-      found_x2_plane = false;
+      room_planes.found_x2_plane = false;
     }
   }
 
@@ -569,7 +566,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
   min_y2_plane_points_dist[0] = 100;
   min_y2_plane_points_dist[1] = 100;
 
-  for(const auto& y_plane : current_y_vert_planes) {
+  for(const auto& y_plane : room_info.current_y_vert_planes) {
     if(y_plane.ny < 0) {
       continue;
     }
@@ -579,16 +576,16 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
     float diff_dist_y1 = 100;
     diff_dist_y1 = sqrt((dist_y1 - y_plane.d) * (dist_y1 - y_plane.d));
 
-    int y1_neighbours = find_plane_points(cloud_hull, y_plane, cloud_hull_y1);
+    int y1_neighbours = find_plane_points(room_info.cloud_hull, y_plane, cloud_hull_y1);
 
     if(y1_neighbours > max_y1_neighbours) {
       min_dist_y1 = diff_dist_y1;
       max_y1_neighbours = y1_neighbours;
-      y_plane1 = y_plane;
+      room_planes.y_plane1 = y_plane;
     }
   }
 
-  for(const auto& y_plane : current_y_vert_planes) {
+  for(const auto& y_plane : room_info.current_y_vert_planes) {
     if(y_plane.ny > 0) {
       continue;
     }
@@ -598,12 +595,12 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
     float diff_dist_y2 = 100;
     diff_dist_y2 = sqrt((dist_y2 - y_plane.d) * (dist_y2 - y_plane.d));
 
-    int y2_neighbours = find_plane_points(cloud_hull, y_plane, cloud_hull_y2);
+    int y2_neighbours = find_plane_points(room_info.cloud_hull, y_plane, cloud_hull_y2);
 
     if(y2_neighbours > max_y2_neighbours) {
       min_dist_y2 = diff_dist_y2;
       max_y2_neighbours = y2_neighbours;
-      y_plane2 = y_plane;
+      room_planes.y_plane2 = y_plane;
     }
   }
 
@@ -617,41 +614,41 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::get_room_planes(const std::
   // std::cout << "min_y2_plane_points_dist[0] : " << min_y2_plane_points_dist[0] << std::endl;
   // std::cout << "min_y2_plane_points_dist[1] : " << min_y2_plane_points_dist[1] << std::endl;
 
-  if(y_plane1.ny * y_plane2.ny >= 0) {
+  if(room_planes.y_plane1.ny * room_planes.y_plane2.ny >= 0) {
     // std::cout << "no yplane1 found " << std::endl;
     // std::cout << "no yplane2 found " << std::endl;
-    found_y1_plane = false, found_y2_plane = false;
+    room_planes.found_y1_plane = false, room_planes.found_y2_plane = false;
   } else {
     bool planes_placed_correctly = false;
-    if(!y_plane1.plane_points.empty() && !y_plane2.plane_points.empty()) {
-      planes_placed_correctly = plane_utils->compute_point_difference(y_plane1.plane_points.back().y, y_plane2.plane_points.back().y);
+    if(!room_planes.y_plane1.plane_points.empty() && !room_planes.y_plane2.plane_points.empty()) {
+      planes_placed_correctly = plane_utils->compute_point_difference(room_planes.y_plane1.plane_points.back().y, room_planes.y_plane2.plane_points.back().y);
     }
 
     if(max_y1_neighbours >= min_neighbors_thres && planes_placed_correctly) {
       // std::cout << "room has yplane1: " << y_plane1.nx << ", " << y_plane1.ny << ", " << y_plane1.nz << ", " << y_plane1.d << std::endl;
-      found_y1_plane = true;
+      room_planes.found_y1_plane = true;
     } else {
       // std::cout << "no yplane1 found " << std::endl;
-      found_y1_plane = false;
+      room_planes.found_y1_plane = false;
     }
     if(max_y2_neighbours >= min_neighbors_thres && planes_placed_correctly) {
       // std::cout << "room has yplane2: " << y_plane2.nx << ", " << y_plane2.ny << ", " << y_plane2.nz << ", " << y_plane2.d << std::endl;
-      found_y2_plane = true;
+      room_planes.found_y2_plane = true;
     } else {
       // std::cout << "no yplane2 found " << std::endl;
-      found_y2_plane = false;
+      room_planes.found_y2_plane = false;
     }
   }
 
-  if(found_x1_plane && found_x2_plane && found_y1_plane && found_y2_plane) {
+  if(room_planes.found_x1_plane && room_planes.found_x2_plane && room_planes.found_y1_plane && room_planes.found_y2_plane) {
     for(int i = 0; i < cloud_hull_x1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x1->points[i]);
     for(int i = 0; i < cloud_hull_x2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x2->points[i]);
     for(int i = 0; i < cloud_hull_y1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y1->points[i]);
     for(int i = 0; i < cloud_hull_y2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y2->points[i]);
-  } else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
+  } else if(room_planes.found_x1_plane && room_planes.found_x2_plane && (!room_planes.found_y1_plane || !room_planes.found_y2_plane)) {
     for(int i = 0; i < cloud_hull_x1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x1->points[i]);
     for(int i = 0; i < cloud_hull_x2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_x2->points[i]);
-  } else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
+  } else if(room_planes.found_y1_plane && room_planes.found_y2_plane && (!room_planes.found_x1_plane || !room_planes.found_x2_plane)) {
     for(int i = 0; i < cloud_hull_y1->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y1->points[i]);
     for(int i = 0; i < cloud_hull_y2->points.size(); ++i) sub_cloud_hull->points.push_back(cloud_hull_y2->points[i]);
   }

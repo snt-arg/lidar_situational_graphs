@@ -138,7 +138,8 @@ private:
         continue;
       }
 
-      room_analyzer->perform_room_segmentation(current_x_vert_planes, current_y_vert_planes, room_cluster_counter, cloud_cluster, cloud_hull, room_candidates_vec, connected_subgraph_map);
+      RoomInfo room_info = {current_x_vert_planes, current_y_vert_planes, cloud_hull};
+      room_analyzer->perform_room_segmentation(room_info, room_cluster_counter, cloud_cluster, room_candidates_vec, connected_subgraph_map);
 
       s_graphs::RoomsData room_candidates_msg;
       room_candidates_msg.header.stamp = ros::Time::now();
