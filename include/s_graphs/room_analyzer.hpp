@@ -154,7 +154,7 @@ public:
    * @param cluster_center
    * @return The center point of the room.
    */
-  geometry_msgs::Point extract_corridor_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2, Eigen::Vector2d& cluster_center);
+  geometry_msgs::Point extract_infinite_room_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2, Eigen::Vector2d& cluster_center);
 
   /**
    * @brief

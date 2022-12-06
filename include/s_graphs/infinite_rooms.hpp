@@ -5,7 +5,7 @@
 #include <g2o/types/slam3d_addons/plane3d.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
-#include <g2o/vertex_corridor.hpp>
+#include <g2o/vertex_infinite_room.hpp>
 #include <g2o/vertex_room.hpp>
 
 namespace g2o {
@@ -17,7 +17,7 @@ class SparseOptimizer;
 namespace s_graphs {
 
 /**
- * @brief Struct that holds information about an infinite room (corridor).
+ * @brief Struct that holds information about an infinite room (infinite_room).
  *
  * @var id: Unique Id of the infinite room.
  * @var connected_id
@@ -38,7 +38,7 @@ public:
   std::vector<int> neighbour_ids;
   g2o::VertexRoomXYLB* cluster_center_node;
   g2o::VertexRoomXYLB* node;  // node instance
-  bool sub_corridor;
+  bool sub_infinite_room;
 };
 
 }  // namespace s_graphs

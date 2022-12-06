@@ -34,7 +34,7 @@
 #include <s_graphs/keyframe.hpp>
 
 #include <g2o/vertex_room.hpp>
-#include <g2o/vertex_corridor.hpp>
+#include <g2o/vertex_infinite_room.hpp>
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/edge_se3_plane.hpp>
@@ -45,7 +45,7 @@
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_plane.hpp>
-#include <g2o/edge_corridor_plane.hpp>
+#include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_room.hpp>
 
 namespace s_graphs {
@@ -161,21 +161,21 @@ private:
    * @param plane_id
    * @param keyframe
    * @param det_plane_map_frame
-   * @param found_corridor
+   * @param found_infinite_room
    * @param found_room
    * @param plane_id_pair
    */
-  void retrieve_plane_properties(const int& plane_type, const int& plane_id, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, bool& found_corridor, bool& found_room, plane_data_list& plane_id_pair);
+  void retrieve_plane_properties(const int& plane_type, const int& plane_id, const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, bool& found_infinite_room, bool& found_room, plane_data_list& plane_id_pair);
 
 private:
   bool use_point_to_plane;
   double plane_information;
   double plane_dist_threshold;
   double plane_points_dist;
-  double corridor_min_plane_length;
+  double infinite_room_min_plane_length;
   double room_min_plane_length, room_max_plane_length;
   double min_plane_points;
-  bool use_corridor_constraint;
+  bool use_infinite_room_constraint;
   bool use_room_constraint;
 
 private:

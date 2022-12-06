@@ -9,18 +9,18 @@ PlaneMapper::PlaneMapper(const ros::NodeHandle& private_nh) {
   plane_information = private_nh.param<double>("plane_information", 0.01);
   plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
   plane_points_dist = private_nh.param<double>("plane_points_dist", 0.5);
-  corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
+  infinite_room_min_plane_length = private_nh.param<double>("infinite_room_min_plane_length", 10);
   room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
   room_max_plane_length = private_nh.param<double>("room_max_plane_length", 6.0);
   min_plane_points = private_nh.param<double>("min_plane_points", 100);
-  use_corridor_constraint = private_nh.param<bool>("use_corridor_constraint", false);
+  use_infinite_room_constraint = private_nh.param<bool>("use_infinite_room_constraint", false);
   use_room_constraint = private_nh.param<bool>("use_room_constraint", false);
 }
 
 PlaneMapper::~PlaneMapper() {}
 
 void PlaneMapper::map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
-  std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
+  std::vector<plane_data_list> x_det_infinite_room_candidates, y_det_infinite_room_candidates;
   std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
 
   for(const auto& cloud_seg_msg : extracted_cloud_vec) {

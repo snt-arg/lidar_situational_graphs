@@ -218,7 +218,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
   } else {
     // check how many planes are extracted
     // if four planes are found its a bounded room
-    // if 2 parallel planes are found it an ifnite corridor
+    // if 2 parallel planes are found it an ifnite infinite_room
     bool found_x1_plane = false;
     bool found_x2_plane = false;
     bool found_y1_plane = false;
@@ -310,7 +310,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_cluster_counter++;
       return true;
     }
-    // if found only two x planes are found add x corridor
+    // if found only two x planes are found add x infinite_room
     else if(found_x1_plane && found_x2_plane && (!found_y1_plane || !found_y2_plane)) {
       if(sub_cloud_hull->points.size() > 0) extract_cluster_endpoints(sub_cloud_hull, p1, p2);
 
@@ -358,7 +358,7 @@ bool RoomAnalyzer::perform_room_segmentation(const std::vector<s_graphs::PlaneDa
       room_cluster_counter++;
       return true;
     }
-    // if found only two y planes are found at y corridor
+    // if found only two y planes are found at y infinite_room
     else if(found_y1_plane && found_y2_plane && (!found_x1_plane || !found_x2_plane)) {
       if(sub_cloud_hull->points.size() > 0) extract_cluster_endpoints(sub_cloud_hull, p1, p2);
 

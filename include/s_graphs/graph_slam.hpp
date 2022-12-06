@@ -14,7 +14,7 @@ namespace g2o {
 class VertexSE3;
 class VertexPlane;
 class VertexPointXYZ;
-class VertexCorridor;
+class VertexInfiniteRoom;
 class EdgeSE3;
 class EdgeSE3Plane;
 class EdgeSE3PointToPlane;
@@ -26,9 +26,9 @@ class EdgeSE3PriorQuat;
 class EdgePlane;
 class EdgePlaneIdentity;
 class EdgePlaneParallel;
-class EdgeSE3Corridor;
-class EdgeCorridorXPlane;
-class EdgeCorridorYPlane;
+class EdgeSE3InfiniteRoom;
+class EdgeInfiniteRoomXPlane;
+class EdgeInfiniteRoomYPlane;
 class EdgeSE3Room;
 class EdgeRoomXPlane;
 class EdgeRoom2Planes;
@@ -37,10 +37,10 @@ class EdgeRoomXPrior;
 class EdgeRoomYPlane;
 class EdgeRoomYPrior;
 class EdgeRoomRoom;
-class EdgeRoomXCorridor;
-class EdgeRoomYCorridor;
-class EdgeXCorridorXCorridor;
-class EdgeYCorridorYCorridor;
+class EdgeRoomXInfiniteRoom;
+class EdgeRoomYInfiniteRoom;
+class EdgeXInfiniteRoomXInfiniteRoom;
+class EdgeYInfiniteRoomYInfiniteRoom;
 class EdgePlanePerpendicular;
 class Edge2Planes;
 class EdgePlanePriorNormal;
@@ -153,12 +153,12 @@ public:
   g2o::VertexPointXYZ* add_point_xyz_node(const Eigen::Vector3d& xyz);
 
   /**
-   * @brief Add a corridor node to the graph
+   * @brief Add a infinite_room node to the graph
    *
-   * @param corridor_pose
+   * @param infinite_room_pose
    * @return Registered node
    */
-  g2o::VertexCorridor* add_corridor_node(const double& corridor_pose);
+  g2o::VertexInfiniteRoom* add_infinite_room_node(const double& infinite_room_pose);
 
   /**
    * @brief Add a room node to the graph
@@ -348,50 +348,50 @@ public:
    * @brief
    *
    * @param v_se3
-   * @param v_corridor
+   * @param v_infinite_room
    * @param measurement
    * @param information
    * @return registered edge
    */
-  g2o::EdgeSE3Corridor* add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const double& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeSE3InfiniteRoom* add_se3_infinite_room_edge(g2o::VertexSE3* v_se3, g2o::VertexInfiniteRoom* v_infinite_room, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param v_corridor
+   * @param v_infinite_room
    * @param v_plane2
    * @param measurement
    * @param information
    * @return registered edge
    */
-  g2o::EdgeCorridorXPlane* add_corridor_xplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeInfiniteRoomXPlane* add_infinite_room_xplane_edge(g2o::VertexInfiniteRoom* v_infinite_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param v_corridor
+   * @param v_infinite_room
    * @param v_plane2
    * @param measurement
    * @param information
    * @return registered edge
    */
-  g2o::EdgeCorridorYPlane* add_corridor_yplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeInfiniteRoomYPlane* add_infinite_room_yplane_edge(g2o::VertexInfiniteRoom* v_infinite_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
-   * @param corridor_xplane_edge
+   * @param infinite_room_xplane_edge
    * @return Success or failure
    */
-  bool remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge);
+  bool remove_infinite_room_xplane_edge(g2o::EdgeInfiniteRoomXPlane* infinite_room_xplane_edge);
 
   /**
    * @brief
    *
-   * @param corridor_yplane_edge
+   * @param infinite_room_yplane_edge
    * @return Success or failure
    */
-  bool remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge);
+  bool remove_infinite_room_yplane_edge(g2o::EdgeInfiniteRoomYPlane* infinite_room_yplane_edge);
 
   /**
    * @brief
@@ -495,23 +495,23 @@ public:
    * @brief
    *
    * @param v_room
-   * @param v_xcorridor
+   * @param v_xinfinite_room
    * @param measurement
    * @param information
    * @return registered edge
    */
-  g2o::EdgeRoomXCorridor* add_room_x_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_xcorridor, const double& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeRoomXInfiniteRoom* add_room_x_infinite_room_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexInfiniteRoom* v_xinfinite_room, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
    *
    * @param v_room
-   * @param v_ycorridor
+   * @param v_yinfinite_room
    * @param measurement
    * @param information
    * @return registered edge
    */
-  g2o::EdgeRoomYCorridor* add_room_y_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_ycorridor, const double& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeRoomYInfiniteRoom* add_room_y_infinite_room_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexInfiniteRoom* v_yinfinite_room, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -522,7 +522,7 @@ public:
    * @param information
    * @return registered edge
    */
-  g2o::EdgeXCorridorXCorridor* add_x_corridor_x_corridor_edge(g2o::VertexCorridor* v_xcorr1, g2o::VertexCorridor* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeXInfiniteRoomXInfiniteRoom* add_x_infinite_room_x_infinite_room_edge(g2o::VertexInfiniteRoom* v_xcorr1, g2o::VertexInfiniteRoom* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -533,7 +533,7 @@ public:
    * @param information
    * @return registered edge
    */
-  g2o::EdgeYCorridorYCorridor* add_y_corridor_y_corridor_edge(g2o::VertexCorridor* v_ycorr1, g2o::VertexCorridor* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information);
+  g2o::EdgeYInfiniteRoomYInfiniteRoom* add_y_infinite_room_y_infinite_room_edge(g2o::VertexInfiniteRoom* v_ycorr1, g2o::VertexInfiniteRoom* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief

@@ -5,18 +5,18 @@
 namespace s_graphs {
 
 InfiniteRoomMapper::InfiniteRoomMapper(const ros::NodeHandle& private_nh) {
-  corridor_point_diff_threshold = private_nh.param<double>("corridor_point_diff_threshold", 3.0);
-  corridor_plane_length_diff_threshold = private_nh.param<double>("corridor_plane_length_diff_threshold", 0.3);
-  corridor_min_width = private_nh.param<double>("corridor_min_width", 1.5);
-  corridor_max_width = private_nh.param<double>("corridor_max_width", 2.5);
+  infinite_room_point_diff_threshold = private_nh.param<double>("infinite_room_point_diff_threshold", 3.0);
+  infinite_room_plane_length_diff_threshold = private_nh.param<double>("infinite_room_plane_length_diff_threshold", 0.3);
+  infinite_room_min_width = private_nh.param<double>("infinite_room_min_width", 1.5);
+  infinite_room_max_width = private_nh.param<double>("infinite_room_max_width", 2.5);
 
-  corridor_information = private_nh.param<double>("corridor_information", 0.01);
-  corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 1.0);
+  infinite_room_information = private_nh.param<double>("infinite_room_information", 0.01);
+  infinite_room_dist_threshold = private_nh.param<double>("infinite_room_dist_threshold", 1.0);
 
   use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
   use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 
-  corridor_min_seg_dist = private_nh.param<double>("corridor_min_seg_dist", 1.5);
+  infinite_room_min_seg_dist = private_nh.param<double>("infinite_room_min_seg_dist", 1.5);
   dupl_plane_matching_information = private_nh.param<double>("dupl_plane_matching_information", 0.01);
 
   plane_utils.reset(new PlaneUtils());
@@ -24,18 +24,18 @@ InfiniteRoomMapper::InfiniteRoomMapper(const ros::NodeHandle& private_nh) {
 
 InfiniteRoomMapper::~InfiniteRoomMapper() {}
 
-void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_corridor_candidates, const std::vector<plane_data_list>& y_det_corridor_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors) {
-  std::vector<structure_data_list> x_corridor = sort_corridors(PlaneUtils::plane_class::X_VERT_PLANE, x_det_corridor_candidates);
-  std::vector<structure_data_list> y_corridor = sort_corridors(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_corridor_candidates);
+void InfiniteRoomMapper::lookup_infinite_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_infinite_room_candidates, const std::vector<plane_data_list>& y_det_infinite_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
+  std::vector<structure_data_list> x_infinite_room = sort_infinite_rooms(PlaneUtils::plane_class::X_VERT_PLANE, x_det_infinite_room_candidates);
+  std::vector<structure_data_list> y_infinite_room = sort_infinite_rooms(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_infinite_room_candidates);
 
-  std::vector<plane_data_list> x_corridor_refined = refine_corridors(x_corridor);
-  if(x_corridor_refined.size() == 2) factor_corridors(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_corridor_refined[0], x_corridor_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+  std::vector<plane_data_list> x_infinite_room_refined = refine_infinite_rooms(x_infinite_room);
+  if(x_infinite_room_refined.size() == 2) factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_infinite_room_refined[0], x_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
 
-  std::vector<plane_data_list> y_corridor_refined = refine_corridors(y_corridor);
-  if(y_corridor_refined.size() == 2) factor_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_corridor_refined[0], y_corridor_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+  std::vector<plane_data_list> y_infinite_room_refined = refine_infinite_rooms(y_infinite_room);
+  if(y_infinite_room_refined.size() == 2) factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_infinite_room_refined[0], y_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
 }
 
-void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors, const std::vector<Rooms>& rooms_vec) {
+void InfiniteRoomMapper::lookup_infinite_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, const std::vector<Rooms>& rooms_vec) {
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     // check the distance with the current room vector
     Rooms matched_room;
@@ -55,12 +55,12 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     }
 
     if(min_dist_x_corr_room < 1.0) {
-      std::cout << "Room already exists in the given location, not inserting an x corridor" << std::endl;
+      std::cout << "Room already exists in the given location, not inserting an x infinite_room" << std::endl;
       return;
     }
 
-    // factor the corridor here
-    std::cout << "factoring x corridor" << std::endl;
+    // factor the infinite_room here
+    std::cout << "factoring x infinite_room" << std::endl;
     Eigen::Vector4d x_plane1(room_data.x_planes[0].nx, room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
     Eigen::Vector4d x_plane2(room_data.x_planes[1].nx, room_data.x_planes[1].ny, room_data.x_planes[1].nz, room_data.x_planes[1].d);
     plane_data_list x_plane1_data, x_plane2_data;
@@ -79,12 +79,12 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     x_plane2_data.cluster_center(1) = room_data.cluster_center.y;
     x_plane1_data.connected_id = room_data.id;
 
-    // get the corridor neighbours
+    // get the infinite_room neighbours
     for(const auto& room_neighbour_id : room_data.neighbour_ids) {
       x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
     }
 
-    factor_corridors(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+    factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
   }
 
   else if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
@@ -104,12 +104,12 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       }
     }
     if(min_dist_y_corr_room < 1.0) {
-      std::cout << "Room already exists in the given location, not inserting a y corridor" << std::endl;
+      std::cout << "Room already exists in the given location, not inserting a y infinite_room" << std::endl;
       return;
     }
 
-    // factor the corridor here
-    std::cout << "factoring y corridor" << std::endl;
+    // factor the infinite_room here
+    std::cout << "factoring y infinite_room" << std::endl;
     Eigen::Vector4d y_plane1(room_data.y_planes[0].nx, room_data.y_planes[0].ny, room_data.y_planes[0].nz, room_data.y_planes[0].d);
     Eigen::Vector4d y_plane2(room_data.y_planes[1].nx, room_data.y_planes[1].ny, room_data.y_planes[1].nz, room_data.y_planes[1].d);
     plane_data_list y_plane1_data, y_plane2_data;
@@ -128,65 +128,65 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     y_plane2_data.cluster_center(1) = room_data.cluster_center.y;
     y_plane1_data.connected_id = room_data.id;
 
-    // get the corridor neighbours
+    // get the infinite_room neighbours
     for(const auto& room_neighbour_id : room_data.neighbour_ids) {
       y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
     }
-    factor_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
+    factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
   }
 }
 
-std::vector<structure_data_list> InfiniteRoomMapper::sort_corridors(const int plane_type, const std::vector<plane_data_list>& corridor_candidates) {
-  std::vector<structure_data_list> corridor_pair_vec;
+std::vector<structure_data_list> InfiniteRoomMapper::sort_infinite_rooms(const int plane_type, const std::vector<plane_data_list>& infinite_room_candidates) {
+  std::vector<structure_data_list> infinite_room_pair_vec;
 
-  for(int i = 0; i < corridor_candidates.size(); ++i) {
-    for(int j = i + 1; j < corridor_candidates.size(); ++j) {
-      float corr_width = plane_utils->width_between_planes(corridor_candidates[i].plane_unflipped.coeffs(), corridor_candidates[j].plane_unflipped.coeffs());
-      float diff_plane_length = fabs(corridor_candidates[i].plane_length - corridor_candidates[j].plane_length);
-      float start_point_diff = MapperUtils::point_difference(plane_type, corridor_candidates[i].start_point, corridor_candidates[j].start_point);
-      float end_point_diff = MapperUtils::point_difference(plane_type, corridor_candidates[i].end_point, corridor_candidates[j].end_point);
+  for(int i = 0; i < infinite_room_candidates.size(); ++i) {
+    for(int j = i + 1; j < infinite_room_candidates.size(); ++j) {
+      float corr_width = plane_utils->width_between_planes(infinite_room_candidates[i].plane_unflipped.coeffs(), infinite_room_candidates[j].plane_unflipped.coeffs());
+      float diff_plane_length = fabs(infinite_room_candidates[i].plane_length - infinite_room_candidates[j].plane_length);
+      float start_point_diff = MapperUtils::point_difference(plane_type, infinite_room_candidates[i].start_point, infinite_room_candidates[j].start_point);
+      float end_point_diff = MapperUtils::point_difference(plane_type, infinite_room_candidates[i].end_point, infinite_room_candidates[j].end_point);
       float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
-      ROS_DEBUG_NAMED("corridor planes", "corr plane i coeffs %f %f %f %f", corridor_candidates[i].plane_unflipped.coeffs()(0), corridor_candidates[i].plane_unflipped.coeffs()(1), corridor_candidates[i].plane_unflipped.coeffs()(2),
-                      corridor_candidates[i].plane_unflipped.coeffs()(3));
-      ROS_DEBUG_NAMED("corridor planes", "corr plane j coeffs %f %f %f %f", corridor_candidates[j].plane_unflipped.coeffs()(0), corridor_candidates[j].plane_unflipped.coeffs()(1), corridor_candidates[j].plane_unflipped.coeffs()(2),
-                      corridor_candidates[j].plane_unflipped.coeffs()(3));
-      ROS_DEBUG_NAMED("corridor planes", "corr width %f", corr_width);
-      ROS_DEBUG_NAMED("corridor planes", "plane length diff %f", diff_plane_length);
-      ROS_DEBUG_NAMED("corridor planes", "avg plane point diff %f", avg_plane_point_diff);
+      ROS_DEBUG_NAMED("infinite_room planes", "corr plane i coeffs %f %f %f %f", infinite_room_candidates[i].plane_unflipped.coeffs()(0), infinite_room_candidates[i].plane_unflipped.coeffs()(1), infinite_room_candidates[i].plane_unflipped.coeffs()(2),
+                      infinite_room_candidates[i].plane_unflipped.coeffs()(3));
+      ROS_DEBUG_NAMED("infinite_room planes", "corr plane j coeffs %f %f %f %f", infinite_room_candidates[j].plane_unflipped.coeffs()(0), infinite_room_candidates[j].plane_unflipped.coeffs()(1), infinite_room_candidates[j].plane_unflipped.coeffs()(2),
+                      infinite_room_candidates[j].plane_unflipped.coeffs()(3));
+      ROS_DEBUG_NAMED("infinite_room planes", "corr width %f", corr_width);
+      ROS_DEBUG_NAMED("infinite_room planes", "plane length diff %f", diff_plane_length);
+      ROS_DEBUG_NAMED("infinite_room planes", "avg plane point diff %f", avg_plane_point_diff);
 
-      if(corridor_candidates[i].plane_unflipped.coeffs().head(3).dot(corridor_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < corridor_max_width && corr_width > corridor_min_width) && diff_plane_length < corridor_plane_length_diff_threshold) {
-        if(avg_plane_point_diff < corridor_point_diff_threshold) {
-          structure_data_list corridor_pair;
-          corridor_pair.plane1 = corridor_candidates[i];
-          corridor_pair.plane2 = corridor_candidates[j];
-          corridor_pair.width = corr_width;
-          corridor_pair.length_diff = diff_plane_length;
-          corridor_pair.avg_point_diff = avg_plane_point_diff;
-          corridor_pair_vec.push_back(corridor_pair);
-          ROS_DEBUG_NAMED("corridor planes", "adding corridor candidates");
+      if(infinite_room_candidates[i].plane_unflipped.coeffs().head(3).dot(infinite_room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < infinite_room_max_width && corr_width > infinite_room_min_width) && diff_plane_length < infinite_room_plane_length_diff_threshold) {
+        if(avg_plane_point_diff < infinite_room_point_diff_threshold) {
+          structure_data_list infinite_room_pair;
+          infinite_room_pair.plane1 = infinite_room_candidates[i];
+          infinite_room_pair.plane2 = infinite_room_candidates[j];
+          infinite_room_pair.width = corr_width;
+          infinite_room_pair.length_diff = diff_plane_length;
+          infinite_room_pair.avg_point_diff = avg_plane_point_diff;
+          infinite_room_pair_vec.push_back(infinite_room_pair);
+          ROS_DEBUG_NAMED("infinite_room planes", "adding infinite_room candidates");
         }
       }
     }
   }
 
-  return corridor_pair_vec;
+  return infinite_room_pair_vec;
 }
 
-std::vector<plane_data_list> InfiniteRoomMapper::refine_corridors(const std::vector<structure_data_list>& corr_vec) {
-  float min_corridor_diff = corridor_point_diff_threshold;
+std::vector<plane_data_list> InfiniteRoomMapper::refine_infinite_rooms(const std::vector<structure_data_list>& corr_vec) {
+  float min_infinite_room_diff = infinite_room_point_diff_threshold;
   std::vector<plane_data_list> corr_refined;
   corr_refined.resize(2);
 
   for(int i = 0; i < corr_vec.size(); ++i) {
-    float corridor_diff = corr_vec[i].avg_point_diff;
-    if(corridor_diff < min_corridor_diff) {
-      min_corridor_diff = corridor_diff;
+    float infinite_room_diff = corr_vec[i].avg_point_diff;
+    if(infinite_room_diff < min_infinite_room_diff) {
+      min_infinite_room_diff = infinite_room_diff;
       corr_refined[0] = corr_vec[i].plane1;
       corr_refined[1] = corr_vec[i].plane2;
     }
   }
 
-  if(min_corridor_diff >= corridor_point_diff_threshold) {
+  if(min_infinite_room_diff >= infinite_room_point_diff_threshold) {
     std::vector<plane_data_list> corr_empty;
     corr_empty.resize(0);
     return corr_empty;
@@ -194,22 +194,22 @@ std::vector<plane_data_list> InfiniteRoomMapper::refine_corridors(const std::vec
     return corr_refined;
 }
 
-void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors) {
+void InfiniteRoomMapper::factor_infinite_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
   g2o::VertexRoomXYLB* corr_node;
   g2o::VertexRoomXYLB* cluster_center_node;
   std::pair<int, int> corr_data_association;
   double meas_plane1, meas_plane2;
 
-  Eigen::Matrix<double, 2, 2> information_corridor_planes;
-  information_corridor_planes.setZero();
-  information_corridor_planes(0, 0) = corridor_information;
-  information_corridor_planes(1, 1) = corridor_information;
+  Eigen::Matrix<double, 2, 2> information_infinite_room_planes;
+  information_infinite_room_planes.setZero();
+  information_infinite_room_planes(0, 0) = infinite_room_information;
+  information_infinite_room_planes(1, 1) = infinite_room_information;
 
-  Eigen::Matrix<double, 1, 1> information_corridor_plane;
-  information_corridor_plane(0, 0) = corridor_information;
+  Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
+  information_infinite_room_plane(0, 0) = infinite_room_information;
 
-  Eigen::Matrix<double, 1, 1> information_corridor_prior;
-  information_corridor_prior(0, 0) = 1e-5;
+  Eigen::Matrix<double, 1, 1> information_infinite_room_prior;
+  information_infinite_room_prior(0, 0) = 1e-5;
 
   Eigen::Matrix<double, 3, 3> information_2planes;
   information_2planes.setZero();
@@ -217,50 +217,50 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   information_2planes(1, 1) = dupl_plane_matching_information;
   information_2planes(2, 2) = dupl_plane_matching_information;
 
-  // Eigen::Vector2d corr_pose = compute_corridor_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
+  // Eigen::Vector2d corr_pose = compute_infinite_room_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
   Eigen::Vector2d corr_pose(corr_plane1_pair.plane_centroid(0), corr_plane1_pair.plane_centroid(1));
-  ROS_DEBUG_NAMED("corridor planes", "final corridor plane 1 %f %f %f %f", corr_plane1_pair.plane_unflipped.coeffs()(0), corr_plane1_pair.plane_unflipped.coeffs()(1), corr_plane1_pair.plane_unflipped.coeffs()(2), corr_plane1_pair.plane_unflipped.coeffs()(3));
-  ROS_DEBUG_NAMED("corridor planes", "final corridor plane 2 %f %f %f %f", corr_plane2_pair.plane_unflipped.coeffs()(0), corr_plane2_pair.plane_unflipped.coeffs()(1), corr_plane2_pair.plane_unflipped.coeffs()(2), corr_plane2_pair.plane_unflipped.coeffs()(3));
+  ROS_DEBUG_NAMED("infinite_room planes", "final infinite_room plane 1 %f %f %f %f", corr_plane1_pair.plane_unflipped.coeffs()(0), corr_plane1_pair.plane_unflipped.coeffs()(1), corr_plane1_pair.plane_unflipped.coeffs()(2), corr_plane1_pair.plane_unflipped.coeffs()(3));
+  ROS_DEBUG_NAMED("infinite_room planes", "final infinite_room plane 2 %f %f %f %f", corr_plane2_pair.plane_unflipped.coeffs()(0), corr_plane2_pair.plane_unflipped.coeffs()(1), corr_plane2_pair.plane_unflipped.coeffs()(2), corr_plane2_pair.plane_unflipped.coeffs()(3));
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     auto found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
     auto found_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane2_pair.plane_id);
 
     if(found_plane1 == x_vert_planes.end() || found_plane2 == x_vert_planes.end()) {
-      std::cout << "did not find planes for x corridor " << std::endl;
+      std::cout << "did not find planes for x infinite_room " << std::endl;
       return;
     }
 
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
-    corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_corridors, y_corridors, detected_mapped_plane_pairs);
+    corr_data_association = associate_infinite_rooms(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_infinite_rooms, y_infinite_rooms, detected_mapped_plane_pairs);
 
-    if((x_corridors.empty() || corr_data_association.first == -1)) {
-      std::cout << "found an X corridor with pre pose " << corr_pose << " between plane " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
+    if((x_infinite_rooms.empty() || corr_data_association.first == -1)) {
+      std::cout << "found an X infinite_room with pre pose " << corr_pose << " between plane " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
       corr_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
       corr_node = graph_slam->add_room_node(corr_pose);
       cluster_center_node = graph_slam->add_room_node(corr_plane1_pair.cluster_center);
       cluster_center_node->setFixed(true);
-      // graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
-      InfiniteRooms det_corridor;
-      det_corridor.id = corr_data_association.first;
-      det_corridor.plane1 = corr_plane1_pair.plane_unflipped;
-      det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
-      det_corridor.plane1_id = corr_plane1_pair.plane_id;
-      det_corridor.plane2_id = corr_plane2_pair.plane_id;
-      det_corridor.cluster_center_node = cluster_center_node;
-      det_corridor.node = corr_node;
-      det_corridor.connected_id = corr_plane1_pair.connected_id;
-      det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
-      x_corridors.push_back(det_corridor);
+      // graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_infinite_room_prior);
+      InfiniteRooms det_infinite_room;
+      det_infinite_room.id = corr_data_association.first;
+      det_infinite_room.plane1 = corr_plane1_pair.plane_unflipped;
+      det_infinite_room.plane2 = corr_plane2_pair.plane_unflipped;
+      det_infinite_room.plane1_id = corr_plane1_pair.plane_id;
+      det_infinite_room.plane2_id = corr_plane2_pair.plane_id;
+      det_infinite_room.cluster_center_node = cluster_center_node;
+      det_infinite_room.node = corr_node;
+      det_infinite_room.connected_id = corr_plane1_pair.connected_id;
+      det_infinite_room.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
+      x_infinite_rooms.push_back(det_infinite_room);
 
-      auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, cluster_center_node, information_corridor_planes);
+      auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, cluster_center_node, information_infinite_room_planes);
       graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
 
     } else {
-      /* add the edge between detected planes and the corridor */
-      corr_node = x_corridors[corr_data_association.second].node;
-      std::cout << "Matched det corridor X with pre pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate() << std::endl;
+      /* add the edge between detected planes and the infinite_room */
+      corr_node = x_infinite_rooms[corr_data_association.second].node;
+      std::cout << "Matched det infinite_room X with pre pose " << corr_pose << " to mapped infinite_room with id " << corr_data_association.first << " and pose " << corr_node->estimate() << std::endl;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges = (*found_plane1).plane_node->edges();
       std::set<g2o::HyperGraph::Edge*> plane2_edges = (*found_plane2).plane_node->edges();
@@ -289,35 +289,35 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
     if(found_plane1 == y_vert_planes.end() || found_plane2 == y_vert_planes.end()) return;
 
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
-    corr_data_association = associate_corridors(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_corridors, y_corridors, detected_mapped_plane_pairs);
+    corr_data_association = associate_infinite_rooms(plane_type, corr_pose, (*found_plane1), (*found_plane2), x_vert_planes, y_vert_planes, x_infinite_rooms, y_infinite_rooms, detected_mapped_plane_pairs);
 
-    if((y_corridors.empty() || corr_data_association.first == -1)) {
-      std::cout << "found an Y corridor with pre pose " << corr_pose << " between plane " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
+    if((y_infinite_rooms.empty() || corr_data_association.first == -1)) {
+      std::cout << "found an Y infinite_room with pre pose " << corr_pose << " between plane " << corr_plane1_pair.plane_unflipped.coeffs() << " and plane " << corr_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
       corr_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
       corr_node = graph_slam->add_room_node(corr_pose);
       cluster_center_node = graph_slam->add_room_node(corr_plane1_pair.cluster_center);
       cluster_center_node->setFixed(true);
-      // graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
+      // graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_infinite_room_prior);
 
-      InfiniteRooms det_corridor;
-      det_corridor.id = corr_data_association.first;
-      det_corridor.plane1 = corr_plane1_pair.plane_unflipped;
-      det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
-      det_corridor.plane1_id = corr_plane1_pair.plane_id;
-      det_corridor.plane2_id = corr_plane2_pair.plane_id;
-      det_corridor.cluster_center_node = cluster_center_node;
-      det_corridor.node = corr_node;
-      det_corridor.connected_id = corr_plane1_pair.connected_id;
-      det_corridor.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
-      y_corridors.push_back(det_corridor);
+      InfiniteRooms det_infinite_room;
+      det_infinite_room.id = corr_data_association.first;
+      det_infinite_room.plane1 = corr_plane1_pair.plane_unflipped;
+      det_infinite_room.plane2 = corr_plane2_pair.plane_unflipped;
+      det_infinite_room.plane1_id = corr_plane1_pair.plane_id;
+      det_infinite_room.plane2_id = corr_plane2_pair.plane_id;
+      det_infinite_room.cluster_center_node = cluster_center_node;
+      det_infinite_room.node = corr_node;
+      det_infinite_room.connected_id = corr_plane1_pair.connected_id;
+      det_infinite_room.connected_neighbour_ids = corr_plane1_pair.connected_neighbour_ids;
+      y_infinite_rooms.push_back(det_infinite_room);
 
-      auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, cluster_center_node, information_corridor_planes);
+      auto edge_corr_plane = graph_slam->add_room_2planes_edge(corr_node, (*found_plane1).plane_node, (*found_plane2).plane_node, cluster_center_node, information_infinite_room_planes);
       graph_slam->add_robust_kernel(edge_corr_plane, "Huber", 1.0);
     } else {
-      /* add the edge between detected planes and the corridor */
-      corr_node = y_corridors[corr_data_association.second].node;
-      std::cout << "Matched det corridor Y with pre pose " << corr_pose << " to mapped corridor with id " << corr_data_association.first << " and pose " << corr_node->estimate() << std::endl;
+      /* add the edge between detected planes and the infinite_room */
+      corr_node = y_infinite_rooms[corr_data_association.second].node;
+      std::cout << "Matched det infinite_room Y with pre pose " << corr_pose << " to mapped infinite_room with id " << corr_data_association.first << " and pose " << corr_node->estimate() << std::endl;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges = (*found_plane1).plane_node->edges();
       std::set<g2o::HyperGraph::Edge*> plane2_edges = (*found_plane2).plane_node->edges();
@@ -342,7 +342,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   return;
 }
 
-std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<InfiniteRooms>& x_corridors, const std::vector<InfiniteRooms>& y_corridors, std::vector<std::pair<VerticalPlanes, VerticalPlanes>>& detected_mapped_plane_pairs) {
+std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<InfiniteRooms>& x_infinite_rooms, const std::vector<InfiniteRooms>& y_infinite_rooms, std::vector<std::pair<VerticalPlanes, VerticalPlanes>>& detected_mapped_plane_pairs) {
   float min_dist = 100;
   bool plane1_min_segment = false, plane2_min_segment = false;
 
@@ -350,14 +350,14 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
   data_association.first = -1;
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    for(int i = 0; i < x_corridors.size(); ++i) {
-      float dist = sqrt(pow(corr_pose(0) - x_corridors[i].node->estimate()(0), 2));
+    for(int i = 0; i < x_infinite_rooms.size(); ++i) {
+      float dist = sqrt(pow(corr_pose(0) - x_infinite_rooms[i].node->estimate()(0), 2));
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>> current_detected_mapped_plane_pairs;
       std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
       std::pair<VerticalPlanes, VerticalPlanes> x2_detected_mapped_plane_pair;
-      auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane1_id);
-      auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_corridors[i].plane2_id);
+      auto found_mapped_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_infinite_rooms[i].plane1_id);
+      auto found_mapped_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_infinite_rooms[i].plane2_id);
 
       if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
         plane1_min_segment = true;
@@ -391,23 +391,23 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
 
       if(dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
-        data_association.first = x_corridors[i].id;
+        data_association.first = x_infinite_rooms[i].id;
         data_association.second = i;
         detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
-        ROS_DEBUG_NAMED("corridor planes", "dist x corr %f", dist);
+        ROS_DEBUG_NAMED("infinite_room planes", "dist x corr %f", dist);
       }
     }
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    for(int i = 0; i < y_corridors.size(); ++i) {
-      float dist = sqrt(pow(corr_pose(1) - y_corridors[i].node->estimate()(1), 2));
+    for(int i = 0; i < y_infinite_rooms.size(); ++i) {
+      float dist = sqrt(pow(corr_pose(1) - y_infinite_rooms[i].node->estimate()(1), 2));
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>> current_detected_mapped_plane_pairs;
       std::pair<VerticalPlanes, VerticalPlanes> y1_detected_mapped_plane_pair;
       std::pair<VerticalPlanes, VerticalPlanes> y2_detected_mapped_plane_pair;
-      auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane1_id);
-      auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_corridors[i].plane2_id);
+      auto found_mapped_plane1 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_infinite_rooms[i].plane1_id);
+      auto found_mapped_plane2 = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == y_infinite_rooms[i].plane2_id);
 
       if(plane1.id == (*found_mapped_plane1).id || plane1.id == (*found_mapped_plane2).id) {
         plane1_min_segment = true;
@@ -441,80 +441,80 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
 
       if(dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
-        data_association.first = y_corridors[i].id;
+        data_association.first = y_infinite_rooms[i].id;
         data_association.second = i;
         detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
-        ROS_DEBUG_NAMED("corridor planes", "dist y corr %f", dist);
+        ROS_DEBUG_NAMED("infinite_room planes", "dist y corr %f", dist);
       }
     }
   }
 
-  // ROS_DEBUG_NAMED("corridor planes", "min dist %f", min_dist);
-  if(min_dist > corridor_dist_threshold) data_association.first = -1;
+  // ROS_DEBUG_NAMED("infinite_room planes", "min dist %f", min_dist);
+  if(min_dist > infinite_room_dist_threshold) data_association.first = -1;
 
   return data_association;
 }
 
-std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<InfiniteRooms>& x_corridors, const std::vector<InfiniteRooms>& y_corridors) {
+std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<InfiniteRooms>& x_infinite_rooms, const std::vector<InfiniteRooms>& y_infinite_rooms) {
   float min_dist = 100;
   std::pair<int, int> data_association;
   data_association.first = -1;
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    for(int i = 0; i < x_corridors.size(); ++i) {
-      float dist = sqrt(pow(corr_pose(0) - x_corridors[i].node->estimate()(0), 2) + pow(corr_pose(1) - x_corridors[i].node->estimate()(1), 2));
+    for(int i = 0; i < x_infinite_rooms.size(); ++i) {
+      float dist = sqrt(pow(corr_pose(0) - x_infinite_rooms[i].node->estimate()(0), 2) + pow(corr_pose(1) - x_infinite_rooms[i].node->estimate()(1), 2));
 
       if(dist < min_dist) {
         min_dist = dist;
-        data_association.first = x_corridors[i].id;
+        data_association.first = x_infinite_rooms[i].id;
         data_association.second = i;
-        ROS_DEBUG_NAMED("corridor planes", "dist x corr %f", dist);
+        ROS_DEBUG_NAMED("infinite_room planes", "dist x corr %f", dist);
       }
     }
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    for(int i = 0; i < y_corridors.size(); ++i) {
-      float dist = sqrt(pow(corr_pose(0) - y_corridors[i].node->estimate()(0), 2) + pow(corr_pose(1) - y_corridors[i].node->estimate()(1), 2));
+    for(int i = 0; i < y_infinite_rooms.size(); ++i) {
+      float dist = sqrt(pow(corr_pose(0) - y_infinite_rooms[i].node->estimate()(0), 2) + pow(corr_pose(1) - y_infinite_rooms[i].node->estimate()(1), 2));
 
       if(dist < min_dist) {
         min_dist = dist;
-        data_association.first = y_corridors[i].id;
+        data_association.first = y_infinite_rooms[i].id;
         data_association.second = i;
-        ROS_DEBUG_NAMED("corridor planes", "dist y corr %f", dist);
+        ROS_DEBUG_NAMED("infinite_room planes", "dist y corr %f", dist);
       }
     }
   }
 
-  // ROS_DEBUG_NAMED("corridor planes", "min dist %f", min_dist);
-  if(min_dist > corridor_dist_threshold) data_association.first = -1;
+  // ROS_DEBUG_NAMED("infinite_room planes", "min dist %f", min_dist);
+  if(min_dist > infinite_room_dist_threshold) data_association.first = -1;
 
   return data_association;
 }
 
-double InfiniteRoomMapper::corridor_measurement(const int plane_type, const Eigen::Vector2d& corridor_pose, const Eigen::Vector4d& plane) {
+double InfiniteRoomMapper::infinite_room_measurement(const int plane_type, const Eigen::Vector2d& infinite_room_pose, const Eigen::Vector4d& plane) {
   double meas;
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    if(fabs(corridor_pose(0)) > fabs(plane(3))) {
-      meas = corridor_pose(0) - plane(3);
+    if(fabs(infinite_room_pose(0)) > fabs(plane(3))) {
+      meas = infinite_room_pose(0) - plane(3);
     } else {
-      meas = plane(3) - corridor_pose(0);
+      meas = plane(3) - infinite_room_pose(0);
     }
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    if(fabs(corridor_pose(1)) > fabs(plane(3))) {
-      meas = corridor_pose(1) - plane(3);
+    if(fabs(infinite_room_pose(1)) > fabs(plane(3))) {
+      meas = infinite_room_pose(1) - plane(3);
     } else {
-      meas = plane(3) - corridor_pose(1);
+      meas = plane(3) - infinite_room_pose(1);
     }
   }
 
   return meas;
 }
 
-double InfiniteRoomMapper::corridor_measurement(const int plane_type, const Eigen::Vector2d& corridor_pose, const Eigen::Vector4d& plane1, const Eigen::Vector4d& plane2) {
+double InfiniteRoomMapper::infinite_room_measurement(const int plane_type, const Eigen::Vector2d& infinite_room_pose, const Eigen::Vector4d& plane1, const Eigen::Vector4d& plane2) {
   double meas;
   double plane_diff;
 
@@ -526,7 +526,7 @@ double InfiniteRoomMapper::corridor_measurement(const int plane_type, const Eige
       double size = plane2(3) - plane1(3);
       plane_diff = ((size) / 2) + plane1(3);
     }
-    meas = corridor_pose(0) - plane_diff;
+    meas = infinite_room_pose(0) - plane_diff;
   }
 
   if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
@@ -537,27 +537,27 @@ double InfiniteRoomMapper::corridor_measurement(const int plane_type, const Eige
       double size = plane2(3) - plane1(3);
       plane_diff = ((size) / 2) + plane1(3);
     }
-    meas = corridor_pose(1) - plane_diff;
+    meas = infinite_room_pose(1) - plane_diff;
   }
 
   return meas;
 }
 
-bool InfiniteRoomMapper::check_corridor_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexRoomXYLB* corr_node) {
+bool InfiniteRoomMapper::check_infinite_room_ids(const int plane_type, const std::set<g2o::HyperGraph::Edge*>& plane_edges, const g2o::VertexRoomXYLB* corr_node) {
   for(auto edge_itr = plane_edges.begin(); edge_itr != plane_edges.end(); ++edge_itr) {
     if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-      g2o::EdgeRoom2Planes* edge_corridor_planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
-      if(edge_corridor_planes) {
-        g2o::VertexRoomXYLB* found_corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_planes->vertices()[0]);
-        if(found_corridor_node->id() == corr_node->id()) return true;
+      g2o::EdgeRoom2Planes* edge_infinite_room_planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
+      if(edge_infinite_room_planes) {
+        g2o::VertexRoomXYLB* found_infinite_room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_infinite_room_planes->vertices()[0]);
+        if(found_infinite_room_node->id() == corr_node->id()) return true;
       }
     }
 
     if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-      g2o::EdgeRoom2Planes* edge_corridor_planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
-      if(edge_corridor_planes) {
-        g2o::VertexRoomXYLB* found_corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_planes->vertices()[0]);
-        if(found_corridor_node->id() == corr_node->id()) return true;
+      g2o::EdgeRoom2Planes* edge_infinite_room_planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
+      if(edge_infinite_room_planes) {
+        g2o::VertexRoomXYLB* found_infinite_room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_infinite_room_planes->vertices()[0]);
+        if(found_infinite_room_node->id() == corr_node->id()) return true;
       }
     }
   }
