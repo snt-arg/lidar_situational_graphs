@@ -77,6 +77,14 @@ public:
    * @param hort_planes
    */
   void map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+
+  /**
+   * @brief
+   *
+   * @param keyframe
+   * @param det_plane_body_frame
+   * @return
+   */
   g2o::Plane3D convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame);
 
 private:
@@ -92,15 +100,6 @@ private:
    * @return
    */
   int add_planes_to_graph(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
-
-  /**
-   * @brief
-   *
-   * @param keyframe
-   * @param det_plane_body_frame
-   * @return
-   */
-  g2o::Plane3D convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame);
 
   /**
    * @brief
