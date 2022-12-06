@@ -28,7 +28,7 @@ namespace s_graphs {
  * @var cluster_center_node
  * @var node
  */
-struct Infinite_rooms {
+struct Corridors {
 public:
   int id;
   int connected_id;

@@ -735,7 +735,7 @@ private:
     hort_plane_snapshot = hort_planes_snapshot;
     hort_plane_snapshot_mutex.unlock();
 
-    std::vector<Infinite_rooms> x_corridor_snapshot, y_corridor_snapshot;
+    std::vector<Corridors> x_corridor_snapshot, y_corridor_snapshot;
     corridor_snapshot_mutex.lock();
     x_corridor_snapshot = x_corridors_snapshot;
     y_corridor_snapshot = y_corridors_snapshot;
@@ -1017,7 +1017,7 @@ private:
           /* remove the edge between the corridor and the duplicate found plane */
           /* get corridor id from the vertex */
           g2o::VertexRoomXYLB* corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_xplane->vertices()[0]);
-          auto found_x_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&Infinite_rooms::id, _1) == corridor_node->id());
+          auto found_x_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
 
           if(found_x_corridor == x_corridors.end()) continue;
 
@@ -1130,7 +1130,7 @@ private:
         if(edge_corridor_yplane) {
           /* remove the edge between the corridor and the duplicate found plane */
           g2o::VertexRoomXYLB* corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_yplane->vertices()[0]);
-          auto found_y_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&Infinite_rooms::id, _1) == corridor_node->id());
+          auto found_y_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
           if(found_y_corridor == y_corridors.end()) continue;
 
           if((*found_y_corridor).plane1_id == (*it).first.id) {
@@ -1505,7 +1505,7 @@ private:
   std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes, dupl_y_vert_planes;  // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                                                     // horizontally segmented planes
   int vertex_count;
-  std::vector<Infinite_rooms> x_corridors, y_corridors;  // corridors segmented from planes
+  std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes
   std::vector<Rooms> rooms_vec;                     // rooms segmented from planes
   std::vector<Floors> floors_vec;
 
@@ -1516,7 +1516,7 @@ private:
   std::vector<HorizontalPlanes> hort_planes_snapshot;
 
   std::mutex corridor_snapshot_mutex;
-  std::vector<Infinite_rooms> x_corridors_snapshot, y_corridors_snapshot;
+  std::vector<Corridors> x_corridors_snapshot, y_corridors_snapshot;
 
   std::mutex room_snapshot_mutex;
   std::vector<Rooms> rooms_vec_snapshot;
