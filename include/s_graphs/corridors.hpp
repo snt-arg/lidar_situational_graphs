@@ -26,6 +26,7 @@ public:
   std::vector<int> neighbour_ids;
   g2o::VertexRoomXYLB* cluster_center_node;
   g2o::VertexRoomXYLB* node;  // node instance
+  bool sub_corridor;
 };
 
 }  // namespace s_graphs
