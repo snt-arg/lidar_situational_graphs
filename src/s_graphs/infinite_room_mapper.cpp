@@ -24,7 +24,7 @@ InfiniteRoomMapper::InfiniteRoomMapper(const ros::NodeHandle& private_nh) {
 
 InfiniteRoomMapper::~InfiniteRoomMapper() {}
 
-void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_corridor_candidates, const std::vector<plane_data_list>& y_det_corridor_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
+void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_corridor_candidates, const std::vector<plane_data_list>& y_det_corridor_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors) {
   std::vector<structure_data_list> x_corridor = sort_corridors(PlaneUtils::plane_class::X_VERT_PLANE, x_det_corridor_candidates);
   std::vector<structure_data_list> y_corridor = sort_corridors(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_corridor_candidates);
 
@@ -35,7 +35,7 @@ void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   if(y_corridor_refined.size() == 2) factor_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_corridor_refined[0], y_corridor_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors);
 }
 
-void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, const std::vector<Rooms>& rooms_vec) {
+void InfiniteRoomMapper::lookup_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors, const std::vector<Rooms>& rooms_vec) {
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     // check the distance with the current room vector
     Rooms matched_room;
@@ -194,7 +194,7 @@ std::vector<plane_data_list> InfiniteRoomMapper::refine_corridors(const std::vec
     return corr_refined;
 }
 
-void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
+void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors) {
   g2o::VertexRoomXYLB* corr_node;
   g2o::VertexRoomXYLB* cluster_center_node;
   std::pair<int, int> corr_data_association;
@@ -242,7 +242,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       cluster_center_node = graph_slam->add_room_node(corr_plane1_pair.cluster_center);
       cluster_center_node->setFixed(true);
       // graph_slam->add_room_yprior_edge(corr_node, corr_pose(1), information_corridor_prior);
-      Corridors det_corridor;
+      InfiniteRooms det_corridor;
       det_corridor.id = corr_data_association.first;
       det_corridor.plane1 = corr_plane1_pair.plane_unflipped;
       det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
@@ -300,7 +300,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
       cluster_center_node->setFixed(true);
       // graph_slam->add_room_xprior_edge(corr_node, corr_pose(0), information_corridor_prior);
 
-      Corridors det_corridor;
+      InfiniteRooms det_corridor;
       det_corridor.id = corr_data_association.first;
       det_corridor.plane1 = corr_plane1_pair.plane_unflipped;
       det_corridor.plane2 = corr_plane2_pair.plane_unflipped;
@@ -342,7 +342,7 @@ void InfiniteRoomMapper::factor_corridors(std::unique_ptr<GraphSLAM>& graph_slam
   return;
 }
 
-std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors, std::vector<std::pair<VerticalPlanes, VerticalPlanes>>& detected_mapped_plane_pairs) {
+std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const VerticalPlanes& plane1, const VerticalPlanes& plane2, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const std::vector<InfiniteRooms>& x_corridors, const std::vector<InfiniteRooms>& y_corridors, std::vector<std::pair<VerticalPlanes, VerticalPlanes>>& detected_mapped_plane_pairs) {
   float min_dist = 100;
   bool plane1_min_segment = false, plane2_min_segment = false;
 
@@ -455,7 +455,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_typ
   return data_association;
 }
 
-std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<Corridors>& x_corridors, const std::vector<Corridors>& y_corridors) {
+std::pair<int, int> InfiniteRoomMapper::associate_corridors(const int& plane_type, const Eigen::Vector2d& corr_pose, const std::vector<InfiniteRooms>& x_corridors, const std::vector<InfiniteRooms>& y_corridors) {
   float min_dist = 100;
   std::pair<int, int> data_association;
   data_association.first = -1;

@@ -33,9 +33,9 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   }
 }
 
-void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors, std::vector<Rooms>& rooms_vec) {
   float min_dist_room_x_corr = 100;
-  s_graphs::Corridors matched_x_corridor;
+  s_graphs::InfiniteRooms matched_x_corridor;
   for(const auto& current_x_corridor : x_corridors) {
     if((room_data.x_planes[0].id == current_x_corridor.plane1_id || room_data.x_planes[0].id == current_x_corridor.plane2_id) && (room_data.x_planes[1].id == current_x_corridor.plane1_id || room_data.x_planes[1].id == current_x_corridor.plane2_id)) {
       min_dist_room_x_corr = 0;
@@ -50,7 +50,7 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   }
 
   float min_dist_room_y_corr = 100;
-  s_graphs::Corridors matched_y_corridor;
+  s_graphs::InfiniteRooms matched_y_corridor;
   for(const auto& current_y_corridor : y_corridors) {
     if((room_data.y_planes[0].id == current_y_corridor.plane1_id || room_data.y_planes[0].id == current_y_corridor.plane2_id) && (room_data.y_planes[1].id == current_y_corridor.plane1_id || room_data.y_planes[1].id == current_y_corridor.plane2_id)) {
       min_dist_room_y_corr = 0;
@@ -455,7 +455,7 @@ bool FiniteRoomMapper::check_room_ids(const int plane_type, const std::set<g2o::
   return false;
 }
 
-void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_corridor, const s_graphs::InfiniteRooms& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -485,7 +485,7 @@ void FiniteRoomMapper::map_room_from_existing_corridors(std::unique_ptr<GraphSLA
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_x_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -517,7 +517,7 @@ void FiniteRoomMapper::map_room_from_existing_x_corridor(std::unique_ptr<GraphSL
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::Corridors& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_y_corridor, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -549,7 +549,7 @@ void FiniteRoomMapper::map_room_from_existing_y_corridor(std::unique_ptr<GraphSL
     return;
 }
 
-void FiniteRoomMapper::remove_mapped_corridor(const int plane_type, std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors matched_corridor, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors) {
+void FiniteRoomMapper::remove_mapped_corridor(const int plane_type, std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms matched_corridor, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors) {
   std::set<g2o::HyperGraph::Edge*> edges = matched_corridor.node->edges();
   for(auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
     g2o::EdgeRoom2Planes* edge_room_2planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
@@ -561,13 +561,13 @@ void FiniteRoomMapper::remove_mapped_corridor(const int plane_type, std::unique_
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     if(graph_slam->remove_room_node(matched_corridor.node)) {
-      auto mapped_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&Corridors::id, _1) == matched_corridor.id);
+      auto mapped_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&InfiniteRooms::id, _1) == matched_corridor.id);
       x_corridors.erase(mapped_corridor);
       std::cout << "removed overlapped x-corridor " << std::endl;
     }
   } else if(plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     if(graph_slam->remove_room_node(matched_corridor.node)) {
-      auto mapped_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&Corridors::id, _1) == matched_corridor.id);
+      auto mapped_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&InfiniteRooms::id, _1) == matched_corridor.id);
       y_corridors.erase(mapped_corridor);
       std::cout << "removed overlapped y-corridor " << std::endl;
     }

@@ -23,7 +23,7 @@
 #include <s_graphs/PlanesData.h>
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/planes.hpp>
-#include <s_graphs/corridors.hpp>
+#include <s_graphs/infinite_rooms.hpp>
 #include <s_graphs/rooms.hpp>
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/graph_slam.hpp>
@@ -71,7 +71,7 @@ public:
    * @param y_corridors
    * @param rooms_vec
    */
-  void detect_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec);
+  void detect_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors, std::vector<Rooms>& rooms_vec);
 
   /**
    * @brief Factor the room neighbours between two rooms/corridors
@@ -82,7 +82,7 @@ public:
    * @param y_corridors
    * @param rooms_vec
    */
-  void factor_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<Corridors>& x_corridors, std::vector<Corridors>& y_corridors, std::vector<Rooms>& rooms_vec);
+  void factor_room_neighbours(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomsData& room_msg, std::vector<InfiniteRooms>& x_corridors, std::vector<InfiniteRooms>& y_corridors, std::vector<Rooms>& rooms_vec);
 
 private:
   /**
@@ -148,7 +148,7 @@ private:
    * @param x_corridor
    * @param room_x_corr_meas
    */
-  void factor_room_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::Corridors& x_corridor, double room_x_corr_meas);
+  void factor_room_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::InfiniteRooms& x_corridor, double room_x_corr_meas);
 
   /**
    * @brief factor edges between room and y corridor
@@ -158,7 +158,7 @@ private:
    * @param y_corridor
    * @param room_y_corr_meas
    */
-  void factor_room_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::Corridors& y_corridor, double room_y_corr_meas);
+  void factor_room_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Rooms& room, const s_graphs::InfiniteRooms& y_corridor, double room_y_corr_meas);
 
   /**
    * @brief
@@ -168,7 +168,7 @@ private:
    * @param room
    * @param x_corr_room_meas
    */
-  void factor_x_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor, const s_graphs::Rooms& room, double x_corr_room_meas);
+  void factor_x_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms& x_corridor, const s_graphs::Rooms& room, double x_corr_room_meas);
 
   /**
    * @brief
@@ -178,7 +178,7 @@ private:
    * @param x_corridor2
    * @param x_corr_x_corr_meas
    */
-  void factor_x_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor1, const s_graphs::Corridors& x_corridor2, double x_corr_x_corr_meas);
+  void factor_x_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms& x_corridor1, const s_graphs::InfiniteRooms& x_corridor2, double x_corr_x_corr_meas);
 
   /**
    * @brief
@@ -187,7 +187,7 @@ private:
    * @param x_corridor
    * @param y_corridor
    */
-  void factor_x_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& x_corridor, const s_graphs::Corridors& y_corridor);
+  void factor_x_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms& x_corridor, const s_graphs::InfiniteRooms& y_corridor);
 
   /**
    * @brief
@@ -197,7 +197,7 @@ private:
    * @param room
    * @param y_corr_room_meas
    */
-  void factor_y_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor, const s_graphs::Rooms& room, double y_corr_room_meas);
+  void factor_y_corridor_room_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms& y_corridor, const s_graphs::Rooms& room, double y_corr_room_meas);
 
   /**
    * @brief
@@ -206,7 +206,7 @@ private:
    * @param y_corridor
    * @param x_corridor
    */
-  void factor_y_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor, const s_graphs::Corridors& x_corridor);
+  void factor_y_corridor_x_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms& y_corridor, const s_graphs::InfiniteRooms& x_corridor);
 
   /**
    * @brief
@@ -216,7 +216,7 @@ private:
    * @param y_corridor2
    * @param y_corr_y_corr_meas
    */
-  void factor_y_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::Corridors& y_corridor1, const s_graphs::Corridors& y_corridor2, double y_corr_y_corr_meas);
+  void factor_y_corridor_y_corridor_constraints(std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms& y_corridor1, const s_graphs::InfiniteRooms& y_corridor2, double y_corr_y_corr_meas);
 };
 
 }  // namespace s_graphs

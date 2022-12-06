@@ -1,5 +1,5 @@
-#ifndef CORRIDORS_HPP
-#define CORRIDORS_HPP
+#ifndef INFINITE_ROOMS_HPP
+#define INFINITE_ROOMS_HPP
 
 #include <Eigen/Eigen>
 #include <g2o/types/slam3d_addons/plane3d.h>
@@ -28,7 +28,7 @@ namespace s_graphs {
  * @var cluster_center_node
  * @var node
  */
-struct Corridors {
+struct InfiniteRooms {
 public:
   int id;
   int connected_id;
@@ -42,4 +42,4 @@ public:
 };
 
 }  // namespace s_graphs
-#endif  // CORRIDORS_HPP
+#endif  // INFINITE_ROOMS_HPP

@@ -27,7 +27,7 @@
 #include <s_graphs/PlanesData.h>
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/planes.hpp>
-#include <s_graphs/corridors.hpp>
+#include <s_graphs/infinite_rooms.hpp>
 #include <s_graphs/rooms.hpp>
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/graph_slam.hpp>
