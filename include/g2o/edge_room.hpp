@@ -253,7 +253,7 @@ public:
       vec = (0.5 * (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3))) + fabs(plane1(3)) * plane1.head(3);
     }
 
-    Eigen::Vector2d vec_normal = vec.head(2) / vec.norm();
+    Eigen::Vector2d vec_normal = vec.head(2) / vec.head(2).norm();
     Eigen::Vector2d final_pose_vec = vec.head(2) + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
 
     _error = room_pose - final_pose_vec;

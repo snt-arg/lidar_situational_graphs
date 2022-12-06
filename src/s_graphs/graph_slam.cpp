@@ -25,7 +25,7 @@
 #include <g2o/edge_se3_priorquat.hpp>
 #include <g2o/edge_plane_prior.hpp>
 #include <g2o/edge_plane_identity.hpp>
-#include <g2o/edge_plane_parallel.hpp>
+#include <g2o/edge_plane.hpp>
 #include <g2o/robust_kernel_io.hpp>
 #include <g2o/edge_corridor_plane.hpp>
 #include <g2o/edge_room.hpp>
@@ -46,6 +46,7 @@ G2O_REGISTER_TYPE(EDGE_PLANE_PRIOR_DISTANCE, EdgePlanePriorDistance)
 G2O_REGISTER_TYPE(EDGE_PLANE_IDENTITY, EdgePlaneIdentity)
 G2O_REGISTER_TYPE(EDGE_PLANE_PARALLEL, EdgePlaneParallel)
 G2O_REGISTER_TYPE(EDGE_PLANE_PAERPENDICULAR, EdgePlanePerpendicular)
+G2O_REGISTER_TYPE(EDGE_2PLANES, Edge2Planes)
 G2O_REGISTER_TYPE(EDGE_SE3_CORRIDOR, EdgeSE3Corridor)
 G2O_REGISTER_TYPE(EDGE_CORRIDOR_XPLANE, EdgeCorridorXPlane)
 G2O_REGISTER_TYPE(EDGE_CORRIDOR_YPLANE, EdgeCorridorYPlane)
@@ -171,6 +172,12 @@ g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs,
 
 bool GraphSLAM::remove_plane_node(g2o::VertexPlane* plane_vertex) {
   bool ack = graph->removeVertex(plane_vertex);
+
+  return ack;
+}
+
+bool GraphSLAM::remove_room_node(g2o::VertexRoomXYLB* room_vertex) {
+  bool ack = graph->removeVertex(room_vertex);
 
   return ack;
 }
@@ -379,6 +386,16 @@ g2o::EdgePlanePerpendicular* GraphSLAM::add_plane_perpendicular_edge(g2o::Vertex
   return edge;
 }
 
+g2o::Edge2Planes* GraphSLAM::add_2planes_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::MatrixXd& information) {
+  g2o::Edge2Planes* edge(new g2o::Edge2Planes());
+  edge->setInformation(information);
+  edge->vertices()[0] = v_plane1;
+  edge->vertices()[1] = v_plane2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgeSE3Corridor* GraphSLAM::add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const double& measurement, const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Corridor* edge(new g2o::EdgeSE3Corridor());
   edge->setMeasurement(measurement);
@@ -456,6 +473,12 @@ g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(g2o::VertexRoomXYLB* v_ro
   graph->addEdge(edge);
 
   return edge;
+}
+
+bool GraphSLAM::remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge) {
+  bool ack = graph->removeEdge(room_plane_edge);
+
+  return ack;
 }
 
 g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_xplane1, g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1, g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information) {
@@ -607,19 +630,23 @@ int GraphSLAM::optimize(int num_iterations) {
   graph->initializeOptimization();
   graph->setVerbose(true);
 
-  std::cout << "chi2" << std::endl;
   double chi2 = graph->chi2();
-
-  if(std::isnan(chi2) || std::isinf(chi2)) std::cout << "\033[1;31mbold GRAPH RETURNED A NAN/INF RE-RUN THE EXPERIMENT \033[0m\n" << std::endl;
+  if(std::isnan(graph->chi2())) {
+    std::cout << "GRAPH RETURNED A NAN WAITING AFTER OPTIMIZATION" << std::endl;
+  }
 
   std::cout << "optimize!!" << std::endl;
-  auto t1 = ros::WallTime::now();
+  auto t1 = ros::Time::now();
   int iterations = graph->optimize(num_iterations);
-  auto t2 = ros::WallTime::now();
+  auto t2 = ros::Time::now();
   std::cout << "done" << std::endl;
   std::cout << "iterations: " << iterations << " / " << num_iterations << std::endl;
   std::cout << "chi2: (before)" << chi2 << " -> (after)" << graph->chi2() << std::endl;
   std::cout << "time: " << boost::format("%.3f") % (t2 - t1).toSec() << "[sec]" << std::endl;
+
+  if(std::isnan(graph->chi2())) {
+    throw std::invalid_argument("GRAPH RETURNED A NAN...STOPPING THE EXPERIMENT");
+  }
 
   return iterations;
 }

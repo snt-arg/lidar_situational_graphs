@@ -44,7 +44,7 @@
 #include <g2o/edge_se3_priorquat.hpp>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_point_to_plane.hpp>
-#include <g2o/edge_plane_parallel.hpp>
+#include <g2o/edge_plane.hpp>
 #include <g2o/edge_corridor_plane.hpp>
 #include <g2o/edge_room.hpp>
 
@@ -77,6 +77,7 @@ public:
    * @param hort_planes
    */
   void map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+  g2o::Plane3D convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame);
 
 private:
   /**

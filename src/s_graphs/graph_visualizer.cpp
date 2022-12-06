@@ -345,7 +345,13 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   float corridor_edge_h = 21.5;
   float corridor_point_h = plane_h;
 
+  for(auto& single_x_corridor : x_corridor_snapshot) {
+    single_x_corridor.sub_corridor = false;
+  }
+
   for(int i = 0; i < x_corridor_snapshot.size(); ++i) {
+    if(x_corridor_snapshot[i].sub_corridor) continue;
+
     bool overlapped_corridor = false;
     float dist_room_x_corr = 100;
     for(const auto& room : room_snapshot) {
@@ -356,6 +362,17 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       dist_room_x_corr = sqrt(pow(room.node->estimate()(0) - x_corridor_snapshot[i].node->estimate()(0), 2) + pow(room.node->estimate()(1) - x_corridor_snapshot[i].node->estimate()(1), 2));
       if(dist_room_x_corr < 1.0) {
         overlapped_corridor = true;
+        break;
+      }
+    }
+
+    float dist_x_corr = 100;
+    for(auto& current_x_corridor : x_corridor_snapshot) {
+      if(current_x_corridor.id == x_corridor_snapshot[i].id) continue;
+
+      dist_x_corr = sqrt(pow(current_x_corridor.node->estimate()(0) - x_corridor_snapshot[i].node->estimate()(0), 2) + pow(current_x_corridor.node->estimate()(1) - x_corridor_snapshot[i].node->estimate()(1), 2));
+      if(dist_x_corr < 2.0) {
+        current_x_corridor.sub_corridor = true;
         break;
       }
     }
@@ -448,7 +465,13 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       corridor_pose_marker.ns = "overlapped_x_corridor";
   }
 
+  for(auto& single_y_corridor : y_corridor_snapshot) {
+    single_y_corridor.sub_corridor = false;
+  }
+
   for(int i = 0; i < y_corridor_snapshot.size(); ++i) {
+    if(y_corridor_snapshot[i].sub_corridor) continue;
+
     bool overlapped_corridor = false;
     float dist_room_y_corr = 100;
     for(const auto& room : room_snapshot) {
@@ -459,6 +482,16 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       dist_room_y_corr = sqrt(pow(room.node->estimate()(0) - y_corridor_snapshot[i].node->estimate()(0), 2) + pow(room.node->estimate()(1) - y_corridor_snapshot[i].node->estimate()(1), 2));
       if(dist_room_y_corr < 1.0) {
         overlapped_corridor = true;
+        break;
+      }
+    }
+
+    float dist_y_corr = 100;
+    for(auto& current_y_corridor : y_corridor_snapshot) {
+      if(current_y_corridor.id == y_corridor_snapshot[i].id) continue;
+      dist_y_corr = sqrt(pow(current_y_corridor.node->estimate()(0) - y_corridor_snapshot[i].node->estimate()(0), 2) + pow(current_y_corridor.node->estimate()(1) - y_corridor_snapshot[i].node->estimate()(1), 2));
+      if(dist_y_corr < 2.0) {
+        current_y_corridor.sub_corridor = true;
         break;
       }
     }
@@ -580,10 +613,10 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   for(int i = 0; i < room_snapshot.size(); ++i) {
     if(room_snapshot[i].sub_room) continue;
 
-    for(auto room : room_snapshot) {
+    for(auto& room : room_snapshot) {
       if(room.id == room_snapshot[i].id) continue;
       float dist_room_room = sqrt(pow(room.node->estimate()(0) - room_snapshot[i].node->estimate()(0), 2) + pow(room.node->estimate()(1) - room_snapshot[i].node->estimate()(1), 2));
-      if(dist_room_room < 1.0 && room.sub_room == false) {
+      if(dist_room_room < 2.0 && room.sub_room == false) {
         room.sub_room = true;
       }
     }
@@ -897,6 +930,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       floor_line_marker.lifetime = ros::Duration(10.0);
 
       for(const auto& room : room_snapshot) {
+        if(room.sub_room) continue;
         geometry_msgs::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
@@ -908,7 +942,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
         floor_line_marker.points.push_back(p2);
       }
       for(const auto& x_corridor : x_corridor_snapshot) {
-        if(x_corridor.id == -1) continue;
+        if(x_corridor.id == -1 || x_corridor.sub_corridor) continue;
         geometry_msgs::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
@@ -920,7 +954,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
         floor_line_marker.points.push_back(p2);
       }
       for(const auto& y_corridor : y_corridor_snapshot) {
-        if(y_corridor.id == -1) continue;
+        if(y_corridor.id == -1 || y_corridor.sub_corridor) continue;
         geometry_msgs::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;

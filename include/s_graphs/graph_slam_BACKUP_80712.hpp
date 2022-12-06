@@ -132,13 +132,24 @@ public:
   g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs, const int id);
 
   /**
+<<<<<<< HEAD
+   * @brief Remove a plane node from the graph
+   *
+   * @param plane id
+   * @return Success or failure
+=======
    * @brief remove a plane node from the graph
    * @param plane vertex
    * @return success or failure
+>>>>>>> main
    */
   bool remove_plane_node(g2o::VertexPlane* plane_vertex);
 
   /**
+<<<<<<< HEAD
+   * @brief Add a point_xyz node to the graph
+   *
+=======
    * @brief remove a room node from the graph
    * @param room vertex
    * @return success or failure
@@ -147,6 +158,7 @@ public:
 
   /**
    * @brief add a point_xyz node to the graph
+>>>>>>> main
    * @param xyz
    * @return Registered node
    */
@@ -342,8 +354,7 @@ public:
    */
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
-  g2o::Edge2Planes* add_2planes_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::MatrixXd& information);
-
+<<<<<<< HEAD
   /**
    * @brief
    *
@@ -353,6 +364,10 @@ public:
    * @param information
    * @return registered edge
    */
+=======
+  g2o::Edge2Planes* add_2planes_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::MatrixXd& information);
+
+>>>>>>> main
   g2o::EdgeSE3Corridor* add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const double& measurement, const Eigen::MatrixXd& information);
 
   /**
@@ -427,8 +442,7 @@ public:
    */
   g2o::EdgeRoom2Planes* add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, g2o::VertexRoomXYLB* v_cluster_center, const Eigen::MatrixXd& information);
 
-  bool remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge);
-
+<<<<<<< HEAD
   /**
    * @brief
    *
@@ -440,6 +454,10 @@ public:
    * @param information
    * @return registered edge
    */
+=======
+  bool remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge);
+
+>>>>>>> main
   g2o::EdgeRoom4Planes* add_room_4planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_xplane1, g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1, g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information);
 
   /**

@@ -42,7 +42,6 @@ class EdgeRoomYCorridor;
 class EdgeXCorridorXCorridor;
 class EdgeYCorridorYCorridor;
 class EdgePlanePerpendicular;
-class Edge2Planes;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class RobustKernelFactory;
@@ -132,21 +131,16 @@ public:
   g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs, const int id);
 
   /**
-   * @brief remove a plane node from the graph
-   * @param plane vertex
-   * @return success or failure
+   * @brief Remove a plane node from the graph
+   *
+   * @param plane id
+   * @return Success or failure
    */
   bool remove_plane_node(g2o::VertexPlane* plane_vertex);
 
   /**
-   * @brief remove a room node from the graph
-   * @param room vertex
-   * @return success or failure
-   */
-  bool remove_room_node(g2o::VertexRoomXYLB* room_vertex);
-
-  /**
-   * @brief add a point_xyz node to the graph
+   * @brief Add a point_xyz node to the graph
+   *
    * @param xyz
    * @return Registered node
    */
@@ -342,8 +336,6 @@ public:
    */
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
-  g2o::Edge2Planes* add_2planes_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::MatrixXd& information);
-
   /**
    * @brief
    *
@@ -426,8 +418,6 @@ public:
    * @return registered edge
    */
   g2o::EdgeRoom2Planes* add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, g2o::VertexRoomXYLB* v_cluster_center, const Eigen::MatrixXd& information);
-
-  bool remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge);
 
   /**
    * @brief

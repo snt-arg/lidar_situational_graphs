@@ -187,7 +187,6 @@ install(
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-
 catkin_install_python(
   PROGRAMS
     src/${PROJECT_NAME}/bag_player.py
@@ -195,3 +194,9 @@ catkin_install_python(
     src/${PROJECT_NAME}/map2odom_publisher.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
+
+if(CATKIN_ENABLE_TESTING)
+  catkin_add_gtest(SGraphsUnitTest test/testPlane.cpp)
+  target_link_libraries(SGraphsUnitTest s_graphs_nodelet)
+endif()
+
