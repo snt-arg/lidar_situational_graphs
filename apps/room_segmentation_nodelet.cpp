@@ -154,9 +154,9 @@ private:
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->get_cloud_clusters();
-    std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->get_connected_graph();
-    visualization_msgs::MarkerArray skeleton_marker_array = room_analyzer->get_makerarray_clusters();
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->extract_cloud_clusters();
+    std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->extract_connected_graph();
+    visualization_msgs::MarkerArray skeleton_marker_array = room_analyzer->extract_marker_array_clusters();
 
     int cluster_id = 0;
     for(const auto& cloud_cluster : curr_cloud_clusters) {
@@ -165,7 +165,7 @@ private:
       if(cloud_cluster->points.size() < 10) continue;
 
       float hull_area;
-      room_analyzer->get_convex_hull(cloud_cluster, cloud_hull, hull_area);
+      room_analyzer->extract_convex_hull(cloud_cluster, cloud_hull, hull_area);
       if(hull_area < 1.5) {
         // std::cout << "subgraph area too small to be a room " << std::endl;
         continue;

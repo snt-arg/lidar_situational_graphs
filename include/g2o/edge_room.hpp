@@ -33,7 +33,7 @@
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include "g2o/vertex_room.hpp"
-#include "g2o/vertex_corridor.hpp"
+#include "g2o/vertex_infinite_room.hpp"
 namespace g2o {
 
 class EdgeSE3Room : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB> {
@@ -433,14 +433,14 @@ public:
   }
 };
 
-class EdgeRoomXCorridor : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexCorridor> {
+class EdgeRoomXInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXCorridor() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexCorridor>() {}
+  EdgeRoomXInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
-    const VertexCorridor* v2 = static_cast<const g2o::VertexCorridor*>(_vertices[1]);
+    const VertexInfiniteRoom* v2 = static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
 
     double est;
     est = pow(v1->estimate()(0) - v2->estimate(), 2);
@@ -480,14 +480,14 @@ public:
   }
 };
 
-class EdgeRoomYCorridor : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexCorridor> {
+class EdgeRoomYInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomYCorridor() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexCorridor>() {}
+  EdgeRoomYInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
-    const VertexCorridor* v2 = static_cast<const g2o::VertexCorridor*>(_vertices[1]);
+    const VertexInfiniteRoom* v2 = static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
 
     double est;
     est = pow(v1->estimate()(1) - v2->estimate(), 2);

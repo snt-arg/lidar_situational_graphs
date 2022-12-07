@@ -60,7 +60,7 @@
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/keyframe.hpp>
 #include <s_graphs/planes.hpp>
-#include <s_graphs/corridors.hpp>
+#include <s_graphs/infinite_rooms.hpp>
 #include <s_graphs/rooms.hpp>
 #include <s_graphs/floors.hpp>
 #include <s_graphs/keyframe_updater.hpp>
@@ -78,7 +78,7 @@
 #include <s_graphs/keyframe_mapper.hpp>
 
 #include <g2o/vertex_room.hpp>
-#include <g2o/vertex_corridor.hpp>
+#include <g2o/vertex_infinite_room.hpp>
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/edge_se3_plane.hpp>
@@ -89,7 +89,7 @@
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_plane.hpp>
-#include <g2o/edge_corridor_plane.hpp>
+#include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_room.hpp>
 
 namespace s_graphs {
@@ -156,14 +156,14 @@ public:
     use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", false);
     use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", false);
 
-    corridor_information = private_nh.param<double>("corridor_information", 0.01);
-    corridor_dist_threshold = private_nh.param<double>("corridor_dist_threshold", 1.0);
-    corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
-    corridor_min_width = private_nh.param<double>("corridor_min_width", 1.5);
-    corridor_max_width = private_nh.param<double>("corridor_max_width", 2.5);
-    corridor_plane_length_diff_threshold = private_nh.param<double>("corridor_plane_length_diff_threshold", 0.3);
-    corridor_point_diff_threshold = private_nh.param<double>("corridor_point_diff_threshold", 3.0);
-    corridor_min_seg_dist = private_nh.param<double>("corridor_min_seg_dist", 1.5);
+    infinite_room_information = private_nh.param<double>("infinite_room_information", 0.01);
+    infinite_room_dist_threshold = private_nh.param<double>("infinite_room_dist_threshold", 1.0);
+    infinite_room_min_plane_length = private_nh.param<double>("infinite_room_min_plane_length", 10);
+    infinite_room_min_width = private_nh.param<double>("infinite_room_min_width", 1.5);
+    infinite_room_max_width = private_nh.param<double>("infinite_room_max_width", 2.5);
+    infinite_room_plane_length_diff_threshold = private_nh.param<double>("infinite_room_plane_length_diff_threshold", 0.3);
+    infinite_room_point_diff_threshold = private_nh.param<double>("infinite_room_point_diff_threshold", 3.0);
+    infinite_room_min_seg_dist = private_nh.param<double>("infinite_room_min_seg_dist", 1.5);
 
     room_information = private_nh.param<double>("room_information", 0.01);
     room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
@@ -279,7 +279,7 @@ private:
       return;
     }
     for(const auto& floor_data_msg : floor_data_queue) {
-      floor_mapper->lookup_floors(graph_slam, floor_data_msg, floors_vec, rooms_vec, x_corridors, y_corridors);
+      floor_mapper->lookup_floors(graph_slam, floor_data_msg, floors_vec, rooms_vec, x_infinite_rooms, y_infinite_rooms);
 
       floor_data_queue.pop_front();
     }
@@ -312,15 +312,15 @@ private:
         // float dist_robot_room = sqrt(pow(room_data.room_center.x - latest_keyframe->node->estimate().matrix()(0,3),2) + pow(room_data.room_center.y - latest_keyframe->node->estimate().matrix()(1,3),2));
         // std::cout << "dist robot room: " << dist_robot_room << std::endl;
         if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
-          finite_room_mapper->lookup_rooms(graph_slam, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors, rooms_vec);
+          finite_room_mapper->lookup_rooms(graph_slam, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms, rooms_vec);
         }
-        // x corridor
+        // x infinite_room
         else if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
-          inf_room_mapper->lookup_corridors(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors, rooms_vec);
+          inf_room_mapper->lookup_infinite_rooms(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms, rooms_vec);
         }
-        // y corridor
+        // y infinite_room
         else if(room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
-          inf_room_mapper->lookup_corridors(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_corridors, y_corridors, rooms_vec);
+          inf_room_mapper->lookup_infinite_rooms(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms, rooms_vec);
         }
       }
 
@@ -350,8 +350,8 @@ private:
     }
 
     for(const auto& room_data_msg : all_room_data_queue) {
-      // neighbour_mapper->detect_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
-      // neighbour_mapper->factor_room_neighbours(graph_slam, room_data_msg, x_corridors, y_corridors, rooms_vec);
+      // neighbour_mapper->detect_room_neighbours(graph_slam, room_data_msg, x_infinite_rooms, y_infinite_rooms, rooms_vec);
+      // neighbour_mapper->factor_room_neighbours(graph_slam, room_data_msg, x_infinite_rooms, y_infinite_rooms, rooms_vec);
 
       all_room_data_queue.pop_front();
     }
@@ -416,7 +416,7 @@ private:
     for(int i = 0; i < new_keyframes.size(); i++) {
       // perform planar segmentation
       if(extract_planar_surfaces) {
-        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->get_segmented_planes(new_keyframes[i]->cloud);
+        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
         plane_mapper->map_extracted_planes(graph_slam, new_keyframes[i], extracted_cloud_vec, x_vert_planes, y_vert_planes, hort_planes);
       }
     }
@@ -735,18 +735,18 @@ private:
     hort_plane_snapshot = hort_planes_snapshot;
     hort_plane_snapshot_mutex.unlock();
 
-    std::vector<Corridors> x_corridor_snapshot, y_corridor_snapshot;
-    corridor_snapshot_mutex.lock();
-    x_corridor_snapshot = x_corridors_snapshot;
-    y_corridor_snapshot = y_corridors_snapshot;
-    corridor_snapshot_mutex.unlock();
+    std::vector<InfiniteRooms> x_infinite_room_snapshot, y_infinite_room_snapshot;
+    infinite_room_snapshot_mutex.lock();
+    x_infinite_room_snapshot = x_infinite_rooms_snapshot;
+    y_infinite_room_snapshot = y_infinite_rooms_snapshot;
+    infinite_room_snapshot_mutex.unlock();
 
     std::vector<Rooms> room_snapshot;
     room_snapshot_mutex.lock();
     room_snapshot = rooms_vec_snapshot;
     room_snapshot_mutex.unlock();
 
-    auto markers = graph_visualizer->create_marker_array(ros::Time::now(), local_graph, x_plane_snapshot, y_plane_snapshot, hort_plane_snapshot, x_corridor_snapshot, y_corridor_snapshot, room_snapshot, loop_detector->get_distance_thresh() * 2.0, keyframes, floors_vec);
+    auto markers = graph_visualizer->create_marker_array(ros::Time::now(), local_graph, x_plane_snapshot, y_plane_snapshot, hort_plane_snapshot, x_infinite_room_snapshot, y_infinite_room_snapshot, room_snapshot, loop_detector->get_distance_thresh() * 2.0, keyframes, floors_vec);
     markers_pub.publish(markers);
 
     publish_all_mapped_planes(x_plane_snapshot, y_plane_snapshot);
@@ -827,10 +827,10 @@ private:
     hort_planes_snapshot = hort_planes;
     hort_plane_snapshot_mutex.unlock();
 
-    corridor_snapshot_mutex.lock();
-    x_corridors_snapshot = x_corridors;
-    y_corridors_snapshot = y_corridors;
-    corridor_snapshot_mutex.unlock();
+    infinite_room_snapshot_mutex.lock();
+    x_infinite_rooms_snapshot = x_infinite_rooms;
+    y_infinite_rooms_snapshot = y_infinite_rooms;
+    infinite_room_snapshot_mutex.unlock();
 
     room_snapshot_mutex.lock();
     rooms_vec_snapshot = rooms_vec;
@@ -980,7 +980,7 @@ private:
   }
 
   /**
-   * @brief merge all the duplicate x and y planes detected by room/corridors
+   * @brief merge all the duplicate x and y planes detected by room/infinite_rooms
    */
   void merge_duplicate_planes() {
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>> curr_dupl_x_vert_planes;
@@ -1016,35 +1016,35 @@ private:
           continue;
         }
 
-        g2o::EdgeRoomXPlane* edge_corridor_xplane = dynamic_cast<g2o::EdgeRoomXPlane*>(*edge_itr);
-        if(edge_corridor_xplane) {
-          /* remove the edge between the corridor and the duplicate found plane */
-          /* get corridor id from the vertex */
-          g2o::VertexRoomXYLB* corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_xplane->vertices()[0]);
-          auto found_x_corridor = std::find_if(x_corridors.begin(), x_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
+        g2o::EdgeRoomXPlane* edge_infinite_room_xplane = dynamic_cast<g2o::EdgeRoomXPlane*>(*edge_itr);
+        if(edge_infinite_room_xplane) {
+          /* remove the edge between the infinite_room and the duplicate found plane */
+          /* get infinite_room id from the vertex */
+          g2o::VertexRoomXYLB* infinite_room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_infinite_room_xplane->vertices()[0]);
+          auto found_x_infinite_room = std::find_if(x_infinite_rooms.begin(), x_infinite_rooms.end(), boost::bind(&InfiniteRooms::id, _1) == infinite_room_node->id());
 
-          if(found_x_corridor == x_corridors.end()) continue;
+          if(found_x_infinite_room == x_infinite_rooms.end()) continue;
 
-          /* if any of the mapped plane_id of the corridor equal to dupl plane id replace it */
-          if((*found_x_corridor).plane1_id == (*it).first.id) {
-            (*found_x_corridor).plane1_id = (*it).second.id;
-            (*found_x_corridor).plane1 = (*it).second.plane;
-          } else if((*found_x_corridor).plane2_id == (*it).first.id) {
-            (*found_x_corridor).plane2_id = (*it).second.id;
-            (*found_x_corridor).plane2 = (*it).second.plane;
+          /* if any of the mapped plane_id of the infinite_room equal to dupl plane id replace it */
+          if((*found_x_infinite_room).plane1_id == (*it).first.id) {
+            (*found_x_infinite_room).plane1_id = (*it).second.id;
+            (*found_x_infinite_room).plane1 = (*it).second.plane;
+          } else if((*found_x_infinite_room).plane2_id == (*it).first.id) {
+            (*found_x_infinite_room).plane2_id = (*it).second.id;
+            (*found_x_infinite_room).plane2 = (*it).second.plane;
           }
-          /* Add edge between corridor and current mapped plane */
+          /* Add edge between infinite_room and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
-          double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::X_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
-          Eigen::Matrix<double, 1, 1> information_corridor_plane;
-          information_corridor_plane(0, 0) = corridor_information;
-          // information_corridor_plane(1, 1) = corridor_information;
+          double meas_plane1 = inf_room_mapper->infinite_room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, infinite_room_node->estimate(), found_mapped_plane1_coeffs);
+          Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
+          information_infinite_room_plane(0, 0) = infinite_room_information;
+          // information_infinite_room_plane(1, 1) = infinite_room_information;
 
-          auto edge_plane = graph_slam->add_room_xplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
+          auto edge_plane = graph_slam->add_room_xplane_edge(infinite_room_node, (*it).second.plane_node, meas_plane1, information_infinite_room_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
 
-          if(graph_slam->remove_room_xplane_edge(edge_corridor_xplane)) std::cout << "removed edge - corridor xplane " << std::endl;
+          if(graph_slam->remove_room_xplane_edge(edge_infinite_room_xplane)) std::cout << "removed edge - infinite_room xplane " << std::endl;
           continue;
         }
         /* TODO: analyze if connecting room node with (*it).second.plane is necessary  */
@@ -1130,33 +1130,33 @@ private:
           if(graph_slam->remove_se3_plane_edge(edge_se3_plane)) std::cout << "remove edge - pose se3 yplane " << std::endl;
           continue;
         }
-        g2o::EdgeRoomYPlane* edge_corridor_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
-        if(edge_corridor_yplane) {
-          /* remove the edge between the corridor and the duplicate found plane */
-          g2o::VertexRoomXYLB* corridor_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_corridor_yplane->vertices()[0]);
-          auto found_y_corridor = std::find_if(y_corridors.begin(), y_corridors.end(), boost::bind(&Corridors::id, _1) == corridor_node->id());
-          if(found_y_corridor == y_corridors.end()) continue;
+        g2o::EdgeRoomYPlane* edge_infinite_room_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
+        if(edge_infinite_room_yplane) {
+          /* remove the edge between the infinite_room and the duplicate found plane */
+          g2o::VertexRoomXYLB* infinite_room_node = dynamic_cast<g2o::VertexRoomXYLB*>(edge_infinite_room_yplane->vertices()[0]);
+          auto found_y_infinite_room = std::find_if(y_infinite_rooms.begin(), y_infinite_rooms.end(), boost::bind(&InfiniteRooms::id, _1) == infinite_room_node->id());
+          if(found_y_infinite_room == y_infinite_rooms.end()) continue;
 
-          if((*found_y_corridor).plane1_id == (*it).first.id) {
-            (*found_y_corridor).plane1_id = (*it).second.id;
-            (*found_y_corridor).plane1 = (*it).second.plane;
-          } else if((*found_y_corridor).plane2_id == (*it).first.id) {
-            (*found_y_corridor).plane2_id = (*it).second.id;
-            (*found_y_corridor).plane2 = (*it).second.plane;
+          if((*found_y_infinite_room).plane1_id == (*it).first.id) {
+            (*found_y_infinite_room).plane1_id = (*it).second.id;
+            (*found_y_infinite_room).plane1 = (*it).second.plane;
+          } else if((*found_y_infinite_room).plane2_id == (*it).first.id) {
+            (*found_y_infinite_room).plane2_id = (*it).second.id;
+            (*found_y_infinite_room).plane2 = (*it).second.plane;
           }
 
-          /* Add edge between corridor and current mapped plane */
+          /* Add edge between infinite_room and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
           plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
-          double meas_plane1 = inf_room_mapper->corridor_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, corridor_node->estimate(), found_mapped_plane1_coeffs);
-          Eigen::Matrix<double, 1, 1> information_corridor_plane;
-          information_corridor_plane(0, 0) = corridor_information;
-          // information_corridor_plane(1, 1) = corridor_information;
+          double meas_plane1 = inf_room_mapper->infinite_room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, infinite_room_node->estimate(), found_mapped_plane1_coeffs);
+          Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
+          information_infinite_room_plane(0, 0) = infinite_room_information;
+          // information_infinite_room_plane(1, 1) = infinite_room_information;
 
-          auto edge_plane = graph_slam->add_room_yplane_edge(corridor_node, (*it).second.plane_node, meas_plane1, information_corridor_plane);
+          auto edge_plane = graph_slam->add_room_yplane_edge(infinite_room_node, (*it).second.plane_node, meas_plane1, information_infinite_room_plane);
           graph_slam->add_robust_kernel(edge_plane, "Huber", 1.0);
 
-          if(graph_slam->remove_room_yplane_edge(edge_corridor_yplane)) std::cout << "removed edge - corridor yplane " << std::endl;
+          if(graph_slam->remove_room_yplane_edge(edge_infinite_room_yplane)) std::cout << "removed edge - infinite_room yplane " << std::endl;
           continue;
         }
         g2o::EdgeRoomYPlane* edge_room_yplane = dynamic_cast<g2o::EdgeRoomYPlane*>(*edge_itr);
@@ -1496,10 +1496,10 @@ private:
   double min_plane_points;
   bool use_point_to_plane;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
-  double corridor_information;
-  double corridor_dist_threshold, corridor_min_plane_length, corridor_min_width, corridor_max_width;
-  double corridor_plane_length_diff_threshold, corridor_point_diff_threshold;
-  double corridor_min_seg_dist;
+  double infinite_room_information;
+  double infinite_room_dist_threshold, infinite_room_min_plane_length, infinite_room_min_width, infinite_room_max_width;
+  double infinite_room_plane_length_diff_threshold, infinite_room_point_diff_threshold;
+  double infinite_room_min_seg_dist;
   double room_information;
   double room_plane_length_diff_threshold, room_point_diff_threshold;
   double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width, room_max_width;
@@ -1509,7 +1509,7 @@ private:
   std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes, dupl_y_vert_planes;  // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                                                     // horizontally segmented planes
   int vertex_count;
-  std::vector<Corridors> x_corridors, y_corridors;  // corridors segmented from planes
+  std::vector<InfiniteRooms> x_infinite_rooms, y_infinite_rooms;  // infinite_rooms segmented from planes
   std::vector<Rooms> rooms_vec;                     // rooms segmented from planes
   std::vector<Floors> floors_vec;
 
@@ -1519,8 +1519,8 @@ private:
   std::mutex hort_plane_snapshot_mutex;
   std::vector<HorizontalPlanes> hort_planes_snapshot;
 
-  std::mutex corridor_snapshot_mutex;
-  std::vector<Corridors> x_corridors_snapshot, y_corridors_snapshot;
+  std::mutex infinite_room_snapshot_mutex;
+  std::vector<InfiniteRooms> x_infinite_rooms_snapshot, y_infinite_rooms_snapshot;
 
   std::mutex room_snapshot_mutex;
   std::vector<Rooms> rooms_vec_snapshot;

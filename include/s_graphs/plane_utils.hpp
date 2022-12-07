@@ -18,6 +18,9 @@
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 struct plane_data_list {
   plane_data_list() : plane_centroid(0, 0, 0), connected_id(-1) {
     connected_neighbour_ids.clear();
@@ -34,6 +37,12 @@ struct plane_data_list {
   Eigen::Vector2d cluster_center;
 };
 
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 struct structure_data_list {
   plane_data_list plane1;
   plane_data_list plane2;
@@ -42,6 +51,9 @@ struct structure_data_list {
   float avg_point_diff;
 };
 
+/**
+ * @brief
+ */
 class PlaneUtils {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
@@ -56,6 +68,12 @@ public:
     HORT_PLANE = 2,
   };
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   inline float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
     Eigen::Vector3d vec;
     float size = 0;
@@ -70,6 +88,12 @@ public:
     return size;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   inline float width_between_planes(s_graphs::PlaneData& plane1, s_graphs::PlaneData& plane2) {
     Eigen::Vector3d vec;
     Eigen::Vector3d plane1_eigen, plane2_eigen;
@@ -87,6 +111,12 @@ public:
     return size;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void correct_plane_d(int plane_type, s_graphs::PlaneData& plane) {
     if(plane.d > 0) {
       plane.nx = -1 * plane.nx;
@@ -97,6 +127,12 @@ public:
     return;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   void correct_plane_d(int plane_type, Eigen::Vector4d& plane) {
     if(plane(3) > 0) {
       plane(0) = -1 * plane(0);
@@ -107,6 +143,12 @@ public:
     return;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1, const Eigen::Vector4d& x_plane2, const Eigen::Vector4d& y_plane1, const Eigen::Vector4d& y_plane2) {
     Eigen::Vector2d center;
     Eigen::Vector3d vec_x, vec_y;
@@ -130,6 +172,12 @@ public:
     return center;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   geometry_msgs::Point room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
     geometry_msgs::Point center;
     Eigen::Vector3d vec_x, vec_y;
@@ -161,6 +209,12 @@ public:
     return center;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2, g2o::VertexSE3* keyframe_node) {
     PointNormal pmin, pmax;
     pcl::getMaxSegment(*cloud_seg, pmin, pmax);
@@ -179,6 +233,12 @@ public:
     return length;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg, pcl::PointXY& p1, pcl::PointXY& p2) {
     PointNormal pmin, pmax;
     pcl::getMaxSegment(*cloud_seg, pmin, pmax);
@@ -191,6 +251,12 @@ public:
     return length;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   pcl::PointXY convert_point_to_map(pcl::PointXY point_local, Eigen::Matrix4d keyframe_pose) {
     pcl::PointXY point_map;
 
@@ -206,6 +272,12 @@ public:
     return point_map;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   float get_min_segment(const pcl::PointCloud<PointNormal>::Ptr& cloud_1, const pcl::PointCloud<PointNormal>::Ptr& cloud_2) {
     float min_dist = std::numeric_limits<float>::max();
     const auto token = std::numeric_limits<std::size_t>::max();
@@ -226,6 +298,12 @@ public:
     return (std::sqrt(min_dist));
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool check_point_neighbours(const pcl::PointCloud<PointNormal>::Ptr& cloud_1, const pcl::PointCloud<PointNormal>::Ptr& cloud_2) {
     bool valid_neighbour = false;
     int point_count = 0;
@@ -248,15 +326,66 @@ public:
     return valid_neighbour;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   bool compute_point_difference(const double plane1_point, const double plane2_point) {
     if((plane1_point - plane2_point) > 0) return false;
 
     return true;
   }
 
+  /**
+   * @brief
+   *
+   * @param
+   * @return
+   */
   float plane_dot_product(const s_graphs::PlaneData& plane1, const s_graphs::PlaneData& plane2) {
     float dot_product = plane1.nx * plane2.nx + plane1.ny * plane2.ny + plane1.nz * plane2.nz;
     return dot_product;
+  }
+
+  geometry_msgs::Point extract_infite_room_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2, Eigen::Vector2d& cluster_center) {
+    geometry_msgs::Point center_point;
+    Eigen::Vector4d plane1_eigen, plane2_eigen;
+    plane1_eigen << plane1.nx, plane1.ny, plane1.nz, plane1.d;
+    plane2_eigen << plane2.nx, plane2.ny, plane2.nz, plane2.d;
+
+    if(fabs(p1.x) > fabs(p2.x)) {
+      float size = p1.x - p2.x;
+      cluster_center(0) = (size / 2) + p2.x;
+    } else {
+      float size = p2.x - p1.x;
+      cluster_center(0) = (size / 2) + p1.x;
+    }
+
+    if(fabs(p1.y) > fabs(p2.y)) {
+      float size = p1.y - p2.y;
+      cluster_center(1) = (size / 2) + p2.y;
+    } else {
+      float size = p2.y - p1.y;
+      cluster_center(1) = (size / 2) + p1.y;
+    }
+
+    Eigen::Vector3d vec;
+    Eigen::Vector2d vec_normal, final_pose_vec;
+
+    if(fabs(plane1_eigen(3)) > fabs(plane2_eigen(3))) {
+      vec = (0.5 * (fabs(plane1_eigen(3)) * plane1_eigen.head(3) - fabs(plane2_eigen(3)) * plane2_eigen.head(3))) + fabs(plane2_eigen(3)) * plane2_eigen.head(3);
+    } else {
+      vec = (0.5 * (fabs(plane2_eigen(3)) * plane2_eigen.head(3) - fabs(plane1_eigen(3)) * plane1_eigen.head(3))) + fabs(plane1_eigen(3)) * plane1_eigen.head(3);
+    }
+
+    vec_normal = vec.head(2) / vec.norm();
+    final_pose_vec = vec.head(2) + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
+    center_point.x = final_pose_vec(0);
+    center_point.y = final_pose_vec(1);
+
+    return center_point;
   }
 };
 }  // namespace s_graphs

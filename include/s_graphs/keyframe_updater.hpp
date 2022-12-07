@@ -9,14 +9,15 @@
 namespace s_graphs {
 
 /**
- * @brief this class decides if a new frame should be registered to the pose graph as a keyframe
+ * @brief This class decides if a new frame should be registered to the pose graph as a keyframe
  */
 class KeyframeUpdater {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   /**
-   * @brief constructor
+   * @brief Constructor for class KeyframeUpdater
+   *
    * @param pnh
    */
   KeyframeUpdater(ros::NodeHandle& pnh) : is_first(true), prev_keypose(Eigen::Isometry3d::Identity()) {
@@ -27,8 +28,9 @@ public:
   }
 
   /**
-   * @brief decide if a new frame should be registered to the graph
-   * @param pose  pose of the frame
+   * @brief Decide if a new frame should be registered to the graph
+   *
+   * @param pose: pose of the frame
    * @return  if true, the frame should be registered
    */
   bool update(const Eigen::Isometry3d& pose) {
@@ -56,6 +58,7 @@ public:
 
   /**
    * @brief the last keyframe's accumulated distance from the first keyframe
+   *
    * @return accumulated distance
    */
   double get_accum_distance() const {
