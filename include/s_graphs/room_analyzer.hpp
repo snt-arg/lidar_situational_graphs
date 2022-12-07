@@ -29,6 +29,25 @@
 
 namespace s_graphs {
 
+struct RoomInfo {
+public:
+  const std::vector<s_graphs::PlaneData>& current_x_vert_planes;
+  const std::vector<s_graphs::PlaneData>& current_y_vert_planes;
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull;
+};
+
+struct RoomPlanes {
+public:
+  s_graphs::PlaneData& x_plane1;
+  s_graphs::PlaneData& x_plane2;
+  s_graphs::PlaneData& y_plane1;
+  s_graphs::PlaneData& y_plane2;
+  bool found_x1_plane;
+  bool found_x2_plane;
+  bool found_y1_plane;
+  bool found_y2_plane;
+};
+
 /**
  * @brief Class that provides tools for different analysis over open space clusters to generate rooms
  */
@@ -95,7 +114,7 @@ public:
    * @param found_y2_plane
    * @return
    */
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_room_planes(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, pcl::PointXY p_min, pcl::PointXY p_max, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, s_graphs::PlaneData& x_plane1, s_graphs::PlaneData& x_plane2, s_graphs::PlaneData& y_plane1, s_graphs::PlaneData& y_plane2, bool& found_x1_plane, bool& found_x2_plane, bool& found_y1_plane, bool& found_y2_plane);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_room_planes(RoomInfo& room_info, RoomPlanes& room_planes, pcl::PointXY p_min, pcl::PointXY p_max);
 
   /**
    * @brief
@@ -169,7 +188,7 @@ public:
    *
    * @return Success or Failure.
    */
-  bool perform_room_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map);
+  bool perform_room_segmentation(RoomInfo& room_info, int& room_cluster_counter, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster, std::vector<s_graphs::RoomData>& room_candidates_vec, std::vector<std::pair<int, int>> connected_subgraph_map);
 
   /**
    * @brief

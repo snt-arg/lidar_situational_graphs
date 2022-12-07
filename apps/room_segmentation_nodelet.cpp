@@ -171,7 +171,8 @@ private:
         continue;
       }
 
-      bool found_room = room_analyzer->perform_room_segmentation(current_x_vert_planes, current_y_vert_planes, room_cluster_counter, cloud_cluster, cloud_hull, room_candidates_vec, connected_subgraph_map);
+      RoomInfo room_info = {current_x_vert_planes, current_y_vert_planes, cloud_hull};
+      bool found_room = room_analyzer->perform_room_segmentation(room_info, room_cluster_counter, cloud_cluster, room_candidates_vec, connected_subgraph_map);
       if(found_room) {
         refined_skeleton_marker_array.markers.push_back(skeleton_marker_array.markers[2 * cluster_id]);
         refined_skeleton_marker_array.markers.push_back(skeleton_marker_array.markers[2 * cluster_id + 1]);
