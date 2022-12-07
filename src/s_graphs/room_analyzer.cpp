@@ -9,7 +9,7 @@ RoomAnalyzer::RoomAnalyzer(const ros::NodeHandle& private_nh, std::shared_ptr<Pl
   plane_utils = plane_utils_ptr;
   cloud_clusters.clear();
   subgraphs.clear();
-  vertex_neigh_thres = private_nh.param<int>("vertex_neigh_thres", 5);
+  vertex_neigh_thres = private_nh.param<int>("vertex_neigh_thres", 2);
 }
 
 RoomAnalyzer::~RoomAnalyzer() {
