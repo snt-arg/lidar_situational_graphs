@@ -29,22 +29,63 @@ public:
 
   using Ptr = std::shared_ptr<KeyFrame>;
 
+  /**
+   * @brief Constructor for class KeyFrame
+   *
+   * @param stamp
+   * @param odom
+   * @param accum_distance
+   * @param cloud
+   * @return
+   */
   KeyFrame(const ros::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud);
+
+  /**
+   * @brief Constructor for class KeyFrame
+   *
+   *
+   * @param directory
+   * @param graph
+   */
   KeyFrame(const std::string& directory, g2o::HyperGraph* graph);
   virtual ~KeyFrame();
 
+  /**
+   * @brief Saves the keyframe into a given directory.
+   *
+   * @param directory
+   */
   void save(const std::string& directory);
+
+  /**
+   * @brief Loads the keyframes from a directory into the graph pointer.
+   *
+   * @param directory
+   * @param graph
+   * @return Success or failure
+   */
   bool load(const std::string& directory, g2o::HyperGraph* graph);
 
+  /**
+   * @brief
+   *
+   * @return
+   */
   long id() const;
+
+  /**
+   * @brief
+   *
+   * @return
+   */
   Eigen::Isometry3d estimate() const;
 
 public:
-  ros::Time stamp;                                // timestamp
-  Eigen::Isometry3d odom;                         // odometry (estimated by scan_matching_odometry)
-  double accum_distance;                          // accumulated distance from the first node (by scan_matching_odometry)
-  pcl::PointCloud<PointT>::ConstPtr cloud;        // point cloud
-  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // semantically segmented pointcloud
+  ros::Time stamp;                                            // timestamp
+  Eigen::Isometry3d odom;                                     // odometry (estimated by scan_matching_odometry)
+  double accum_distance;                                      // accumulated distance from the first node (by scan_matching_odometry)
+  pcl::PointCloud<PointT>::ConstPtr cloud;                    // point cloud
+  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;           // semantically segmented pointcloud
   std::vector<int> x_plane_ids, y_plane_ids, hort_plane_ids;  // list of planes associated with the keyframe
 
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
@@ -66,7 +107,18 @@ public:
   using PointT = KeyFrame::PointT;
   using Ptr = std::shared_ptr<KeyFrameSnapshot>;
 
+  /**
+   * @brief Constructor for class KeyFramesnapshot
+   *
+   * @param key
+   */
   KeyFrameSnapshot(const KeyFrame::Ptr& key);
+
+  /**
+   * @brief Constructor for class KeyFramesnapshot
+   *
+   * @param key
+   */
   KeyFrameSnapshot(const Eigen::Isometry3d& pose, const pcl::PointCloud<PointT>::ConstPtr& cloud);
 
   ~KeyFrameSnapshot();

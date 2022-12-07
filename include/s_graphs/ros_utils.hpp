@@ -15,6 +15,7 @@ namespace s_graphs {
 
 /**
  * @brief convert Eigen::Matrix to geometry_msgs::TransformStamped
+ *
  * @param stamp            timestamp
  * @param pose             Eigen::Matrix to be converted
  * @param frame_id         tf frame_id
@@ -43,6 +44,12 @@ static geometry_msgs::TransformStamped matrix2transform(const ros::Time& stamp, 
   return odom_trans;
 }
 
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 static geometry_msgs::PoseStamped matrix2PoseStamped(const ros::Time& stamp, const Eigen::Matrix4f& pose, const std::string& frame_id) {
   Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
   quat.normalize();
@@ -56,11 +63,17 @@ static geometry_msgs::PoseStamped matrix2PoseStamped(const ros::Time& stamp, con
   pose_stamped.pose.orientation.w = quat.w();
   pose_stamped.pose.orientation.x = quat.x();
   pose_stamped.pose.orientation.y = quat.y();
-  pose_stamped.pose.orientation.z = quat.z(); 
+  pose_stamped.pose.orientation.z = quat.z();
 
-  return pose_stamped; 
+  return pose_stamped;
 }
 
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 static Eigen::Isometry3d pose2isometry(const geometry_msgs::Pose& pose) {
   Eigen::Isometry3d mat = Eigen::Isometry3d::Identity();
   mat.translation() = Eigen::Vector3d(pose.position.x, pose.position.y, pose.position.z);
@@ -68,6 +81,12 @@ static Eigen::Isometry3d pose2isometry(const geometry_msgs::Pose& pose) {
   return mat;
 }
 
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 static Eigen::Isometry3d tf2isometry(const tf::StampedTransform& trans) {
   Eigen::Isometry3d mat = Eigen::Isometry3d::Identity();
   mat.translation() = Eigen::Vector3d(trans.getOrigin().x(), trans.getOrigin().y(), trans.getOrigin().z());
@@ -75,6 +94,12 @@ static Eigen::Isometry3d tf2isometry(const tf::StampedTransform& trans) {
   return mat;
 }
 
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 static geometry_msgs::Pose isometry2pose(const Eigen::Isometry3d& mat) {
   Eigen::Quaterniond quat(mat.linear());
   Eigen::Vector3d trans = mat.translation();
@@ -91,6 +116,12 @@ static geometry_msgs::Pose isometry2pose(const Eigen::Isometry3d& mat) {
   return pose;
 }
 
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 static Eigen::Isometry3d odom2isometry(const nav_msgs::OdometryConstPtr& odom_msg) {
   const auto& orientation = odom_msg->pose.pose.orientation;
   const auto& position = odom_msg->pose.pose.position;

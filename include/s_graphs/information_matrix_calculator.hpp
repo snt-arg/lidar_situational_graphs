@@ -9,6 +9,9 @@
 
 namespace s_graphs {
 
+/**
+ * @brief
+ */
 class InformationMatrixCalculator {
 public:
   using PointT = pcl::PointXYZI;
@@ -18,6 +21,12 @@ public:
   ~InformationMatrixCalculator();
 
   template<typename ParamServer>
+
+  /**
+   * @brief
+   *
+   * @param params
+   */
   void load(ParamServer& params) {
     use_const_inf_matrix = params.template param<bool>("use_const_inf_matrix", false);
     const_stddev_x = params.template param<double>("const_stddev_x", 0.5);
@@ -31,11 +40,38 @@ public:
     fitness_score_thresh = params.template param<double>("fitness_score_thresh", 2.5);
   }
 
+  /**
+   * @brief
+   *
+   * @param cloud1
+   * @param cloud2
+   * @param relpose
+   * @param max_range
+   * @return
+   */
   static double calc_fitness_score(const pcl::PointCloud<PointT>::ConstPtr& cloud1, const pcl::PointCloud<PointT>::ConstPtr& cloud2, const Eigen::Isometry3d& relpose, double max_range = std::numeric_limits<double>::max());
 
+  /**
+   * @brief
+   *
+   * @param cloud1
+   * @param cloud2
+   * @param relpose
+   * @return Information matrix
+   */
   Eigen::MatrixXd calc_information_matrix(const pcl::PointCloud<PointT>::ConstPtr& cloud1, const pcl::PointCloud<PointT>::ConstPtr& cloud2, const Eigen::Isometry3d& relpose) const;
 
 private:
+  /**
+   * @brief
+   *
+   * @param a
+   * @param max_x
+   * @param min_y
+   * @param max_y
+   * @param x
+   * @return
+   */
   double weight(double a, double max_x, double min_y, double max_y, double x) const {
     double y = (1.0 - std::exp(-a * x)) / (1.0 - std::exp(-a * max_x));
     return min_y + (max_y - min_y) * y;

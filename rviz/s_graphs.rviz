@@ -115,8 +115,8 @@ Visualization Manager:
       Marker Topic: /s_graphs/markers
       Name: MarkerArray
       Namespaces:
-        corridor_x_lines: true
-        corridor_y_lines: true
+        infinite_room_x_lines: true
+        infinite_room_y_lines: true
         floor_lines: true
         floors: true
         keyframe_keyframe_edges: true
@@ -125,9 +125,9 @@ Visualization Manager:
         nodes: true
         rooms: true
         rooms_lines: true
-        x_corridor: true
+        x_infinite_room: true
         x_vert_planes: true
-        y_corridor: true
+        y_infinite_room: true
         y_vert_planes: true
       Queue Size: 100
       Value: true

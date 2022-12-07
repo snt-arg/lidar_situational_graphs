@@ -81,7 +81,7 @@ vertex_neigh_thres:         5
 keyframe_window_size:       1
 plane_information:          1.0
 room_information:           1.0
-corridor_information:       1.0
+infinite_room_information:       1.0
 plane_dist_threshold:       0.35
 plane_points_dist:          0.5
 constant_covariance:        true

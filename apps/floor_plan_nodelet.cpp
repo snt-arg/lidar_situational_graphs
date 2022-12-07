@@ -123,8 +123,8 @@ private:
   void extract_rooms(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes) {
     int room_cluster_counter = 0;
     std::vector<s_graphs::RoomData> room_candidates_vec;
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->get_cloud_clusters();
-    std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->get_connected_graph();
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->extract_cloud_clusters();
+    std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->extract_connected_graph();
 
     for(const auto& cloud_cluster : curr_cloud_clusters) {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -132,13 +132,14 @@ private:
       if(cloud_cluster->points.size() < 10) continue;
 
       float hull_area;
-      room_analyzer->get_convex_hull(cloud_cluster, cloud_hull, hull_area);
+      room_analyzer->extract_convex_hull(cloud_cluster, cloud_hull, hull_area);
       if(hull_area < 1.5) {
         std::cout << "subgraph area too small to be a room " << std::endl;
         continue;
       }
 
-      room_analyzer->perform_room_segmentation(current_x_vert_planes, current_y_vert_planes, room_cluster_counter, cloud_cluster, cloud_hull, room_candidates_vec, connected_subgraph_map);
+      RoomInfo room_info = {current_x_vert_planes, current_y_vert_planes, cloud_hull};
+      room_analyzer->perform_room_segmentation(room_info, room_cluster_counter, cloud_cluster, room_candidates_vec, connected_subgraph_map);
 
       s_graphs::RoomsData room_candidates_msg;
       room_candidates_msg.header.stamp = ros::Time::now();

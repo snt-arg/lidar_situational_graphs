@@ -9,18 +9,18 @@ PlaneMapper::PlaneMapper(const ros::NodeHandle& private_nh) {
   plane_information = private_nh.param<double>("plane_information", 0.01);
   plane_dist_threshold = private_nh.param<double>("plane_dist_threshold", 0.15);
   plane_points_dist = private_nh.param<double>("plane_points_dist", 0.5);
-  corridor_min_plane_length = private_nh.param<double>("corridor_min_plane_length", 10);
+  infinite_room_min_plane_length = private_nh.param<double>("infinite_room_min_plane_length", 10);
   room_min_plane_length = private_nh.param<double>("room_min_plane_length", 3.0);
   room_max_plane_length = private_nh.param<double>("room_max_plane_length", 6.0);
   min_plane_points = private_nh.param<double>("min_plane_points", 100);
-  use_corridor_constraint = private_nh.param<bool>("use_corridor_constraint", false);
+  use_infinite_room_constraint = private_nh.param<bool>("use_infinite_room_constraint", false);
   use_room_constraint = private_nh.param<bool>("use_room_constraint", false);
 }
 
 PlaneMapper::~PlaneMapper() {}
 
 void PlaneMapper::map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
-  std::vector<plane_data_list> x_det_corridor_candidates, y_det_corridor_candidates;
+  std::vector<plane_data_list> x_det_infinite_room_candidates, y_det_infinite_room_candidates;
   std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
 
   for(const auto& cloud_seg_msg : extracted_cloud_vec) {
@@ -116,7 +116,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
   switch(plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       if(x_vert_planes.empty() || data_association.first == -1) {
-        data_association.first = graph_slam->num_vertices_local();
+        data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association.first;
@@ -154,7 +154,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
     }
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
       if(y_vert_planes.empty() || data_association.first == -1) {
-        data_association.first = graph_slam->num_vertices_local();
+        data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association.first;
@@ -191,7 +191,7 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
     }
     case PlaneUtils::plane_class::HORT_PLANE: {
       if(hort_planes.empty() || data_association.first == -1) {
-        data_association.first = graph_slam->num_vertices_local();
+        data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         HorizontalPlanes hort_plane;
         hort_plane.id = data_association.first;
@@ -234,8 +234,10 @@ int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int
     auto edge = graph_slam->add_se3_point_to_plane_edge(keyframe->node, plane_node, Gij, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   } else {
-    Eigen::Matrix3d information = Eigen::Matrix3d::Identity() * plane_information;
-    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), information);
+    Eigen::Matrix3d plane_information_mat = Eigen::Matrix3d::Identity() * plane_information;
+    plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
+
+    auto edge = graph_slam->add_se3_plane_edge(keyframe->node, plane_node, det_plane_body_frame.coeffs(), plane_information_mat);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   }
 

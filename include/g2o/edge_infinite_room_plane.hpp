@@ -24,32 +24,32 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef EDGE_CORRIDOR_PLANE_HPP
-#define EDGE_CORRIDOR_PLANE_HPP
+#ifndef EDGE_INFINITE_ROOM_PLANE_HPP
+#define EDGE_INFINITE_ROOM_PLANE_HPP
 
 #include <Eigen/Dense>
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/types/slam3d/vertex_se3.h>
-#include "g2o/vertex_corridor.hpp"
+#include "g2o/vertex_infinite_room.hpp"
 
 namespace g2o {
 
-class EdgeSE3Corridor : public BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor> {
+class EdgeSE3InfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexInfiniteRoom> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3Corridor() : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexCorridor>() {}
+  EdgeSE3InfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
-    const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
+    const VertexInfiniteRoom* v2 = static_cast<const VertexInfiniteRoom*>(_vertices[1]);
     Eigen::Isometry3d w2m = v1->estimate().inverse();
-    Eigen::Isometry3d corridor_pose_map;
-    corridor_pose_map.matrix().block<4, 4>(0, 0) = Eigen::Matrix4d::Identity();
-    corridor_pose_map.matrix()(1, 3) = v2->estimate();
+    Eigen::Isometry3d infinite_room_pose_map;
+    infinite_room_pose_map.matrix().block<4, 4>(0, 0) = Eigen::Matrix4d::Identity();
+    infinite_room_pose_map.matrix()(1, 3) = v2->estimate();
 
-    Eigen::Isometry3d corridor_pose_local = corridor_pose_map * w2m;
-    double est = corridor_pose_local.matrix()(0, 3);
+    Eigen::Isometry3d infinite_room_pose_local = infinite_room_pose_map * w2m;
+    double est = infinite_room_pose_local.matrix()(0, 3);
 
     _error[0] = est - _measurement;
   }
@@ -86,13 +86,13 @@ public:
   }
 };
 
-class EdgeCorridorXPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
+class EdgeInfiniteRoomXPlane : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorXPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
+  EdgeInfiniteRoomXPlane() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane>() {}
 
   void computeError() override {
-    const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
+    const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
@@ -155,13 +155,13 @@ public:
   }
 };
 
-class EdgeCorridorYPlane : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane> {
+class EdgeInfiniteRoomYPlane : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeCorridorYPlane() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexPlane>() {}
+  EdgeInfiniteRoomYPlane() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane>() {}
 
   void computeError() override {
-    const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
+    const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
@@ -224,14 +224,14 @@ public:
   }
 };
 
-class EdgeXCorridorXCorridor : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor> {
+class EdgeXInfiniteRoomXInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeXCorridorXCorridor() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor>() {}
+  EdgeXInfiniteRoomXInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
-    const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
-    const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
+    const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
+    const VertexInfiniteRoom* v2 = static_cast<const VertexInfiniteRoom*>(_vertices[1]);
 
     double est = pow(v1 - v2, 2);
 
@@ -275,14 +275,14 @@ public:
   }
 };
 
-class EdgeYCorridorYCorridor : public BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor> {
+class EdgeYInfiniteRoomYInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeYCorridorYCorridor() : BaseBinaryEdge<1, double, g2o::VertexCorridor, g2o::VertexCorridor>() {}
+  EdgeYInfiniteRoomYInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
-    const VertexCorridor* v1 = static_cast<const VertexCorridor*>(_vertices[0]);
-    const VertexCorridor* v2 = static_cast<const VertexCorridor*>(_vertices[1]);
+    const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
+    const VertexInfiniteRoom* v2 = static_cast<const VertexInfiniteRoom*>(_vertices[1]);
 
     double est = pow(v1 - v2, 2);
 
@@ -327,4 +327,4 @@ public:
 };
 
 }  // namespace g2o
-#endif  // EDGE_CORRIDOR_PLANE_HPP
+#endif  // EDGE_INFINITE_ROOM_PLANE_HPP
