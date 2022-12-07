@@ -14,6 +14,14 @@ class SparseOptimizer;
 
 namespace s_graphs {
 
+/**
+ * @brief Struct that contains information about floors
+ *
+ * @var id
+ * @var graph_id
+ * @var plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id
+ * @var node
+ */
 struct Floors {
 public:
   int id;

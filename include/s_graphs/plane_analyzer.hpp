@@ -36,40 +36,88 @@ namespace s_graphs {
 
 typedef pcl::PointXYZI PointT;
 typedef pcl::PointXYZRGBNormal PointNormal;
+
 /**
- * @brief this class provides tools for different analysis over pointclouds to extract planar surfaces
+ * @brief This class provides tools for different analysis over pointclouds to extract planar surfaces.
  */
 class PlaneAnalyzer {
 public:
+  /**
+   * @brief Constructor of class PlaneAnalyzer
+   *
+   * @param private_nh
+   */
   PlaneAnalyzer(ros::NodeHandle private_nh);
   ~PlaneAnalyzer();
 
 public:
-  std::vector<sensor_msgs::PointCloud2> get_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
+  /**
+   * @brief
+   *
+   * @param cloud
+   * @return Segmented planes found in the point cloud
+   */
+  std::vector<sensor_msgs::PointCloud2> extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
 
 private:
+  /**
+   * @brief Initializes ros related jobs.
+   *
+   * @param private_nh
+   */
   void init_ros(ros::NodeHandle private_nh);
 
 private:
-  ros::Publisher segmented_cloud_pub_;
+  ros::Publisher segmented_cloud_pub;
 
 private:
+  /**
+   * @brief
+   *
+   * @param extracted_cloud
+   * @return
+   */
   pcl::PointCloud<PointNormal>::Ptr compute_clusters(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param extracted_cloud
+   * @return
+   */
   pcl::PointCloud<pcl::Normal>::Ptr compute_cloud_normals(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param extracted_cloud
+   * @param cloud_normals
+   * @return
+   */
   pcl::PointCloud<PointNormal>::Ptr shadow_filter(const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud, pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
 
   /**
-   * Maps an input h from a value between 0.0 and 1.0 into a rainbow. Copied from
-   * OctomapProvider in octomap.
+   * @brief Maps an input h from a value between 0.0 and 1.0 into a rainbow.
+   * References OctomapProvider in octomap.
+   *
+   * @param h
+   *          Value between 0.0 and 1.0.
+   * @return RGB color
    */
   std_msgs::ColorRGBA rainbow_color_map(double h);
+
+  /**
+   * @brief Generates a random RGB color.
+   *
+   * @return RGB color
+   */
   std_msgs::ColorRGBA random_color();
 
 private:
   int min_seg_points_;
-  int min_horizontal_inliers_, min_vertical_inliers_;
-  bool use_euclidean_filter_, use_shadow_filter_;
-  std::string plane_extraction_frame_, plane_visualization_frame_;
+  int min_horizontal_inliers, min_vertical_inliers;
+  bool use_euclidean_filter, use_shadow_filter;
+  std::string plane_extraction_frame, plane_visualization_frame;
 };
 }  // namespace s_graphs
 

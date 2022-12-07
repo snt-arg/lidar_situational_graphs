@@ -24,10 +24,10 @@
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef G2O_VERTEX_CORRIDOR_H
-#define G2O_VERTEX_CORRIDOR_H
+#ifndef G2O_VERTEX_INFINITE_ROOM_H
+#define G2O_VERTEX_INFINITE_ROOM_H
 
-//#include "g2o/config.h"
+// #include "g2o/config.h"
 #include <g2o/types/slam3d/g2o_types_slam3d_api.h>
 #include "g2o/core/base_vertex.h"
 #include "g2o/core/hyper_graph_action.h"
@@ -36,62 +36,59 @@
 
 namespace g2o {
 
-  class G2O_TYPES_SLAM3D_API VertexCorridor : public BaseVertex<1, double>
-  {
-    public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-      VertexCorridor() {}
+class G2O_TYPES_SLAM3D_API VertexInfiniteRoom : public BaseVertex<1, double> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  VertexInfiniteRoom() {}
 
-      virtual void setToOriginImpl() {
-        _estimate = 0;
-      }
+  virtual void setToOriginImpl() {
+    _estimate = 0;
+  }
 
-      virtual bool setEstimateDataImpl(const number_t* est){
-        _estimate = est[0];
+  virtual bool setEstimateDataImpl(const number_t* est) {
+    _estimate = est[0];
 
-        return true;
-      }
+    return true;
+  }
 
-      virtual bool getEstimateData(number_t* est) const{
-        est[0] = _estimate;
-        return true;
-      }
+  virtual bool getEstimateData(number_t* est) const {
+    est[0] = _estimate;
+    return true;
+  }
 
-      virtual int estimateDimension() const { 
-        return 1;
-      }
+  virtual int estimateDimension() const {
+    return 1;
+  }
 
-      virtual bool setMinimalEstimateDataImpl(const number_t* est){
-        setEstimateData(est);
-        return true;
-      }
+  virtual bool setMinimalEstimateDataImpl(const number_t* est) {
+    setEstimateData(est);
+    return true;
+  }
 
-      virtual bool getMinimalEstimateData(number_t* est) const{
-        getEstimateData(est);
-        return true;
-      }
+  virtual bool getMinimalEstimateData(number_t* est) const {
+    getEstimateData(est);
+    return true;
+  }
 
-      virtual int minimalEstimateDimension() const { 
-        return 1;
-      }
+  virtual int minimalEstimateDimension() const {
+    return 1;
+  }
 
-      virtual void oplusImpl(const number_t* update)
-      {
-        _estimate += update[0];
-      }
+  virtual void oplusImpl(const number_t* update) {
+    _estimate += update[0];
+  }
 
-      virtual bool read(std::istream& is) { 
-        is >> _estimate;
-        return true;
-      }
-      
-      virtual bool write(std::ostream& os) const { 
-        os << _estimate;
-        return true; 
-      }
+  virtual bool read(std::istream& is) {
+    is >> _estimate;
+    return true;
+  }
 
-  };
+  virtual bool write(std::ostream& os) const {
+    os << _estimate;
+    return true;
+  }
+};
 
-}
+}  // namespace g2o
 
 #endif

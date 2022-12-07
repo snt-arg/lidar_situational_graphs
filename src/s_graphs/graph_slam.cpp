@@ -16,7 +16,7 @@
 #include <g2o/types/slam3d/edge_se3_pointxyz.h>
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 #include <g2o/vertex_room.hpp>
-#include <g2o/vertex_corridor.hpp>
+#include <g2o/vertex_infinite_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <g2o/edge_se3_priorxy.hpp>
@@ -27,7 +27,7 @@
 #include <g2o/edge_plane_identity.hpp>
 #include <g2o/edge_plane.hpp>
 #include <g2o/robust_kernel_io.hpp>
-#include <g2o/edge_corridor_plane.hpp>
+#include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_room.hpp>
 
 G2O_USE_OPTIMIZATION_LIBRARY(pcg)
@@ -47,9 +47,9 @@ G2O_REGISTER_TYPE(EDGE_PLANE_IDENTITY, EdgePlaneIdentity)
 G2O_REGISTER_TYPE(EDGE_PLANE_PARALLEL, EdgePlaneParallel)
 G2O_REGISTER_TYPE(EDGE_PLANE_PAERPENDICULAR, EdgePlanePerpendicular)
 G2O_REGISTER_TYPE(EDGE_2PLANES, Edge2Planes)
-G2O_REGISTER_TYPE(EDGE_SE3_CORRIDOR, EdgeSE3Corridor)
-G2O_REGISTER_TYPE(EDGE_CORRIDOR_XPLANE, EdgeCorridorXPlane)
-G2O_REGISTER_TYPE(EDGE_CORRIDOR_YPLANE, EdgeCorridorYPlane)
+G2O_REGISTER_TYPE(EDGE_SE3_INFINITE_ROOM, EdgeSE3InfiniteRoom)
+G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_XPLANE, EdgeInfiniteRoomXPlane)
+G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_YPLANE, EdgeInfiniteRoomYPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_ROOM, EdgeSE3Room)
 G2O_REGISTER_TYPE(EDGE_ROOM_XPLANE, EdgeRoomXPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_2PLANES, EdgeRoom2Planes)
@@ -58,12 +58,12 @@ G2O_REGISTER_TYPE(EDGE_ROOM_XPRIOR, EdgeRoomXPrior)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPLANE, EdgeRoomYPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPRIOR, EdgeRoomYPrior)
 G2O_REGISTER_TYPE(EDGE_ROOM_ROOM, EdgeRoomRoom)
-G2O_REGISTER_TYPE(EDGE_ROOM_XCORRIDOR, EdgeRoomXCorridor)
-G2O_REGISTER_TYPE(EDGE_ROOM_YCORRIDOR, EdgeRoomYCorridor)
-G2O_REGISTER_TYPE(EDGE_XCORRIDOR_XCORRIDOR, EdgeXCorridorXCorridor)
-G2O_REGISTER_TYPE(EDGE_YCORRIDOR_YCORRIDOR, EdgeYCorridorYCorridor)
+G2O_REGISTER_TYPE(EDGE_ROOM_XINFINITE_ROOM, EdgeRoomXInfiniteRoom)
+G2O_REGISTER_TYPE(EDGE_ROOM_YINFINITE_ROOM, EdgeRoomYInfiniteRoom)
+G2O_REGISTER_TYPE(EDGE_XINFINITE_ROOM_XINFINITE_ROOM, EdgeXInfiniteRoomXInfiniteRoom)
+G2O_REGISTER_TYPE(EDGE_YINFINITE_ROOM_YINFINITE_ROOM, EdgeYInfiniteRoomYInfiniteRoom)
 G2O_REGISTER_TYPE(VERTEX_ROOMXYLB, VertexRoomXYLB)
-G2O_REGISTER_TYPE(VERTEX_CORRIDOR, VertexCorridor)
+G2O_REGISTER_TYPE(VERTEX_INFINITE_ROOM, VertexInfiniteRoom)
 }  // namespace g2o
 
 namespace s_graphs {
@@ -92,7 +92,7 @@ GraphSLAM::GraphSLAM(const std::string& solver_type) {
   std::cout << "done" << std::endl;
 
   robust_kernel_factory = g2o::RobustKernelFactory::instance();
-  vertex_count = edge_count = 0;
+  nbr_of_vertices = nbr_of_edges = 0;
 }
 
 /**
@@ -102,7 +102,7 @@ GraphSLAM::~GraphSLAM() {
   graph.reset();
 }
 
-void GraphSLAM::set_solver(const std::string& solver_type) {
+void GraphSLAM::select_solver_type(const std::string& solver_type) {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
 
   std::cout << "construct solver: " << solver_type << std::endl;
@@ -122,40 +122,40 @@ void GraphSLAM::set_solver(const std::string& solver_type) {
   std::cout << "done" << std::endl;
 }
 
-int GraphSLAM::num_vertices() const {
+int GraphSLAM::retrieve_total_nbr_of_vertices() const {
   return graph->vertices().size();
 }
-int GraphSLAM::num_edges() const {
+int GraphSLAM::retrive_total_nbr_of_edges() const {
   return graph->edges().size();
 }
 
-int GraphSLAM::num_vertices_local() const {
-  return vertex_count;
+int GraphSLAM::retrieve_local_nbr_of_vertices() const {
+  return nbr_of_vertices;
 }
-int GraphSLAM::num_edges_local() const {
-  return edge_count;
+int GraphSLAM::retrieve_local_nbr_of_edges() const {
+  return nbr_of_edges;
 }
 
-int GraphSLAM::add_vertices() {
-  return vertex_count += 1;
+int GraphSLAM::increment_local_nbr_of_vertices() {
+  return nbr_of_vertices += 1;
 }
 
 g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
   g2o::VertexSE3* vertex(new g2o::VertexSE3());
-  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(pose);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
 
 g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs) {
   g2o::VertexPlane* vertex(new g2o::VertexPlane());
-  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(plane_coeffs);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
@@ -165,7 +165,7 @@ g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs,
   vertex->setId(id);
   vertex->setEstimate(plane_coeffs);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
@@ -184,40 +184,40 @@ bool GraphSLAM::remove_room_node(g2o::VertexRoomXYLB* room_vertex) {
 
 g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   g2o::VertexPointXYZ* vertex(new g2o::VertexPointXYZ());
-  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(xyz);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
 
-g2o::VertexCorridor* GraphSLAM::add_corridor_node(const double& corridor_pose) {
-  g2o::VertexCorridor* vertex(new g2o::VertexCorridor());
-  vertex->setId(static_cast<int>(num_vertices_local()));
-  vertex->setEstimate(corridor_pose);
+g2o::VertexInfiniteRoom* GraphSLAM::add_infinite_room_node(const double& infinite_room_pose) {
+  g2o::VertexInfiniteRoom* vertex(new g2o::VertexInfiniteRoom());
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  vertex->setEstimate(infinite_room_pose);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
 
 g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector2d& room_pose) {
   g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
-  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(room_pose);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
 
 g2o::VertexRoomXYLB* GraphSLAM::add_floor_node(const Eigen::Vector2d& floor_pose) {
   g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
-  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(floor_pose);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
@@ -396,47 +396,47 @@ g2o::Edge2Planes* GraphSLAM::add_2planes_edge(g2o::VertexPlane* v_plane1, g2o::V
   return edge;
 }
 
-g2o::EdgeSE3Corridor* GraphSLAM::add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2o::VertexCorridor* v_corridor, const double& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeSE3Corridor* edge(new g2o::EdgeSE3Corridor());
+g2o::EdgeSE3InfiniteRoom* GraphSLAM::add_se3_infinite_room_edge(g2o::VertexSE3* v_se3, g2o::VertexInfiniteRoom* v_infinite_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeSE3InfiniteRoom* edge(new g2o::EdgeSE3InfiniteRoom());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_se3;
-  edge->vertices()[1] = v_corridor;
+  edge->vertices()[1] = v_infinite_room;
   graph->addEdge(edge);
 
   return edge;
 }
 
-g2o::EdgeCorridorXPlane* GraphSLAM::add_corridor_xplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeCorridorXPlane* edge(new g2o::EdgeCorridorXPlane());
+g2o::EdgeInfiniteRoomXPlane* GraphSLAM::add_infinite_room_xplane_edge(g2o::VertexInfiniteRoom* v_infinite_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeInfiniteRoomXPlane* edge(new g2o::EdgeInfiniteRoomXPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
-  edge->vertices()[0] = v_corridor;
+  edge->vertices()[0] = v_infinite_room;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
 
   return edge;
 }
 
-g2o::EdgeCorridorYPlane* GraphSLAM::add_corridor_yplane_edge(g2o::VertexCorridor* v_corridor, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeCorridorYPlane* edge(new g2o::EdgeCorridorYPlane());
+g2o::EdgeInfiniteRoomYPlane* GraphSLAM::add_infinite_room_yplane_edge(g2o::VertexInfiniteRoom* v_infinite_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeInfiniteRoomYPlane* edge(new g2o::EdgeInfiniteRoomYPlane());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
-  edge->vertices()[0] = v_corridor;
+  edge->vertices()[0] = v_infinite_room;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
 
   return edge;
 }
 
-bool GraphSLAM::remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge) {
-  bool ack = graph->removeEdge(corridor_xplane_edge);
+bool GraphSLAM::remove_infinite_room_xplane_edge(g2o::EdgeInfiniteRoomXPlane* infinite_room_xplane_edge) {
+  bool ack = graph->removeEdge(infinite_room_xplane_edge);
 
   return ack;
 }
 
-bool GraphSLAM::remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge) {
-  bool ack = graph->removeEdge(corridor_yplane_edge);
+bool GraphSLAM::remove_infinite_room_yplane_edge(g2o::EdgeInfiniteRoomYPlane* infinite_room_yplane_edge) {
+  bool ack = graph->removeEdge(infinite_room_yplane_edge);
 
   return ack;
 }
@@ -542,30 +542,30 @@ bool GraphSLAM::remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge) {
   return ack;
 }
 
-g2o::EdgeRoomXCorridor* GraphSLAM::add_room_x_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_xcorridor, const double& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeRoomXCorridor* edge(new g2o::EdgeRoomXCorridor());
+g2o::EdgeRoomXInfiniteRoom* GraphSLAM::add_room_x_infinite_room_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexInfiniteRoom* v_xinfinite_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomXInfiniteRoom* edge(new g2o::EdgeRoomXInfiniteRoom());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_room;
-  edge->vertices()[1] = v_xcorridor;
+  edge->vertices()[1] = v_xinfinite_room;
   graph->addEdge(edge);
 
   return edge;
 }
 
-g2o::EdgeRoomYCorridor* GraphSLAM::add_room_y_corridor_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexCorridor* v_ycorridor, const double& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeRoomYCorridor* edge(new g2o::EdgeRoomYCorridor());
+g2o::EdgeRoomYInfiniteRoom* GraphSLAM::add_room_y_infinite_room_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexInfiniteRoom* v_yinfinite_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomYInfiniteRoom* edge(new g2o::EdgeRoomYInfiniteRoom());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_room;
-  edge->vertices()[1] = v_ycorridor;
+  edge->vertices()[1] = v_yinfinite_room;
   graph->addEdge(edge);
 
   return edge;
 }
 
-g2o::EdgeXCorridorXCorridor* GraphSLAM::add_x_corridor_x_corridor_edge(g2o::VertexCorridor* v_xcorr1, g2o::VertexCorridor* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeXCorridorXCorridor* edge(new g2o::EdgeXCorridorXCorridor());
+g2o::EdgeXInfiniteRoomXInfiniteRoom* GraphSLAM::add_x_infinite_room_x_infinite_room_edge(g2o::VertexInfiniteRoom* v_xcorr1, g2o::VertexInfiniteRoom* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeXInfiniteRoomXInfiniteRoom* edge(new g2o::EdgeXInfiniteRoomXInfiniteRoom());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_xcorr1;
@@ -575,8 +575,8 @@ g2o::EdgeXCorridorXCorridor* GraphSLAM::add_x_corridor_x_corridor_edge(g2o::Vert
   return edge;
 }
 
-g2o::EdgeYCorridorYCorridor* GraphSLAM::add_y_corridor_y_corridor_edge(g2o::VertexCorridor* v_ycorr1, g2o::VertexCorridor* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information) {
-  g2o::EdgeYCorridorYCorridor* edge(new g2o::EdgeYCorridorYCorridor());
+g2o::EdgeYInfiniteRoomYInfiniteRoom* GraphSLAM::add_y_infinite_room_y_infinite_room_edge(g2o::VertexInfiniteRoom* v_ycorr1, g2o::VertexInfiniteRoom* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeYInfiniteRoomYInfiniteRoom* edge(new g2o::EdgeYInfiniteRoomYInfiniteRoom());
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_ycorr1;

@@ -6,12 +6,12 @@ namespace s_graphs {
 
 PlaneAnalyzer::PlaneAnalyzer(ros::NodeHandle private_nh) {
   min_seg_points_ = private_nh.param<int>("min_seg_points", 100);
-  min_horizontal_inliers_ = private_nh.param<int>("min_horizontal_inliers", 500);
-  min_vertical_inliers_ = private_nh.param<int>("min_vertical_inliers", 100);
-  use_euclidean_filter_ = private_nh.param<bool>("use_euclidean_filter", true);
-  use_shadow_filter_ = private_nh.param<bool>("use_shadow_filter", false);
-  plane_extraction_frame_ = private_nh.param<std::string>("plane_extraction_frame_id", "base_link");
-  plane_visualization_frame_ = private_nh.param<std::string>("plane_visualization_frame_id", "base_link_elevated");
+  min_horizontal_inliers = private_nh.param<int>("min_horizontal_inliers", 500);
+  min_vertical_inliers = private_nh.param<int>("min_vertical_inliers", 100);
+  use_euclidean_filter = private_nh.param<bool>("use_euclidean_filter", true);
+  use_shadow_filter = private_nh.param<bool>("use_shadow_filter", false);
+  plane_extraction_frame = private_nh.param<std::string>("plane_extraction_frame_id", "base_link");
+  plane_visualization_frame = private_nh.param<std::string>("plane_visualization_frame_id", "base_link_elevated");
 
   init_ros(private_nh);
 }
@@ -19,10 +19,10 @@ PlaneAnalyzer::PlaneAnalyzer(ros::NodeHandle private_nh) {
 PlaneAnalyzer::~PlaneAnalyzer() {}
 
 void PlaneAnalyzer::init_ros(ros::NodeHandle private_nh) {
-  segmented_cloud_pub_ = private_nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
+  segmented_cloud_pub = private_nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
 }
 
-std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud) {
+std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud) {
   pcl::PointCloud<PointNormal>::Ptr segmented_cloud(new pcl::PointCloud<PointNormal>);
   std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec;
   pcl::PointCloud<PointT>::Ptr transformed_cloud(new pcl::PointCloud<PointT>);
@@ -57,7 +57,7 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(const 
         break;
       }
       /* filtering out noisy ground plane measurements */
-      if((fabs(coefficients->values[2]) > 0.9 && inliers->indices.size() < min_horizontal_inliers_) || inliers->indices.size() < min_vertical_inliers_) {
+      if((fabs(coefficients->values[2]) > 0.9 && inliers->indices.size() < min_horizontal_inliers) || inliers->indices.size() < min_vertical_inliers) {
         extract.setInputCloud(transformed_cloud);
         extract.setIndices(inliers);
         extract.setNegative(true);
@@ -91,9 +91,9 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(const 
       }
 
       pcl::PointCloud<PointNormal>::Ptr extracted_cloud_filtered;
-      if(use_euclidean_filter_)
+      if(use_euclidean_filter)
         extracted_cloud_filtered = compute_clusters(extracted_cloud);
-      else if(use_shadow_filter_) {
+      else if(use_shadow_filter) {
         pcl::PointCloud<pcl::Normal>::Ptr normals = compute_cloud_normals(extracted_cloud);
         extracted_cloud_filtered = shadow_filter(extracted_cloud, normals);
       } else {
@@ -112,7 +112,7 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(const 
       pcl::toROSMsg(*extracted_cloud_filtered, extracted_cloud_msg);
       std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
       extracted_cloud_msg.header = ext_msg_header;
-      extracted_cloud_msg.header.frame_id = plane_extraction_frame_;
+      extracted_cloud_msg.header.frame_id = plane_extraction_frame;
       extracted_cloud_vec.push_back(extracted_cloud_msg);
 
       extract.setInputCloud(transformed_cloud);
@@ -130,8 +130,8 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::get_segmented_planes(const 
   pcl::toROSMsg(*segmented_cloud, segmented_cloud_msg);
   std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
   segmented_cloud_msg.header = msg_header;
-  segmented_cloud_msg.header.frame_id = plane_visualization_frame_;
-  segmented_cloud_pub_.publish(segmented_cloud_msg);
+  segmented_cloud_msg.header.frame_id = plane_visualization_frame;
+  segmented_cloud_pub.publish(segmented_cloud_msg);
 
   return extracted_cloud_vec;
 }

@@ -11,19 +11,25 @@
 namespace s_graphs {
 
 /**
- * @brief this class generates a map point cloud from registered keyframes
+ * @brief Class that generates a map point cloud from registered keyframes
  */
 class MapCloudGenerator {
 public:
   using PointT = pcl::PointXYZI;
 
+  /**
+   * @brief Contructor of class MapCloudGenerator
+   */
   MapCloudGenerator();
   ~MapCloudGenerator();
 
   /**
-   * @brief generates a map point cloud
-   * @param keyframes   snapshots of keyframes
-   * @param resolution  resolution of generated map
+   * @brief Generates a map point cloud
+   *
+   * @param keyframes
+   *          snapshots of keyframes
+   * @param resolution
+   *          resolution of generated map
    * @return generated map point cloud
    */
   pcl::PointCloud<PointT>::Ptr generate(const std::vector<KeyFrameSnapshot::Ptr>& keyframes, double resolution) const;
