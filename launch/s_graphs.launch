@@ -52,11 +52,14 @@
 
   <!--ROOM SEGMENTATION -->
   <node pkg="nodelet" type="nodelet" name="s_graphs_room_seg_nodelet_manager" args="manager" output="screen" />
-  <node pkg="nodelet" type="nodelet" name="s_graphs_room_segmentor" args="load s_graphs/RoomSegmentationNodelet s_graphs_room_seg_nodelet_manager"></node>
+  <node pkg="nodelet" type="nodelet" name="s_graphs_room_segmentor" args="load s_graphs/RoomSegmentationNodelet s_graphs_room_seg_nodelet_manager">
+    <param name="vertex_neigh_thres" value="2" />
+  </node>
 
   <!--FLOOR PLANNING -->
   <node pkg="nodelet" type="nodelet" name="s_graphs_floor_plan_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="s_graphs_floor_planner" args="load s_graphs/FloorPlanNodelet s_graphs_floor_plan_nodelet_manager">
+    <param name="vertex_neigh_thres" value="2" />
   </node>
 
   <!-- GRAPH SLAM -->
