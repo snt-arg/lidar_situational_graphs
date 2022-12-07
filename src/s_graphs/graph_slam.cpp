@@ -16,7 +16,6 @@
 #include <g2o/types/slam3d/edge_se3_pointxyz.h>
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 #include <g2o/vertex_room.hpp>
-#include <g2o/vertex_corridor.hpp>
 #include <g2o/vertex_wall.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
@@ -232,10 +231,10 @@ void GraphSLAM::update_floor_node(g2o::VertexRoomXYLB* floor_node, const Eigen::
 
 g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center) {
   g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
-  vertex->setId(static_cast<int>(num_vertices_local()));
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(wall_center);
   graph->addVertex(vertex);
-  this->add_vertices();
+  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }
@@ -496,216 +495,218 @@ g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(g2o::VertexWallXYZ* v_wal
   graph->addEdge(edge);
 
   return edge;
-  bool GraphSLAM::remove_room_2planes_edge(g2o::EdgeRoom2Planes * room_plane_edge) {
-    bool ack = graph->removeEdge(room_plane_edge);
+}
 
-    return ack;
+bool GraphSLAM::remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge) {
+  bool ack = graph->removeEdge(room_plane_edge);
+
+  return ack;
+}
+
+g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_xplane1, g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1, g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoom4Planes* edge(new g2o::EdgeRoom4Planes());
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  edge->vertices()[1] = v_xplane1;
+  edge->vertices()[2] = v_xplane2;
+  edge->vertices()[3] = v_yplane1;
+  edge->vertices()[4] = v_yplane2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeRoomXPrior* GraphSLAM::add_room_xprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomXPrior* edge(new g2o::EdgeRoomXPrior());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomYPlane* edge(new g2o::EdgeRoomYPlane());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  edge->vertices()[1] = v_plane2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeRoomYPrior* GraphSLAM::add_room_yprior_edge(g2o::VertexRoomXYLB* v_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomYPrior* edge(new g2o::EdgeRoomYPrior());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeRoomRoom* GraphSLAM::add_room_room_edge(g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomRoom* edge(new g2o::EdgeRoomRoom());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room1;
+  edge->vertices()[1] = v_room2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+bool GraphSLAM::remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge) {
+  bool ack = graph->removeEdge(room_room_edge);
+
+  return ack;
+}
+
+g2o::EdgeRoomXInfiniteRoom* GraphSLAM::add_room_x_infinite_room_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexInfiniteRoom* v_xinfinite_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomXInfiniteRoom* edge(new g2o::EdgeRoomXInfiniteRoom());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  edge->vertices()[1] = v_xinfinite_room;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeRoomYInfiniteRoom* GraphSLAM::add_room_y_infinite_room_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexInfiniteRoom* v_yinfinite_room, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeRoomYInfiniteRoom* edge(new g2o::EdgeRoomYInfiniteRoom());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room;
+  edge->vertices()[1] = v_yinfinite_room;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeXInfiniteRoomXInfiniteRoom* GraphSLAM::add_x_infinite_room_x_infinite_room_edge(g2o::VertexInfiniteRoom* v_xcorr1, g2o::VertexInfiniteRoom* v_xcorr2, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeXInfiniteRoomXInfiniteRoom* edge(new g2o::EdgeXInfiniteRoomXInfiniteRoom());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_xcorr1;
+  edge->vertices()[1] = v_xcorr2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeYInfiniteRoomYInfiniteRoom* GraphSLAM::add_y_infinite_room_y_infinite_room_edge(g2o::VertexInfiniteRoom* v_ycorr1, g2o::VertexInfiniteRoom* v_ycorr2, const double& measurement, const Eigen::MatrixXd& information) {
+  g2o::EdgeYInfiniteRoomYInfiniteRoom* edge(new g2o::EdgeYInfiniteRoomYInfiniteRoom());
+  edge->setMeasurement(measurement);
+  edge->setInformation(information);
+  edge->vertices()[0] = v_ycorr1;
+  edge->vertices()[1] = v_ycorr2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+bool GraphSLAM::remove_room_xplane_edge(g2o::EdgeRoomXPlane* room_xplane_edge) {
+  bool ack = graph->removeEdge(room_xplane_edge);
+
+  return ack;
+}
+
+bool GraphSLAM::remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge) {
+  bool ack = graph->removeEdge(room_yplane_edge);
+
+  return ack;
+}
+
+void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size) {
+  if(kernel_type == "NONE") {
+    return;
   }
 
-  g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(g2o::VertexRoomXYLB * v_room, g2o::VertexPlane * v_xplane1, g2o::VertexPlane * v_xplane2, g2o::VertexPlane * v_yplane1, g2o::VertexPlane * v_yplane2, const Eigen::MatrixXd& information) {
-    g2o::EdgeRoom4Planes* edge(new g2o::EdgeRoom4Planes());
-    edge->setInformation(information);
-    edge->vertices()[0] = v_room;
-    edge->vertices()[1] = v_xplane1;
-    edge->vertices()[2] = v_xplane2;
-    edge->vertices()[3] = v_yplane1;
-    edge->vertices()[4] = v_yplane2;
-    graph->addEdge(edge);
-
-    return edge;
+  g2o::RobustKernel* kernel = robust_kernel_factory->construct(kernel_type);
+  if(kernel == nullptr) {
+    std::cerr << "warning : invalid robust kernel type: " << kernel_type << std::endl;
+    return;
   }
 
-  g2o::EdgeRoomXPrior* GraphSLAM::add_room_xprior_edge(g2o::VertexRoomXYLB * v_room, const double& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeRoomXPrior* edge(new g2o::EdgeRoomXPrior());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_room;
-    graph->addEdge(edge);
+  kernel->setDelta(kernel_size);
 
-    return edge;
+  g2o::OptimizableGraph::Edge* edge_ = dynamic_cast<g2o::OptimizableGraph::Edge*>(edge);
+  edge_->setRobustKernel(kernel);
+}
+
+int GraphSLAM::optimize(int num_iterations) {
+  g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
+  if(graph->edges().size() < 10) {
+    return -1;
   }
 
-  g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(g2o::VertexRoomXYLB * v_room, g2o::VertexPlane * v_plane2, const double& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeRoomYPlane* edge(new g2o::EdgeRoomYPlane());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_room;
-    edge->vertices()[1] = v_plane2;
-    graph->addEdge(edge);
+  std::cout << std::endl;
+  std::cout << "--- pose graph optimization ---" << std::endl;
+  std::cout << "nodes: " << graph->vertices().size() << "   edges: " << graph->edges().size() << std::endl;
+  std::cout << "optimizing... " << std::flush;
 
-    return edge;
+  std::cout << "init" << std::endl;
+  graph->initializeOptimization();
+  graph->setVerbose(true);
+
+  double chi2 = graph->chi2();
+  if(std::isnan(graph->chi2())) {
+    std::cout << "GRAPH RETURNED A NAN WAITING AFTER OPTIMIZATION" << std::endl;
   }
 
-  g2o::EdgeRoomYPrior* GraphSLAM::add_room_yprior_edge(g2o::VertexRoomXYLB * v_room, const double& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeRoomYPrior* edge(new g2o::EdgeRoomYPrior());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_room;
-    graph->addEdge(edge);
+  std::cout << "optimize!!" << std::endl;
+  auto t1 = ros::Time::now();
+  int iterations = graph->optimize(num_iterations);
+  auto t2 = ros::Time::now();
+  std::cout << "done" << std::endl;
+  std::cout << "iterations: " << iterations << " / " << num_iterations << std::endl;
+  std::cout << "chi2: (before)" << chi2 << " -> (after)" << graph->chi2() << std::endl;
+  std::cout << "time: " << boost::format("%.3f") % (t2 - t1).toSec() << "[sec]" << std::endl;
 
-    return edge;
+  if(std::isnan(graph->chi2())) {
+    throw std::invalid_argument("GRAPH RETURNED A NAN...STOPPING THE EXPERIMENT");
   }
 
-  g2o::EdgeRoomRoom* GraphSLAM::add_room_room_edge(g2o::VertexRoomXYLB * v_room1, g2o::VertexRoomXYLB * v_room2, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeRoomRoom* edge(new g2o::EdgeRoomRoom());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_room1;
-    edge->vertices()[1] = v_room2;
-    graph->addEdge(edge);
+  return iterations;
+}
 
-    return edge;
-  }
-
-  bool GraphSLAM::remove_room_room_edge(g2o::EdgeRoomRoom * room_room_edge) {
-    bool ack = graph->removeEdge(room_room_edge);
-
-    return ack;
-  }
-
-  g2o::EdgeRoomXInfiniteRoom* GraphSLAM::add_room_x_infinite_room_edge(g2o::VertexRoomXYLB * v_room, g2o::VertexInfiniteRoom * v_xinfinite_room, const double& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeRoomXInfiniteRoom* edge(new g2o::EdgeRoomXInfiniteRoom());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_room;
-    edge->vertices()[1] = v_xinfinite_room;
-    graph->addEdge(edge);
-
-    return edge;
-  }
-
-  g2o::EdgeRoomYInfiniteRoom* GraphSLAM::add_room_y_infinite_room_edge(g2o::VertexRoomXYLB * v_room, g2o::VertexInfiniteRoom * v_yinfinite_room, const double& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeRoomYInfiniteRoom* edge(new g2o::EdgeRoomYInfiniteRoom());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_room;
-    edge->vertices()[1] = v_yinfinite_room;
-    graph->addEdge(edge);
-
-    return edge;
-  }
-
-  g2o::EdgeXInfiniteRoomXInfiniteRoom* GraphSLAM::add_x_infinite_room_x_infinite_room_edge(g2o::VertexInfiniteRoom * v_xcorr1, g2o::VertexInfiniteRoom * v_xcorr2, const double& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeXInfiniteRoomXInfiniteRoom* edge(new g2o::EdgeXInfiniteRoomXInfiniteRoom());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_xcorr1;
-    edge->vertices()[1] = v_xcorr2;
-    graph->addEdge(edge);
-
-    return edge;
-  }
-
-  g2o::EdgeYInfiniteRoomYInfiniteRoom* GraphSLAM::add_y_infinite_room_y_infinite_room_edge(g2o::VertexInfiniteRoom * v_ycorr1, g2o::VertexInfiniteRoom * v_ycorr2, const double& measurement, const Eigen::MatrixXd& information) {
-    g2o::EdgeYInfiniteRoomYInfiniteRoom* edge(new g2o::EdgeYInfiniteRoomYInfiniteRoom());
-    edge->setMeasurement(measurement);
-    edge->setInformation(information);
-    edge->vertices()[0] = v_ycorr1;
-    edge->vertices()[1] = v_ycorr2;
-    graph->addEdge(edge);
-
-    return edge;
-  }
-
-  bool GraphSLAM::remove_room_xplane_edge(g2o::EdgeRoomXPlane * room_xplane_edge) {
-    bool ack = graph->removeEdge(room_xplane_edge);
-
-    return ack;
-  }
-
-  bool GraphSLAM::remove_room_yplane_edge(g2o::EdgeRoomYPlane * room_yplane_edge) {
-    bool ack = graph->removeEdge(room_yplane_edge);
-
-    return ack;
-  }
-
-  void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge * edge, const std::string& kernel_type, double kernel_size) {
-    if(kernel_type == "NONE") {
-      return;
-    }
-
-    g2o::RobustKernel* kernel = robust_kernel_factory->construct(kernel_type);
-    if(kernel == nullptr) {
-      std::cerr << "warning : invalid robust kernel type: " << kernel_type << std::endl;
-      return;
-    }
-
-    kernel->setDelta(kernel_size);
-
-    g2o::OptimizableGraph::Edge* edge_ = dynamic_cast<g2o::OptimizableGraph::Edge*>(edge);
-    edge_->setRobustKernel(kernel);
-  }
-
-  int GraphSLAM::optimize(int num_iterations) {
-    g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
-    if(graph->edges().size() < 10) {
-      return -1;
-    }
-
-    std::cout << std::endl;
-    std::cout << "--- pose graph optimization ---" << std::endl;
-    std::cout << "nodes: " << graph->vertices().size() << "   edges: " << graph->edges().size() << std::endl;
-    std::cout << "optimizing... " << std::flush;
-
-    std::cout << "init" << std::endl;
-    graph->initializeOptimization();
-    graph->setVerbose(true);
-
-    double chi2 = graph->chi2();
-    if(std::isnan(graph->chi2())) {
-      std::cout << "GRAPH RETURNED A NAN WAITING AFTER OPTIMIZATION" << std::endl;
-    }
-
-    std::cout << "optimize!!" << std::endl;
-    auto t1 = ros::Time::now();
-    int iterations = graph->optimize(num_iterations);
-    auto t2 = ros::Time::now();
-    std::cout << "done" << std::endl;
-    std::cout << "iterations: " << iterations << " / " << num_iterations << std::endl;
-    std::cout << "chi2: (before)" << chi2 << " -> (after)" << graph->chi2() << std::endl;
-    std::cout << "time: " << boost::format("%.3f") % (t2 - t1).toSec() << "[sec]" << std::endl;
-
-    if(std::isnan(graph->chi2())) {
-      throw std::invalid_argument("GRAPH RETURNED A NAN...STOPPING THE EXPERIMENT");
-    }
-
-    return iterations;
-  }
-
-  bool GraphSLAM::compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd> & spinv, std::vector<std::pair<int, int>> vert_pairs_vec) {
-    if(graph->computeMarginals(spinv, vert_pairs_vec)) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  void GraphSLAM::save(const std::string& filename) {
-    g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
-
-    std::ofstream ofs(filename);
-    graph->save(ofs);
-
-    g2o::save_robust_kernels(filename + ".kernels", graph);
-  }
-
-  bool GraphSLAM::load(const std::string& filename) {
-    std::cout << "loading pose graph..." << std::endl;
-    g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
-
-    std::ifstream ifs(filename);
-    if(!graph->load(ifs, true)) {
-      return false;
-    }
-
-    std::cout << "nodes  : " << graph->vertices().size() << std::endl;
-    std::cout << "edges  : " << graph->edges().size() << std::endl;
-
-    if(!g2o::load_robust_kernels(filename + ".kernels", graph)) {
-      return false;
-    }
-
+bool GraphSLAM::compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv, std::vector<std::pair<int, int>> vert_pairs_vec) {
+  if(graph->computeMarginals(spinv, vert_pairs_vec)) {
     return true;
+  } else {
+    return false;
   }
+}
+
+void GraphSLAM::save(const std::string& filename) {
+  g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
+
+  std::ofstream ofs(filename);
+  graph->save(ofs);
+
+  g2o::save_robust_kernels(filename + ".kernels", graph);
+}
+
+bool GraphSLAM::load(const std::string& filename) {
+  std::cout << "loading pose graph..." << std::endl;
+  g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
+
+  std::ifstream ifs(filename);
+  if(!graph->load(ifs, true)) {
+    return false;
+  }
+
+  std::cout << "nodes  : " << graph->vertices().size() << std::endl;
+  std::cout << "edges  : " << graph->edges().size() << std::endl;
+
+  if(!g2o::load_robust_kernels(filename + ".kernels", graph)) {
+    return false;
+  }
+
+  return true;
+}
 
 }  // namespace s_graphs
