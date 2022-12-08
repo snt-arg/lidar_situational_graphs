@@ -332,7 +332,14 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
     std::pair<VerticalPlanes, VerticalPlanes> x2_detected_mapped_plane_pair;
 
-    if(x_plane1.id == (*found_mapped_xplane1).id || x_plane1.id == (*found_mapped_xplane2).id) {
+    g2o::Plane3D plane1 = (*found_mapped_xplane1).plane;
+    g2o::Plane3D plane2 = x_plane1.plane;
+    double maha_dist = plane_utils->plane_difference(plane1, plane2);
+    if(maha_dist < 1.0) {
+      x_plane1_min_segment = true;
+      x1_detected_mapped_plane_pair.first = x_plane1;
+      x1_detected_mapped_plane_pair.second = x_plane1;
+    } else if(x_plane1.id == (*found_mapped_xplane1).id || x_plane1.id == (*found_mapped_xplane2).id) {
       x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = x_plane1;
@@ -347,8 +354,14 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     }
 
     current_detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
-
-    if(x_plane2.id == (*found_mapped_xplane1).id || x_plane2.id == (*found_mapped_xplane2).id) {
+    plane1 = (*found_mapped_xplane2).plane;
+    plane2 = x_plane2.plane;
+    maha_dist = plane_utils->plane_difference(plane1, plane2);
+    if(maha_dist < 1.0) {
+      x_plane2_min_segment = true;
+      x2_detected_mapped_plane_pair.first = x_plane2;
+      x2_detected_mapped_plane_pair.second = x_plane2;
+    } else if(x_plane2.id == (*found_mapped_xplane1).id || x_plane2.id == (*found_mapped_xplane2).id) {
       x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = x_plane2;
@@ -368,7 +381,14 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     std::pair<VerticalPlanes, VerticalPlanes> y1_detected_mapped_plane_pair;
     std::pair<VerticalPlanes, VerticalPlanes> y2_detected_mapped_plane_pair;
 
-    if(y_plane1.id == (*found_mapped_yplane1).id || y_plane1.id == (*found_mapped_yplane2).id) {
+    plane1 = (*found_mapped_yplane1).plane;
+    plane2 = y_plane1.plane;
+    maha_dist = plane_utils->plane_difference(plane1, plane2);
+    if(maha_dist < 1.0) {
+      y_plane1_min_segment = true;
+      y1_detected_mapped_plane_pair.first = y_plane1;
+      y1_detected_mapped_plane_pair.second = y_plane1;
+    } else if(y_plane1.id == (*found_mapped_yplane1).id || y_plane1.id == (*found_mapped_yplane2).id) {
       y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = y_plane1;
@@ -383,7 +403,14 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     }
     current_detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
 
-    if(y_plane2.id == (*found_mapped_yplane1).id || y_plane2.id == (*found_mapped_yplane2).id) {
+    plane1 = (*found_mapped_yplane2).plane;
+    plane2 = y_plane2.plane;
+    maha_dist = plane_utils->plane_difference(plane1, plane2);
+    if(maha_dist < 1.0) {
+      y_plane2_min_segment = true;
+      y2_detected_mapped_plane_pair.first = y_plane2;
+      y2_detected_mapped_plane_pair.second = y_plane2;
+    } else if(y_plane2.id == (*found_mapped_yplane1).id || y_plane2.id == (*found_mapped_yplane2).id) {
       y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = y_plane2;
