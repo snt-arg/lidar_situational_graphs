@@ -332,47 +332,45 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
     std::pair<VerticalPlanes, VerticalPlanes> x2_detected_mapped_plane_pair;
 
-    g2o::Plane3D plane1 = (*found_mapped_xplane1).plane;
-    g2o::Plane3D plane2 = x_plane1.plane;
-    double maha_dist = plane_utils->plane_difference(plane1, plane2);
-    if(maha_dist < 1.0) {
-      x_plane1_min_segment = true;
-      x1_detected_mapped_plane_pair.first = x_plane1;
-      x1_detected_mapped_plane_pair.second = x_plane1;
-    } else if(x_plane1.id == (*found_mapped_xplane1).id || x_plane1.id == (*found_mapped_xplane2).id) {
+    if(x_plane1.id == (*found_mapped_xplane1).id || x_plane1.id == (*found_mapped_xplane2).id) {
       x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = x_plane1;
     } else if((x_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      x_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane1).cloud_seg_map, x_plane1.cloud_seg_map);
-      x1_detected_mapped_plane_pair.first = x_plane1;
-      x1_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane1).plane, x_plane1.plane);
+      if(maha_dist < 0.5) {
+        x_plane1_min_segment = true;
+        x1_detected_mapped_plane_pair.first = x_plane1;
+        x1_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
+      }
     } else {
-      x_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane2).cloud_seg_map, x_plane1.cloud_seg_map);
-      x1_detected_mapped_plane_pair.first = x_plane1;
-      x1_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane2).plane, x_plane1.plane);
+      if(maha_dist < 0.5) {
+        x_plane1_min_segment = true;
+        x1_detected_mapped_plane_pair.first = x_plane1;
+        x1_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
+      }
     }
 
     current_detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
-    plane1 = (*found_mapped_xplane2).plane;
-    plane2 = x_plane2.plane;
-    maha_dist = plane_utils->plane_difference(plane1, plane2);
-    if(maha_dist < 1.0) {
-      x_plane2_min_segment = true;
-      x2_detected_mapped_plane_pair.first = x_plane2;
-      x2_detected_mapped_plane_pair.second = x_plane2;
-    } else if(x_plane2.id == (*found_mapped_xplane1).id || x_plane2.id == (*found_mapped_xplane2).id) {
+    if(x_plane2.id == (*found_mapped_xplane1).id || x_plane2.id == (*found_mapped_xplane2).id) {
       x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = x_plane2;
     } else if((x_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      x_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane1).cloud_seg_map, x_plane2.cloud_seg_map);
-      x2_detected_mapped_plane_pair.first = x_plane2;
-      x2_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane1).plane, x_plane2.plane);
+      if(maha_dist < 0.5) {
+        x_plane2_min_segment = true;
+        x2_detected_mapped_plane_pair.first = x_plane2;
+        x2_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
+      }
     } else {
-      x_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_xplane2).cloud_seg_map, x_plane2.cloud_seg_map);
-      x2_detected_mapped_plane_pair.first = x_plane2;
-      x2_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane2).plane, x_plane2.plane);
+      if(maha_dist < 0.5) {
+        x_plane2_min_segment = true;
+        x2_detected_mapped_plane_pair.first = x_plane2;
+        x2_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
+      }
     }
     current_detected_mapped_plane_pairs.push_back(x2_detected_mapped_plane_pair);
 
@@ -381,47 +379,45 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     std::pair<VerticalPlanes, VerticalPlanes> y1_detected_mapped_plane_pair;
     std::pair<VerticalPlanes, VerticalPlanes> y2_detected_mapped_plane_pair;
 
-    plane1 = (*found_mapped_yplane1).plane;
-    plane2 = y_plane1.plane;
-    maha_dist = plane_utils->plane_difference(plane1, plane2);
-    if(maha_dist < 1.0) {
-      y_plane1_min_segment = true;
-      y1_detected_mapped_plane_pair.first = y_plane1;
-      y1_detected_mapped_plane_pair.second = y_plane1;
-    } else if(y_plane1.id == (*found_mapped_yplane1).id || y_plane1.id == (*found_mapped_yplane2).id) {
+    if(y_plane1.id == (*found_mapped_yplane1).id || y_plane1.id == (*found_mapped_yplane2).id) {
       y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = y_plane1;
     } else if((y_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      y_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane1).cloud_seg_map, y_plane1.cloud_seg_map);
-      y1_detected_mapped_plane_pair.first = y_plane1;
-      y1_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane1).plane, y_plane1.plane);
+      if(maha_dist < 0.5) {
+        y_plane1_min_segment = true;
+        y1_detected_mapped_plane_pair.first = y_plane1;
+        y1_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
+      }
     } else {
-      y_plane1_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane2).cloud_seg_map, y_plane1.cloud_seg_map);
-      y1_detected_mapped_plane_pair.first = y_plane1;
-      y1_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane2).plane, y_plane1.plane);
+      if(maha_dist < 0.5) {
+        y_plane1_min_segment = true;
+        y1_detected_mapped_plane_pair.first = y_plane1;
+        y1_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
+      }
     }
     current_detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
 
-    plane1 = (*found_mapped_yplane2).plane;
-    plane2 = y_plane2.plane;
-    maha_dist = plane_utils->plane_difference(plane1, plane2);
-    if(maha_dist < 1.0) {
-      y_plane2_min_segment = true;
-      y2_detected_mapped_plane_pair.first = y_plane2;
-      y2_detected_mapped_plane_pair.second = y_plane2;
-    } else if(y_plane2.id == (*found_mapped_yplane1).id || y_plane2.id == (*found_mapped_yplane2).id) {
+    if(y_plane2.id == (*found_mapped_yplane1).id || y_plane2.id == (*found_mapped_yplane2).id) {
       y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = y_plane2;
     } else if((y_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      y_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane1).cloud_seg_map, y_plane2.cloud_seg_map);
-      y2_detected_mapped_plane_pair.first = y_plane2;
-      y2_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane1).plane, y_plane2.plane);
+      if(maha_dist < 0.5) {
+        y_plane2_min_segment = true;
+        y2_detected_mapped_plane_pair.first = y_plane2;
+        y2_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
+      }
     } else {
-      y_plane2_min_segment = plane_utils->check_point_neighbours((*found_mapped_yplane2).cloud_seg_map, y_plane2.cloud_seg_map);
-      y2_detected_mapped_plane_pair.first = y_plane2;
-      y2_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane2).plane, y_plane2.plane);
+      if(maha_dist < 0.5) {
+        y_plane2_min_segment = true;
+        y2_detected_mapped_plane_pair.first = y_plane2;
+        y2_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
+      }
     }
     current_detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
 
