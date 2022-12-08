@@ -387,6 +387,12 @@ public:
 
     return center_point;
   }
+  double plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2) {
+    Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
+    Eigen::Vector3d error = plane1.ominus(plane2);
+    double maha_dist = sqrt(error.transpose() * information * error);
+    return maha_dist;
+  }
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP
