@@ -2,7 +2,11 @@
 
 **Situational graphs (S-Graphs)** is a ROS package for generating in real-time four-layered hierarchical factor graphs representing a scene graph including **_Keyframes_** registring the robot poses, **_Walls_** which maps wall planes, **_Rooms Layer_** constraining the wall planes using room/infinite_room factors, **_Floors_** constraining the rooms within a given floor level. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
-![S-Graphs Banner](./imgs/s_graphs+.gif)
+<p align="center">
+  <a href="">
+    <img src="./imgs/s_graphs+.gif" alt="Logo" width="80%">
+  </a>
+</p>
 
 ## Table of contents
 
@@ -46,7 +50,11 @@
 
 ### Architecture
 
-![S-Graphs Architecture](./imgs/system_architecture.png)
+<p align="center">
+  <a href="">
+    <img src="./imgs/system_architecture.png" alt="Architecture" width="80%">
+  </a>
+</p>
 
 ## Installation
 
@@ -268,7 +276,11 @@ All the configurable parameters are listed in _launch/s_graphs.launch_ as ros pa
 
 - `map2odom`: The transform published between the map frame and the odom frame after the corrections have been applied.
 
-![Tf Tree](./imgs/Tf-tree.png)
+<p align="center">
+  <a href="">
+    <img src="./imgs/Tf-tree.png" alt="tf_tree" width="80%">
+  </a>
+</p>
 
 ## Instructions To Use S-Graphs
 
