@@ -1510,7 +1510,7 @@ private:
   std::vector<HorizontalPlanes> hort_planes;                                                     // horizontally segmented planes
   int vertex_count;
   std::vector<InfiniteRooms> x_infinite_rooms, y_infinite_rooms;  // infinite_rooms segmented from planes
-  std::vector<Rooms> rooms_vec;                     // rooms segmented from planes
+  std::vector<Rooms> rooms_vec;                                   // rooms segmented from planes
   std::vector<Floors> floors_vec;
 
   std::mutex vert_plane_snapshot_mutex;
