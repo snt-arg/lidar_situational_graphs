@@ -40,8 +40,9 @@ namespace g2o {
 class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeWall2Planes() : BaseMultiEdge<3, Eigen::Vector3d>() {
+  EdgeWall2Planes(Eigen::Vector3d wall_point) : BaseMultiEdge<3, Eigen::Vector3d>() {
     resize(3);
+    _wall_point = wall_point;
   }
 
   void computeError() override {
@@ -49,21 +50,24 @@ public:
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
 
-    Eigen::Vector3d wall_pose = v1->estimate();
+    Eigen::Vector3d wall_center = v1->estimate();
     Eigen::Vector4d plane1 = v2->estimate().coeffs();
     Eigen::Vector4d plane2 = v3->estimate().coeffs();
 
     correct_plane_d(plane1);
     correct_plane_d(plane2);
 
-    Eigen::Vector3d estimated_wall_pose;
+    Eigen::Vector3d estimated_wall_center;
     if(fabs(plane1(3)) > fabs(plane2(3))) {
-      estimated_wall_pose = (0.5 * (fabs(plane1(3)) * plane1.head(3) - fabs(plane2(3)) * plane2.head(3)));
+      estimated_wall_center = (0.5 * (fabs(plane1(3)) * plane1.head(3) - fabs(plane2(3)) * plane2.head(3))) + fabs(plane2(3)) * plane2.head(3);
     } else {
-      estimated_wall_pose = (0.5 * (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3)));
+      estimated_wall_center = (0.5 * (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3))) + fabs(plane1(3)) * plane1.head(3);
     }
 
-    _error = wall_pose - estimated_wall_pose;
+    Eigen::Vector3d estimated_wall_center_normalized = estimated_wall_center.head(2) / estimated_wall_center.norm();
+    Eigen::Vector3d final_wall_center = estimated_wall_center.head(2) + (_wall_point - (_wall_point.dot(estimated_wall_center_normalized)) * estimated_wall_center_normalized);
+
+    _error = wall_center - final_wall_center;
   }
 
   virtual bool read(std::istream& is) override {
@@ -106,6 +110,7 @@ private:
       plane = plane;
     }
   }
+  Eigen::Vector3d _wall_point;
 };
 
 }  // namespace g2o

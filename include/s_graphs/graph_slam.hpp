@@ -561,7 +561,7 @@ public:
    */
   bool remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge);
 
-  g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::MatrixXd& information);
+  g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, Eigen::Vector3d wall_point, const Eigen::MatrixXd& information);
 
   /**
    * @brief
