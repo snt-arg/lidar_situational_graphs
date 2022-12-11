@@ -486,8 +486,8 @@ g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(g2o::VertexRoomXYLB* v_ro
   return edge;
 }
 
-g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::MatrixXd& information) {
-  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes());
+g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, Eigen::Vector3d wall_point, const Eigen::MatrixXd& information) {
+  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(wall_point));
   edge->setInformation(information);
   edge->vertices()[0] = v_wall;
   edge->vertices()[1] = v_plane1;
