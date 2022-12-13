@@ -3,7 +3,7 @@
 GraphPublisher::GraphPublisher(const ros::NodeHandle& private_nh) {}
 
 GraphPublisher::~GraphPublisher() {}
-void GraphPublisher::convert_graph_to_string(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam) {
+void GraphPublisher::publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam) {
   g2o::SparseOptimizer* local_graph = graph_slam->graph.get();
   auto edge_itr = local_graph->edges().begin();
   for(int i = 0; edge_itr != local_graph->edges().end(); edge_itr++, i++) {

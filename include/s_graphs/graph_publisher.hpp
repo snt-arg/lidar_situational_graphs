@@ -60,7 +60,7 @@ public:
   ~GraphPublisher();
 
 public:
-  void convert_graph_to_string(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam);
+  void publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam);
 
 private:
 };
