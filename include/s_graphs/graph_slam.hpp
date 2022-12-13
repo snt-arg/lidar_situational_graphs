@@ -9,6 +9,8 @@
 #include <g2o/core/sparse_optimizer.h>
 
 #include <g2o/core/hyper_graph.h>
+#include <g2o/vertex_wall.hpp>
+#include <g2o/edge_wall_two_planes.hpp>
 
 namespace g2o {
 class VertexSE3;
@@ -194,6 +196,14 @@ public:
    * @param information_matrix: information matrix (it must be 6x6)
    * @return registered edge
    */
+
+  g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
+  /**
+   * @brief add a Wall node to the graph
+   * @param wall_center
+   * @return registered node
+   */
+
   g2o::EdgeSE3* add_se3_edge(g2o::VertexSE3* v1, g2o::VertexSE3* v2, const Eigen::Isometry3d& relative_pose, const Eigen::MatrixXd& information_matrix);
 
   /**
@@ -550,6 +560,8 @@ public:
    * @return Success or failure
    */
   bool remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge);
+
+  g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, Eigen::Vector3d wall_point, const Eigen::MatrixXd& information);
 
   /**
    * @brief
