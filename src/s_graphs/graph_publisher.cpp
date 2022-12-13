@@ -1,4 +1,4 @@
-#include <graph_publisher.hpp>
+#include <s_graphs/graph_publisher.hpp>
 
 GraphPublisher::GraphPublisher(const ros::NodeHandle& private_nh) {}
 

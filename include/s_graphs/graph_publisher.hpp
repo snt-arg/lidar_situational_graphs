@@ -50,7 +50,10 @@
 #include <g2o/edge_room.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
 #include <unordered_map>
-
+#include <ros1_graph_manager_interface/Attribute.h>
+#include <ros1_graph_manager_interface/Edge.h>
+#include <ros1_graph_manager_interface/Node.h>
+#include <ros1_graph_manager_interface/Graph.h>
 class GraphPublisher {
 public:
   GraphPublisher(const ros::NodeHandle& private_nh);
