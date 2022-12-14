@@ -38,7 +38,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
 
       // Room Node
       graph_node.id = v_room->id();
-      graph_node.type = "Room";
+      graph_node.type = "Finite Room";
       node_attribute.name = "VertexRoomXYLB";
       Eigen::Vector2d room_pose = v_room->estimate();
       node_attribute.fl_value.push_back(room_pose.x());
@@ -147,15 +147,64 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
       g2o::VertexRoomXYLB* v_room = dynamic_cast<g2o::VertexRoomXYLB*>(edge_r2p->vertices()[0]);
       g2o::VertexPlane* v_xplane = dynamic_cast<g2o::VertexPlane*>(edge_r2p->vertices()[1]);
       g2o::VertexPlane* v_yplane = dynamic_cast<g2o::VertexPlane*>(edge_r2p->vertices()[2]);
+      ros1_graph_manager_interface::Node graph_node;
+      ros1_graph_manager_interface::Attribute edge_attribute;
+      ros1_graph_manager_interface::Attribute node_attribute;
+
+      // Room Node
+      graph_node.id = v_room->id();
+      graph_node.type = "Infinte Room";
+      node_attribute.name = "VertexRoomXYLB";
+      Eigen::Vector2d room_pose = v_room->estimate();
+      node_attribute.fl_value.push_back(room_pose.x());
+      node_attribute.fl_value.push_back(room_pose.y());
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // Plane 1 node
+      graph_node.id = v_xplane->id();
+      graph_node.type = "Plane";
+      node_attribute.name = "VertexPlane";
+      Eigen::Vector4d plane_coeffs = v_xplane->estimate().coeffs();
+      node_attribute.fl_value.push_back(plane_coeffs(0));
+      node_attribute.fl_value.push_back(plane_coeffs(1));
+      node_attribute.fl_value.push_back(plane_coeffs(2));
+      node_attribute.fl_value.push_back(plane_coeffs(3));
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // Plane 2 node
+      graph_node.id = v_yplane->id();
+      graph_node.type = "Plane";
+      node_attribute.name = "VertexPlane";
+      plane_coeffs = v_yplane->estimate().coeffs();
+      node_attribute.fl_value.push_back(plane_coeffs(0));
+      node_attribute.fl_value.push_back(plane_coeffs(1));
+      node_attribute.fl_value.push_back(plane_coeffs(2));
+      node_attribute.fl_value.push_back(plane_coeffs(3));
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // Edge 1
       ros1_graph_manager_interface::Edge graph_edge;
       graph_edge.origin_node = v_room->id();
       graph_edge.target_node = v_xplane->id();
-      ros1_graph_manager_interface::Attribute edge_attribute;
       edge_attribute.name = "EdgeRoom2Planes";
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
+
+      // Edge 2
       graph_edge.origin_node = v_room->id();
       graph_edge.target_node = v_yplane->id();
       edge_attribute.name = "EdgeRoom2Planes";
