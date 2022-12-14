@@ -25,6 +25,33 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
     g2o::EdgeRoom4Planes* edge_r4p = dynamic_cast<g2o::EdgeRoom4Planes*>(edge);
     g2o::EdgeRoom2Planes* edge_r2p = dynamic_cast<g2o::EdgeRoom2Planes*>(edge);
     // g2o::EdgePlaneParallel* edge_pp = dynamic_cast<g2o::EdgePlaneParallel*>(edge);
+    g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
+    std::vector<int> ids;
+
+    if(edge_plane) {
+      g2o::VertexPlane* v_plane = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
+      ros1_graph_manager_interface::Node graph_node;
+      ros1_graph_manager_interface::Attribute node_attribute;
+
+      // Plane 1 node
+      auto found_vertex = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&ros1_graph_manager_interface::Node::id, _1) == v_plane->id());
+      if(found_vertex == nodes_vec.end()) {
+        graph_node.id = v_plane->id();
+        ids.push_back(v_plane->id());
+        graph_node.type = "Plane";
+        node_attribute.name = "VertexPlane";
+        Eigen::Vector4d plane_coeffs = v_plane->estimate().coeffs();
+        node_attribute.fl_value.push_back(plane_coeffs(0));
+        node_attribute.fl_value.push_back(plane_coeffs(1));
+        node_attribute.fl_value.push_back(plane_coeffs(2));
+        node_attribute.fl_value.push_back(plane_coeffs(3));
+        node_att_vec.push_back(node_attribute);
+        graph_node.attributes = node_att_vec;
+        nodes_vec.push_back(graph_node);
+        node_attribute.fl_value.clear();
+        node_att_vec.clear();
+      }
+    }
     if(edge_r4p) {
       g2o::VertexRoomXYLB* v_room = dynamic_cast<g2o::VertexRoomXYLB*>(edge_r4p->vertices()[0]);
       g2o::VertexPlane* v_xplane1 = dynamic_cast<g2o::VertexPlane*>(edge_r4p->vertices()[1]);
@@ -49,65 +76,65 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
       node_attribute.fl_value.clear();
       node_att_vec.clear();
 
-      // Plane 1 node
-      graph_node.id = v_xplane1->id();
-      graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
-      Eigen::Vector4d plane_coeffs = v_xplane1->estimate().coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+      // // Plane 1 node
+      // graph_node.id = v_xplane1->id();
+      // graph_node.type = "Plane";
+      // node_attribute.name = "VertexPlane";
+      // Eigen::Vector4d plane_coeffs = v_xplane1->estimate().coeffs();
+      // node_attribute.fl_value.push_back(plane_coeffs(0));
+      // node_attribute.fl_value.push_back(plane_coeffs(1));
+      // node_attribute.fl_value.push_back(plane_coeffs(2));
+      // node_attribute.fl_value.push_back(plane_coeffs(3));
+      // node_att_vec.push_back(node_attribute);
+      // graph_node.attributes = node_att_vec;
+      // nodes_vec.push_back(graph_node);
+      // node_attribute.fl_value.clear();
+      // node_att_vec.clear();
 
-      // Plane 2 node
-      graph_node.id = v_xplane2->id();
-      graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
-      plane_coeffs = v_xplane2->estimate().coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+      // // Plane 2 node
+      // graph_node.id = v_xplane2->id();
+      // graph_node.type = "Plane";
+      // node_attribute.name = "VertexPlane";
+      // plane_coeffs = v_xplane2->estimate().coeffs();
+      // node_attribute.fl_value.push_back(plane_coeffs(0));
+      // node_attribute.fl_value.push_back(plane_coeffs(1));
+      // node_attribute.fl_value.push_back(plane_coeffs(2));
+      // node_attribute.fl_value.push_back(plane_coeffs(3));
+      // node_att_vec.push_back(node_attribute);
+      // graph_node.attributes = node_att_vec;
+      // nodes_vec.push_back(graph_node);
+      // node_attribute.fl_value.clear();
+      // node_att_vec.clear();
 
-      // Plane 3 node
-      graph_node.id = v_yplane1->id();
-      graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
-      plane_coeffs = v_yplane1->estimate().coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+      // // Plane 3 node
+      // graph_node.id = v_yplane1->id();
+      // graph_node.type = "Plane";
+      // node_attribute.name = "VertexPlane";
+      // plane_coeffs = v_yplane1->estimate().coeffs();
+      // node_attribute.fl_value.push_back(plane_coeffs(0));
+      // node_attribute.fl_value.push_back(plane_coeffs(1));
+      // node_attribute.fl_value.push_back(plane_coeffs(2));
+      // node_attribute.fl_value.push_back(plane_coeffs(3));
+      // node_att_vec.push_back(node_attribute);
+      // graph_node.attributes = node_att_vec;
+      // nodes_vec.push_back(graph_node);
+      // node_attribute.fl_value.clear();
+      // node_att_vec.clear();
 
-      // Plane 4 node
-      graph_node.id = v_yplane2->id();
-      graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
-      plane_coeffs = v_yplane2->estimate().coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+      // // Plane 4 node
+      // graph_node.id = v_yplane2->id();
+      // graph_node.type = "Plane";
+      // node_attribute.name = "VertexPlane";
+      // plane_coeffs = v_yplane2->estimate().coeffs();
+      // node_attribute.fl_value.push_back(plane_coeffs(0));
+      // node_attribute.fl_value.push_back(plane_coeffs(1));
+      // node_attribute.fl_value.push_back(plane_coeffs(2));
+      // node_attribute.fl_value.push_back(plane_coeffs(3));
+      // node_att_vec.push_back(node_attribute);
+      // graph_node.attributes = node_att_vec;
+      // nodes_vec.push_back(graph_node);
+      // node_attribute.fl_value.clear();
+      // node_att_vec.clear();
 
       // first edge
       graph_edge.origin_node = v_room->id();
@@ -164,35 +191,35 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
       node_attribute.fl_value.clear();
       node_att_vec.clear();
 
-      // Plane 1 node
-      graph_node.id = v_xplane->id();
-      graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
-      Eigen::Vector4d plane_coeffs = v_xplane->estimate().coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+      // // Plane 1 node
+      // graph_node.id = v_xplane->id();
+      // graph_node.type = "Plane";
+      // node_attribute.name = "VertexPlane";
+      // Eigen::Vector4d plane_coeffs = v_xplane->estimate().coeffs();
+      // node_attribute.fl_value.push_back(plane_coeffs(0));
+      // node_attribute.fl_value.push_back(plane_coeffs(1));
+      // node_attribute.fl_value.push_back(plane_coeffs(2));
+      // node_attribute.fl_value.push_back(plane_coeffs(3));
+      // node_att_vec.push_back(node_attribute);
+      // graph_node.attributes = node_att_vec;
+      // nodes_vec.push_back(graph_node);
+      // node_attribute.fl_value.clear();
+      // node_att_vec.clear();
 
-      // Plane 2 node
-      graph_node.id = v_yplane->id();
-      graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
-      plane_coeffs = v_yplane->estimate().coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+      // // Plane 2 node
+      // graph_node.id = v_yplane->id();
+      // graph_node.type = "Plane";
+      // node_attribute.name = "VertexPlane";
+      // plane_coeffs = v_yplane->estimate().coeffs();
+      // node_attribute.fl_value.push_back(plane_coeffs(0));
+      // node_attribute.fl_value.push_back(plane_coeffs(1));
+      // node_attribute.fl_value.push_back(plane_coeffs(2));
+      // node_attribute.fl_value.push_back(plane_coeffs(3));
+      // node_att_vec.push_back(node_attribute);
+      // graph_node.attributes = node_att_vec;
+      // nodes_vec.push_back(graph_node);
+      // node_attribute.fl_value.clear();
+      // node_att_vec.clear();
 
       // Edge 1
       ros1_graph_manager_interface::Edge graph_edge;
