@@ -49,6 +49,66 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
       node_attribute.fl_value.clear();
       node_att_vec.clear();
 
+      // Plane 1 node
+      graph_node.id = v_xplane1->id();
+      graph_node.type = "Plane";
+      node_attribute.name = "VertexPlane";
+      Eigen::Vector4d plane_coeffs = v_xplane1->estimate().coeffs();
+      node_attribute.fl_value.push_back(plane_coeffs(0));
+      node_attribute.fl_value.push_back(plane_coeffs(1));
+      node_attribute.fl_value.push_back(plane_coeffs(2));
+      node_attribute.fl_value.push_back(plane_coeffs(3));
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // Plane 2 node
+      graph_node.id = v_xplane2->id();
+      graph_node.type = "Plane";
+      node_attribute.name = "VertexPlane";
+      plane_coeffs = v_xplane2->estimate().coeffs();
+      node_attribute.fl_value.push_back(plane_coeffs(0));
+      node_attribute.fl_value.push_back(plane_coeffs(1));
+      node_attribute.fl_value.push_back(plane_coeffs(2));
+      node_attribute.fl_value.push_back(plane_coeffs(3));
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // Plane 3 node
+      graph_node.id = v_yplane1->id();
+      graph_node.type = "Plane";
+      node_attribute.name = "VertexPlane";
+      plane_coeffs = v_yplane1->estimate().coeffs();
+      node_attribute.fl_value.push_back(plane_coeffs(0));
+      node_attribute.fl_value.push_back(plane_coeffs(1));
+      node_attribute.fl_value.push_back(plane_coeffs(2));
+      node_attribute.fl_value.push_back(plane_coeffs(3));
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // Plane 4 node
+      graph_node.id = v_yplane2->id();
+      graph_node.type = "Plane";
+      node_attribute.name = "VertexPlane";
+      plane_coeffs = v_yplane2->estimate().coeffs();
+      node_attribute.fl_value.push_back(plane_coeffs(0));
+      node_attribute.fl_value.push_back(plane_coeffs(1));
+      node_attribute.fl_value.push_back(plane_coeffs(2));
+      node_attribute.fl_value.push_back(plane_coeffs(3));
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
       // first edge
       graph_edge.origin_node = v_room->id();
       graph_edge.target_node = v_xplane1->id();
@@ -111,7 +171,8 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
     // std::cout << " edges_vec size : " << edges_vec.size() << std::endl;
   }
   graph_msg.edges = edges_vec;
-
+  graph_msg.nodes = nodes_vec;
   edges_vec.clear();
+  nodes_vec.clear();
   return graph_msg;
 }
