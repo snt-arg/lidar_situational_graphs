@@ -3,7 +3,7 @@
 GraphPublisher::GraphPublisher(const ros::NodeHandle& private_nh) {}
 
 GraphPublisher::~GraphPublisher() {}
-void GraphPublisher::publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam) {
+void GraphPublisher::publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type) {
   g2o::SparseOptimizer* local_graph = graph_slam->graph.get();
   std::vector<ros1_graph_manager_interface::Edge> edges_vec;
   std::vector<ros1_graph_manager_interface::Node> nodes_vec;
@@ -34,6 +34,9 @@ void GraphPublisher::publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_s
       // std::cout << "v_yplane2 : " << v_yplane2->id() << '\n';
     }
     graph_msg.edges = edges_vec;
+    if(graph_type == "BIM") {
+      graph_msg.name = "BIM";
+    }
     // std::cout << " edges_vec size : " << edges_vec.size() << std::endl;
   }
   //   auto vertex_itr = local_graph->vertices().begin();
