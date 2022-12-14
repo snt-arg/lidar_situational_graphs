@@ -60,7 +60,7 @@ public:
   ~GraphPublisher();
 
 public:
-  void publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type);
+  ros1_graph_manager_interface::Graph publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type);
 
 private:
 };

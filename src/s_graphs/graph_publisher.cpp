@@ -3,7 +3,7 @@
 GraphPublisher::GraphPublisher(const ros::NodeHandle& private_nh) {}
 
 GraphPublisher::~GraphPublisher() {}
-void GraphPublisher::publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type) {
+ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type) {
   g2o::SparseOptimizer* local_graph = graph_slam->graph.get();
   std::vector<ros1_graph_manager_interface::Edge> edges_vec;
   std::vector<ros1_graph_manager_interface::Node> nodes_vec;
@@ -27,29 +27,21 @@ void GraphPublisher::publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_s
       att_vec.push_back(edge_attributes);
       edge_nodes.attributes = att_vec;
       edges_vec.push_back(edge_nodes);
+      att_vec.clear();
       // std::cout << "v_room : " << v_room->id() << std::endl;
       // std::cout << "v_xplane1 : " << v_xplane1->id() << '\n';
       // std::cout << "v_xplane2 : " << v_xplane2->id() << '\n';
       // std::cout << "v_yplane1 : " << v_yplane1->id() << '\n';
       // std::cout << "v_yplane2 : " << v_yplane2->id() << '\n';
+    } else {
+      continue;
     }
-    graph_msg.edges = edges_vec;
-    if(graph_type == "BIM") {
-      graph_msg.name = "BIM";
-    }
+
     // std::cout << " edges_vec size : " << edges_vec.size() << std::endl;
   }
-  //   auto vertex_itr = local_graph->vertices().begin();
-  //   for(int i = 0; vertex_itr != local_graph->edges().end(); vertex_itr++, i++) {
-  //     g2o::HyperGraph::Edge* edge = *vertex_itr;
-  //     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
-  //     if(edge_se3) {
-  //       g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]);
-  //       g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]);
-  //       Eigen::Vector3d pt1 = v1->estimate().translation();
-  //       Eigen::Vector3d pt2 = v2->estimate().translation();
-  //     }
-  //   }
-
-  //   g2o::VertexSE3*
+  graph_msg.edges = edges_vec;
+  if(graph_type == "BIM") {
+    graph_msg.name = "BIM";
+  }
+  return graph_msg;
 }
