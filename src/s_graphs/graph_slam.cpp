@@ -16,6 +16,7 @@
 #include <g2o/types/slam3d/edge_se3_pointxyz.h>
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 #include <g2o/vertex_room.hpp>
+#include <g2o/vertex_wall.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_point_to_plane.hpp>
@@ -226,6 +227,16 @@ void GraphSLAM::update_floor_node(g2o::VertexRoomXYLB* floor_node, const Eigen::
   floor_node->setEstimate(floor_pose);
 
   return;
+}
+
+g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center) {
+  g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  vertex->setEstimate(wall_center);
+  graph->addVertex(vertex);
+  this->increment_local_nbr_of_vertices();
+
+  return vertex;
 }
 
 g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1, g2o::VertexSE3* v2, const Eigen::Isometry3d& relative_pose, const Eigen::MatrixXd& information_matrix) {
@@ -470,6 +481,17 @@ g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(g2o::VertexRoomXYLB* v_ro
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
   edge->vertices()[3] = v_cluster_center;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, Eigen::Vector3d wall_point, const Eigen::MatrixXd& information) {
+  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(wall_point));
+  edge->setInformation(information);
+  edge->vertices()[0] = v_wall;
+  edge->vertices()[1] = v_plane1;
+  edge->vertices()[2] = v_plane2;
   graph->addEdge(edge);
 
   return edge;
