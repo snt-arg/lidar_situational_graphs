@@ -61,7 +61,7 @@ public:
   ~GraphPublisher();
 
 public:
-  ros1_graph_manager_interface::Graph publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type);
+  ros1_graph_manager_interface::Graph publish_graph(std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type, std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior);
 
 private:
 };
