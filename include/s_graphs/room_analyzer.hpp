@@ -33,7 +33,7 @@ struct RoomInfo {
 public:
   const std::vector<s_graphs::PlaneData>& current_x_vert_planes;
   const std::vector<s_graphs::PlaneData>& current_y_vert_planes;
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull;
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster;
 };
 
 struct RoomPlanes {
@@ -260,10 +260,10 @@ private:
    *
    * @param cloud_hull
    * @param plane
-   * @param sub_cloud_hull
+   * @param sub_cloud_cluster
    * @return
    */
-  int find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_hull);
+  int find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster);
 
   /**
    * @brief
