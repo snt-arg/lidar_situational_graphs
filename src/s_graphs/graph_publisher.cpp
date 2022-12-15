@@ -12,8 +12,8 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
   std::vector<ros1_graph_manager_interface::Attribute> node_att_vec;
 
   // Graph Type
-  if(graph_type == "BIM") {
-    graph_msg.name = "BIM";
+  if(graph_type == "Prior") {
+    graph_msg.name = "Prior";
   } else {
     graph_msg.name = "ONLINE";
   }
@@ -24,9 +24,8 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
     g2o::HyperGraph::Edge* edge = *edge_itr;
     g2o::EdgeRoom4Planes* edge_r4p = dynamic_cast<g2o::EdgeRoom4Planes*>(edge);
     g2o::EdgeRoom2Planes* edge_r2p = dynamic_cast<g2o::EdgeRoom2Planes*>(edge);
-    // g2o::EdgePlaneParallel* edge_pp = dynamic_cast<g2o::EdgePlaneParallel*>(edge);
+    g2o::Edge2Planes* edge_2p = dynamic_cast<g2o::Edge2Planes*>(edge);
     g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
-    std::vector<int> ids;
 
     if(edge_plane) {
       g2o::VertexPlane* v_plane = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
@@ -37,7 +36,6 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
       auto found_vertex = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&ros1_graph_manager_interface::Node::id, _1) == v_plane->id());
       if(found_vertex == nodes_vec.end()) {
         graph_node.id = v_plane->id();
-        ids.push_back(v_plane->id());
         graph_node.type = "Plane";
         node_attribute.name = "VertexPlane";
         Eigen::Vector4d plane_coeffs = v_plane->estimate().coeffs();
@@ -239,11 +237,46 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(std::unique_pt
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
-      // } else if(edge_pp) {
-      //   g2o::VertexPlane* v_plane1 = dynamic_cast<g2o::VertexPlane*>(edge_r4p->vertices()[0]);
-      //   g2o::VertexPlane* v_plane2 = dynamic_cast<g2o::VertexPlane*>(edge_r4p->vertices()[1]);
-      // }
+    } else if(edge_2p) {
+      ros1_graph_manager_interface::Node graph_node;
+      ros1_graph_manager_interface::Attribute node_attribute;
+      g2o::VertexPlane* v_plane1 = dynamic_cast<g2o::VertexPlane*>(edge_2p->vertices()[0]);
+      g2o::VertexPlane* v_plane2 = dynamic_cast<g2o::VertexPlane*>(edge_2p->vertices()[1]);
+      // Plane 1 node
+      auto found_vertex1 = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&ros1_graph_manager_interface::Node::id, _1) == v_plane1->id());
+      if(found_vertex1 == nodes_vec.end()) {
+        graph_node.id = v_plane1->id();
+        graph_node.type = "Plane";
+        node_attribute.name = "VertexPlane";
+        Eigen::Vector4d plane_coeffs = v_plane1->estimate().coeffs();
+        node_attribute.fl_value.push_back(plane_coeffs(0));
+        node_attribute.fl_value.push_back(plane_coeffs(1));
+        node_attribute.fl_value.push_back(plane_coeffs(2));
+        node_attribute.fl_value.push_back(plane_coeffs(3));
+        node_att_vec.push_back(node_attribute);
+        graph_node.attributes = node_att_vec;
+        nodes_vec.push_back(graph_node);
+        node_attribute.fl_value.clear();
+        node_att_vec.clear();
+      }
+      auto found_vertex2 = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&ros1_graph_manager_interface::Node::id, _1) == v_plane2->id());
+      if(found_vertex2 == nodes_vec.end()) {
+        graph_node.id = v_plane2->id();
+        graph_node.type = "Plane";
+        node_attribute.name = "VertexPlane";
+        Eigen::Vector4d plane_coeffs = v_plane2->estimate().coeffs();
+        node_attribute.fl_value.push_back(plane_coeffs(0));
+        node_attribute.fl_value.push_back(plane_coeffs(1));
+        node_attribute.fl_value.push_back(plane_coeffs(2));
+        node_attribute.fl_value.push_back(plane_coeffs(3));
+        node_att_vec.push_back(node_attribute);
+        graph_node.attributes = node_att_vec;
+        nodes_vec.push_back(graph_node);
+        node_attribute.fl_value.clear();
+        node_att_vec.clear();
+      }
     }
+
     // std::cout << " edges_vec size : " << edges_vec.size() << std::endl;
   }
   graph_msg.edges = edges_vec;

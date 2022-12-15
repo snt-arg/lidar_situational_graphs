@@ -45,6 +45,7 @@
 #include <g2o/edge_se3_priorquat.hpp>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_point_to_plane.hpp>
+#include <g2o/edge_plane.hpp>
 
 #include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_room.hpp>
