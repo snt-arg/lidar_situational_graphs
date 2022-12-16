@@ -27,7 +27,7 @@ RUN echo "$ssh_prv_key" > /root/.ssh/id_rsa && \
 # - Creating S-Graphs working space
 RUN mkdir -p /root/s_graphs_ws/src
 WORKDIR /root/s_graphs_ws/src
-RUN git clone git@github.com:snt-arg/s_graphs.git && cd s_graphs && git checkout v2.0.0 -b v2.0.0-stable-release
+RUN git clone git@github.com:snt-arg/s_graphs.git && cd s_graphs && git checkout v2.1.0 -b v2.1.0-stable-release
 
 # - Installing S-Graphs dependencies
 WORKDIR /root/s_graphs_ws/src/s_graphs
