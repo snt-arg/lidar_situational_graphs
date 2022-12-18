@@ -888,7 +888,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (*local_x_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (*local_x_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -910,7 +910,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (*local_y_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (*local_y_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -941,7 +941,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (x_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (x_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -961,7 +961,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (y_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (y_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -1035,7 +1035,7 @@ private:
           }
           /* Add edge between infinite_room and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
           double meas_plane1 = inf_room_mapper->infinite_room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, infinite_room_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
           information_infinite_room_plane(0, 0) = infinite_room_information;
@@ -1067,7 +1067,7 @@ private:
 
           /* Add edge between room and current mapped plane */
           Eigen::Vector4d found_mapped_x_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
           double x_plane1_meas = finite_room_mapper->room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_room_plane;
           information_room_plane(0, 0) = room_information;
@@ -1147,7 +1147,7 @@ private:
 
           /* Add edge between infinite_room and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
           double meas_plane1 = inf_room_mapper->infinite_room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, infinite_room_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
           information_infinite_room_plane(0, 0) = infinite_room_information;
@@ -1176,7 +1176,7 @@ private:
 
           /* Add edge between room and current mapped plane */
           Eigen::Vector4d found_mapped_y_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs);
           double y_plane1_meas = finite_room_mapper->room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_room_plane;
           information_room_plane(0, 0) = room_information;
