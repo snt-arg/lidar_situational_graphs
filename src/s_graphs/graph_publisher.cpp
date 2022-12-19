@@ -20,7 +20,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       ros1_graph_manager_interface::Attribute node_attribute;
       graph_node.id = x_vert_planes_prior[i].id;
       graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
+      node_attribute.name = "Geometric_info";
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
@@ -38,7 +38,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       ros1_graph_manager_interface::Attribute node_attribute;
       graph_node.id = y_vert_planes_prior[i].id;
       graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
+      node_attribute.name = "Geometric_info";
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
@@ -58,7 +58,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       ros1_graph_manager_interface::Attribute node_attribute;
       graph_node.id = rooms_vec_prior[i].id;
       graph_node.type = "Finite Room";
-      node_attribute.name = "VertexRoomXYLB";
+      node_attribute.name = "Geometric_info";
       Eigen::Vector2d room_pose = v_room->estimate();
       node_attribute.fl_value.push_back(room_pose.x());
       node_attribute.fl_value.push_back(room_pose.y());
@@ -71,7 +71,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       // first edge
       graph_edge.origin_node = v_room->id();
       graph_edge.target_node = rooms_vec_prior[i].plane_x1_id;
-      edge_attribute.name = "EdgeRoom4Planes";
+      edge_attribute.name = "Geometric_info";
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
@@ -109,7 +109,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       ros1_graph_manager_interface::Attribute node_attribute;
       graph_node.id = x_vert_planes[i].id;
       graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
+      node_attribute.name = "Geometric_info";
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
@@ -127,7 +127,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       ros1_graph_manager_interface::Attribute node_attribute;
       graph_node.id = y_vert_planes[i].id;
       graph_node.type = "Plane";
-      node_attribute.name = "VertexPlane";
+      node_attribute.name = "Geometric_info";
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
@@ -147,10 +147,11 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       ros1_graph_manager_interface::Attribute node_attribute;
       graph_node.id = rooms_vec[i].id;
       graph_node.type = "Finite Room";
-      node_attribute.name = "VertexRoomXYLB";
+      node_attribute.name = "Geometric_info";
       Eigen::Vector2d room_pose = v_room->estimate();
       node_attribute.fl_value.push_back(room_pose.x());
       node_attribute.fl_value.push_back(room_pose.y());
+      node_attribute.fl_value.push_back(0.0);
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
       nodes_vec.push_back(graph_node);
@@ -204,6 +205,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       Eigen::Vector2d room_pose = v_room->estimate();
       node_attribute.fl_value.push_back(room_pose.x());
       node_attribute.fl_value.push_back(room_pose.y());
+      node_attribute.fl_value.push_back(0.0);
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
       nodes_vec.push_back(graph_node);
@@ -235,13 +237,14 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       ros1_graph_manager_interface::Attribute edge_attribute;
       ros1_graph_manager_interface::Attribute node_attribute;
 
-      // X Infinte Room Node
+      // Y Infinte Room Node
       graph_node.id = y_infinite_rooms[i].id;
       graph_node.type = "Infinite Room";
       node_attribute.name = "Y-Infinite Room";
       Eigen::Vector2d room_pose = v_room->estimate();
       node_attribute.fl_value.push_back(room_pose.x());
       node_attribute.fl_value.push_back(room_pose.y());
+      node_attribute.fl_value.push_back(0.0);
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
       nodes_vec.push_back(graph_node);
@@ -284,7 +287,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
         if(found_vertex1 == nodes_vec.end()) {
           graph_node.id = v_plane1->id();
           graph_node.type = "Plane";
-          node_attribute.name = "VertexPlane";
+          node_attribute.name = "Geometric_info";
           Eigen::Vector4d plane_coeffs = v_plane1->estimate().coeffs();
           node_attribute.fl_value.push_back(plane_coeffs(0));
           node_attribute.fl_value.push_back(plane_coeffs(1));
@@ -300,7 +303,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
         if(found_vertex2 == nodes_vec.end()) {
           graph_node.id = v_plane2->id();
           graph_node.type = "Plane";
-          node_attribute.name = "VertexPlane";
+          node_attribute.name = "Geometric_info";
           Eigen::Vector4d plane_coeffs = v_plane2->estimate().coeffs();
           node_attribute.fl_value.push_back(plane_coeffs(0));
           node_attribute.fl_value.push_back(plane_coeffs(1));
