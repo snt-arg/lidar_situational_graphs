@@ -62,6 +62,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
       Eigen::Vector2d room_pose = v_room->estimate();
       node_attribute.fl_value.push_back(room_pose.x());
       node_attribute.fl_value.push_back(room_pose.y());
+      node_attribute.fl_value.push_back(0.0);
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
       nodes_vec.push_back(graph_node);
