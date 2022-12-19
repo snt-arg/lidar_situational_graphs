@@ -218,7 +218,7 @@ public:
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
     map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes", 1, false);
     all_map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/all_map_planes", 1, false);
-    graph_pub = mt_nh.advertise<ros1_graph_manager_interface::Graph>("s_graphs/graph_structutre", 32);
+    graph_pub = mt_nh.advertise<ros1_graph_manager_interface::Graph>("/s_graphs/graph_structure", 32);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
@@ -750,8 +750,8 @@ private:
 
     auto markers = graph_visualizer->create_marker_array(ros::Time::now(), local_graph, x_plane_snapshot, y_plane_snapshot, hort_plane_snapshot, x_infinite_room_snapshot, y_infinite_room_snapshot, room_snapshot, loop_detector->get_distance_thresh() * 2.0, keyframes, floors_vec);
     markers_pub.publish(markers);
-    auto graph_structure = graph_publisher->publish_graph(graph_slam, "Online");
-    graph_pub.publish(graph_structure);
+    // auto graph_structure = graph_publisher->publish_graph(graph_slam, "Online");
+    // graph_pub.publish(graph_structure);
 
     publish_all_mapped_planes(x_plane_snapshot, y_plane_snapshot);
     map_points_pub.publish(cloud_msg);
