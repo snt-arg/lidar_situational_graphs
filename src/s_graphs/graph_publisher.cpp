@@ -318,8 +318,6 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::uni
         }
       }
     }
-
-    // iterate over graph
   }
   graph_msg.edges = edges_vec;
   graph_msg.nodes = nodes_vec;
