@@ -76,7 +76,6 @@
 #include <s_graphs/plane_analyzer.hpp>
 #include <s_graphs/graph_visualizer.hpp>
 #include <s_graphs/keyframe_mapper.hpp>
-#include <s_graphs/graph_publisher.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_infinite_room.hpp>
@@ -136,7 +135,6 @@ public:
     floor_mapper.reset(new FloorMapper(private_nh));
     graph_visualizer.reset(new GraphVisualizer(private_nh));
     keyframe_mapper.reset(new KeyframeMapper(private_nh));
-    graph_publisher.reset(new GraphPublisher(private_nh));
 
     gps_time_offset = private_nh.param<double>("gps_time_offset", 0.0);
     gps_edge_stddev_xy = private_nh.param<double>("gps_edge_stddev_xy", 10000.0);
@@ -218,7 +216,6 @@ public:
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
     map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes", 1, false);
     all_map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/all_map_planes", 1, false);
-    graph_pub = mt_nh.advertise<ros1_graph_manager_interface::Graph>("/s_graphs/graph_structure", 32);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
@@ -750,8 +747,6 @@ private:
 
     auto markers = graph_visualizer->create_marker_array(ros::Time::now(), local_graph, x_plane_snapshot, y_plane_snapshot, hort_plane_snapshot, x_infinite_room_snapshot, y_infinite_room_snapshot, room_snapshot, loop_detector->get_distance_thresh() * 2.0, keyframes, floors_vec);
     markers_pub.publish(markers);
-    // auto graph_structure = graph_publisher->publish_graph(graph_slam, "Online");
-    // graph_pub.publish(graph_structure);
 
     publish_all_mapped_planes(x_plane_snapshot, y_plane_snapshot);
     map_points_pub.publish(cloud_msg);
@@ -1458,7 +1453,6 @@ private:
   ros::Publisher map_points_pub;
   ros::Publisher map_planes_pub;
   ros::Publisher all_map_planes_pub;
-  ros::Publisher graph_pub;
   tf::TransformListener tf_listener;
 
   ros::ServiceServer dump_service_server;
@@ -1580,7 +1574,6 @@ private:
   std::unique_ptr<FloorMapper> floor_mapper;
   std::unique_ptr<GraphVisualizer> graph_visualizer;
   std::unique_ptr<KeyframeMapper> keyframe_mapper;
-  std::unique_ptr<GraphPublisher> graph_publisher;
 };
 
 }  // namespace s_graphs
