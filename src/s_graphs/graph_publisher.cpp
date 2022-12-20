@@ -3,8 +3,7 @@
 GraphPublisher::GraphPublisher(const ros::NodeHandle& private_nh) {}
 
 GraphPublisher::~GraphPublisher() {}
-ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const std::unique_ptr<s_graphs::GraphSLAM>& graph_slam, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  g2o::SparseOptimizer* local_graph = graph_slam->graph.get();
+ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   std::vector<ros1_graph_manager_interface::Edge> edges_vec;
   std::vector<ros1_graph_manager_interface::Node> nodes_vec;
   ros1_graph_manager_interface::Graph graph_msg;
