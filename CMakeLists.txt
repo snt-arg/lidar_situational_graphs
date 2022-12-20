@@ -22,7 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   interactive_markers
   ndt_omp
   fast_gicp
-  ros1_graph_manager_interface
+  graph_manager_msgs
 )
 catkin_python_setup()
 

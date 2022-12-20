@@ -3,20 +3,20 @@
 GraphPublisher::GraphPublisher(const ros::NodeHandle& private_nh) {}
 
 GraphPublisher::~GraphPublisher() {}
-ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  std::vector<ros1_graph_manager_interface::Edge> edges_vec;
-  std::vector<ros1_graph_manager_interface::Node> nodes_vec;
-  ros1_graph_manager_interface::Graph graph_msg;
-  std::vector<ros1_graph_manager_interface::Attribute> edge_att_vec;
-  std::vector<ros1_graph_manager_interface::Attribute> node_att_vec;
+graph_manager_msgs::Graph GraphPublisher::publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
+  std::vector<graph_manager_msgs::Edge> edges_vec;
+  std::vector<graph_manager_msgs::Node> nodes_vec;
+  graph_manager_msgs::Graph graph_msg;
+  std::vector<graph_manager_msgs::Attribute> edge_att_vec;
+  std::vector<graph_manager_msgs::Attribute> node_att_vec;
 
   // Graph Type
   if(graph_type == "Prior") {
     graph_msg.name = "Prior";
     for(int i = 0; i < x_vert_planes_prior.size(); i++) {
       g2o::Plane3D v_plane = x_vert_planes_prior[i].plane;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute node_attribute;
       graph_node.id = x_vert_planes_prior[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -33,8 +33,8 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
     }
     for(int i = 0; i < y_vert_planes_prior.size(); i++) {
       g2o::Plane3D v_plane = y_vert_planes_prior[i].plane;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute node_attribute;
       graph_node.id = y_vert_planes_prior[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -51,10 +51,10 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
     }
     for(int i = 0; i < rooms_vec_prior.size(); i++) {
       g2o::VertexRoomXYLB* v_room = rooms_vec_prior[i].node;
-      ros1_graph_manager_interface::Edge graph_edge;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute edge_attribute;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Edge graph_edge;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute edge_attribute;
+      graph_manager_msgs::Attribute node_attribute;
       graph_node.id = rooms_vec_prior[i].id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
@@ -105,8 +105,8 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
     graph_msg.name = "ONLINE";
     for(int i = 0; i < x_vert_planes.size(); i++) {
       g2o::Plane3D v_plane = x_vert_planes[i].plane;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute node_attribute;
       graph_node.id = x_vert_planes[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -123,8 +123,8 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
     }
     for(int i = 0; i < y_vert_planes.size(); i++) {
       g2o::Plane3D v_plane = y_vert_planes[i].plane;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute node_attribute;
       graph_node.id = y_vert_planes[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -141,10 +141,10 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
     }
     for(int i = 0; i < rooms_vec.size(); i++) {
       g2o::VertexRoomXYLB* v_room = rooms_vec[i].node;
-      ros1_graph_manager_interface::Edge graph_edge;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute edge_attribute;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Edge graph_edge;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute edge_attribute;
+      graph_manager_msgs::Attribute node_attribute;
       graph_node.id = rooms_vec[i].id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
@@ -193,10 +193,10 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
 
     for(int i = 0; i < x_infinite_rooms.size(); i++) {
       g2o::VertexRoomXYLB* v_room = x_infinite_rooms[i].node;
-      ros1_graph_manager_interface::Edge graph_edge;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute edge_attribute;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Edge graph_edge;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute edge_attribute;
+      graph_manager_msgs::Attribute node_attribute;
 
       // X Infinte Room Node
       graph_node.id = x_infinite_rooms[i].id;
@@ -232,10 +232,10 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
 
     for(int i = 0; i < y_infinite_rooms.size(); i++) {
       g2o::VertexRoomXYLB* v_room = y_infinite_rooms[i].node;
-      ros1_graph_manager_interface::Edge graph_edge;
-      ros1_graph_manager_interface::Node graph_node;
-      ros1_graph_manager_interface::Attribute edge_attribute;
-      ros1_graph_manager_interface::Attribute node_attribute;
+      graph_manager_msgs::Edge graph_edge;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute edge_attribute;
+      graph_manager_msgs::Attribute node_attribute;
 
       // Y Infinte Room Node
       graph_node.id = y_infinite_rooms[i].id;
@@ -278,12 +278,12 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
       g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
 
       if(edge_2p) {
-        ros1_graph_manager_interface::Node graph_node;
-        ros1_graph_manager_interface::Attribute node_attribute;
+        graph_manager_msgs::Node graph_node;
+        graph_manager_msgs::Attribute node_attribute;
         g2o::VertexPlane* v_plane1 = dynamic_cast<g2o::VertexPlane*>(edge_2p->vertices()[0]);
         g2o::VertexPlane* v_plane2 = dynamic_cast<g2o::VertexPlane*>(edge_2p->vertices()[1]);
         // Plane 1 node
-        auto found_vertex1 = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&ros1_graph_manager_interface::Node::id, _1) == v_plane1->id());
+        auto found_vertex1 = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&graph_manager_msgs::Node::id, _1) == v_plane1->id());
         if(found_vertex1 == nodes_vec.end()) {
           graph_node.id = v_plane1->id();
           graph_node.type = "Plane";
@@ -299,7 +299,7 @@ ros1_graph_manager_interface::Graph GraphPublisher::publish_graph(const g2o::Spa
           node_attribute.fl_value.clear();
           node_att_vec.clear();
         }
-        auto found_vertex2 = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&ros1_graph_manager_interface::Node::id, _1) == v_plane2->id());
+        auto found_vertex2 = std::find_if(nodes_vec.begin(), nodes_vec.end(), boost::bind(&graph_manager_msgs::Node::id, _1) == v_plane2->id());
         if(found_vertex2 == nodes_vec.end()) {
           graph_node.id = v_plane2->id();
           graph_node.type = "Plane";

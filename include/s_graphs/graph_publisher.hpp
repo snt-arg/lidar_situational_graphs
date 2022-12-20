@@ -68,17 +68,17 @@
 #include <g2o/edge_wall_two_planes.hpp>
 
 #include <unordered_map>
-#include <ros1_graph_manager_interface/Attribute.h>
-#include <ros1_graph_manager_interface/Edge.h>
-#include <ros1_graph_manager_interface/Node.h>
-#include <ros1_graph_manager_interface/Graph.h>
+#include <graph_manager_msgs/Attribute.h>
+#include <graph_manager_msgs/Edge.h>
+#include <graph_manager_msgs/Node.h>
+#include <graph_manager_msgs/Graph.h>
 class GraphPublisher {
 public:
   GraphPublisher(const ros::NodeHandle& private_nh);
   ~GraphPublisher();
 
 public:
-  ros1_graph_manager_interface::Graph publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
+  graph_manager_msgs::Graph publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
 
 private:
 };
