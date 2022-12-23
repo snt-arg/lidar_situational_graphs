@@ -191,83 +191,83 @@ graph_manager_msgs::Graph GraphPublisher::publish_graph(const g2o::SparseOptimiz
       edge_att_vec.clear();
     }
 
-    for(int i = 0; i < x_infinite_rooms.size(); i++) {
-      g2o::VertexRoomXYLB* v_room = x_infinite_rooms[i].node;
-      graph_manager_msgs::Edge graph_edge;
-      graph_manager_msgs::Node graph_node;
-      graph_manager_msgs::Attribute edge_attribute;
-      graph_manager_msgs::Attribute node_attribute;
+    // for(int i = 0; i < x_infinite_rooms.size(); i++) {
+    //   g2o::VertexRoomXYLB* v_room = x_infinite_rooms[i].node;
+    //   graph_manager_msgs::Edge graph_edge;
+    //   graph_manager_msgs::Node graph_node;
+    //   graph_manager_msgs::Attribute edge_attribute;
+    //   graph_manager_msgs::Attribute node_attribute;
 
-      // X Infinte Room Node
-      graph_node.id = x_infinite_rooms[i].id;
-      graph_node.type = "Infinite Room";
-      node_attribute.name = "X-Infinite Room";
-      Eigen::Vector2d room_pose = v_room->estimate();
-      node_attribute.fl_value.push_back(room_pose.x());
-      node_attribute.fl_value.push_back(room_pose.y());
-      node_attribute.fl_value.push_back(0.0);
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+    //   // X Infinte Room Node
+    //   graph_node.id = x_infinite_rooms[i].id;
+    //   graph_node.type = "Infinite Room";
+    //   node_attribute.name = "X-Infinite Room";
+    //   Eigen::Vector2d room_pose = v_room->estimate();
+    //   node_attribute.fl_value.push_back(room_pose.x());
+    //   node_attribute.fl_value.push_back(room_pose.y());
+    //   node_attribute.fl_value.push_back(0.0);
+    //   node_att_vec.push_back(node_attribute);
+    //   graph_node.attributes = node_att_vec;
+    //   nodes_vec.push_back(graph_node);
+    //   node_attribute.fl_value.clear();
+    //   node_att_vec.clear();
 
-      // first edge
-      graph_edge.origin_node = v_room->id();
-      graph_edge.target_node = x_infinite_rooms[i].plane1_id;
-      edge_attribute.name = "EdgeRoom2Planes";
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
+    //   // first edge
+    //   graph_edge.origin_node = v_room->id();
+    //   graph_edge.target_node = x_infinite_rooms[i].plane1_id;
+    //   edge_attribute.name = "EdgeRoom2Planes";
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
 
-      // 2nd edge
+    //   // 2nd edge
 
-      graph_edge.target_node = x_infinite_rooms[i].plane2_id;
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
-    }
+    //   graph_edge.target_node = x_infinite_rooms[i].plane2_id;
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
+    // }
 
-    for(int i = 0; i < y_infinite_rooms.size(); i++) {
-      g2o::VertexRoomXYLB* v_room = y_infinite_rooms[i].node;
-      graph_manager_msgs::Edge graph_edge;
-      graph_manager_msgs::Node graph_node;
-      graph_manager_msgs::Attribute edge_attribute;
-      graph_manager_msgs::Attribute node_attribute;
+    // for(int i = 0; i < y_infinite_rooms.size(); i++) {
+    //   g2o::VertexRoomXYLB* v_room = y_infinite_rooms[i].node;
+    //   graph_manager_msgs::Edge graph_edge;
+    //   graph_manager_msgs::Node graph_node;
+    //   graph_manager_msgs::Attribute edge_attribute;
+    //   graph_manager_msgs::Attribute node_attribute;
 
-      // Y Infinte Room Node
-      graph_node.id = y_infinite_rooms[i].id;
-      graph_node.type = "Infinite Room";
-      node_attribute.name = "Y-Infinite Room";
-      Eigen::Vector2d room_pose = v_room->estimate();
-      node_attribute.fl_value.push_back(room_pose.x());
-      node_attribute.fl_value.push_back(room_pose.y());
-      node_attribute.fl_value.push_back(0.0);
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+    //   // Y Infinte Room Node
+    //   graph_node.id = y_infinite_rooms[i].id;
+    //   graph_node.type = "Infinite Room";
+    //   node_attribute.name = "Y-Infinite Room";
+    //   Eigen::Vector2d room_pose = v_room->estimate();
+    //   node_attribute.fl_value.push_back(room_pose.x());
+    //   node_attribute.fl_value.push_back(room_pose.y());
+    //   node_attribute.fl_value.push_back(0.0);
+    //   node_att_vec.push_back(node_attribute);
+    //   graph_node.attributes = node_att_vec;
+    //   nodes_vec.push_back(graph_node);
+    //   node_attribute.fl_value.clear();
+    //   node_att_vec.clear();
 
-      // first edge
-      graph_edge.origin_node = v_room->id();
-      graph_edge.target_node = y_infinite_rooms[i].plane1_id;
-      edge_attribute.name = "EdgeRoom2Planes";
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
+    //   // first edge
+    //   graph_edge.origin_node = v_room->id();
+    //   graph_edge.target_node = y_infinite_rooms[i].plane1_id;
+    //   edge_attribute.name = "EdgeRoom2Planes";
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
 
-      // 2nd edge
+    //   // 2nd edge
 
-      graph_edge.target_node = y_infinite_rooms[i].plane2_id;
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
-    }
+    //   graph_edge.target_node = y_infinite_rooms[i].plane2_id;
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
+    // }
 
     auto edge_itr = local_graph->edges().begin();
     for(int i = 0; edge_itr != local_graph->edges().end(); edge_itr++, i++) {
