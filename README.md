@@ -58,6 +58,8 @@
 
 ## Installation
 
+> Note: S-Graphs+ requires Ubuntu 20.04 and the ROS Noetic distro.
+
 ### Automated Installation
 
 1. Create a workspace for S-Graphs
