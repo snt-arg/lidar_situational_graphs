@@ -71,3 +71,7 @@ repositories:
     type: git
     url: https://github.com/koide3/ndt_omp.git
     version: master
+  s_graphs_utils/ros1_graph_manager_interface:
+    type: git
+    url: https://github.com/snt-arg/ros1_graph_manager_interface.git
+    version: main
