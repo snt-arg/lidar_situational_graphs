@@ -22,9 +22,9 @@ void PlaneAnalyzer::init_ros(ros::NodeHandle private_nh) {
   segmented_cloud_pub = private_nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
 }
 
-std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud) {
+std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud) {
   pcl::PointCloud<PointNormal>::Ptr segmented_cloud(new pcl::PointCloud<PointNormal>);
-  std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec;
+  std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec;
   pcl::PointCloud<PointT>::Ptr transformed_cloud(new pcl::PointCloud<PointT>);
 
   transformed_cloud->header = cloud->header;
@@ -108,12 +108,14 @@ std::vector<sensor_msgs::PointCloud2> PlaneAnalyzer::extract_segmented_planes(co
         // segmented_cloud->back().b = 177;
       }
 
-      sensor_msgs::PointCloud2 extracted_cloud_msg;
-      pcl::toROSMsg(*extracted_cloud_filtered, extracted_cloud_msg);
-      std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
-      extracted_cloud_msg.header = ext_msg_header;
-      extracted_cloud_msg.header.frame_id = plane_extraction_frame;
-      extracted_cloud_vec.push_back(extracted_cloud_msg);
+      extracted_cloud_vec.push_back(extracted_cloud_filtered);
+
+      // sensor_msgs::PointCloud2 extracted_cloud_msg;
+      // pcl::toROSMsg(*extracted_cloud_filtered, extracted_cloud_msg);
+      // std_msgs::Header ext_msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
+      // extracted_cloud_msg.header = ext_msg_header;
+      // extracted_cloud_msg.header.frame_id = plane_extraction_frame;
+      // extracted_cloud_vec.push_back(extracted_cloud_msg);
 
       extract.setInputCloud(transformed_cloud);
       extract.setIndices(inliers);

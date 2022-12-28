@@ -19,14 +19,11 @@ PlaneMapper::PlaneMapper(const ros::NodeHandle& private_nh) {
 
 PlaneMapper::~PlaneMapper() {}
 
-void PlaneMapper::map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<sensor_msgs::PointCloud2>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
+void PlaneMapper::map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
   std::vector<plane_data_list> x_det_infinite_room_candidates, y_det_infinite_room_candidates;
   std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
 
-  for(const auto& cloud_seg_msg : extracted_cloud_vec) {
-    pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(new pcl::PointCloud<PointNormal>());
-    pcl::fromROSMsg(cloud_seg_msg, *cloud_seg_body);
-
+  for(const auto& cloud_seg_body : extracted_cloud_vec) {
     if(cloud_seg_body->points.size() < min_plane_points) continue;
     keyframe->cloud_seg_body = cloud_seg_body;
 

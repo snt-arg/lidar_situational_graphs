@@ -419,7 +419,7 @@ private:
     for(int i = 0; i < new_keyframes.size(); i++) {
       // perform planar segmentation
       if(extract_planar_surfaces) {
-        std::vector<sensor_msgs::PointCloud2> extracted_cloud_vec = plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
+        std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec = plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
         plane_mapper->map_extracted_planes(graph_slam, new_keyframes[i], extracted_cloud_vec, x_vert_planes, y_vert_planes, hort_planes);
       }
     }

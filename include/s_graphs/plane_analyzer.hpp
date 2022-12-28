@@ -57,7 +57,7 @@ public:
    * @param cloud
    * @return Segmented planes found in the point cloud
    */
-  std::vector<sensor_msgs::PointCloud2> extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
+  std::vector<pcl::PointCloud<PointNormal>::Ptr> extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud);
 
 private:
   /**
