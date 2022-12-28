@@ -45,6 +45,7 @@ public:
   std::vector<g2o::VertexSE3*> keyframe_node_vec;                     // vector keyframe node instance
   g2o::VertexPlane* plane_node;                                       // node instance
   std::vector<double> color;
+  int revit_id;
 };
 
 /**

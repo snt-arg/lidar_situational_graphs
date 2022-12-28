@@ -243,8 +243,8 @@ public:
     Eigen::Vector4d plane2 = v3->estimate().coeffs();
     Eigen::Vector2d cluster_center = v4->estimate();
 
-    correct_plane_d(plane1);
-    correct_plane_d(plane2);
+    correct_plane_direction(plane1);
+    correct_plane_direction(plane2);
 
     Eigen::Vector3d vec;
     if(fabs(plane1(3)) > fabs(plane2(3))) {
@@ -289,7 +289,7 @@ public:
   }
 
 private:
-  void correct_plane_d(Eigen::Vector4d& plane) {
+  void correct_plane_direction(Eigen::Vector4d& plane) {
     if(plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
@@ -320,10 +320,10 @@ public:
     Eigen::Vector4d y_plane1 = v4->estimate().coeffs();
     Eigen::Vector4d y_plane2 = v5->estimate().coeffs();
 
-    correct_plane_d(x_plane1);
-    correct_plane_d(x_plane2);
-    correct_plane_d(y_plane1);
-    correct_plane_d(y_plane2);
+    correct_plane_direction(x_plane1);
+    correct_plane_direction(x_plane2);
+    correct_plane_direction(y_plane1);
+    correct_plane_direction(y_plane2);
 
     Eigen::Vector3d vec_x, vec_y;
     if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
@@ -372,7 +372,7 @@ public:
   }
 
 private:
-  void correct_plane_d(Eigen::Vector4d& plane) {
+  void correct_plane_direction(Eigen::Vector4d& plane) {
     if(plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);

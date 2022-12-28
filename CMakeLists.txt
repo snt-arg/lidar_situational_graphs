@@ -22,6 +22,7 @@ find_package(catkin REQUIRED COMPONENTS
   interactive_markers
   ndt_omp
   fast_gicp
+  graph_manager_msgs
 )
 catkin_python_setup()
 
@@ -151,6 +152,7 @@ add_library(s_graphs_nodelet
   src/s_graphs/registrations.cpp
   src/s_graphs/information_matrix_calculator.cpp
   src/s_graphs/keyframe_mapper.cpp
+  src/s_graphs/graph_publisher.cpp
   src/g2o/robust_kernel_io.cpp
 )
 target_link_libraries(s_graphs_nodelet

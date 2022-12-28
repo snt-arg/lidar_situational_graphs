@@ -76,6 +76,7 @@
 #include <s_graphs/plane_analyzer.hpp>
 #include <s_graphs/graph_visualizer.hpp>
 #include <s_graphs/keyframe_mapper.hpp>
+#include <s_graphs/graph_publisher.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_infinite_room.hpp>
@@ -135,6 +136,7 @@ public:
     floor_mapper.reset(new FloorMapper(private_nh));
     graph_visualizer.reset(new GraphVisualizer(private_nh));
     keyframe_mapper.reset(new KeyframeMapper(private_nh));
+    graph_publisher.reset(new GraphPublisher(private_nh));
 
     gps_time_offset = private_nh.param<double>("gps_time_offset", 0.0);
     gps_edge_stddev_xy = private_nh.param<double>("gps_edge_stddev_xy", 10000.0);
@@ -216,8 +218,8 @@ public:
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
     map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes", 1, false);
     all_map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/all_map_planes", 1, false);
-
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
+    graph_pub = mt_nh.advertise<graph_manager_msgs::Graph>("/s_graphs/graph_structure", 32);
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
 
@@ -226,6 +228,7 @@ public:
     double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
     optimization_timer = mt_nh.createTimer(ros::Duration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
     map_publish_timer = mt_nh.createTimer(ros::Duration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
+    graph_publish_timer = mt_nh.createTimer(ros::Duration(graph_update_interval), &SGraphsNodelet::graph_publisher_timer_callback, this);
   }
 
 private:
@@ -692,6 +695,18 @@ private:
 
     return updated;
   }
+  /**
+   * @brief generate graph structure and publish it
+   * @param event
+   */
+  void graph_publisher_timer_callback(const ros::TimerEvent& event) {
+    g2o::SparseOptimizer* local_graph;
+    graph_mutex.lock();
+    local_graph = graph_slam->graph.get();
+    graph_mutex.unlock();
+    auto graph_structure = graph_publisher->publish_graph(local_graph, "Online", x_vert_planes_prior, y_vert_planes_prior, rooms_vec_prior, x_vert_planes, y_vert_planes, rooms_vec, x_infinite_rooms, y_infinite_rooms);
+    graph_pub.publish(graph_structure);
+  }
 
   /**
    * @brief generate map point cloud and publish it
@@ -888,7 +903,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (*local_x_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (*local_x_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -910,7 +925,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (*local_y_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (*local_y_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -941,7 +956,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (x_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (x_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -961,7 +976,7 @@ private:
       s_graphs::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (y_vert_plane).plane_node->estimate().coeffs();
-      // correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
+      // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, mapped_plane_coeffs);
       plane_data.id = (y_vert_plane).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
@@ -1035,7 +1050,7 @@ private:
           }
           /* Add edge between infinite_room and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_plane1_coeffs);
           double meas_plane1 = inf_room_mapper->infinite_room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, infinite_room_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
           information_infinite_room_plane(0, 0) = infinite_room_information;
@@ -1067,7 +1082,7 @@ private:
 
           /* Add edge between room and current mapped plane */
           Eigen::Vector4d found_mapped_x_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE, found_mapped_x_plane1_coeffs);
           double x_plane1_meas = finite_room_mapper->room_measurement(PlaneUtils::plane_class::X_VERT_PLANE, room_node->estimate(), found_mapped_x_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_room_plane;
           information_room_plane(0, 0) = room_information;
@@ -1147,7 +1162,7 @@ private:
 
           /* Add edge between infinite_room and current mapped plane */
           Eigen::Vector4d found_mapped_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_plane1_coeffs);
           double meas_plane1 = inf_room_mapper->infinite_room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, infinite_room_node->estimate(), found_mapped_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
           information_infinite_room_plane(0, 0) = infinite_room_information;
@@ -1176,7 +1191,7 @@ private:
 
           /* Add edge between room and current mapped plane */
           Eigen::Vector4d found_mapped_y_plane1_coeffs = (*it).second.plane_node->estimate().coeffs();
-          plane_utils->correct_plane_d(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs);
+          plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE, found_mapped_y_plane1_coeffs);
           double y_plane1_meas = finite_room_mapper->room_measurement(PlaneUtils::plane_class::Y_VERT_PLANE, room_node->estimate(), found_mapped_y_plane1_coeffs);
           Eigen::Matrix<double, 1, 1> information_room_plane;
           information_room_plane(0, 0) = room_information;
@@ -1421,6 +1436,7 @@ private:
   ros::NodeHandle private_nh;
   ros::Timer optimization_timer;
   ros::Timer map_publish_timer;
+  ros::Timer graph_publish_timer;
 
   std::unique_ptr<message_filters::Subscriber<nav_msgs::Odometry>> odom_sub;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> cloud_sub;
@@ -1454,7 +1470,7 @@ private:
   ros::Publisher map_points_pub;
   ros::Publisher map_planes_pub;
   ros::Publisher all_map_planes_pub;
-
+  ros::Publisher graph_pub;
   tf::TransformListener tf_listener;
 
   ros::ServiceServer dump_service_server;
@@ -1505,12 +1521,14 @@ private:
   double room_dist_threshold, room_min_plane_length, room_max_plane_length, room_min_width, room_max_width;
   double room_width_diff_threshold;
   double color_r, color_g, color_b;
-  std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;                                      // vertically segmented planes
+  std::vector<VerticalPlanes> x_vert_planes, y_vert_planes;  // vertically segmented planes
+  std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
   std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes, dupl_y_vert_planes;  // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                                                     // horizontally segmented planes
   int vertex_count;
   std::vector<InfiniteRooms> x_infinite_rooms, y_infinite_rooms;  // infinite_rooms segmented from planes
   std::vector<Rooms> rooms_vec;                                   // rooms segmented from planes
+  std::vector<Rooms> rooms_vec_prior;
   std::vector<Floors> floors_vec;
 
   std::mutex vert_plane_snapshot_mutex;
@@ -1576,6 +1594,7 @@ private:
   std::unique_ptr<FloorMapper> floor_mapper;
   std::unique_ptr<GraphVisualizer> graph_visualizer;
   std::unique_ptr<KeyframeMapper> keyframe_mapper;
+  std::unique_ptr<GraphPublisher> graph_publisher;
 };
 
 }  // namespace s_graphs

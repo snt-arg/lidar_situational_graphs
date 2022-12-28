@@ -54,8 +54,8 @@ public:
     Eigen::Vector4d plane1 = v2->estimate().coeffs();
     Eigen::Vector4d plane2 = v3->estimate().coeffs();
 
-    correct_plane_d(plane1);
-    correct_plane_d(plane2);
+    correct_plane_direction(plane1);
+    correct_plane_direction(plane2);
 
     Eigen::Vector3d estimated_wall_center;
     if(fabs(plane1(3)) > fabs(plane2(3))) {
@@ -100,7 +100,7 @@ public:
   }
 
 private:
-  void correct_plane_d(Eigen::Vector4d& plane) {
+  void correct_plane_direction(Eigen::Vector4d& plane) {
     if(plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);

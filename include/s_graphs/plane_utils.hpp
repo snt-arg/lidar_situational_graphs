@@ -117,7 +117,7 @@ public:
    * @param
    * @return
    */
-  void correct_plane_d(int plane_type, s_graphs::PlaneData& plane) {
+  void correct_plane_direction(int plane_type, s_graphs::PlaneData& plane) {
     if(plane.d > 0) {
       plane.nx = -1 * plane.nx;
       plane.ny = -1 * plane.ny;
@@ -133,7 +133,7 @@ public:
    * @param
    * @return
    */
-  void correct_plane_d(int plane_type, Eigen::Vector4d& plane) {
+  void correct_plane_direction(int plane_type, Eigen::Vector4d& plane) {
     if(plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
