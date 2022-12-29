@@ -17,7 +17,8 @@ namespace s_graphs {
 /**
  * @brief
  *
- * @param id, Door's I.D
+ * @param id, Door's I.D for graph slam
+ * @param prior_id, Door's I.D from prior knowledge
  * @param room1_id, I.D of 1st room
  * @param room2_id, I.D of 2nd room
  * @param door_pos_w, Door's position in WOrld frame
@@ -27,6 +28,7 @@ namespace s_graphs {
 struct DoorWays {
 public:
   int id;
+  int prior_id;
   Eigen::Vector3d door_pos_w, door_pos_r1, door_pose_r2;
   int room1_id, room2_id;
   g2o::VertexDoorWayXYZ* node;  // node instance
