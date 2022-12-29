@@ -35,6 +35,7 @@ public:
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   std::vector<int> neighbour_ids;
   g2o::VertexRoomXYLB* node;  // node instance
+  int prior_id;
   bool sub_room;
 };
 
