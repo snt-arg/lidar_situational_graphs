@@ -10,6 +10,7 @@
 
 #include <g2o/core/hyper_graph.h>
 #include <g2o/vertex_wall.hpp>
+#include <g2o/vertex_doorway.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
 
 namespace g2o {
@@ -201,6 +202,13 @@ public:
   /**
    * @brief add a Wall node to the graph
    * @param wall_center
+   * @return registered node
+   */
+
+  g2o::VertexDoorWayXYZ* add_doorway_node(const Eigen::Vector3d& door_position);
+  /**
+   * @brief add a doorway node to the graph
+   * @param door_position
    * @return registered node
    */
 

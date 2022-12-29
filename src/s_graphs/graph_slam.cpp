@@ -17,6 +17,7 @@
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_wall.hpp>
+#include <g2o/vertex_doorway.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_point_to_plane.hpp>
@@ -233,6 +234,16 @@ g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center)
   g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(wall_center);
+  graph->addVertex(vertex);
+  this->increment_local_nbr_of_vertices();
+
+  return vertex;
+}
+
+g2o::VertexDoorWayXYZ* GraphSLAM::add_doorway_node(const Eigen::Vector3d& door_position) {
+  g2o::VertexDoorWayXYZ* vertex(new g2o::VertexDoorWayXYZ());
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  vertex->setEstimate(door_position);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
 
