@@ -19,7 +19,7 @@ PlaneMapper::PlaneMapper(const ros::NodeHandle& private_nh) {
 
 PlaneMapper::~PlaneMapper() {}
 
-void PlaneMapper::map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
+void PlaneMapper::map_extracted_planes(std::shared_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
   std::vector<plane_data_list> x_det_infinite_room_candidates, y_det_infinite_room_candidates;
   std::vector<plane_data_list> x_det_room_candidates, y_det_room_candidates;
 
@@ -36,7 +36,7 @@ void PlaneMapper::map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, K
  * @brief detected plane mapping
  *
  */
-int PlaneMapper::add_planes_to_graph(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
+int PlaneMapper::add_planes_to_graph(std::shared_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
   int plane_id;
   int plane_type = -1;
 
@@ -74,7 +74,7 @@ g2o::Plane3D PlaneMapper::convert_plane_to_map_frame(const KeyFrame::Ptr& keyfra
  * @brief sort and factor the detected planes
  *
  */
-int PlaneMapper::sort_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
+int PlaneMapper::sort_planes(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
   int plane_id = factor_planes(graph_slam, plane_type, keyframe, det_plane_map_frame, det_plane_body_frame, x_vert_planes, y_vert_planes, hort_planes);
 
   return plane_id;
@@ -83,7 +83,7 @@ int PlaneMapper::sort_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& 
 /**
  * @brief create vertical plane factors
  */
-int PlaneMapper::factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
+int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes) {
   g2o::VertexPlane* plane_node;
   int plane_id = -1;
 
