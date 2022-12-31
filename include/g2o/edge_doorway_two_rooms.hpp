@@ -32,15 +32,17 @@
 #include <g2o/core/base_multi_edge.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/types/slam3d/vertex_se3.h>
-#include "g2o/vertex_wall.hpp"
+#include "g2o/vertex_room.hpp"
+#include "g2o/vertex_infinite_room.hpp"
+
 namespace g2o {
 
-/*   Define Wall edge with wall surfaces here*/
+/*   Define Doorway edge with 2 rooms here*/
 
-class EdgeDoor2Rooms : public BaseMultiEdge<4, Eigen::Vector4d> {
+class EdgeDoorWay2Rooms : public BaseMultiEdge<3, Eigen::Vector3d> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeDoorWay2Rooms() : BaseMultiEdge<4, Eigen::Vector4d>() {
+  EdgeDoorWay2Rooms() : BaseMultiEdge<3, Eigen::Vector3d>() {
     resize(4);
   }
 
@@ -50,17 +52,44 @@ public:
     const VertexRoomXYLB* v3 = static_cast<const VertexRoomXYLB*>(_vertices[2]);
     const VertexRoomXYLB* v4 = static_cast<const VertexRoomXYLB*>(_vertices[3]);
 
-    Eigen::Vector3d door_way1 = v1->estimate();
-    Eigen::Vector3d door_way2 = v2->estimate();
-    Eigen::Vector2d room1 = v3->estimate();
-    Eigen::Vector2d room2 = v4->estimate();
+    Eigen::Vector3d doorway1_pos = v1->estimate();
+    Eigen::Vector3d doorway2_pos = v2->estimate();
+    Eigen::Vector2d room1_pos = v3->estimate();
+    Eigen::Vector2d room2_pos = v4->estimate();
 
-    _error = wall_center - final_wall_center;
+    // Convert room 1 center to room pose (Transformation matrix)
+    Eigen::Matrix4d room1_pose;
+    Eigen::Vector3d room1_trans;
+    room1_pose.setIdentity();
+    room1_trans.x() = room1_pos.x();
+    room1_trans.y() = room1_pos.y();
+    room1_trans.z() = 0.0;
+    room1_pose.topRightCorner<3, 1>() = room1_trans;
+
+    // Convert door1 position vector to 4x1
+    Eigen::Vector4d doorway1_pose(doorway1_pos.x(), doorway1_pos.y(), doorway1_pos.z(), 1);
+
+    // Convert room 2 center to room pose (Transformation matrix)
+    Eigen::Matrix4d room2_pose;
+    Eigen::Vector3d room2_trans;
+    room2_pose.setIdentity();
+    room2_trans.x() = room2_pos.x();
+    room2_trans.y() = room2_pos.y();
+    room2_trans.z() = 0.0;
+    room2_pose.topRightCorner<3, 1>() = room2_trans;
+
+    // Convert door1 position vector to 4x1
+    Eigen::Vector4d doorway2_pose(doorway2_pos.x(), doorway2_pos.y(), doorway2_pos.z(), 1);
+
+    // Calculate error
+    Eigen::Vector4d diff = (room1_pose * doorway1_pose) - (room2_pose * doorway2_pose);
+    Eigen::Vector3d error(diff.x(), diff.y(), diff.z());
+    _error = error;
   }
 
   virtual bool read(std::istream& is) override {
-    Eigen::Vector4d v;
-    is >> v(0) >> v(1) >> v(2) >> v(3);
+    Eigen::Vector3d v;
+    is >> v(0) >> v(1) >> v(2);
 
     setMeasurement(v);
     for(int i = 0; i < information().rows(); ++i) {
@@ -76,8 +105,8 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    Eigen::Vector4d v = _measurement;
-    os << v(0) << " " << v(1) << " " << v(2) << " " v(3) << " ";
+    Eigen::Vector3d v = _measurement;
+    os << v(0) << " " << v(1) << " " << v(2) << " ";
 
     for(int i = 0; i < information().rows(); ++i) {
       for(int j = i; j < information().cols(); ++j) {
@@ -86,8 +115,6 @@ public:
     }
     return os.good();
   }
-
-  Eigen::Vector3d _wall_point;
 };
 
 }  // namespace g2o

@@ -31,6 +31,7 @@
 #include <g2o/robust_kernel_io.hpp>
 #include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_room.hpp>
+#include <g2o/edge_doorway_two_rooms.hpp>
 
 G2O_USE_OPTIMIZATION_LIBRARY(pcg)
 G2O_USE_OPTIMIZATION_LIBRARY(cholmod)  // be aware of that cholmod brings GPL dependency

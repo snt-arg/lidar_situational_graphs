@@ -12,6 +12,7 @@
 #include <g2o/vertex_wall.hpp>
 #include <g2o/vertex_doorway.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
+#include <g2o/edge_doorway_two_rooms.hpp>
 
 namespace g2o {
 class VertexSE3;
