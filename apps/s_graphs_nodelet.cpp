@@ -885,7 +885,6 @@ private:
 
     // merge_duplicate_planes();
     graph_mutex.lock();
-    graph_slam = local_graph;
     graph_snapshot = local_graph->graph.get();
     graph_mutex.unlock();
 
