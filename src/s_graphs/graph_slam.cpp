@@ -509,6 +509,18 @@ g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(g2o::VertexWallXYZ* v_wal
   return edge;
 }
 
+g2o::EdgeDoorWay2Rooms* GraphSLAM::add_doorway_2rooms_edge(g2o::VertexDoorWayXYZ* v_door_r1, g2o::VertexDoorWayXYZ* v_door_r2, g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::MatrixXd& information) {
+  g2o::EdgeDoorWay2Rooms* edge(new g2o::EdgeDoorWay2Rooms());
+  edge->setInformation(information);
+  edge->vertices()[0] = v_door_r1;
+  edge->vertices()[1] = v_door_r2;
+  edge->vertices()[2] = v_room1;
+  edge->vertices()[3] = v_room2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 bool GraphSLAM::remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge) {
   bool ack = graph->removeEdge(room_plane_edge);
 

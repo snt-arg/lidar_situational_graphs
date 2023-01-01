@@ -34,6 +34,8 @@
 #include <g2o/types/slam3d/vertex_se3.h>
 #include "g2o/vertex_room.hpp"
 #include "g2o/vertex_infinite_room.hpp"
+#include <g2o/vertex_doorway.hpp>
+#include <g2o/edge_doorway_two_rooms.hpp>
 
 namespace g2o {
 
