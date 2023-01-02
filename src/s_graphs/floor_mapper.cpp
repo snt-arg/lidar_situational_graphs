@@ -10,7 +10,7 @@ FloorMapper::FloorMapper(const ros::NodeHandle& private_nh) {
 
 FloorMapper::~FloorMapper() {}
 
-void FloorMapper::lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
+void FloorMapper::lookup_floors(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   double floor_threshold = 0.5;
 
   if(floors_vec.empty()) factor_floor_node(graph_slam, room_data, floors_vec, rooms_vec, x_infinite_rooms, y_infinite_rooms);
@@ -27,7 +27,7 @@ void FloorMapper::lookup_floors(std::unique_ptr<GraphSLAM>& graph_slam, const s_
   }
 }
 
-void FloorMapper::factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
+void FloorMapper::factor_floor_node(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   g2o::VertexRoomXYLB* floor_node;
   Eigen::Vector2d floor_pose(room_data.room_center.x, room_data.room_center.y);
 
@@ -45,13 +45,13 @@ void FloorMapper::factor_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, cons
   factor_floor_room_nodes(graph_slam, floor_pose, floor_node, rooms_vec, x_infinite_rooms, y_infinite_rooms);
 }
 
-void FloorMapper::update_floor_node(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
+void FloorMapper::update_floor_node(std::shared_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   Eigen::Vector2d floor_pose(room_data.room_center.x, room_data.room_center.y);
   graph_slam->update_floor_node(floor_node, floor_pose);
   factor_floor_room_nodes(graph_slam, floor_pose, floor_node, rooms_vec, x_infinite_rooms, y_infinite_rooms);
 }
 
-void FloorMapper::factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, const Eigen::Vector2d& floor_pose, g2o::VertexRoomXYLB* floor_node, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
+void FloorMapper::factor_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam, const Eigen::Vector2d& floor_pose, g2o::VertexRoomXYLB* floor_node, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   Eigen::Matrix2d information_floor;
   information_floor(0, 0) = 0.0001;
   information_floor(1, 1) = 0.0001;
@@ -86,7 +86,7 @@ void FloorMapper::factor_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam
   }
 }
 
-void FloorMapper::remove_floor_room_nodes(std::unique_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node) {
+void FloorMapper::remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node) {
   std::set<g2o::HyperGraph::Edge*> floor_edges = floor_node->edges();
   for(auto edge_itr = floor_edges.begin(); edge_itr != floor_edges.end(); ++edge_itr) {
     g2o::EdgeRoomRoom* edge_floor_room = dynamic_cast<g2o::EdgeRoomRoom*>(*edge_itr);

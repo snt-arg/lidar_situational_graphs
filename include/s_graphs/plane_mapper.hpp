@@ -76,7 +76,7 @@ public:
    * @param y_vert_planes
    * @param hort_planes
    */
-  void map_extracted_planes(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+  void map_extracted_planes(std::shared_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr keyframe, const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -99,7 +99,7 @@ private:
    * @param hort_planes
    * @return
    */
-  int add_planes_to_graph(std::unique_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+  int add_planes_to_graph(std::shared_ptr<GraphSLAM>& graph_slam, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -114,7 +114,7 @@ private:
    * @param hort_planes
    * @return
    */
-  int sort_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+  int sort_planes(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -129,7 +129,7 @@ private:
    * @param hort_planes
    * @return
    */
-  int factor_planes(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
+  int factor_planes(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, KeyFrame::Ptr& keyframe, const g2o::Plane3D& det_plane_map_frame, const g2o::Plane3D& det_plane_body_frame, std::vector<VerticalPlanes>& x_vert_planes, std::vector<VerticalPlanes>& y_vert_planes, std::vector<HorizontalPlanes>& hort_planes);
 
   /**
    * @brief

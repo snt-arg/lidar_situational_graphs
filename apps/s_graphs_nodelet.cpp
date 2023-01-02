@@ -216,6 +216,8 @@ public:
     odom_path_corrected_pub = mt_nh.advertise<nav_msgs::Path>("/s_graphs/odom_path_corrected", 10);
 
     map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/map_points", 1, true);
+    keyframe_map_points_pub = mt_nh.advertise<sensor_msgs::PointCloud2>("/s_graphs/keyframe_map_points", 1, true);
+
     map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/map_planes", 1, false);
     all_map_planes_pub = mt_nh.advertise<s_graphs::PlanesData>("/s_graphs/all_map_planes", 1, false);
     read_until_pub = mt_nh.advertise<std_msgs::Header>("/s_graphs/read_until", 32);
@@ -225,8 +227,11 @@ public:
 
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
+    double keyframe_timer_update_interval = private_nh.param<double>("keyframe_timer_update_interval", 1.0);
     double map_cloud_update_interval = private_nh.param<double>("map_cloud_update_interval", 10.0);
     optimization_timer = mt_nh.createTimer(ros::Duration(graph_update_interval), &SGraphsNodelet::optimization_timer_callback, this);
+    keyframe_timer = mt_nh.createTimer(ros::Duration(keyframe_timer_update_interval), &SGraphsNodelet::keyframe_update_timer_callback, this);
+
     map_publish_timer = mt_nh.createTimer(ros::Duration(map_cloud_update_interval), &SGraphsNodelet::map_points_publish_timer_callback, this);
     graph_publish_timer = mt_nh.createTimer(ros::Duration(graph_update_interval), &SGraphsNodelet::graph_publisher_timer_callback, this);
   }
@@ -772,9 +777,7 @@ private:
    * @brief this methods adds all the data in the queues to the pose graph, and then optimizes the pose graph
    * @param event
    */
-  void optimization_timer_callback(const ros::TimerEvent& event) {
-    std::lock_guard<std::mutex> lock(main_thread_mutex);
-
+  void keyframe_update_timer_callback(const ros::TimerEvent& event) {
     // add keyframes and floor coeffs in the queues to the pose graph
     bool keyframe_updated = flush_keyframe_queue();
 
@@ -793,6 +796,9 @@ private:
 
     // publish mapped planes
     publish_mapped_planes(x_vert_planes, y_vert_planes);
+
+    // publish mapped points of the last keyframes
+    publish_keyframe_mapped_points();
 
     // flush the room poses from room detector and no need to return if no rooms found
     flush_room_data_queue();
@@ -822,17 +828,6 @@ private:
       anchor_node->setEstimate(anchor_target);
     }
 
-    // optimize the pose graph
-    int num_iterations = private_nh.param<int>("g2o_solver_num_iterations", 1024);
-
-    try {
-      if((graph_slam->optimize(num_iterations)) > 0 && !constant_covariance) compute_plane_cov();
-    } catch(std::invalid_argument& e) {
-      std::cout << e.what() << std::endl;
-      throw 1;
-    }
-    // merge_duplicate_planes();
-
     vert_plane_snapshot_mutex.lock();
     x_vert_planes_snapshot = x_vert_planes;
     y_vert_planes_snapshot = y_vert_planes;
@@ -851,10 +846,6 @@ private:
     rooms_vec_snapshot = rooms_vec;
     room_snapshot_mutex.unlock();
 
-    graph_mutex.lock();
-    graph_snapshot = graph_slam->graph.get();
-    graph_mutex.unlock();
-
     // publish tf
     const auto& keyframe = keyframes.back();
     Eigen::Isometry3d trans = keyframe->node->estimate() * keyframe->odom.inverse();
@@ -868,10 +859,56 @@ private:
     keyframes_snapshot_mutex.lock();
     keyframes_snapshot.swap(snapshot);
     keyframes_snapshot_mutex.unlock();
-    graph_updated = true;
 
     geometry_msgs::TransformStamped ts = matrix2transform(keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
     odom2map_pub.publish(ts);
+  }
+
+  /**
+   * @brief this methods adds all the data in the queues to the pose graph, and then optimizes the pose graph
+   * @param event
+   */
+  void optimization_timer_callback(const ros::TimerEvent& event) {
+    graph_mutex.lock();
+    std::shared_ptr<GraphSLAM> local_graph = graph_slam;
+    graph_mutex.unlock();
+
+    // optimize the pose graph
+    int num_iterations = private_nh.param<int>("g2o_solver_num_iterations", 1024);
+
+    try {
+      if((local_graph->optimize(num_iterations)) > 0 && !constant_covariance) compute_plane_cov();
+    } catch(std::invalid_argument& e) {
+      std::cout << e.what() << std::endl;
+      throw 1;
+    }
+
+    // merge_duplicate_planes();
+    graph_mutex.lock();
+    graph_snapshot = local_graph->graph.get();
+    graph_mutex.unlock();
+
+    graph_updated = true;
+  }
+
+  /**
+   * @brief publish the pointcloud snapshots information from the last n keyframes
+   *
+   */
+  void publish_keyframe_mapped_points() {
+    if(keyframes.empty()) return;
+    pcl::PointCloud<PointT>::Ptr keyframe_cloud(new pcl::PointCloud<PointT>);
+
+    std::vector<KeyFrame::Ptr> keyframe_window(keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size), keyframes.end());
+    for(std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin(); it != keyframe_window.rend(); ++it) {
+      keyframe_cloud->header = (*it)->cloud->header;
+      for(size_t i = 0; i < (*it)->cloud->points.size(); ++i) {
+        keyframe_cloud->points.push_back((*it)->cloud->points[i]);
+      }
+    }
+    sensor_msgs::PointCloud2Ptr keyframe_cloud_msg(new sensor_msgs::PointCloud2());
+    pcl::toROSMsg(*keyframe_cloud, *keyframe_cloud_msg);
+    keyframe_map_points_pub.publish(keyframe_cloud_msg);
   }
 
   /**
@@ -1349,7 +1386,7 @@ private:
    * @return
    */
   bool dump_service(s_graphs::DumpGraphRequest& req, s_graphs::DumpGraphResponse& res) {
-    std::lock_guard<std::mutex> lock(main_thread_mutex);
+    std::lock_guard<std::mutex> lock(graph_mutex);
 
     std::string directory = req.destination;
 
@@ -1435,6 +1472,7 @@ private:
   ros::NodeHandle mt_nh;
   ros::NodeHandle private_nh;
   ros::Timer optimization_timer;
+  ros::Timer keyframe_timer;
   ros::Timer map_publish_timer;
   ros::Timer graph_publish_timer;
 
@@ -1468,6 +1506,7 @@ private:
   ros::Publisher odom_path_corrected_pub;
   ros::Publisher read_until_pub;
   ros::Publisher map_points_pub;
+  ros::Publisher keyframe_map_points_pub;
   ros::Publisher map_planes_pub;
   ros::Publisher all_map_planes_pub;
   ros::Publisher graph_pub;
@@ -1568,10 +1607,6 @@ private:
   std::mutex graph_mutex;
   g2o::SparseOptimizer* graph_snapshot;
 
-  // graph slam
-  // all the below members must be accessed after locking main_thread_mutex
-  std::mutex main_thread_mutex;
-
   int max_keyframes_per_update;
   std::deque<KeyFrame::Ptr> new_keyframes;
 
@@ -1581,7 +1616,7 @@ private:
   std::vector<KeyFrame::Ptr> keyframes;
   std::unordered_map<ros::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
 
-  std::unique_ptr<GraphSLAM> graph_slam;
+  std::shared_ptr<GraphSLAM> graph_slam;
   std::unique_ptr<LoopDetector> loop_detector;
   std::unique_ptr<KeyframeUpdater> keyframe_updater;
   std::unique_ptr<PlaneAnalyzer> plane_analyzer;
