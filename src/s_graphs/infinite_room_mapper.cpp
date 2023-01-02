@@ -24,18 +24,20 @@ InfiniteRoomMapper::InfiniteRoomMapper(const ros::NodeHandle& private_nh) {
 
 InfiniteRoomMapper::~InfiniteRoomMapper() {}
 
-void InfiniteRoomMapper::lookup_infinite_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_infinite_room_candidates, const std::vector<plane_data_list>& y_det_infinite_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
+void InfiniteRoomMapper::lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_infinite_room_candidates, const std::vector<plane_data_list>& y_det_infinite_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
   std::vector<structure_data_list> x_infinite_room = sort_infinite_rooms(PlaneUtils::plane_class::X_VERT_PLANE, x_det_infinite_room_candidates);
   std::vector<structure_data_list> y_infinite_room = sort_infinite_rooms(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_infinite_room_candidates);
 
   std::vector<plane_data_list> x_infinite_room_refined = refine_infinite_rooms(x_infinite_room);
-  if(x_infinite_room_refined.size() == 2) factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_infinite_room_refined[0], x_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
+  if(x_infinite_room_refined.size() == 2)
+    factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_infinite_room_refined[0], x_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
 
   std::vector<plane_data_list> y_infinite_room_refined = refine_infinite_rooms(y_infinite_room);
-  if(y_infinite_room_refined.size() == 2) factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_infinite_room_refined[0], y_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
+  if(y_infinite_room_refined.size() == 2)
+    factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_infinite_room_refined[0], y_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
 }
 
-void InfiniteRoomMapper::lookup_infinite_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, const std::vector<Rooms>& rooms_vec) {
+void InfiniteRoomMapper::lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, const std::vector<Rooms>& rooms_vec) {
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     // check the distance with the current room vector
     Rooms matched_room;
@@ -194,7 +196,7 @@ std::vector<plane_data_list> InfiniteRoomMapper::refine_infinite_rooms(const std
     return corr_refined;
 }
 
-void InfiniteRoomMapper::factor_infinite_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
+void InfiniteRoomMapper::factor_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
   g2o::VertexRoomXYLB* corr_node;
   g2o::VertexRoomXYLB* cluster_center_node;
   std::pair<int, int> corr_data_association;

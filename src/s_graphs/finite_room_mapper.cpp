@@ -23,7 +23,7 @@ FiniteRoomMapper::FiniteRoomMapper(const ros::NodeHandle& private_nh) {
 
 FiniteRoomMapper::~FiniteRoomMapper() {}
 
-void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_room_candidates, const std::vector<plane_data_list>& y_det_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_room_candidates, const std::vector<plane_data_list>& y_det_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
   std::vector<structure_data_list> x_room_pair_vec = sort_rooms(PlaneUtils::plane_class::X_VERT_PLANE, x_det_room_candidates);
   std::vector<structure_data_list> y_room_pair_vec = sort_rooms(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_room_candidates);
   std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> refined_room_pair = refine_rooms(x_room_pair_vec, y_room_pair_vec);
@@ -33,7 +33,7 @@ void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, cons
   }
 }
 
-void FiniteRoomMapper::lookup_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, std::vector<Rooms>& rooms_vec) {
   float min_dist_room_x_corr = 100;
   s_graphs::InfiniteRooms matched_x_infinite_room;
   for(const auto& current_x_infinite_room : x_infinite_rooms) {
@@ -183,7 +183,7 @@ std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> FiniteRoom
     return std::make_pair(x_room, y_room);
 }
 
-void FiniteRoomMapper::factor_rooms(std::unique_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::factor_rooms(std::shared_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -466,7 +466,7 @@ bool FiniteRoomMapper::check_room_ids(const int plane_type, const std::set<g2o::
   return false;
 }
 
-void FiniteRoomMapper::map_room_from_existing_infinite_rooms(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -496,7 +496,7 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(std::unique_ptr<Gra
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_x_infinite_room(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_x_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -528,7 +528,7 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(std::unique_ptr<Gr
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_y_infinite_room(std::unique_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_y_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -560,7 +560,7 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(std::unique_ptr<Gr
     return;
 }
 
-void FiniteRoomMapper::remove_mapped_infinite_room(const int plane_type, std::unique_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms matched_infinite_room, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
+void FiniteRoomMapper::remove_mapped_infinite_room(const int plane_type, std::shared_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms matched_infinite_room, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
   std::set<g2o::HyperGraph::Edge*> edges = matched_infinite_room.node->edges();
   for(auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
     g2o::EdgeRoom2Planes* edge_room_2planes = dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);

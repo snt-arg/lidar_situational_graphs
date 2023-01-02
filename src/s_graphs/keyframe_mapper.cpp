@@ -12,7 +12,7 @@ KeyframeMapper::KeyframeMapper(const ros::NodeHandle& private_nh) {
 
 KeyframeMapper::~KeyframeMapper() {}
 
-int KeyframeMapper::map_keyframes(std::unique_ptr<GraphSLAM>& graph_slam, Eigen::Isometry3d odom2map, std::deque<KeyFrame::Ptr>& keyframe_queue, std::vector<KeyFrame::Ptr>& keyframes, std::deque<KeyFrame::Ptr>& new_keyframes, g2o::VertexSE3*& anchor_node, g2o::EdgeSE3*& anchor_edge, std::unordered_map<ros::Time, KeyFrame::Ptr, RosTimeHash>& keyframe_hash) {
+int KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam, Eigen::Isometry3d odom2map, std::deque<KeyFrame::Ptr>& keyframe_queue, std::vector<KeyFrame::Ptr>& keyframes, std::deque<KeyFrame::Ptr>& new_keyframes, g2o::VertexSE3*& anchor_node, g2o::EdgeSE3*& anchor_edge, std::unordered_map<ros::Time, KeyFrame::Ptr, RosTimeHash>& keyframe_hash) {
   int num_processed = 0;
   for(int i = 0; i < std::min<int>(keyframe_queue.size(), max_keyframes_per_update); i++) {
     num_processed = i;
