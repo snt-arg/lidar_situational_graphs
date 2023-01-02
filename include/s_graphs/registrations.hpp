@@ -3,8 +3,7 @@
 #ifndef HDL_GRAPH_SLAM_REGISTRATIONS_HPP
 #define HDL_GRAPH_SLAM_REGISTRATIONS_HPP
 
-#include <ros/ros.h>
-
+#include "rclcpp/rclcpp.hpp"
 #include <pcl/registration/registration.h>
 
 namespace s_graphs {

@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: BSD-2-Clause
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.5)
 project(s_graphs)
 
 # Can we use C++17 in indigo?
@@ -7,24 +7,33 @@ add_definitions(-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
 set(CMAKE_CXX_FLAGS "-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
 # pcl 1.7 causes a segfault when it is built with debug mode
 set(CMAKE_BUILD_TYPE "RELEASE")
+find_package(rosidl_default_generators REQUIRED)
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  rospy
-  pcl_ros
-  geodesy
-  nmea_msgs
-  sensor_msgs
-  geometry_msgs
-  message_generation
-  interactive_markers
-  ndt_omp
-  fast_gicp
-  graph_manager_msgs
-)
-catkin_python_setup()
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+find_package(ament_cmake_ros REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(rclpy REQUIRED)
+find_package(pcl_ros REQUIRED)
+find_package(geodesy REQUIRED)
+find_package(nmea_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
+find_package(interactive_markers REQUIRED)
+find_package(ndt_omp REQUIRED)
+find_package(fast_gicp REQUIRED)
+find_package(tf2 REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(graph_manager_msgs REQUIRED)
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -55,32 +64,18 @@ endif()
 ########################
 ## message generation ##
 ########################
-add_message_files(FILES
-  FloorCoeffs.msg
-  ScanMatchingStatus.msg
-  PointClouds.msg
-  RoomData.msg
-  RoomsData.msg
-  PlaneData.msg
-  PlanesData.msg
-)
-
-add_service_files(FILES
-  SaveMap.srv
-  DumpGraph.srv
-)
-
-generate_messages(DEPENDENCIES std_msgs geometry_msgs sensor_msgs)
-
-###################################
-## catkin specific configuration ##
-###################################
-catkin_package(
-  INCLUDE_DIRS include
-  LIBRARIES s_graphs_nodelet
-#  CATKIN_DEPENDS pcl_ros roscpp sensor_msgs
-#  DEPENDS system_lib
-)
+# rosidl_generate_interfaces(${PROJECT_NAME}
+#   "msg/PointClouds.msg"
+#   "msg/PlaneData.msg"
+#   "msg/PlanesData.msg"
+#   "msg/RoomData.msg"
+#   "msg/RoomsData.msg"
+#   "msg/FloorCoeffs.msg"
+#   "msg/ScanMatchingStatus.msg"
+#   "srv/DumpGraph.srv"
+#   "srv/SaveMap.srv"
+#   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
+# )
 
 ###########
 ## Build ##
@@ -88,117 +83,114 @@ catkin_package(
 include_directories(include)
 include_directories(
   ${PCL_INCLUDE_DIRS}
-  ${catkin_INCLUDE_DIRS}
 )
 
 # nodelets
-add_library(s_graphs_prefiltering_nodelet apps/prefiltering_nodelet.cpp)
-target_link_libraries(s_graphs_prefiltering_nodelet
-  ${catkin_LIBRARIES}
+add_executable(s_graphs_prefiltering_node apps/prefiltering_nodelet.cpp)
+ament_target_dependencies(s_graphs_prefiltering_node rclcpp sensor_msgs tf2 tf2_ros pcl_ros)
+target_link_libraries(s_graphs_prefiltering_node
   ${PCL_LIBRARIES}
 )
 
-add_library(s_graphs_room_segmentation_nodelet 
-  apps/room_segmentation_nodelet.cpp 
-  src/s_graphs/room_analyzer.cpp
-)
-target_link_libraries(s_graphs_room_segmentation_nodelet
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
-add_dependencies(s_graphs_room_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
+# add_executable(s_graphs_room_segmentation_node 
+#   apps/room_segmentation_nodelet.cpp 
+#   src/s_graphs/room_analyzer.cpp
+# )
+# ament_target_dependencies(s_graphs_room_segmentation_node rclcpp)
+# target_link_libraries(s_graphs_room_segmentation_node
+#   ${PCL_LIBRARIES}
+# )
 
-add_library(s_graphs_floor_plan_nodelet 
-  apps/floor_plan_nodelet.cpp
-  src/s_graphs/room_analyzer.cpp
-  src/s_graphs/floor_analyzer.cpp
-)
-target_link_libraries(s_graphs_floor_plan_nodelet
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
-add_dependencies(s_graphs_floor_plan_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
+# add_executable(s_graphs_floor_plan_node
+#   apps/floor_plan_nodelet.cpp
+#   src/s_graphs/room_analyzer.cpp
+#   src/s_graphs/floor_analyzer.cpp
+# )
+# ament_target_dependencies(s_graphs_floor_plan_node rclcpp)
+# target_link_libraries(s_graphs_floor_plan_node
+#   ${PCL_LIBRARIES}
+# )
 
-add_library(s_graphs_floor_detection_nodelet 
-    apps/floor_detection_nodelet.cpp
-)
-target_link_libraries(s_graphs_floor_detection_nodelet
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
-add_dependencies(s_graphs_floor_detection_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
+# add_executable(s_graphs_floor_detection_node 
+#     apps/floor_detection_nodelet.cpp
+# )
+# ament_target_dependencies(s_graphs_floor_detection_node rclcpp)
+# target_link_libraries(s_graphs_floor_detection_node
+#   ${PCL_LIBRARIES}
+# )
 
-add_library(s_graphs_scan_matching_odometry_nodelet
-  apps/scan_matching_odometry_nodelet.cpp
-  src/s_graphs/registrations.cpp
-)
-target_link_libraries(s_graphs_scan_matching_odometry_nodelet
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-)
-add_dependencies(s_graphs_scan_matching_odometry_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
+# add_executable(s_graphs_scan_matching_odometry_node
+#   apps/scan_matching_odometry_nodelet.cpp
+#   src/s_graphs/registrations.cpp
+# )
+# ament_target_dependencies(s_graphs_scan_matching_odometry_node rclcpp)
+# target_link_libraries(s_graphs_scan_matching_odometry_node
+#   ${PCL_LIBRARIES}
+# )
 
-add_library(s_graphs_nodelet
-  apps/s_graphs_nodelet.cpp
-  src/s_graphs/plane_analyzer.cpp
-  src/s_graphs/graph_slam.cpp
-  src/s_graphs/plane_mapper.cpp
-  src/s_graphs/infinite_room_mapper.cpp
-  src/s_graphs/finite_room_mapper.cpp
-  src/s_graphs/floor_mapper.cpp
-  src/s_graphs/keyframe.cpp
-  src/s_graphs/graph_visualizer.cpp
-  src/s_graphs/map_cloud_generator.cpp
-  src/s_graphs/registrations.cpp
-  src/s_graphs/information_matrix_calculator.cpp
-  src/s_graphs/keyframe_mapper.cpp
-  src/s_graphs/graph_publisher.cpp
-  src/g2o/robust_kernel_io.cpp
-)
-target_link_libraries(s_graphs_nodelet
-  ${catkin_LIBRARIES}
-  ${PCL_LIBRARIES}
-  ${G2O_TYPES_DATA}
-  ${G2O_CORE_LIBRARY}
-  ${G2O_STUFF_LIBRARY}
-  ${G2O_SOLVER_PCG}
-  ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
-  ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
-  ${G2O_TYPES_SLAM3D}
-  ${G2O_TYPES_SLAM3D_ADDONS}
-)
-add_dependencies(s_graphs_nodelet ${PROJECT_NAME}_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
+# add_executable(s_graphs_node
+#   apps/s_graphs_nodelet.cpp
+#   src/s_graphs/plane_analyzer.cpp
+#   src/s_graphs/graph_slam.cpp
+#   src/s_graphs/plane_mapper.cpp
+#   src/s_graphs/infinite_room_mapper.cpp
+#   src/s_graphs/finite_room_mapper.cpp
+#   src/s_graphs/floor_mapper.cpp
+#   src/s_graphs/keyframe.cpp
+#   src/s_graphs/graph_visualizer.cpp
+#   src/s_graphs/map_cloud_generator.cpp
+#   src/s_graphs/registrations.cpp
+#   src/s_graphs/information_matrix_calculator.cpp
+#   src/s_graphs/keyframe_mapper.cpp
+#   src/s_graphs/graph_publisher.cpp
+#   src/g2o/robust_kernel_io.cpp
+# )
+# ament_target_dependencies(s_graphs_node rclcpp)
+# target_link_libraries(s_graphs_node
+#   ${PCL_LIBRARIES}
+#   ${G2O_TYPES_DATA}
+#   ${G2O_CORE_LIBRARY}
+#   ${G2O_STUFF_LIBRARY}
+#   ${G2O_SOLVER_PCG}
+#   ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
+#   ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
+#   ${G2O_TYPES_SLAM3D}
+#   ${G2O_TYPES_SLAM3D_ADDONS}
+# )
 
 #############
 ## Install ##
 #############
 
 install(TARGETS
-  s_graphs_nodelet s_graphs_floor_plan_nodelet s_graphs_room_segmentation_nodelet s_graphs_scan_matching_odometry_nodelet s_graphs_prefiltering_nodelet
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+  # s_graphs_node s_graphs_floor_plan_node s_graphs_room_segmentation_node s_graphs_scan_matching_odometry_node 
+  s_graphs_prefiltering_node
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/${PROJECT_NAME}
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  DESTINATION include
 )
 
 install(
   DIRECTORY launch config rviz
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+  DESTINATION share/${PROJECT_NAME}
 )
 
-catkin_install_python(
+install(
   PROGRAMS
     src/${PROJECT_NAME}/bag_player.py
     src/${PROJECT_NAME}/ford2bag.py
     src/${PROJECT_NAME}/map2odom_publisher.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+  DESTINATION lib/${PROJECT_NAME}
 )
 
-if(CATKIN_ENABLE_TESTING)
-  catkin_add_gtest(SGraphsUnitTest test/testPlane.cpp)
-  target_link_libraries(SGraphsUnitTest s_graphs_nodelet)
-endif()
+# if(AMENT_ENABLE_TESTING)
+#   find_package(ament_cmake_gtest REQUIRED)
+#   ament_add_gtest(SGraphsUnitTest test/testPlane.cpp)
+#   target_link_libraries(SGraphsUnitTest s_graphs_nodelet)
+# endif()
 
+#ament_python_install_package(${PROJECT_NAME}/src/s_graphs)
+ament_export_include_directories(include)
+ament_package()

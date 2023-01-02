@@ -13,7 +13,7 @@
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/floor_analyzer.hpp>
 
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include <ros/time.h>
 #include <nodelet/nodelet.h>
 #include <pluginlib/class_list_macros.h>

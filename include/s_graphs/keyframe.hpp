@@ -3,7 +3,7 @@
 #ifndef KEYFRAME_HPP
 #define KEYFRAME_HPP
 
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include <vector>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
