@@ -37,7 +37,6 @@ public:
     }
 
     points_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>("velodyne_points", 64, std::bind(&PrefilteringNode::cloud_callback, this, std::placeholders::_1));
-
     points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/filtered_points", 32);
     colored_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/colored_points", 32);
   }
@@ -51,10 +50,10 @@ private:
     this->declare_parameter("statistical_mean_k", 20);
     this->declare_parameter("statistical_stddev", 1.0);
     this->declare_parameter("radius_radius", 0.8);
-    this->declare_parameter("radius_min_neighbors", 2);
+    this->declare_parameter("radius_min_neighbors", 2.0);
     this->declare_parameter("use_distance_filter", true);
-    this->declare_parameter("distance_near_thresh", 1);
-    this->declare_parameter("distance_far_thresh", 100);
+    this->declare_parameter("distance_near_thresh", 1.0);
+    this->declare_parameter("distance_far_thresh", 100.0);
     this->declare_parameter("base_link_frame", "");
     this->declare_parameter("scan_period", 0.1);
 
@@ -91,7 +90,7 @@ private:
       outlier_removal_filter = sor;
     } else if(outlier_removal_method == "RADIUS") {
       double radius = this->get_parameter("radius_radius").get_parameter_value().get<double>();
-      int min_neighbors = this->get_parameter("radius_min_neighbors").get_parameter_value().get<int>();
+      int min_neighbors = this->get_parameter("radius_min_neighbors").get_parameter_value().get<double>();
       std::cout << "outlier_removal: RADIUS " << radius << " - " << min_neighbors << std::endl;
 
       pcl::RadiusOutlierRemoval<PointT>::Ptr rad(new pcl::RadiusOutlierRemoval<PointT>());
@@ -105,7 +104,6 @@ private:
     use_distance_filter = this->get_parameter("use_distance_filter").get_parameter_value().get<bool>();
     distance_near_thresh = this->get_parameter("distance_near_thresh").get_parameter_value().get<double>();
     distance_far_thresh = this->get_parameter("distance_far_thresh").get_parameter_value().get<double>();
-
     base_link_frame = this->get_parameter("base_link_frame").get_parameter_value().get<std::string>();
   }
 
@@ -127,7 +125,7 @@ private:
     geometry_msgs::msg::TransformStamped transform_msg;
     if(!base_link_frame.empty()) {
       try {
-        transform_msg = tf_buffer->lookupTransform(base_link_frame, src_cloud->header.frame_id, tf2::TimePointZero, rclcpp::Duration(2));
+        transform_msg = tf_buffer->lookupTransform(base_link_frame, src_cloud->header.frame_id, tf2::TimePointZero);
       } catch(const tf2::TransformException& ex) {
         RCLCPP_INFO(this->get_logger(), "Could not transform %s to %s: %s", base_link_frame.c_str(), src_cloud->header.frame_id.c_str(), ex.what());
         return;
