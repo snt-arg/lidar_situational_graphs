@@ -1,4 +1,4 @@
-Header header
+std_msgs/Header header
 
 int32 id
 int32[] neighbour_ids

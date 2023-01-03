@@ -1,5 +1,6 @@
 prefiltering_node:
   ros__parameters:
+    base_link_frame: base_footprint
     use_distance_filter: true
     distance_near_thresh: 0.5
     distance_far_thresh: 100.0
@@ -10,5 +11,3 @@ prefiltering_node:
     statistical_stddev: 1.2
     radius_min_neighbors: 0.5
     radius_radius: 2.0
-  
-    

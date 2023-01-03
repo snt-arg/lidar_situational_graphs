@@ -24,13 +24,22 @@ from launch_ros.actions import Node
 def generate_launch_description():
 
     pkg_dir = get_package_share_directory('s_graphs')
-    param_file = os.path.join(pkg_dir, 'config', 'hdl_prefiltering.yaml')
+    prefilitering_param_file = os.path.join(
+        pkg_dir, 'config', 'prefiltering.yaml')
 
-    param_reader_cmd = Node(package='s_graphs', executable='s_graphs_prefiltering_node', parameters=[param_file], output='screen', remappings=[('velodyne_points', '/platform/velodyne_points'),
-                                                                                                                                               ('imu/data', '/platform/imu/data')]
+    prefiltering_cmd = Node(package='s_graphs', executable='s_graphs_prefiltering_node', parameters=[prefilitering_param_file], output='screen', remappings=[('velodyne_points', '/platform/velodyne_points'),
+                                                                                                                                                             ('imu/data', '/platform/imu/data')]
                             )
 
+    pkg_dir = get_package_share_directory('s_graphs')
+    scan_matching_param_file = os.path.join(
+        pkg_dir, 'config', 'scan_matching.yaml')
+
+    scan_matching_cmd = Node(package='s_graphs', executable='s_graphs_scan_matching_odometry_node', parameters=[scan_matching_param_file], output='screen'
+                             )
+
     ld = LaunchDescription()
-    ld.add_action(param_reader_cmd)
+    ld.add_action(prefiltering_cmd)
+    ld.add_action(scan_matching_cmd)
 
     return ld

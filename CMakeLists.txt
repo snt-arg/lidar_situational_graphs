@@ -17,7 +17,6 @@ endif()
 # pcl 1.7 causes a segfault when it is built with debug mode
 set(CMAKE_BUILD_TYPE "RELEASE")
 find_package(rosidl_default_generators REQUIRED)
-
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
@@ -28,6 +27,7 @@ find_package(geodesy REQUIRED)
 find_package(nmea_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(ndt_omp REQUIRED)
 find_package(fast_gicp REQUIRED)
@@ -64,18 +64,18 @@ endif()
 ########################
 ## message generation ##
 ########################
-# rosidl_generate_interfaces(${PROJECT_NAME}
-#   "msg/PointClouds.msg"
-#   "msg/PlaneData.msg"
-#   "msg/PlanesData.msg"
-#   "msg/RoomData.msg"
-#   "msg/RoomsData.msg"
-#   "msg/FloorCoeffs.msg"
-#   "msg/ScanMatchingStatus.msg"
-#   "srv/DumpGraph.srv"
-#   "srv/SaveMap.srv"
-#   DEPENDENCIES std_msgs geometry_msgs sensor_msgs
-# )
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/PointClouds.msg"
+  "msg/PlaneData.msg"
+  "msg/PlanesData.msg"
+  "msg/RoomData.msg"
+  "msg/RoomsData.msg"
+  "msg/FloorCoeffs.msg"
+  "msg/ScanMatchingStatus.msg"
+  "srv/DumpGraph.srv"
+  "srv/SaveMap.srv"
+  DEPENDENCIES builtin_interfaces std_msgs geometry_msgs sensor_msgs
+)
 
 ###########
 ## Build ##
@@ -85,7 +85,7 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
-# nodelets
+# nodes
 add_executable(s_graphs_prefiltering_node apps/prefiltering_nodelet.cpp)
 ament_target_dependencies(s_graphs_prefiltering_node rclcpp sensor_msgs tf2 tf2_ros pcl_ros)
 target_link_libraries(s_graphs_prefiltering_node
@@ -119,14 +119,13 @@ target_link_libraries(s_graphs_prefiltering_node
 #   ${PCL_LIBRARIES}
 # )
 
-# add_executable(s_graphs_scan_matching_odometry_node
-#   apps/scan_matching_odometry_nodelet.cpp
-#   src/s_graphs/registrations.cpp
-# )
-# ament_target_dependencies(s_graphs_scan_matching_odometry_node rclcpp)
-# target_link_libraries(s_graphs_scan_matching_odometry_node
-#   ${PCL_LIBRARIES}
-# )
+add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_nodelet.cpp src/s_graphs/registrations.cpp)
+ament_target_dependencies(s_graphs_scan_matching_odometry_node rclcpp sensor_msgs geometry_msgs nav_msgs ndt_omp fast_gicp tf2 tf2_ros pcl_ros )
+target_link_libraries(s_graphs_scan_matching_odometry_node
+  ${PCL_LIBRARIES}
+)
+rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 
 # add_executable(s_graphs_node
 #   apps/s_graphs_nodelet.cpp
@@ -163,8 +162,8 @@ target_link_libraries(s_graphs_prefiltering_node
 #############
 
 install(TARGETS
-  # s_graphs_node s_graphs_floor_plan_node s_graphs_room_segmentation_node s_graphs_scan_matching_odometry_node 
-  s_graphs_prefiltering_node
+  # s_graphs_node s_graphs_floor_plan_node s_graphs_room_segmentation_node 
+  s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -192,5 +191,6 @@ install(
 # endif()
 
 #ament_python_install_package(${PROJECT_NAME}/src/s_graphs)
+ament_export_dependencies(rosidl_default_runtime)
 ament_export_include_directories(include)
 ament_package()
