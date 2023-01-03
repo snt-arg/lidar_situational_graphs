@@ -4,18 +4,16 @@
 #include <math.h>
 #include <boost/format.hpp>
 
-#include <s_graphs/room_analyzer.hpp>
-#include <s_graphs/plane_utils.hpp>
+#include "rclcpp/rclcpp.hpp"
+#include "pcl_ros/transforms.hpp"
+#include "tf2_ros/transform_listener.h"
+#include "pcl_conversions/pcl_conversions.h"
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "std_msgs/msg/color_rgba.hpp"
 
-#include <ros/time.h>
-#include <nodelet/nodelet.h>
-#include <pluginlib/class_list_macros.h>
-#include <pcl_ros/transforms.h>
-#include <pcl_ros/point_cloud.h>
-#include <tf/transform_listener.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <std_msgs/ColorRGBA.h>
+#include "s_graphs/msg/rooms_data.hpp"
+#include <s_graphs/plane_utils.hpp>
+#include <s_graphs/room_analyzer.hpp>
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -42,37 +40,35 @@
 
 namespace s_graphs {
 
-class RoomSegmentationNodelet : public nodelet::Nodelet {
+class RoomSegmentationNode : public rclcpp::Node {
 public:
   typedef pcl::PointXYZRGBNormal PointT;
 
-  RoomSegmentationNodelet() {}
-  virtual ~RoomSegmentationNodelet() {}
-
-  virtual void onInit() {
-    nh = getNodeHandle();
-    private_nh = getPrivateNodeHandle();
+  RoomSegmentationNode() : Node("room_segmentation_node") {
     this->initialize_params();
     this->init_ros();
   }
 
 private:
   void initialize_params() {
+    this->declare_parameter("vertex_neigh_thres", 2);
+    room_analyzer_params params{this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
+
     plane_utils.reset(new PlaneUtils());
-    room_analyzer.reset(new RoomAnalyzer(private_nh, plane_utils));
+    room_analyzer.reset(new RoomAnalyzer(params, plane_utils));
   }
 
   void init_ros() {
-    skeleton_graph_sub = nh.subscribe("/voxblox_skeletonizer/sparse_graph", 1, &RoomSegmentationNodelet::skeleton_graph_callback, this);
-    map_planes_sub = nh.subscribe("/s_graphs/map_planes", 100, &RoomSegmentationNodelet::map_planes_callback, this);
+    skeleton_graph_sub = this->create_subscription<visualization_msgs::msg::MarkerArray>("/voxblox_skeletonizer/sparse_graph", 1, std::bind(&RoomSegmentationNode::skeleton_graph_callback, this, std::placeholders::_1));
+    map_planes_sub = this->create_subscription<s_graphs::msg::PlanesData>("/s_graphs/map_planes", 100, std::bind(&RoomSegmentationNode::map_planes_callback, this, std::placeholders::_1));
 
-    cluster_cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_cloud", 1, true);
-    cluster_clouds_pub = nh.advertise<sensor_msgs::PointCloud2>("/room_segmentation/cluster_clouds", 1, true);
-    room_data_pub = nh.advertise<s_graphs::RoomsData>("/room_segmentation/room_data", 1, false);
-    room_centers_pub = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/room_centers", 1, true);
-    refined_skeleton_graph_pub = nh.advertise<visualization_msgs::MarkerArray>("/room_segmentation/refined_skeleton_graph", 1, true);
+    cluster_cloud_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/room_segmentation/cluster_cloud", 1);
+    cluster_clouds_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/room_segmentation/cluster_clouds", 1);
+    room_data_pub = this->create_publisher<s_graphs::msg::RoomsData>("/room_segmentation/room_data", 1);
+    room_centers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/room_segmentation/room_centers", 1);
+    refined_skeleton_graph_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/room_segmentation/refined_skeleton_graph", 1);
 
-    room_detection_timer = nh.createTimer(ros::Duration(1.0), &RoomSegmentationNodelet::room_detection_callback, this);
+    auto room_detection_timer = rclcpp::create_timer(this, rclcpp::Clock::make_shared(), rclcpp::Duration(1.0), [=]() { room_detection_callback(); });
   }
 
   template<typename T>
@@ -84,8 +80,8 @@ private:
     return result;
   }
 
-  void room_detection_callback(const ros::TimerEvent& event) {
-    std::vector<s_graphs::PlaneData> current_x_vert_planes, current_y_vert_planes;
+  void room_detection_callback() {
+    std::vector<s_graphs::msg::PlaneData> current_x_vert_planes, current_y_vert_planes;
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
@@ -93,23 +89,23 @@ private:
       return;
     }
 
-    auto t1 = ros::Time::now();
+    auto t1 = this->now();
     extract_rooms(current_x_vert_planes, current_y_vert_planes);
-    auto t2 = ros::Time::now();
-    std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
+    auto t2 = this->now();
+    std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).seconds() << std::endl;
   }
 
   /**
    * @brief get the vertical planes in map frame
    * @param map_planes_msg
    */
-  void map_planes_callback(const s_graphs::PlanesData::Ptr& map_planes_msg) {
+  void map_planes_callback(const s_graphs::msg::PlanesData::SharedPtr map_planes_msg) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     x_vert_plane_queue.push_back(map_planes_msg->x_planes);
     y_vert_plane_queue.push_back(map_planes_msg->y_planes);
   }
 
-  void flush_map_planes(std::vector<s_graphs::PlaneData>& current_x_vert_planes, std::vector<s_graphs::PlaneData>& current_y_vert_planes) {
+  void flush_map_planes(std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes, std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     for(const auto& x_map_planes_msg : x_vert_plane_queue) {
       for(const auto& x_map_plane : x_map_planes_msg) {
@@ -139,7 +135,7 @@ private:
    * @brief get the points from the skeleton graph for clusterting and identifying room candidates
    * @param skeleton_graph_msg
    */
-  void skeleton_graph_callback(const visualization_msgs::MarkerArray::Ptr& skeleton_graph_msg) {
+  void skeleton_graph_callback(visualization_msgs::msg::MarkerArray::SharedPtr skeleton_graph_msg) {
     room_analyzer->analyze_skeleton_graph(skeleton_graph_msg);
   }
 
@@ -147,16 +143,16 @@ private:
    * @brief extract clusters with its centers from the skeletal cloud
    *
    */
-  void extract_rooms(std::vector<s_graphs::PlaneData> current_x_vert_planes, std::vector<s_graphs::PlaneData> current_y_vert_planes) {
+  void extract_rooms(std::vector<s_graphs::msg::PlaneData> current_x_vert_planes, std::vector<s_graphs::msg::PlaneData> current_y_vert_planes) {
     int room_cluster_counter = 0;
-    visualization_msgs::MarkerArray refined_skeleton_marker_array;
-    std::vector<s_graphs::RoomData> room_candidates_vec;
+    visualization_msgs::msg::MarkerArray refined_skeleton_marker_array;
+    std::vector<s_graphs::msg::RoomData> room_candidates_vec;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
 
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->extract_cloud_clusters();
     std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->extract_connected_graph();
-    visualization_msgs::MarkerArray skeleton_marker_array = room_analyzer->extract_marker_array_clusters();
+    visualization_msgs::msg::MarkerArray skeleton_marker_array = room_analyzer->extract_marker_array_clusters();
 
     int cluster_id = 0;
     for(const auto& cloud_cluster : curr_cloud_clusters) {
@@ -183,46 +179,46 @@ private:
       cluster_id++;
     }
 
-    s_graphs::RoomsData room_candidates_msg;
-    room_candidates_msg.header.stamp = ros::Time::now();
+    s_graphs::msg::RoomsData room_candidates_msg;
+    room_candidates_msg.header.stamp = this->now();
     room_candidates_msg.rooms = room_candidates_vec;
-    room_data_pub.publish(room_candidates_msg);
+    room_data_pub->publish(room_candidates_msg);
     viz_room_centers(room_candidates_msg);
 
-    sensor_msgs::PointCloud2 cloud_cluster_msg;
+    sensor_msgs::msg::PointCloud2 cloud_cluster_msg;
     pcl::toROSMsg(*cloud_visualizer, cloud_cluster_msg);
-    cloud_cluster_msg.header.stamp = ros::Time::now();
+    cloud_cluster_msg.header.stamp = this->now();
     cloud_cluster_msg.header.frame_id = "map";
-    cluster_cloud_pub.publish(cloud_cluster_msg);
+    cluster_cloud_pub->publish(cloud_cluster_msg);
 
-    refined_skeleton_graph_pub.publish(refined_skeleton_marker_array);
+    refined_skeleton_graph_pub->publish(refined_skeleton_marker_array);
   }
 
-  void viz_room_centers(s_graphs::RoomsData room_vec) {
-    visualization_msgs::Marker room_marker;
+  void viz_room_centers(s_graphs::msg::RoomsData room_vec) {
+    visualization_msgs::msg::Marker room_marker;
     room_marker.pose.orientation.w = 1.0;
     room_marker.scale.x = 0.5;
     room_marker.scale.y = 0.5;
     room_marker.scale.z = 0.5;
     // plane_marker.points.resize(vert_planes.size());
     room_marker.header.frame_id = "map";
-    room_marker.header.stamp = ros::Time::now();
+    room_marker.header.stamp = this->now();
     room_marker.ns = "rooms";
     room_marker.id = 0;
-    room_marker.type = visualization_msgs::Marker::CUBE_LIST;
+    room_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
     room_marker.color.r = 1;
     // room_marker.color.g = 0.07;
     // room_marker.color.b = 0.0;
     // room_marker.color.a = 1;
 
     for(const auto& room : room_vec.rooms) {
-      geometry_msgs::Point point;
+      geometry_msgs::msg::Point point;
       point.x = room.room_center.x;
       point.y = room.room_center.y;
       point.z = 7.0;
       room_marker.points.push_back(point);
 
-      std_msgs::ColorRGBA point_color;
+      std_msgs::msg::ColorRGBA point_color;
       if(room.x_planes.size() == 2 && room.y_planes.size() == 2) {
         point_color.r = 1;
         point_color.a = 1;
@@ -233,31 +229,29 @@ private:
       room_marker.colors.push_back(point_color);
     }
 
-    visualization_msgs::MarkerArray markers;
+    visualization_msgs::msg::MarkerArray markers;
     markers.markers.push_back(room_marker);
-    room_centers_pub.publish(markers);
+    room_centers_pub->publish(markers);
   }
 
 private:
-  ros::Subscriber skeleton_graph_sub;
-  ros::Subscriber map_planes_sub;
-  ros::Publisher cluster_cloud_pub;
-  ros::Publisher cluster_clouds_pub;
-  ros::Publisher room_data_pub;
-  ros::Publisher room_centers_pub;
-  ros::Publisher refined_skeleton_graph_pub;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr skeleton_graph_sub;
+  rclcpp::Subscription<s_graphs::msg::PlanesData>::SharedPtr map_planes_sub;
+
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_cloud_pub;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_clouds_pub;
+  rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr room_data_pub;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr room_centers_pub;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr refined_skeleton_graph_pub;
 
   /* private variables */
 private:
-  ros::Timer room_detection_timer;
+  // rclcpp::TimerBase::SharedPtr room_detection_timer;
+  // ros::Timer room_detection_timer;
   std::mutex map_plane_mutex;
 
-  // skeleton graph queue
-  std::deque<visualization_msgs::MarkerArray::Ptr> skeleton_graph_queue;
-  std::vector<s_graphs::PlaneData> x_vert_plane_vec, y_vert_plane_vec;
-  std::deque<std::vector<s_graphs::PlaneData>> x_vert_plane_queue, y_vert_plane_queue;
-  ros::NodeHandle nh;
-  ros::NodeHandle private_nh;
+  std::vector<s_graphs::msg::PlaneData> x_vert_plane_vec, y_vert_plane_vec;
+  std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue, y_vert_plane_queue;
 
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::shared_ptr<PlaneUtils> plane_utils;
@@ -265,4 +259,9 @@ private:
 
 }  // namespace s_graphs
 
-PLUGINLIB_EXPORT_CLASS(s_graphs::RoomSegmentationNodelet, nodelet::Nodelet)
+int main(int argc, char* argv[]) {
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<s_graphs::RoomSegmentationNode>());
+  rclcpp::shutdown();
+  return 0;
+}

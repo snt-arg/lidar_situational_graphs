@@ -28,6 +28,7 @@ find_package(nmea_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
+find_package(visualization_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(ndt_omp REQUIRED)
 find_package(fast_gicp REQUIRED)
@@ -92,14 +93,15 @@ target_link_libraries(s_graphs_prefiltering_node
   ${PCL_LIBRARIES}
 )
 
-# add_executable(s_graphs_room_segmentation_node 
-#   apps/room_segmentation_nodelet.cpp 
-#   src/s_graphs/room_analyzer.cpp
-# )
-# ament_target_dependencies(s_graphs_room_segmentation_node rclcpp)
-# target_link_libraries(s_graphs_room_segmentation_node
-#   ${PCL_LIBRARIES}
-# )
+add_executable(s_graphs_room_segmentation_node 
+  apps/room_segmentation_nodelet.cpp 
+  src/s_graphs/room_analyzer.cpp
+)
+ament_target_dependencies(s_graphs_room_segmentation_node rclcpp rclcpp sensor_msgs tf2 tf2_ros pcl_ros visualization_msgs)
+target_link_libraries(s_graphs_room_segmentation_node
+  ${PCL_LIBRARIES}
+)
+rosidl_target_interfaces(s_graphs_room_segmentation_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # add_executable(s_graphs_floor_plan_node
 #   apps/floor_plan_nodelet.cpp
@@ -162,8 +164,8 @@ rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "r
 #############
 
 install(TARGETS
-  # s_graphs_node s_graphs_floor_plan_node s_graphs_room_segmentation_node 
-  s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node
+  # s_graphs_node s_graphs_floor_plan_node  
+  s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

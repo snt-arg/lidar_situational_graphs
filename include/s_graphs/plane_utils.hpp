@@ -5,7 +5,7 @@
 
 #include <Eigen/Dense>
 
-#include <s_graphs/PlanesData.h>
+#include "s_graphs/msg/planes_data.hpp"
 
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/edge_se3_plane.hpp>
@@ -14,7 +14,7 @@
 #include <pcl/common/angles.h>
 #include <pcl/common/distances.h>
 
-#include <geometry_msgs/Point.h>
+#include "geometry_msgs/msg/point.hpp"
 
 namespace s_graphs {
 
@@ -94,7 +94,7 @@ public:
    * @param
    * @return
    */
-  inline float width_between_planes(s_graphs::PlaneData& plane1, s_graphs::PlaneData& plane2) {
+  inline float width_between_planes(s_graphs::msg::PlaneData& plane1, s_graphs::msg::PlaneData& plane2) {
     Eigen::Vector3d vec;
     Eigen::Vector3d plane1_eigen, plane2_eigen;
     plane1_eigen << plane1.nx, plane1.ny, plane1.nz;
@@ -117,7 +117,7 @@ public:
    * @param
    * @return
    */
-  void correct_plane_direction(int plane_type, s_graphs::PlaneData& plane) {
+  void correct_plane_direction(int plane_type, s_graphs::msg::PlaneData& plane) {
     if(plane.d > 0) {
       plane.nx = -1 * plane.nx;
       plane.ny = -1 * plane.ny;
@@ -178,8 +178,8 @@ public:
    * @param
    * @return
    */
-  geometry_msgs::Point room_center(const s_graphs::PlaneData& x_plane1, const s_graphs::PlaneData& x_plane2, const s_graphs::PlaneData& y_plane1, const s_graphs::PlaneData& y_plane2) {
-    geometry_msgs::Point center;
+  geometry_msgs::msg::Point room_center(const s_graphs::msg::PlaneData& x_plane1, const s_graphs::msg::PlaneData& x_plane2, const s_graphs::msg::PlaneData& y_plane1, const s_graphs::msg::PlaneData& y_plane2) {
+    geometry_msgs::msg::Point center;
     Eigen::Vector3d vec_x, vec_y;
     Eigen::Vector3d x_plane1_eigen, x_plane2_eigen;
     Eigen::Vector3d y_plane1_eigen, y_plane2_eigen;
@@ -344,13 +344,13 @@ public:
    * @param
    * @return
    */
-  float plane_dot_product(const s_graphs::PlaneData& plane1, const s_graphs::PlaneData& plane2) {
+  float plane_dot_product(const s_graphs::msg::PlaneData& plane1, const s_graphs::msg::PlaneData& plane2) {
     float dot_product = plane1.nx * plane2.nx + plane1.ny * plane2.ny + plane1.nz * plane2.nz;
     return dot_product;
   }
 
-  geometry_msgs::Point extract_infite_room_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::PlaneData plane1, s_graphs::PlaneData plane2, Eigen::Vector2d& cluster_center) {
-    geometry_msgs::Point center_point;
+  geometry_msgs::msg::Point extract_infite_room_center(int plane_type, pcl::PointXY p1, pcl::PointXY p2, s_graphs::msg::PlaneData plane1, s_graphs::msg::PlaneData plane2, Eigen::Vector2d& cluster_center) {
+    geometry_msgs::msg::Point center_point;
     Eigen::Vector4d plane1_eigen, plane2_eigen;
     plane1_eigen << plane1.nx, plane1.ny, plane1.nz, plane1.d;
     plane2_eigen << plane2.nx, plane2.ny, plane2.nz, plane2.d;
