@@ -26,8 +26,8 @@ def generate_launch_description():
     pkg_dir = get_package_share_directory('s_graphs')
     param_file = os.path.join(pkg_dir, 'config', 'hdl_prefiltering.yaml')
 
-    param_reader_cmd = Node(package='s_graphs', executable='s_graphs_prefiltering_node', parameters=[param_file], output='screen', remappings=[('velodyne_points', '/platform/velodyne_points')
-                                                                                                                                               ]
+    param_reader_cmd = Node(package='s_graphs', executable='s_graphs_prefiltering_node', parameters=[param_file], output='screen', remappings=[('velodyne_points', '/platform/velodyne_points'),
+                                                                                                                                               ('imu/data', '/platform/imu/data')]
                             )
 
     ld = LaunchDescription()
