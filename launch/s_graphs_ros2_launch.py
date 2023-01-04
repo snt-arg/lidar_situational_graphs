@@ -42,9 +42,14 @@ def generate_launch_description():
     room_segmentation_cmd = Node(package='s_graphs', executable='s_graphs_room_segmentation_node', parameters=[{"vertex_neigh_thres": 2}], output='screen'
                                  )
 
+    pkg_dir = get_package_share_directory('s_graphs')
+    floor_plan_cmd = Node(package='s_graphs', executable='s_graphs_floor_plan_node', parameters=[{"vertex_neigh_thres": 2}], output='screen'
+                          )
+
     ld = LaunchDescription()
     ld.add_action(prefiltering_cmd)
     ld.add_action(scan_matching_cmd)
     ld.add_action(room_segmentation_cmd)
+    ld.add_action(floor_plan_cmd)
 
     return ld

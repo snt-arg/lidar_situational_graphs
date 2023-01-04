@@ -103,15 +103,16 @@ target_link_libraries(s_graphs_room_segmentation_node
 )
 rosidl_target_interfaces(s_graphs_room_segmentation_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-# add_executable(s_graphs_floor_plan_node
-#   apps/floor_plan_nodelet.cpp
-#   src/s_graphs/room_analyzer.cpp
-#   src/s_graphs/floor_analyzer.cpp
-# )
-# ament_target_dependencies(s_graphs_floor_plan_node rclcpp)
-# target_link_libraries(s_graphs_floor_plan_node
-#   ${PCL_LIBRARIES}
-# )
+add_executable(s_graphs_floor_plan_node
+  apps/floor_plan_nodelet.cpp
+  src/s_graphs/room_analyzer.cpp
+  src/s_graphs/floor_analyzer.cpp
+)
+ament_target_dependencies(s_graphs_floor_plan_node rclcpp sensor_msgs tf2 tf2_ros pcl_ros visualization_msgs)
+target_link_libraries(s_graphs_floor_plan_node
+  ${PCL_LIBRARIES}
+)
+rosidl_target_interfaces(s_graphs_floor_plan_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # add_executable(s_graphs_floor_detection_node 
 #     apps/floor_detection_nodelet.cpp
@@ -164,8 +165,8 @@ rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "r
 #############
 
 install(TARGETS
-  # s_graphs_node s_graphs_floor_plan_node  
-  s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node
+  # s_graphs_node  
+  s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node s_graphs_floor_plan_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

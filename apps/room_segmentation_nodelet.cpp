@@ -68,7 +68,7 @@ private:
     room_centers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/room_segmentation/room_centers", 1);
     refined_skeleton_graph_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/room_segmentation/refined_skeleton_graph", 1);
 
-    auto room_detection_timer = rclcpp::create_timer(this, rclcpp::Clock::make_shared(), rclcpp::Duration(1.0), [=]() { room_detection_callback(); });
+    room_detection_timer = create_wall_timer(std::chrono::seconds(1), std::bind(&RoomSegmentationNode::room_detection_callback, this));
   }
 
   template<typename T>
@@ -85,7 +85,7 @@ private:
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
-      // std::cout << "Did not receive any mapped planes" << std::endl;
+      RCLCPP_INFO(this->get_logger(), "Did not receive any mapped planes");
       return;
     }
 
@@ -246,8 +246,7 @@ private:
 
   /* private variables */
 private:
-  // rclcpp::TimerBase::SharedPtr room_detection_timer;
-  // ros::Timer room_detection_timer;
+  rclcpp::TimerBase::SharedPtr room_detection_timer;
   std::mutex map_plane_mutex;
 
   std::vector<s_graphs::msg::PlaneData> x_vert_plane_vec, y_vert_plane_vec;

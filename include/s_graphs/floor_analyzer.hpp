@@ -10,10 +10,9 @@
 #include <boost/format.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl_ros/transforms.h>
-#include <pcl_ros/point_cloud.h>
-#include <tf/transform_listener.h>
+#include "sensor_msgs/msg/point_cloud2.hpp"
+#include "pcl_ros/transforms.hpp"
+#include "tf2_ros/transform_listener.h"
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <pcl/point_types.h>
@@ -30,8 +29,8 @@
 #include <pcl/common/impl/io.hpp>
 
 #include <s_graphs/plane_utils.hpp>
-#include <s_graphs/RoomData.h>
-#include <s_graphs/RoomsData.h>
+#include "s_graphs/msg/room_data.hpp"
+#include "s_graphs/msg/rooms_data.hpp"
 
 namespace s_graphs {
 
@@ -46,10 +45,9 @@ public:
   /**
    * @brief Constructor for FloorAnalyzer.
    *
-   * @param private_nh: private ros node handler.
    * @param plane_utils_ptr: a pointer containing utils for planes manipulation.
    */
-  FloorAnalyzer(ros::NodeHandle private_nh, std::shared_ptr<PlaneUtils> plane_utils_ptr);
+  FloorAnalyzer(std::shared_ptr<PlaneUtils> plane_utils_ptr);
   ~FloorAnalyzer();
 
 public:
@@ -60,7 +58,7 @@ public:
    * @param current_y_vert_planes
    * @param floor_plane_candidates_vec
    */
-  void perform_floor_segmentation(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes, std::vector<s_graphs::PlaneData>& floor_plane_candidates_vec);
+  void perform_floor_segmentation(const std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes, std::vector<s_graphs::msg::PlaneData>& floor_plane_candidates_vec);
 
 private:
   std::shared_ptr<PlaneUtils> plane_utils;

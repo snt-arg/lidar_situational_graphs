@@ -4,51 +4,46 @@
 #include <math.h>
 #include <boost/format.hpp>
 
-#include <s_graphs/PointClouds.h>
-#include <s_graphs/RoomData.h>
-#include <s_graphs/RoomsData.h>
-#include <s_graphs/PlaneData.h>
-#include <s_graphs/PlanesData.h>
+#include "s_graphs/msg/point_clouds.hpp"
+#include "s_graphs/msg/room_data.hpp"
+#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs/msg/plane_data.hpp"
+#include "s_graphs/msg/planes_data.hpp"
 #include <s_graphs/room_analyzer.hpp>
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/floor_analyzer.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include <ros/time.h>
-#include <nodelet/nodelet.h>
-#include <pluginlib/class_list_macros.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <pcl_ros/transforms.h>
-#include <pcl_ros/point_cloud.h>
+#include "visualization_msgs/msg/marker_array.h"
+#include "pcl_ros/transforms.hpp"
 
 namespace s_graphs {
 
-class FloorPlanNodelet : public nodelet::Nodelet {
+class FloorPlanNode : public rclcpp::Node {
 public:
-  FloorPlanNodelet() {}
-  virtual ~FloorPlanNodelet() {}
-
-  virtual void onInit() {
-    nh = getNodeHandle();
-    private_nh = getPrivateNodeHandle();
+  FloorPlanNode() : Node("floor_segmentation_node") {
     this->initialize_params();
     this->init_ros();
   }
 
 private:
   void initialize_params() {
+    this->declare_parameter("vertex_neigh_thres", 2);
+    room_analyzer_params params{this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
+
     plane_utils.reset(new PlaneUtils());
-    room_analyzer.reset(new RoomAnalyzer(private_nh, plane_utils));
-    floor_analyzer.reset(new FloorAnalyzer(private_nh, plane_utils));
+    room_analyzer.reset(new RoomAnalyzer(params, plane_utils));
+    floor_analyzer.reset(new FloorAnalyzer(plane_utils));
   }
 
   void init_ros() {
-    skeleton_graph_sub = nh.subscribe("/voxblox_skeletonizer/sparse_graph", 1, &FloorPlanNodelet::skeleton_graph_callback, this);
-    map_planes_sub = nh.subscribe("/s_graphs/all_map_planes", 100, &FloorPlanNodelet::map_planes_callback, this);
+    skeleton_graph_sub = this->create_subscription<visualization_msgs::msg::MarkerArray>("/voxblox_skeletonizer/sparse_graph", 1, std::bind(&FloorPlanNode::skeleton_graph_callback, this, std::placeholders::_1));
+    map_planes_sub = this->create_subscription<s_graphs::msg::PlanesData>("/s_graphs/all_map_planes", 100, std::bind(&FloorPlanNode::map_planes_callback, this, std::placeholders::_1));
 
-    floor_plane_timer = nh.createTimer(ros::Duration(10.0), &FloorPlanNodelet::floor_plan_callback, this);
-    all_rooms_data_pub = nh.advertise<s_graphs::RoomsData>("/floor_plan/all_rooms_data", 1, false);
-    floor_data_pub = nh.advertise<s_graphs::RoomData>("/floor_plan/floor_data", 1, false);
+    all_rooms_data_pub = this->create_publisher<s_graphs::msg::RoomsData>("/floor_plan/all_rooms_data", 1);
+    floor_data_pub = this->create_publisher<s_graphs::msg::RoomData>("/floor_plan/floor_data", 1);
+
+    floor_plane_timer = create_wall_timer(std::chrono::seconds(10), std::bind(&FloorPlanNode::floor_plan_callback, this));
   }
 
   template<typename T>
@@ -65,7 +60,7 @@ private:
    * @brief get the points from the skeleton graph for clusterting and identifying room candidates
    * @param skeleton_graph_msg
    */
-  void skeleton_graph_callback(const visualization_msgs::MarkerArray::Ptr& skeleton_graph_msg) {
+  void skeleton_graph_callback(const visualization_msgs::msg::MarkerArray::SharedPtr skeleton_graph_msg) {
     room_analyzer->analyze_skeleton_graph(skeleton_graph_msg);
   }
 
@@ -73,13 +68,13 @@ private:
    * @brief get all the mapped planes from all the keyframes
    *
    */
-  void map_planes_callback(const s_graphs::PlanesData::Ptr& map_planes_msg) {
+  void map_planes_callback(const s_graphs::msg::PlanesData::SharedPtr map_planes_msg) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     x_vert_plane_queue.push_back(map_planes_msg->x_planes);
     y_vert_plane_queue.push_back(map_planes_msg->y_planes);
   }
 
-  void flush_map_planes(std::vector<s_graphs::PlaneData>& current_x_vert_planes, std::vector<s_graphs::PlaneData>& current_y_vert_planes) {
+  void flush_map_planes(std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes, std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     for(const auto& x_map_planes_msg : x_vert_plane_queue) {
       for(const auto& x_map_plane : x_map_planes_msg) {
@@ -104,25 +99,25 @@ private:
     }
   }
 
-  void floor_plan_callback(const ros::TimerEvent& event) {
-    std::vector<s_graphs::PlaneData> current_x_vert_planes, current_y_vert_planes;
+  void floor_plan_callback() {
+    std::vector<s_graphs::msg::PlaneData> current_x_vert_planes, current_y_vert_planes;
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
-      // std::cout << "Did not receive any mapped planes" << std::endl;
+      RCLCPP_INFO(this->get_logger(), "Did not receive any mapped planes");
       return;
     }
 
-    auto t1 = ros::Time::now();
+    auto t1 = this->now();
     // extract_rooms(current_x_vert_planes, current_y_vert_planes);
     extract_floors(current_x_vert_planes, current_y_vert_planes);
-    auto t2 = ros::Time::now();
+    auto t2 = this->now();
     // std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).toSec() << std::endl;
   }
 
-  void extract_rooms(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes) {
+  void extract_rooms(const std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes) {
     int room_cluster_counter = 0;
-    std::vector<s_graphs::RoomData> room_candidates_vec;
+    std::vector<s_graphs::msg::RoomData> room_candidates_vec;
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->extract_cloud_clusters();
     std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->extract_connected_graph();
 
@@ -141,43 +136,41 @@ private:
       RoomInfo room_info = {current_x_vert_planes, current_y_vert_planes, cloud_cluster};
       room_analyzer->perform_room_segmentation(room_info, room_cluster_counter, cloud_cluster, room_candidates_vec, connected_subgraph_map);
 
-      s_graphs::RoomsData room_candidates_msg;
-      room_candidates_msg.header.stamp = ros::Time::now();
+      s_graphs::msg::RoomsData room_candidates_msg;
+      room_candidates_msg.header.stamp = this->now();
       room_candidates_msg.rooms = room_candidates_vec;
-      all_rooms_data_pub.publish(room_candidates_msg);
+      all_rooms_data_pub->publish(room_candidates_msg);
     }
   }
 
-  void extract_floors(const std::vector<s_graphs::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::PlaneData>& current_y_vert_planes) {
-    std::vector<s_graphs::PlaneData> floor_plane_candidates_vec;
+  void extract_floors(const std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes, const std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes) {
+    std::vector<s_graphs::msg::PlaneData> floor_plane_candidates_vec;
     floor_analyzer->perform_floor_segmentation(current_x_vert_planes, current_y_vert_planes, floor_plane_candidates_vec);
 
-    geometry_msgs::Point floor_center;
+    geometry_msgs::msg::Point floor_center;
     if(floor_plane_candidates_vec.size() == 4) {
       floor_center = plane_utils->room_center(floor_plane_candidates_vec[0], floor_plane_candidates_vec[1], floor_plane_candidates_vec[2], floor_plane_candidates_vec[3]);
 
-      s_graphs::RoomData floor_data_msg;
-      floor_data_msg.header.stamp = ros::Time::now();
+      s_graphs::msg::RoomData floor_data_msg;
+      floor_data_msg.header.stamp = this->now();
       floor_data_msg.id = 0;
       floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[0]);
       floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[1]);
       floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[2]);
       floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[3]);
       floor_data_msg.room_center = floor_center;
-      floor_data_pub.publish(floor_data_msg);
+      floor_data_pub->publish(floor_data_msg);
     }
   }
 
 private:
-  ros::NodeHandle nh;
-  ros::NodeHandle private_nh;
-  ros::Subscriber skeleton_graph_sub;
-  ros::Subscriber map_planes_sub;
-  ros::Publisher all_rooms_data_pub;
-  ros::Publisher floor_data_pub;
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr skeleton_graph_sub;
+  rclcpp::Subscription<s_graphs::msg::PlanesData>::SharedPtr map_planes_sub;
+  rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr all_rooms_data_pub;
+  rclcpp::Publisher<s_graphs::msg::RoomData>::SharedPtr floor_data_pub;
 
 private:
-  ros::Timer floor_plane_timer;
+  rclcpp::TimerBase::SharedPtr floor_plane_timer;
 
 private:
   std::unique_ptr<RoomAnalyzer> room_analyzer;
@@ -185,8 +178,14 @@ private:
   std::shared_ptr<PlaneUtils> plane_utils;
 
   std::mutex map_plane_mutex;
-  std::deque<std::vector<s_graphs::PlaneData>> x_vert_plane_queue, y_vert_plane_queue;
+  std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue, y_vert_plane_queue;
 };
 
 }  // namespace s_graphs
-PLUGINLIB_EXPORT_CLASS(s_graphs::FloorPlanNodelet, nodelet::Nodelet)
+
+int main(int argc, char* argv[]) {
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<s_graphs::FloorPlanNode>());
+  rclcpp::shutdown();
+  return 0;
+}
