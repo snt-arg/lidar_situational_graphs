@@ -55,7 +55,7 @@ public:
     const VertexRoomXYLB* v4 = static_cast<const VertexRoomXYLB*>(_vertices[3]);
 
     Eigen::Vector3d doorway1_coord_r1 = v1->estimate();
-    Eigen::Vector3d doorway2_coord_r1 = v2->estimate();
+    Eigen::Vector3d doorway1_coord_r2 = v2->estimate();
     Eigen::Vector2d room1_coord_w = v3->estimate();
     Eigen::Vector2d room2_coord_w = v4->estimate();
 
@@ -67,12 +67,9 @@ public:
     room1_trans.y() = room1_coord_w.y();
     room1_trans.z() = 0.0;
     room1_pose_w.topRightCorner<3, 1>() = room1_trans;
-    std::cout << "room1_pose_w : " << room1_pose_w << std::endl;
 
     // Convert door1 position vector to 4x1
     Eigen::Vector4d doorway1_pose_r1(doorway1_coord_r1.x(), doorway1_coord_r1.y(), doorway1_coord_r1.z(), 1);
-    std::cout << "doorway1_pose in r1 : " << doorway1_pose_r1 << std::endl;
-    std::cout << "doorway1_pose in W : " << (room1_pose_w * doorway1_pose_r1) << std::endl;
 
     // Convert room 2 center to room pose (Transformation matrix)
     Eigen::Matrix4d room2_pose_w;
@@ -82,16 +79,12 @@ public:
     room2_trans.y() = room2_coord_w.y();
     room2_trans.z() = 0.0;
     room2_pose_w.topRightCorner<3, 1>() = room2_trans;
-    std::cout << "room2_pose_w : " << room2_pose_w << std::endl;
 
     // Convert door1 position vector to 4x1
-    Eigen::Vector4d doorway1_pose_r2(doorway2_coord_r1.x(), doorway2_coord_r1.y(), doorway2_coord_r1.z(), 1);
-    std::cout << "doorway1_pose in r2 : " << doorway1_pose_r2 << std::endl;
-    std::cout << "doorway1_pose in W : " << (room2_pose_w * doorway1_pose_r2) << std::endl;
+    Eigen::Vector4d doorway1_pose_r2(doorway1_coord_r2.x(), doorway1_coord_r2.y(), doorway1_coord_r2.z(), 1);
 
     // Calculate error
     Eigen::Vector4d diff = (room1_pose_w * doorway1_pose_r1) - (room2_pose_w * doorway1_pose_r2);
-    std::cout << diff << std::endl;
     Eigen::Vector3d error(diff.x(), diff.y(), diff.z());
     _error = error;
   }
