@@ -10,7 +10,7 @@
 
 namespace s_graphs {
 
-KeyFrame::KeyFrame(const ros::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud) : stamp(stamp), odom(odom), accum_distance(accum_distance), cloud(cloud), node(nullptr) {}
+KeyFrame::KeyFrame(const rclcpp::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud) : stamp(stamp), odom(odom), accum_distance(accum_distance), cloud(cloud), node(nullptr) {}
 
 KeyFrame::KeyFrame(const std::string& directory, g2o::HyperGraph* graph) : stamp(), odom(Eigen::Isometry3d::Identity()), accum_distance(-1), cloud(nullptr), node(nullptr) {
   load(directory, graph);
@@ -24,7 +24,7 @@ void KeyFrame::save(const std::string& directory) {
   }
 
   std::ofstream ofs(directory + "/data");
-  ofs << "stamp " << stamp.sec << " " << stamp.nsec << "\n";
+  ofs << "stamp " << stamp.seconds() << " " << stamp.nanoseconds() << "\n";
 
   ofs << "estimate\n";
   ofs << node->estimate().matrix() << "\n";
@@ -69,9 +69,10 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
   while(!ifs.eof()) {
     std::string token;
     ifs >> token;
-
     if(token == "stamp") {
-      ifs >> stamp.sec >> stamp.nsec;
+      double seconds = stamp.seconds();
+      double nanoseconds = stamp.nanoseconds();
+      ifs >> seconds >> nanoseconds;
     } else if(token == "estimate") {
       Eigen::Matrix4d mat;
       for(int i = 0; i < 4; i++) {
@@ -117,19 +118,19 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
   }
 
   if(node_id < 0) {
-    ROS_ERROR_STREAM("invalid node id!!");
-    ROS_ERROR_STREAM(directory);
+    std::cerr << "invalid node id!!" << std::endl;
+    std::cerr << directory << std::endl;
     return false;
   }
 
   if(graph->vertices().find(node_id) == graph->vertices().end()) {
-    ROS_ERROR_STREAM("vertex ID=" << node_id << " does not exist!!");
+    std::cerr << "vertex ID=" << node_id << " does not exist!!" << std::endl;
     return false;
   }
 
   node = dynamic_cast<g2o::VertexSE3*>(graph->vertices()[node_id]);
   if(node == nullptr) {
-    ROS_ERROR_STREAM("failed to downcast!!");
+    std::cerr << "failed to downcast!!" << std::endl;
     return false;
   }
 

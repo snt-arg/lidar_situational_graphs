@@ -45,17 +45,29 @@ public:
   /**
    * @brief Constructor of the class LoopDetector
    *
-   * @param pnh
+   * @param node
    */
-  LoopDetector(ros::NodeHandle& pnh) {
-    distance_thresh = pnh.param<double>("distance_thresh", 5.0);
-    accum_distance_thresh = pnh.param<double>("accum_distance_thresh", 8.0);
-    distance_from_last_edge_thresh = pnh.param<double>("min_edge_interval", 5.0);
+  LoopDetector(const rclcpp::Node::SharedPtr node) {
+    distance_thresh = node->get_parameter("distance_thresh").get_parameter_value().get<double>();
+    accum_distance_thresh = node->get_parameter("accum_distance_thresh").get_parameter_value().get<double>();
+    distance_from_last_edge_thresh = node->get_parameter("min_edge_interval").get_parameter_value().get<double>();
 
-    fitness_score_max_range = pnh.param<double>("fitness_score_max_range", std::numeric_limits<double>::max());
-    fitness_score_thresh = pnh.param<double>("fitness_score_thresh", 0.5);
+    fitness_score_max_range = node->get_parameter("fitness_score_max_range").get_parameter_value().get<double>();
+    fitness_score_thresh = node->get_parameter("fitness_score_thresh").get_parameter_value().get<double>();
 
-    registration = select_registration_method(pnh);
+    s_graphs::registration_params params;
+    params = {node->get_parameter("registration_method").get_parameter_value().get<std::string>(),
+              node->get_parameter("reg_num_threads").get_parameter_value().get<int>(),
+              node->get_parameter("reg_transformation_epsilon").get_parameter_value().get<double>(),
+              node->get_parameter("reg_maximum_iterations").get_parameter_value().get<int>(),
+              node->get_parameter("reg_max_correspondence_distance").get_parameter_value().get<double>(),
+              node->get_parameter("reg_correspondence_randomness").get_parameter_value().get<int>(),
+              node->get_parameter("reg_resolution").get_parameter_value().get<double>(),
+              node->get_parameter("reg_use_reciprocal_correspondences").get_parameter_value().get<bool>(),
+              node->get_parameter("reg_max_optimizer_iterations").get_parameter_value().get<int>(),
+              node->get_parameter("reg_nn_search_method").get_parameter_value().get<std::string>()};
+
+    registration = select_registration_method(params);
     last_edge_accum_distance = 0.0;
   }
 
@@ -158,7 +170,7 @@ private:
     std::cout << "--- loop detection ---" << std::endl;
     std::cout << "num_candidates: " << candidate_keyframes.size() << std::endl;
     std::cout << "matching" << std::flush;
-    auto t1 = ros::Time::now();
+    auto t1 = rclcpp::Clock{}.now();
 
     pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
     for(const auto& candidate : candidate_keyframes) {
@@ -182,9 +194,9 @@ private:
       relative_pose = registration->getFinalTransformation();
     }
 
-    auto t2 = ros::Time::now();
+    auto t2 = rclcpp::Clock{}.now();
     std::cout << " done" << std::endl;
-    std::cout << "best_score: " << boost::format("%.3f") % best_score << "    time: " << boost::format("%.3f") % (t2 - t1).toSec() << "[sec]" << std::endl;
+    std::cout << "best_score: " << boost::format("%.3f") % best_score << "    time: " << boost::format("%.3f") % (t2 - t1).seconds() << "[sec]" << std::endl;
 
     if(best_score > fitness_score_thresh) {
       std::cout << "loop not found..." << std::endl;

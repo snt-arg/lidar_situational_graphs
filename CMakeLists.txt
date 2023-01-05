@@ -34,6 +34,8 @@ find_package(ndt_omp REQUIRED)
 find_package(fast_gicp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(message_filters REQUIRED)
+find_package(geographic_msgs REQUIRED)
 find_package(graph_manager_msgs REQUIRED)
 
 find_package(PCL REQUIRED)
@@ -86,9 +88,25 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
+set(DEPENDENCIES rclcpp 
+    sensor_msgs 
+    geometry_msgs 
+    nav_msgs 
+    ndt_omp 
+    fast_gicp 
+    tf2 
+    tf2_ros
+    pcl_ros 
+    graph_manager_msgs 
+    visualization_msgs 
+    message_filters 
+    geographic_msgs
+    nmea_msgs
+    geodesy)
+
 # nodes
 add_executable(s_graphs_prefiltering_node apps/prefiltering_nodelet.cpp)
-ament_target_dependencies(s_graphs_prefiltering_node rclcpp sensor_msgs tf2 tf2_ros pcl_ros)
+ament_target_dependencies(s_graphs_prefiltering_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_prefiltering_node
   ${PCL_LIBRARIES}
 )
@@ -97,7 +115,7 @@ add_executable(s_graphs_room_segmentation_node
   apps/room_segmentation_nodelet.cpp 
   src/s_graphs/room_analyzer.cpp
 )
-ament_target_dependencies(s_graphs_room_segmentation_node rclcpp rclcpp sensor_msgs tf2 tf2_ros pcl_ros visualization_msgs)
+ament_target_dependencies(s_graphs_room_segmentation_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_room_segmentation_node
   ${PCL_LIBRARIES}
 )
@@ -108,7 +126,7 @@ add_executable(s_graphs_floor_plan_node
   src/s_graphs/room_analyzer.cpp
   src/s_graphs/floor_analyzer.cpp
 )
-ament_target_dependencies(s_graphs_floor_plan_node rclcpp sensor_msgs tf2 tf2_ros pcl_ros visualization_msgs)
+ament_target_dependencies(s_graphs_floor_plan_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_floor_plan_node
   ${PCL_LIBRARIES}
 )
@@ -123,50 +141,51 @@ rosidl_target_interfaces(s_graphs_floor_plan_node ${PROJECT_NAME} "rosidl_typesu
 # )
 
 add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_nodelet.cpp src/s_graphs/registrations.cpp)
-ament_target_dependencies(s_graphs_scan_matching_odometry_node rclcpp sensor_msgs geometry_msgs nav_msgs ndt_omp fast_gicp tf2 tf2_ros pcl_ros )
+ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES}) 
 target_link_libraries(s_graphs_scan_matching_odometry_node
   ${PCL_LIBRARIES}
 )
 rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 
-# add_executable(s_graphs_node
-#   apps/s_graphs_nodelet.cpp
-#   src/s_graphs/plane_analyzer.cpp
-#   src/s_graphs/graph_slam.cpp
-#   src/s_graphs/plane_mapper.cpp
-#   src/s_graphs/infinite_room_mapper.cpp
-#   src/s_graphs/finite_room_mapper.cpp
-#   src/s_graphs/floor_mapper.cpp
-#   src/s_graphs/keyframe.cpp
-#   src/s_graphs/graph_visualizer.cpp
-#   src/s_graphs/map_cloud_generator.cpp
-#   src/s_graphs/registrations.cpp
-#   src/s_graphs/information_matrix_calculator.cpp
-#   src/s_graphs/keyframe_mapper.cpp
-#   src/s_graphs/graph_publisher.cpp
-#   src/g2o/robust_kernel_io.cpp
-# )
-# ament_target_dependencies(s_graphs_node rclcpp)
-# target_link_libraries(s_graphs_node
-#   ${PCL_LIBRARIES}
-#   ${G2O_TYPES_DATA}
-#   ${G2O_CORE_LIBRARY}
-#   ${G2O_STUFF_LIBRARY}
-#   ${G2O_SOLVER_PCG}
-#   ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
-#   ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
-#   ${G2O_TYPES_SLAM3D}
-#   ${G2O_TYPES_SLAM3D_ADDONS}
-# )
+add_executable(s_graphs_node
+  apps/s_graphs_nodelet.cpp
+  src/s_graphs/plane_analyzer.cpp
+  src/s_graphs/graph_slam.cpp
+  src/s_graphs/plane_mapper.cpp
+  src/s_graphs/infinite_room_mapper.cpp
+  src/s_graphs/finite_room_mapper.cpp
+  src/s_graphs/floor_mapper.cpp
+  src/s_graphs/keyframe.cpp
+  src/s_graphs/graph_visualizer.cpp
+  src/s_graphs/map_cloud_generator.cpp
+  src/s_graphs/registrations.cpp
+  src/s_graphs/information_matrix_calculator.cpp
+  src/s_graphs/keyframe_mapper.cpp
+  src/s_graphs/graph_publisher.cpp
+  src/g2o/robust_kernel_io.cpp
+)
+ament_target_dependencies(s_graphs_node ${DEPENDENCIES})
+target_link_libraries(s_graphs_node
+  ${PCL_LIBRARIES}
+  ${G2O_TYPES_DATA}
+  ${G2O_CORE_LIBRARY}
+  ${G2O_STUFF_LIBRARY}
+  ${G2O_SOLVER_PCG}
+  ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
+  ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
+  ${G2O_TYPES_SLAM3D}
+  ${G2O_TYPES_SLAM3D_ADDONS}
+)
+rosidl_target_interfaces(s_graphs_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 
 #############
 ## Install ##
 #############
 
-install(TARGETS
-  # s_graphs_node  
-  s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node s_graphs_floor_plan_node
+install(TARGETS  
+  s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node s_graphs_floor_plan_node s_graphs_node
   DESTINATION lib/${PROJECT_NAME}
 )
 

@@ -8,10 +8,11 @@
 #include <cmath>
 #include <math.h>
 #include <boost/format.hpp>
+#include <boost/bind.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Point.h>
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "geometry_msgs/msg/point.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -20,10 +21,7 @@
 #include <pcl/common/angles.h>
 #include <pcl/common/distances.h>
 
-#include <s_graphs/RoomData.h>
-#include <s_graphs/RoomsData.h>
-#include <s_graphs/PlaneData.h>
-#include <s_graphs/PlanesData.h>
+#include "s_graphs/msg/rooms_data.hpp"
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/planes.hpp>
 #include <s_graphs/infinite_rooms.hpp>
@@ -149,30 +147,14 @@ public:
    * @param private_nh
    * @return
    */
-  InfiniteRoomMapper(const ros::NodeHandle& private_nh);
+  InfiniteRoomMapper(const rclcpp::Node::SharedPtr node);
   ~InfiniteRoomMapper();
 
 private:
-  ros::NodeHandle nh;
+  rclcpp::Node::SharedPtr node_obj;
   std::unique_ptr<PlaneUtils> plane_utils;
 
 public:
-  /**
-   * @brief
-   *
-   * @param graph_slam
-   * @param x_det_infinite_room_candidates
-   * @param y_det_infinite_room_candidates
-   * @param x_vert_planes
-   * @param y_vert_planes
-   * @param dupl_x_vert_planes
-   * @param dupl_y_vert_planes
-   * @param x_infinite_rooms
-   * @param y_infinite_rooms
-   * @return
-   */
-  void lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_infinite_room_candidates, const std::vector<plane_data_list>& y_det_infinite_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms);
-
   /**
    * @brief
    *
@@ -188,7 +170,7 @@ public:
    * @param rooms_vec
    * @return
    */
-  void lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, const std::vector<Rooms>& rooms_vec);
+  void lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::msg::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, const std::vector<Rooms>& rooms_vec);
 
   /**
    * @brief Compute the length of a infinite_room.
@@ -212,23 +194,6 @@ public:
   double infinite_room_measurement(const int plane_type, const Eigen::Vector2d& infinite_room_pose, const Eigen::Vector4d& plane1, const Eigen::Vector4d& plane2);
 
 private:
-  /**
-   * @brief Sort infinite_rooms and add their possible candidates for refinement
-   *
-   * @param plane_type
-   * @param infinite_room_candidates
-   * @return
-   */
-  std::vector<structure_data_list> sort_infinite_rooms(const int plane_type, const std::vector<plane_data_list>& infinite_room_candidates);
-
-  /**
-   * @brief
-   *
-   * @param corr_vec
-   * @return
-   */
-  std::vector<plane_data_list> refine_infinite_rooms(const std::vector<structure_data_list>& corr_vec);
-
   /**
    * @brief Creates the infinite_room vertex and adds edges between the vertex the detected planes
    *
@@ -293,11 +258,8 @@ private:
   void parallel_plane_constraint(std::shared_ptr<GraphSLAM>& graph_slam, g2o::VertexPlane* plane1_node, g2o::VertexPlane* plane2_node);
 
 private:
-  double infinite_room_plane_length_diff_threshold, infinite_room_point_diff_threshold;
-  double infinite_room_min_width, infinite_room_max_width;
   double infinite_room_information;
   double infinite_room_dist_threshold;
-  double infinite_room_min_seg_dist;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
   double dupl_plane_matching_information;
 };
@@ -314,28 +276,14 @@ public:
    *
    * @param private_nh
    */
-  FiniteRoomMapper(const ros::NodeHandle& private_nh);
+  FiniteRoomMapper(const rclcpp::Node::SharedPtr node);
   ~FiniteRoomMapper();
 
 private:
-  ros::NodeHandle nh;
+  rclcpp::Node::SharedPtr node_obj;
   std::unique_ptr<PlaneUtils> plane_utils;
 
 public:
-  /**
-   * @brief
-   *
-   * @param graph_slam
-   * @param x_det_room_candidates
-   * @param y_det_room_candidates
-   * @param x_vert_planes
-   * @param y_vert_planes
-   * @param dupl_x_vert_planes
-   * @param dupl_y_vert_planes
-   * @param rooms_vec
-   */
-  void lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_room_candidates, const std::vector<plane_data_list>& y_det_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec);
-
   /**
    * @brief
    *
@@ -349,7 +297,7 @@ public:
    * @param y_infinite_rooms
    * @param rooms_vec
    */
-  void lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, std::vector<Rooms>& rooms_vec);
+  void lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, std::vector<Rooms>& rooms_vec);
 
   /**
    * @brief
@@ -362,24 +310,6 @@ public:
   double room_measurement(const int& plane_type, const Eigen::Vector2d& room_pose, const Eigen::Vector4d& plane);
 
 private:
-  /**
-   * @brief Sort the rooms candidates
-   *
-   * @param plane_type
-   * @param room_candidates
-   * @return Sorted room candidates.
-   */
-  std::vector<structure_data_list> sort_rooms(const int& plane_type, const std::vector<plane_data_list>& room_candidates);
-
-  /**
-   * @brief Refine the sorted room candidates
-   *
-   * @param x_room_vec
-   * @param y_room_vec
-   * @return Refined room candidates.
-   */
-  std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec);
-
   /**
    * @brief Creates the room vertex and adds edges between the vertex and detected planes
    *
@@ -435,7 +365,7 @@ private:
    * @param y_plane1
    * @param y_plane2
    */
-  void map_room_from_existing_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
+  void map_room_from_existing_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
 
   /**
    * @brief map a new room from mapped x infinite_room planes
@@ -451,7 +381,7 @@ private:
    * @param y_plane1
    * @param y_plane2
    */
-  void map_room_from_existing_x_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
+  void map_room_from_existing_x_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
 
   /**
    * @brief map a new room from mapped y infinite_room planes
@@ -467,7 +397,7 @@ private:
    * @param y_plane1
    * @param y_plane2
    */
-  void map_room_from_existing_y_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
+  void map_room_from_existing_y_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2);
 
   /**
    * @brief remove the infinite_room overlapped by a room
@@ -476,9 +406,6 @@ private:
   void remove_mapped_infinite_room(const int plane_type, std::shared_ptr<GraphSLAM>& graph_slam, s_graphs::InfiniteRooms matched_infinite_room, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms);
 
 private:
-  double room_width_diff_threshold;
-  double room_plane_length_diff_threshold, room_point_diff_threshold;
-  double room_min_width, room_max_width;
   double room_information;
   double room_dist_threshold;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;

@@ -4,36 +4,21 @@
 
 namespace s_graphs {
 
-FiniteRoomMapper::FiniteRoomMapper(const ros::NodeHandle& private_nh) {
+FiniteRoomMapper::FiniteRoomMapper(const rclcpp::Node::SharedPtr node) {
+  node_obj = node;
+  room_information = node->get_parameter("room_information").get_parameter_value().get<double>();
+  room_dist_threshold = node->get_parameter("room_dist_threshold").get_parameter_value().get<double>();
+  dupl_plane_matching_information = node->get_parameter("dupl_plane_matching_information").get_parameter_value().get<double>();
+
+  use_parallel_plane_constraint = node->get_parameter("use_parallel_plane_constraint").get_parameter_value().get<bool>();
+  use_perpendicular_plane_constraint = node->get_parameter("use_perpendicular_plane_constraint").get_parameter_value().get<bool>();
+
   plane_utils.reset(new PlaneUtils());
-
-  room_information = private_nh.param<double>("room_information", 0.01);
-  room_dist_threshold = private_nh.param<double>("room_dist_threshold", 1.0);
-  room_point_diff_threshold = private_nh.param<double>("room_point_diff_threshold", 3.0);
-  room_width_diff_threshold = private_nh.param<double>("room_width_diff_threshold", 2.5);
-  room_plane_length_diff_threshold = private_nh.param<double>("room_plane_length_diff_threshold", 0.3);
-  dupl_plane_matching_information = private_nh.param<double>("dupl_plane_matching_information", 0.01);
-
-  room_min_width = private_nh.param<double>("room_min_width", 2.5);
-  room_max_width = private_nh.param<double>("room_max_width", 6.0);
-
-  use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
-  use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
 }
 
 FiniteRoomMapper::~FiniteRoomMapper() {}
 
-void FiniteRoomMapper::lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_room_candidates, const std::vector<plane_data_list>& y_det_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
-  std::vector<structure_data_list> x_room_pair_vec = sort_rooms(PlaneUtils::plane_class::X_VERT_PLANE, x_det_room_candidates);
-  std::vector<structure_data_list> y_room_pair_vec = sort_rooms(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_room_candidates);
-  std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> refined_room_pair = refine_rooms(x_room_pair_vec, y_room_pair_vec);
-
-  if(refined_room_pair.first.size() == 2 && refined_room_pair.second.size() == 2) {
-    factor_rooms(graph_slam, refined_room_pair.first, refined_room_pair.second, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, rooms_vec);
-  }
-}
-
-void FiniteRoomMapper::lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, std::vector<Rooms>& rooms_vec) {
+void FiniteRoomMapper::lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, std::vector<Rooms>& rooms_vec) {
   float min_dist_room_x_corr = 100;
   s_graphs::InfiniteRooms matched_x_infinite_room;
   for(const auto& current_x_infinite_room : x_infinite_rooms) {
@@ -119,70 +104,6 @@ void FiniteRoomMapper::lookup_rooms(std::shared_ptr<GraphSLAM>& graph_slam, cons
   factor_rooms(graph_slam, x_planes_room, y_planes_room, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, rooms_vec);
 }
 
-std::vector<structure_data_list> FiniteRoomMapper::sort_rooms(const int& plane_type, const std::vector<plane_data_list>& room_candidates) {
-  std::vector<structure_data_list> room_pair_vec;
-
-  for(int i = 0; i < room_candidates.size(); ++i) {
-    for(int j = i + 1; j < room_candidates.size(); ++j) {
-      float room_width = plane_utils->width_between_planes(room_candidates[i].plane_unflipped.coeffs(), room_candidates[j].plane_unflipped.coeffs());
-      float diff_plane_length = fabs(room_candidates[i].plane_length - room_candidates[j].plane_length);
-      float start_point_diff = MapperUtils::point_difference(plane_type, room_candidates[i].start_point, room_candidates[j].start_point);
-      float end_point_diff = MapperUtils::point_difference(plane_type, room_candidates[i].end_point, room_candidates[j].end_point);
-      float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
-      ROS_DEBUG_NAMED("room planes", "room plane i coeffs %f %f %f %f", room_candidates[i].plane_unflipped.coeffs()(0), room_candidates[i].plane_unflipped.coeffs()(1), room_candidates[i].plane_unflipped.coeffs()(2), room_candidates[i].plane_unflipped.coeffs()(3));
-      ROS_DEBUG_NAMED("room planes", "room plane j coeffs %f %f %f %f", room_candidates[j].plane_unflipped.coeffs()(0), room_candidates[j].plane_unflipped.coeffs()(1), room_candidates[j].plane_unflipped.coeffs()(2), room_candidates[j].plane_unflipped.coeffs()(3));
-      ROS_DEBUG_NAMED("room planes", "room width %f", room_width);
-      ROS_DEBUG_NAMED("room planes", "room plane lenght diff %f", diff_plane_length);
-      ROS_DEBUG_NAMED("room planes", "room plane point diff %f", avg_plane_point_diff);
-
-      if(room_candidates[i].plane_unflipped.coeffs().head(3).dot(room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (room_width > room_min_width && room_width < room_max_width) && diff_plane_length < room_plane_length_diff_threshold) {
-        if(avg_plane_point_diff < room_point_diff_threshold) {
-          structure_data_list room_pair;
-          room_pair.plane1 = room_candidates[i];
-          room_pair.plane2 = room_candidates[j];
-          room_pair.width = room_width;
-          room_pair.length_diff = diff_plane_length;
-          room_pair.avg_point_diff = avg_plane_point_diff;
-          room_pair_vec.push_back(room_pair);
-          ROS_DEBUG_NAMED("room planes", "adding room candidates");
-        }
-      }
-    }
-  }
-  return room_pair_vec;
-}
-
-std::pair<std::vector<plane_data_list>, std::vector<plane_data_list>> FiniteRoomMapper::refine_rooms(std::vector<structure_data_list> x_room_vec, std::vector<structure_data_list> y_room_vec) {
-  float min_room_point_diff = room_point_diff_threshold;
-  std::vector<plane_data_list> x_room, y_room;
-  x_room.resize(2);
-  y_room.resize(2);
-
-  for(int i = 0; i < x_room_vec.size(); ++i) {
-    for(int j = 0; j < y_room_vec.size(); ++j) {
-      float width_diff = fabs(x_room_vec[i].width - y_room_vec[j].width);
-      if(width_diff < room_width_diff_threshold) {
-        float room_diff = (x_room_vec[i].avg_point_diff + y_room_vec[j].avg_point_diff) / 2;
-        if(room_diff < min_room_point_diff) {
-          min_room_point_diff = room_diff;
-          x_room[0] = x_room_vec[i].plane1;
-          x_room[1] = x_room_vec[i].plane2;
-          y_room[0] = y_room_vec[j].plane1;
-          y_room[1] = y_room_vec[j].plane2;
-        }
-      }
-    }
-  }
-
-  if(min_room_point_diff >= room_point_diff_threshold) {
-    std::vector<plane_data_list> x_room_empty, y_room_empty;
-    x_room_empty.resize(0);
-    y_room_empty.resize(0);
-    return std::make_pair(x_room_empty, x_room_empty);
-  } else
-    return std::make_pair(x_room, y_room);
-}
-
 void FiniteRoomMapper::factor_rooms(std::shared_ptr<GraphSLAM>& graph_slam, std::vector<plane_data_list> x_room_pair_vec, std::vector<plane_data_list> y_room_pair_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<Rooms>& rooms_vec) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
@@ -212,10 +133,14 @@ void FiniteRoomMapper::factor_rooms(std::shared_ptr<GraphSLAM>& graph_slam, std:
   double x_plane1_meas, x_plane2_meas;
   double y_plane1_meas, y_plane2_meas;
 
-  ROS_DEBUG_NAMED("room planes", "final room plane 1 %f %f %f %f", x_room_pair_vec[0].plane_unflipped.coeffs()(0), x_room_pair_vec[0].plane_unflipped.coeffs()(1), x_room_pair_vec[0].plane_unflipped.coeffs()(2), x_room_pair_vec[0].plane_unflipped.coeffs()(3));
-  ROS_DEBUG_NAMED("room planes", "final room plane 2 %f %f %f %f", x_room_pair_vec[1].plane_unflipped.coeffs()(0), x_room_pair_vec[1].plane_unflipped.coeffs()(1), x_room_pair_vec[1].plane_unflipped.coeffs()(2), x_room_pair_vec[1].plane_unflipped.coeffs()(3));
-  ROS_DEBUG_NAMED("room planes", "final room plane 3 %f %f %f %f", y_room_pair_vec[0].plane_unflipped.coeffs()(0), y_room_pair_vec[0].plane_unflipped.coeffs()(1), y_room_pair_vec[0].plane_unflipped.coeffs()(2), y_room_pair_vec[0].plane_unflipped.coeffs()(3));
-  ROS_DEBUG_NAMED("room planes", "final room plane 4 %f %f %f %f", y_room_pair_vec[1].plane_unflipped.coeffs()(0), y_room_pair_vec[1].plane_unflipped.coeffs()(1), y_room_pair_vec[1].plane_unflipped.coeffs()(2), y_room_pair_vec[1].plane_unflipped.coeffs()(3));
+  RCLCPP_DEBUG(node_obj->get_logger(), "room planes", "final room plane 1 %f %f %f %f", x_room_pair_vec[0].plane_unflipped.coeffs()(0), x_room_pair_vec[0].plane_unflipped.coeffs()(1), x_room_pair_vec[0].plane_unflipped.coeffs()(2),
+               x_room_pair_vec[0].plane_unflipped.coeffs()(3));
+  RCLCPP_DEBUG(node_obj->get_logger(), "room planes", "final room plane 2 %f %f %f %f", x_room_pair_vec[1].plane_unflipped.coeffs()(0), x_room_pair_vec[1].plane_unflipped.coeffs()(1), x_room_pair_vec[1].plane_unflipped.coeffs()(2),
+               x_room_pair_vec[1].plane_unflipped.coeffs()(3));
+  RCLCPP_DEBUG(node_obj->get_logger(), "room planes", "final room plane 3 %f %f %f %f", y_room_pair_vec[0].plane_unflipped.coeffs()(0), y_room_pair_vec[0].plane_unflipped.coeffs()(1), y_room_pair_vec[0].plane_unflipped.coeffs()(2),
+               y_room_pair_vec[0].plane_unflipped.coeffs()(3));
+  RCLCPP_DEBUG(node_obj->get_logger(), "room planes", "final room plane 4 %f %f %f %f", y_room_pair_vec[1].plane_unflipped.coeffs()(0), y_room_pair_vec[1].plane_unflipped.coeffs()(1), y_room_pair_vec[1].plane_unflipped.coeffs()(2),
+               y_room_pair_vec[1].plane_unflipped.coeffs()(3));
 
   found_x_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[0].plane_id);
   found_x_plane2 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[1].plane_id);
@@ -324,7 +249,7 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     float diff_x = room_pose(0) - rooms_vec[i].node->estimate()(0);
     float diff_y = room_pose(1) - rooms_vec[i].node->estimate()(1);
     float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));
-    ROS_DEBUG_NAMED("room planes", "dist room %f", dist);
+    RCLCPP_DEBUG(node_obj->get_logger(), "room planes", "dist room %f", dist);
 
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>> current_detected_mapped_plane_pairs;
     auto found_mapped_xplane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x1_id);
@@ -417,7 +342,7 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
     }
   }
 
-  ROS_DEBUG_NAMED("room planes", "min dist room %f", min_dist);
+  RCLCPP_DEBUG(node_obj->get_logger(), "room planes", "min dist room %f", min_dist);
   if(min_dist > room_dist_threshold) data_association.first = -1;
 
   return data_association;
@@ -466,7 +391,7 @@ bool FiniteRoomMapper::check_room_ids(const int plane_type, const std::set<g2o::
   return false;
 }
 
-void FiniteRoomMapper::map_room_from_existing_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -496,7 +421,7 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(std::shared_ptr<Gra
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_x_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_x_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_x_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -528,7 +453,7 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(std::shared_ptr<Gr
     return;
 }
 
-void FiniteRoomMapper::map_room_from_existing_y_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
+void FiniteRoomMapper::map_room_from_existing_y_infinite_room(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData& det_room_data, const s_graphs::InfiniteRooms& matched_y_infinite_room, std::vector<Rooms>& rooms_vec, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, const VerticalPlanes& x_plane1, const VerticalPlanes& x_plane2, const VerticalPlanes& y_plane1, const VerticalPlanes& y_plane2) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 

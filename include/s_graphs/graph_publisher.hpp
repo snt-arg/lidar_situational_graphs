@@ -9,25 +9,21 @@
 #include <math.h>
 #include <boost/format.hpp>
 
-#include <ros/ros.h>
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Point.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl/conversions.h>
+#include "rclcpp/rclcpp.hpp"
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/common/common.h>
-#include <pcl_ros/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include "pcl_ros/transforms.hpp"
 
-#include <s_graphs/ros_utils.hpp>
-#include <s_graphs/ros_time_hash.hpp>
-#include <s_graphs/PointClouds.h>
-#include <s_graphs/RoomData.h>
-#include <s_graphs/RoomsData.h>
-#include <s_graphs/PlaneData.h>
-#include <s_graphs/PlanesData.h>
+#include "s_graphs/msg/room_data.hpp"
+#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs/msg/plane_data.hpp"
+#include "s_graphs/msg/planes_data.hpp"
 
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/keyframe.hpp>
@@ -44,12 +40,10 @@
 #include <s_graphs/room_mapper.hpp>
 #include <s_graphs/floor_mapper.hpp>
 #include <s_graphs/plane_mapper.hpp>
-#include <s_graphs/neighbour_mapper.hpp>
 #include <s_graphs/plane_analyzer.hpp>
 #include <s_graphs/graph_visualizer.hpp>
 #include <s_graphs/keyframe_mapper.hpp>
 #include <s_graphs/graph_publisher.hpp>
-// #include <revit_wall_mapper.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/edge_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
@@ -68,17 +62,17 @@
 #include <g2o/edge_wall_two_planes.hpp>
 
 #include <unordered_map>
-#include <graph_manager_msgs/Attribute.h>
-#include <graph_manager_msgs/Edge.h>
-#include <graph_manager_msgs/Node.h>
-#include <graph_manager_msgs/Graph.h>
+#include "graph_manager_msgs/msg/attribute.hpp"
+#include "graph_manager_msgs/msg/edge.hpp"
+#include "graph_manager_msgs/msg/node.hpp"
+#include "graph_manager_msgs/msg/graph.hpp"
 class GraphPublisher {
 public:
-  GraphPublisher(const ros::NodeHandle& private_nh);
+  GraphPublisher();
   ~GraphPublisher();
 
 public:
-  graph_manager_msgs::Graph publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
+  graph_manager_msgs::msg::Graph publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
 
 private:
 };

@@ -4,40 +4,22 @@
 
 namespace s_graphs {
 
-InfiniteRoomMapper::InfiniteRoomMapper(const ros::NodeHandle& private_nh) {
-  infinite_room_point_diff_threshold = private_nh.param<double>("infinite_room_point_diff_threshold", 3.0);
-  infinite_room_plane_length_diff_threshold = private_nh.param<double>("infinite_room_plane_length_diff_threshold", 0.3);
-  infinite_room_min_width = private_nh.param<double>("infinite_room_min_width", 1.5);
-  infinite_room_max_width = private_nh.param<double>("infinite_room_max_width", 2.5);
+InfiniteRoomMapper::InfiniteRoomMapper(const rclcpp::Node::SharedPtr node) {
+  node_obj = node;
 
-  infinite_room_information = private_nh.param<double>("infinite_room_information", 0.01);
-  infinite_room_dist_threshold = private_nh.param<double>("infinite_room_dist_threshold", 1.0);
+  infinite_room_information = node->get_parameter("infinite_room_information").get_parameter_value().get<double>();
+  infinite_room_dist_threshold = node->get_parameter("infinite_room_dist_threshold").get_parameter_value().get<double>();
+  dupl_plane_matching_information = node->get_parameter("dupl_plane_matching_information").get_parameter_value().get<double>();
 
-  use_parallel_plane_constraint = private_nh.param<bool>("use_parallel_plane_constraint", true);
-  use_perpendicular_plane_constraint = private_nh.param<bool>("use_perpendicular_plane_constraint", true);
-
-  infinite_room_min_seg_dist = private_nh.param<double>("infinite_room_min_seg_dist", 1.5);
-  dupl_plane_matching_information = private_nh.param<double>("dupl_plane_matching_information", 0.01);
+  use_parallel_plane_constraint = node->get_parameter("use_parallel_plane_constraint").get_parameter_value().get<bool>();
+  use_perpendicular_plane_constraint = node->get_parameter("use_perpendicular_plane_constraint").get_parameter_value().get<bool>();
 
   plane_utils.reset(new PlaneUtils());
 }
 
 InfiniteRoomMapper::~InfiniteRoomMapper() {}
 
-void InfiniteRoomMapper::lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const std::vector<plane_data_list>& x_det_infinite_room_candidates, const std::vector<plane_data_list>& y_det_infinite_room_candidates, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
-  std::vector<structure_data_list> x_infinite_room = sort_infinite_rooms(PlaneUtils::plane_class::X_VERT_PLANE, x_det_infinite_room_candidates);
-  std::vector<structure_data_list> y_infinite_room = sort_infinite_rooms(PlaneUtils::plane_class::Y_VERT_PLANE, y_det_infinite_room_candidates);
-
-  std::vector<plane_data_list> x_infinite_room_refined = refine_infinite_rooms(x_infinite_room);
-  if(x_infinite_room_refined.size() == 2)
-    factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, x_infinite_room_refined[0], x_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
-
-  std::vector<plane_data_list> y_infinite_room_refined = refine_infinite_rooms(y_infinite_room);
-  if(y_infinite_room_refined.size() == 2)
-    factor_infinite_rooms(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, y_infinite_room_refined[0], y_infinite_room_refined[1], x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms);
-}
-
-void InfiniteRoomMapper::lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, const std::vector<Rooms>& rooms_vec) {
+void InfiniteRoomMapper::lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const int& plane_type, const s_graphs::msg::RoomData room_data, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms, const std::vector<Rooms>& rooms_vec) {
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     // check the distance with the current room vector
     Rooms matched_room;
@@ -138,64 +120,6 @@ void InfiniteRoomMapper::lookup_infinite_rooms(std::shared_ptr<GraphSLAM>& graph
   }
 }
 
-std::vector<structure_data_list> InfiniteRoomMapper::sort_infinite_rooms(const int plane_type, const std::vector<plane_data_list>& infinite_room_candidates) {
-  std::vector<structure_data_list> infinite_room_pair_vec;
-
-  for(int i = 0; i < infinite_room_candidates.size(); ++i) {
-    for(int j = i + 1; j < infinite_room_candidates.size(); ++j) {
-      float corr_width = plane_utils->width_between_planes(infinite_room_candidates[i].plane_unflipped.coeffs(), infinite_room_candidates[j].plane_unflipped.coeffs());
-      float diff_plane_length = fabs(infinite_room_candidates[i].plane_length - infinite_room_candidates[j].plane_length);
-      float start_point_diff = MapperUtils::point_difference(plane_type, infinite_room_candidates[i].start_point, infinite_room_candidates[j].start_point);
-      float end_point_diff = MapperUtils::point_difference(plane_type, infinite_room_candidates[i].end_point, infinite_room_candidates[j].end_point);
-      float avg_plane_point_diff = (start_point_diff + end_point_diff) / 2;
-      ROS_DEBUG_NAMED("infinite_room planes", "corr plane i coeffs %f %f %f %f", infinite_room_candidates[i].plane_unflipped.coeffs()(0), infinite_room_candidates[i].plane_unflipped.coeffs()(1), infinite_room_candidates[i].plane_unflipped.coeffs()(2),
-                      infinite_room_candidates[i].plane_unflipped.coeffs()(3));
-      ROS_DEBUG_NAMED("infinite_room planes", "corr plane j coeffs %f %f %f %f", infinite_room_candidates[j].plane_unflipped.coeffs()(0), infinite_room_candidates[j].plane_unflipped.coeffs()(1), infinite_room_candidates[j].plane_unflipped.coeffs()(2),
-                      infinite_room_candidates[j].plane_unflipped.coeffs()(3));
-      ROS_DEBUG_NAMED("infinite_room planes", "corr width %f", corr_width);
-      ROS_DEBUG_NAMED("infinite_room planes", "plane length diff %f", diff_plane_length);
-      ROS_DEBUG_NAMED("infinite_room planes", "avg plane point diff %f", avg_plane_point_diff);
-
-      if(infinite_room_candidates[i].plane_unflipped.coeffs().head(3).dot(infinite_room_candidates[j].plane_unflipped.coeffs().head(3)) < 0 && (corr_width < infinite_room_max_width && corr_width > infinite_room_min_width) && diff_plane_length < infinite_room_plane_length_diff_threshold) {
-        if(avg_plane_point_diff < infinite_room_point_diff_threshold) {
-          structure_data_list infinite_room_pair;
-          infinite_room_pair.plane1 = infinite_room_candidates[i];
-          infinite_room_pair.plane2 = infinite_room_candidates[j];
-          infinite_room_pair.width = corr_width;
-          infinite_room_pair.length_diff = diff_plane_length;
-          infinite_room_pair.avg_point_diff = avg_plane_point_diff;
-          infinite_room_pair_vec.push_back(infinite_room_pair);
-          ROS_DEBUG_NAMED("infinite_room planes", "adding infinite_room candidates");
-        }
-      }
-    }
-  }
-
-  return infinite_room_pair_vec;
-}
-
-std::vector<plane_data_list> InfiniteRoomMapper::refine_infinite_rooms(const std::vector<structure_data_list>& corr_vec) {
-  float min_infinite_room_diff = infinite_room_point_diff_threshold;
-  std::vector<plane_data_list> corr_refined;
-  corr_refined.resize(2);
-
-  for(int i = 0; i < corr_vec.size(); ++i) {
-    float infinite_room_diff = corr_vec[i].avg_point_diff;
-    if(infinite_room_diff < min_infinite_room_diff) {
-      min_infinite_room_diff = infinite_room_diff;
-      corr_refined[0] = corr_vec[i].plane1;
-      corr_refined[1] = corr_vec[i].plane2;
-    }
-  }
-
-  if(min_infinite_room_diff >= infinite_room_point_diff_threshold) {
-    std::vector<plane_data_list> corr_empty;
-    corr_empty.resize(0);
-    return corr_empty;
-  } else
-    return corr_refined;
-}
-
 void InfiniteRoomMapper::factor_infinite_rooms(std::shared_ptr<GraphSLAM>& graph_slam, const int plane_type, const plane_data_list& corr_plane1_pair, const plane_data_list& corr_plane2_pair, const std::vector<VerticalPlanes>& x_vert_planes, const std::vector<VerticalPlanes>& y_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes, std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes, std::vector<InfiniteRooms>& x_infinite_rooms, std::vector<InfiniteRooms>& y_infinite_rooms) {
   g2o::VertexRoomXYLB* corr_node;
   g2o::VertexRoomXYLB* cluster_center_node;
@@ -221,8 +145,10 @@ void InfiniteRoomMapper::factor_infinite_rooms(std::shared_ptr<GraphSLAM>& graph
 
   // Eigen::Vector2d corr_pose = compute_infinite_room_pose(plane_type, corr_plane1_pair.plane_centroid, corr_plane1_pair.plane_unflipped.coeffs(), corr_plane2_pair.plane_unflipped.coeffs());
   Eigen::Vector2d corr_pose(corr_plane1_pair.plane_centroid(0), corr_plane1_pair.plane_centroid(1));
-  ROS_DEBUG_NAMED("infinite_room planes", "final infinite_room plane 1 %f %f %f %f", corr_plane1_pair.plane_unflipped.coeffs()(0), corr_plane1_pair.plane_unflipped.coeffs()(1), corr_plane1_pair.plane_unflipped.coeffs()(2), corr_plane1_pair.plane_unflipped.coeffs()(3));
-  ROS_DEBUG_NAMED("infinite_room planes", "final infinite_room plane 2 %f %f %f %f", corr_plane2_pair.plane_unflipped.coeffs()(0), corr_plane2_pair.plane_unflipped.coeffs()(1), corr_plane2_pair.plane_unflipped.coeffs()(2), corr_plane2_pair.plane_unflipped.coeffs()(3));
+  RCLCPP_DEBUG(node_obj->get_logger(), "infinite_room planes", "final infinite_room plane 1 %f %f %f %f", corr_plane1_pair.plane_unflipped.coeffs()(0), corr_plane1_pair.plane_unflipped.coeffs()(1), corr_plane1_pair.plane_unflipped.coeffs()(2),
+               corr_plane1_pair.plane_unflipped.coeffs()(3));
+  RCLCPP_DEBUG(node_obj->get_logger(), "infinite_room planes", "final infinite_room plane 2 %f %f %f %f", corr_plane2_pair.plane_unflipped.coeffs()(0), corr_plane2_pair.plane_unflipped.coeffs()(1), corr_plane2_pair.plane_unflipped.coeffs()(2),
+               corr_plane2_pair.plane_unflipped.coeffs()(3));
 
   if(plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     auto found_plane1 = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), boost::bind(&VerticalPlanes::id, _1) == corr_plane1_pair.plane_id);
@@ -396,7 +322,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(const int& plan
         data_association.first = x_infinite_rooms[i].id;
         data_association.second = i;
         detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
-        ROS_DEBUG_NAMED("infinite_room planes", "dist x corr %f", dist);
+        RCLCPP_DEBUG(node_obj->get_logger(), "infinite_room planes", "dist x corr %f", dist);
       }
     }
   }
@@ -446,12 +372,12 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(const int& plan
         data_association.first = y_infinite_rooms[i].id;
         data_association.second = i;
         detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
-        ROS_DEBUG_NAMED("infinite_room planes", "dist y corr %f", dist);
+        RCLCPP_DEBUG(node_obj->get_logger(), "infinite_room planes", "dist y corr %f", dist);
       }
     }
   }
 
-  // ROS_DEBUG_NAMED("infinite_room planes", "min dist %f", min_dist);
+  // RCLCPP_DEBUG(node_obj->get_logger(),"infinite_room planes", "min dist %f", min_dist);
   if(min_dist > infinite_room_dist_threshold) data_association.first = -1;
 
   return data_association;
@@ -470,7 +396,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(const int& plan
         min_dist = dist;
         data_association.first = x_infinite_rooms[i].id;
         data_association.second = i;
-        ROS_DEBUG_NAMED("infinite_room planes", "dist x corr %f", dist);
+        RCLCPP_DEBUG(node_obj->get_logger(), "infinite_room planes", "dist x corr %f", dist);
       }
     }
   }
@@ -483,12 +409,12 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(const int& plan
         min_dist = dist;
         data_association.first = y_infinite_rooms[i].id;
         data_association.second = i;
-        ROS_DEBUG_NAMED("infinite_room planes", "dist y corr %f", dist);
+        RCLCPP_DEBUG(node_obj->get_logger(), "infinite_room planes", "dist y corr %f", dist);
       }
     }
   }
 
-  // ROS_DEBUG_NAMED("infinite_room planes", "min dist %f", min_dist);
+  // RCLCPP_DEBUG(node_obj->get_logger(),"infinite_room planes", "min dist %f", min_dist);
   if(min_dist > infinite_room_dist_threshold) data_association.first = -1;
 
   return data_association;

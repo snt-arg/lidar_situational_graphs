@@ -7,17 +7,17 @@
 
 namespace s_graphs {
 
-InformationMatrixCalculator::InformationMatrixCalculator(ros::NodeHandle& nh) {
-  use_const_inf_matrix = nh.param<bool>("use_const_inf_matrix", false);
-  const_stddev_x = nh.param<double>("const_stddev_x", 0.5);
-  const_stddev_q = nh.param<double>("const_stddev_q", 0.1);
+InformationMatrixCalculator::InformationMatrixCalculator(const rclcpp::Node::SharedPtr node) {
+  use_const_inf_matrix = node->get_parameter("use_const_inf_matrix").get_parameter_value().get<bool>();
+  const_stddev_x = node->get_parameter("const_stddev_x").get_parameter_value().get<double>();
+  const_stddev_q = node->get_parameter("const_stddev_q").get_parameter_value().get<double>();
 
-  var_gain_a = nh.param<double>("var_gain_a", 20.0);
-  min_stddev_x = nh.param<double>("min_stddev_x", 0.1);
-  max_stddev_x = nh.param<double>("max_stddev_x", 5.0);
-  min_stddev_q = nh.param<double>("min_stddev_q", 0.05);
-  max_stddev_q = nh.param<double>("max_stddev_q", 0.2);
-  fitness_score_thresh = nh.param<double>("fitness_score_thresh", 0.5);
+  var_gain_a = node->get_parameter("var_gain_a").get_parameter_value().get<double>();
+  min_stddev_x = node->get_parameter("min_stddev_x").get_parameter_value().get<double>();
+  max_stddev_x = node->get_parameter("max_stddev_x").get_parameter_value().get<double>();
+  min_stddev_q = node->get_parameter("min_stddev_q").get_parameter_value().get<double>();
+  max_stddev_q = node->get_parameter("max_stddev_q").get_parameter_value().get<double>();
+  fitness_score_thresh = node->get_parameter("fitness_score_thresh").get_parameter_value().get<double>();
 }
 
 InformationMatrixCalculator::~InformationMatrixCalculator() {}

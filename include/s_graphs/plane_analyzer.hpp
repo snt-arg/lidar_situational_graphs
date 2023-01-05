@@ -10,12 +10,10 @@
 #include <boost/format.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl_ros/transforms.h>
-#include <pcl_ros/point_cloud.h>
-#include <tf/transform_listener.h>
+#include "sensor_msgs/msg/point_cloud2.hpp"
+#include "pcl_ros/transforms.hpp"
 #include <pcl_conversions/pcl_conversions.h>
-#include <std_msgs/ColorRGBA.h>
+#include "std_msgs/msg/color_rgba.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -45,9 +43,9 @@ public:
   /**
    * @brief Constructor of class PlaneAnalyzer
    *
-   * @param private_nh
+   * @param node
    */
-  PlaneAnalyzer(ros::NodeHandle private_nh);
+  PlaneAnalyzer(rclcpp::Node::SharedPtr node);
   ~PlaneAnalyzer();
 
 public:
@@ -63,12 +61,12 @@ private:
   /**
    * @brief Initializes ros related jobs.
    *
-   * @param private_nh
+   * @param node
    */
-  void init_ros(ros::NodeHandle private_nh);
+  void init_ros(rclcpp::Node::SharedPtr node);
 
 private:
-  ros::Publisher segmented_cloud_pub;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr segmented_cloud_pub;
 
 private:
   /**
@@ -104,14 +102,14 @@ private:
    *          Value between 0.0 and 1.0.
    * @return RGB color
    */
-  std_msgs::ColorRGBA rainbow_color_map(double h);
+  std_msgs::msg::ColorRGBA rainbow_color_map(double h);
 
   /**
    * @brief Generates a random RGB color.
    *
    * @return RGB color
    */
-  std_msgs::ColorRGBA random_color();
+  std_msgs::msg::ColorRGBA random_color();
 
 private:
   int min_seg_points_;

@@ -10,8 +10,8 @@
 #include <boost/format.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Point.h>
+#include "visualization_msgs/msg/marker_array.h"
+#include "geometry_msgs/msg/point.h"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -33,7 +33,6 @@
 #include <s_graphs/room_mapper.hpp>
 #include <s_graphs/floor_mapper.hpp>
 #include <s_graphs/plane_mapper.hpp>
-#include <s_graphs/neighbour_mapper.hpp>
 #include <s_graphs/plane_analyzer.hpp>
 
 #include <g2o/vertex_room.hpp>
@@ -63,9 +62,9 @@ public:
   /**
    * @brief Constructor for class GraphVisualizer.
    *
-   * @param private_nh
+   * @param node
    */
-  GraphVisualizer(const ros::NodeHandle& private_nh);
+  GraphVisualizer(const rclcpp::Node::SharedPtr node);
   ~GraphVisualizer();
 
 public:
@@ -81,10 +80,9 @@ public:
    * @param floors_vec
    * @return A MarkerArray message.
    */
-  visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<InfiniteRooms> x_infinite_room_snapshot, std::vector<InfiniteRooms> y_infinite_room_snapshot, std::vector<Rooms> room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec);
+  visualization_msgs::msg::MarkerArray create_marker_array(const rclcpp::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<InfiniteRooms> x_infinite_room_snapshot, std::vector<InfiniteRooms> y_infinite_room_snapshot, std::vector<Rooms> room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec);
 
 private:
-  ros::NodeHandle nh;
   std::string map_frame_id;
   double color_r, color_g, color_b;
 };

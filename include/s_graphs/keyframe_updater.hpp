@@ -3,7 +3,7 @@
 #ifndef KEYFRAME_UPDATER_HPP
 #define KEYFRAME_UPDATER_HPP
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <Eigen/Dense>
 
 namespace s_graphs {
@@ -18,11 +18,11 @@ public:
   /**
    * @brief Constructor for class KeyframeUpdater
    *
-   * @param pnh
+   * @param node
    */
-  KeyframeUpdater(ros::NodeHandle& pnh) : is_first(true), prev_keypose(Eigen::Isometry3d::Identity()) {
-    keyframe_delta_trans = pnh.param<double>("keyframe_delta_trans", 2.0);
-    keyframe_delta_angle = pnh.param<double>("keyframe_delta_angle", 2.0);
+  KeyframeUpdater(const rclcpp::Node::SharedPtr node) : is_first(true), prev_keypose(Eigen::Isometry3d::Identity()) {
+    keyframe_delta_trans = node->get_parameter("keyframe_delta_trans").get_parameter_value().get<double>();
+    keyframe_delta_angle = node->get_parameter("keyframe_delta_angle").get_parameter_value().get<double>();
 
     accum_distance = 0.0;
   }

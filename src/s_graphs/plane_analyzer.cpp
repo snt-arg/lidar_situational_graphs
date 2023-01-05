@@ -4,22 +4,22 @@
 
 namespace s_graphs {
 
-PlaneAnalyzer::PlaneAnalyzer(ros::NodeHandle private_nh) {
-  min_seg_points_ = private_nh.param<int>("min_seg_points", 100);
-  min_horizontal_inliers = private_nh.param<int>("min_horizontal_inliers", 500);
-  min_vertical_inliers = private_nh.param<int>("min_vertical_inliers", 100);
-  use_euclidean_filter = private_nh.param<bool>("use_euclidean_filter", true);
-  use_shadow_filter = private_nh.param<bool>("use_shadow_filter", false);
-  plane_extraction_frame = private_nh.param<std::string>("plane_extraction_frame_id", "base_link");
-  plane_visualization_frame = private_nh.param<std::string>("plane_visualization_frame_id", "base_link_elevated");
+PlaneAnalyzer::PlaneAnalyzer(rclcpp::Node::SharedPtr node) {
+  min_seg_points_ = node->get_parameter("min_seg_points").get_parameter_value().get<int>();
+  min_horizontal_inliers = node->get_parameter("min_horizontal_inliers").get_parameter_value().get<int>();
+  min_vertical_inliers = node->get_parameter("min_vertical_inliers").get_parameter_value().get<int>();
+  use_euclidean_filter = node->get_parameter("use_euclidean_filter").get_parameter_value().get<bool>();
+  use_shadow_filter = node->get_parameter("use_shadow_filter").get_parameter_value().get<bool>();
+  plane_extraction_frame = node->get_parameter("plane_extraction_frame_id").get_parameter_value().get<std::string>();
+  plane_visualization_frame = node->get_parameter("plane_visualization_frame_id").get_parameter_value().get<std::string>();
 
-  init_ros(private_nh);
+  init_ros(node);
 }
 
 PlaneAnalyzer::~PlaneAnalyzer() {}
 
-void PlaneAnalyzer::init_ros(ros::NodeHandle private_nh) {
-  segmented_cloud_pub = private_nh.advertise<sensor_msgs::PointCloud2>("segmented_cloud", 1);
+void PlaneAnalyzer::init_ros(rclcpp::Node::SharedPtr node) {
+  segmented_cloud_pub = node->create_publisher<sensor_msgs::msg::PointCloud2>("segmented_cloud", 1);
 }
 
 std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_planes(const pcl::PointCloud<PointT>::ConstPtr cloud) {
@@ -128,12 +128,12 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
     }
   }
 
-  sensor_msgs::PointCloud2 segmented_cloud_msg;
+  sensor_msgs::msg::PointCloud2 segmented_cloud_msg;
   pcl::toROSMsg(*segmented_cloud, segmented_cloud_msg);
-  std_msgs::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
+  std_msgs::msg::Header msg_header = pcl_conversions::fromPCL(transformed_cloud->header);
   segmented_cloud_msg.header = msg_header;
   segmented_cloud_msg.header.frame_id = plane_visualization_frame;
-  segmented_cloud_pub.publish(segmented_cloud_msg);
+  segmented_cloud_pub->publish(segmented_cloud_msg);
 
   return extracted_cloud_vec;
 }
@@ -155,8 +155,8 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(const pcl::Poi
   pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
   int cluster_id = 0;
   for(auto single_cluster : cluster_indices) {
-    // std_msgs::ColorRGBA color = rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
-    std_msgs::ColorRGBA color = random_color();
+    // std_msgs::msg::ColorRGBA color = rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
+    std_msgs::msg::ColorRGBA color = random_color();
     double r = color.r;
     double g = color.g;
     double b = color.b;
@@ -203,8 +203,8 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::shadow_filter(const pcl::PointC
   return extracted_cloud_filtered;
 }
 
-std_msgs::ColorRGBA PlaneAnalyzer::rainbow_color_map(double h) {
-  std_msgs::ColorRGBA color;
+std_msgs::msg::ColorRGBA PlaneAnalyzer::rainbow_color_map(double h) {
+  std_msgs::msg::ColorRGBA color;
   color.a = 255;
   // blend over HSV-values (more colors)
 
@@ -263,8 +263,8 @@ std_msgs::ColorRGBA PlaneAnalyzer::rainbow_color_map(double h) {
   return color;
 }
 
-std_msgs::ColorRGBA PlaneAnalyzer::random_color() {
-  std_msgs::ColorRGBA color;
+std_msgs::msg::ColorRGBA PlaneAnalyzer::random_color() {
+  std_msgs::msg::ColorRGBA color;
   color.r = rand() % 256;
   color.b = rand() % 256;
   color.g = rand() % 256;

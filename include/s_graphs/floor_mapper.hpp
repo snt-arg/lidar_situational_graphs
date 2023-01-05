@@ -10,8 +10,8 @@
 #include <boost/format.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Point.h>
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "geometry_msgs/msg/point.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -20,10 +20,8 @@
 #include <pcl/common/angles.h>
 #include <pcl/common/distances.h>
 
-#include <s_graphs/RoomData.h>
-#include <s_graphs/RoomsData.h>
-#include <s_graphs/PlaneData.h>
-#include <s_graphs/PlanesData.h>
+#include "s_graphs/msg/room_data.hpp"
+#include "s_graphs/msg/rooms_data.hpp"
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/planes.hpp>
 #include <s_graphs/infinite_rooms.hpp>
@@ -58,13 +56,11 @@ public:
   /**
    * @brief Constructor for the class FloorMapper
    *
-   * @param private_nh
    */
-  FloorMapper(const ros::NodeHandle& private_nh);
+  FloorMapper();
   ~FloorMapper();
 
 private:
-  ros::NodeHandle nh;
   std::unique_ptr<PlaneUtils> plane_utils;
 
 public:
@@ -78,7 +74,7 @@ public:
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    */
-  void lookup_floors(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
+  void lookup_floors(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
 
 private:
   /**
@@ -91,7 +87,7 @@ private:
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    */
-  void factor_floor_node(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
+  void factor_floor_node(std::shared_ptr<GraphSLAM>& graph_slam, const s_graphs::msg::RoomData room_data, std::vector<s_graphs::Floors>& floors_vec, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
 
   /**
    * @brief
@@ -103,7 +99,7 @@ private:
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    */
-  void update_floor_node(std::shared_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
+  void update_floor_node(std::shared_ptr<GraphSLAM>& graph_slam, g2o::VertexRoomXYLB* floor_node, const s_graphs::msg::RoomData room_data, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
 
 private:
   /**

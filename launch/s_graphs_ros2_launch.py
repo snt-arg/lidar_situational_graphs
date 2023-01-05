@@ -46,10 +46,17 @@ def generate_launch_description():
     floor_plan_cmd = Node(package='s_graphs', executable='s_graphs_floor_plan_node', parameters=[{"vertex_neigh_thres": 2}], output='screen'
                           )
 
+    s_graphs_param_file = os.path.join(
+        pkg_dir, 'config', 's_graphs.yaml')
+    pkg_dir = get_package_share_directory('s_graphs')
+    s_graphs_cmd = Node(package='s_graphs', executable='s_graphs_node', parameters=[s_graphs_param_file], output='screen', remappings=[]
+                        )
+
     ld = LaunchDescription()
     ld.add_action(prefiltering_cmd)
     ld.add_action(scan_matching_cmd)
     ld.add_action(room_segmentation_cmd)
     ld.add_action(floor_plan_cmd)
+    ld.add_action(s_graphs_cmd)
 
     return ld

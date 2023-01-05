@@ -3,7 +3,7 @@
 #ifndef KEYFRAME_MAPPER_HPP
 #define KEYFRAME_MAPPER_HPP
 
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include <s_graphs/ros_time_hash.hpp>
 
 #include <s_graphs/graph_slam.hpp>
@@ -21,7 +21,6 @@
 #include <s_graphs/room_mapper.hpp>
 #include <s_graphs/floor_mapper.hpp>
 #include <s_graphs/plane_mapper.hpp>
-#include <s_graphs/neighbour_mapper.hpp>
 #include <s_graphs/plane_analyzer.hpp>
 
 namespace s_graphs {
@@ -38,7 +37,7 @@ public:
    *
    * @param private_nh
    */
-  KeyframeMapper(const ros::NodeHandle& private_nh);
+  KeyframeMapper(const rclcpp::Node::SharedPtr node);
   ~KeyframeMapper();
 
 public:
@@ -55,10 +54,10 @@ public:
    * @param keyframe_hash
    * @return
    */
-  int map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam, Eigen::Isometry3d odom2map, std::deque<KeyFrame::Ptr>& keyframe_queue, std::vector<KeyFrame::Ptr>& keyframes, std::deque<KeyFrame::Ptr>& new_keyframes, g2o::VertexSE3*& anchor_node, g2o::EdgeSE3*& anchor_edge, std::unordered_map<ros::Time, KeyFrame::Ptr, RosTimeHash>& keyframe_hash);
+  int map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam, Eigen::Isometry3d odom2map, std::deque<KeyFrame::Ptr>& keyframe_queue, std::vector<KeyFrame::Ptr>& keyframes, std::deque<KeyFrame::Ptr>& new_keyframes, g2o::VertexSE3*& anchor_node, g2o::EdgeSE3*& anchor_edge, std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash>& keyframe_hash);
 
 private:
-  ros::NodeHandle nh;
+  rclcpp::Node::SharedPtr node_obj;
   int max_keyframes_per_update;
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
 };

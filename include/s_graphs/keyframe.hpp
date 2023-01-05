@@ -38,7 +38,7 @@ public:
    * @param cloud
    * @return
    */
-  KeyFrame(const ros::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud);
+  KeyFrame(const rclcpp::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud);
 
   /**
    * @brief Constructor for class KeyFrame
@@ -81,7 +81,7 @@ public:
   Eigen::Isometry3d estimate() const;
 
 public:
-  ros::Time stamp;                                            // timestamp
+  rclcpp::Time stamp;                                         // timestamp
   Eigen::Isometry3d odom;                                     // odometry (estimated by scan_matching_odometry)
   double accum_distance;                                      // accumulated distance from the first node (by scan_matching_odometry)
   pcl::PointCloud<PointT>::ConstPtr cloud;                    // point cloud

@@ -10,21 +10,20 @@
 #include <boost/format.hpp>
 
 #include "rclcpp/rclcpp.hpp"
-#include <visualization_msgs/MarkerArray.h>
-#include <geometry_msgs/Point.h>
-#include <sensor_msgs/PointCloud2.h>
-#include <pcl/conversions.h>
+#include "visualization_msgs/msg/marker_array.hpp"
+#include "geometry_msgs/msg/point.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/common/common.h>
-#include <pcl_ros/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include "pcl_ros/transforms.hpp"
 
-#include <s_graphs/RoomData.h>
-#include <s_graphs/RoomsData.h>
-#include <s_graphs/PlaneData.h>
-#include <s_graphs/PlanesData.h>
+#include "s_graphs/msg/room_data.hpp"
+#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs/msg/plane_data.hpp"
+#include "s_graphs/msg/planes_data.hpp"
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/planes.hpp>
 #include <s_graphs/infinite_rooms.hpp>
@@ -62,7 +61,7 @@ public:
    *
    * @param private_nh
    */
-  PlaneMapper(const ros::NodeHandle& private_nh);
+  PlaneMapper(const rclcpp::Node::SharedPtr node);
   ~PlaneMapper();
 
 public:
@@ -179,8 +178,8 @@ private:
   bool use_room_constraint;
 
 private:
-  ros::NodeHandle nh;
   std::unique_ptr<PlaneUtils> plane_utils;
+  rclcpp::Node::SharedPtr node_obj;
 };
 
 }  // namespace s_graphs

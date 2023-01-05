@@ -6,17 +6,17 @@
 #include <unordered_map>
 #include <boost/functional/hash.hpp>
 
-#include <ros/time.h>
+#include <rclcpp/rclcpp.hpp>
 
 /**
- * @brief Hash calculation for ros::Time
+ * @brief Hash calculation for rclcpp::Time
  */
 class RosTimeHash {
 public:
-  size_t operator()(const ros::Time& val) const {
+  size_t operator()(const rclcpp::Time& val) const {
     size_t seed = 0;
-    boost::hash_combine(seed, val.sec);
-    boost::hash_combine(seed, val.nsec);
+    boost::hash_combine(seed, val.seconds());
+    boost::hash_combine(seed, val.nanoseconds());
     return seed;
   }
 };

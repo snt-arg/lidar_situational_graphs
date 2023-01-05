@@ -3,7 +3,7 @@
 #ifndef INFORMATION_MATRIX_CALCULATOR_HPP
 #define INFORMATION_MATRIX_CALCULATOR_HPP
 
-#include <ros/ros.h>
+#include "rclcpp/rclcpp.hpp"
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 
@@ -17,7 +17,7 @@ public:
   using PointT = pcl::PointXYZI;
 
   InformationMatrixCalculator() {}
-  InformationMatrixCalculator(ros::NodeHandle& nh);
+  InformationMatrixCalculator(const rclcpp::Node::SharedPtr node);
   ~InformationMatrixCalculator();
 
   template<typename ParamServer>
