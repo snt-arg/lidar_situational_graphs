@@ -88,7 +88,7 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
-set(DEPENDENCIES rclcpp 
+set(DEPENDENCIES rclcpp
     sensor_msgs 
     geometry_msgs 
     nav_msgs 
@@ -198,10 +198,9 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
+ament_python_install_package(src/${PROJECT_NAME})
 install(
   PROGRAMS
-    src/${PROJECT_NAME}/bag_player.py
-    src/${PROJECT_NAME}/ford2bag.py
     src/${PROJECT_NAME}/map2odom_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -212,7 +211,6 @@ install(
 #   target_link_libraries(SGraphsUnitTest s_graphs_nodelet)
 # endif()
 
-#ament_python_install_package(${PROJECT_NAME}/src/s_graphs)
 ament_export_dependencies(rosidl_default_runtime)
 ament_export_include_directories(include)
 ament_package()

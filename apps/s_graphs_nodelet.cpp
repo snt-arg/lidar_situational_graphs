@@ -28,6 +28,7 @@
 #include "tf2_eigen/tf2_eigen.h"
 #include "tf2_ros/transform_listener.h"
 #include "tf2_ros/buffer_interface.h"
+#include "tf2_ros/transform_broadcaster.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 
 #include "sensor_msgs/msg/imu.hpp"
@@ -133,6 +134,7 @@ public:
     // tfs
     tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
+    odom2map_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
     // subscribers
     init_odom2map_sub = this->create_subscription<geometry_msgs::msg::PointStamped>("/odom2map/initial_pose", 1, std::bind(&SGraphsNode::init_map2odom_pose_callback, this, std::placeholders::_1));
@@ -282,7 +284,8 @@ private:
   }
 
   void init_subclass() {
-    graph_slam.reset(new GraphSLAM(this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>()));
+    graph_slam = std::make_shared<GraphSLAM>(this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>());
+    // graph_slam.reset(new GraphSLAM(this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>()));
     keyframe_updater.reset(new KeyframeUpdater(shared_from_this()));
     plane_analyzer.reset(new PlaneAnalyzer(shared_from_this()));
     loop_detector.reset(new LoopDetector(shared_from_this()));
@@ -313,6 +316,10 @@ private:
 
     geometry_msgs::msg::PoseStamped pose_stamped_corrected = matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id);
     publish_corrected_odom(pose_stamped_corrected);
+
+    // this is dirty but temp solution for no /clock topic in ros2
+    geometry_msgs::msg::TransformStamped odom2map_transform = matrix2transform(odom_msg->header.stamp, trans_odom2map, map_frame_id, odom_frame_id);
+    odom2map_broadcaster->sendTransform(odom2map_transform);
   }
 
   /**
@@ -1540,6 +1547,7 @@ private:
   rclcpp::TimerBase::SharedPtr keyframe_timer;
   rclcpp::TimerBase::SharedPtr map_publish_timer;
   rclcpp::TimerBase::SharedPtr graph_publish_timer;
+  rclcpp::TimerBase::SharedPtr map_to_odom_broadcast_timer;
 
   message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> cloud_sub;
@@ -1579,6 +1587,7 @@ private:
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> odom2map_broadcaster;
 
   rclcpp::Service<s_graphs::srv::DumpGraph>::SharedPtr dump_service_server;
   rclcpp::Service<s_graphs::srv::SaveMap>::SharedPtr save_map_service_server;

@@ -1,5 +1,6 @@
 scan_matching_node: 
   ros__parameters:
+    use_sim_time: False
     publish_tf: true
     odom_frame_id: "odom"
     robot_odom_frame_id: "odom"
