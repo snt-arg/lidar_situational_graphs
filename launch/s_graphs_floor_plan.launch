@@ -1,6 +1,0 @@
-<launch>
-  <!--Floor Planning -->
-  <node pkg="nodelet" type="nodelet" name="hdl_floor_plan_nodelet_manager" args="manager" output="screen" />
-  <node pkg="nodelet" type="nodelet" name="hdl_floor_planner" args="load s_graphs/FloorPlanNodelet hdl_floor_plan_nodelet_manager">
-  </node>
-</launch>

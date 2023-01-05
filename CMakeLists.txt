@@ -105,14 +105,14 @@ set(DEPENDENCIES rclcpp
     geodesy)
 
 # nodes
-add_executable(s_graphs_prefiltering_node apps/prefiltering_nodelet.cpp)
+add_executable(s_graphs_prefiltering_node apps/prefiltering_node.cpp)
 ament_target_dependencies(s_graphs_prefiltering_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_prefiltering_node
   ${PCL_LIBRARIES}
 )
 
 add_executable(s_graphs_room_segmentation_node 
-  apps/room_segmentation_nodelet.cpp 
+  apps/room_segmentation_node.cpp 
   src/s_graphs/room_analyzer.cpp
 )
 ament_target_dependencies(s_graphs_room_segmentation_node ${DEPENDENCIES})
@@ -122,7 +122,7 @@ target_link_libraries(s_graphs_room_segmentation_node
 rosidl_target_interfaces(s_graphs_room_segmentation_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(s_graphs_floor_plan_node
-  apps/floor_plan_nodelet.cpp
+  apps/floor_plan_node.cpp
   src/s_graphs/room_analyzer.cpp
   src/s_graphs/floor_analyzer.cpp
 )
@@ -132,15 +132,7 @@ target_link_libraries(s_graphs_floor_plan_node
 )
 rosidl_target_interfaces(s_graphs_floor_plan_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-# add_executable(s_graphs_floor_detection_node 
-#     apps/floor_detection_nodelet.cpp
-# )
-# ament_target_dependencies(s_graphs_floor_detection_node rclcpp)
-# target_link_libraries(s_graphs_floor_detection_node
-#   ${PCL_LIBRARIES}
-# )
-
-add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_nodelet.cpp src/s_graphs/registrations.cpp)
+add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_node.cpp src/s_graphs/registrations.cpp)
 ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES}) 
 target_link_libraries(s_graphs_scan_matching_odometry_node
   ${PCL_LIBRARIES}
@@ -149,7 +141,7 @@ rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "r
 
 
 add_executable(s_graphs_node
-  apps/s_graphs_nodelet.cpp
+  apps/s_graphs_node.cpp
   src/s_graphs/plane_analyzer.cpp
   src/s_graphs/graph_slam.cpp
   src/s_graphs/plane_mapper.cpp
@@ -208,7 +200,7 @@ install(
 # if(AMENT_ENABLE_TESTING)
 #   find_package(ament_cmake_gtest REQUIRED)
 #   ament_add_gtest(SGraphsUnitTest test/testPlane.cpp)
-#   target_link_libraries(SGraphsUnitTest s_graphs_nodelet)
+#   target_link_libraries(SGraphsUnitTest s_graphs_node)
 # endif()
 
 ament_export_dependencies(rosidl_default_runtime)
