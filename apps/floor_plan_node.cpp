@@ -104,7 +104,7 @@ private:
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
-      RCLCPP_INFO(this->get_logger(), "Did not receive any mapped planes");
+      // RCLCPP_INFO(this->get_logger(), "Did not receive any mapped planes");
       return;
     }
 

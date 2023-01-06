@@ -650,7 +650,7 @@ int GraphSLAM::optimize(int num_iterations) {
 
   std::cout << "init" << std::endl;
   graph->initializeOptimization();
-  graph->setVerbose(true);
+  graph->setVerbose(false);
 
   double chi2 = graph->chi2();
   if(std::isnan(graph->chi2())) {

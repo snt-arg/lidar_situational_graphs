@@ -85,14 +85,14 @@ private:
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
-      RCLCPP_INFO(this->get_logger(), "Did not receive any mapped planes");
+      // RCLCPP_INFO(this->get_logger(), "Did not receive any mapped planes");
       return;
     }
 
     auto t1 = this->now();
     extract_rooms(current_x_vert_planes, current_y_vert_planes);
     auto t2 = this->now();
-    std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).seconds() << std::endl;
+    // std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).seconds() << std::endl;
   }
 
   /**
