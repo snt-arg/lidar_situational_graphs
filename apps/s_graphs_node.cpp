@@ -285,21 +285,20 @@ private:
 
   void init_subclass() {
     graph_slam = std::make_shared<GraphSLAM>(this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>());
-    // graph_slam.reset(new GraphSLAM(this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>()));
-    keyframe_updater.reset(new KeyframeUpdater(shared_from_this()));
-    plane_analyzer.reset(new PlaneAnalyzer(shared_from_this()));
-    loop_detector.reset(new LoopDetector(shared_from_this()));
-    map_cloud_generator.reset(new MapCloudGenerator());
-    inf_calclator.reset(new InformationMatrixCalculator(shared_from_this()));
-    nmea_parser.reset(new NmeaSentenceParser());
-    plane_utils.reset(new PlaneUtils());
-    plane_mapper.reset(new PlaneMapper(shared_from_this()));
-    inf_room_mapper.reset(new InfiniteRoomMapper(shared_from_this()));
-    finite_room_mapper.reset(new FiniteRoomMapper(shared_from_this()));
-    floor_mapper.reset(new FloorMapper());
-    graph_visualizer.reset(new GraphVisualizer(shared_from_this()));
-    keyframe_mapper.reset(new KeyframeMapper(shared_from_this()));
-    graph_publisher.reset(new GraphPublisher());
+    keyframe_updater = std::make_unique<KeyframeUpdater>(shared_from_this());
+    plane_analyzer = std::make_unique<PlaneAnalyzer>(shared_from_this());
+    loop_detector = std::make_unique<LoopDetector>(shared_from_this());
+    map_cloud_generator = std::make_unique<MapCloudGenerator>();
+    inf_calclator = std::make_unique<InformationMatrixCalculator>(shared_from_this());
+    nmea_parser = std::make_unique<NmeaSentenceParser>();
+    plane_utils = std::make_unique<PlaneUtils>();
+    plane_mapper = std::make_unique<PlaneMapper>(shared_from_this());
+    inf_room_mapper = std::make_unique<InfiniteRoomMapper>(shared_from_this());
+    finite_room_mapper = std::make_unique<FiniteRoomMapper>(shared_from_this());
+    floor_mapper = std::make_unique<FloorMapper>();
+    graph_visualizer = std::make_unique<GraphVisualizer>(shared_from_this());
+    keyframe_mapper = std::make_unique<KeyframeMapper>(shared_from_this());
+    graph_publisher = std::make_unique<GraphPublisher>();
     main_timer->cancel();
   }
 
