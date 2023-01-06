@@ -178,6 +178,7 @@ public:
     save_map_service_server = this->create_service<s_graphs::srv::SaveMap>("/s_graphs/save_map", std::bind(&SGraphsNode::save_map_service, this, std::placeholders::_1, std::placeholders::_2));
 
     graph_updated = false;
+    prev_edge_count, curr_edge_count = 0;
 
     double graph_update_interval = this->get_parameter("graph_update_interval").get_parameter_value().get<double>();
     double keyframe_timer_update_interval = this->get_parameter("keyframe_timer_update_interval").get_parameter_value().get<double>();
@@ -945,6 +946,9 @@ private:
     std::shared_ptr<GraphSLAM> local_graph = graph_slam;
     graph_mutex.unlock();
 
+    curr_edge_count = local_graph->retrive_total_nbr_of_edges();
+    if(curr_edge_count <= prev_edge_count) return;
+
     // optimize the pose graph
     int num_iterations = this->get_parameter("g2o_solver_num_iterations").get_parameter_value().get<int>();
 
@@ -961,6 +965,7 @@ private:
     graph_mutex.unlock();
 
     graph_updated = true;
+    prev_edge_count = curr_edge_count;
   }
 
   /**
@@ -1629,11 +1634,11 @@ private:
   std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
   std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes, dupl_y_vert_planes;  // vertically segmented planes
   std::vector<HorizontalPlanes> hort_planes;                                                     // horizontally segmented planes
-  int vertex_count;
-  std::vector<InfiniteRooms> x_infinite_rooms, y_infinite_rooms;  // infinite_rooms segmented from planes
-  std::vector<Rooms> rooms_vec;                                   // rooms segmented from planes
+  std::vector<InfiniteRooms> x_infinite_rooms, y_infinite_rooms;                                 // infinite_rooms segmented from planes
+  std::vector<Rooms> rooms_vec;                                                                  // rooms segmented from planes
   std::vector<Rooms> rooms_vec_prior;
   std::vector<Floors> floors_vec;
+  int prev_edge_count, curr_edge_count;
 
   std::mutex vert_plane_snapshot_mutex;
   std::vector<VerticalPlanes> x_vert_planes_snapshot, y_vert_planes_snapshot;  // snapshot of vertically segmented planes
