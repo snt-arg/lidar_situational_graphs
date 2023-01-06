@@ -29,21 +29,20 @@
 
 // #include "g2o/config.h"
 #include <g2o/types/slam3d/g2o_types_slam3d_api.h>
-#include "g2o/core/base_vertex.h"
-#include "g2o/core/hyper_graph_action.h"
 
 #include <Eigen/Core>
+
+#include "g2o/core/base_vertex.h"
+#include "g2o/core/hyper_graph_action.h"
 
 namespace g2o {
 
 class G2O_TYPES_SLAM3D_API VertexInfiniteRoom : public BaseVertex<1, double> {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
   VertexInfiniteRoom() {}
 
-  virtual void setToOriginImpl() {
-    _estimate = 0;
-  }
+  virtual void setToOriginImpl() { _estimate = 0; }
 
   virtual bool setEstimateDataImpl(const number_t* est) {
     _estimate = est[0];
@@ -56,9 +55,7 @@ public:
     return true;
   }
 
-  virtual int estimateDimension() const {
-    return 1;
-  }
+  virtual int estimateDimension() const { return 1; }
 
   virtual bool setMinimalEstimateDataImpl(const number_t* est) {
     setEstimateData(est);
@@ -70,13 +67,9 @@ public:
     return true;
   }
 
-  virtual int minimalEstimateDimension() const {
-    return 1;
-  }
+  virtual int minimalEstimateDimension() const { return 1; }
 
-  virtual void oplusImpl(const number_t* update) {
-    _estimate += update[0];
-  }
+  virtual void oplusImpl(const number_t* update) { _estimate += update[0]; }
 
   virtual bool read(std::istream& is) {
     is >> _estimate;

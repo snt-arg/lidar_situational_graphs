@@ -3,12 +3,12 @@
 #ifndef LOOP_DETECTOR_HPP
 #define LOOP_DETECTOR_HPP
 
+#include <g2o/types/slam3d/vertex_se3.h>
+
 #include <boost/format.hpp>
+#include <s_graphs/graph_slam.hpp>
 #include <s_graphs/keyframe.hpp>
 #include <s_graphs/registrations.hpp>
-#include <s_graphs/graph_slam.hpp>
-
-#include <g2o/types/slam3d/vertex_se3.h>
 
 namespace s_graphs {
 
@@ -16,7 +16,7 @@ namespace s_graphs {
  * @brief Struct Loop
  */
 struct Loop {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = std::shared_ptr<Loop>;
 
@@ -27,9 +27,12 @@ public:
    * @param key2
    * @param relpose
    */
-  Loop(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Matrix4f& relpose) : key1(key1), key2(key2), relative_pose(relpose) {}
+  Loop(const KeyFrame::Ptr& key1,
+       const KeyFrame::Ptr& key2,
+       const Eigen::Matrix4f& relpose)
+      : key1(key1), key2(key2), relative_pose(relpose) {}
 
-public:
+ public:
   KeyFrame::Ptr key1;
   KeyFrame::Ptr key2;
   Eigen::Matrix4f relative_pose;
@@ -39,7 +42,7 @@ public:
  * @brief This class finds loops by scam matching and adds them to the pose graph
  */
 class LoopDetector {
-public:
+ public:
   typedef pcl::PointXYZI PointT;
 
   /**
@@ -48,24 +51,46 @@ public:
    * @param node
    */
   LoopDetector(const rclcpp::Node::SharedPtr node) {
-    distance_thresh = node->get_parameter("distance_thresh").get_parameter_value().get<double>();
-    accum_distance_thresh = node->get_parameter("accum_distance_thresh").get_parameter_value().get<double>();
-    distance_from_last_edge_thresh = node->get_parameter("min_edge_interval").get_parameter_value().get<double>();
+    distance_thresh =
+        node->get_parameter("distance_thresh").get_parameter_value().get<double>();
+    accum_distance_thresh = node->get_parameter("accum_distance_thresh")
+                                .get_parameter_value()
+                                .get<double>();
+    distance_from_last_edge_thresh =
+        node->get_parameter("min_edge_interval").get_parameter_value().get<double>();
 
-    fitness_score_max_range = node->get_parameter("fitness_score_max_range").get_parameter_value().get<double>();
-    fitness_score_thresh = node->get_parameter("fitness_score_thresh").get_parameter_value().get<double>();
+    fitness_score_max_range = node->get_parameter("fitness_score_max_range")
+                                  .get_parameter_value()
+                                  .get<double>();
+    fitness_score_thresh =
+        node->get_parameter("fitness_score_thresh").get_parameter_value().get<double>();
 
     s_graphs::registration_params params;
-    params = {node->get_parameter("registration_method").get_parameter_value().get<std::string>(),
-              node->get_parameter("reg_num_threads").get_parameter_value().get<int>(),
-              node->get_parameter("reg_transformation_epsilon").get_parameter_value().get<double>(),
-              node->get_parameter("reg_maximum_iterations").get_parameter_value().get<int>(),
-              node->get_parameter("reg_max_correspondence_distance").get_parameter_value().get<double>(),
-              node->get_parameter("reg_correspondence_randomness").get_parameter_value().get<int>(),
-              node->get_parameter("reg_resolution").get_parameter_value().get<double>(),
-              node->get_parameter("reg_use_reciprocal_correspondences").get_parameter_value().get<bool>(),
-              node->get_parameter("reg_max_optimizer_iterations").get_parameter_value().get<int>(),
-              node->get_parameter("reg_nn_search_method").get_parameter_value().get<std::string>()};
+    params = {
+        node->get_parameter("registration_method")
+            .get_parameter_value()
+            .get<std::string>(),
+        node->get_parameter("reg_num_threads").get_parameter_value().get<int>(),
+        node->get_parameter("reg_transformation_epsilon")
+            .get_parameter_value()
+            .get<double>(),
+        node->get_parameter("reg_maximum_iterations").get_parameter_value().get<int>(),
+        node->get_parameter("reg_max_correspondence_distance")
+            .get_parameter_value()
+            .get<double>(),
+        node->get_parameter("reg_correspondence_randomness")
+            .get_parameter_value()
+            .get<int>(),
+        node->get_parameter("reg_resolution").get_parameter_value().get<double>(),
+        node->get_parameter("reg_use_reciprocal_correspondences")
+            .get_parameter_value()
+            .get<bool>(),
+        node->get_parameter("reg_max_optimizer_iterations")
+            .get_parameter_value()
+            .get<int>(),
+        node->get_parameter("reg_nn_search_method")
+            .get_parameter_value()
+            .get<std::string>()};
 
     registration = select_registration_method(params);
     last_edge_accum_distance = 0.0;
@@ -82,12 +107,14 @@ public:
    *          Pose graph
    * @return Loop vector
    */
-  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes, const std::deque<KeyFrame::Ptr>& new_keyframes, s_graphs::GraphSLAM& graph_slam) {
+  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes,
+                                const std::deque<KeyFrame::Ptr>& new_keyframes,
+                                s_graphs::GraphSLAM& graph_slam) {
     std::vector<Loop::Ptr> detected_loops;
-    for(const auto& new_keyframe : new_keyframes) {
+    for (const auto& new_keyframe : new_keyframes) {
       auto candidates = find_candidates(keyframes, new_keyframe);
       auto loop = matching(candidates, new_keyframe, graph_slam);
-      if(loop) {
+      if (loop) {
         detected_loops.push_back(loop);
       }
     }
@@ -100,13 +127,12 @@ public:
    *
    * @return Distance treshold
    */
-  double get_distance_thresh() const {
-    return distance_thresh;
-  }
+  double get_distance_thresh() const { return distance_thresh; }
 
-private:
+ private:
   /**
-   * @brief Find loop candidates. A detected loop begins at one of #keyframes and ends at #new_keyframe
+   * @brief Find loop candidates. A detected loop begins at one of #keyframes and ends
+   * at #new_keyframe
    *
    * @param keyframes
    *          Candidate keyframes of loop start
@@ -114,18 +140,21 @@ private:
    *          Loop end keyframe
    * @return Loop candidates
    */
-  std::vector<KeyFrame::Ptr> find_candidates(const std::vector<KeyFrame::Ptr>& keyframes, const KeyFrame::Ptr& new_keyframe) const {
+  std::vector<KeyFrame::Ptr> find_candidates(
+      const std::vector<KeyFrame::Ptr>& keyframes,
+      const KeyFrame::Ptr& new_keyframe) const {
     // too close to the last registered loop edge
-    if(new_keyframe->accum_distance - last_edge_accum_distance < distance_from_last_edge_thresh) {
+    if (new_keyframe->accum_distance - last_edge_accum_distance <
+        distance_from_last_edge_thresh) {
       return std::vector<KeyFrame::Ptr>();
     }
 
     std::vector<KeyFrame::Ptr> candidates;
     candidates.reserve(32);
 
-    for(const auto& k : keyframes) {
+    for (const auto& k : keyframes) {
       // traveled distance between keyframes is too small
-      if(new_keyframe->accum_distance - k->accum_distance < accum_distance_thresh) {
+      if (new_keyframe->accum_distance - k->accum_distance < accum_distance_thresh) {
         continue;
       }
 
@@ -134,7 +163,7 @@ private:
 
       // estimated distance between keyframes is too small
       double dist = (pos1.head<2>() - pos2.head<2>()).norm();
-      if(dist > distance_thresh) {
+      if (dist > distance_thresh) {
         continue;
       }
 
@@ -145,7 +174,9 @@ private:
   }
 
   /**
-   * @brief To validate a loop candidate this function applies a scan matching between keyframes consisting the loop. If they are matched well, the loop is added to the pose graph
+   * @brief To validate a loop candidate this function applies a scan matching between
+   * keyframes consisting the loop. If they are matched well, the loop is added to the
+   * pose graph
    *
    * @param candidate_keyframes
    *          candidate keyframes of loop start
@@ -155,8 +186,10 @@ private:
    *          graph slam
    * @return Loop pointer
    */
-  Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes, const KeyFrame::Ptr& new_keyframe, s_graphs::GraphSLAM& graph_slam) {
-    if(candidate_keyframes.empty()) {
+  Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes,
+                     const KeyFrame::Ptr& new_keyframe,
+                     s_graphs::GraphSLAM& graph_slam) {
+    if (candidate_keyframes.empty()) {
       return nullptr;
     }
 
@@ -173,19 +206,25 @@ private:
     auto t1 = rclcpp::Clock{}.now();
 
     pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
-    for(const auto& candidate : candidate_keyframes) {
+    for (const auto& candidate : candidate_keyframes) {
       registration->setInputSource(candidate->cloud);
       Eigen::Isometry3d new_keyframe_estimate = new_keyframe->node->estimate();
-      new_keyframe_estimate.linear() = Eigen::Quaterniond(new_keyframe_estimate.linear()).normalized().toRotationMatrix();
+      new_keyframe_estimate.linear() =
+          Eigen::Quaterniond(new_keyframe_estimate.linear())
+              .normalized()
+              .toRotationMatrix();
       Eigen::Isometry3d candidate_estimate = candidate->node->estimate();
-      candidate_estimate.linear() = Eigen::Quaterniond(candidate_estimate.linear()).normalized().toRotationMatrix();
-      Eigen::Matrix4f guess = (new_keyframe_estimate.inverse() * candidate_estimate).matrix().cast<float>();
+      candidate_estimate.linear() = Eigen::Quaterniond(candidate_estimate.linear())
+                                        .normalized()
+                                        .toRotationMatrix();
+      Eigen::Matrix4f guess =
+          (new_keyframe_estimate.inverse() * candidate_estimate).matrix().cast<float>();
       guess(2, 3) = 0.0;
       registration->align(*aligned, guess);
       std::cout << "." << std::flush;
 
       double score = registration->getFitnessScore(fitness_score_max_range);
-      if(!registration->hasConverged() || score > best_score) {
+      if (!registration->hasConverged() || score > best_score) {
         continue;
       }
 
@@ -196,27 +235,35 @@ private:
 
     auto t2 = rclcpp::Clock{}.now();
     std::cout << " done" << std::endl;
-    std::cout << "best_score: " << boost::format("%.3f") % best_score << "    time: " << boost::format("%.3f") % (t2 - t1).seconds() << "[sec]" << std::endl;
+    std::cout << "best_score: " << boost::format("%.3f") % best_score
+              << "    time: " << boost::format("%.3f") % (t2 - t1).seconds() << "[sec]"
+              << std::endl;
 
-    if(best_score > fitness_score_thresh) {
+    if (best_score > fitness_score_thresh) {
       std::cout << "loop not found..." << std::endl;
       return nullptr;
     }
 
     std::cout << "loop found!!" << std::endl;
-    std::cout << "relpose: " << relative_pose.block<3, 1>(0, 3) << " - " << Eigen::Quaternionf(relative_pose.block<3, 3>(0, 0)).coeffs().transpose() << std::endl;
+    std::cout
+        << "relpose: " << relative_pose.block<3, 1>(0, 3) << " - "
+        << Eigen::Quaternionf(relative_pose.block<3, 3>(0, 0)).coeffs().transpose()
+        << std::endl;
 
     last_edge_accum_distance = new_keyframe->accum_distance;
 
     return std::make_shared<Loop>(new_keyframe, best_matched, relative_pose);
   }
 
-private:
-  double distance_thresh;                 // estimated distance between keyframes consisting a loop must be less than this distance
+ private:
+  double distance_thresh;  // estimated distance between keyframes consisting a loop
+                           // must be less than this distance
   double accum_distance_thresh;           // traveled distance between ...
-  double distance_from_last_edge_thresh;  // a new loop edge must far from the last one at least this distance
+  double distance_from_last_edge_thresh;  // a new loop edge must far from the last one
+                                          // at least this distance
 
-  double fitness_score_max_range;  // maximum allowable distance between corresponding points
+  double fitness_score_max_range;  // maximum allowable distance between corresponding
+                                   // points
   double fitness_score_thresh;     // threshold for scan matching
 
   double last_edge_accum_distance;

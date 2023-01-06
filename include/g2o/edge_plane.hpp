@@ -27,14 +27,16 @@
 #ifndef EDGE_PLANE_PARALLEL_HPP
 #define EDGE_PLANE_PARALLEL_HPP
 
-#include <Eigen/Dense>
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 
+#include <Eigen/Dense>
+
 namespace g2o {
 
-class EdgePlaneParallel : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
-public:
+class EdgePlaneParallel
+    : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgePlaneParallel() : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
     _information.setIdentity();
@@ -52,15 +54,15 @@ public:
   }
   virtual bool read(std::istream& is) override {
     Eigen::Vector3d v;
-    for(int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
       is >> v[i];
     }
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -70,31 +72,29 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    for(int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
       os << _measurement[i] << " ";
     }
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector3d& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 3;
-  }
+  virtual int measurementDimension() const override { return 3; }
 };
 
-class EdgePlanePerpendicular : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
-public:
+class EdgePlanePerpendicular
+    : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgePlanePerpendicular() : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
+  EdgePlanePerpendicular()
+      : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
     _information.setIdentity();
     _error.setZero();
   }
@@ -111,15 +111,15 @@ public:
 
   virtual bool read(std::istream& is) override {
     Eigen::Vector3d v;
-    for(int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
       is >> v[i];
     }
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -129,31 +129,29 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    for(int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
       os << _measurement[i] << " ";
     }
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector3d& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 3;
-  }
+  virtual int measurementDimension() const override { return 3; }
 };
 
-class Edge2Planes : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane> {
-public:
+class Edge2Planes
+    : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Edge2Planes() : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane>() {
+  Edge2Planes()
+      : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane>() {
     _information.setIdentity();
     _error.setZero();
   }
@@ -169,15 +167,15 @@ public:
 
   virtual bool read(std::istream& is) override {
     Eigen::Vector3d v;
-    for(int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
       is >> v[i];
     }
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -187,12 +185,12 @@ public:
   }
 
   virtual bool write(std::ostream& os) const override {
-    for(int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i) {
       os << _measurement[i] << " ";
     }
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }

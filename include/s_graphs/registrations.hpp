@@ -8,7 +8,7 @@
 namespace s_graphs {
 
 struct registration_params {
-public:
+ public:
   std::string registration_method;
   long int reg_num_threads;
   double reg_transformation_epsilon;
@@ -27,7 +27,8 @@ public:
  * @param registration_params
  * @return selected scan matching
  */
-boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>> select_registration_method(registration_params params);
+boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>>
+select_registration_method(registration_params params);
 
 }  // namespace s_graphs
 

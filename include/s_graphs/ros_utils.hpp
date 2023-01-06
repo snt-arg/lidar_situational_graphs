@@ -5,11 +5,11 @@
 
 #include <Eigen/Dense>
 
-#include "rclcpp/rclcpp.hpp"
-#include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "nav_msgs/msg/odometry.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace s_graphs {
 
@@ -22,7 +22,11 @@ namespace s_graphs {
  * @param child_frame_id   tf child frame_id
  * @return converted TransformStamped
  */
-static geometry_msgs::msg::TransformStamped matrix2transform(const rclcpp::Time& stamp, const Eigen::Matrix4f& pose, const std::string& frame_id, const std::string& child_frame_id) {
+static geometry_msgs::msg::TransformStamped matrix2transform(
+    const rclcpp::Time& stamp,
+    const Eigen::Matrix4f& pose,
+    const std::string& frame_id,
+    const std::string& child_frame_id) {
   Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
   quat.normalize();
   geometry_msgs::msg::Quaternion odom_quat;
@@ -50,7 +54,9 @@ static geometry_msgs::msg::TransformStamped matrix2transform(const rclcpp::Time&
  * @param
  * @return
  */
-static geometry_msgs::msg::PoseStamped matrix2PoseStamped(const rclcpp::Time& stamp, const Eigen::Matrix4f& pose, const std::string& frame_id) {
+static geometry_msgs::msg::PoseStamped matrix2PoseStamped(const rclcpp::Time& stamp,
+                                                          const Eigen::Matrix4f& pose,
+                                                          const std::string& frame_id) {
   Eigen::Quaternionf quat(pose.block<3, 3>(0, 0));
   quat.normalize();
 
@@ -76,8 +82,13 @@ static geometry_msgs::msg::PoseStamped matrix2PoseStamped(const rclcpp::Time& st
  */
 static Eigen::Isometry3d pose2isometry(const geometry_msgs::msg::Pose& pose) {
   Eigen::Isometry3d mat = Eigen::Isometry3d::Identity();
-  mat.translation() = Eigen::Vector3d(pose.position.x, pose.position.y, pose.position.z);
-  mat.linear() = Eigen::Quaterniond(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z).toRotationMatrix();
+  mat.translation() =
+      Eigen::Vector3d(pose.position.x, pose.position.y, pose.position.z);
+  mat.linear() = Eigen::Quaterniond(pose.orientation.w,
+                                    pose.orientation.x,
+                                    pose.orientation.y,
+                                    pose.orientation.z)
+                     .toRotationMatrix();
   return mat;
 }
 
@@ -87,10 +98,17 @@ static Eigen::Isometry3d pose2isometry(const geometry_msgs::msg::Pose& pose) {
  * @param
  * @return
  */
-static Eigen::Isometry3d tf2isometry(const geometry_msgs::msg::TransformStamped& trans) {
+static Eigen::Isometry3d tf2isometry(
+    const geometry_msgs::msg::TransformStamped& trans) {
   Eigen::Isometry3d mat = Eigen::Isometry3d::Identity();
-  mat.translation() = Eigen::Vector3d(trans.transform.translation.x, trans.transform.translation.y, trans.transform.translation.z);
-  mat.linear() = Eigen::Quaterniond(trans.transform.rotation.w, trans.transform.rotation.x, trans.transform.rotation.y, trans.transform.rotation.z).toRotationMatrix();
+  mat.translation() = Eigen::Vector3d(trans.transform.translation.x,
+                                      trans.transform.translation.y,
+                                      trans.transform.translation.z);
+  mat.linear() = Eigen::Quaterniond(trans.transform.rotation.w,
+                                    trans.transform.rotation.x,
+                                    trans.transform.rotation.y,
+                                    trans.transform.rotation.z)
+                     .toRotationMatrix();
   return mat;
 }
 
@@ -122,7 +140,8 @@ static geometry_msgs::msg::Pose isometry2pose(const Eigen::Isometry3d& mat) {
  * @param
  * @return
  */
-static Eigen::Isometry3d odom2isometry(const nav_msgs::msg::Odometry::SharedPtr& odom_msg) {
+static Eigen::Isometry3d odom2isometry(
+    const nav_msgs::msg::Odometry::SharedPtr& odom_msg) {
   const auto& orientation = odom_msg->pose.pose.orientation;
   const auto& position = odom_msg->pose.pose.position;
 

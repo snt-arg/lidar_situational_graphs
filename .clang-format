@@ -1,26 +1,25 @@
 ---
 Language:        Cpp
-# BasedOnStyle:  Google
-AccessModifierOffset: -2
+BasedOnStyle:  Google
+AccessModifierOffset: -1
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: false
-AlignEscapedNewlines: Left
 AlignOperands:   true
 AlignTrailingComments: true
-AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: false
 AllowShortCaseLabelsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 AlwaysBreakAfterDefinitionReturnType: None
 AlwaysBreakAfterReturnType: None
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
-BinPackArguments: true
+BinPackArguments: false
 BinPackParameters: false
-BraceWrapping:   
+BraceWrapping:
   AfterClass:      false
   AfterControlStatement: false
   AfterEnum:       false
@@ -29,24 +28,15 @@ BraceWrapping:
   AfterObjCDeclaration: false
   AfterStruct:     false
   AfterUnion:      false
-  AfterExternBlock: false
   BeforeCatch:     false
   BeforeElse:      false
   IndentBraces:    false
-  SplitEmptyFunction: true
-  SplitEmptyRecord: true
-  SplitEmptyNamespace: true
 BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Attach
-BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
-BreakConstructorInitializers: BeforeColon
-BreakAfterJavaFieldAnnotations: false
-BreakStringLiterals: false
-ColumnLimit:     256
+ColumnLimit:     88
 CommentPragmas:  '^ IWYU pragma:'
-CompactNamespaces: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ConstructorInitializerIndentWidth: 4
 ContinuationIndentWidth: 4
@@ -54,13 +44,11 @@ Cpp11BracedListStyle: true
 DerivePointerAlignment: true
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
-FixNamespaceComments: true
-ForEachMacros:   
+ForEachMacros:
   - foreach
   - Q_FOREACH
   - BOOST_FOREACH
-IncludeBlocks:   Preserve
-IncludeCategories: 
+IncludeCategories:
   - Regex:           '^<ext/.*\.h>'
     Priority:        2
   - Regex:           '^<.*\.h>'
@@ -69,13 +57,9 @@ IncludeCategories:
     Priority:        2
   - Regex:           '.*'
     Priority:        3
-IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseLabels: true
-IndentPPDirectives: None
 IndentWidth:     2
 IndentWrappedFunctionNames: false
-JavaScriptQuotes: Leave
-JavaScriptWrapImports: true
 KeepEmptyLinesAtTheStartOfBlocks: false
 MacroBlockBegin: ''
 MacroBlockEnd:   ''
@@ -84,25 +68,18 @@ NamespaceIndentation: None
 ObjCBlockIndentWidth: 2
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: false
-PenaltyBreakAssignment: 2
 PenaltyBreakBeforeFirstCallParameter: 1
 PenaltyBreakComment: 300
 PenaltyBreakFirstLessLess: 120
 PenaltyBreakString: 1000
-PenaltyExcessCharacter: 0
+PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Left
-RawStringFormats: 
-  - Delimiters:       [pb]
-    Language:        TextProto
-    BasedOnStyle:    google
 ReflowComments:  true
-SortIncludes:    false
-SortUsingDeclarations: false
+SortIncludes:    true
 SpaceAfterCStyleCast: false
-SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
-SpaceBeforeParens: Never
+SpaceBeforeParens: ControlStatements
 SpaceInEmptyParentheses: false
 SpacesBeforeTrailingComments: 2
 SpacesInAngles:  false

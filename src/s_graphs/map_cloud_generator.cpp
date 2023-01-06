@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSD-2-Clause
 
-#include <s_graphs/map_cloud_generator.hpp>
-
 #include <pcl/octree/octree_search.h>
+
+#include <s_graphs/map_cloud_generator.hpp>
 
 namespace s_graphs {
 
@@ -10,8 +10,10 @@ MapCloudGenerator::MapCloudGenerator() {}
 
 MapCloudGenerator::~MapCloudGenerator() {}
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(const std::vector<KeyFrameSnapshot::Ptr>& keyframes, double resolution) const {
-  if(keyframes.empty()) {
+pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
+    const std::vector<KeyFrameSnapshot::Ptr>& keyframes,
+    double resolution) const {
+  if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
     return nullptr;
   }
@@ -19,9 +21,9 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(cons
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
   cloud->reserve(keyframes.front()->cloud->size() * keyframes.size());
 
-  for(const auto& keyframe : keyframes) {
+  for (const auto& keyframe : keyframes) {
     Eigen::Matrix4f pose = keyframe->pose.matrix().cast<float>();
-    for(const auto& src_pt : keyframe->cloud->points) {
+    for (const auto& src_pt : keyframe->cloud->points) {
       PointT dst_pt;
       dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
       dst_pt.intensity = src_pt.intensity;
@@ -33,7 +35,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(cons
   cloud->height = 1;
   cloud->is_dense = false;
 
-  if(resolution <= 0.0) return cloud;  // To get unfiltered point cloud with intensity
+  if (resolution <= 0.0) return cloud;  // To get unfiltered point cloud with intensity
 
   pcl::octree::OctreePointCloud<PointT> octree(resolution);
   octree.setInputCloud(cloud);
@@ -49,10 +51,12 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(cons
   return filtered;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(const Eigen::Matrix4f& pose, const pcl::PointCloud<PointT>::Ptr& cloud) const {
+pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
+    const Eigen::Matrix4f& pose,
+    const pcl::PointCloud<PointT>::Ptr& cloud) const {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
   map_cloud->reserve(cloud->size());
-  for(const auto& src_pt : cloud->points) {
+  for (const auto& src_pt : cloud->points) {
     PointT dst_pt;
     dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
     dst_pt.intensity = src_pt.intensity;

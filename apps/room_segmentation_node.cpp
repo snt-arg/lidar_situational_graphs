@@ -1,47 +1,45 @@
-#include <iostream>
-#include <string>
-#include <cmath>
 #include <math.h>
-#include <boost/format.hpp>
-
-#include "rclcpp/rclcpp.hpp"
-#include "pcl_ros/transforms.hpp"
-#include "tf2_ros/transform_listener.h"
-#include "pcl_conversions/pcl_conversions.h"
-#include "visualization_msgs/msg/marker_array.hpp"
-#include "std_msgs/msg/color_rgba.hpp"
-
-#include "s_graphs/msg/rooms_data.hpp"
-#include <s_graphs/plane_utils.hpp>
-#include <s_graphs/room_analyzer.hpp>
-
-#include <pcl/point_types.h>
-#include <pcl/point_cloud.h>
 #include <pcl/ModelCoefficients.h>
-#include <pcl/io/pcd_io.h>
 #include <pcl/common/angles.h>
 #include <pcl/common/distances.h>
-#include <pcl/sample_consensus/method_types.h>
-#include <pcl/sample_consensus/model_types.h>
-#include <pcl/segmentation/sac_segmentation.h>
-#include <pcl/filters/passthrough.h>
-#include <pcl/filters/voxel_grid.h>
+#include <pcl/common/io.h>
 #include <pcl/filters/approximate_voxel_grid.h>
+#include <pcl/filters/crop_hull.h>
+#include <pcl/filters/extract_indices.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/shadowpoints.h>
-#include <pcl/filters/extract_indices.h>
-#include <pcl/common/io.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/ml/kmeans.h>
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/conditional_euclidean_clustering.h>
-#include <pcl/ml/kmeans.h>
+#include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/surface/convex_hull.h>
-#include <pcl/filters/crop_hull.h>
+
+#include <boost/format.hpp>
+#include <cmath>
+#include <iostream>
+#include <s_graphs/plane_utils.hpp>
+#include <s_graphs/room_analyzer.hpp>
+#include <string>
+
+#include "pcl_conversions/pcl_conversions.h"
+#include "pcl_ros/transforms.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "s_graphs/msg/rooms_data.hpp"
+#include "std_msgs/msg/color_rgba.hpp"
+#include "tf2_ros/transform_listener.h"
+#include "visualization_msgs/msg/marker_array.hpp"
 
 namespace s_graphs {
 
 class RoomSegmentationNode : public rclcpp::Node {
-public:
+ public:
   typedef pcl::PointXYZRGBNormal PointT;
 
   RoomSegmentationNode() : Node("room_segmentation_node") {
@@ -49,32 +47,51 @@ public:
     this->init_ros();
   }
 
-private:
+ private:
   void initialize_params() {
     this->declare_parameter("vertex_neigh_thres", 2);
-    room_analyzer_params params{this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
+    room_analyzer_params params{
+        this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
 
     plane_utils.reset(new PlaneUtils());
     room_analyzer.reset(new RoomAnalyzer(params, plane_utils));
   }
 
   void init_ros() {
-    skeleton_graph_sub = this->create_subscription<visualization_msgs::msg::MarkerArray>("/voxblox_skeletonizer/sparse_graph", 1, std::bind(&RoomSegmentationNode::skeleton_graph_callback, this, std::placeholders::_1));
-    map_planes_sub = this->create_subscription<s_graphs::msg::PlanesData>("/s_graphs/map_planes", 100, std::bind(&RoomSegmentationNode::map_planes_callback, this, std::placeholders::_1));
+    skeleton_graph_sub =
+        this->create_subscription<visualization_msgs::msg::MarkerArray>(
+            "/voxblox_skeletonizer/sparse_graph",
+            1,
+            std::bind(&RoomSegmentationNode::skeleton_graph_callback,
+                      this,
+                      std::placeholders::_1));
+    map_planes_sub = this->create_subscription<s_graphs::msg::PlanesData>(
+        "/s_graphs/map_planes",
+        100,
+        std::bind(
+            &RoomSegmentationNode::map_planes_callback, this, std::placeholders::_1));
 
-    cluster_cloud_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/room_segmentation/cluster_cloud", 1);
-    cluster_clouds_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>("/room_segmentation/cluster_clouds", 1);
-    room_data_pub = this->create_publisher<s_graphs::msg::RoomsData>("/room_segmentation/room_data", 1);
-    room_centers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/room_segmentation/room_centers", 1);
-    refined_skeleton_graph_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>("/room_segmentation/refined_skeleton_graph", 1);
+    cluster_cloud_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+        "/room_segmentation/cluster_cloud", 1);
+    cluster_clouds_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+        "/room_segmentation/cluster_clouds", 1);
+    room_data_pub = this->create_publisher<s_graphs::msg::RoomsData>(
+        "/room_segmentation/room_data", 1);
+    room_centers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+        "/room_segmentation/room_centers", 1);
+    refined_skeleton_graph_pub =
+        this->create_publisher<visualization_msgs::msg::MarkerArray>(
+            "/room_segmentation/refined_skeleton_graph", 1);
 
-    room_detection_timer = create_wall_timer(std::chrono::seconds(1), std::bind(&RoomSegmentationNode::room_detection_callback, this));
+    room_detection_timer = create_wall_timer(
+        std::chrono::seconds(1),
+        std::bind(&RoomSegmentationNode::room_detection_callback, this));
   }
 
-  template<typename T>
+  template <typename T>
   bool contains(std::vector<T> vec, const T& elem) {
     bool result = false;
-    if(find(vec.begin(), vec.end(), elem) != vec.end()) {
+    if (find(vec.begin(), vec.end(), elem) != vec.end()) {
       result = true;
     }
     return result;
@@ -84,7 +101,7 @@ private:
     std::vector<s_graphs::msg::PlaneData> current_x_vert_planes, current_y_vert_planes;
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
-    if(current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
+    if (current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
       // RCLCPP_INFO(this->get_logger(), "Did not receive any mapped planes");
       return;
     }
@@ -92,7 +109,8 @@ private:
     auto t1 = this->now();
     extract_rooms(current_x_vert_planes, current_y_vert_planes);
     auto t2 = this->now();
-    // std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 - t1).seconds() << std::endl;
+    // std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 -
+    // t1).seconds() << std::endl;
   }
 
   /**
@@ -105,11 +123,13 @@ private:
     y_vert_plane_queue.push_back(map_planes_msg->y_planes);
   }
 
-  void flush_map_planes(std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes, std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes) {
+  void flush_map_planes(std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes,
+                        std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
-    for(const auto& x_map_planes_msg : x_vert_plane_queue) {
-      for(const auto& x_map_plane : x_map_planes_msg) {
-        if(!contains(current_x_vert_planes, x_map_plane) || current_x_vert_planes.empty()) {
+    for (const auto& x_map_planes_msg : x_vert_plane_queue) {
+      for (const auto& x_map_plane : x_map_planes_msg) {
+        if (!contains(current_x_vert_planes, x_map_plane) ||
+            current_x_vert_planes.empty()) {
           current_x_vert_planes.push_back(x_map_plane);
         } else {
           continue;
@@ -118,9 +138,10 @@ private:
       x_vert_plane_queue.pop_front();
     }
 
-    for(const auto& y_map_planes_msg : y_vert_plane_queue) {
-      for(const auto& y_map_plane : y_map_planes_msg) {
-        if(!contains(current_y_vert_planes, y_map_plane) || current_y_vert_planes.empty()) {
+    for (const auto& y_map_planes_msg : y_vert_plane_queue) {
+      for (const auto& y_map_plane : y_map_planes_msg) {
+        if (!contains(current_y_vert_planes, y_map_plane) ||
+            current_y_vert_planes.empty()) {
           current_y_vert_planes.push_back(y_map_plane);
         } else {
           continue;
@@ -132,10 +153,12 @@ private:
 
   /**
    *
-   * @brief get the points from the skeleton graph for clusterting and identifying room candidates
+   * @brief get the points from the skeleton graph for clusterting and identifying room
+   * candidates
    * @param skeleton_graph_msg
    */
-  void skeleton_graph_callback(visualization_msgs::msg::MarkerArray::SharedPtr skeleton_graph_msg) {
+  void skeleton_graph_callback(
+      visualization_msgs::msg::MarkerArray::SharedPtr skeleton_graph_msg) {
     room_analyzer->analyze_skeleton_graph(skeleton_graph_msg);
   }
 
@@ -143,37 +166,52 @@ private:
    * @brief extract clusters with its centers from the skeletal cloud
    *
    */
-  void extract_rooms(std::vector<s_graphs::msg::PlaneData> current_x_vert_planes, std::vector<s_graphs::msg::PlaneData> current_y_vert_planes) {
+  void extract_rooms(std::vector<s_graphs::msg::PlaneData> current_x_vert_planes,
+                     std::vector<s_graphs::msg::PlaneData> current_y_vert_planes) {
     int room_cluster_counter = 0;
     visualization_msgs::msg::MarkerArray refined_skeleton_marker_array;
     std::vector<s_graphs::msg::RoomData> room_candidates_vec;
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_visualizer(new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer(
+        new pcl::PointCloud<pcl::PointXYZRGB>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_visualizer(
+        new pcl::PointCloud<pcl::PointXYZRGB>);
 
-    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters = room_analyzer->extract_cloud_clusters();
-    std::vector<std::pair<int, int>> connected_subgraph_map = room_analyzer->extract_connected_graph();
-    visualization_msgs::msg::MarkerArray skeleton_marker_array = room_analyzer->extract_marker_array_clusters();
+    std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters =
+        room_analyzer->extract_cloud_clusters();
+    std::vector<std::pair<int, int>> connected_subgraph_map =
+        room_analyzer->extract_connected_graph();
+    visualization_msgs::msg::MarkerArray skeleton_marker_array =
+        room_analyzer->extract_marker_array_clusters();
 
     int cluster_id = 0;
-    for(const auto& cloud_cluster : curr_cloud_clusters) {
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull(new pcl::PointCloud<pcl::PointXYZRGB>);
+    for (const auto& cloud_cluster : curr_cloud_clusters) {
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull(
+          new pcl::PointCloud<pcl::PointXYZRGB>);
 
-      if(cloud_cluster->points.size() < 10) continue;
+      if (cloud_cluster->points.size() < 10) continue;
 
       float hull_area;
       room_analyzer->extract_convex_hull(cloud_cluster, cloud_hull, hull_area);
-      if(hull_area < 1.5) {
+      if (hull_area < 1.5) {
         // std::cout << "subgraph area too small to be a room " << std::endl;
         continue;
       }
 
-      RoomInfo room_info = {current_x_vert_planes, current_y_vert_planes, cloud_cluster};
-      bool found_room = room_analyzer->perform_room_segmentation(room_info, room_cluster_counter, cloud_cluster, room_candidates_vec, connected_subgraph_map);
-      if(found_room) {
-        refined_skeleton_marker_array.markers.push_back(skeleton_marker_array.markers[2 * cluster_id]);
-        refined_skeleton_marker_array.markers.push_back(skeleton_marker_array.markers[2 * cluster_id + 1]);
+      RoomInfo room_info = {
+          current_x_vert_planes, current_y_vert_planes, cloud_cluster};
+      bool found_room =
+          room_analyzer->perform_room_segmentation(room_info,
+                                                   room_cluster_counter,
+                                                   cloud_cluster,
+                                                   room_candidates_vec,
+                                                   connected_subgraph_map);
+      if (found_room) {
+        refined_skeleton_marker_array.markers.push_back(
+            skeleton_marker_array.markers[2 * cluster_id]);
+        refined_skeleton_marker_array.markers.push_back(
+            skeleton_marker_array.markers[2 * cluster_id + 1]);
       }
-      for(int i = 0; i < cloud_cluster->points.size(); ++i) {
+      for (int i = 0; i < cloud_cluster->points.size(); ++i) {
         cloud_visualizer->points.push_back(cloud_cluster->points[i]);
       }
       cluster_id++;
@@ -211,7 +249,7 @@ private:
     // room_marker.color.b = 0.0;
     // room_marker.color.a = 1;
 
-    for(const auto& room : room_vec.rooms) {
+    for (const auto& room : room_vec.rooms) {
       geometry_msgs::msg::Point point;
       point.x = room.room_center.x;
       point.y = room.room_center.y;
@@ -219,7 +257,7 @@ private:
       room_marker.points.push_back(point);
 
       std_msgs::msg::ColorRGBA point_color;
-      if(room.x_planes.size() == 2 && room.y_planes.size() == 2) {
+      if (room.x_planes.size() == 2 && room.y_planes.size() == 2) {
         point_color.r = 1;
         point_color.a = 1;
       } else {
@@ -234,23 +272,26 @@ private:
     room_centers_pub->publish(markers);
   }
 
-private:
-  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr skeleton_graph_sub;
+ private:
+  rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr
+      skeleton_graph_sub;
   rclcpp::Subscription<s_graphs::msg::PlanesData>::SharedPtr map_planes_sub;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_cloud_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_clouds_pub;
   rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr room_data_pub;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr room_centers_pub;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr refined_skeleton_graph_pub;
+  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
+      refined_skeleton_graph_pub;
 
   /* private variables */
-private:
+ private:
   rclcpp::TimerBase::SharedPtr room_detection_timer;
   std::mutex map_plane_mutex;
 
   std::vector<s_graphs::msg::PlaneData> x_vert_plane_vec, y_vert_plane_vec;
-  std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue, y_vert_plane_queue;
+  std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue,
+      y_vert_plane_queue;
 
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::shared_ptr<PlaneUtils> plane_utils;

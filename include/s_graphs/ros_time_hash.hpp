@@ -3,16 +3,15 @@
 #ifndef ROS_TIME_HASH_HPP
 #define ROS_TIME_HASH_HPP
 
-#include <unordered_map>
 #include <boost/functional/hash.hpp>
-
 #include <rclcpp/rclcpp.hpp>
+#include <unordered_map>
 
 /**
  * @brief Hash calculation for rclcpp::Time
  */
 class RosTimeHash {
-public:
+ public:
   size_t operator()(const rclcpp::Time& val) const {
     size_t seed = 0;
     boost::hash_combine(seed, val.seconds());

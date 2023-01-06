@@ -3,12 +3,14 @@
 #ifndef KEYFRAME_HPP
 #define KEYFRAME_HPP
 
-#include "rclcpp/rclcpp.hpp"
-#include <vector>
-#include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
 #include <boost/optional.hpp>
 #include <s_graphs/planes.hpp>
+#include <vector>
+
+#include "rclcpp/rclcpp.hpp"
 
 namespace g2o {
 class VertexSE3;
@@ -22,7 +24,7 @@ namespace s_graphs {
  * @brief KeyFrame (pose node)
  */
 struct KeyFrame {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using PointT = pcl::PointXYZI;
   using PointNormal = pcl::PointXYZRGBNormal;
@@ -38,7 +40,10 @@ public:
    * @param cloud
    * @return
    */
-  KeyFrame(const rclcpp::Time& stamp, const Eigen::Isometry3d& odom, double accum_distance, const pcl::PointCloud<PointT>::ConstPtr& cloud);
+  KeyFrame(const rclcpp::Time& stamp,
+           const Eigen::Isometry3d& odom,
+           double accum_distance,
+           const pcl::PointCloud<PointT>::ConstPtr& cloud);
 
   /**
    * @brief Constructor for class KeyFrame
@@ -80,13 +85,16 @@ public:
    */
   Eigen::Isometry3d estimate() const;
 
-public:
-  rclcpp::Time stamp;                                         // timestamp
-  Eigen::Isometry3d odom;                                     // odometry (estimated by scan_matching_odometry)
-  double accum_distance;                                      // accumulated distance from the first node (by scan_matching_odometry)
-  pcl::PointCloud<PointT>::ConstPtr cloud;                    // point cloud
-  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;           // semantically segmented pointcloud
-  std::vector<int> x_plane_ids, y_plane_ids, hort_plane_ids;  // list of planes associated with the keyframe
+ public:
+  rclcpp::Time stamp;      // timestamp
+  Eigen::Isometry3d odom;  // odometry (estimated by scan_matching_odometry)
+  double accum_distance;   // accumulated distance from the first node (by
+                           // scan_matching_odometry)
+  pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
+  pcl::PointCloud<PointNormal>::Ptr
+      cloud_seg_body;  // semantically segmented pointcloud
+  std::vector<int> x_plane_ids, y_plane_ids,
+      hort_plane_ids;  // list of planes associated with the keyframe
 
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS
@@ -101,7 +109,7 @@ public:
  * @brief KeyFramesnapshot for map cloud generation
  */
 struct KeyFrameSnapshot {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   using PointT = KeyFrame::PointT;
@@ -119,11 +127,12 @@ public:
    *
    * @param key
    */
-  KeyFrameSnapshot(const Eigen::Isometry3d& pose, const pcl::PointCloud<PointT>::ConstPtr& cloud);
+  KeyFrameSnapshot(const Eigen::Isometry3d& pose,
+                   const pcl::PointCloud<PointT>::ConstPtr& cloud);
 
   ~KeyFrameSnapshot();
 
-public:
+ public:
   Eigen::Isometry3d pose;                   // pose estimated by graph optimization
   pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
 };

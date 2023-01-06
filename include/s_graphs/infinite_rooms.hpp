@@ -1,10 +1,11 @@
 #ifndef INFINITE_ROOMS_HPP
 #define INFINITE_ROOMS_HPP
 
-#include <Eigen/Eigen>
 #include <g2o/types/slam3d_addons/plane3d.h>
-#include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+#include <Eigen/Eigen>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/vertex_room.hpp>
 
@@ -29,7 +30,7 @@ namespace s_graphs {
  * @var node
  */
 struct InfiniteRooms {
-public:
+ public:
   int id;
   int connected_id;
   std::vector<int> connected_neighbour_ids;

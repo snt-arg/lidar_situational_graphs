@@ -1,10 +1,11 @@
 #ifndef ROOMS_HPP
 #define ROOMS_HPP
 
-#include <Eigen/Eigen>
 #include <g2o/types/slam3d_addons/plane3d.h>
-#include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+#include <Eigen/Eigen>
 
 namespace g2o {
 class VertexRoomXYLB;
@@ -27,7 +28,7 @@ namespace s_graphs {
  * @param sub_room
  */
 struct Rooms {
-public:
+ public:
   int id;
   int connected_id;
   std::vector<int> connected_neighbour_ids;

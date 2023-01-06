@@ -3,11 +3,11 @@
 #ifndef NMEA_SENTENCE_PARSER_HPP
 #define NMEA_SENTENCE_PARSER_HPP
 
+#include <boost/algorithm/string.hpp>
 #include <cmath>
+#include <numeric>
 #include <string>
 #include <vector>
-#include <numeric>
-#include <boost/algorithm/string.hpp>
 
 namespace s_graphs {
 
@@ -15,13 +15,11 @@ namespace s_graphs {
  * @brief
  */
 struct GPRMC {
-public:
+ public:
   /**
    * @brief Contructor of class GPRMC
    */
-  GPRMC() {
-    status = 'V';
-  }
+  GPRMC() { status = 'V'; }
 
   /**
    * @brief Contructor of class GPRMC
@@ -29,7 +27,7 @@ public:
    * @param tokens
    */
   GPRMC(const std::vector<std::string>& tokens) {
-    if(tokens[0] != "$GPRMC" || tokens.size() < 12) {
+    if (tokens[0] != "$GPRMC" || tokens.size() < 12) {
       status = 'V';
       return;
     }
@@ -56,7 +54,8 @@ public:
     day = (date / 10000) % 100;
 
     magnetic_variation = std::stod(tokens[10]);
-    magnetic_variation = tokens[11][0] == 'E' ? magnetic_variation : -magnetic_variation;
+    magnetic_variation =
+        tokens[11][0] == 'E' ? magnetic_variation : -magnetic_variation;
   }
 
   double degmin2deg(double degmin) {
@@ -65,7 +64,7 @@ public:
     return d + m;
   }
 
-public:
+ public:
   char status;  // Status A=active or V=Void.
 
   int hour;  // Fix taken at 12:35:19 UTC
@@ -89,7 +88,7 @@ public:
  * @brief
  */
 class NmeaSentenceParser {
-public:
+ public:
   /**
    * @brief Contructor of class NmeaSentenceParser.
    *
@@ -105,16 +104,19 @@ public:
    */
   GPRMC parse(const std::string& sentence) const {
     int checksum_loc = sentence.find('*');
-    if(checksum_loc == std::string::npos) {
+    if (checksum_loc == std::string::npos) {
       return GPRMC();
     }
 
     int checksum = std::stoul(sentence.substr(checksum_loc + 1), nullptr, 16);
 
     std::string substr = sentence.substr(1, checksum_loc - 1);
-    int sum = std::accumulate(substr.begin(), substr.end(), static_cast<unsigned char>(0), [=](unsigned char n, unsigned char c) { return n ^ c; });
+    int sum = std::accumulate(substr.begin(),
+                              substr.end(),
+                              static_cast<unsigned char>(0),
+                              [=](unsigned char n, unsigned char c) { return n ^ c; });
 
-    if(checksum != (sum & 0xf)) {
+    if (checksum != (sum & 0xf)) {
       std::cerr << "checksum doesn't match!!" << std::endl;
       std::cerr << sentence << " " << sum << std::endl;
       return GPRMC();

@@ -3,10 +3,11 @@
 #ifndef MAP_CLOUD_GENERATOR_HPP
 #define MAP_CLOUD_GENERATOR_HPP
 
-#include <vector>
-#include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
 #include <s_graphs/keyframe.hpp>
+#include <vector>
 
 namespace s_graphs {
 
@@ -14,7 +15,7 @@ namespace s_graphs {
  * @brief Class that generates a map point cloud from registered keyframes
  */
 class MapCloudGenerator {
-public:
+ public:
   using PointT = pcl::PointXYZI;
 
   /**
@@ -32,8 +33,12 @@ public:
    *          resolution of generated map
    * @return generated map point cloud
    */
-  pcl::PointCloud<PointT>::Ptr generate(const std::vector<KeyFrameSnapshot::Ptr>& keyframes, double resolution) const;
-  pcl::PointCloud<PointT>::Ptr generate(const Eigen::Matrix4f& pose, const pcl::PointCloud<PointT>::Ptr& cloud) const;
+  pcl::PointCloud<PointT>::Ptr generate(
+      const std::vector<KeyFrameSnapshot::Ptr>& keyframes,
+      double resolution) const;
+  pcl::PointCloud<PointT>::Ptr generate(
+      const Eigen::Matrix4f& pose,
+      const pcl::PointCloud<PointT>::Ptr& cloud) const;
 };
 
 }  // namespace s_graphs

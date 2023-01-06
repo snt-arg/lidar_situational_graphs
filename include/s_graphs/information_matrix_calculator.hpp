@@ -3,9 +3,10 @@
 #ifndef INFORMATION_MATRIX_CALCULATOR_HPP
 #define INFORMATION_MATRIX_CALCULATOR_HPP
 
-#include "rclcpp/rclcpp.hpp"
-#include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+#include "rclcpp/rclcpp.hpp"
 
 namespace s_graphs {
 
@@ -13,14 +14,14 @@ namespace s_graphs {
  * @brief
  */
 class InformationMatrixCalculator {
-public:
+ public:
   using PointT = pcl::PointXYZI;
 
   InformationMatrixCalculator() {}
   InformationMatrixCalculator(const rclcpp::Node::SharedPtr node);
   ~InformationMatrixCalculator();
 
-  template<typename ParamServer>
+  template <typename ParamServer>
 
   /**
    * @brief
@@ -49,7 +50,11 @@ public:
    * @param max_range
    * @return
    */
-  static double calc_fitness_score(const pcl::PointCloud<PointT>::ConstPtr& cloud1, const pcl::PointCloud<PointT>::ConstPtr& cloud2, const Eigen::Isometry3d& relpose, double max_range = std::numeric_limits<double>::max());
+  static double calc_fitness_score(
+      const pcl::PointCloud<PointT>::ConstPtr& cloud1,
+      const pcl::PointCloud<PointT>::ConstPtr& cloud2,
+      const Eigen::Isometry3d& relpose,
+      double max_range = std::numeric_limits<double>::max());
 
   /**
    * @brief
@@ -59,9 +64,12 @@ public:
    * @param relpose
    * @return Information matrix
    */
-  Eigen::MatrixXd calc_information_matrix(const pcl::PointCloud<PointT>::ConstPtr& cloud1, const pcl::PointCloud<PointT>::ConstPtr& cloud2, const Eigen::Isometry3d& relpose) const;
+  Eigen::MatrixXd calc_information_matrix(
+      const pcl::PointCloud<PointT>::ConstPtr& cloud1,
+      const pcl::PointCloud<PointT>::ConstPtr& cloud2,
+      const Eigen::Isometry3d& relpose) const;
 
-private:
+ private:
   /**
    * @brief
    *
@@ -77,7 +85,7 @@ private:
     return min_y + (max_y - min_y) * y;
   }
 
-private:
+ private:
   bool use_const_inf_matrix;
   double const_stddev_x;
   double const_stddev_q;

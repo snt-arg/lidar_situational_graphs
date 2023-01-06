@@ -27,18 +27,22 @@
 #ifndef EDGE_INFINITE_ROOM_PLANE_HPP
 #define EDGE_INFINITE_ROOM_PLANE_HPP
 
-#include <Eigen/Dense>
 #include <g2o/core/base_binary_edge.h>
-#include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/types/slam3d/vertex_se3.h>
+#include <g2o/types/slam3d_addons/vertex_plane.h>
+
+#include <Eigen/Dense>
+
 #include "g2o/vertex_infinite_room.hpp"
 
 namespace g2o {
 
-class EdgeSE3InfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexInfiniteRoom> {
-public:
+class EdgeSE3InfiniteRoom
+    : public BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexInfiniteRoom> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3InfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexInfiniteRoom>() {}
+  EdgeSE3InfiniteRoom()
+      : BaseBinaryEdge<1, double, g2o::VertexSE3, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
@@ -59,10 +63,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -73,23 +77,23 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 };
 
-class EdgeInfiniteRoomXPlane : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane> {
-public:
+class EdgeInfiniteRoomXPlane
+    : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeInfiniteRoomXPlane() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane>() {}
+  EdgeInfiniteRoomXPlane()
+      : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
@@ -97,7 +101,7 @@ public:
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    if(plane(3) > 0) {
+    if (plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
@@ -105,13 +109,13 @@ public:
     }
 
     double est;
-    if(fabs(trans) > fabs(plane(3))) {
+    if (fabs(trans) > fabs(plane(3))) {
       est = trans - plane(3);
     } else {
       est = plane(3) - trans;
     }
 
-    if(est * _measurement < 0) {
+    if (est * _measurement < 0) {
       est = -1 * est;
     }
 
@@ -123,10 +127,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -138,27 +142,25 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 1;
-  }
+  virtual int measurementDimension() const override { return 1; }
 };
 
-class EdgeInfiniteRoomYPlane : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane> {
-public:
+class EdgeInfiniteRoomYPlane
+    : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeInfiniteRoomYPlane() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane>() {}
+  EdgeInfiniteRoomYPlane()
+      : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexPlane>() {}
 
   void computeError() override {
     const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
@@ -166,7 +168,7 @@ public:
     double trans = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    if(plane(3) > 0) {
+    if (plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
@@ -174,13 +176,13 @@ public:
     }
 
     double est;
-    if(fabs(trans) > fabs(plane(3))) {
+    if (fabs(trans) > fabs(plane(3))) {
       est = trans - plane(3);
     } else {
       est = plane(3) - trans;
     }
 
-    if(est * _measurement < 0) {
+    if (est * _measurement < 0) {
       est = -1 * est;
     }
 
@@ -192,10 +194,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -207,27 +209,27 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 1;
-  }
+  virtual int measurementDimension() const override { return 1; }
 };
 
-class EdgeXInfiniteRoomXInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom> {
-public:
+class EdgeXInfiniteRoomXInfiniteRoom : public BaseBinaryEdge<1,
+                                                             double,
+                                                             g2o::VertexInfiniteRoom,
+                                                             g2o::VertexInfiniteRoom> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeXInfiniteRoomXInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom>() {}
+  EdgeXInfiniteRoomXInfiniteRoom()
+      : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
@@ -243,10 +245,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -258,27 +260,27 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 1;
-  }
+  virtual int measurementDimension() const override { return 1; }
 };
 
-class EdgeYInfiniteRoomYInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom> {
-public:
+class EdgeYInfiniteRoomYInfiniteRoom : public BaseBinaryEdge<1,
+                                                             double,
+                                                             g2o::VertexInfiniteRoom,
+                                                             g2o::VertexInfiniteRoom> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeYInfiniteRoomYInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom>() {}
+  EdgeYInfiniteRoomYInfiniteRoom()
+      : BaseBinaryEdge<1, double, g2o::VertexInfiniteRoom, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexInfiniteRoom* v1 = static_cast<const VertexInfiniteRoom*>(_vertices[0]);
@@ -294,10 +296,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -309,21 +311,17 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 1;
-  }
+  virtual int measurementDimension() const override { return 1; }
 };
 
 }  // namespace g2o

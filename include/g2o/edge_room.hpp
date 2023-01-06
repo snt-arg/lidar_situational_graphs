@@ -27,19 +27,23 @@
 #ifndef EDGE_ROOM_PLANE_HPP
 #define EDGE_ROOM_PLANE_HPP
 
-#include <Eigen/Dense>
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/core/base_multi_edge.h>
-#include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/types/slam3d/vertex_se3.h>
-#include "g2o/vertex_room.hpp"
+#include <g2o/types/slam3d_addons/vertex_plane.h>
+
+#include <Eigen/Dense>
+
 #include "g2o/vertex_infinite_room.hpp"
+#include "g2o/vertex_room.hpp"
 namespace g2o {
 
-class EdgeSE3Room : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB> {
-public:
+class EdgeSE3Room
+    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3Room() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB>() {}
+  EdgeSE3Room()
+      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB>() {}
 
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
@@ -60,10 +64,10 @@ public:
     is >> v(0) >> v(1);
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -75,20 +79,19 @@ public:
     Eigen::Vector2d v = _measurement;
     os << v(0) << " " << v(1) << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector2d& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const Eigen::Vector2d& m) override { _measurement = m; }
 };
-class EdgeRoomXPlane : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
-public:
+class EdgeRoomXPlane
+    : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoomXPlane() : BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane>() {}
 
@@ -98,7 +101,7 @@ public:
     Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    if(plane(3) > 0) {
+    if (plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
@@ -106,13 +109,13 @@ public:
     }
 
     double est;
-    if(fabs(room_pose(0)) > fabs(plane(3))) {
+    if (fabs(room_pose(0)) > fabs(plane(3))) {
       est = room_pose(0) - plane(3);
     } else {
       est = plane(3) - room_pose(0);
     }
 
-    if(est * _measurement < 0) {
+    if (est * _measurement < 0) {
       est = -1 * est;
     }
 
@@ -124,10 +127,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -139,25 +142,22 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 1;
-  }
+  virtual int measurementDimension() const override { return 1; }
 };
 
-class EdgeRoomYPlane : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
-public:
+class EdgeRoomYPlane
+    : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoomYPlane() : BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane>() {}
 
@@ -167,7 +167,7 @@ public:
     Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
 
-    if(plane(3) > 0) {
+    if (plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
@@ -175,13 +175,13 @@ public:
     }
 
     double est;
-    if(fabs(room_pose(1)) > fabs(plane(3))) {
+    if (fabs(room_pose(1)) > fabs(plane(3))) {
       est = room_pose(1) - plane(3);
     } else {
       est = plane(3) - room_pose(1);
     }
 
-    if(est * _measurement < 0) {
+    if (est * _measurement < 0) {
       est = -1 * est;
     }
 
@@ -193,10 +193,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -208,29 +208,23 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 
-  virtual int measurementDimension() const override {
-    return 1;
-  }
+  virtual int measurementDimension() const override { return 1; }
 };
 
 class EdgeRoom2Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoom2Planes() : BaseMultiEdge<2, Eigen::Vector2d>() {
-    resize(4);
-  }
+  EdgeRoom2Planes() : BaseMultiEdge<2, Eigen::Vector2d>() { resize(4); }
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
@@ -247,14 +241,19 @@ public:
     correct_plane_direction(plane2);
 
     Eigen::Vector3d vec;
-    if(fabs(plane1(3)) > fabs(plane2(3))) {
-      vec = (0.5 * (fabs(plane1(3)) * plane1.head(3) - fabs(plane2(3)) * plane2.head(3))) + fabs(plane2(3)) * plane2.head(3);
+    if (fabs(plane1(3)) > fabs(plane2(3))) {
+      vec = (0.5 *
+             (fabs(plane1(3)) * plane1.head(3) - fabs(plane2(3)) * plane2.head(3))) +
+            fabs(plane2(3)) * plane2.head(3);
     } else {
-      vec = (0.5 * (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3))) + fabs(plane1(3)) * plane1.head(3);
+      vec = (0.5 *
+             (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3))) +
+            fabs(plane1(3)) * plane1.head(3);
     }
 
     Eigen::Vector2d vec_normal = vec.head(2) / vec.head(2).norm();
-    Eigen::Vector2d final_pose_vec = vec.head(2) + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
+    Eigen::Vector2d final_pose_vec =
+        vec.head(2) + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
 
     _error = room_pose - final_pose_vec;
   }
@@ -264,10 +263,10 @@ public:
     is >> v(0) >> v(1);
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -280,17 +279,17 @@ public:
     Eigen::Vector2d v = _measurement;
     os << v(0) << " " << v(1) << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-private:
+ private:
   void correct_plane_direction(Eigen::Vector4d& plane) {
-    if(plane(3) > 0) {
+    if (plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
@@ -302,11 +301,9 @@ private:
 };
 
 class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoom4Planes() : BaseMultiEdge<2, Eigen::Vector2d>() {
-    resize(5);
-  }
+  EdgeRoom4Planes() : BaseMultiEdge<2, Eigen::Vector2d>() { resize(5); }
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
@@ -326,16 +323,24 @@ public:
     correct_plane_direction(y_plane2);
 
     Eigen::Vector3d vec_x, vec_y;
-    if(fabs(x_plane1(3)) > fabs(x_plane2(3))) {
-      vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) - fabs(x_plane2(3)) * x_plane2.head(3))) + fabs(x_plane2(3)) * x_plane2.head(3);
+    if (fabs(x_plane1(3)) > fabs(x_plane2(3))) {
+      vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) -
+                      fabs(x_plane2(3)) * x_plane2.head(3))) +
+              fabs(x_plane2(3)) * x_plane2.head(3);
     } else {
-      vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) - fabs(x_plane1(3)) * x_plane1.head(3))) + fabs(x_plane1(3)) * x_plane1.head(3);
+      vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) -
+                      fabs(x_plane1(3)) * x_plane1.head(3))) +
+              fabs(x_plane1(3)) * x_plane1.head(3);
     }
 
-    if(fabs(y_plane1(3)) > fabs(y_plane2(3))) {
-      vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) - fabs(y_plane2(3)) * y_plane2.head(3))) + fabs(y_plane2(3)) * y_plane2.head(3);
+    if (fabs(y_plane1(3)) > fabs(y_plane2(3))) {
+      vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) -
+                      fabs(y_plane2(3)) * y_plane2.head(3))) +
+              fabs(y_plane2(3)) * y_plane2.head(3);
     } else {
-      vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) - fabs(y_plane1(3)) * y_plane1.head(3))) + fabs(y_plane1(3)) * y_plane1.head(3);
+      vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) -
+                      fabs(y_plane1(3)) * y_plane1.head(3))) +
+              fabs(y_plane1(3)) * y_plane1.head(3);
     }
 
     Eigen::Vector2d final_vec = vec_x.head(2) + vec_y.head(2);
@@ -347,10 +352,10 @@ public:
     is >> v(0) >> v(1);
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -363,17 +368,17 @@ public:
     Eigen::Vector2d v = _measurement;
     os << v(0) << " " << v(1) << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-private:
+ private:
   void correct_plane_direction(Eigen::Vector4d& plane) {
-    if(plane(3) > 0) {
+    if (plane(3) > 0) {
       plane(0) = -1 * plane(0);
       plane(1) = -1 * plane(1);
       plane(2) = -1 * plane(2);
@@ -384,10 +389,15 @@ private:
   }
 };
 
-class EdgeRoomRoom : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB> {
-public:
+class EdgeRoomRoom : public BaseBinaryEdge<2,
+                                           Eigen::Vector2d,
+                                           g2o::VertexRoomXYLB,
+                                           g2o::VertexRoomXYLB> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomRoom() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB>() {}
+  EdgeRoomRoom()
+      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB>() {
+  }
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
@@ -405,10 +415,10 @@ public:
     is >> v(0) >> v(1);
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -420,27 +430,28 @@ public:
     Eigen::Vector2d v = _measurement;
     os << v(0) << " " << v(1) << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const Eigen::Vector2d& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const Eigen::Vector2d& m) override { _measurement = m; }
 };
 
-class EdgeRoomXInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
-public:
+class EdgeRoomXInfiniteRoom
+    : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
+  EdgeRoomXInfiniteRoom()
+      : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
-    const VertexInfiniteRoom* v2 = static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
+    const VertexInfiniteRoom* v2 =
+        static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
 
     double est;
     est = pow(v1->estimate()(0) - v2->estimate(), 2);
@@ -453,10 +464,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -467,27 +478,28 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 };
 
-class EdgeRoomYInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
-public:
+class EdgeRoomYInfiniteRoom
+    : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomYInfiniteRoom() : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
+  EdgeRoomYInfiniteRoom()
+      : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
     const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
-    const VertexInfiniteRoom* v2 = static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
+    const VertexInfiniteRoom* v2 =
+        static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
 
     double est;
     est = pow(v1->estimate()(1) - v2->estimate(), 2);
@@ -500,10 +512,10 @@ public:
     is >> v;
 
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) {
+        if (i != j) {
           information()(j, i) = information()(i, j);
         }
       }
@@ -514,44 +526,41 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i) {
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i) {
+      for (int j = i; j < information().cols(); ++j) {
         os << " " << information()(i, j);
       };
     }
     return os.good();
   }
 
-  virtual void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  virtual void setMeasurement(const double& m) override { _measurement = m; }
 };
 
 class EdgeRoomXPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB> {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoomXPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>() {}
 
   void computeError() override {
-    const g2o::VertexRoomXYLB* v1 = static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
+    const g2o::VertexRoomXYLB* v1 =
+        static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
 
     Eigen::Vector2d estimate = v1->estimate();
 
     _error[0] = estimate(0) - _measurement;
   }
 
-  void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  void setMeasurement(const double& m) override { _measurement = m; }
 
   virtual bool read(std::istream& is) override {
     double v;
     is >> v;
     setMeasurement(v);
-    for(int i = 0; i < information().rows(); ++i)
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i)
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) information()(j, i) = information()(i, j);
+        if (i != j) information()(j, i) = information()(i, j);
       }
     return true;
   }
@@ -559,38 +568,37 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i)
-      for(int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
+    for (int i = 0; i < information().rows(); ++i)
+      for (int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
     return os.good();
   }
 };
 
 class EdgeRoomYPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB> {
-public:
+ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoomYPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>() {}
 
   void computeError() override {
-    const g2o::VertexRoomXYLB* v1 = static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
+    const g2o::VertexRoomXYLB* v1 =
+        static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
 
     Eigen::Vector2d estimate = v1->estimate();
 
     _error[0] = estimate(1) - _measurement;
   }
 
-  void setMeasurement(const double& m) override {
-    _measurement = m;
-  }
+  void setMeasurement(const double& m) override { _measurement = m; }
 
   virtual bool read(std::istream& is) override {
     double v;
     is >> v;
     setMeasurement(v);
 
-    for(int i = 0; i < information().rows(); ++i)
-      for(int j = i; j < information().cols(); ++j) {
+    for (int i = 0; i < information().rows(); ++i)
+      for (int j = i; j < information().cols(); ++j) {
         is >> information()(i, j);
-        if(i != j) information()(j, i) = information()(i, j);
+        if (i != j) information()(j, i) = information()(i, j);
       }
     return true;
   }
@@ -598,8 +606,8 @@ public:
   virtual bool write(std::ostream& os) const override {
     os << _measurement << " ";
 
-    for(int i = 0; i < information().rows(); ++i)
-      for(int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
+    for (int i = 0; i < information().rows(); ++i)
+      for (int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
     return os.good();
   }
 };

@@ -3,8 +3,9 @@
 #ifndef ROBUST_KERNEL_IO_HPP
 #define ROBUST_KERNEL_IO_HPP
 
-#include <string>
 #include <g2o/core/sparse_optimizer.h>
+
+#include <string>
 
 namespace g2o {
 

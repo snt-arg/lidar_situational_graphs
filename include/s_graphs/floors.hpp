@@ -1,10 +1,11 @@
 #ifndef FLOOR_HPP
 #define FLOOR_HPP
 
-#include <Eigen/Eigen>
 #include <g2o/types/slam3d_addons/plane3d.h>
-#include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+
+#include <Eigen/Eigen>
 
 namespace g2o {
 class VertexRoomXYLB;
@@ -23,7 +24,7 @@ namespace s_graphs {
  * @var node
  */
 struct Floors {
-public:
+ public:
   int id;
   int graph_id;
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
