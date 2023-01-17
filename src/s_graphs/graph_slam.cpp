@@ -17,6 +17,7 @@
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_wall.hpp>
+#include <g2o/vertex_doorway.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_point_to_plane.hpp>
@@ -30,6 +31,7 @@
 #include <g2o/robust_kernel_io.hpp>
 #include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_room.hpp>
+#include <g2o/edge_doorway_two_rooms.hpp>
 
 G2O_USE_OPTIMIZATION_LIBRARY(pcg)
 G2O_USE_OPTIMIZATION_LIBRARY(cholmod)  // be aware of that cholmod brings GPL dependency
@@ -233,6 +235,16 @@ g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center)
   g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(wall_center);
+  graph->addVertex(vertex);
+  this->increment_local_nbr_of_vertices();
+
+  return vertex;
+}
+
+g2o::VertexDoorWayXYZ* GraphSLAM::add_doorway_node(const Eigen::Vector3d& door_position) {
+  g2o::VertexDoorWayXYZ* vertex(new g2o::VertexDoorWayXYZ());
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  vertex->setEstimate(door_position);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
 
@@ -492,6 +504,18 @@ g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(g2o::VertexWallXYZ* v_wal
   edge->vertices()[0] = v_wall;
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeDoorWay2Rooms* GraphSLAM::add_doorway_2rooms_edge(g2o::VertexDoorWayXYZ* v_door_r1, g2o::VertexDoorWayXYZ* v_door_r2, g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::MatrixXd& information) {
+  g2o::EdgeDoorWay2Rooms* edge(new g2o::EdgeDoorWay2Rooms());
+  edge->setInformation(information);
+  edge->vertices()[0] = v_door_r1;
+  edge->vertices()[1] = v_door_r2;
+  edge->vertices()[2] = v_room1;
+  edge->vertices()[3] = v_room2;
   graph->addEdge(edge);
 
   return edge;

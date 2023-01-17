@@ -10,7 +10,10 @@
 
 #include <g2o/core/hyper_graph.h>
 #include <g2o/vertex_wall.hpp>
+#include <g2o/vertex_doorway.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
+#include <g2o/vertex_doorway.hpp>
+#include <g2o/edge_doorway_two_rooms.hpp>
 
 namespace g2o {
 class VertexSE3;
@@ -201,6 +204,13 @@ public:
   /**
    * @brief add a Wall node to the graph
    * @param wall_center
+   * @return registered node
+   */
+
+  g2o::VertexDoorWayXYZ* add_doorway_node(const Eigen::Vector3d& door_position);
+  /**
+   * @brief add a doorway node to the graph
+   * @param door_position
    * @return registered node
    */
 
@@ -561,8 +571,29 @@ public:
    */
   bool remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge);
 
+  /**
+   * @brief
+   *
+   * @param v_wall
+   * @param v_wall_surface1
+   * @param v_wall_surface2
+   * @param wall_center
+   * @param information
+   * @return registered edge
+   */
   g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, Eigen::Vector3d wall_point, const Eigen::MatrixXd& information);
 
+  /**
+   * @brief
+   *
+   * @param v_door_r1
+   * @param v_door_r2
+   * @param v_room1
+   * @param v_room2
+   * @param information
+   * @return registered edge
+   */
+  g2o::EdgeDoorWay2Rooms* add_doorway_2rooms_edge(g2o::VertexDoorWayXYZ* v_door_r1, g2o::VertexDoorWayXYZ* v_door_r2, g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::MatrixXd& information);
   /**
    * @brief
    *
