@@ -433,6 +433,45 @@ public:
   }
 };
 
+class Edge2Rooms : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Edge2Rooms() : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB>() {}
+
+  void computeError() override {
+    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexRoomXYLB* v2 = static_cast<const VertexRoomXYLB*>(_vertices[1]);
+
+    _error = v1->estimate() - v2->estimate();
+  }
+
+  virtual bool read(std::istream& is) override {
+    Eigen::Vector2d v;
+    is >> v(0) >> v(1);
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        is >> information()(i, j);
+        if(i != j) {
+          information()(j, i) = information()(i, j);
+        }
+      }
+    }
+    return true;
+  }
+
+  virtual bool write(std::ostream& os) const override {
+    Eigen::Vector2d v;
+    os << v(0) << " " << v(1) << " ";
+
+    for(int i = 0; i < information().rows(); ++i) {
+      for(int j = i; j < information().cols(); ++j) {
+        os << " " << information()(i, j);
+      };
+    }
+    return os.good();
+  }
+};
 class EdgeRoomXInfiniteRoom : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
