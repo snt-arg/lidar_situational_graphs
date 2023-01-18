@@ -52,6 +52,7 @@ class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class RobustKernelFactory;
 class VertexRoomXYLB;
+class Edge2Rooms;
 }  // namespace g2o
 
 namespace s_graphs {
@@ -594,6 +595,16 @@ public:
    * @return registered edge
    */
   g2o::EdgeDoorWay2Rooms* add_doorway_2rooms_edge(g2o::VertexDoorWayXYZ* v_door_r1, g2o::VertexDoorWayXYZ* v_door_r2, g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::MatrixXd& information);
+
+  /**
+   * @brief
+   * @param v_room1
+   * @param v_room2
+   * @param information
+   * @return registered edge
+   */
+  g2o::Edge2Rooms* add_2rooms_edge(g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::MatrixXd& information);
+
   /**
    * @brief
    *

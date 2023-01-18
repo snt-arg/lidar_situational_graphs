@@ -61,6 +61,7 @@ G2O_REGISTER_TYPE(EDGE_ROOM_XPRIOR, EdgeRoomXPrior)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPLANE, EdgeRoomYPlane)
 G2O_REGISTER_TYPE(EDGE_ROOM_YPRIOR, EdgeRoomYPrior)
 G2O_REGISTER_TYPE(EDGE_ROOM_ROOM, EdgeRoomRoom)
+G2O_REGISTER_TYPE(EDGE_2ROOMS, Edge2Rooms)
 G2O_REGISTER_TYPE(EDGE_ROOM_XINFINITE_ROOM, EdgeRoomXInfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_ROOM_YINFINITE_ROOM, EdgeRoomYInfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_XINFINITE_ROOM_XINFINITE_ROOM, EdgeXInfiniteRoomXInfiniteRoom)
@@ -627,6 +628,15 @@ g2o::EdgeYInfiniteRoomYInfiniteRoom* GraphSLAM::add_y_infinite_room_y_infinite_r
   edge->setInformation(information);
   edge->vertices()[0] = v_ycorr1;
   edge->vertices()[1] = v_ycorr2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+g2o::Edge2Rooms* GraphSLAM::add_2rooms_edge(g2o::VertexRoomXYLB* v_room1, g2o::VertexRoomXYLB* v_room2, const Eigen::MatrixXd& information) {
+  g2o::Edge2Rooms* edge(new g2o::Edge2Rooms());
+  edge->setInformation(information);
+  edge->vertices()[0] = v_room1;
+  edge->vertices()[1] = v_room2;
   graph->addEdge(edge);
 
   return edge;
