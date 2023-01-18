@@ -49,7 +49,6 @@
 #include <s_graphs/graph_visualizer.hpp>
 #include <s_graphs/keyframe_mapper.hpp>
 #include <s_graphs/graph_publisher.hpp>
-// #include <revit_wall_mapper.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/edge_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
@@ -72,6 +71,7 @@
 #include <graph_manager_msgs/Edge.h>
 #include <graph_manager_msgs/Node.h>
 #include <graph_manager_msgs/Graph.h>
+#include <graph_manager_msgs/Match.h>
 class GraphPublisher {
 public:
   GraphPublisher(const ros::NodeHandle& private_nh);
