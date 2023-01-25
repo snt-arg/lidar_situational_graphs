@@ -152,6 +152,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   traj_plane_edge_marker.header.stamp = stamp;
   traj_plane_edge_marker.ns = "keyframe_plane_edges";
   traj_plane_edge_marker.id = markers.markers.size();
+  traj_plane_edge_marker.lifetime = duration_planes;
   traj_plane_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
   traj_plane_edge_marker.pose.orientation.w = 1.0;
   traj_plane_edge_marker.scale.x = 0.01;
