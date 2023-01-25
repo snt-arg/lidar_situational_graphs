@@ -1072,7 +1072,9 @@ class SGraphsNode : public rclcpp::Node {
    */
   void keyframe_update_timer_callback() {
     // add keyframes and floor coeffs in the queues to the pose graph
+    keyframes_mutex.lock();
     bool keyframe_updated = flush_keyframe_queue();
+    keyframes_mutex.unlock();
 
     if (!keyframe_updated) {
       std_msgs::msg::Header read_until;
@@ -1145,13 +1147,6 @@ class SGraphsNode : public rclcpp::Node {
     rooms_vec_snapshot = rooms_vec;
     room_snapshot_mutex.unlock();
 
-    // publish tf
-    const auto& keyframe = keyframes.back();
-    Eigen::Isometry3d trans = keyframe->node->estimate() * keyframe->odom.inverse();
-    trans_odom2map_mutex.lock();
-    trans_odom2map = trans.matrix().cast<float>();
-    trans_odom2map_mutex.unlock();
-
     std::vector<KeyFrameSnapshot::Ptr> snapshot(keyframes.size());
     std::transform(
         keyframes.begin(),
@@ -1162,10 +1157,6 @@ class SGraphsNode : public rclcpp::Node {
     keyframes_snapshot_mutex.lock();
     keyframes_snapshot.swap(snapshot);
     keyframes_snapshot_mutex.unlock();
-
-    geometry_msgs::msg::TransformStamped ts = matrix2transform(
-        keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
-    odom2map_pub->publish(ts);
   }
 
   /**
@@ -1174,12 +1165,18 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void optimization_timer_callback() {
+    if (keyframes.empty()) return;
+
     graph_mutex.lock();
     std::shared_ptr<GraphSLAM> local_graph = graph_slam;
     graph_mutex.unlock();
 
     curr_edge_count = local_graph->retrive_total_nbr_of_edges();
     if (curr_edge_count <= prev_edge_count) return;
+
+    keyframes_mutex.lock();
+    const auto& keyframe = keyframes.back();
+    keyframes_mutex.unlock();
 
     // optimize the pose graph
     int num_iterations = this->get_parameter("g2o_solver_num_iterations")
@@ -1193,6 +1190,16 @@ class SGraphsNode : public rclcpp::Node {
       std::cout << e.what() << std::endl;
       throw 1;
     }
+
+    // publish tf
+    Eigen::Isometry3d trans = keyframe->node->estimate() * keyframe->odom.inverse();
+    trans_odom2map_mutex.lock();
+    trans_odom2map = trans.matrix().cast<float>();
+    trans_odom2map_mutex.unlock();
+
+    geometry_msgs::msg::TransformStamped ts = matrix2transform(
+        keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
+    odom2map_pub->publish(ts);
 
     // merge_duplicate_planes();
     graph_mutex.lock();
@@ -2066,6 +2073,8 @@ class SGraphsNode : public rclcpp::Node {
 
   std::mutex floor_data_mutex;
   std::deque<s_graphs::msg::RoomData> floor_data_queue;
+
+  std::mutex keyframes_mutex;
 
   // for map cloud generation
   std::atomic_bool graph_updated;
