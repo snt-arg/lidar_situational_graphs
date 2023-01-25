@@ -1,6 +1,6 @@
 s_graphs_node:
   ros__parameters:
-    use_sim_time: False
+    use_sim_time: True
     map_frame_id: "map"
     odom_frame_id: "odom"
     plane_extraction_frame_id: body
