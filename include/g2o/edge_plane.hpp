@@ -154,7 +154,7 @@ class Edge2Planes : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, 
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   Edge2Planes() : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane>() {
-    _information.setIdentity();
+    // _information.setIdentity();
     _error.setZero();
   }
 
@@ -163,7 +163,6 @@ public:
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     g2o::Plane3D plane1 = v1->estimate();
     g2o::Plane3D plane2 = v2->estimate();
-
     _error = plane1.ominus(plane2);
   }
 
