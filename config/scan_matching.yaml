@@ -13,7 +13,7 @@ scan_matching_node:
     downsample_method: "NONE"
     downsample_resolution: 0.1
     # ICP, GICP, NDT, GICP_OMP, NDT_OMP, FAST_GICP (recommended), or FAST_VGICP
-    registration_method: "GICP" 
+    registration_method: "FAST_VGICP" 
     reg_num_threads: 0
     reg_transformation_epsilon: 0.01
     reg_maximum_iterations: 64
