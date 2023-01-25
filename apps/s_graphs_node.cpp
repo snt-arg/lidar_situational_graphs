@@ -1091,9 +1091,6 @@ class SGraphsNode : public rclcpp::Node {
     // publish mapped planes
     publish_mapped_planes(x_vert_planes, y_vert_planes);
 
-    // publish mapped points of the last keyframes
-    publish_keyframe_mapped_points();
-
     // flush the room poses from room detector and no need to return if no rooms found
     flush_room_data_queue();
 
@@ -1212,20 +1209,24 @@ class SGraphsNode : public rclcpp::Node {
    */
   void publish_keyframe_mapped_points() {
     if (keyframes.empty()) return;
-    pcl::PointCloud<PointT>::Ptr keyframe_cloud(new pcl::PointCloud<PointT>);
 
     std::vector<KeyFrame::Ptr> keyframe_window(
         keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size),
         keyframes.end());
+
+    std::vector<KeyFrameSnapshot::Ptr> snapshot_vec;
     for (std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin();
          it != keyframe_window.rend();
          ++it) {
-      keyframe_cloud->header = (*it)->cloud->header;
-      for (size_t i = 0; i < (*it)->cloud->points.size(); ++i) {
-        keyframe_cloud->points.push_back((*it)->cloud->points[i]);
-      }
+      KeyFrameSnapshot::Ptr snapshot = std::make_shared<KeyFrameSnapshot>(*it);
+      snapshot_vec.push_back(snapshot);
     }
 
+    pcl::PointCloud<PointT>::Ptr keyframe_cloud =
+        map_cloud_generator->generate(snapshot_vec, 0.0);
+
+    keyframe_cloud->header.frame_id = map_frame_id;
+    keyframe_cloud->header.stamp = snapshot_vec.back()->cloud->header.stamp;
     sensor_msgs::msg::PointCloud2 keyframe_cloud_msg;
     pcl::toROSMsg(*keyframe_cloud, keyframe_cloud_msg);
     keyframe_map_points_pub->publish(keyframe_cloud_msg);
