@@ -38,6 +38,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   double keyframe_h = 7.0;
   double plane_h = 15;
   double wall_vertex_h = 18;
+  rclcpp::Duration duration_planes = rclcpp::Duration::from_seconds(5);
 
   visualization_msgs::msg::Marker traj_marker;
   traj_marker.header.frame_id = map_frame_id;
@@ -317,6 +318,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   x_vert_plane_marker.header.stamp = stamp;
   x_vert_plane_marker.ns = "x_vert_planes";
   x_vert_plane_marker.id = markers.markers.size();
+  x_vert_plane_marker.lifetime = duration_planes;
   x_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
 
   for (int i = 0; i < x_plane_snapshot.size(); ++i) {
@@ -348,6 +350,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   y_vert_plane_marker.header.stamp = stamp;
   y_vert_plane_marker.ns = "y_vert_planes";
   y_vert_plane_marker.id = markers.markers.size();
+  y_vert_plane_marker.lifetime = duration_planes;
   y_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
 
   for (int i = 0; i < y_plane_snapshot.size(); ++i) {
@@ -379,6 +382,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   hort_plane_marker.header.stamp = stamp;
   hort_plane_marker.ns = "hort_planes";
   hort_plane_marker.id = markers.markers.size();
+  hort_plane_marker.lifetime = duration_planes;
   hort_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
 
   for (int i = 0; i < hort_plane_snapshot.size(); ++i) {
@@ -398,6 +402,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   float infinite_room_node_h = 22;
   float infinite_room_edge_h = 21.5;
   float infinite_room_point_h = plane_h;
+  rclcpp::Duration duration_room = rclcpp::Duration::from_seconds(5);
 
   for (auto& single_x_infinite_room : x_infinite_room_snapshot) {
     single_x_infinite_room.sub_infinite_room = false;
@@ -467,7 +472,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       corr_x_line_marker.color.g = color_g;
       corr_x_line_marker.color.b = color_b;
       corr_x_line_marker.color.a = 1.0;
-      corr_x_line_marker.lifetime = rclcpp::Duration(15.0);
+      corr_x_line_marker.lifetime = duration_room;
     } else {
       x_infinite_room_snapshot[i].id = -1;
       corr_x_line_marker.ns = "overlapped_infinite_room_x_lines";
@@ -538,7 +543,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.pose.position.y =
           x_infinite_room_snapshot[i].node->estimate()(1);
       infinite_room_pose_marker.pose.position.z = infinite_room_node_h;
-      infinite_room_pose_marker.lifetime = rclcpp::Duration(15.0);
+      infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
     } else
       infinite_room_pose_marker.ns = "overlapped_x_infinite_room";
@@ -611,7 +616,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       corr_y_line_marker.color.g = color_g;
       corr_y_line_marker.color.b = color_b;
       corr_y_line_marker.color.a = 1.0;
-      corr_y_line_marker.lifetime = rclcpp::Duration(15.0);
+      corr_y_line_marker.lifetime = duration_room;
     } else {
       y_infinite_room_snapshot[i].id = -1;
       corr_y_line_marker.ns = "overlapped_infinite_room_y_lines";
@@ -683,7 +688,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.pose.position.y =
           y_infinite_room_snapshot[i].node->estimate()(1);
       infinite_room_pose_marker.pose.position.z = infinite_room_node_h;
-      infinite_room_pose_marker.lifetime = rclcpp::Duration(15.0);
+      infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
     } else
       infinite_room_pose_marker.ns = "overlapped_y_infinite_room";
@@ -708,7 +713,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   room_marker.color.g = 0.07;
   room_marker.color.b = 0.57;
   room_marker.color.a = 1;
-  room_marker.lifetime = rclcpp::Duration(15.0);
+  room_marker.lifetime = duration_room;
 
   for (int i = 0; i < room_snapshot.size(); ++i) {
     room_snapshot[i].sub_room = false;
@@ -746,7 +751,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_line_marker.color.g = color_g;
     room_line_marker.color.b = color_b;
     room_line_marker.color.a = 1.0;
-    room_line_marker.lifetime = rclcpp::Duration(15.0);
+    room_line_marker.lifetime = duration_room;
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
     p1.x = room_snapshot[i].node->estimate()(0);
     p1.y = room_snapshot[i].node->estimate()(1);
@@ -862,7 +867,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   x_corr_neighbour_line_marker.color.g = 0;
   x_corr_neighbour_line_marker.color.b = 0;
   x_corr_neighbour_line_marker.color.a = 1.0;
-  x_corr_neighbour_line_marker.lifetime = rclcpp::Duration(15.0);
+  x_corr_neighbour_line_marker.lifetime = duration_room;
 
   for (const auto& x_infinite_room : x_infinite_room_snapshot) {
     for (const auto& x_infinite_room_neighbour_id : x_infinite_room.neighbour_ids) {
@@ -927,7 +932,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   y_corr_neighbour_line_marker.color.g = 0;
   y_corr_neighbour_line_marker.color.b = 0;
   y_corr_neighbour_line_marker.color.a = 1.0;
-  y_corr_neighbour_line_marker.lifetime = rclcpp::Duration(15.0);
+  y_corr_neighbour_line_marker.lifetime = duration_room;
 
   for (const auto& y_infinite_room : y_infinite_room_snapshot) {
     for (const auto& y_infinite_room_neighbour_id : y_infinite_room.neighbour_ids) {
@@ -992,7 +997,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   room_neighbour_line_marker.color.g = 0;
   room_neighbour_line_marker.color.b = 0;
   room_neighbour_line_marker.color.a = 1.0;
-  room_neighbour_line_marker.lifetime = rclcpp::Duration(15.0);
+  room_neighbour_line_marker.lifetime = duration_room;
 
   for (const auto& room : room_snapshot) {
     for (const auto& room_neighbour_id : room.neighbour_ids) {
@@ -1042,6 +1047,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   }
   markers.markers.push_back(room_neighbour_line_marker);
 
+  rclcpp::Duration duration_floor = rclcpp::Duration::from_seconds(5);
   for (const auto& floor : floors_vec) {
     if (floor.id != -1) {
       float floor_node_h = 27;
@@ -1061,7 +1067,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_marker.color.g = 0;
       floor_marker.color.b = 1;
       floor_marker.color.a = 1;
-      floor_marker.lifetime = rclcpp::Duration(10.0);
+      floor_marker.lifetime = duration_floor;
 
       floor_marker.pose.position.x = floor.node->estimate()(0);
       floor_marker.pose.position.y = floor.node->estimate()(1);
@@ -1080,7 +1086,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_line_marker.color.g = color_g;
       floor_line_marker.color.b = color_b;
       floor_line_marker.color.a = 1.0;
-      floor_line_marker.lifetime = rclcpp::Duration(10.0);
+      floor_line_marker.lifetime = duration_floor;
 
       for (const auto& room : room_snapshot) {
         if (room.sub_room) continue;
