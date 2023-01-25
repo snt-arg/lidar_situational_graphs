@@ -39,7 +39,7 @@ namespace g2o {
 
 class G2O_TYPES_SLAM3D_API VertexWallXYZ : public BaseVertex<3, Vector3> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   VertexWallXYZ() {}
 
   virtual void setToOriginImpl() { _estimate.fill(0.); }

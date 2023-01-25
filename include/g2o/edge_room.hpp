@@ -29,6 +29,7 @@
 
 #include <g2o/core/base_binary_edge.h>
 #include <g2o/core/base_multi_edge.h>
+#include <g2o/core/base_unary_edge.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 

@@ -39,7 +39,7 @@ namespace g2o {
 
 class G2O_TYPES_SLAM3D_API VertexInfiniteRoom : public BaseVertex<1, double> {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   VertexInfiniteRoom() {}
 
   virtual void setToOriginImpl() { _estimate = 0; }
