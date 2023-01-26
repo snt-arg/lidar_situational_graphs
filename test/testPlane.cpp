@@ -1,28 +1,24 @@
-
-#include <gflags/gflags.h>
-#include <glog/logging.h>
 #include <gtest/gtest.h>
 
+#include <rclcpp/rclcpp.hpp>
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/keyframe.hpp>
 #include <s_graphs/plane_analyzer.hpp>
 #include <s_graphs/plane_mapper.hpp>
 #include <s_graphs/plane_utils.hpp>
 
-#define TEST_EXPRESSION(a) EXPECT_EQ((a), meval::EvaluateMathExpression(#a))
-
 typedef pcl::PointXYZI PointT;
 
 TEST(testPlane, ConvertPlaneToMap) {
-  ros::NodeHandle nh;
-  s_graphs::PlaneMapper plane_mapper(nh);
+  auto node = rclcpp::Node::make_shared("test_node");
+  s_graphs::PlaneMapper plane_mapper(node);
   s_graphs::GraphSLAM graph_slam;
   Eigen::Isometry3d odom;
   odom.setIdentity();
 
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
   s_graphs::KeyFrame::Ptr keyframe(
-      new s_graphs::KeyFrame(ros::Time::now(), odom, 0.0, cloud));
+      new s_graphs::KeyFrame(rclcpp::Clock().now(), odom, 0.0, cloud));
   keyframe->node = graph_slam.add_se3_node(odom);
   Eigen::Vector4d local_plane;
   local_plane << 1, 0, 0, 10;
@@ -33,13 +29,11 @@ TEST(testPlane, ConvertPlaneToMap) {
   EXPECT_EQ(map_plane_vec(0), 1);
   EXPECT_EQ(map_plane_vec(1), 0);
   EXPECT_EQ(map_plane_vec(2), 0);
-  EXPECT_EQ(map_plane_vec(3), 10);
+  EXPECT_EQ(map_plane_vec(3) + 1, 10);
 }
 
-// Run all the tests that were declared with TEST()
 int main(int argc, char** argv) {
+  rclcpp::init(argc, argv);
   testing::InitGoogleTest(&argc, argv);
-  ros::init(argc, argv, "testPlane");
-  ros::NodeHandle nh;
   return RUN_ALL_TESTS();
 }

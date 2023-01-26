@@ -37,6 +37,9 @@ find_package(tf2_ros REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(graph_manager_msgs REQUIRED)
+find_package(ament_lint_auto REQUIRED)
+find_package(ament_lint_common REQUIRED)
+ament_lint_auto_find_test_dependencies()
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -197,11 +200,11 @@ install(
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# if(AMENT_ENABLE_TESTING)
-#   find_package(ament_cmake_gtest REQUIRED)
-#   ament_add_gtest(SGraphsUnitTest test/testPlane.cpp)
-#   target_link_libraries(SGraphsUnitTest s_graphs_node)
-# endif()
+if(AMENT_ENABLE_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(testPlane test/testPlane.cpp)
+  target_link_libraries(testPlane s_graphs_node)
+endif()
 
 ament_export_dependencies(rosidl_default_runtime)
 ament_export_include_directories(include)
