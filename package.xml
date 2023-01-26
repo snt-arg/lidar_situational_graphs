@@ -51,7 +51,6 @@
   <member_of_group>rosidl_interface_packages</member_of_group>
 
   <build_depend>ament_cmake_gtest</build_depend>
-  <build_depend>ament_lint_auto</build_depend>
   <test_depend>ament_cmake_gtest</test_depend>
   <test_depend>ament_lint_auto</test_depend>
 

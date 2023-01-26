@@ -119,6 +119,17 @@ class PlaneMapper {
   g2o::Plane3D convert_plane_to_map_frame(const KeyFrame::Ptr& keyframe,
                                           const g2o::Plane3D& det_plane_body_frame);
 
+  /**
+   * @brief
+   *
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param hort_planes
+   */
+  void convert_plane_points_to_map(std::vector<VerticalPlanes>& x_vert_planes,
+                                   std::vector<VerticalPlanes>& y_vert_planes,
+                                   std::vector<HorizontalPlanes>& hort_planes);
+
  private:
   /**
    * @brief
@@ -202,17 +213,6 @@ class PlaneMapper {
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes,
       const std::vector<HorizontalPlanes>& hort_planes);
-
-  /**
-   * @brief
-   *
-   * @param x_vert_planes
-   * @param y_vert_planes
-   * @param hort_planes
-   */
-  void convert_plane_points_to_map(std::vector<VerticalPlanes>& x_vert_planes,
-                                   std::vector<VerticalPlanes>& y_vert_planes,
-                                   std::vector<HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
