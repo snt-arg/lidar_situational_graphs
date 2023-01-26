@@ -766,7 +766,7 @@ private:
     room_snapshot = rooms_vec_snapshot;
     room_snapshot_mutex.unlock();
 
-    auto markers = graph_visualizer->create_marker_array(ros::Time::now(), local_graph, x_plane_snapshot, y_plane_snapshot, hort_plane_snapshot, x_infinite_room_snapshot, y_infinite_room_snapshot, room_snapshot, loop_detector->get_distance_thresh() * 2.0, keyframes, floors_vec, x_vert_planes_prior, y_vert_planes_prior, rooms_vec_prior);
+    auto markers = graph_visualizer->create_marker_array(ros::Time::now(), local_graph, x_plane_snapshot, y_plane_snapshot, hort_plane_snapshot, x_infinite_room_snapshot, y_infinite_room_snapshot, room_snapshot, loop_detector->get_distance_thresh() * 2.0, keyframes, floors_vec);
     markers_pub.publish(markers);
 
     publish_all_mapped_planes(x_plane_snapshot, y_plane_snapshot);
