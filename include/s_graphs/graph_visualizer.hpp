@@ -87,6 +87,7 @@ private:
   ros::NodeHandle nh;
   std::string map_frame_id;
   double color_r, color_g, color_b;
+  bool prior_published = false;
 };
 
 }  // namespace s_graphs

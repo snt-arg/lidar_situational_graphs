@@ -26,6 +26,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   double keyframe_h = 7.0;
   double plane_h = 15;
   double wall_vertex_h = 18;
+  double prior_room_h = 22;
 
   visualization_msgs::Marker traj_marker;
   traj_marker.header.frame_id = map_frame_id;
@@ -231,105 +232,219 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
     }
   }
   markers.markers.push_back(traj_plane_edge_marker);
+  if(!prior_published) {
+    for(int i = 0; i < x_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
+      double r, g, b;
+      visualization_msgs::Marker wall_visual_marker;
+      wall_visual_marker.header.frame_id = "prior_map";
+      wall_visual_marker.header.stamp = stamp;
+      wall_visual_marker.ns = "wall_2";
+      wall_visual_marker.id = markers.markers.size() + i;
+      wall_visual_marker.type = visualization_msgs::Marker::CUBE;
 
-  for(int i = 0; i < x_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
-    double r, g, b;
-    visualization_msgs::Marker wall_visual_marker;
-    wall_visual_marker.header.frame_id = "prior_map";
-    wall_visual_marker.header.stamp = stamp;
-    wall_visual_marker.ns = "wall_2";
-    wall_visual_marker.id = markers.markers.size() + i;
-    wall_visual_marker.type = visualization_msgs::Marker::CUBE;
+      wall_visual_marker.pose.position.x = x_vert_planes_prior[i].start_point.x();
+      wall_visual_marker.pose.position.y = x_vert_planes_prior[i].start_point.y() + 0.5 * x_vert_planes_prior[i].length;
+      wall_visual_marker.pose.position.z = plane_h;
+      wall_visual_marker.pose.orientation.x = 0;
+      wall_visual_marker.pose.orientation.y = 1;
+      wall_visual_marker.pose.orientation.z = 0.0;
+      wall_visual_marker.pose.orientation.w = 1;
 
-    wall_visual_marker.pose.position.x = x_vert_planes_prior[i].start_point.x();
-    wall_visual_marker.pose.position.y = x_vert_planes_prior[i].start_point.y() + 0.5 * x_vert_planes_prior[i].length;
-    wall_visual_marker.pose.position.z = plane_h;
-    wall_visual_marker.pose.orientation.x = 0;
-    wall_visual_marker.pose.orientation.y = 1;
-    wall_visual_marker.pose.orientation.z = 0.0;
-    wall_visual_marker.pose.orientation.w = 1;
-
-    wall_visual_marker.scale.z = 0.01;
-    wall_visual_marker.scale.x = 3.0;
-    wall_visual_marker.scale.y = x_vert_planes_prior[i].length;
-    std_msgs::ColorRGBA color;
-    color.r = rand() % 256;
-    color.b = rand() % 256;
-    color.g = rand() % 256;
-    wall_visual_marker.color.r = 0.0;  // color.r / 255;
-    wall_visual_marker.color.g = 1.0;  // color.g / 255;
-    wall_visual_marker.color.b = 0.0;  // color.b / 255;
-    wall_visual_marker.color.a = 1.0;
-    markers.markers.push_back(wall_visual_marker);
-  }
-
-  for(int i = 0; i < y_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
-
-    double r, g, b;
-    visualization_msgs::Marker wall_visual_marker;
-    wall_visual_marker.header.frame_id = "prior_map";
-    wall_visual_marker.header.stamp = stamp;
-    wall_visual_marker.ns = "wall_1";
-    wall_visual_marker.id = markers.markers.size() + i;
-    wall_visual_marker.type = visualization_msgs::Marker::CUBE;
-
-    wall_visual_marker.pose.position.x = y_vert_planes_prior[i].start_point.x() + 0.5 * y_vert_planes_prior[i].length;
-    wall_visual_marker.pose.position.y = y_vert_planes_prior[i].start_point.y();
-    wall_visual_marker.pose.position.z = plane_h;
-    wall_visual_marker.pose.orientation.x = 0;
-    wall_visual_marker.pose.orientation.y = 1;
-    wall_visual_marker.pose.orientation.z = 0.0;
-    wall_visual_marker.pose.orientation.w = 1;
-
-    wall_visual_marker.scale.y = 0.01;
-    wall_visual_marker.scale.x = 3.0;
-    wall_visual_marker.scale.z = y_vert_planes_prior[i].length;
-    std_msgs::ColorRGBA color;
-    color.r = rand() % 256;
-    color.b = rand() % 256;
-    color.g = rand() % 256;
-    wall_visual_marker.color.r = 1.0;  // color.r / 255;
-    wall_visual_marker.color.g = 0.0;  // color.g / 255;
-    wall_visual_marker.color.b = 0.0;  // color.b / 255;
-    wall_visual_marker.color.a = 1.0;
-    markers.markers.push_back(wall_visual_marker);
-  }
-
-  // Wall edge markers
-  visualization_msgs::Marker wall_center_marker;
-  auto wall_edge_itr = local_graph->edges().begin();
-  for(int i = 0; wall_edge_itr != local_graph->edges().end(); wall_edge_itr++, i++) {
-    g2o::HyperGraph::Edge* edge = *wall_edge_itr;
-    g2o::EdgeWall2Planes* edge_wall = dynamic_cast<g2o::EdgeWall2Planes*>(edge);
-    if(edge_wall) {
-      g2o::VertexWallXYZ* v1 = dynamic_cast<g2o::VertexWallXYZ*>(edge_wall->vertices()[0]);
-      g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[1]);
-      g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[2]);
-      Eigen::Vector3d wall_center = v1->estimate();
-
-      wall_center_marker.ns = "wall_center_marker";
-      wall_center_marker.header.frame_id = "prior_map";
-      wall_center_marker.header.stamp = stamp;
-      wall_center_marker.id = markers.markers.size() + 1;
-      wall_center_marker.type = visualization_msgs::Marker::SPHERE;
-      wall_center_marker.color.r = color_r;
-      wall_center_marker.color.g = color_g;
-      wall_center_marker.color.b = color_b;
-      wall_center_marker.color.a = 1.0;
-      wall_center_marker.scale.x = 0.3;
-      wall_center_marker.scale.y = 0.3;
-      wall_center_marker.scale.z = 0.3;
-      wall_center_marker.pose.position.x = wall_center.x();
-      wall_center_marker.pose.position.y = wall_center.y();
-      wall_center_marker.pose.position.z = wall_vertex_h;
-      wall_center_marker.pose.orientation.x = 0.0;
-      wall_center_marker.pose.orientation.y = 0.0;
-      wall_center_marker.pose.orientation.z = 0.0;
-      wall_center_marker.pose.orientation.w = 1.0;
-      markers.markers.push_back(wall_center_marker);
+      wall_visual_marker.scale.z = 0.01;
+      wall_visual_marker.scale.x = 3.0;
+      wall_visual_marker.scale.y = x_vert_planes_prior[i].length;
+      std_msgs::ColorRGBA color;
+      color.r = rand() % 256;
+      color.b = rand() % 256;
+      color.g = rand() % 256;
+      wall_visual_marker.color.r = color.r / 255;
+      wall_visual_marker.color.g = color.g / 255;
+      wall_visual_marker.color.b = color.b / 255;
+      wall_visual_marker.color.a = 1.0;
+      markers.markers.push_back(wall_visual_marker);
     }
-  }
 
+    for(int i = 0; i < y_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
+
+      double r, g, b;
+      visualization_msgs::Marker wall_visual_marker;
+      wall_visual_marker.header.frame_id = "prior_map";
+      wall_visual_marker.header.stamp = stamp;
+      wall_visual_marker.ns = "wall_1";
+      wall_visual_marker.id = markers.markers.size() + i;
+      wall_visual_marker.type = visualization_msgs::Marker::CUBE;
+
+      wall_visual_marker.pose.position.x = y_vert_planes_prior[i].start_point.x() + 0.5 * y_vert_planes_prior[i].length;
+      wall_visual_marker.pose.position.y = y_vert_planes_prior[i].start_point.y();
+      wall_visual_marker.pose.position.z = plane_h;
+      wall_visual_marker.pose.orientation.x = 0;
+      wall_visual_marker.pose.orientation.y = 1;
+      wall_visual_marker.pose.orientation.z = 0.0;
+      wall_visual_marker.pose.orientation.w = 1;
+
+      wall_visual_marker.scale.y = 0.01;
+      wall_visual_marker.scale.x = 3.0;
+      wall_visual_marker.scale.z = y_vert_planes_prior[i].length;
+      std_msgs::ColorRGBA color;
+      color.r = rand() % 256;
+      color.b = rand() % 256;
+      color.g = rand() % 256;
+      wall_visual_marker.color.r = color.r / 255;
+      wall_visual_marker.color.g = color.g / 255;
+      wall_visual_marker.color.b = color.b / 255;
+      wall_visual_marker.color.a = 1.0;
+      markers.markers.push_back(wall_visual_marker);
+    }
+
+    // Wall Center markers
+    visualization_msgs::Marker wall_center_marker;
+    auto wall_edge_itr = local_graph->edges().begin();
+    for(int i = 0; wall_edge_itr != local_graph->edges().end(); wall_edge_itr++, i++) {
+      g2o::HyperGraph::Edge* edge = *wall_edge_itr;
+      g2o::EdgeWall2Planes* edge_wall = dynamic_cast<g2o::EdgeWall2Planes*>(edge);
+      if(edge_wall) {
+        g2o::VertexWallXYZ* v1 = dynamic_cast<g2o::VertexWallXYZ*>(edge_wall->vertices()[0]);
+        g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[1]);
+        g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[2]);
+        Eigen::Vector3d wall_center = v1->estimate();
+
+        wall_center_marker.ns = "wall_center_marker";
+        wall_center_marker.header.frame_id = "prior_map";
+        wall_center_marker.header.stamp = stamp;
+        wall_center_marker.id = markers.markers.size() + 1;
+        wall_center_marker.type = visualization_msgs::Marker::SPHERE;
+        std_msgs::ColorRGBA color;
+        color.r = rand() % 256;
+        color.b = rand() % 256;
+        color.g = rand() % 256;
+        wall_center_marker.color.r = color.r / 255;
+        wall_center_marker.color.g = color.g / 255;
+        wall_center_marker.color.b = color.b / 255;
+        wall_center_marker.color.a = 1.0;
+        wall_center_marker.scale.x = 0.3;
+        wall_center_marker.scale.y = 0.3;
+        wall_center_marker.scale.z = 0.3;
+        wall_center_marker.pose.position.x = wall_center.x();
+        wall_center_marker.pose.position.y = wall_center.y();
+        wall_center_marker.pose.position.z = wall_vertex_h;
+        wall_center_marker.pose.orientation.x = 0.0;
+        wall_center_marker.pose.orientation.y = 0.0;
+        wall_center_marker.pose.orientation.z = 0.0;
+        wall_center_marker.pose.orientation.w = 1.0;
+        markers.markers.push_back(wall_center_marker);
+
+        // keyframe plane edge markers
+        visualization_msgs::Marker wall_edge_plane_marker;
+        wall_edge_plane_marker.header.frame_id = "prior_map";
+        wall_edge_plane_marker.header.stamp = stamp;
+        wall_edge_plane_marker.ns = "wall_to_plane_edge_1";
+        wall_edge_plane_marker.id = markers.markers.size();
+        wall_edge_plane_marker.type = visualization_msgs::Marker::LINE_LIST;
+        wall_edge_plane_marker.pose.orientation.w = 1.0;
+        wall_edge_plane_marker.scale.x = 0.03;
+        geometry_msgs::Point point1, point2, point3;
+        point1.x = wall_center.x();
+        point1.y = wall_center.y();
+        point1.z = wall_vertex_h;
+        for(int j = 0; j < x_vert_planes_prior.size(); j++) {
+          if(v2->id() == x_vert_planes_prior[j].id) {
+            // std::cout << "v2 : id :  " << v2->id() << "   x vert id   " << x_vert_planes_prior[j].id << std::endl;
+            point2.x = x_vert_planes_prior[j].start_point.x();
+            point2.y = x_vert_planes_prior[j].start_point.y();
+            point2.z = plane_h;
+            break;
+          }
+        }
+        for(int j = 0; j < y_vert_planes_prior.size(); j++) {
+          if(v2->id() == y_vert_planes_prior[j].id) {
+            // std::cout << "v2 : id :  " << v2->id() << "   y vert id   " << y_vert_planes_prior[j].id << std::endl;
+            point2.x = y_vert_planes_prior[j].start_point.x();
+            point2.y = y_vert_planes_prior[j].start_point.y();
+            point2.z = plane_h;
+            break;
+          }
+        }
+
+        // std::cout << "p1 : " << point1.x << "   " << point1.y << "  " << point1.z << std::endl;
+        // std::cout << "p2 : " << point2.x << "   " << point2.y << "  " << point2.z << std::endl;
+        wall_edge_plane_marker.points.push_back(point1);
+        wall_edge_plane_marker.points.push_back(point2);
+        wall_edge_plane_marker.color.r = 255.0f;
+        wall_edge_plane_marker.color.g = 255.0f;
+        wall_edge_plane_marker.color.b = 255.0f;
+        wall_edge_plane_marker.color.a = 1.0;
+        markers.markers.push_back(wall_edge_plane_marker);
+        visualization_msgs::Marker wall_edge_plane_marker_2;
+        wall_edge_plane_marker_2.header.frame_id = "prior_map";
+        wall_edge_plane_marker_2.header.stamp = stamp;
+        wall_edge_plane_marker_2.ns = "wall_to_plane_edge_2";
+        wall_edge_plane_marker_2.id = markers.markers.size();
+        wall_edge_plane_marker_2.type = visualization_msgs::Marker::LINE_LIST;
+        wall_edge_plane_marker_2.pose.orientation.w = 1.0;
+        for(int j = 0; j < x_vert_planes_prior.size(); j++) {
+          if(v3->id() == x_vert_planes_prior[j].id) {
+            std::cout << "v3 : id :  " << v3->id() << "   x vert id   " << x_vert_planes_prior[j].id << std::endl;
+            point3.x = x_vert_planes_prior[j].start_point.x();
+            point3.y = x_vert_planes_prior[j].start_point.y();
+            point3.z = plane_h;
+            break;
+          }
+        }
+        for(int j = 0; j < y_vert_planes_prior.size(); j++) {
+          if(v3->id() == y_vert_planes_prior[j].id) {
+            std::cout << "v3 : id :  " << v3->id() << "   y vert id   " << y_vert_planes_prior[j].id << std::endl;
+            point3.x = y_vert_planes_prior[j].start_point.x();
+            point3.y = y_vert_planes_prior[j].start_point.y();
+            point3.z = plane_h;
+            break;
+          }
+        }
+        wall_edge_plane_marker_2.scale.x = 0.03;
+        wall_edge_plane_marker_2.color.r = 255.0f;
+        wall_edge_plane_marker_2.color.g = 255.0f;
+        wall_edge_plane_marker_2.color.b = 255.0f;
+        wall_edge_plane_marker_2.color.a = 1.0;
+        std::cout << "p1 : " << point1.x << "   " << point1.y << "  " << point1.z << std::endl;
+        std::cout << "p3 : " << point3.x << "   " << point3.y << "  " << point3.z << std::endl;
+        wall_edge_plane_marker_2.points.push_back(point1);
+        wall_edge_plane_marker_2.points.push_back(point3);
+        markers.markers.push_back(wall_edge_plane_marker_2);
+      }
+    }
+
+    for(int i = 0; i < rooms_vec_prior.size(); i++) {  // walls_x_coord.size()
+
+      double r, g, b;
+      visualization_msgs::Marker prior_room_marker;
+      prior_room_marker.header.frame_id = "prior_map";
+      prior_room_marker.header.stamp = stamp;
+      prior_room_marker.ns = "prior_room";
+      prior_room_marker.id = markers.markers.size() + i;
+      prior_room_marker.type = visualization_msgs::Marker::CUBE;
+      Eigen::Vector2d room_pose = rooms_vec_prior[i].node->estimate();
+      prior_room_marker.pose.position.x = room_pose.x();
+      prior_room_marker.pose.position.y = room_pose.y();
+      prior_room_marker.pose.position.z = prior_room_h;
+      prior_room_marker.pose.orientation.x = 0;
+      prior_room_marker.pose.orientation.y = 0;
+      prior_room_marker.pose.orientation.z = 0.0;
+      prior_room_marker.pose.orientation.w = 1;
+
+      prior_room_marker.scale.y = 0.5;
+      prior_room_marker.scale.x = 0.5;
+      prior_room_marker.scale.z = 0.5;
+      std_msgs::ColorRGBA color;
+      color.r = rand() % 256;
+      color.b = rand() % 256;
+      color.g = rand() % 256;
+      prior_room_marker.color.r = color.r / 255;
+      prior_room_marker.color.g = color.g / 255;
+      prior_room_marker.color.b = color.b / 255;
+      prior_room_marker.color.a = 1.0;
+      markers.markers.push_back(prior_room_marker);
+    }
+    prior_published = true;
+  }
   // sphere
   visualization_msgs::Marker sphere_marker;
   sphere_marker.header.frame_id = map_frame_id;
