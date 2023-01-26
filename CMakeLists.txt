@@ -139,7 +139,7 @@ target_link_libraries(s_graphs_scan_matching_odometry_node
 )
 rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-add_library(${PROEJECT_NAME}_lib  
+add_library(s_graphs_lib  
     src/s_graphs/plane_analyzer.cpp
     src/s_graphs/graph_slam.cpp
     src/s_graphs/plane_mapper.cpp
@@ -155,7 +155,7 @@ add_library(${PROEJECT_NAME}_lib
     src/s_graphs/graph_publisher.cpp
     src/g2o/robust_kernel_io.cpp
 )
-target_link_libraries(${PROEJECT_NAME}_lib 
+target_link_libraries(s_graphs_lib 
                       ${PCL_LIBRARIES}
                       ${G2O_TYPES_DATA}
                       ${G2O_CORE_LIBRARY}
@@ -166,15 +166,15 @@ target_link_libraries(${PROEJECT_NAME}_lib
                       ${G2O_TYPES_SLAM3D}
                       ${G2O_TYPES_SLAM3D_ADDONS}
                       )
-ament_target_dependencies(${PROEJECT_NAME}_lib ${DEPENDENCIES})                   
-rosidl_target_interfaces(${PROEJECT_NAME}_lib ${PROJECT_NAME} "rosidl_typesupport_cpp")
+ament_target_dependencies(s_graphs_lib ${DEPENDENCIES})                   
+rosidl_target_interfaces(s_graphs_lib ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(s_graphs_node
   apps/s_graphs_node.cpp
 )
 ament_target_dependencies(s_graphs_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_node
-  ${PROEJECT_NAME}_lib
+  s_graphs_lib
 )
 rosidl_target_interfaces(s_graphs_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
@@ -182,6 +182,9 @@ rosidl_target_interfaces(s_graphs_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 #############
 ## Install ##
 #############
+install(TARGETS 
+    s_graphs_lib
+    DESTINATION lib)
 
 install(TARGETS  
   s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node s_graphs_floor_plan_node s_graphs_node
@@ -221,10 +224,10 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(testPlane test/testPlane.cpp)
-  target_link_libraries(testPlane ${PROEJECT_NAME}_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+  target_link_libraries(testPlane s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
   ament_add_gtest(testRoom test/testRoom.cpp)
-  target_link_libraries(testRoom ${PROEJECT_NAME}_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+  target_link_libraries(testRoom s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
   install(TARGETS
     testPlane testRoom DESTINATION test/${PROJECT_NAME})
