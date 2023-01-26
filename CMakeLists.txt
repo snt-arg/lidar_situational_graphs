@@ -223,8 +223,11 @@ if(BUILD_TESTING)
   ament_add_gtest(testPlane test/testPlane.cpp)
   target_link_libraries(testPlane ${PROEJECT_NAME}_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
+  ament_add_gtest(testRoom test/testRoom.cpp)
+  target_link_libraries(testRoom ${PROEJECT_NAME}_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+
   install(TARGETS
-    testPlane DESTINATION test/${PROJECT_NAME})
+    testPlane testRoom DESTINATION test/${PROJECT_NAME})
 endif()
 
 ament_export_dependencies(rosidl_default_runtime)
