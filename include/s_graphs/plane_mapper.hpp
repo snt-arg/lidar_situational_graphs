@@ -130,6 +130,27 @@ class PlaneMapper {
                                    std::vector<VerticalPlanes>& y_vert_planes,
                                    std::vector<HorizontalPlanes>& hort_planes);
 
+  /**
+   * @brief
+   *
+   * @param plane_type
+   * @param keyframe
+   * @param det_plane
+   * @param cloud_seg_body
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param hort_planes
+   * @return
+   */
+  std::pair<int, int> associate_plane(
+      const int& plane_type,
+      const KeyFrame::Ptr& keyframe,
+      const g2o::Plane3D& det_plane,
+      const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+      const std::vector<VerticalPlanes>& x_vert_planes,
+      const std::vector<VerticalPlanes>& y_vert_planes,
+      const std::vector<HorizontalPlanes>& hort_planes);
+
  private:
   /**
    * @brief
@@ -192,27 +213,6 @@ class PlaneMapper {
                     std::vector<VerticalPlanes>& x_vert_planes,
                     std::vector<VerticalPlanes>& y_vert_planes,
                     std::vector<HorizontalPlanes>& hort_planes);
-
-  /**
-   * @brief
-   *
-   * @param plane_type
-   * @param keyframe
-   * @param det_plane
-   * @param cloud_seg_body
-   * @param x_vert_planes
-   * @param y_vert_planes
-   * @param hort_planes
-   * @return
-   */
-  std::pair<int, int> associate_plane(
-      const int& plane_type,
-      const KeyFrame::Ptr& keyframe,
-      const g2o::Plane3D& det_plane,
-      const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
-      const std::vector<HorizontalPlanes>& hort_planes);
 
   /**
    * @brief

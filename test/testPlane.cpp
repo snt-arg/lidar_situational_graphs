@@ -43,10 +43,10 @@ class TestPlane : public ::testing::Test {
  public:
   rclcpp::Node::SharedPtr node;
   std::shared_ptr<s_graphs::PlaneMapper> plane_mapper;
-  s_graphs::GraphSLAM graph_slam;
+  std::shared_ptr<s_graphs::PlaneUtils> plane_utils;
+  std::shared_ptr<s_graphs::GraphSLAM> graph_slam;
   Eigen::Isometry3d odom;
   s_graphs::KeyFrame::Ptr keyframe;
-  Eigen::Vector4d local_plane;
   g2o::Plane3D det_plane_map_frame;
   Eigen::Vector4d map_plane_vec;
   pcl::PointCloud<PointT>::Ptr cloud;
@@ -62,7 +62,9 @@ class TestPlane : public ::testing::Test {
     node->declare_parameter("plane_points_dist", 0.1);
     node->declare_parameter("min_plane_points", 100);
 
+    graph_slam = std::make_shared<s_graphs::GraphSLAM>();
     plane_mapper = std::make_shared<s_graphs::PlaneMapper>(node);
+    plane_utils = std::make_shared<s_graphs::PlaneUtils>();
     cloud = boost::make_shared<pcl::PointCloud<PointT>>();
   }
 
@@ -70,7 +72,8 @@ class TestPlane : public ::testing::Test {
     odom.setIdentity();
     keyframe =
         std::make_shared<s_graphs::KeyFrame>(rclcpp::Clock().now(), odom, 0.0, cloud);
-    keyframe->node = graph_slam.add_se3_node(odom);
+    keyframe->node = graph_slam->add_se3_node(odom);
+    Eigen::Vector4d local_plane;
     local_plane << 1, 0, 0, 10;
     g2o::Plane3D det_plane_body_frame(local_plane);
     det_plane_map_frame =
@@ -93,11 +96,45 @@ class TestPlane : public ::testing::Test {
     s_graphs::KeyFrame::Ptr keyframe(
         new s_graphs::KeyFrame(rclcpp::Clock().now(), odom, 0.0, cloud));
 
-    keyframe->node = graph_slam.add_se3_node(Eigen::Isometry3d::Identity());
+    keyframe->node = graph_slam->add_se3_node(Eigen::Isometry3d::Identity());
     x_vert_plane.keyframe_node_vec.push_back(keyframe->node);
     x_vert_planes.push_back(x_vert_plane);
     plane_mapper->convert_plane_points_to_map(
         x_vert_planes, y_vert_planes, hort_planes);
+  }
+
+  std::pair<int, int> testAssociatePlanes() {
+    g2o::Plane3D det_plane;
+    Eigen::Vector4d det_plane_coeffs;
+    det_plane_coeffs << 1, 0, 0, 9.9;
+    det_plane = det_plane_coeffs;
+
+    odom.setIdentity();
+    s_graphs::KeyFrame::Ptr keyframe(
+        new s_graphs::KeyFrame(rclcpp::Clock().now(), odom, 0.0, cloud));
+    keyframe->node = graph_slam->add_se3_node(Eigen::Isometry3d::Identity());
+
+    s_graphs::VerticalPlanes x_vert_plane;
+    x_vert_plane.id = 1;
+    Eigen::Vector4d local_plane;
+    local_plane << 1, 0, 0, 10;
+    g2o::Plane3D mapped_plane(local_plane);
+    x_vert_plane.plane = mapped_plane;
+    x_vert_plane.keyframe_node = keyframe->node;
+    x_vert_plane.cloud_seg_body = boost::make_shared<pcl::PointCloud<PointNormal>>();
+    x_vert_plane.cloud_seg_map = boost::make_shared<pcl::PointCloud<PointNormal>>();
+    x_vert_plane.keyframe_node_vec.push_back(keyframe->node);
+    x_vert_planes.push_back(x_vert_plane);
+
+    std::pair<int, int> matched_plane =
+        plane_mapper->associate_plane(s_graphs::PlaneUtils::plane_class::X_VERT_PLANE,
+                                      keyframe,
+                                      det_plane,
+                                      keyframe->cloud_seg_body,
+                                      x_vert_planes,
+                                      y_vert_planes,
+                                      hort_planes);
+    return matched_plane;
   }
 };
 
@@ -120,6 +157,12 @@ TEST_F(TestPlane, ConvertPlanePointsToMap) {
   EXPECT_EQ(x_vert_planes[0].cloud_seg_map->points[0].x, 1);
   EXPECT_EQ(x_vert_planes[0].cloud_seg_map->points[0].y, 2);
   EXPECT_EQ(x_vert_planes[0].cloud_seg_map->points[0].z, 3);
+}
+
+TEST_F(TestPlane, AssociatePlanes) {
+  std::pair<int, int> matched_plane = this->testAssociatePlanes();
+  EXPECT_EQ(matched_plane.first, 1);
+  EXPECT_EQ(matched_plane.second, 0);
 }
 
 int main(int argc, char** argv) {
