@@ -234,7 +234,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
       room_edge_plane_marker1.type = visualization_msgs::Marker::LINE_LIST;
       room_edge_plane_marker1.pose.orientation.w = 1.0;
       for(int j = 0; j < x_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_x1_id == x_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_x1_id == x_vert_planes_prior[j].id) {
           point2.x = x_vert_planes_prior[j].start_point.x();
           point2.y = room_pose.y();  // x_vert_planes_prior[j].start_point.y();
           point2.z = 1.0 + plane_h;
@@ -242,7 +242,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
         }
       }
       for(int j = 0; j < y_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_x1_id == y_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_x1_id == y_vert_planes_prior[j].id) {
           point2.x = room_pose.x();  // y_vert_planes_prior[j].start_point.x();
           point2.y = y_vert_planes_prior[j].start_point.y();
           point2.z = 1.0 + plane_h;
@@ -266,7 +266,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
       room_edge_plane_marker2.type = visualization_msgs::Marker::LINE_LIST;
       room_edge_plane_marker2.pose.orientation.w = 1.0;
       for(int j = 0; j < x_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_x2_id == x_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_x2_id == x_vert_planes_prior[j].id) {
           point3.x = x_vert_planes_prior[j].start_point.x();
           point3.y = room_pose.y();  // x_vert_planes_prior[j].start_point.y();
           point3.z = 1.0 + plane_h;
@@ -274,7 +274,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
         }
       }
       for(int j = 0; j < y_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_x2_id == y_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_x2_id == y_vert_planes_prior[j].id) {
           point3.x = room_pose.x();  // y_vert_planes_prior[j].start_point.x();
           point3.y = y_vert_planes_prior[j].start_point.y();
           point3.z = 1.0 + plane_h;
@@ -298,7 +298,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
       room_edge_plane_marker3.type = visualization_msgs::Marker::LINE_LIST;
       room_edge_plane_marker3.pose.orientation.w = 1.0;
       for(int j = 0; j < x_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_y1_id == x_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_y1_id == x_vert_planes_prior[j].id) {
           point4.x = x_vert_planes_prior[j].start_point.x();
           point4.y = room_pose.y();  // x_vert_planes_prior[j].start_point.y();
           point4.z = 1.0 + plane_h;
@@ -306,7 +306,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
         }
       }
       for(int j = 0; j < y_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_y1_id == y_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_y1_id == y_vert_planes_prior[j].id) {
           point4.x = room_pose.x();  // y_vert_planes_prior[j].start_point.x();
           point4.y = y_vert_planes_prior[j].start_point.y();
           point4.z = 1.0 + plane_h;
@@ -330,7 +330,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
       room_edge_plane_marker4.type = visualization_msgs::Marker::LINE_LIST;
       room_edge_plane_marker4.pose.orientation.w = 1.0;
       for(int j = 0; j < x_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_y2_id == x_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_y2_id == x_vert_planes_prior[j].id) {
           point5.x = x_vert_planes_prior[j].start_point.x();
           point5.y = room_pose.y();  // x_vert_planes_prior[j].start_point.y();
           point5.z = 1.0 + plane_h;
@@ -338,7 +338,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
         }
       }
       for(int j = 0; j < y_vert_planes_prior.size(); j++) {
-        if(rooms_vec_prior[i].plane_y2_id == y_vert_planes_prior[j].revit_id) {
+        if(rooms_vec_prior[i].plane_y2_id == y_vert_planes_prior[j].id) {
           point5.x = room_pose.x();  // y_vert_planes_prior[j].start_point.x();
           point5.y = y_vert_planes_prior[j].start_point.y();
           point5.z = 1.0 + plane_h;
