@@ -14,15 +14,15 @@
 - [About S-Graphs](#about-s-graphs)
   - [Architecture](#architecture)
 - [Installation](#installation)
-  - [Automated Installation](#automated-installation)
   - [Manual Installation](#manual-installation)
 - [Example on Datasets](#example-on-datasets)
   - [Real Dataset](#real-dataset)
   - [Virtual Dataset](#virtual-dataset)
-- [Using Docker](#using-docker)
+- [Unit Tests](#unit-tests-for-s-graphs)
+- [Docker](#docker-note-docker-still-uses-the-ros1-older-version-of-s-graphs)
   - [Running Datasets Using Docker](#running-datasets-using-docker)
-- [ROS Related](#ros-related)
-  - [Nodelets](#nodelets)
+- [ROS2 Related](#ros2-related)
+  - [Nodes](#nodes)
   - [Published TFs](#published-tfs)
   - [Services](#services)
   - [Parameters](#parameters)
@@ -269,7 +269,7 @@ The other 2 commands should be executed outside docker. Additionally, the `env` 
 
 ## ROS2 Related
 
-### Node
+### Nodes
 
 > s_graphs is composed of **3** main nodes.
 
@@ -338,7 +338,7 @@ The other 2 commands should be executed outside docker. Additionally, the `env` 
 
 ### Parameters
 
-All the configurable parameters are listed in _launch/s_graphs.launch_ as ros params.
+All the configurable parameters are listed in config folder as ros params.
 
 ### Published TFs
 
