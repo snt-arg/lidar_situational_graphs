@@ -63,14 +63,6 @@ repositories:
     type: git
     url: https://github.com/ethz-asl/voxblox.git
     version: master
-  s_graphs_utils/fast_gicp:
-    type: git
-    url: https://github.com/SMRT-AIST/fast_gicp.git
-    version: master
-  s_graphs_utils/ndt_omp:
-    type: git
-    url: https://github.com/koide3/ndt_omp.git
-    version: master
   s_graphs_utils/ros1_graph_manager_interface:
     type: git
     url: git@github.com:snt-arg/ros1_graph_manager_interface.git
