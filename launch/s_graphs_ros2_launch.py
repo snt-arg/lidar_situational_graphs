@@ -79,10 +79,73 @@ def launch_sgraphs(context, *args, **kwargs):
         ],
     )
 
+    map_keyframe_static_transform = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="map_keyframe_static_transform",
+        arguments=["0.0", "0.0", "7.0", "0.0", "0.0", "0.0", "map", "keyframes_layer"],
+        output="screen",
+    )
+
+    keyframe_wall_static_transform = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="keyframe_wall_static_transform",
+        arguments=[
+            "0.0",
+            "0.0",
+            "8.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "keyframes_layer",
+            "walls_layer",
+        ],
+        output="screen",
+    )
+
+    wall_room_static_transform = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="wall_room_static_transform",
+        arguments=[
+            "0.0",
+            "0.0",
+            "7.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "walls_layer",
+            "rooms_layer",
+        ],
+        output="screen",
+    )
+
+    room_floor_static_transform = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="room_floor_static_transform",
+        arguments=[
+            "0.0",
+            "0.0",
+            "5.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "rooms_layer",
+            "floors_layer",
+        ],
+        output="screen",
+    )
+
     return [
         prefiltering_cmd,
         scan_matching_cmd,
         room_segmentation_cmd,
         floor_plan_cmd,
         s_graphs_cmd,
+        map_keyframe_static_transform,
+        keyframe_wall_static_transform,
+        wall_room_static_transform,
+        room_floor_static_transform,
     ]

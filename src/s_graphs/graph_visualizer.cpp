@@ -39,6 +39,9 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node) {
   color_r = node->get_parameter("color_r").get_parameter_value().get<double>();
   color_g = node->get_parameter("color_g").get_parameter_value().get<double>();
   color_b = node->get_parameter("color_b").get_parameter_value().get<double>();
+
+  tf_buffer = std::make_unique<tf2_ros::Buffer>(node->get_clock());
+  tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 }
 
 GraphVisualizer::~GraphVisualizer() {}
@@ -64,13 +67,15 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   // markers.markers.resize(11);
 
   // node markers
-  double keyframe_h = 7.0;
-  double plane_h = 15;
   double wall_vertex_h = 18;
   rclcpp::Duration duration_planes = rclcpp::Duration::from_seconds(5);
+  std::string keyframes_layer_id = "keyframes_layer";
+  std::string walls_layer_id = "walls_layer";
+  std::string rooms_layer_id = "rooms_layer";
+  std::string floors_layer_id = "floors_layer";
 
   visualization_msgs::msg::Marker traj_marker;
-  traj_marker.header.frame_id = map_frame_id;
+  traj_marker.header.frame_id = keyframes_layer_id;
   traj_marker.header.stamp = stamp;
   traj_marker.ns = "nodes";
   traj_marker.id = markers.markers.size();
@@ -94,7 +99,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     Eigen::Vector3d pos = keyframes[i]->node->estimate().translation();
     traj_marker.points[i].x = pos.x();
     traj_marker.points[i].y = pos.y();
-    traj_marker.points[i].z = pos.z() + keyframe_h;
+    traj_marker.points[i].z = pos.z();
 
     double p = static_cast<double>(i) / keyframes.size();
     traj_marker.colors[i].r = 1.0 - p;
@@ -124,7 +129,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
   // keyframe edge markers
   visualization_msgs::msg::Marker traj_edge_marker;
-  traj_edge_marker.header.frame_id = map_frame_id;
+  traj_edge_marker.header.frame_id = keyframes_layer_id;
   traj_edge_marker.header.stamp = stamp;
   traj_edge_marker.ns = "keyframe_keyframe_edges";
   traj_edge_marker.id = markers.markers.size();
@@ -145,11 +150,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point point1, point2;
       point1.x = pt1.x();
       point1.y = pt1.y();
-      point1.z = pt1.z() + keyframe_h;
+      point1.z = pt1.z();
 
       point2.x = pt2.x();
       point2.y = pt2.y();
-      point2.z = pt2.z() + keyframe_h;
+      point2.z = pt2.z();
       traj_edge_marker.points.push_back(point1);
       traj_edge_marker.points.push_back(point2);
 
@@ -177,7 +182,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
   // keyframe plane edge markers
   visualization_msgs::msg::Marker traj_plane_edge_marker;
-  traj_plane_edge_marker.header.frame_id = map_frame_id;
+  traj_plane_edge_marker.header.frame_id = keyframes_layer_id;
   traj_plane_edge_marker.header.stamp = stamp;
   traj_plane_edge_marker.ns = "keyframe_plane_edges";
   traj_plane_edge_marker.id = markers.markers.size();
@@ -207,14 +212,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
           fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(2))) {
         for (auto x_plane : x_plane_snapshot) {
           if (x_plane.id == v2->id()) {
-            double x = 0, y = 0;
+            double x = 0, y = 0, z = 0;
             for (int p = 0; p < x_plane.cloud_seg_map->points.size(); ++p) {
               x += x_plane.cloud_seg_map->points[p].x;
               y += x_plane.cloud_seg_map->points[p].y;
+              z += x_plane.cloud_seg_map->points[p].z;
             }
             x = x / x_plane.cloud_seg_map->points.size();
             y = y / x_plane.cloud_seg_map->points.size();
-            pt2 = Eigen::Vector3d(x, y, 0.0);
+            z = z / x_plane.cloud_seg_map->points.size();
+            pt2 = Eigen::Vector3d(x, y, z);
           }
         }
         r = 0.0;
@@ -222,14 +229,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                  fabs(v2->estimate().normal()(1)) > fabs(v2->estimate().normal()(2))) {
         for (auto y_plane : y_plane_snapshot) {
           if (y_plane.id == v2->id()) {
-            double x = 0, y = 0;
+            double x = 0, y = 0, z = 0;
             for (int p = 0; p < y_plane.cloud_seg_map->points.size(); ++p) {
               x += y_plane.cloud_seg_map->points[p].x;
               y += y_plane.cloud_seg_map->points[p].y;
+              z += y_plane.cloud_seg_map->points[p].z;
             }
             x = x / y_plane.cloud_seg_map->points.size();
             y = y / y_plane.cloud_seg_map->points.size();
-            pt2 = Eigen::Vector3d(x, y, 0.0);
+            z = z / y_plane.cloud_seg_map->points.size();
+            pt2 = Eigen::Vector3d(x, y, z);
           }
         }
         b = 0.0;
@@ -237,14 +246,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                  fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(1))) {
         for (auto h_plane : hort_plane_snapshot) {
           if (h_plane.id == v2->id()) {
-            double x = 0, y = 0;
+            double x = 0, y = 0, z = 0;
             for (int p = 0; p < h_plane.cloud_seg_map->points.size(); ++p) {
               x += h_plane.cloud_seg_map->points[p].x;
               y += h_plane.cloud_seg_map->points[p].y;
+              z += h_plane.cloud_seg_map->points[p].z;
             }
             x = x / h_plane.cloud_seg_map->points.size();
             y = y / h_plane.cloud_seg_map->points.size();
-            pt2 = Eigen::Vector3d(x, y, 0.0);
+            z = z / h_plane.cloud_seg_map->points.size();
+            pt2 = Eigen::Vector3d(x, y, z);
           }
         }
         r = 0;
@@ -253,13 +264,22 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         continue;
 
       geometry_msgs::msg::Point point1, point2;
+      geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
       point1.x = pt1.x();
       point1.y = pt1.y();
-      point1.z = pt1.z() + keyframe_h;
+      point1.z = pt1.z();
 
-      point2.x = pt2.x();
-      point2.y = pt2.y();
-      point2.z = pt2.z() + plane_h;
+      point2_stamped.header.frame_id = walls_layer_id;
+      point2_stamped.point.x = pt2.x();
+      point2_stamped.point.y = pt2.y();
+      point2_stamped.point.z = pt2.z();
+      tf_buffer->transform(point2_stamped,
+                           point2_stamped_transformed,
+                           keyframes_layer_id,
+                           tf2::TimePointZero,
+                           walls_layer_id);
+
+      point2 = point2_stamped_transformed.point;
       traj_plane_edge_marker.points.push_back(point1);
       traj_plane_edge_marker.points.push_back(point2);
 
@@ -317,7 +337,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
   // sphere
   visualization_msgs::msg::Marker sphere_marker;
-  sphere_marker.header.frame_id = map_frame_id;
+  sphere_marker.header.frame_id = keyframes_layer_id;
   sphere_marker.header.stamp = stamp;
   sphere_marker.ns = "loop_close_radius";
   sphere_marker.id = markers.markers.size();
@@ -327,7 +347,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     Eigen::Vector3d pos = keyframes.back()->node->estimate().translation();
     sphere_marker.pose.position.x = pos.x();
     sphere_marker.pose.position.y = pos.y();
-    sphere_marker.pose.position.z = pos.z() + keyframe_h;
+    sphere_marker.pose.position.z = pos.z();
   }
   sphere_marker.pose.orientation.w = 1.0;
   sphere_marker.scale.x = sphere_marker.scale.y = sphere_marker.scale.z =
@@ -344,7 +364,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   x_vert_plane_marker.scale.y = 0.05;
   x_vert_plane_marker.scale.z = 0.05;
   // plane_marker.points.resize(vert_planes.size());
-  x_vert_plane_marker.header.frame_id = map_frame_id;
+  x_vert_plane_marker.header.frame_id = walls_layer_id;
   x_vert_plane_marker.header.stamp = stamp;
   x_vert_plane_marker.ns = "x_vert_planes";
   x_vert_plane_marker.id = markers.markers.size();
@@ -362,7 +382,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point point;
       point.x = x_plane_snapshot[i].cloud_seg_map->points[j].x;
       point.y = x_plane_snapshot[i].cloud_seg_map->points[j].y;
-      point.z = x_plane_snapshot[i].cloud_seg_map->points[j].z + plane_h;
+      point.z = x_plane_snapshot[i].cloud_seg_map->points[j].z;
       x_vert_plane_marker.points.push_back(point);
       x_vert_plane_marker.colors.push_back(color);
     }
@@ -376,7 +396,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   y_vert_plane_marker.scale.y = 0.05;
   y_vert_plane_marker.scale.z = 0.05;
   // plane_marker.points.resize(vert_planes.size());
-  y_vert_plane_marker.header.frame_id = map_frame_id;
+  y_vert_plane_marker.header.frame_id = walls_layer_id;
   y_vert_plane_marker.header.stamp = stamp;
   y_vert_plane_marker.ns = "y_vert_planes";
   y_vert_plane_marker.id = markers.markers.size();
@@ -394,7 +414,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point point;
       point.x = y_plane_snapshot[i].cloud_seg_map->points[j].x;
       point.y = y_plane_snapshot[i].cloud_seg_map->points[j].y;
-      point.z = y_plane_snapshot[i].cloud_seg_map->points[j].z + plane_h;
+      point.z = y_plane_snapshot[i].cloud_seg_map->points[j].z;
       y_vert_plane_marker.points.push_back(point);
       y_vert_plane_marker.colors.push_back(color);
     }
@@ -408,7 +428,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   hort_plane_marker.scale.y = 0.05;
   hort_plane_marker.scale.z = 0.05;
   // plane_marker.points.resize(vert_planes.size());
-  hort_plane_marker.header.frame_id = map_frame_id;
+  hort_plane_marker.header.frame_id = walls_layer_id;
   hort_plane_marker.header.stamp = stamp;
   hort_plane_marker.ns = "hort_planes";
   hort_plane_marker.id = markers.markers.size();
@@ -420,7 +440,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point point;
       point.x = hort_plane_snapshot[i].cloud_seg_map->points[j].x;
       point.y = hort_plane_snapshot[i].cloud_seg_map->points[j].y;
-      point.z = hort_plane_snapshot[i].cloud_seg_map->points[j].z + plane_h;
+      point.z = hort_plane_snapshot[i].cloud_seg_map->points[j].z;
       hort_plane_marker.points.push_back(point);
     }
     hort_plane_marker.color.r = 1;
@@ -429,11 +449,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   }
   markers.markers.push_back(hort_plane_marker);
 
-  float infinite_room_node_h = 22;
-  float infinite_room_edge_h = 21.5;
-  float infinite_room_point_h = plane_h;
   rclcpp::Duration duration_room = rclcpp::Duration::from_seconds(5);
-
   for (auto& single_x_infinite_room : x_infinite_room_snapshot) {
     single_x_infinite_room.sub_infinite_room = false;
   }
@@ -494,7 +510,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     corr_x_line_marker.pose.orientation.w = 1.0;
     if (!overlapped_infinite_room) {
       corr_x_line_marker.ns = "infinite_room_x_lines";
-      corr_x_line_marker.header.frame_id = map_frame_id;
+      corr_x_line_marker.header.frame_id = rooms_layer_id;
       corr_x_line_marker.header.stamp = stamp;
       corr_x_line_marker.id = markers.markers.size() + 1;
       corr_x_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -511,14 +527,14 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3;
     p1.x = x_infinite_room_snapshot[i].node->estimate()(0);
     p1.y = x_infinite_room_snapshot[i].node->estimate()(1);
-    p1.z = infinite_room_edge_h;
+    p1.z = 0;
 
     float min_dist_plane1 = 100;
     for (int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_plane1).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_plane1).cloud_seg_map->points[p].y;
-      p_tmp.z = infinite_room_point_h;
+      p_tmp.z = (*found_plane1).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -529,6 +545,21 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p2 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
+    point2_stamped.header.frame_id = walls_layer_id;
+    point2_stamped.point.x = p2.x;
+    point2_stamped.point.y = p2.y;
+    point2_stamped.point.z = p2.z;
+
+    // convert point p2 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point2_stamped,
+                         point2_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+
+    p2 = point2_stamped_transformed.point;
     corr_x_line_marker.points.push_back(p1);
     corr_x_line_marker.points.push_back(p2);
 
@@ -537,7 +568,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_plane2).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_plane2).cloud_seg_map->points[p].y;
-      p_tmp.z = infinite_room_point_h;
+      p_tmp.z = (*found_plane2).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -548,6 +579,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p3 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point3_stamped, point3_stamped_transformed;
+    point3_stamped.header.frame_id = walls_layer_id;
+    point3_stamped.point.x = p3.x;
+    point3_stamped.point.y = p3.y;
+    point3_stamped.point.z = p3.z;
+    // convert point p3 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point3_stamped,
+                         point3_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+
+    p3 = point3_stamped_transformed.point;
     corr_x_line_marker.points.push_back(p1);
     corr_x_line_marker.points.push_back(p3);
     markers.markers.push_back(corr_x_line_marker);
@@ -559,7 +604,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     infinite_room_pose_marker.scale.y = 0.5;
     infinite_room_pose_marker.scale.z = 0.5;
     // plane_marker.points.resize(vert_planes.size());
-    infinite_room_pose_marker.header.frame_id = map_frame_id;
+    infinite_room_pose_marker.header.frame_id = rooms_layer_id;
     infinite_room_pose_marker.header.stamp = stamp;
     if (!overlapped_infinite_room) {
       infinite_room_pose_marker.ns = "x_infinite_room";
@@ -572,7 +617,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
           x_infinite_room_snapshot[i].node->estimate()(0);
       infinite_room_pose_marker.pose.position.y =
           x_infinite_room_snapshot[i].node->estimate()(1);
-      infinite_room_pose_marker.pose.position.z = infinite_room_node_h;
+      infinite_room_pose_marker.pose.position.z = 0.0;
       infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
     } else
@@ -638,7 +683,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     corr_y_line_marker.pose.orientation.w = 1.0;
     if (!overlapped_infinite_room) {
       corr_y_line_marker.ns = "infinite_room_y_lines";
-      corr_y_line_marker.header.frame_id = map_frame_id;
+      corr_y_line_marker.header.frame_id = rooms_layer_id;
       corr_y_line_marker.header.stamp = stamp;
       corr_y_line_marker.id = markers.markers.size() + 1;
       corr_y_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -655,14 +700,14 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3;
     p1.x = y_infinite_room_snapshot[i].node->estimate()(0);
     p1.y = y_infinite_room_snapshot[i].node->estimate()(1);
-    p1.z = infinite_room_edge_h;
+    p1.z = 0;
 
     float min_dist_plane1 = 100;
     for (int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_plane1).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_plane1).cloud_seg_map->points[p].y;
-      p_tmp.z = infinite_room_point_h;
+      p_tmp.z = (*found_plane1).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -673,6 +718,21 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p2 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
+    point2_stamped.header.frame_id = walls_layer_id;
+    point2_stamped.point.x = p2.x;
+    point2_stamped.point.y = p2.y;
+    point2_stamped.point.z = p2.z;
+
+    // convert point p2 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point2_stamped,
+                         point2_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+
+    p2 = point2_stamped_transformed.point;
     corr_y_line_marker.points.push_back(p1);
     corr_y_line_marker.points.push_back(p2);
 
@@ -681,7 +741,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_plane2).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_plane2).cloud_seg_map->points[p].y;
-      p_tmp.z = infinite_room_point_h;
+      p_tmp.z = (*found_plane2).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -692,6 +752,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p3 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point3_stamped, point3_stamped_transformed;
+    point3_stamped.header.frame_id = walls_layer_id;
+    point3_stamped.point.x = p3.x;
+    point3_stamped.point.y = p3.y;
+    point3_stamped.point.z = p3.z;
+    // convert point p3 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point3_stamped,
+                         point3_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+
+    p3 = point3_stamped_transformed.point;
     corr_y_line_marker.points.push_back(p1);
     corr_y_line_marker.points.push_back(p3);
     markers.markers.push_back(corr_y_line_marker);
@@ -703,7 +777,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     infinite_room_pose_marker.scale.y = 0.5;
     infinite_room_pose_marker.scale.z = 0.5;
     // plane_marker.points.resize(vert_planes.size());
-    infinite_room_pose_marker.header.frame_id = map_frame_id;
+    infinite_room_pose_marker.header.frame_id = rooms_layer_id;
     infinite_room_pose_marker.header.stamp = stamp;
     if (!overlapped_infinite_room) {
       infinite_room_pose_marker.ns = "y_infinite_room";
@@ -717,7 +791,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
           y_infinite_room_snapshot[i].node->estimate()(0);
       infinite_room_pose_marker.pose.position.y =
           y_infinite_room_snapshot[i].node->estimate()(1);
-      infinite_room_pose_marker.pose.position.z = infinite_room_node_h;
+      infinite_room_pose_marker.pose.position.z = 0.0;
       infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
     } else
@@ -725,16 +799,13 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   }
 
   // room markers
-  float room_node_h = infinite_room_node_h;
-  float room_edge_h = infinite_room_edge_h;
-  float room_point_h = plane_h;
   visualization_msgs::msg::Marker room_marker;
   room_marker.pose.orientation.w = 1.0;
   room_marker.scale.x = 0.5;
   room_marker.scale.y = 0.5;
   room_marker.scale.z = 0.5;
   // plane_marker.points.resize(vert_planes.size());
-  room_marker.header.frame_id = map_frame_id;
+  room_marker.header.frame_id = rooms_layer_id;
   room_marker.header.stamp = stamp;
   room_marker.ns = "rooms";
   room_marker.id = markers.markers.size();
@@ -765,7 +836,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point point;
     point.x = room_snapshot[i].node->estimate()(0);
     point.y = room_snapshot[i].node->estimate()(1);
-    point.z = room_node_h;
+    point.z = 0.0;
     room_marker.points.push_back(point);
 
     // fill in the line marker
@@ -773,7 +844,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_line_marker.scale.x = 0.02;
     room_line_marker.pose.orientation.w = 1.0;
     room_line_marker.ns = "rooms_lines";
-    room_line_marker.header.frame_id = map_frame_id;
+    room_line_marker.header.frame_id = rooms_layer_id;
     room_line_marker.header.stamp = stamp;
     room_line_marker.id = markers.markers.size() + 1;
     room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -785,7 +856,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
     p1.x = room_snapshot[i].node->estimate()(0);
     p1.y = room_snapshot[i].node->estimate()(1);
-    p1.z = room_edge_h;
+    p1.z = 0.0;
 
     auto found_planex1 = std::find_if(
         x_plane_snapshot.begin(),
@@ -809,7 +880,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_planex1).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_planex1).cloud_seg_map->points[p].y;
-      p_tmp.z = room_point_h;
+      p_tmp.z = (*found_planex1).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -820,6 +891,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p2 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
+    point2_stamped.header.frame_id = walls_layer_id;
+    point2_stamped.point.x = p2.x;
+    point2_stamped.point.y = p2.y;
+    point2_stamped.point.z = p2.z;
+
+    // convert point p2 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point2_stamped,
+                         point2_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+    p2 = point2_stamped_transformed.point;
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p2);
 
@@ -828,7 +913,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_planex2).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_planex2).cloud_seg_map->points[p].y;
-      p_tmp.z = room_point_h;
+      p_tmp.z = (*found_planex2).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -839,6 +924,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p3 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point3_stamped, point3_stamped_transformed;
+    point3_stamped.header.frame_id = walls_layer_id;
+    point3_stamped.point.x = p3.x;
+    point3_stamped.point.y = p3.y;
+    point3_stamped.point.z = p3.z;
+
+    // convert point p2 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point3_stamped,
+                         point3_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+    p3 = point3_stamped_transformed.point;
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p3);
 
@@ -847,7 +946,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_planey1).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_planey1).cloud_seg_map->points[p].y;
-      p_tmp.z = room_point_h;
+      p_tmp.z = (*found_planey1).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -858,6 +957,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p4 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point4_stamped, point4_stamped_transformed;
+    point4_stamped.header.frame_id = walls_layer_id;
+    point4_stamped.point.x = p4.x;
+    point4_stamped.point.y = p4.y;
+    point4_stamped.point.z = p4.z;
+
+    // convert point p2 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point4_stamped,
+                         point4_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+    p4 = point4_stamped_transformed.point;
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p4);
 
@@ -866,7 +979,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point p_tmp;
       p_tmp.x = (*found_planey2).cloud_seg_map->points[p].x;
       p_tmp.y = (*found_planey2).cloud_seg_map->points[p].y;
-      p_tmp.z = room_point_h;
+      p_tmp.z = (*found_planey2).cloud_seg_map->points[p].z;
 
       float norm =
           std::sqrt(std::pow((p1.x - p_tmp.x), 2) + std::pow((p1.y - p_tmp.y), 2) +
@@ -877,6 +990,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p5 = p_tmp;
       }
     }
+
+    geometry_msgs::msg::PointStamped point5_stamped, point5_stamped_transformed;
+    point5_stamped.header.frame_id = walls_layer_id;
+    point5_stamped.point.x = p5.x;
+    point5_stamped.point.y = p5.y;
+    point5_stamped.point.z = p5.z;
+
+    // convert point p2 to rooms_layer_id currently it is map_frame_id
+    tf_buffer->transform(point5_stamped,
+                         point5_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+    p5 = point5_stamped_transformed.point;
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p5);
 
@@ -884,211 +1011,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   }
   markers.markers.push_back(room_marker);
 
-  // check for xinfinite_room neighbours and draw lines between them
-  visualization_msgs::msg::Marker x_corr_neighbour_line_marker;
-  x_corr_neighbour_line_marker.scale.x = 0.02;
-  x_corr_neighbour_line_marker.pose.orientation.w = 1.0;
-  x_corr_neighbour_line_marker.ns = "x_corr_neighbour_lines";
-  x_corr_neighbour_line_marker.header.frame_id = map_frame_id;
-  x_corr_neighbour_line_marker.header.stamp = stamp;
-  x_corr_neighbour_line_marker.id = markers.markers.size() + 1;
-  x_corr_neighbour_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-  x_corr_neighbour_line_marker.color.r = 1;
-  x_corr_neighbour_line_marker.color.g = 0;
-  x_corr_neighbour_line_marker.color.b = 0;
-  x_corr_neighbour_line_marker.color.a = 1.0;
-  x_corr_neighbour_line_marker.lifetime = duration_room;
-
-  for (const auto& x_infinite_room : x_infinite_room_snapshot) {
-    for (const auto& x_infinite_room_neighbour_id : x_infinite_room.neighbour_ids) {
-      geometry_msgs::msg::Point p1, p2;
-      p1.x = x_infinite_room.node->estimate()(0);
-      p1.y = x_infinite_room.node->estimate()(1);
-      p1.z = infinite_room_node_h;
-
-      auto found_neighbour_room =
-          std::find_if(room_snapshot.begin(),
-                       room_snapshot.end(),
-                       boost::bind(&Rooms::id, _1) == x_infinite_room_neighbour_id);
-      if (found_neighbour_room != room_snapshot.end()) {
-        p2.x = (*found_neighbour_room).node->estimate()(0);
-        p2.y = (*found_neighbour_room).node->estimate()(1);
-        p2.z = room_node_h;
-
-        x_corr_neighbour_line_marker.points.push_back(p1);
-        x_corr_neighbour_line_marker.points.push_back(p2);
-      } else {
-        auto found_neighbour_x_corr = std::find_if(
-            x_infinite_room_snapshot.begin(),
-            x_infinite_room_snapshot.end(),
-            boost::bind(&InfiniteRooms::id, _1) == x_infinite_room_neighbour_id);
-        if (found_neighbour_x_corr != x_infinite_room_snapshot.end()) {
-          p2.x = (*found_neighbour_x_corr).node->estimate()(0);
-          p2.y = (*found_neighbour_x_corr).node->estimate()(1);
-          p2.z = infinite_room_node_h;
-
-          x_corr_neighbour_line_marker.points.push_back(p1);
-          x_corr_neighbour_line_marker.points.push_back(p2);
-        } else {
-          auto found_neighbour_y_corr = std::find_if(
-              y_infinite_room_snapshot.begin(),
-              y_infinite_room_snapshot.end(),
-              boost::bind(&InfiniteRooms::id, _1) == x_infinite_room_neighbour_id);
-          if (found_neighbour_y_corr != y_infinite_room_snapshot.end()) {
-            p2.x = (*found_neighbour_y_corr).node->estimate()(0);
-            p2.y = (*found_neighbour_y_corr).node->estimate()(1);
-            p2.z = infinite_room_node_h;
-
-            x_corr_neighbour_line_marker.points.push_back(p1);
-            x_corr_neighbour_line_marker.points.push_back(p2);
-          } else
-            continue;
-        }
-      }
-    }
-  }
-  markers.markers.push_back(x_corr_neighbour_line_marker);
-
-  // check for yinfinite_room neighbours and draw lines between them
-  visualization_msgs::msg::Marker y_corr_neighbour_line_marker;
-  y_corr_neighbour_line_marker.scale.x = 0.02;
-  y_corr_neighbour_line_marker.pose.orientation.w = 1.0;
-  y_corr_neighbour_line_marker.ns = "y_corr_neighbour_lines";
-  y_corr_neighbour_line_marker.header.frame_id = map_frame_id;
-  y_corr_neighbour_line_marker.header.stamp = stamp;
-  y_corr_neighbour_line_marker.id = markers.markers.size() + 1;
-  y_corr_neighbour_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-  y_corr_neighbour_line_marker.color.r = 1;
-  y_corr_neighbour_line_marker.color.g = 0;
-  y_corr_neighbour_line_marker.color.b = 0;
-  y_corr_neighbour_line_marker.color.a = 1.0;
-  y_corr_neighbour_line_marker.lifetime = duration_room;
-
-  for (const auto& y_infinite_room : y_infinite_room_snapshot) {
-    for (const auto& y_infinite_room_neighbour_id : y_infinite_room.neighbour_ids) {
-      geometry_msgs::msg::Point p1, p2;
-      p1.x = y_infinite_room.node->estimate()(0);
-      p1.y = y_infinite_room.node->estimate()(1);
-      p1.z = infinite_room_node_h;
-
-      auto found_neighbour_room =
-          std::find_if(room_snapshot.begin(),
-                       room_snapshot.end(),
-                       boost::bind(&Rooms::id, _1) == y_infinite_room_neighbour_id);
-      if (found_neighbour_room != room_snapshot.end()) {
-        p2.x = (*found_neighbour_room).node->estimate()(0);
-        p2.y = (*found_neighbour_room).node->estimate()(1);
-        p2.z = room_node_h;
-
-        y_corr_neighbour_line_marker.points.push_back(p1);
-        y_corr_neighbour_line_marker.points.push_back(p2);
-      } else {
-        auto found_neighbour_x_corr = std::find_if(
-            x_infinite_room_snapshot.begin(),
-            x_infinite_room_snapshot.end(),
-            boost::bind(&InfiniteRooms::id, _1) == y_infinite_room_neighbour_id);
-        if (found_neighbour_x_corr != x_infinite_room_snapshot.end()) {
-          p2.x = (*found_neighbour_x_corr).node->estimate()(0);
-          p2.y = (*found_neighbour_x_corr).node->estimate()(1);
-          p2.z = infinite_room_node_h;
-
-          y_corr_neighbour_line_marker.points.push_back(p1);
-          y_corr_neighbour_line_marker.points.push_back(p2);
-        } else {
-          auto found_neighbour_y_corr = std::find_if(
-              y_infinite_room_snapshot.begin(),
-              y_infinite_room_snapshot.end(),
-              boost::bind(&InfiniteRooms::id, _1) == y_infinite_room_neighbour_id);
-          if (found_neighbour_y_corr != y_infinite_room_snapshot.end()) {
-            p2.x = (*found_neighbour_y_corr).node->estimate()(0);
-            p2.y = (*found_neighbour_y_corr).node->estimate()(1);
-            p2.z = infinite_room_node_h;
-
-            y_corr_neighbour_line_marker.points.push_back(p1);
-            y_corr_neighbour_line_marker.points.push_back(p2);
-          } else
-            continue;
-        }
-      }
-    }
-  }
-  markers.markers.push_back(y_corr_neighbour_line_marker);
-
-  // check the neighbours for the rooms and draw lines between them
-  visualization_msgs::msg::Marker room_neighbour_line_marker;
-  room_neighbour_line_marker.scale.x = 0.02;
-  room_neighbour_line_marker.pose.orientation.w = 1.0;
-  room_neighbour_line_marker.ns = "room_neighbour_lines";
-  room_neighbour_line_marker.header.frame_id = map_frame_id;
-  room_neighbour_line_marker.header.stamp = stamp;
-  room_neighbour_line_marker.id = markers.markers.size() + 1;
-  room_neighbour_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-  room_neighbour_line_marker.color.r = 1;
-  room_neighbour_line_marker.color.g = 0;
-  room_neighbour_line_marker.color.b = 0;
-  room_neighbour_line_marker.color.a = 1.0;
-  room_neighbour_line_marker.lifetime = duration_room;
-
-  for (const auto& room : room_snapshot) {
-    for (const auto& room_neighbour_id : room.neighbour_ids) {
-      geometry_msgs::msg::Point p1, p2;
-      p1.x = room.node->estimate()(0);
-      p1.y = room.node->estimate()(1);
-      p1.z = room_node_h;
-
-      auto found_neighbour_room =
-          std::find_if(room_snapshot.begin(),
-                       room_snapshot.end(),
-                       boost::bind(&Rooms::id, _1) == room_neighbour_id);
-      if (found_neighbour_room != room_snapshot.end()) {
-        p2.x = (*found_neighbour_room).node->estimate()(0);
-        p2.y = (*found_neighbour_room).node->estimate()(1);
-        p2.z = room_node_h;
-
-        room_neighbour_line_marker.points.push_back(p1);
-        room_neighbour_line_marker.points.push_back(p2);
-      } else {
-        auto found_neighbour_x_corr =
-            std::find_if(x_infinite_room_snapshot.begin(),
-                         x_infinite_room_snapshot.end(),
-                         boost::bind(&InfiniteRooms::id, _1) == room_neighbour_id);
-        if (found_neighbour_x_corr != x_infinite_room_snapshot.end()) {
-          p2.x = (*found_neighbour_x_corr).node->estimate()(0);
-          p2.y = (*found_neighbour_x_corr).node->estimate()(1);
-          p2.z = infinite_room_node_h;
-          room_neighbour_line_marker.points.push_back(p1);
-          room_neighbour_line_marker.points.push_back(p2);
-        } else {
-          auto found_neighbour_y_corr =
-              std::find_if(y_infinite_room_snapshot.begin(),
-                           y_infinite_room_snapshot.end(),
-                           boost::bind(&InfiniteRooms::id, _1) == room_neighbour_id);
-          if (found_neighbour_y_corr != y_infinite_room_snapshot.end()) {
-            p2.x = (*found_neighbour_y_corr).node->estimate()(0);
-            p2.y = (*found_neighbour_y_corr).node->estimate()(1);
-            p2.z = infinite_room_node_h;
-            room_neighbour_line_marker.points.push_back(p1);
-            room_neighbour_line_marker.points.push_back(p2);
-          } else
-            continue;
-        }
-      }
-    }
-  }
-  markers.markers.push_back(room_neighbour_line_marker);
-
   rclcpp::Duration duration_floor = rclcpp::Duration::from_seconds(5);
   for (const auto& floor : floors_vec) {
     if (floor.id != -1) {
-      float floor_node_h = 27;
-      float floor_edge_h = 26.5;
       visualization_msgs::msg::Marker floor_marker;
       floor_marker.pose.orientation.w = 1.0;
       floor_marker.scale.x = 0.5;
       floor_marker.scale.y = 0.5;
       floor_marker.scale.z = 0.5;
       // plane_marker.points.resize(vert_planes.size());
-      floor_marker.header.frame_id = map_frame_id;
+      floor_marker.header.frame_id = floors_layer_id;
       floor_marker.header.stamp = stamp;
       floor_marker.ns = "floors";
       floor_marker.id = markers.markers.size();
@@ -1101,14 +1033,14 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
       floor_marker.pose.position.x = floor.node->estimate()(0);
       floor_marker.pose.position.y = floor.node->estimate()(1);
-      floor_marker.pose.position.z = floor_node_h;
+      floor_marker.pose.position.z = 0.0;
 
       // create line markers between floor and rooms/infinite_rooms
       visualization_msgs::msg::Marker floor_line_marker;
       floor_line_marker.scale.x = 0.02;
       floor_line_marker.pose.orientation.w = 1.0;
       floor_line_marker.ns = "floor_lines";
-      floor_line_marker.header.frame_id = map_frame_id;
+      floor_line_marker.header.frame_id = floors_layer_id;
       floor_line_marker.header.stamp = stamp;
       floor_line_marker.id = markers.markers.size() + 1;
       floor_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
@@ -1123,10 +1055,24 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = floor_node_h;
+        p1.z = 0.0;
         p2.x = room.node->estimate()(0);
         p2.y = room.node->estimate()(1);
-        p2.z = room_node_h;
+        p2.z = 0.0;
+
+        geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
+        point2_stamped.header.frame_id = rooms_layer_id;
+        point2_stamped.point.x = p2.x;
+        point2_stamped.point.y = p2.y;
+        point2_stamped.point.z = p2.z;
+
+        // convert point p2 to rooms_layer_id currently it is map_frame_id
+        tf_buffer->transform(point2_stamped,
+                             point2_stamped_transformed,
+                             floors_layer_id,
+                             tf2::TimePointZero,
+                             rooms_layer_id);
+        p2 = point2_stamped_transformed.point;
         floor_line_marker.points.push_back(p1);
         floor_line_marker.points.push_back(p2);
       }
@@ -1135,10 +1081,24 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = floor_node_h;
+        p1.z = 0.0;
         p2.x = x_infinite_room.node->estimate()(0);
         p2.y = x_infinite_room.node->estimate()(1);
-        p2.z = infinite_room_node_h;
+        p2.z = 0.0;
+
+        geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
+        point2_stamped.header.frame_id = rooms_layer_id;
+        point2_stamped.point.x = p2.x;
+        point2_stamped.point.y = p2.y;
+        point2_stamped.point.z = p2.z;
+
+        // convert point p2 to rooms_layer_id currently it is map_frame_id
+        tf_buffer->transform(point2_stamped,
+                             point2_stamped_transformed,
+                             floors_layer_id,
+                             tf2::TimePointZero,
+                             rooms_layer_id);
+        p2 = point2_stamped_transformed.point;
         floor_line_marker.points.push_back(p1);
         floor_line_marker.points.push_back(p2);
       }
@@ -1147,10 +1107,24 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = floor_node_h;
+        p1.z = 0.0;
         p2.x = y_infinite_room.node->estimate()(0);
         p2.y = y_infinite_room.node->estimate()(1);
-        p2.z = infinite_room_node_h;
+        p2.z = 0.0;
+
+        geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
+        point2_stamped.header.frame_id = rooms_layer_id;
+        point2_stamped.point.x = p2.x;
+        point2_stamped.point.y = p2.y;
+        point2_stamped.point.z = p2.z;
+
+        // convert point p2 to rooms_layer_id currently it is map_frame_id
+        tf_buffer->transform(point2_stamped,
+                             point2_stamped_transformed,
+                             floors_layer_id,
+                             tf2::TimePointZero,
+                             rooms_layer_id);
+        p2 = point2_stamped_transformed.point;
         floor_line_marker.points.push_back(p1);
         floor_line_marker.points.push_back(p2);
       }
