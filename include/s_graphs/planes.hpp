@@ -48,6 +48,7 @@ public:
   int revit_id;                 // I.D in case of prior knowledge
   double length;                // length of Plane
   Eigen::Vector2d start_point;  // starting point of prior planes
+  std::string type;
 };
 
 /**
