@@ -18,7 +18,7 @@ GraphVisualizer::~GraphVisualizer() {}
  * @param stamp
  * @return
  */
-visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, std::vector<VerticalPlanes> x_vert_planes_prior, std::vector<VerticalPlanes> y_vert_planes_prior, std::vector<Rooms> rooms_vec_prior, bool got_trans_prior2map_, std::vector<DoorWays> doorways_vec_prior) {
+visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, std::vector<VerticalPlanes> x_vert_planes_prior, std::vector<VerticalPlanes> y_vert_planes_prior, std::vector<Rooms> rooms_vec_prior, std::vector<Rooms> rooms_vec, bool got_trans_prior2map_, std::vector<DoorWays> doorways_vec_prior) {
   visualization_msgs::MarkerArray prior_markers;
   double plane_h = 15;
   double wall_vertex_h = 18;
@@ -383,63 +383,115 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
     prior_door_marker.color.b = 0.0;
     prior_door_marker.color.a = 1.0;
     prior_markers.markers.push_back(prior_door_marker);
-
-    geometry_msgs::Point point1, point2, point3;
-    point1.x = door_pose.x();
-    point1.y = door_pose.y();
-    point1.z = prior_room_h;
-    visualization_msgs::Marker door_edge_plane_marker1;
-    door_edge_plane_marker1.header.frame_id = "prior_map";
-    door_edge_plane_marker1.header.stamp = stamp;
-    door_edge_plane_marker1.ns = "prior_door_edge_1";
-    door_edge_plane_marker1.id = prior_markers.markers.size();
-    door_edge_plane_marker1.type = visualization_msgs::Marker::LINE_LIST;
-    door_edge_plane_marker1.pose.orientation.w = 1.0;
-    for(int j = 0; j < rooms_vec_prior.size(); j++) {
-      std::cout << "rooms_vec_prior  " << rooms_vec_prior[j].prior_id << "    "
-                << "doorways_vec_prior  room1_id :  " << doorways_vec_prior[i].room1_id << std::endl;
-      if(rooms_vec_prior[j].prior_id == doorways_vec_prior[i].room1_id) {
-        Eigen::Vector2d room_pose = rooms_vec_prior[j].node->estimate();
-        point2.x = room_pose.x();
-        point2.y = room_pose.y();
-        point2.z = prior_room_h;
+    if(!got_trans_prior2map_) {
+      geometry_msgs::Point point1, point2, point3;
+      point1.x = door_pose.x();
+      point1.y = door_pose.y();
+      point1.z = prior_room_h;
+      visualization_msgs::Marker door_edge_plane_marker1;
+      door_edge_plane_marker1.header.frame_id = "prior_map";
+      door_edge_plane_marker1.header.stamp = stamp;
+      door_edge_plane_marker1.ns = "prior_door_edge_1";
+      door_edge_plane_marker1.id = prior_markers.markers.size();
+      door_edge_plane_marker1.type = visualization_msgs::Marker::LINE_LIST;
+      door_edge_plane_marker1.pose.orientation.w = 1.0;
+      for(int j = 0; j < rooms_vec_prior.size(); j++) {
+        if(rooms_vec_prior[j].prior_id == doorways_vec_prior[i].room1_id) {
+          Eigen::Vector2d room_pose = rooms_vec_prior[j].node->estimate();
+          point2.x = room_pose.x();
+          point2.y = room_pose.y();
+          point2.z = prior_room_h;
+        }
       }
+
+      door_edge_plane_marker1.scale.x = 0.03;
+      door_edge_plane_marker1.color.r = 255.0f;
+      door_edge_plane_marker1.color.g = 255.0f;
+      door_edge_plane_marker1.color.b = 255.0f;
+      door_edge_plane_marker1.color.a = 1.0;
+      door_edge_plane_marker1.points.push_back(point1);
+      door_edge_plane_marker1.points.push_back(point2);
+      prior_markers.markers.push_back(door_edge_plane_marker1);
+
+      visualization_msgs::Marker door_edge_plane_marker2;
+      door_edge_plane_marker2.header.frame_id = "prior_map";
+      door_edge_plane_marker2.header.stamp = stamp;
+      door_edge_plane_marker2.ns = "prior_door_edge_2";
+      door_edge_plane_marker2.id = prior_markers.markers.size();
+      door_edge_plane_marker2.type = visualization_msgs::Marker::LINE_LIST;
+      door_edge_plane_marker2.pose.orientation.w = 1.0;
+      for(int j = 0; j < rooms_vec_prior.size(); j++) {
+        if(rooms_vec_prior[j].prior_id == doorways_vec_prior[i].room2_id) {
+          Eigen::Vector2d room_pose = rooms_vec_prior[j].node->estimate();
+          point3.x = room_pose.x();
+          point3.y = room_pose.y();
+          point3.z = prior_room_h;
+        }
+      }
+      door_edge_plane_marker2.scale.x = 0.03;
+      door_edge_plane_marker2.color.r = 255.0f;
+      door_edge_plane_marker2.color.g = 255.0f;
+      door_edge_plane_marker2.color.b = 255.0f;
+      door_edge_plane_marker2.color.a = 1.0;
+      door_edge_plane_marker2.points.push_back(point1);
+      door_edge_plane_marker2.points.push_back(point3);
+      prior_markers.markers.push_back(door_edge_plane_marker2);
     }
 
-    door_edge_plane_marker1.scale.x = 0.03;
-    door_edge_plane_marker1.color.r = 255.0f;
-    door_edge_plane_marker1.color.g = 255.0f;
-    door_edge_plane_marker1.color.b = 255.0f;
-    door_edge_plane_marker1.color.a = 1.0;
-    door_edge_plane_marker1.points.push_back(point1);
-    door_edge_plane_marker1.points.push_back(point2);
-    prior_markers.markers.push_back(door_edge_plane_marker1);
-
-    visualization_msgs::Marker door_edge_plane_marker2;
-    door_edge_plane_marker2.header.frame_id = "prior_map";
-    door_edge_plane_marker2.header.stamp = stamp;
-    door_edge_plane_marker2.ns = "prior_door_edge_2";
-    door_edge_plane_marker2.id = prior_markers.markers.size();
-    door_edge_plane_marker2.type = visualization_msgs::Marker::LINE_LIST;
-    door_edge_plane_marker2.pose.orientation.w = 1.0;
-    for(int j = 0; j < rooms_vec_prior.size(); j++) {
-      std::cout << "rooms_vec_prior  " << rooms_vec_prior[j].prior_id << "    "
-                << "doorways_vec_prior  room2_id :  " << doorways_vec_prior[i].room2_id << std::endl;
-      if(rooms_vec_prior[j].prior_id == doorways_vec_prior[i].room2_id) {
-        Eigen::Vector2d room_pose = rooms_vec_prior[j].node->estimate();
-        point3.x = room_pose.x();
-        point3.y = room_pose.y();
-        point3.z = prior_room_h;
+    if(got_trans_prior2map_) {
+      geometry_msgs::Point point1, point2, point3;
+      point1.x = door_pose.x();
+      point1.y = door_pose.y();
+      point1.z = prior_room_h;
+      visualization_msgs::Marker door_edge_plane_marker1;
+      door_edge_plane_marker1.header.frame_id = "prior_map";
+      door_edge_plane_marker1.header.stamp = stamp;
+      door_edge_plane_marker1.ns = "prior_door_edge_1";
+      door_edge_plane_marker1.id = prior_markers.markers.size();
+      door_edge_plane_marker1.type = visualization_msgs::Marker::LINE_LIST;
+      door_edge_plane_marker1.pose.orientation.w = 1.0;
+      for(int j = 0; j < rooms_vec.size(); j++) {
+        if(rooms_vec[j].prior_id == doorways_vec_prior[i].room1_id) {
+          Eigen::Vector2d room_pose = rooms_vec[j].node->estimate();
+          point2.x = room_pose.x();
+          point2.y = room_pose.y();
+          point2.z = prior_room_h;
+        }
       }
+
+      door_edge_plane_marker1.scale.x = 0.03;
+      door_edge_plane_marker1.color.r = 255.0f;
+      door_edge_plane_marker1.color.g = 255.0f;
+      door_edge_plane_marker1.color.b = 255.0f;
+      door_edge_plane_marker1.color.a = 1.0;
+      door_edge_plane_marker1.points.push_back(point1);
+      door_edge_plane_marker1.points.push_back(point2);
+      prior_markers.markers.push_back(door_edge_plane_marker1);
+
+      visualization_msgs::Marker door_edge_plane_marker2;
+      door_edge_plane_marker2.header.frame_id = "prior_map";
+      door_edge_plane_marker2.header.stamp = stamp;
+      door_edge_plane_marker2.ns = "prior_door_edge_2";
+      door_edge_plane_marker2.id = prior_markers.markers.size();
+      door_edge_plane_marker2.type = visualization_msgs::Marker::LINE_LIST;
+      door_edge_plane_marker2.pose.orientation.w = 1.0;
+      for(int j = 0; j < rooms_vec.size(); j++) {
+        if(rooms_vec[j].prior_id == doorways_vec_prior[i].room2_id) {
+          Eigen::Vector2d room_pose = rooms_vec[j].node->estimate();
+          point3.x = room_pose.x();
+          point3.y = room_pose.y();
+          point3.z = prior_room_h;
+        }
+      }
+      door_edge_plane_marker2.scale.x = 0.03;
+      door_edge_plane_marker2.color.r = 255.0f;
+      door_edge_plane_marker2.color.g = 255.0f;
+      door_edge_plane_marker2.color.b = 255.0f;
+      door_edge_plane_marker2.color.a = 1.0;
+      door_edge_plane_marker2.points.push_back(point1);
+      door_edge_plane_marker2.points.push_back(point3);
+      prior_markers.markers.push_back(door_edge_plane_marker2);
     }
-    door_edge_plane_marker2.scale.x = 0.03;
-    door_edge_plane_marker2.color.r = 255.0f;
-    door_edge_plane_marker2.color.g = 255.0f;
-    door_edge_plane_marker2.color.b = 255.0f;
-    door_edge_plane_marker2.color.a = 1.0;
-    door_edge_plane_marker2.points.push_back(point1);
-    door_edge_plane_marker2.points.push_back(point3);
-    prior_markers.markers.push_back(door_edge_plane_marker2);
   }
   return prior_markers;
 }
