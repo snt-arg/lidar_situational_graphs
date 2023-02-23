@@ -104,14 +104,11 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
       wall_center_marker.header.frame_id = "prior_map";
       wall_center_marker.header.stamp = stamp;
       wall_center_marker.id = prior_markers.markers.size() + 1;
-      wall_center_marker.type = visualization_msgs::Marker::SPHERE;
-      std_msgs::ColorRGBA color;
-      color.r = rand() % 256;
-      color.b = rand() % 256;
-      color.g = rand() % 256;
-      wall_center_marker.color.r = color.r / 255;
-      wall_center_marker.color.g = color.g / 255;
-      wall_center_marker.color.b = color.b / 255;
+      wall_center_marker.type = visualization_msgs::Marker::CUBE;
+
+      wall_center_marker.color.r = 229 / 255.0;
+      wall_center_marker.color.g = 170 / 255.0;
+      wall_center_marker.color.b = 112 / 255.0;
       wall_center_marker.color.a = 1.0;
       wall_center_marker.scale.x = 0.3;
       wall_center_marker.scale.y = 0.3;
@@ -156,9 +153,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
       }
       wall_edge_plane_marker.points.push_back(point1);
       wall_edge_plane_marker.points.push_back(point2);
-      wall_edge_plane_marker.color.r = 255.0f;
-      wall_edge_plane_marker.color.g = 255.0f;
-      wall_edge_plane_marker.color.b = 255.0f;
+      wall_edge_plane_marker.color.r = 0.0;
+      wall_edge_plane_marker.color.g = 0.0;
+      wall_edge_plane_marker.color.b = 0.0;
       wall_edge_plane_marker.color.a = 1.0;
       prior_markers.markers.push_back(wall_edge_plane_marker);
       visualization_msgs::Marker wall_edge_plane_marker_2;
@@ -184,10 +181,10 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
           break;
         }
       }
-      wall_edge_plane_marker_2.scale.x = 0.03;
-      wall_edge_plane_marker_2.color.r = 255.0f;
-      wall_edge_plane_marker_2.color.g = 255.0f;
-      wall_edge_plane_marker_2.color.b = 255.0f;
+      wall_edge_plane_marker_2.scale.x = 0.02;
+      wall_edge_plane_marker_2.color.r = 0.0;
+      wall_edge_plane_marker_2.color.g = 0.0;
+      wall_edge_plane_marker_2.color.b = 0.0;
       wall_edge_plane_marker_2.color.a = 1.0;
       wall_edge_plane_marker_2.points.push_back(point1);
       wall_edge_plane_marker_2.points.push_back(point3);
@@ -217,9 +214,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
       prior_room_marker.scale.y = 0.5;
       prior_room_marker.scale.x = 0.5;
       prior_room_marker.scale.z = 0.5;
-      prior_room_marker.color.r = 0.0;
-      prior_room_marker.color.g = 0.0;
-      prior_room_marker.color.b = 1.0;
+      prior_room_marker.color.r = 1.0;
+      prior_room_marker.color.g = 0.07;
+      prior_room_marker.color.b = 0.57;
       prior_room_marker.color.a = 1.0;
       prior_markers.markers.push_back(prior_room_marker);
 
@@ -251,8 +248,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
           break;
         }
       }
-      room_edge_plane_marker1.scale.x = 0.03;
-      room_edge_plane_marker1.color.r = 1.0;
+      room_edge_plane_marker1.scale.x = 0.01;
+      room_edge_plane_marker1.color.r = 0.0;
       room_edge_plane_marker1.color.g = 0.0;
       room_edge_plane_marker1.color.b = 0.0;
       room_edge_plane_marker1.color.a = 1.0;
@@ -283,8 +280,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
           break;
         }
       }
-      room_edge_plane_marker2.scale.x = 0.03;
-      room_edge_plane_marker2.color.r = 1.0;
+      room_edge_plane_marker2.scale.x = 0.01;
+      room_edge_plane_marker2.color.r = 0.0;
       room_edge_plane_marker2.color.g = 0.0;
       room_edge_plane_marker2.color.b = 0.0;
       room_edge_plane_marker2.color.a = 1.0;
@@ -315,8 +312,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
           break;
         }
       }
-      room_edge_plane_marker3.scale.x = 0.03;
-      room_edge_plane_marker3.color.r = 1.0;
+      room_edge_plane_marker3.scale.x = 0.01;
+      room_edge_plane_marker3.color.r = 0.0;
       room_edge_plane_marker3.color.g = 0.0;
       room_edge_plane_marker3.color.b = 0.0;
       room_edge_plane_marker3.color.a = 1.0;
@@ -347,8 +344,8 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
           break;
         }
       }
-      room_edge_plane_marker4.scale.x = 0.03;
-      room_edge_plane_marker4.color.r = 1.0;
+      room_edge_plane_marker4.scale.x = 0.01;
+      room_edge_plane_marker4.color.r = 0.0;
       room_edge_plane_marker4.color.g = 0.0;
       room_edge_plane_marker4.color.b = 0.0;
       room_edge_plane_marker4.color.a = 1.0;
@@ -375,12 +372,12 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
     prior_door_marker.pose.orientation.z = 0.0;
     prior_door_marker.pose.orientation.w = 1;
 
-    prior_door_marker.scale.y = 0.1;
-    prior_door_marker.scale.x = 1.0;
-    prior_door_marker.scale.z = 1.0;
-    prior_door_marker.color.r = 1.0;
-    prior_door_marker.color.g = 0.0;
-    prior_door_marker.color.b = 0.0;
+    prior_door_marker.scale.y = 0.08;
+    prior_door_marker.scale.x = 0.5;
+    prior_door_marker.scale.z = 0.5;
+    prior_door_marker.color.r = 193 / 255.0;
+    prior_door_marker.color.g = 154 / 255.0;
+    prior_door_marker.color.b = 107 / 255.0;
     prior_door_marker.color.a = 1.0;
     prior_markers.markers.push_back(prior_door_marker);
     if(!got_trans_prior2map_) {
@@ -404,10 +401,10 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
         }
       }
 
-      door_edge_plane_marker1.scale.x = 0.03;
-      door_edge_plane_marker1.color.r = 255.0f;
-      door_edge_plane_marker1.color.g = 255.0f;
-      door_edge_plane_marker1.color.b = 255.0f;
+      door_edge_plane_marker1.scale.x = 0.02;
+      door_edge_plane_marker1.color.r = 0.0;
+      door_edge_plane_marker1.color.g = 0.0;
+      door_edge_plane_marker1.color.b = 0.0;
       door_edge_plane_marker1.color.a = 1.0;
       door_edge_plane_marker1.points.push_back(point1);
       door_edge_plane_marker1.points.push_back(point2);
@@ -428,10 +425,10 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
           point3.z = prior_room_h;
         }
       }
-      door_edge_plane_marker2.scale.x = 0.03;
-      door_edge_plane_marker2.color.r = 255.0f;
-      door_edge_plane_marker2.color.g = 255.0f;
-      door_edge_plane_marker2.color.b = 255.0f;
+      door_edge_plane_marker2.scale.x = 0.02;
+      door_edge_plane_marker2.color.r = 0.0;
+      door_edge_plane_marker2.color.g = 0.0;
+      door_edge_plane_marker2.color.b = 0.0;
       door_edge_plane_marker2.color.a = 1.0;
       door_edge_plane_marker2.points.push_back(point1);
       door_edge_plane_marker2.points.push_back(point3);
@@ -459,10 +456,10 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
         }
       }
 
-      door_edge_plane_marker1.scale.x = 0.03;
-      door_edge_plane_marker1.color.r = 255.0f;
-      door_edge_plane_marker1.color.g = 255.0f;
-      door_edge_plane_marker1.color.b = 255.0f;
+      door_edge_plane_marker1.scale.x = 0.02;
+      door_edge_plane_marker1.color.r = 0.0;
+      door_edge_plane_marker1.color.g = 0.0;
+      door_edge_plane_marker1.color.b = 0.0;
       door_edge_plane_marker1.color.a = 1.0;
       door_edge_plane_marker1.points.push_back(point1);
       door_edge_plane_marker1.points.push_back(point2);
@@ -483,10 +480,10 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
           point3.z = prior_room_h;
         }
       }
-      door_edge_plane_marker2.scale.x = 0.03;
-      door_edge_plane_marker2.color.r = 255.0f;
-      door_edge_plane_marker2.color.g = 255.0f;
-      door_edge_plane_marker2.color.b = 255.0f;
+      door_edge_plane_marker2.scale.x = 0.02;
+      door_edge_plane_marker2.color.r = 0.0;
+      door_edge_plane_marker2.color.g = 0.0;
+      door_edge_plane_marker2.color.b = 0.0;
       door_edge_plane_marker2.color.a = 1.0;
       door_edge_plane_marker2.points.push_back(point1);
       door_edge_plane_marker2.points.push_back(point3);
