@@ -9,7 +9,7 @@ RoomAnalyzer::RoomAnalyzer(const ros::NodeHandle& private_nh, std::shared_ptr<Pl
   plane_utils = plane_utils_ptr;
   cloud_clusters.clear();
   subgraphs.clear();
-  vertex_neigh_thres = private_nh.param<int>("vertex_neigh_thres", 2);
+  vertex_neigh_thres = private_nh.param<int>("vertex_neigh_thres", 1);
 }
 
 RoomAnalyzer::~RoomAnalyzer() {
@@ -679,7 +679,7 @@ void RoomAnalyzer::downsample_cloud_data(pcl::PointCloud<pcl::PointXYZRGB>::Ptr&
 
 int RoomAnalyzer::find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, const s_graphs::PlaneData& plane, pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster) {
   int num_neighbours = 0;
-  double point_hull_dist_thres = 1.0;
+  double point_hull_dist_thres = 1.5;
 
   for(int i = 0; i < cloud_hull->points.size(); ++i) {
     double min_point_hull_dist = 1000;
