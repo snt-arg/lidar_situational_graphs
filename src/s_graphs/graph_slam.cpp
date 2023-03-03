@@ -102,7 +102,7 @@ namespace s_graphs {
 /**
  * @brief constructor
  */
-GraphSLAM::GraphSLAM(const std::string& solver_type) {
+GraphSLAM::GraphSLAM(const std::string& solver_type, bool save_time) {
   graph.reset(new g2o::SparseOptimizer());
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
 
@@ -128,6 +128,13 @@ GraphSLAM::GraphSLAM(const std::string& solver_type) {
   nbr_of_vertices = nbr_of_edges = 0;
   timing_counter = 0;
   sum_prev_timings = 0.0;
+
+  save_compute_time = save_time;
+  if (save_compute_time) {
+    time_recorder.open("/tmp/computation_time.txt");
+    time_recorder << "#time \n";
+    time_recorder.close();
+  }
 }
 
 /**
@@ -819,9 +826,16 @@ int GraphSLAM::optimize(int num_iterations) {
             << std::endl;
   timing_counter++;
   sum_prev_timings += (t2 - t1).seconds();
-  std::cout << "Avg Computation Time: "
+  std::cout << "avg Computation Time: "
             << boost::format("%.3f") % (sum_prev_timings / timing_counter) << "[sec]"
             << std::endl;
+
+  if (save_compute_time) {
+    time_recorder.open("/tmp/computation_time.txt",
+                       std::ofstream::out | std::ofstream::app);
+    time_recorder << std::to_string((t2 - t1).seconds()) + " \n";
+    time_recorder.close();
+  }
 
   if (std::isnan(graph->chi2())) {
     throw std::invalid_argument("GRAPH RETURNED A NAN...STOPPING THE EXPERIMENT");

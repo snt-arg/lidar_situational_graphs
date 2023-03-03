@@ -326,6 +326,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("color_r", 0.0);
     this->declare_parameter("color_g", 0.0);
     this->declare_parameter("color_b", 0.0);
+    this->declare_parameter("save_timings", false);
 
     this->declare_parameter("max_keyframes_per_update", 10);
     this->declare_parameter("gps_time_offset", 10);
@@ -406,9 +407,9 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void init_subclass() {
-    graph_slam = std::make_shared<GraphSLAM>(this->get_parameter("g2o_solver_type")
-                                                 .get_parameter_value()
-                                                 .get<std::string>());
+    graph_slam = std::make_shared<GraphSLAM>(
+        this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>(),
+        this->get_parameter("save_timings").get_parameter_value().get<bool>());
     keyframe_updater = std::make_unique<KeyframeUpdater>(shared_from_this());
     plane_analyzer = std::make_unique<PlaneAnalyzer>(shared_from_this());
     loop_detector = std::make_unique<LoopDetector>(shared_from_this());
