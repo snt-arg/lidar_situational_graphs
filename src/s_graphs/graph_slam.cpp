@@ -126,6 +126,8 @@ GraphSLAM::GraphSLAM(const std::string& solver_type) {
 
   robust_kernel_factory = g2o::RobustKernelFactory::instance();
   nbr_of_vertices = nbr_of_edges = 0;
+  timing_counter = 0;
+  sum_prev_timings = 0.0;
 }
 
 /**
@@ -814,6 +816,11 @@ int GraphSLAM::optimize(int num_iterations) {
   std::cout << "iterations: " << iterations << " / " << num_iterations << std::endl;
   std::cout << "chi2: (before)" << chi2 << " -> (after)" << graph->chi2() << std::endl;
   std::cout << "time: " << boost::format("%.3f") % (t2 - t1).seconds() << "[sec]"
+            << std::endl;
+  timing_counter++;
+  sum_prev_timings += (t2 - t1).seconds();
+  std::cout << "Avg Computation Time: "
+            << boost::format("%.3f") % (sum_prev_timings / timing_counter) << "[sec]"
             << std::endl;
 
   if (std::isnan(graph->chi2())) {

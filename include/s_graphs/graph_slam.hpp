@@ -749,6 +749,8 @@ class GraphSLAM {
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
   int nbr_of_vertices;
   int nbr_of_edges;
+  int timing_counter;
+  double sum_prev_timings;
 };
 
 }  // namespace s_graphs
