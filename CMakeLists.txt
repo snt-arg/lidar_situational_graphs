@@ -200,10 +200,10 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-ament_python_install_package(src/${PROJECT_NAME})
+ament_python_install_package(${PROJECT_NAME})
 install(
   PROGRAMS
-    src/${PROJECT_NAME}/map2odom_publisher.py
+    ${PROJECT_NAME}/map2odom_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

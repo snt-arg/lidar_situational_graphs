@@ -34,11 +34,19 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 namespace s_graphs {
 
 GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node) {
+  node_ptr_ = node.get();
+
   map_frame_id =
       node->get_parameter("map_frame_id").get_parameter_value().get<std::string>();
   color_r = node->get_parameter("color_r").get_parameter_value().get<double>();
   color_g = node->get_parameter("color_g").get_parameter_value().get<double>();
   color_b = node->get_parameter("color_b").get_parameter_value().get<double>();
+
+  std::string ns = node_ptr_->get_namespace();
+  if (ns.length()) {
+    std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
+    map_frame_id = ns_prefix + "/" + map_frame_id;
+  }
 
   tf_buffer = std::make_unique<tf2_ros::Buffer>(node->get_clock());
   tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -69,10 +77,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   // node markers
   double wall_vertex_h = 18;
   rclcpp::Duration duration_planes = rclcpp::Duration::from_seconds(5);
+
   std::string keyframes_layer_id = "keyframes_layer";
   std::string walls_layer_id = "walls_layer";
   std::string rooms_layer_id = "rooms_layer";
   std::string floors_layer_id = "floors_layer";
+
+  std::string ns = node_ptr_->get_namespace();
+  if (ns.length()) {
+    std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
+    keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
+    walls_layer_id = ns_prefix + "/" + walls_layer_id;
+    rooms_layer_id = ns_prefix + "/" + rooms_layer_id;
+    floors_layer_id = ns_prefix + "/" + floors_layer_id;
+  }
 
   visualization_msgs::msg::Marker traj_marker;
   traj_marker.header.frame_id = keyframes_layer_id;

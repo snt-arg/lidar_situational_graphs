@@ -44,12 +44,20 @@ PlaneAnalyzer::PlaneAnalyzer(rclcpp::Node::SharedPtr node) {
       node->get_parameter("use_euclidean_filter").get_parameter_value().get<bool>();
   use_shadow_filter =
       node->get_parameter("use_shadow_filter").get_parameter_value().get<bool>();
+
   plane_extraction_frame = node->get_parameter("plane_extraction_frame_id")
                                .get_parameter_value()
                                .get<std::string>();
   plane_visualization_frame = node->get_parameter("plane_visualization_frame_id")
                                   .get_parameter_value()
                                   .get<std::string>();
+
+  std::string ns = node->get_namespace();
+  if (ns.length()) {
+    std::string ns_prefix = std::string(node->get_namespace()).substr(1);
+    plane_extraction_frame = ns_prefix + "/" + plane_extraction_frame;
+    plane_visualization_frame = ns_prefix + "/" + plane_visualization_frame;
+  }
 
   init_ros(node);
 }
