@@ -93,7 +93,7 @@ class GraphSLAM {
    *
    * @param solver_type Default value is lm_var
    */
-  GraphSLAM(const std::string& solver_type = "lm_var");
+  GraphSLAM(const std::string& solver_type = "lm_var", bool save_time = false);
   virtual ~GraphSLAM();
 
   /**
@@ -749,6 +749,10 @@ class GraphSLAM {
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
   int nbr_of_vertices;
   int nbr_of_edges;
+  int timing_counter;
+  double sum_prev_timings;
+  bool save_compute_time;
+  std::ofstream time_recorder;
 };
 
 }  // namespace s_graphs
