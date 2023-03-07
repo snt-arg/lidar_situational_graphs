@@ -32,6 +32,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef ROS_UTILS_HPP
 #define ROS_UTILS_HPP
 
+#include <pcl/point_cloud.h>
+
 #include <Eigen/Dense>
 
 #include "geometry_msgs/msg/pose.hpp"
@@ -39,6 +41,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "s_graphs/keyframe.hpp"
 
 namespace s_graphs {
 
@@ -184,6 +187,12 @@ static Eigen::Isometry3d odom2isometry(
   isometry.linear() = quat.toRotationMatrix();
   isometry.translation() = Eigen::Vector3d(position.x, position.y, position.z);
   return isometry;
+}
+
+static KeyFrame keyframe2msg() {
+  pcl::PointCloud<pcl::PointXYZI>::ConstPtr cloud;
+  KeyFrame keyframe(rclcpp::Time(0), Eigen::Isometry3d::Identity(), 0.0, cloud);
+  return keyframe;
 }
 
 }  // namespace s_graphs
