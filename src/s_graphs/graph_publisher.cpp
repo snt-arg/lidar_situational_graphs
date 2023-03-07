@@ -27,7 +27,11 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
+#include <pcl_conversions/pcl_conversions.h>
+
 #include <s_graphs/graph_publisher.hpp>
+
+#include "s_graphs/ros_utils.hpp"
 
 GraphPublisher::GraphPublisher() {}
 
@@ -371,3 +375,21 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
   nodes_vec.clear();
   return graph_msg;
 }
+
+graph_manager_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
+    const g2o::SparseOptimizer* local_graph,
+    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+  graph_manager_msgs::msg::GraphKeyframes msg;
+  msg.keyframes.reserve(keyframes.size());
+  for (auto& keyframe : keyframes) {
+    graph_manager_msgs::msg::Keyframe keyframe_msg;
+    keyframe_msg.id = keyframe->id();
+    keyframe_msg.header.stamp = keyframe->stamp;
+    keyframe_msg.pose = s_graphs::isometry2pose(keyframe->estimate());
+    pcl::toROSMsg(*keyframe->cloud, keyframe_msg.pointcloud);
+    msg.keyframes.emplace_back(keyframe_msg);
+  }
+
+  return msg;
+};
+

@@ -139,6 +139,10 @@ target_link_libraries(s_graphs_scan_matching_odometry_node
 )
 rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
+
+
+
+
 add_library(s_graphs_lib  
     src/s_graphs/plane_analyzer.cpp
     src/s_graphs/graph_slam.cpp
@@ -166,8 +170,21 @@ target_link_libraries(s_graphs_lib
                       ${G2O_TYPES_SLAM3D}
                       ${G2O_TYPES_SLAM3D_ADDONS}
                       )
+
+target_include_directories(s_graphs_lib
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
 ament_target_dependencies(s_graphs_lib ${DEPENDENCIES})                   
+
 rosidl_target_interfaces(s_graphs_lib ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+ament_export_targets(export_s_graph_lib HAS_LIBRARY_TARGET)
+ament_export_dependencies(${DEPENDENCIES})
+ament_export_include_directories(include)
+ament_export_libraries(s_graphs_lib)
+
 
 add_executable(s_graphs_node
   apps/s_graphs_node.cpp
@@ -182,17 +199,24 @@ rosidl_target_interfaces(s_graphs_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 #############
 ## Install ##
 #############
-install(TARGETS 
-    s_graphs_lib
-    DESTINATION lib)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+install(
+  TARGETS s_graphs_lib
+  EXPORT export_s_graph_lib
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
 
 install(TARGETS  
   s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node s_graphs_floor_plan_node s_graphs_node
   DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}
-  DESTINATION include
 )
 
 install(

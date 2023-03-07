@@ -83,6 +83,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "graph_manager_msgs/msg/attribute.hpp"
 #include "graph_manager_msgs/msg/edge.hpp"
 #include "graph_manager_msgs/msg/graph.hpp"
+#include "graph_manager_msgs/msg/graph_keyframes.hpp"
 #include "graph_manager_msgs/msg/node.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -109,6 +110,10 @@ class GraphPublisher {
       const std::vector<s_graphs::Rooms>& rooms_vec,
       const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
+
+  graph_manager_msgs::msg::GraphKeyframes publish_graph_keyframes(
+      const g2o::SparseOptimizer* local_graph,
+      const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 
  private:
 };
