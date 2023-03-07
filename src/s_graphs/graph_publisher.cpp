@@ -382,14 +382,8 @@ graph_manager_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
   graph_manager_msgs::msg::GraphKeyframes msg;
   msg.keyframes.reserve(keyframes.size());
   for (auto& keyframe : keyframes) {
-    graph_manager_msgs::msg::Keyframe keyframe_msg;
-    keyframe_msg.id = keyframe->id();
-    keyframe_msg.header.stamp = keyframe->stamp;
-    keyframe_msg.pose = s_graphs::isometry2pose(keyframe->estimate());
-    pcl::toROSMsg(*keyframe->cloud, keyframe_msg.pointcloud);
-    msg.keyframes.emplace_back(keyframe_msg);
+    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));
   }
-
   return msg;
 };
 
