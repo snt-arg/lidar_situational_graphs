@@ -31,6 +31,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "s_graphs/ros_utils.hpp"
 
+#include "rclcpp/logger.hpp"
+
 namespace s_graphs {
 
 /**
@@ -181,10 +183,11 @@ KeyFrame ROS2Keyframe(const graph_manager_msgs::msg::Keyframe& msg) {
   pcl::fromROSMsg(msg.pointcloud, *cloud);
 
   // TODO: add_accumulated_distance
-  KeyFrame keyframe(msg.header.stamp, pose2isometry(msg.pose), 0.0, cloud);
+  auto isometry = pose2isometry(msg.pose);
+  KeyFrame keyframe(msg.header.stamp, isometry, 0.0, cloud);
   keyframe.node = new g2o::VertexSE3();
-  // TODO: Check this
   keyframe.node->setId(msg.id);
+  keyframe.node->setEstimate(isometry);
   return keyframe;
 }
 
