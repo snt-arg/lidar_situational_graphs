@@ -151,6 +151,21 @@ class LoopDetector {
     return detected_loops;
   }
 
+  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes,
+                                const std::vector<KeyFrame::Ptr>& new_keyframes,
+                                s_graphs::GraphSLAM& graph_slam) {
+    std::vector<Loop::Ptr> detected_loops;
+    for (const auto& new_keyframe : new_keyframes) {
+      auto candidates = find_candidates(keyframes, new_keyframe);
+      auto loop = matching(candidates, new_keyframe, graph_slam);
+      if (loop) {
+        detected_loops.push_back(loop);
+      }
+    }
+
+    return detected_loops;
+  }
+
   /**
    * @brief
    *
