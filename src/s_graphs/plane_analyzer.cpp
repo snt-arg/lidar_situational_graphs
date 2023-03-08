@@ -51,6 +51,13 @@ PlaneAnalyzer::PlaneAnalyzer(rclcpp::Node::SharedPtr node) {
                                   .get_parameter_value()
                                   .get<std::string>();
 
+  save_timings = node->get_parameter("save_timings").get_parameter_value().get<bool>();
+  if (save_timings) {
+    time_recorder.open("/tmp/plane_seg_computation_time.txt");
+    time_recorder << "#time \n";
+    time_recorder.close();
+  }
+
   init_ros(node);
 }
 
@@ -73,6 +80,7 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
   }
 
   int i = 0;
+  auto t1 = rclcpp::Clock{}.now();
   while (transformed_cloud->points.size() > min_seg_points_) {
     try {
       pcl::ModelCoefficients::Ptr coefficients(new pcl::ModelCoefficients);
@@ -176,6 +184,14 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
       std::cout << "No ransac model found" << std::endl;
       break;
     }
+  }
+
+  auto t2 = rclcpp::Clock{}.now();
+  if (save_timings) {
+    time_recorder.open("/tmp/plane_seg_computation_time.txt",
+                       std::ofstream::out | std::ofstream::app);
+    time_recorder << std::to_string((t2 - t1).seconds()) + " \n";
+    time_recorder.close();
   }
 
   sensor_msgs::msg::PointCloud2 segmented_cloud_msg;

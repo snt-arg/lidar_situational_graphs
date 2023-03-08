@@ -58,12 +58,23 @@ class FloorPlanNode : public rclcpp::Node {
  private:
   void initialize_params() {
     this->declare_parameter("vertex_neigh_thres", 2);
+    this->declare_parameter("save_timings", false);
+
     room_analyzer_params params{
         this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
+
+    save_timings =
+        this->get_parameter("save_timings").get_parameter_value().get<bool>();
 
     plane_utils.reset(new PlaneUtils());
     room_analyzer.reset(new RoomAnalyzer(params, plane_utils));
     floor_analyzer.reset(new FloorAnalyzer(plane_utils));
+
+    if (save_timings) {
+      time_recorder.open("/tmp/floor_seg_computation_time.txt");
+      time_recorder << "#time \n";
+      time_recorder.close();
+    }
   }
 
   void init_ros() {
@@ -160,6 +171,12 @@ class FloorPlanNode : public rclcpp::Node {
     auto t2 = this->now();
     // std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 -
     // t1).toSec() << std::endl;
+    if (save_timings) {
+      time_recorder.open("/tmp/floor_seg_computation_time.txt",
+                         std::ofstream::out | std::ofstream::app);
+      time_recorder << std::to_string((t2 - t1).seconds()) + " \n";
+      time_recorder.close();
+    }
   }
 
   void extract_rooms(
@@ -235,6 +252,8 @@ class FloorPlanNode : public rclcpp::Node {
 
  private:
   rclcpp::TimerBase::SharedPtr floor_plane_timer;
+  bool save_timings;
+  std::ofstream time_recorder;
 
  private:
   std::unique_ptr<RoomAnalyzer> room_analyzer;
