@@ -12,8 +12,10 @@ Panels:
         - /MarkerArray1/Namespaces1
         - /MarkerArray2
         - /MarkerArray2/Namespaces1
+        - /Odometry1
+        - /Odometry1/Shape1
       Splitter Ratio: 0.5
-    Tree Height: 787
+    Tree Height: 363
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -61,49 +63,49 @@ Visualization Manager:
           Value: false
         planes_layer:
           Value: true
-        robot2/back:
+        robot3/back:
           Value: false
-        robot2/back_fisheye:
+        robot3/back_fisheye:
           Value: false
-        robot2/body:
+        robot3/body:
           Value: true
-        robot2/flat_body:
+        robot3/flat_body:
           Value: false
-        robot2/floors_layer:
+        robot3/floors_layer:
           Value: false
-        robot2/frontleft:
+        robot3/frontleft:
           Value: false
-        robot2/frontleft_fisheye:
+        robot3/frontleft_fisheye:
           Value: false
-        robot2/frontright:
+        robot3/frontright:
           Value: false
-        robot2/frontright_fisheye:
+        robot3/frontright_fisheye:
           Value: false
-        robot2/gpe:
+        robot3/gpe:
           Value: false
-        robot2/head:
+        robot3/head:
           Value: false
-        robot2/keyframes_layer:
+        robot3/keyframes_layer:
           Value: false
-        robot2/left:
+        robot3/left:
           Value: false
-        robot2/left_fisheye:
+        robot3/left_fisheye:
           Value: false
-        robot2/map:
+        robot3/map:
           Value: true
-        robot2/odom:
-          Value: true
-        robot2/right:
+        robot3/odom:
           Value: false
-        robot2/right_fisheye:
+        robot3/right:
           Value: false
-        robot2/rooms_layer:
+        robot3/right_fisheye:
           Value: false
-        robot2/velodyne:
+        robot3/rooms_layer:
           Value: false
-        robot2/vision:
+        robot3/velodyne:
           Value: false
-        robot2/walls_layer:
+        robot3/vision:
+          Value: false
+        robot3/walls_layer:
           Value: false
       Marker Scale: 5
       Name: TF
@@ -111,39 +113,39 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        robot2/map:
+        robot3/map:
           map_elevated:
             {}
-          robot2/keyframes_layer:
-            robot2/walls_layer:
-              robot2/rooms_layer:
-                robot2/floors_layer:
+          robot3/keyframes_layer:
+            robot3/walls_layer:
+              robot3/rooms_layer:
+                robot3/floors_layer:
                   {}
-          robot2/odom:
-            robot2/body:
-              robot2/flat_body:
+          robot3/odom:
+            robot3/body:
+              robot3/flat_body:
                 {}
-              robot2/head:
-                robot2/back:
-                  robot2/back_fisheye:
+              robot3/head:
+                robot3/back:
+                  robot3/back_fisheye:
                     {}
-                robot2/frontleft:
-                  robot2/frontleft_fisheye:
+                robot3/frontleft:
+                  robot3/frontleft_fisheye:
                     {}
-                robot2/frontright:
-                  robot2/frontright_fisheye:
+                robot3/frontright:
+                  robot3/frontright_fisheye:
                     {}
-                robot2/left:
-                  robot2/left_fisheye:
+                robot3/left:
+                  robot3/left_fisheye:
                     {}
-                robot2/right:
-                  robot2/right_fisheye:
+                robot3/right:
+                  robot3/right_fisheye:
                     {}
-              robot2/velodyne:
+              robot3/velodyne:
                 {}
-              robot2/vision:
+              robot3/vision:
                 {}
-            robot2/gpe:
+            robot3/gpe:
               {}
       Update Interval: 0
       Value: true
@@ -177,7 +179,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot2/filtered_points
+        Value: /robot3/filtered_points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -211,7 +213,7 @@ Visualization Manager:
         Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot2/s_graphs/map_points
+        Value: /robot3/s_graphs/map_points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -219,21 +221,27 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
+        floor_lines: true
+        floors: true
         hort_planes: true
         imu: true
+        infinite_room_x_lines: true
+        infinite_room_y_lines: true
         keyframe_keyframe_edges: true
         keyframe_plane_edges: true
         loop_close_radius: true
         nodes: true
         rooms: true
+        x_infinite_room: true
         x_vert_planes: true
+        y_infinite_room: true
         y_vert_planes: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot2/s_graphs/markers
+        Value: /robot3/s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
@@ -241,7 +249,23 @@ Visualization Manager:
       Namespaces:
         closed_spaces: true
         connected_edges_0: true
+        connected_edges_1: true
+        connected_edges_2: true
+        connected_edges_3: true
+        connected_edges_4: true
+        connected_edges_5: true
+        connected_edges_6: true
+        connected_edges_7: true
+        connected_edges_8: true
         connected_vertices_0: true
+        connected_vertices_1: true
+        connected_vertices_2: true
+        connected_vertices_3: true
+        connected_vertices_4: true
+        connected_vertices_5: true
+        connected_vertices_6: true
+        connected_vertices_7: true
+        connected_vertices_8: true
         edges: true
         vertices: true
       Topic:
@@ -249,12 +273,51 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /robot2/voxblox_skeletonizer/sparse_graph
+        Value: /robot3/voxblox_skeletonizer/sparse_graph
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 1
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Shape:
+        Alpha: 1
+        Axes Length: 1
+        Axes Radius: 0.10000000149011612
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot3/platform/odometry
       Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
-    Fixed Frame: robot2/map
+    Fixed Frame: robot3/map
     Frame Rate: 30
   Name: root
   Tools:
@@ -297,25 +360,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 69.88490295410156
+      Distance: 30.62542724609375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.750600576400757
-        Y: -13.448716163635254
-        Z: 6.258066654205322
+        X: 1.9618535041809082
+        Y: -1.9759483337402344
+        Z: 6.233096599578857
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1447968482971191
+      Pitch: 0.8947969675064087
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.718144416809082
+      Yaw: 2.9431371688842773
     Saved: ~
 Window Geometry:
   Displays:

@@ -59,7 +59,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <iostream>
 #include <s_graphs/floor_mapper.hpp>
 #include <s_graphs/floors.hpp>
-#include <s_graphs/graph_publisher.hpp>
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/graph_visualizer.hpp>
 #include <s_graphs/infinite_rooms.hpp>
@@ -91,8 +90,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "s_graphs/msg/planes_data.hpp"
 #include "s_graphs/msg/room_data.hpp"
 #include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs/room_utils.hpp"
+#include "s_graphs/ros_utils.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+
 class GraphPublisher {
  public:
   GraphPublisher();
@@ -114,6 +116,9 @@ class GraphPublisher {
   graph_manager_msgs::msg::GraphKeyframes publish_graph_keyframes(
       const g2o::SparseOptimizer* local_graph,
       const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+
+  void publish_room_keyframes(const g2o::SparseOptimizer* local_graph,
+                              const std::vector<s_graphs::Rooms>& rooms_vec);
 
  private:
 };

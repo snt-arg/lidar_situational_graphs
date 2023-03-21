@@ -15,7 +15,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # pcl 1.7 causes a segfault when it is built with debug mode
-set(CMAKE_BUILD_TYPE "RELEASE")
+# set(CMAKE_BUILD_TYPE "RELEASE")
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
@@ -122,6 +122,7 @@ add_library(s_graphs_lib
     src/s_graphs/keyframe_mapper.cpp
     src/s_graphs/graph_publisher.cpp
     src/s_graphs/ros_utils.cpp
+    src/s_graphs/room_utils.cpp
     src/g2o/robust_kernel_io.cpp
 )
 target_link_libraries(s_graphs_lib 
@@ -257,8 +258,11 @@ if(BUILD_TESTING)
   ament_add_gtest(testRoom test/testRoom.cpp)
   target_link_libraries(testRoom s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
+  ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp src/s_graphs/room_utils.cpp)
+  target_link_libraries(testRoomCentreCompute s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+
   install(TARGETS
-    testPlane testRoom DESTINATION test/${PROJECT_NAME})
+    testPlane testRoom testRoomCentreCompute DESTINATION test/${PROJECT_NAME})
 endif()
 
 ament_export_dependencies(rosidl_default_runtime)

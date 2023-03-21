@@ -277,7 +277,7 @@ class SGraphsNode : public rclcpp::Node {
         "s_graphs/graph_structure", 32);
     graph_keyframes_pub =
         this->create_publisher<graph_manager_msgs::msg::GraphKeyframes>(
-            "s_graphs/graph_keyframes", 10);
+            "s_graphs/graph_keyframes", 32);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
         "s_graphs/dump",
@@ -1021,6 +1021,16 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.lock();
     local_graph = graph_slam->graph.get();
     graph_mutex.unlock();
+    std::string graph_type;
+    if (std::string("/robot1") == this->get_namespace()) {
+      graph_type = "Prior";
+    } else {
+      graph_type = "Online";
+    }
+    // RCLCPP_WARN_ONCE(this->get_logger(),
+    //                  "ns = %s, graph type = %s",
+    //                  this->get_namespace(),
+    //                  graph_type.c_str());
     auto graph_structure = graph_publisher->publish_graph(local_graph,
                                                           "Online",
                                                           x_vert_planes_prior,
@@ -1031,6 +1041,8 @@ class SGraphsNode : public rclcpp::Node {
                                                           rooms_vec,
                                                           x_infinite_rooms,
                                                           y_infinite_rooms);
+    graph_structure.name = graph_type;
+
     auto graph_keyframes =
         graph_publisher->publish_graph_keyframes(local_graph, this->keyframes);
     graph_pub->publish(graph_structure);
