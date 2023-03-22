@@ -1,5 +1,12 @@
 #include "s_graphs/room_utils.hpp"
 
+#include <algorithm>
+#include <iterator>
+#include <vector>
+
+#include "s_graphs/plane_analyzer.hpp"
+#include "s_graphs/rooms.hpp"
+
 /**
  * Obtain the vertical planes that form the boundaries of a given room.
  * @param room The room whose planes are to be obtained.
@@ -153,16 +160,16 @@ std::set<std::pair<int, g2o::VertexSE3*>> obtain_keyframe_candidates_from_room(
   }
   return keyframe_candidates;
 }
-std::set<std::pair<int, g2o::VertexSE3*>> filter_keyframes(
+std::set<int> filter_keyframes_ids(
     const std::set<std::pair<int, g2o::VertexSE3*>>& candidate_keyframes,
     const std::vector<PlaneGlobalRep>& plane_reps) {
-  std::set<std::pair<int, g2o::VertexSE3*>> keyframes_inside;
+  std::set<int> keyframes_inside;
 
   for (auto& [id, keyframe] : candidate_keyframes) {
     if (!is_SE3_inside_a_room(keyframe->estimate(), plane_reps)) {
       continue;
     }
-    keyframes_inside.insert({id, keyframe});
+    keyframes_inside.insert({id});
   }
 
   return keyframes_inside;
@@ -208,4 +215,42 @@ std::set<g2o::VertexSE3*> filter_inside_room_keyframes(
   // room.node->estimate();
 
   return final_candidates;
-};
+}
+
+std::vector<s_graphs::KeyFrame::Ptr> obtain_keyframes_from_ids(
+    const std::set<int>& id_list,
+    const std::vector<s_graphs::KeyFrame::Ptr>& _keyframes) {
+  std::vector<s_graphs::KeyFrame::Ptr> keyframes;
+  for (auto& id : id_list) {
+    auto it = std::find_if(_keyframes.begin(), _keyframes.end(), [id](auto& keyframe) {
+      return keyframe->id() == id;
+    });
+    if (it == _keyframes.end()) {
+      continue;
+    }
+    keyframes.emplace_back(*it);
+  }
+  return keyframes;
+}
+std::optional<
+    std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
+generate_room_keyframe(const s_graphs::Rooms& room,
+                       const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
+                       const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
+                       const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+  auto global_planes =
+      obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
+  auto room_centre = obtain_global_centre_of_room(global_planes);
+  // If room centre coudn't be computed return
+  if (!room_centre.has_value()) return {};
+
+  auto keyframe_candidates =
+      obtain_keyframe_candidates_from_room(room, x_vert_planes, y_vert_planes);
+  auto keyframes_ids = filter_keyframes_ids(keyframe_candidates, global_planes);
+  auto keyframes_vec = obtain_keyframes_from_ids(keyframes_ids, keyframes);
+  auto cloud = generate_room_pointcloud(
+      room, room_centre.value(), keyframes_vec.begin(), keyframes_vec.end());
+  return {{room_centre.value(), cloud}};
+  // room_centre.value(), cloud)};
+}
+

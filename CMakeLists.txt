@@ -258,7 +258,8 @@ if(BUILD_TESTING)
   ament_add_gtest(testRoom test/testRoom.cpp)
   target_link_libraries(testRoom s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
-  ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp src/s_graphs/room_utils.cpp)
+  # ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp src/s_graphs/room_utils.cpp)
+  ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp)
   target_link_libraries(testRoomCentreCompute s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
   install(TARGETS

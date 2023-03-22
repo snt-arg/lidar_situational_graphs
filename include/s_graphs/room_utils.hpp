@@ -5,6 +5,7 @@
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <math.h>
 #include <pcl/common/common.h>
+#include <pcl/filters/passthrough.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -95,5 +96,198 @@ std::vector<PlaneGlobalRep> obtain_global_planes_from_room(
     const s_graphs::Rooms& room,
     const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
     const std::vector<s_graphs::VerticalPlanes>& y_vert_planes);
+
+template <typename PointT>
+typename pcl::PointCloud<PointT>::Ptr transform_pointcloud(
+    typename pcl::PointCloud<PointT>::ConstPtr _cloud,
+    Eigen::Isometry3d transform) {
+  typename pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+  // at the beggining add the first pc
+  cloud->points.reserve(_cloud->size());
+  const Eigen::Matrix4f transform_mat = transform.matrix().cast<float>();
+  for (const auto& src_pt : _cloud->points) {
+    PointT dst_pt;
+    dst_pt.getVector4fMap() = transform_mat * src_pt.getVector4fMap();
+    dst_pt.intensity = src_pt.intensity;
+    cloud->emplace_back(dst_pt);
+  }
+  cloud->width = cloud->size();
+  cloud->height = 1;
+  cloud->is_dense = false;
+  // std::cout << "cloud: " << cloud << " with size" << cloud->size() << std::endl;
+  return cloud;
+}
+
+// REMOVE THIS
+template <typename T>
+pcl::PointCloud<s_graphs::PointT>::Ptr filter_room_pointcloud(
+    pcl::PointCloud<s_graphs::PointT>::Ptr cloud,
+    double max_dist = 0) {
+  pcl::PointCloud<s_graphs::PointT>::Ptr filtered(
+      new pcl::PointCloud<s_graphs::PointT>());
+
+  // Easy filter, remove floor points -> Although this doesn't affect the descriptor
+  pcl::PassThrough<s_graphs::PointT> pass;
+  pass.setInputCloud(cloud);
+  pass.setFilterFieldName("z");
+  pass.setFilterLimits(0.3, 3.0);
+  pass.filter(*filtered);
+  if (max_dist) {
+    pcl::PointCloud<s_graphs::PointT>::Ptr more_filtered(
+        new pcl::PointCloud<s_graphs::PointT>());
+    for (auto& pnt : filtered->points) {
+      Eigen::Vector3d point = pnt.getVector3fMap().cast<double>();
+      point.z() = 0;
+      if (point.norm() > max_dist + 0.3) {
+        continue;
+      }
+      more_filtered->points.emplace_back(pnt);
+    }
+
+    filtered = more_filtered;
+  }
+  filtered->width = filtered->size();
+  filtered->height = 1;
+
+  // pass.setInputCloud(filtered);
+  // pass.setFilterFieldName("x");
+  // pass.setFilterLimits(-5, 5);
+  // pass.filter(*filtered);
+
+  // pass.setInputCloud(filtered);
+  // pass.setFilterFieldName("y");
+  // pass.setFilterLimits(-5, 5);
+  // pass.filter(*filtered);
+  return filtered;
+}
+
+template <class IterI>
+pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
+    const s_graphs::Rooms& room,
+    const Eigen::Isometry3d& room_centre,
+    IterI begin,
+    IterI end) {
+  pcl::PointCloud<s_graphs::PointT>::Ptr room_cloud(
+      new pcl::PointCloud<s_graphs::PointT>());
+  for (auto it = begin; it != end; it++) {
+    s_graphs::KeyFrame::Ptr keyframe = *it;
+    std::cout << "Keyframe:" << keyframe->id() << std::endl;
+    Eigen::Isometry3d rel_transform = room_centre.inverse() * keyframe->estimate();
+    auto cloud = transform_pointcloud<s_graphs::KeyFrame::PointT>(keyframe->cloud,
+                                                                  rel_transform);
+    room_cloud->points.insert(room_cloud->end(), cloud->begin(), cloud->end());
+  }
+  room_cloud->width = room_cloud->size();
+  room_cloud->height = 1;
+  return room_cloud;
+}
+
+std::optional<
+    std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
+generate_room_keyframe(const s_graphs::Rooms& room,
+                       const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
+                       const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
+                       const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+
+struct ExtendedRooms : public s_graphs::Rooms {
+  ExtendedRooms() : s_graphs::Rooms(){};
+  ExtendedRooms(s_graphs::Rooms&& rooms) : s_graphs::Rooms(rooms){};
+  ExtendedRooms(s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms){};
+  ExtendedRooms(const s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms){};
+  std::vector<PlaneGlobalRep> global_planes;
+  Eigen::Isometry3d centre;
+  std::vector<s_graphs::KeyFrame::Ptr> keyframes;
+  pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr cloud;
+};
+
+class RoomsKeyframeGenerator : public s_graphs::Rooms {
+ public:
+  RoomsKeyframeGenerator(const std::vector<s_graphs::VerticalPlanes>* x_vert_planes,
+                         const std::vector<s_graphs::VerticalPlanes>* y_vert_planes,
+                         const std::vector<s_graphs::KeyFrame::Ptr>* keyframes)
+      : x_vert_planes_(x_vert_planes),
+        y_vert_planes_(y_vert_planes),
+        keyframes_(keyframes){};
+
+  void addRoom(const s_graphs::Rooms& room) {
+    if (room_keyframe_dict_.count(room.id)) {
+      return;
+    }
+    auto value =
+        generate_room_keyframe(room, *x_vert_planes_, *y_vert_planes_, *keyframes_);
+    if (!value.has_value()) return;
+    auto [centre, cloud] = value.value();
+    ExtendedRooms ext_room(room);
+    ext_room.cloud = cloud;
+    ext_room.centre = centre;
+    ext_room.global_planes =
+        obtain_global_planes_from_room(room, *x_vert_planes_, *y_vert_planes_);
+
+    std::cout << "AQUI1" << std::endl;
+    std::vector<PlaneGlobalRep> local_plane_rep;
+    for (auto& plane : ext_room.global_planes) {
+      PlaneGlobalRep local_plane;
+      auto transform_point = ext_room.centre.inverse() * plane.point;
+      local_plane.point = transform_point;
+      local_plane.normal = ext_room.centre.linear().inverse() * plane.normal;
+      local_plane_rep.emplace_back(local_plane);
+    }
+
+    std::cout << "AQUI2" << std::endl;
+    double max_dist = 0;
+    for (size_t i = 0; i < local_plane_rep.size() - 2; i++) {
+      auto& plane_i_1 = local_plane_rep[i];
+      auto& plane_i_2 = local_plane_rep[i + 2];
+      auto intersection = find_intersection(
+          plane_i_1.point, plane_i_2.normal, plane_i_2.point, plane_i_1.normal);
+      if (intersection.has_value()) {
+        auto intersec = intersection.value();
+        intersec.z() = 0;
+        auto dist = intersec.norm();
+        if (dist > max_dist) {
+          max_dist = dist;
+        }
+      }
+    }
+    std::cout << "max_dist:" << max_dist << std::endl;
+
+    /************/
+    room_keyframe_dict_.insert({ext_room.id, ext_room});
+
+    std::cout << "AQUI3" << std::endl;
+    auto filtered = filter_room_pointcloud<s_graphs::PointT>(cloud, max_dist);
+    std::string preable(
+        "/home/miguel/lux_stay_ws/ros2_ws/src/multirobot_sgraphs_server/"
+        "pointcloud_data/room_keyframes/");
+    pcl::io::savePCDFileASCII(
+        preable + "room_keyframe_" + std::to_string(room.id) + ".pcd", *cloud);
+    pcl::io::savePCDFileASCII(
+        preable + "room_keyframe_" + std::to_string(room.id) + "filtered.pcd",
+        *filtered);
+  }
+
+  const ExtendedRooms& getExtendedRoom(int id) { return room_keyframe_dict_[id]; };
+  std::optional<ExtendedRooms> tryGetExtendedRoom(int id) {
+    if (!room_keyframe_dict_.count(id)) {
+      return {};
+    }
+    return room_keyframe_dict_[id];
+  };
+
+  std::vector<ExtendedRooms> getExtendedRooms() {
+    std::vector<ExtendedRooms> out;
+    out.reserve(room_keyframe_dict_.size());
+    for (auto& [id, room] : room_keyframe_dict_) {
+      out.emplace_back(room);
+    }
+    return out;
+  }
+
+ private:
+  std::unordered_map<int, ExtendedRooms> room_keyframe_dict_;
+  const std::vector<s_graphs::VerticalPlanes>* x_vert_planes_;
+  const std::vector<s_graphs::VerticalPlanes>* y_vert_planes_;
+  const std::vector<s_graphs::KeyFrame::Ptr>* keyframes_;
+};
 
 #endif

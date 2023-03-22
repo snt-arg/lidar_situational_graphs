@@ -81,6 +81,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/planes.hpp>
 #include <s_graphs/room_mapper.hpp>
+#include <s_graphs/room_utils.hpp>
 #include <s_graphs/rooms.hpp>
 #include <s_graphs/ros_time_hash.hpp>
 #include <s_graphs/ros_utils.hpp>
@@ -1047,6 +1048,21 @@ class SGraphsNode : public rclcpp::Node {
         graph_publisher->publish_graph_keyframes(local_graph, this->keyframes);
     graph_pub->publish(graph_structure);
     graph_keyframes_pub->publish(graph_keyframes);
+
+    static RoomsKeyframeGenerator keyframe_generator(
+        &this->x_vert_planes, &this->y_vert_planes, &this->keyframes);
+
+    for (auto room : this->rooms_vec) {
+      keyframe_generator.addRoom(room);
+    }
+    for (auto room : keyframe_generator.getExtendedRooms()) {
+      RCLCPP_WARN(this->get_logger(), "Extended Room: %d", room.id);
+      RCLCPP_WARN(this->get_logger(),
+                  "\t CENTRE: [ %f , %f ,%f ]",
+                  room.centre.translation().x(),
+                  room.centre.translation().y(),
+                  room.centre.translation().z());
+    }
   }
 
   /**

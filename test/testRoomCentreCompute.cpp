@@ -181,6 +181,22 @@ class TestRoom : public ::testing::Test {
   // s_graphs::KeyFrame::Ptr keyframe;
 };
 
+/* struct TestKeyframe {
+  int id_;
+  TestKeyframe(int id = 1) : id_(id) {}
+  int id() { return id_; }
+};
+
+void testFunction() {
+  s_graphs::Rooms room;
+  room.id = 1;
+  std::vector<TestKeyframe*> v;
+  v.emplace_back(new TestKeyframe(1));
+  v.emplace_back(new TestKeyframe(2));
+  v.emplace_back(new TestKeyframe(3));
+  generateRoomPointcloud(room, v.begin(), v.end());
+} */
+
 TEST_F(TestRoom, TestRoomCentre) {
   this->testLookupRooms();
   auto centre_gt = rooms_vec[0].node->estimate();
@@ -193,6 +209,7 @@ TEST_F(TestRoom, TestRoomCentre) {
   auto centre_est = centre.value();
   ASSERT_DOUBLE_EQ(centre_gt.x(), centre_est.translation().x());
   ASSERT_DOUBLE_EQ(centre_gt.y(), centre_est.translation().y());
+  // testFunction();
 }
 
 int main(int argc, char** argv) {
