@@ -254,3 +254,39 @@ generate_room_keyframe(const s_graphs::Rooms& room,
   // room_centre.value(), cloud)};
 }
 
+graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
+    const ExtendedRooms& room) {
+  graph_manager_msgs::msg::RoomKeyframe msg;
+  msg.header.frame_id = "room";
+  msg.id = room.id;
+  pcl::toROSMsg(*room.cloud, msg.pointcloud);
+  msg.pose = s_graphs::isometry2pose(room.centre);
+  for (auto& keyframe : room.keyframes) {
+    msg.keyframes_ids.emplace_back(keyframe->id());
+  }
+  msg.planes_ids.emplace_back(room.plane_x1_id);
+  msg.planes_ids.emplace_back(room.plane_x2_id);
+  msg.planes_ids.emplace_back(room.plane_y1_id);
+  msg.planes_ids.emplace_back(room.plane_y2_id);
+
+  return msg;
+}
+
+ExtendedRooms obtainExtendedRoomFromRosMsg(
+    const graph_manager_msgs::msg::RoomKeyframe& msg) {
+  ExtendedRooms room;
+  room.id = msg.id;
+  pcl::fromROSMsg(msg.pointcloud, *room.cloud);
+  room.centre = s_graphs::pose2isometry(msg.pose);
+  // TODO: Fill these fields
+  /* for (auto& keyframe : msg.keyframes_ids) {
+    room.keyframes
+  }
+  msg.planes_ids.emplace_back(room.plane_x1_id);
+  msg.planes_ids.emplace_back(room.plane_x2_id);
+  msg.planes_ids.emplace_back(room.plane_y1_id);
+  msg.planes_ids.emplace_back(room.plane_y2_id); */
+
+  return room;
+}
+

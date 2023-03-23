@@ -44,6 +44,7 @@
 #include <s_graphs/planes.hpp>
 #include <s_graphs/room_mapper.hpp>
 #include <s_graphs/rooms.hpp>
+#include <s_graphs/ros_utils.hpp>
 #include <string>
 #include <unordered_map>
 
@@ -53,6 +54,7 @@
 #include "graph_manager_msgs/msg/graph.hpp"
 #include "graph_manager_msgs/msg/graph_keyframes.hpp"
 #include "graph_manager_msgs/msg/node.hpp"
+#include "graph_manager_msgs/msg/room_keyframe.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "s_graphs/msg/plane_data.hpp"
@@ -190,10 +192,22 @@ generate_room_keyframe(const s_graphs::Rooms& room,
                        const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 
 struct ExtendedRooms : public s_graphs::Rooms {
-  ExtendedRooms() : s_graphs::Rooms(){};
-  ExtendedRooms(s_graphs::Rooms&& rooms) : s_graphs::Rooms(rooms){};
-  ExtendedRooms(s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms){};
-  ExtendedRooms(const s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms){};
+  ExtendedRooms() : s_graphs::Rooms() {
+    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
+        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+  };
+  ExtendedRooms(s_graphs::Rooms&& rooms) : s_graphs::Rooms(rooms) {
+    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
+        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+  };
+  ExtendedRooms(s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms) {
+    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
+        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+  };
+  ExtendedRooms(const s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms) {
+    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
+        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+  };
   std::vector<PlaneGlobalRep> global_planes;
   Eigen::Isometry3d centre;
   std::vector<s_graphs::KeyFrame::Ptr> keyframes;
@@ -223,7 +237,6 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
     ext_room.global_planes =
         obtain_global_planes_from_room(room, *x_vert_planes_, *y_vert_planes_);
 
-    std::cout << "AQUI1" << std::endl;
     std::vector<PlaneGlobalRep> local_plane_rep;
     for (auto& plane : ext_room.global_planes) {
       PlaneGlobalRep local_plane;
@@ -233,7 +246,6 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
       local_plane_rep.emplace_back(local_plane);
     }
 
-    std::cout << "AQUI2" << std::endl;
     double max_dist = 0;
     for (size_t i = 0; i < local_plane_rep.size() - 2; i++) {
       auto& plane_i_1 = local_plane_rep[i];
@@ -249,12 +261,11 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
         }
       }
     }
-    std::cout << "max_dist:" << max_dist << std::endl;
+    // std::cout << "max_dist:" << max_dist << std::endl;
 
     /************/
     room_keyframe_dict_.insert({ext_room.id, ext_room});
 
-    std::cout << "AQUI3" << std::endl;
     auto filtered = filter_room_pointcloud<s_graphs::PointT>(cloud, max_dist);
     std::string preable(
         "/home/miguel/lux_stay_ws/ros2_ws/src/multirobot_sgraphs_server/"
@@ -289,5 +300,11 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
   const std::vector<s_graphs::VerticalPlanes>* y_vert_planes_;
   const std::vector<s_graphs::KeyFrame::Ptr>* keyframes_;
 };
+
+graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
+    const ExtendedRooms& room);
+
+ExtendedRooms obtainExtendedRoomFromRosMsg(
+    const graph_manager_msgs::msg::RoomKeyframe& msg);
 
 #endif

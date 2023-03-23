@@ -279,6 +279,9 @@ class SGraphsNode : public rclcpp::Node {
     graph_keyframes_pub =
         this->create_publisher<graph_manager_msgs::msg::GraphKeyframes>(
             "s_graphs/graph_keyframes", 32);
+    graph_room_keyframe_pub =
+        this->create_publisher<graph_manager_msgs::msg::RoomKeyframe>(
+            "s_graphs/graph_room_keyframes", 32);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
         "s_graphs/dump",
@@ -1062,6 +1065,7 @@ class SGraphsNode : public rclcpp::Node {
                   room.centre.translation().x(),
                   room.centre.translation().y(),
                   room.centre.translation().z());
+      graph_room_keyframe_pub->publish(convertExtendedRoomToRosMsg(room));
     }
   }
 
@@ -2065,6 +2069,8 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<graph_manager_msgs::msg::Graph>::SharedPtr graph_pub;
   rclcpp::Publisher<graph_manager_msgs::msg::GraphKeyframes>::SharedPtr
       graph_keyframes_pub;
+  rclcpp::Publisher<graph_manager_msgs::msg::RoomKeyframe>::SharedPtr
+      graph_room_keyframe_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
