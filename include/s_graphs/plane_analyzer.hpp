@@ -150,6 +150,9 @@ class PlaneAnalyzer {
   int min_horizontal_inliers, min_vertical_inliers;
   bool use_euclidean_filter, use_shadow_filter;
   std::string plane_extraction_frame, plane_visualization_frame;
+
+  bool save_timings;
+  std::ofstream time_recorder;
 };
 }  // namespace s_graphs
 

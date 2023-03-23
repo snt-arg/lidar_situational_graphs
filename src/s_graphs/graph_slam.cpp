@@ -131,7 +131,7 @@ GraphSLAM::GraphSLAM(const std::string& solver_type, bool save_time) {
 
   save_compute_time = save_time;
   if (save_compute_time) {
-    time_recorder.open("/tmp/computation_time.txt");
+    time_recorder.open("/tmp/optimization_computation_time.txt");
     time_recorder << "#time \n";
     time_recorder.close();
   }
@@ -822,7 +822,7 @@ int GraphSLAM::optimize(int num_iterations) {
             << std::endl;
 
   if (save_compute_time) {
-    time_recorder.open("/tmp/computation_time.txt",
+    time_recorder.open("/tmp/optimization_computation_time.txt",
                        std::ofstream::out | std::ofstream::app);
     time_recorder << std::to_string((t2 - t1).seconds()) + " \n";
     time_recorder.close();
