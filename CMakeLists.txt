@@ -15,7 +15,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 # pcl 1.7 causes a segfault when it is built with debug mode
-# set(CMAKE_BUILD_TYPE "RELEASE")
+set(CMAKE_BUILD_TYPE "RELEASE")
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)

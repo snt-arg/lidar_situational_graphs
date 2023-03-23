@@ -1031,10 +1031,6 @@ class SGraphsNode : public rclcpp::Node {
     } else {
       graph_type = "Online";
     }
-    // RCLCPP_WARN_ONCE(this->get_logger(),
-    //                  "ns = %s, graph type = %s",
-    //                  this->get_namespace(),
-    //                  graph_type.c_str());
     auto graph_structure = graph_publisher->publish_graph(local_graph,
                                                           "Online",
                                                           x_vert_planes_prior,
@@ -1059,12 +1055,6 @@ class SGraphsNode : public rclcpp::Node {
       keyframe_generator.addRoom(room);
     }
     for (auto room : keyframe_generator.getExtendedRooms()) {
-      RCLCPP_WARN(this->get_logger(), "Extended Room: %d", room.id);
-      RCLCPP_WARN(this->get_logger(),
-                  "\t CENTRE: [ %f , %f ,%f ]",
-                  room.centre.translation().x(),
-                  room.centre.translation().y(),
-                  room.centre.translation().z());
       graph_room_keyframe_pub->publish(convertExtendedRoomToRosMsg(room));
     }
   }
@@ -1074,7 +1064,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void map_points_publish_timer_callback() {
-    if (!map_points_pub->get_subscription_count() < 0 || !graph_updated) {
+    if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
       return;
     }
 
