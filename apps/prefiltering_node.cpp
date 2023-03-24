@@ -63,7 +63,7 @@ class PrefilteringNode : public rclcpp::Node {
 
     if (this->get_parameter("deskewing").get_parameter_value().get<bool>()) {
       imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-          "/imu/data",
+          "imu/data",
           1,
           std::bind(&PrefilteringNode::imu_callback, this, std::placeholders::_1));
     }
@@ -73,9 +73,9 @@ class PrefilteringNode : public rclcpp::Node {
         64,
         std::bind(&PrefilteringNode::cloud_callback, this, std::placeholders::_1));
     points_pub =
-        this->create_publisher<sensor_msgs::msg::PointCloud2>("/filtered_points", 32);
+        this->create_publisher<sensor_msgs::msg::PointCloud2>("filtered_points", 32);
     colored_pub =
-        this->create_publisher<sensor_msgs::msg::PointCloud2>("/colored_points", 32);
+        this->create_publisher<sensor_msgs::msg::PointCloud2>("colored_points", 32);
   }
 
  private:
@@ -128,11 +128,10 @@ class PrefilteringNode : public rclcpp::Node {
                                              .get_parameter_value()
                                              .get<std::string>();
     if (outlier_removal_method == "STATISTICAL") {
-      int mean_k = this->get_parameter("outlier_removal_method")
-                       .get_parameter_value()
-                       .get<int>();
+      int mean_k =
+          this->get_parameter("statistical_mean_k").get_parameter_value().get<int>();
       double stddev_mul_thresh =
-          this->get_parameter("statistical_stddev").get_parameter_value().get<int>();
+          this->get_parameter("statistical_stddev").get_parameter_value().get<double>();
       std::cout << "outlier_removal: STATISTICAL " << mean_k << " - "
                 << stddev_mul_thresh << std::endl;
 
@@ -165,8 +164,14 @@ class PrefilteringNode : public rclcpp::Node {
         this->get_parameter("distance_near_thresh").get_parameter_value().get<double>();
     distance_far_thresh =
         this->get_parameter("distance_far_thresh").get_parameter_value().get<double>();
+
     base_link_frame =
         this->get_parameter("base_link_frame").get_parameter_value().get<std::string>();
+    std::string ns = this->get_namespace();
+    if (ns.length()) {
+      std::string ns_prefix = std::string(this->get_namespace()).substr(1);
+      base_link_frame = ns_prefix + "/" + base_link_frame;
+    }
   }
 
   void imu_callback(sensor_msgs::msg::Imu::SharedPtr imu_msg) {

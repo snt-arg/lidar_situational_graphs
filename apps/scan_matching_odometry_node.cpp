@@ -68,14 +68,14 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
     if (this->get_parameter("enable_imu_frontend").get_parameter_value().get<bool>()) {
       msf_pose_sub =
           this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-              "/msf_core/pose",
+              "msf_core/pose",
               1,
               std::bind(&ScanMatchingOdometryNode::msf_pose_callback,
                         this,
                         std::placeholders::_1));
       msf_pose_after_update_sub =
           this->create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
-              "/msf_core/pose_after_update",
+              "msf_core/pose_after_update",
               1,
               std::bind(&ScanMatchingOdometryNode::msf_pose_after_update_callback,
                         this,
@@ -83,19 +83,19 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
     }
 
     points_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "/filtered_points",
+        "filtered_points",
         256,
         std::bind(
             &ScanMatchingOdometryNode::cloud_callback, this, std::placeholders::_1));
     read_until_pub = this->create_publisher<std_msgs::msg::Header>(
-        "/scan_matching_odometry/read_until", 32);
-    odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("/odom", 32);
+        "scan_matching_odometry/read_until", 32);
+    odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("odom", 32);
     trans_pub = this->create_publisher<geometry_msgs::msg::TransformStamped>(
-        "/scan_matching_odometry/transform", 32);
+        "scan_matching_odometry/transform", 32);
     status_pub = this->create_publisher<s_graphs::msg::ScanMatchingStatus>(
-        "/scan_matching_odometry/status", 8);
+        "scan_matching_odometry/status", 8);
     aligned_points_pub =
-        this->create_publisher<sensor_msgs::msg::PointCloud2>("/aligned_points", 32);
+        this->create_publisher<sensor_msgs::msg::PointCloud2>("aligned_points", 32);
   }
 
  private:
@@ -103,7 +103,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
    * @brief initialize parameters
    */
   void initialize_params() {
-    this->declare_parameter("points_topic", "/velodyne_points");
+    this->declare_parameter("points_topic", "velodyne_points");
     this->declare_parameter("odom_frame_id", "odom");
     this->declare_parameter("robot_odom_frame_id", "robot_odom");
     this->declare_parameter("publish_tf", true);
@@ -115,6 +115,14 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
     robot_odom_frame_id = this->get_parameter("robot_odom_frame_id")
                               .get_parameter_value()
                               .get<std::string>();
+
+    std::string ns = this->get_namespace();
+    if (ns.length()) {
+      std::string ns_prefix = std::string(this->get_namespace()).substr(1);
+      odom_frame_id = ns_prefix + "/" + odom_frame_id;
+      robot_odom_frame_id = ns_prefix + "/" + odom_frame_id;
+    }
+
     publish_tf = this->get_parameter("publish_tf").get_parameter_value().get<bool>();
 
     // The minimum tranlational distance and rotation angle between keyframes.
@@ -237,7 +245,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
     read_until->stamp = rclcpp::Time(cloud_msg->header.stamp) + rclcpp::Duration(1, 0);
     read_until_pub->publish(*read_until);
 
-    read_until->frame_id = "/filtered_points";
+    read_until->frame_id = "filtered_points";
     read_until_pub->publish(*read_until);
   }
 
@@ -327,7 +335,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
           RCLCPP_INFO(this->get_logger(),
                       "Could not transform %s to %s: %s",
                       cloud->header.frame_id.c_str(),
-                      robot_odom_frame_id,
+                      robot_odom_frame_id.c_str(),
                       ex.what());
         }
       } else if (tf_buffer->canTransform(
@@ -357,7 +365,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
       RCLCPP_INFO(this->get_logger(), "scan matching has not converged!!");
       RCLCPP_INFO(this->get_logger(),
                   "ignore this frame: %s ",
-                  std::to_string(stamp.seconds()));
+                  std::to_string(stamp.seconds()).c_str());
       return keyframe_pose * prev_trans;
     }
 
@@ -374,7 +382,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
             this->get_logger(), "too large transform!!  %f [m], %f [rad]", dx, da);
         RCLCPP_INFO(this->get_logger(),
                     "ignore this frame %s ",
-                    std::to_string(stamp.seconds()));
+                    std::to_string(stamp.seconds()).c_str());
         return keyframe_pose * prev_trans;
       }
     }

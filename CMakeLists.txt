@@ -104,40 +104,8 @@ set(DEPENDENCIES rclcpp
     nmea_msgs
     geodesy)
 
-# nodes
-add_executable(s_graphs_prefiltering_node apps/prefiltering_node.cpp)
-ament_target_dependencies(s_graphs_prefiltering_node ${DEPENDENCIES})
-target_link_libraries(s_graphs_prefiltering_node
-  ${PCL_LIBRARIES}
-)
 
-add_executable(s_graphs_room_segmentation_node 
-  apps/room_segmentation_node.cpp 
-  src/s_graphs/room_analyzer.cpp
-)
-ament_target_dependencies(s_graphs_room_segmentation_node ${DEPENDENCIES})
-target_link_libraries(s_graphs_room_segmentation_node
-  ${PCL_LIBRARIES}
-)
-rosidl_target_interfaces(s_graphs_room_segmentation_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
-add_executable(s_graphs_floor_plan_node
-  apps/floor_plan_node.cpp
-  src/s_graphs/room_analyzer.cpp
-  src/s_graphs/floor_analyzer.cpp
-)
-ament_target_dependencies(s_graphs_floor_plan_node ${DEPENDENCIES})
-target_link_libraries(s_graphs_floor_plan_node
-  ${PCL_LIBRARIES}
-)
-rosidl_target_interfaces(s_graphs_floor_plan_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
-
-add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_node.cpp src/s_graphs/registrations.cpp)
-ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES}) 
-target_link_libraries(s_graphs_scan_matching_odometry_node
-  ${PCL_LIBRARIES}
-)
-rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_library(s_graphs_lib  
     src/s_graphs/plane_analyzer.cpp
@@ -153,6 +121,8 @@ add_library(s_graphs_lib
     src/s_graphs/information_matrix_calculator.cpp
     src/s_graphs/keyframe_mapper.cpp
     src/s_graphs/graph_publisher.cpp
+    src/s_graphs/ros_utils.cpp
+    src/s_graphs/room_utils.cpp
     src/g2o/robust_kernel_io.cpp
 )
 target_link_libraries(s_graphs_lib 
@@ -166,8 +136,21 @@ target_link_libraries(s_graphs_lib
                       ${G2O_TYPES_SLAM3D}
                       ${G2O_TYPES_SLAM3D_ADDONS}
                       )
+
+target_include_directories(s_graphs_lib
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+
 ament_target_dependencies(s_graphs_lib ${DEPENDENCIES})                   
+
 rosidl_target_interfaces(s_graphs_lib ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+ament_export_targets(export_s_graph_lib HAS_LIBRARY_TARGET)
+ament_export_dependencies(${DEPENDENCIES})
+ament_export_include_directories(include)
+ament_export_libraries(s_graphs_lib)
+
 
 add_executable(s_graphs_node
   apps/s_graphs_node.cpp
@@ -178,21 +161,67 @@ target_link_libraries(s_graphs_node
 )
 rosidl_target_interfaces(s_graphs_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
+# nodes
+add_executable(s_graphs_prefiltering_node apps/prefiltering_node.cpp)
+ament_target_dependencies(s_graphs_prefiltering_node ${DEPENDENCIES})
+target_link_libraries(s_graphs_prefiltering_node
+  ${PCL_LIBRARIES}
+  s_graphs_lib
+)
+
+add_executable(s_graphs_room_segmentation_node 
+  apps/room_segmentation_node.cpp 
+  src/s_graphs/room_analyzer.cpp
+)
+ament_target_dependencies(s_graphs_room_segmentation_node ${DEPENDENCIES})
+target_link_libraries(s_graphs_room_segmentation_node
+  ${PCL_LIBRARIES}
+  s_graphs_lib
+)
+rosidl_target_interfaces(s_graphs_room_segmentation_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+add_executable(s_graphs_floor_plan_node
+  apps/floor_plan_node.cpp
+  src/s_graphs/room_analyzer.cpp
+  src/s_graphs/floor_analyzer.cpp
+)
+ament_target_dependencies(s_graphs_floor_plan_node ${DEPENDENCIES})
+target_link_libraries(s_graphs_floor_plan_node
+  s_graphs_lib
+  ${PCL_LIBRARIES}
+)
+rosidl_target_interfaces(s_graphs_floor_plan_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
+add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_node.cpp src/s_graphs/registrations.cpp )
+ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES}) 
+target_link_libraries(s_graphs_scan_matching_odometry_node
+  s_graphs_lib
+  ${PCL_LIBRARIES}
+)
+rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
+
 
 #############
 ## Install ##
 #############
-install(TARGETS 
-    s_graphs_lib
-    DESTINATION lib)
+
+install(
+  DIRECTORY include/
+  DESTINATION include
+)
+
+install(
+  TARGETS s_graphs_lib
+  EXPORT export_s_graph_lib
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+  INCLUDES DESTINATION include
+)
 
 install(TARGETS  
   s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node s_graphs_floor_plan_node s_graphs_node
   DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY include/${PROJECT_NAME}
-  DESTINATION include
 )
 
 install(
@@ -200,10 +229,10 @@ install(
   DESTINATION share/${PROJECT_NAME}
 )
 
-ament_python_install_package(src/${PROJECT_NAME})
+ament_python_install_package(${PROJECT_NAME})
 install(
   PROGRAMS
-    src/${PROJECT_NAME}/map2odom_publisher.py
+    ${PROJECT_NAME}/map2odom_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -229,8 +258,12 @@ if(BUILD_TESTING)
   ament_add_gtest(testRoom test/testRoom.cpp)
   target_link_libraries(testRoom s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
+  # ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp src/s_graphs/room_utils.cpp)
+  ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp)
+  target_link_libraries(testRoomCentreCompute s_graphs_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+
   install(TARGETS
-    testPlane testRoom DESTINATION test/${PROJECT_NAME})
+    testPlane testRoom testRoomCentreCompute DESTINATION test/${PROJECT_NAME})
 endif()
 
 ament_export_dependencies(rosidl_default_runtime)

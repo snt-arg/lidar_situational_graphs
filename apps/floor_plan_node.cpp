@@ -80,19 +80,19 @@ class FloorPlanNode : public rclcpp::Node {
   void init_ros() {
     skeleton_graph_sub =
         this->create_subscription<visualization_msgs::msg::MarkerArray>(
-            "/voxblox_skeletonizer/sparse_graph",
+            "voxblox_skeletonizer/sparse_graph",
             1,
             std::bind(
                 &FloorPlanNode::skeleton_graph_callback, this, std::placeholders::_1));
     map_planes_sub = this->create_subscription<s_graphs::msg::PlanesData>(
-        "/s_graphs/all_map_planes",
+        "s_graphs/all_map_planes",
         100,
         std::bind(&FloorPlanNode::map_planes_callback, this, std::placeholders::_1));
 
     all_rooms_data_pub = this->create_publisher<s_graphs::msg::RoomsData>(
-        "/floor_plan/all_rooms_data", 1);
+        "floor_plan/all_rooms_data", 1);
     floor_data_pub =
-        this->create_publisher<s_graphs::msg::RoomData>("/floor_plan/floor_data", 1);
+        this->create_publisher<s_graphs::msg::RoomData>("floor_plan/floor_data", 1);
 
     floor_plane_timer = create_wall_timer(
         std::chrono::seconds(10), std::bind(&FloorPlanNode::floor_plan_callback, this));

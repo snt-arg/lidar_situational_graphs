@@ -2,6 +2,8 @@ imgui.ini
 
 # - IDEs Folder
 .vscode
+build/
+
 
 # - Clangd
 compile_commands.json

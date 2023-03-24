@@ -167,6 +167,7 @@ void GraphSLAM::select_solver_type(const std::string& solver_type) {
 int GraphSLAM::retrieve_total_nbr_of_vertices() const {
   return graph->vertices().size();
 }
+
 int GraphSLAM::retrive_total_nbr_of_edges() const { return graph->edges().size(); }
 
 int GraphSLAM::retrieve_local_nbr_of_vertices() const { return nbr_of_vertices; }
@@ -185,13 +186,7 @@ g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
 }
 
 g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs) {
-  g2o::VertexPlane* vertex(new g2o::VertexPlane());
-  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
-  vertex->setEstimate(plane_coeffs);
-  graph->addVertex(vertex);
-  this->increment_local_nbr_of_vertices();
-
-  return vertex;
+  return add_plane_node(plane_coeffs, retrieve_local_nbr_of_vertices());
 }
 
 g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs,
@@ -206,15 +201,11 @@ g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs,
 }
 
 bool GraphSLAM::remove_plane_node(g2o::VertexPlane* plane_vertex) {
-  bool ack = graph->removeVertex(plane_vertex);
-
-  return ack;
+  return graph->removeVertex(plane_vertex);
 }
 
 bool GraphSLAM::remove_room_node(g2o::VertexRoomXYLB* room_vertex) {
-  bool ack = graph->removeVertex(room_vertex);
-
-  return ack;
+  return graph->removeVertex(room_vertex);
 }
 
 g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
@@ -868,7 +859,7 @@ bool GraphSLAM::load(const std::string& filename) {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
 
   std::ifstream ifs(filename);
-  if (!graph->load(ifs, true)) {
+  if (!graph->load(ifs)) {
     return false;
   }
 

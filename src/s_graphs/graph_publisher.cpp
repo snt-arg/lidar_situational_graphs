@@ -27,7 +27,13 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
+#include <pcl_conversions/pcl_conversions.h>
+
+#include <algorithm>
 #include <s_graphs/graph_publisher.hpp>
+#include <vector>
+
+#include "g2o/vertex_room.hpp"
 
 GraphPublisher::GraphPublisher() {}
 
@@ -371,3 +377,80 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
   nodes_vec.clear();
   return graph_msg;
 }
+
+graph_manager_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
+    const g2o::SparseOptimizer* local_graph,
+    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+  graph_manager_msgs::msg::GraphKeyframes msg;
+  msg.keyframes.reserve(keyframes.size());
+  for (auto& keyframe : keyframes) {
+    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));
+  }
+  return msg;
+}
+
+// std::vector<g2o::HyperGraph::Edge*> get_planes_from_room(
+//     g2o::VertexRoomXYLB* _room_ptr,
+//     const std::vector<s_graphs::Rooms>& rooms_vec) {
+//   std::vector<g2o::HyperGraph::Edge*> out_vec;
+//   auto room_edges_iter = _room_ptr->edges().begin();
+//   for (int i = 0; room_edges_iter != _room_ptr->edges().end(); room_edges_iter++,
+//   i++) {
+//     g2o::HyperGraph::Edge* edge = *room_edges_iter;
+//     g2o::EdgeSE3Plane* keyframe_to_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
+//   }
+// }
+//
+//
+
+// std::find_if(x_vert_planes.begin(), x_vert_planes.end, funct());
+// std::vector<>
+
+// auto room_edges_iter = node->edges().begin();
+// for (int i = 0; room_edges_iter != node->edges().end(); room_edges_iter++, i++)
+// {
+//   g2o::HyperGraph::Edge* edge = *room_edges_iter;
+//   g2o::EdgeSE3Plane* keyframe_to_plane =
+//   dynamic_cast<g2o::EdgeSE3Plane*>(edge);
+// }
+/* auto traj_edge_itr = local_graph->edges().begin();
+for (int i = 0; traj_edge_itr != local_graph->edges().end(); traj_edge_itr++, i++)
+{ g2o::HyperGraph::Edge* edge = *traj_edge_itr; g2o::VertexRoomXYLB* room =
+
+      g2o::EdgeSE3Plane* keyframe_to_plane =
+dynamic_cast<g2o::EdgeSE3Plane*>(edge);
+
+  if (edge_se3) {
+    g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]);
+    g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]);
+    Eigen::Vector3d pt1 = v1->estimate().translation();
+    Eigen::Vector3d pt2 = v2->estimate().translation();
+
+    geometry_msgs::msg::Point point1, point2;
+    point1.x = pt1.x();
+    point1.y = pt1.y();
+    point1.z = pt1.z();
+
+    point2.x = pt2.x();
+    point2.y = pt2.y();
+    point2.z = pt2.z();
+
+    double p1 = static_cast<double>(v1->id()) / local_graph->vertices().size();
+    double p2 = static_cast<double>(v2->id()) / local_graph->vertices().size();
+
+    std_msgs::msg::ColorRGBA color1, color2;
+    color1.r = 1.0 - p1;
+    color1.g = p1;
+    color1.a = 1.0;
+
+    color2.r = 1.0 - p2;
+    color2.g = p2;
+    color2.a = 1.0;
+
+    // if(std::abs(v1->id() - v2->id()) > 2) {
+    //   traj_edge_marker.points[i * 2].z += 0.5 + keyframe_h;
+    //   traj_edge_marker.points[i * 2 + 1].z += 0.5 + keyframe_h;
+    // }
+  }
+} */
+// }

@@ -151,6 +151,36 @@ class LoopDetector {
     return detected_loops;
   }
 
+  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes,
+                                const std::vector<KeyFrame::Ptr>& new_keyframes,
+                                s_graphs::GraphSLAM& graph_slam) {
+    std::vector<Loop::Ptr> detected_loops;
+    for (const auto& new_keyframe : new_keyframes) {
+      auto candidates = find_candidates(keyframes, new_keyframe);
+      auto loop = matching(candidates, new_keyframe, graph_slam);
+      if (loop) {
+        detected_loops.push_back(loop);
+      }
+    }
+
+    return detected_loops;
+  }
+
+  std::vector<Loop::Ptr> detectWithAllKeyframes(
+      const std::vector<KeyFrame::Ptr>& keyframes,
+      const std::vector<KeyFrame::Ptr>& new_keyframes,
+      s_graphs::GraphSLAM& graph_slam) {
+    std::vector<Loop::Ptr> detected_loops;
+    for (const auto& new_keyframe : new_keyframes) {
+      auto loop = matching(keyframes, new_keyframe, graph_slam, false);
+      if (loop) {
+        detected_loops.push_back(loop);
+      }
+    }
+
+    return detected_loops;
+  }
+
   /**
    * @brief
    *
@@ -217,7 +247,8 @@ class LoopDetector {
    */
   Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes,
                      const KeyFrame::Ptr& new_keyframe,
-                     s_graphs::GraphSLAM& graph_slam) {
+                     s_graphs::GraphSLAM& graph_slam,
+                     bool use_prior = true) {
     if (candidate_keyframes.empty()) {
       return nullptr;
     }
@@ -228,10 +259,10 @@ class LoopDetector {
     KeyFrame::Ptr best_matched;
     Eigen::Matrix4f relative_pose;
 
-    std::cout << std::endl;
-    std::cout << "--- loop detection ---" << std::endl;
-    std::cout << "num_candidates: " << candidate_keyframes.size() << std::endl;
-    std::cout << "matching" << std::flush;
+    // std::cout << std::endl;
+    // std::cout << "--- loop detection ---" << std::endl;
+    // std::cout << "num_candidates: " << candidate_keyframes.size() << std::endl;
+    // std::cout << "matching" << std::flush;
     auto t1 = rclcpp::Clock{}.now();
 
     pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
@@ -246,11 +277,21 @@ class LoopDetector {
       candidate_estimate.linear() = Eigen::Quaterniond(candidate_estimate.linear())
                                         .normalized()
                                         .toRotationMatrix();
-      Eigen::Matrix4f guess =
-          (new_keyframe_estimate.inverse() * candidate_estimate).matrix().cast<float>();
-      guess(2, 3) = 0.0;
-      registration->align(*aligned, guess);
-      std::cout << "." << std::flush;
+
+      if (use_prior) {
+        Eigen::Matrix4f guess = (new_keyframe_estimate.inverse() * candidate_estimate)
+                                    .matrix()
+                                    .cast<float>();
+        guess(2, 3) = 0.0;
+        registration->align(*aligned, guess);
+      } else {
+        Eigen::Matrix4f guess;
+        guess << 1, 0, 0, 0, 0, 1, 0, 10, 0, 0, 1, 0, 0, 0, 0, 1;
+        // std::cout << "Using our guess";
+        registration->align(*aligned, guess);
+        // registration->align(*aligned);
+      }
+      // std::cout << "." << std::flush;
 
       double score = registration->getFitnessScore(fitness_score_max_range);
       if (!registration->hasConverged() || score > best_score) {
@@ -263,21 +304,24 @@ class LoopDetector {
     }
 
     auto t2 = rclcpp::Clock{}.now();
-    std::cout << " done" << std::endl;
-    std::cout << "best_score: " << boost::format("%.3f") % best_score
-              << "    time: " << boost::format("%.3f") % (t2 - t1).seconds() << "[sec]"
-              << std::endl;
+    // std::cout << " done" << std::endl;
+    // std::cout << "best_score: " << boost::format("%.3f") % best_score
+    //           << "    time: " << boost::format("%.3f") % (t2 - t1).seconds() <<
+    //           "[sec]"
+    //           << std::endl;
 
     if (best_score > fitness_score_thresh) {
-      std::cout << "loop not found..." << std::endl;
+      std::cout << "loop not found... BEST SCORE:" << best_score << std::endl;
       return nullptr;
+    } else {
+      std::cout << "loop found:" << best_score << std::endl;
     }
 
-    std::cout << "loop found!!" << std::endl;
-    std::cout
-        << "relpose: " << relative_pose.block<3, 1>(0, 3) << " - "
-        << Eigen::Quaternionf(relative_pose.block<3, 3>(0, 0)).coeffs().transpose()
-        << std::endl;
+    // std::cout << "loop found!!" << std::endl;
+    // std::cout
+    //     << "relpose: " << relative_pose.block<3, 1>(0, 3) << " - "
+    //     << Eigen::Quaternionf(relative_pose.block<3, 3>(0, 0)).coeffs().transpose()
+    //     << std::endl;
 
     last_edge_accum_distance = new_keyframe->accum_distance;
 

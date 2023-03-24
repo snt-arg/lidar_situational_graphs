@@ -1,25 +1,26 @@
-scan_matching_node: 
-  ros__parameters:
-    use_sim_time: True
-    publish_tf: true
-    odom_frame_id: "odom"
-    robot_odom_frame_id: "odom"
-    keyframe_delta_trans: 0.25
-    keyframe_delta_angle: 2.0
-    keyframe_delta_time: 10000.0
-    transform_thresholding: false
-    max_acceptable_trans: 1.0
-    max_acceptable_angle: 1.0
-    downsample_method: "NONE"
-    downsample_resolution: 0.1
-    # ICP, GICP, NDT, GICP_OMP, NDT_OMP, FAST_GICP (recommended), or FAST_VGICP
-    registration_method: "FAST_VGICP" 
-    reg_num_threads: 0
-    reg_transformation_epsilon: 0.01
-    reg_maximum_iterations: 64
-    reg_max_correspondence_distance: 2.0
-    reg_max_optimizer_iterations: 20
-    reg_use_reciprocal_correspondences: false
-    reg_correspondence_randomness: 20
-    reg_resolution: 1.0
-    reg_nn_search_method: "DIRECT7"
+/**:
+  scan_matching_node: 
+    ros__parameters:
+      use_sim_time: True
+      publish_tf: true
+      odom_frame_id: "odom"
+      robot_odom_frame_id: "odom"
+      keyframe_delta_trans: 0.25
+      keyframe_delta_angle: 2.0
+      keyframe_delta_time: 10000.0
+      transform_thresholding: false
+      max_acceptable_trans: 1.0
+      max_acceptable_angle: 1.0
+      downsample_method: "NONE"
+      downsample_resolution: 0.1
+      # ICP, GICP, NDT, GICP_OMP, NDT_OMP, FAST_GICP (recommended), or FAST_VGICP
+      registration_method: "FAST_VGICP" 
+      reg_num_threads: 0
+      reg_transformation_epsilon: 0.01
+      reg_maximum_iterations: 64
+      reg_max_correspondence_distance: 2.0
+      reg_max_optimizer_iterations: 20
+      reg_use_reciprocal_correspondences: false
+      reg_correspondence_randomness: 20
+      reg_resolution: 1.0
+      reg_nn_search_method: "DIRECT7"

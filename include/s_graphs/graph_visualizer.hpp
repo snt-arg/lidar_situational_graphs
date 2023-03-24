@@ -130,6 +130,7 @@ class GraphVisualizer {
   double color_r, color_g, color_b;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
+  rclcpp::Node* node_ptr_;
 };
 
 }  // namespace s_graphs

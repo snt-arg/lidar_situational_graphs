@@ -81,6 +81,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/planes.hpp>
 #include <s_graphs/room_mapper.hpp>
+#include <s_graphs/room_utils.hpp>
 #include <s_graphs/rooms.hpp>
 #include <s_graphs/ros_time_hash.hpp>
 #include <s_graphs/ros_utils.hpp>
@@ -131,6 +132,14 @@ class SGraphsNode : public rclcpp::Node {
         this->get_parameter("map_frame_id").get_parameter_value().get<std::string>();
     odom_frame_id =
         this->get_parameter("odom_frame_id").get_parameter_value().get<std::string>();
+
+    std::string ns = this->get_namespace();
+    if (ns.length()) {
+      std::string ns_prefix = std::string(this->get_namespace()).substr(1);
+      map_frame_id = ns_prefix + "/" + map_frame_id;
+      odom_frame_id = ns_prefix + "/" + odom_frame_id;
+    }
+
     map_cloud_resolution =
         this->get_parameter("map_cloud_resolution").get_parameter_value().get<double>();
     wait_trans_odom2map =
@@ -189,7 +198,7 @@ class SGraphsNode : public rclcpp::Node {
 
     // subscribers
     init_odom2map_sub = this->create_subscription<geometry_msgs::msg::PointStamped>(
-        "/odom2map/initial_pose",
+        "odom2map/initial_pose",
         1,
         std::bind(
             &SGraphsNode::init_map2odom_pose_callback, this, std::placeholders::_1));
@@ -200,82 +209,88 @@ class SGraphsNode : public rclcpp::Node {
       usleep(1e6);
     }
 
-    odom_sub.subscribe(this, "/odom");
-    cloud_sub.subscribe(this, "/filtered_points");
+    odom_sub.subscribe(this, "odom");
+    cloud_sub.subscribe(this, "filtered_points");
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
         ApproxSyncPolicy(32), odom_sub, cloud_sub));
     sync->registerCallback(&SGraphsNode::cloud_callback, this);
 
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
-        "/odom",
+        "odom",
         1,
         std::bind(&SGraphsNode::raw_odom_callback, this, std::placeholders::_1));
     imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-        "/gpsimu_driver/imu_data",
+        "gpsimu_driver/imu_data",
         1024,
         std::bind(&SGraphsNode::imu_callback, this, std::placeholders::_1));
     floor_sub = this->create_subscription<s_graphs::msg::FloorCoeffs>(
-        "/floor_detection/floor_coeffs",
+        "floor_detection/floor_coeffs",
         1024,
         std::bind(&SGraphsNode::floor_coeffs_callback, this, std::placeholders::_1));
     room_data_sub = this->create_subscription<s_graphs::msg::RoomsData>(
-        "/room_segmentation/room_data",
+        "room_segmentation/room_data",
         1,
         std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1));
     all_room_data_sub = this->create_subscription<s_graphs::msg::RoomsData>(
-        "/floor_plan/all_rooms_data",
+        "floor_plan/all_rooms_data",
         1,
         std::bind(&SGraphsNode::all_room_data_callback, this, std::placeholders::_1));
     floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
-        "/floor_plan/floor_data",
+        "floor_plan/floor_data",
         1,
         std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1));
 
     if (this->get_parameter("enable_gps").get_parameter_value().get<bool>()) {
       gps_sub = this->create_subscription<geographic_msgs::msg::GeoPointStamped>(
-          "/gps/geopoint",
+          "gps/geopoint",
           1024,
           std::bind(&SGraphsNode::gps_callback, this, std::placeholders::_1));
       nmea_sub = this->create_subscription<nmea_msgs::msg::Sentence>(
-          "/gpsimu_driver/nmea_sentence",
+          "gpsimu_driver/nmea_sentence",
           1024,
           std::bind(&SGraphsNode::nmea_callback, this, std::placeholders::_1));
       navsat_sub = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-          "/gps/navsat",
+          "gps/navsat",
           1024,
           std::bind(&SGraphsNode::navsat_callback, this, std::placeholders::_1));
     }
     // publishers
     markers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
-        "/s_graphs/markers", 16);
+        "s_graphs/markers", 16);
     odom2map_pub = this->create_publisher<geometry_msgs::msg::TransformStamped>(
-        "/s_graphs/odom2map", 16);
+        "s_graphs/odom2map", 16);
     odom_pose_corrected_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-        "/s_graphs/odom_pose_corrected", 10);
-    odom_path_corrected_pub = this->create_publisher<nav_msgs::msg::Path>(
-        "/s_graphs/odom_path_corrected", 10);
+        "s_graphs/odom_pose_corrected", 10);
+    odom_path_corrected_pub =
+        this->create_publisher<nav_msgs::msg::Path>("s_graphs/odom_path_corrected", 10);
 
-    map_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-        "/s_graphs/map_points", 1);
+    map_points_pub =
+        this->create_publisher<sensor_msgs::msg::PointCloud2>("s_graphs/map_points", 1);
     keyframe_map_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-        "/s_graphs/keyframe_map_points", 1);
+        "s_graphs/keyframe_map_points", 1);
     map_planes_pub =
-        this->create_publisher<s_graphs::msg::PlanesData>("/s_graphs/map_planes", 1);
-    all_map_planes_pub = this->create_publisher<s_graphs::msg::PlanesData>(
-        "/s_graphs/all_map_planes", 1);
+        this->create_publisher<s_graphs::msg::PlanesData>("s_graphs/map_planes", 1);
+    all_map_planes_pub =
+        this->create_publisher<s_graphs::msg::PlanesData>("s_graphs/all_map_planes", 1);
     read_until_pub =
-        this->create_publisher<std_msgs::msg::Header>("/s_graphs/read_until", 32);
+        this->create_publisher<std_msgs::msg::Header>("s_graphs/read_until", 32);
     graph_pub = this->create_publisher<graph_manager_msgs::msg::Graph>(
-        "/s_graphs/graph_structure", 32);
+        "s_graphs/graph_structure", 32);
+    graph_keyframes_pub =
+        this->create_publisher<graph_manager_msgs::msg::GraphKeyframes>(
+            "s_graphs/graph_keyframes", 32);
+    graph_room_keyframe_pub =
+        this->create_publisher<graph_manager_msgs::msg::RoomKeyframe>(
+            "s_graphs/graph_room_keyframes", 32);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
-        "/s_graphs/dump",
+        "s_graphs/dump",
         std::bind(&SGraphsNode::dump_service,
                   this,
                   std::placeholders::_1,
                   std::placeholders::_2));
     save_map_service_server = this->create_service<s_graphs::srv::SaveMap>(
-        "/s_graphs/save_map",
+        "s_graphs/save_map",
         std::bind(&SGraphsNode::save_map_service,
                   this,
                   std::placeholders::_1,
@@ -399,7 +414,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("room_dist_threshold", 1.0);
     this->declare_parameter("dupl_plane_matching_information", 0.01);
 
-    this->declare_parameter("points_topic", "/velodyne_points");
+    this->declare_parameter("points_topic", "velodyne_points");
     this->declare_parameter("enable_gps", false);
     this->declare_parameter("graph_update_interval", 3.0);
     this->declare_parameter("keyframe_timer_update_interval", 3.0);
@@ -1010,6 +1025,12 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.lock();
     local_graph = graph_slam->graph.get();
     graph_mutex.unlock();
+    std::string graph_type;
+    if (std::string("/robot1") == this->get_namespace()) {
+      graph_type = "Prior";
+    } else {
+      graph_type = "Online";
+    }
     auto graph_structure = graph_publisher->publish_graph(local_graph,
                                                           "Online",
                                                           x_vert_planes_prior,
@@ -1020,7 +1041,22 @@ class SGraphsNode : public rclcpp::Node {
                                                           rooms_vec,
                                                           x_infinite_rooms,
                                                           y_infinite_rooms);
+    graph_structure.name = graph_type;
+
+    auto graph_keyframes =
+        graph_publisher->publish_graph_keyframes(local_graph, this->keyframes);
     graph_pub->publish(graph_structure);
+    graph_keyframes_pub->publish(graph_keyframes);
+
+    static RoomsKeyframeGenerator keyframe_generator(
+        &this->x_vert_planes, &this->y_vert_planes, &this->keyframes);
+
+    for (auto room : this->rooms_vec) {
+      keyframe_generator.addRoom(room);
+    }
+    for (auto room : keyframe_generator.getExtendedRooms()) {
+      graph_room_keyframe_pub->publish(convertExtendedRoomToRosMsg(room));
+    }
   }
 
   /**
@@ -1028,7 +1064,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void map_points_publish_timer_callback() {
-    if (!map_points_pub->get_subscription_count() < 0 || !graph_updated) {
+    if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
       return;
     }
 
@@ -2021,6 +2057,10 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr all_map_planes_pub;
   rclcpp::Publisher<graph_manager_msgs::msg::Graph>::SharedPtr graph_pub;
+  rclcpp::Publisher<graph_manager_msgs::msg::GraphKeyframes>::SharedPtr
+      graph_keyframes_pub;
+  rclcpp::Publisher<graph_manager_msgs::msg::RoomKeyframe>::SharedPtr
+      graph_room_keyframe_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
