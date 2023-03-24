@@ -51,9 +51,10 @@ void RoomAnalyzer::analyze_skeleton_graph(
   cloud_clusters.clear();
   subgraphs.clear();
 
-  visualization_msgs::msg::MarkerArray curr_connected_clusters_marker_array;
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters;
   int subgraph_id = 0;
+
+  visualization_msgs::msg::MarkerArray curr_connected_clusters;
   std::vector<std::pair<int, int>> connected_subgraph_map;
   for (const auto& single_graph : skeleton_graph_msg->markers) {
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp_cloud_cluster(
@@ -77,48 +78,22 @@ void RoomAnalyzer::analyze_skeleton_graph(
       // insert subgraph id in the seq
       tmp_cloud_cluster->header.seq = subgraph_id;
       curr_cloud_clusters.push_back(tmp_cloud_cluster);
-      curr_connected_clusters_marker_array.markers.push_back(single_graph);
+      curr_connected_clusters.markers.push_back(single_graph);
       subgraph_id++;
     }
+  }
 
+  for (const auto& single_graph : skeleton_graph_msg->markers) {
     std::string edge_string = "connected_edges_";
     size_t edge_found = single_graph.ns.find(edge_string);
     if (edge_found != std::string::npos) {
-      curr_connected_clusters_marker_array.markers.push_back(single_graph);
-    }
-
-    // get the connected subsgraphs
-    std::string connected_subgraph_string = "subgraph_edges_";
-    size_t found_connection = single_graph.ns.find(connected_subgraph_string);
-    if (found_connection != std::string::npos) {
-      // the position here encodes the two subgraph ids.
-      int subgraph_1_id = single_graph.id >> 8;
-      int subgraph_2_id = single_graph.id & (2 * 2 * 2 * 2 - 1);
-
-      bool pair_exists = false;
-      for (const auto& connected_graph_ids : connected_subgraph_map) {
-        if (connected_graph_ids.first == subgraph_1_id &&
-            connected_graph_ids.second == subgraph_2_id) {
-          pair_exists = true;
-          continue;
-        } else if (connected_graph_ids.first == subgraph_2_id &&
-                   connected_graph_ids.second == subgraph_1_id) {
-          pair_exists = true;
-          continue;
-        }
-      }
-
-      if (pair_exists) continue;
-
-      std::pair<int, int> connected_subgraph;
-      connected_subgraph = std::make_pair(subgraph_1_id, subgraph_2_id);
-      connected_subgraph_map.push_back(connected_subgraph);
+      curr_connected_clusters.markers.push_back(single_graph);
     }
   }
 
   cloud_clusters = curr_cloud_clusters;
   subgraphs = connected_subgraph_map;
-  clusters_marker_array = curr_connected_clusters_marker_array;
+  clusters_marker_array = curr_connected_clusters;
   skeleton_graph_mutex.unlock();
 
   return;
@@ -256,15 +231,13 @@ bool RoomAnalyzer::perform_room_segmentation(
     RoomInfo& room_info,
     int& room_cluster_counter,
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
-    std::vector<s_graphs::msg::RoomData>& room_candidates_vec,
-    std::vector<std::pair<int, int>> connected_subgraph_map) {
+    std::vector<s_graphs::msg::RoomData>& room_candidates_vec) {
   pcl::PointXY p1;
   pcl::PointXY p2;
   extract_cluster_endpoints(cloud_cluster, p1, p2);
   float room_width_threshold = 1.0;
   geometry_msgs::msg::Point room_length = extract_room_length(p1, p2);
 
-  // TODO:HB check room width here
   if (room_length.x < 0.5 || room_length.y < 0.5) {
     room_cluster_counter++;
     return false;
@@ -344,14 +317,6 @@ bool RoomAnalyzer::perform_room_segmentation(
         return false;
       }
 
-      std::vector<int> neighbour_ids;
-      for (const auto& connected_ids : connected_subgraph_map) {
-        if (connected_ids.first == cloud_cluster->header.seq)
-          neighbour_ids.push_back(connected_ids.second);
-        else if (connected_ids.second == cloud_cluster->header.seq)
-          neighbour_ids.push_back(connected_ids.first);
-      }
-
       // clear plane points which are not required now
       room_planes.x_plane1.plane_points.clear();
       room_planes.x_plane2.plane_points.clear();
@@ -360,7 +325,6 @@ bool RoomAnalyzer::perform_room_segmentation(
 
       s_graphs::msg::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
-      room_candidate.neighbour_ids = neighbour_ids;
       room_candidate.room_length = room_length;
       room_candidate.room_center = room_center;
       room_candidate.x_planes.push_back(room_planes.x_plane1);
@@ -404,14 +368,6 @@ bool RoomAnalyzer::perform_room_segmentation(
         return false;
       }
 
-      std::vector<int> neighbour_ids;
-      for (const auto& connected_ids : connected_subgraph_map) {
-        if (connected_ids.first == cloud_cluster->header.seq)
-          neighbour_ids.push_back(connected_ids.second);
-        else if (connected_ids.second == cloud_cluster->header.seq)
-          neighbour_ids.push_back(connected_ids.first);
-      }
-
       // clear plane points which are not required now
       room_planes.x_plane1.plane_points.clear();
       room_planes.x_plane2.plane_points.clear();
@@ -420,7 +376,6 @@ bool RoomAnalyzer::perform_room_segmentation(
 
       s_graphs::msg::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
-      room_candidate.neighbour_ids = neighbour_ids;
       room_candidate.room_length = room_length;
       room_candidate.room_center = room_center;
       room_candidate.cluster_center.x = cluster_center(0);
@@ -464,14 +419,6 @@ bool RoomAnalyzer::perform_room_segmentation(
         return false;
       }
 
-      std::vector<int> neighbour_ids;
-      for (const auto& connected_ids : connected_subgraph_map) {
-        if (connected_ids.first == cloud_cluster->header.seq)
-          neighbour_ids.push_back(connected_ids.second);
-        else if (connected_ids.second == cloud_cluster->header.seq)
-          neighbour_ids.push_back(connected_ids.first);
-      }
-
       // clear plane points which are not required now
       room_planes.x_plane1.plane_points.clear();
       room_planes.x_plane2.plane_points.clear();
@@ -480,7 +427,6 @@ bool RoomAnalyzer::perform_room_segmentation(
 
       s_graphs::msg::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
-      room_candidate.neighbour_ids = neighbour_ids;
       room_candidate.room_length = room_length;
       room_candidate.room_center = room_center;
       room_candidate.cluster_center.x = cluster_center(0);

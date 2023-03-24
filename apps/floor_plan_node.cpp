@@ -186,8 +186,6 @@ class FloorPlanNode : public rclcpp::Node {
     std::vector<s_graphs::msg::RoomData> room_candidates_vec;
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters =
         room_analyzer->extract_cloud_clusters();
-    std::vector<std::pair<int, int>> connected_subgraph_map =
-        room_analyzer->extract_connected_graph();
 
     for (const auto& cloud_cluster : curr_cloud_clusters) {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull(
@@ -204,11 +202,8 @@ class FloorPlanNode : public rclcpp::Node {
 
       RoomInfo room_info = {
           current_x_vert_planes, current_y_vert_planes, cloud_cluster};
-      room_analyzer->perform_room_segmentation(room_info,
-                                               room_cluster_counter,
-                                               cloud_cluster,
-                                               room_candidates_vec,
-                                               connected_subgraph_map);
+      room_analyzer->perform_room_segmentation(
+          room_info, room_cluster_counter, cloud_cluster, room_candidates_vec);
 
       s_graphs::msg::RoomsData room_candidates_msg;
       room_candidates_msg.header.stamp = this->now();

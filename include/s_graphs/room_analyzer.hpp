@@ -115,13 +115,6 @@ class RoomAnalyzer {
   /**
    * @brief
    *
-   * @return Connected subgraphs
-   */
-  std::vector<std::pair<int, int>> extract_connected_graph() { return subgraphs; }
-
-  /**
-   * @brief
-   *
    * @return Connected clusters marker array
    */
   visualization_msgs::msg::MarkerArray extract_marker_array_clusters() {
@@ -236,7 +229,6 @@ class RoomAnalyzer {
    * @param cloud_cluster
    * @param cloud_hull
    * @param room_candidates_vec
-   * @param connected_subgraph_map
    *
    * @return Success or Failure.
    */
@@ -244,8 +236,7 @@ class RoomAnalyzer {
       RoomInfo& room_info,
       int& room_cluster_counter,
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
-      std::vector<s_graphs::msg::RoomData>& room_candidates_vec,
-      std::vector<std::pair<int, int>> connected_subgraph_map);
+      std::vector<s_graphs::msg::RoomData>& room_candidates_vec);
 
   /**
    * @brief

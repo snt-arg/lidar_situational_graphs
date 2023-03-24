@@ -123,9 +123,6 @@ class RoomSegmentationNode : public rclcpp::Node {
         "room_segmentation/room_data", 1);
     room_centers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
         "room_segmentation/room_centers", 1);
-    refined_skeleton_graph_pub =
-        this->create_publisher<visualization_msgs::msg::MarkerArray>(
-            "room_segmentation/refined_skeleton_graph", 1);
 
     room_detection_timer = create_wall_timer(
         std::chrono::seconds(1),
@@ -228,8 +225,7 @@ class RoomSegmentationNode : public rclcpp::Node {
 
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters =
         room_analyzer->extract_cloud_clusters();
-    std::vector<std::pair<int, int>> connected_subgraph_map =
-        room_analyzer->extract_connected_graph();
+
     visualization_msgs::msg::MarkerArray skeleton_marker_array =
         room_analyzer->extract_marker_array_clusters();
 
@@ -249,18 +245,9 @@ class RoomSegmentationNode : public rclcpp::Node {
 
       RoomInfo room_info = {
           current_x_vert_planes, current_y_vert_planes, cloud_cluster};
-      bool found_room =
-          room_analyzer->perform_room_segmentation(room_info,
-                                                   room_cluster_counter,
-                                                   cloud_cluster,
-                                                   room_candidates_vec,
-                                                   connected_subgraph_map);
-      if (found_room) {
-        refined_skeleton_marker_array.markers.push_back(
-            skeleton_marker_array.markers[2 * cluster_id]);
-        refined_skeleton_marker_array.markers.push_back(
-            skeleton_marker_array.markers[2 * cluster_id + 1]);
-      }
+      bool found_room = room_analyzer->perform_room_segmentation(
+          room_info, room_cluster_counter, cloud_cluster, room_candidates_vec);
+
       for (int i = 0; i < cloud_cluster->points.size(); ++i) {
         cloud_visualizer->points.push_back(cloud_cluster->points[i]);
       }
@@ -278,8 +265,6 @@ class RoomSegmentationNode : public rclcpp::Node {
     cloud_cluster_msg.header.stamp = this->now();
     cloud_cluster_msg.header.frame_id = map_frame_id;
     cluster_cloud_pub->publish(cloud_cluster_msg);
-
-    refined_skeleton_graph_pub->publish(refined_skeleton_marker_array);
   }
 
   void viz_room_centers(s_graphs::msg::RoomsData room_vec) {
@@ -331,8 +316,6 @@ class RoomSegmentationNode : public rclcpp::Node {
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_clouds_pub;
   rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr room_data_pub;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr room_centers_pub;
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr
-      refined_skeleton_graph_pub;
 
   /* private variables */
  private:
