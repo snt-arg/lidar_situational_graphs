@@ -75,7 +75,7 @@ class RoomSegmentationNode : public rclcpp::Node {
     this->initialize_params();
     this->init_ros();
     std::string ns = this->get_namespace();
-    if (ns.length()) {
+    if (ns.length() > 1) {
       std::string ns_prefix = std::string(this->get_namespace()).substr(1);
       map_frame_id = ns_prefix + "/" + map_frame_id;
     }

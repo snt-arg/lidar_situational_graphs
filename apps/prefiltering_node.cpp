@@ -168,7 +168,7 @@ class PrefilteringNode : public rclcpp::Node {
     base_link_frame =
         this->get_parameter("base_link_frame").get_parameter_value().get<std::string>();
     std::string ns = this->get_namespace();
-    if (ns.length()) {
+    if (ns.length() > 1) {
       std::string ns_prefix = std::string(this->get_namespace()).substr(1);
       base_link_frame = ns_prefix + "/" + base_link_frame;
     }

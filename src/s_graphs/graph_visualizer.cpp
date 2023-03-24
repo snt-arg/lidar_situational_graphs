@@ -43,7 +43,7 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node) {
   color_b = node->get_parameter("color_b").get_parameter_value().get<double>();
 
   std::string ns = node_ptr_->get_namespace();
-  if (ns.length()) {
+  if (ns.length() > 1) {
     std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
     map_frame_id = ns_prefix + "/" + map_frame_id;
   }
@@ -84,7 +84,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   std::string floors_layer_id = "floors_layer";
 
   std::string ns = node_ptr_->get_namespace();
-  if (ns.length()) {
+  if (ns.length() > 1) {
     std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
     keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
     walls_layer_id = ns_prefix + "/" + walls_layer_id;

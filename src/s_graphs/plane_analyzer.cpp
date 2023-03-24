@@ -53,7 +53,7 @@ PlaneAnalyzer::PlaneAnalyzer(rclcpp::Node::SharedPtr node) {
                                   .get<std::string>();
 
   std::string ns = node->get_namespace();
-  if (ns.length()) {
+  if (ns.length() > 1) {
     std::string ns_prefix = std::string(node->get_namespace()).substr(1);
     plane_extraction_frame = ns_prefix + "/" + plane_extraction_frame;
     plane_visualization_frame = ns_prefix + "/" + plane_visualization_frame;
