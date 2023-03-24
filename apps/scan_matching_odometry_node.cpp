@@ -117,7 +117,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
                               .get<std::string>();
 
     std::string ns = this->get_namespace();
-    if (ns.length()) {
+    if (ns.length() > 1) {
       std::string ns_prefix = std::string(this->get_namespace()).substr(1);
       odom_frame_id = ns_prefix + "/" + odom_frame_id;
       robot_odom_frame_id = ns_prefix + "/" + odom_frame_id;

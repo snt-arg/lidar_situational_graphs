@@ -21,6 +21,11 @@ def generate_launch_description():
                 default_value="real",
                 description="Flag to get the environment type real or sim",
             ),
+            DeclareLaunchArgument(
+                "namespace",
+                default_value="",
+                description="Namespace for the robot",
+            ),
             OpaqueFunction(function=launch_sgraphs),
         ]
     )
@@ -31,25 +36,31 @@ def launch_sgraphs(context, *args, **kwargs):
     prefiltering_param_file = os.path.join(pkg_dir, "config", "prefiltering.yaml")
     scan_matching_param_file = os.path.join(pkg_dir, "config", "scan_matching.yaml")
     s_graphs_param_file = os.path.join(pkg_dir, "config", "s_graphs.yaml")
+    compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
+    namespace_arg = LaunchConfiguration("namespace").perform(context)
+    ns_prefix = str(namespace_arg) + "/" if namespace_arg else ""
+    if str(ns_prefix).startswith("/"):
+        ns_prefix = ns_prefix[1:]
+    # print("ns_prefix", ns_prefix)
 
     prefiltering_cmd = Node(
         package="s_graphs",
         executable="s_graphs_prefiltering_node",
+        namespace=namespace_arg,
         parameters=[prefiltering_param_file],
         output="screen",
         remappings=[
-            ("velodyne_points", "/platform/velodyne_points"),
-            ("imu/data", "/platform/imu/data"),
+            ("velodyne_points", "platform/velodyne_points"),
+            ("imu/data", "platform/imu/data"),
         ],
     )
-
-    compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
 
     scan_matching_cmd = Node(
         package="s_graphs",
         executable="s_graphs_scan_matching_odometry_node",
+        namespace=namespace_arg,
         parameters=[scan_matching_param_file],
-        remappings=[("/odom", "/platform/odometry")],
+        remappings=[("odom", "platform/odometry")],
         output="screen",
         condition=IfCondition(compute_odom_arg),
     )
@@ -57,6 +68,7 @@ def launch_sgraphs(context, *args, **kwargs):
     room_segmentation_cmd = Node(
         package="s_graphs",
         executable="s_graphs_room_segmentation_node",
+        namespace=namespace_arg,
         parameters=[{"vertex_neigh_thres": 2}],
         output="screen",
     )
@@ -64,6 +76,7 @@ def launch_sgraphs(context, *args, **kwargs):
     floor_plan_cmd = Node(
         package="s_graphs",
         executable="s_graphs_floor_plan_node",
+        namespace=namespace_arg,
         parameters=[{"vertex_neigh_thres": 2}],
         output="screen",
     )
@@ -71,11 +84,12 @@ def launch_sgraphs(context, *args, **kwargs):
     s_graphs_cmd = Node(
         package="s_graphs",
         executable="s_graphs_node",
+        namespace=namespace_arg,
         parameters=[s_graphs_param_file],
         output="screen",
         remappings=[
-            ("velodyne_points", "/platform/velodyne_points"),
-            ("/odom", "/platform/odometry"),
+            ("velodyne_points", "platform/velodyne_points"),
+            ("odom", "platform/odometry"),
         ],
     )
 
@@ -83,7 +97,14 @@ def launch_sgraphs(context, *args, **kwargs):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="map_keyframe_static_transform",
-        arguments=["0.0", "0.0", "7.0", "0.0", "0.0", "0.0", "map", "keyframes_layer"],
+        arguments=["0.0", 
+                   "0.0",
+                   "7.0",
+                   "0.0", 
+                   "0.0", 
+                   "0.0",
+                   ns_prefix+"map", 
+                   ns_prefix+"keyframes_layer"],
         output="screen",
     )
 
@@ -98,8 +119,8 @@ def launch_sgraphs(context, *args, **kwargs):
             "0.0",
             "0.0",
             "0.0",
-            "keyframes_layer",
-            "walls_layer",
+            ns_prefix+"keyframes_layer",
+            ns_prefix+"walls_layer",
         ],
         output="screen",
     )
@@ -115,8 +136,8 @@ def launch_sgraphs(context, *args, **kwargs):
             "0.0",
             "0.0",
             "0.0",
-            "walls_layer",
-            "rooms_layer",
+            ns_prefix+"walls_layer",
+            ns_prefix+"rooms_layer",
         ],
         output="screen",
     )
@@ -132,8 +153,8 @@ def launch_sgraphs(context, *args, **kwargs):
             "0.0",
             "0.0",
             "0.0",
-            "rooms_layer",
-            "floors_layer",
+            ns_prefix+"rooms_layer",
+            ns_prefix+"floors_layer",
         ],
         output="screen",
     )

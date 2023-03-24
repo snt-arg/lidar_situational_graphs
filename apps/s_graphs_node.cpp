@@ -134,7 +134,7 @@ class SGraphsNode : public rclcpp::Node {
         this->get_parameter("odom_frame_id").get_parameter_value().get<std::string>();
 
     std::string ns = this->get_namespace();
-    if (ns.length()) {
+    if (ns.length() > 1) {
       std::string ns_prefix = std::string(this->get_namespace()).substr(1);
       map_frame_id = ns_prefix + "/" + map_frame_id;
       odom_frame_id = ns_prefix + "/" + odom_frame_id;
