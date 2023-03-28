@@ -38,6 +38,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/vertex_room.hpp>
 
+#include "visualization_msgs/msg/marker_array.hpp"
+
 namespace g2o {
 class VertexSE3;
 class HyperGraph;
@@ -57,6 +59,7 @@ namespace s_graphs {
  * @var neighbour_ids
  * @var cluster_center_node
  * @var node
+ * @var cluster_array
  */
 struct InfiniteRooms {
  public:
@@ -69,6 +72,7 @@ struct InfiniteRooms {
   g2o::VertexRoomXYLB* cluster_center_node;
   g2o::VertexRoomXYLB* node;  // node instance
   bool sub_infinite_room;
+  visualization_msgs::msg::MarkerArray cluster_array;
 };
 
 }  // namespace s_graphs

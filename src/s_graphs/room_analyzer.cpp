@@ -69,7 +69,7 @@ void RoomAnalyzer::analyze_skeleton_graph(
         pcl::PointXYZRGB pcl_point;
         pcl_point.x = single_graph.points[i].x;
         pcl_point.y = single_graph.points[i].y;
-        pcl_point.z = 7.0;
+        pcl_point.z = 0.0;
         pcl_point.r = r;
         pcl_point.g = g;
         pcl_point.b = b;
@@ -80,21 +80,20 @@ void RoomAnalyzer::analyze_skeleton_graph(
       curr_cloud_clusters.push_back(tmp_cloud_cluster);
       curr_connected_clusters.markers.push_back(single_graph);
       subgraph_id++;
+      continue;
     }
-  }
 
-  for (const auto& single_graph : skeleton_graph_msg->markers) {
     std::string edge_string = "connected_edges_";
     size_t edge_found = single_graph.ns.find(edge_string);
     if (edge_found != std::string::npos) {
       curr_connected_clusters.markers.push_back(single_graph);
     }
+    continue;
   }
 
   cloud_clusters = curr_cloud_clusters;
   subgraphs = connected_subgraph_map;
   clusters_marker_array = curr_connected_clusters;
-  skeleton_graph_mutex.unlock();
 
   return;
 }
@@ -229,9 +228,9 @@ void RoomAnalyzer::extract_convex_hull(
 
 bool RoomAnalyzer::perform_room_segmentation(
     RoomInfo& room_info,
-    int& room_cluster_counter,
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
-    std::vector<s_graphs::msg::RoomData>& room_candidates_vec) {
+    std::vector<s_graphs::msg::RoomData>& room_candidates_vec,
+    const visualization_msgs::msg::MarkerArray& cloud_marker_array) {
   pcl::PointXY p1;
   pcl::PointXY p2;
   extract_cluster_endpoints(cloud_cluster, p1, p2);
@@ -239,7 +238,6 @@ bool RoomAnalyzer::perform_room_segmentation(
   geometry_msgs::msg::Point room_length = extract_room_length(p1, p2);
 
   if (room_length.x < 0.5 || room_length.y < 0.5) {
-    room_cluster_counter++;
     return false;
   } else {
     // check how many planes are extracted
@@ -331,8 +329,11 @@ bool RoomAnalyzer::perform_room_segmentation(
       room_candidate.x_planes.push_back(room_planes.x_plane2);
       room_candidate.y_planes.push_back(room_planes.y_plane1);
       room_candidate.y_planes.push_back(room_planes.y_plane2);
+      for (int i = 0; i < cloud_marker_array.markers.size(); ++i) {
+        room_candidate.cluster_array.markers.push_back(cloud_marker_array.markers[i]);
+      }
       room_candidates_vec.push_back(room_candidate);
-      room_cluster_counter++;
+
       return true;
     }
     // if found only two x planes are found add x infinite_room
@@ -382,8 +383,11 @@ bool RoomAnalyzer::perform_room_segmentation(
       room_candidate.cluster_center.y = cluster_center(1);
       room_candidate.x_planes.push_back(room_planes.x_plane1);
       room_candidate.x_planes.push_back(room_planes.x_plane2);
+      for (int i = 0; i < cloud_marker_array.markers.size(); ++i) {
+        room_candidate.cluster_array.markers.push_back(cloud_marker_array.markers[i]);
+      }
       room_candidates_vec.push_back(room_candidate);
-      room_cluster_counter++;
+
       return true;
     }
     // if found only two y planes are found at y infinite_room
@@ -433,10 +437,12 @@ bool RoomAnalyzer::perform_room_segmentation(
       room_candidate.cluster_center.y = cluster_center(1);
       room_candidate.y_planes.push_back(room_planes.y_plane1);
       room_candidate.y_planes.push_back(room_planes.y_plane2);
+      for (int i = 0; i < cloud_marker_array.markers.size(); ++i) {
+        room_candidate.cluster_array.markers.push_back(cloud_marker_array.markers[i]);
+      }
       room_candidates_vec.push_back(room_candidate);
       return true;
     } else {
-      room_cluster_counter++;
       return false;
     }
   }

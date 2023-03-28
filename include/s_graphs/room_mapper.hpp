@@ -274,7 +274,8 @@ class InfiniteRoomMapper : public MapperUtils {
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
       std::vector<InfiniteRooms>& x_infinite_rooms,
-      std::vector<InfiniteRooms>& y_infinite_rooms);
+      std::vector<InfiniteRooms>& y_infinite_rooms,
+      const visualization_msgs::msg::MarkerArray& cluster_array);
 
   /**
    * @brief
@@ -417,6 +418,7 @@ class FiniteRoomMapper : public MapperUtils {
    * @param dupl_x_vert_planes
    * @param dupl_y_vert_planes
    * @param rooms_vec
+   * @param cluster_array
    */
   void factor_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
@@ -426,7 +428,8 @@ class FiniteRoomMapper : public MapperUtils {
       const std::vector<VerticalPlanes>& y_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-      std::vector<Rooms>& rooms_vec);
+      std::vector<Rooms>& rooms_vec,
+      const visualization_msgs::msg::MarkerArray& cluster_array);
 
   /**
    * @brief
