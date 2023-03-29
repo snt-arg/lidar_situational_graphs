@@ -42,7 +42,7 @@
     reg_use_reciprocal_correspondences: false
     reg_correspondence_randomness: 20
     reg_resolution: 1.0
-    reg_nn_search_method: "DIRECT1"
+    reg_nn_search_method: "DIRECT7"
         
     # Edge parameters
         

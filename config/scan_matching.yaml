@@ -13,8 +13,8 @@
     downsample_method: "NONE"
     downsample_resolution: 0.1
     # ICP, GICP, NDT, GICP_OMP, NDT_OMP, FAST_GICP (recommended), or FAST_VGICP
-    registration_method: "FAST_VGICP" 
-    reg_num_threads: 0
+    registration_method: "FAST_GICP" 
+    reg_num_threads: 8
     reg_transformation_epsilon: 0.01
     reg_maximum_iterations: 64
     reg_max_correspondence_distance: 2.0

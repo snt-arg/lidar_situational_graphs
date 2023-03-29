@@ -5,7 +5,7 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from ament_index_python import get_package_share_directory
 from launch.actions import OpaqueFunction
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition, LaunchConfigurationEquals
 
 
 def generate_launch_description():
@@ -36,6 +36,7 @@ def launch_sgraphs(context, *args, **kwargs):
     prefiltering_param_file = os.path.join(pkg_dir, "config", "prefiltering.yaml")
     scan_matching_param_file = os.path.join(pkg_dir, "config", "scan_matching.yaml")
     s_graphs_param_file = os.path.join(pkg_dir, "config", "s_graphs.yaml")
+
     compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
     namespace_arg = LaunchConfiguration("namespace").perform(context)
     ns_prefix = str(namespace_arg) + "/" if namespace_arg else ""
@@ -97,14 +98,16 @@ def launch_sgraphs(context, *args, **kwargs):
         package="tf2_ros",
         executable="static_transform_publisher",
         name="map_keyframe_static_transform",
-        arguments=["0.0", 
-                   "0.0",
-                   "7.0",
-                   "0.0", 
-                   "0.0", 
-                   "0.0",
-                   ns_prefix+"map", 
-                   ns_prefix+"keyframes_layer"],
+        arguments=[
+            "0.0",
+            "0.0",
+            "7.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            ns_prefix + "map",
+            ns_prefix + "keyframes_layer",
+        ],
         output="screen",
     )
 
@@ -119,8 +122,8 @@ def launch_sgraphs(context, *args, **kwargs):
             "0.0",
             "0.0",
             "0.0",
-            ns_prefix+"keyframes_layer",
-            ns_prefix+"walls_layer",
+            ns_prefix + "keyframes_layer",
+            ns_prefix + "walls_layer",
         ],
         output="screen",
     )
@@ -136,8 +139,8 @@ def launch_sgraphs(context, *args, **kwargs):
             "0.0",
             "0.0",
             "0.0",
-            ns_prefix+"walls_layer",
-            ns_prefix+"rooms_layer",
+            ns_prefix + "walls_layer",
+            ns_prefix + "rooms_layer",
         ],
         output="screen",
     )
@@ -153,10 +156,28 @@ def launch_sgraphs(context, *args, **kwargs):
             "0.0",
             "0.0",
             "0.0",
-            ns_prefix+"rooms_layer",
-            ns_prefix+"floors_layer",
+            ns_prefix + "rooms_layer",
+            ns_prefix + "floors_layer",
         ],
         output="screen",
+    )
+
+    body_base_footprint_static_transform = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="body_base_footprint_static_transform",
+        arguments=[
+            "0.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            ns_prefix + "body",
+            ns_prefix + "base_footprint",
+        ],
+        output="screen",
+        condition=LaunchConfigurationEquals("env", "real"),
     )
 
     return [
@@ -169,4 +190,5 @@ def launch_sgraphs(context, *args, **kwargs):
         keyframe_wall_static_transform,
         wall_room_static_transform,
         room_floor_static_transform,
+        body_base_footprint_static_transform,
     ]
