@@ -37,18 +37,22 @@ def launch_sgraphs(context, *args, **kwargs):
     scan_matching_param_file = os.path.join(pkg_dir, "config", "scan_matching.yaml")
     s_graphs_param_file = os.path.join(pkg_dir, "config", "s_graphs.yaml")
 
+    env_arg = LaunchConfiguration("env").perform(context)
     compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
     namespace_arg = LaunchConfiguration("namespace").perform(context)
     ns_prefix = str(namespace_arg) + "/" if namespace_arg else ""
     if str(ns_prefix).startswith("/"):
         ns_prefix = ns_prefix[1:]
-    # print("ns_prefix", ns_prefix)
+
+    base_link_frame = "body"
+    if env_arg == "sim":
+        base_link_frame = "base_footprint"
 
     prefiltering_cmd = Node(
         package="s_graphs",
         executable="s_graphs_prefiltering_node",
         namespace=namespace_arg,
-        parameters=[prefiltering_param_file],
+        parameters=[{prefiltering_param_file}, {"base_link_frame": base_link_frame}],
         output="screen",
         remappings=[
             ("velodyne_points", "platform/velodyne_points"),
@@ -162,24 +166,6 @@ def launch_sgraphs(context, *args, **kwargs):
         output="screen",
     )
 
-    body_base_footprint_static_transform = Node(
-        package="tf2_ros",
-        executable="static_transform_publisher",
-        name="body_base_footprint_static_transform",
-        arguments=[
-            "0.0",
-            "0.0",
-            "0.0",
-            "0.0",
-            "0.0",
-            "0.0",
-            ns_prefix + "body",
-            ns_prefix + "base_footprint",
-        ],
-        output="screen",
-        condition=LaunchConfigurationEquals("env", "real"),
-    )
-
     return [
         prefiltering_cmd,
         scan_matching_cmd,
@@ -190,5 +176,4 @@ def launch_sgraphs(context, *args, **kwargs):
         keyframe_wall_static_transform,
         wall_room_static_transform,
         room_floor_static_transform,
-        body_base_footprint_static_transform,
     ]
