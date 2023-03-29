@@ -301,8 +301,8 @@ class RoomSegmentationNode : public rclcpp::Node {
 
     for (const auto& room : room_vec.rooms) {
       geometry_msgs::msg::Point point;
-      point.x = room.room_center.x;
-      point.y = room.room_center.y;
+      point.x = room.room_center.position.x;
+      point.y = room.room_center.position.y;
       point.z = 7.0;
       room_marker.points.push_back(point);
 

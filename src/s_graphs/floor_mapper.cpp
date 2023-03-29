@@ -57,8 +57,8 @@ void FloorMapper::lookup_floors(
   for (const auto& floor : floors_vec) {
     if (floor.id == room_data.id) {
       double floor_dist =
-          sqrt(pow(floor.node->estimate()(0) - room_data.room_center.x, 2) +
-               pow(floor.node->estimate()(1) - room_data.room_center.y, 2));
+          sqrt(pow(floor.node->estimate()(0) - room_data.room_center.position.x, 2) +
+               pow(floor.node->estimate()(1) - room_data.room_center.position.y, 2));
       if (floor_dist > floor_threshold) {
         update_floor_node(graph_slam,
                           floor.node,
@@ -86,7 +86,8 @@ void FloorMapper::factor_floor_node(
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   g2o::VertexRoomXYLB* floor_node;
-  Eigen::Vector2d floor_pose(room_data.room_center.x, room_data.room_center.y);
+  Eigen::Vector2d floor_pose(room_data.room_center.position.x,
+                             room_data.room_center.position.y);
 
   Floors det_floor;
   det_floor.graph_id = graph_slam->retrieve_local_nbr_of_vertices();
@@ -114,7 +115,8 @@ void FloorMapper::update_floor_node(
     const std::vector<s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  Eigen::Vector2d floor_pose(room_data.room_center.x, room_data.room_center.y);
+  Eigen::Vector2d floor_pose(room_data.room_center.position.x,
+                             room_data.room_center.position.y);
   graph_slam->update_floor_node(floor_node, floor_pose);
   factor_floor_room_nodes(graph_slam,
                           floor_pose,

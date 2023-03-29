@@ -78,9 +78,12 @@ void FiniteRoomMapper::lookup_rooms(
       matched_x_infinite_room = current_x_infinite_room;
       break;
     }
-    float dist_room_x_corr = sqrt(
-        pow(room_data.room_center.x - current_x_infinite_room.node->estimate()(0), 2) +
-        pow(room_data.room_center.y - current_x_infinite_room.node->estimate()(1), 2));
+    float dist_room_x_corr = sqrt(pow(room_data.room_center.position.x -
+                                          current_x_infinite_room.node->estimate()(0),
+                                      2) +
+                                  pow(room_data.room_center.position.y -
+                                          current_x_infinite_room.node->estimate()(1),
+                                      2));
     if (dist_room_x_corr < min_dist_room_x_corr) {
       min_dist_room_x_corr = dist_room_x_corr;
       matched_x_infinite_room = current_x_infinite_room;
@@ -99,9 +102,12 @@ void FiniteRoomMapper::lookup_rooms(
       break;
     }
 
-    float dist_room_y_corr = sqrt(
-        pow(room_data.room_center.x - current_y_infinite_room.node->estimate()(0), 2) +
-        pow(room_data.room_center.y - current_y_infinite_room.node->estimate()(1), 2));
+    float dist_room_y_corr = sqrt(pow(room_data.room_center.position.x -
+                                          current_y_infinite_room.node->estimate()(0),
+                                      2) +
+                                  pow(room_data.room_center.position.y -
+                                          current_y_infinite_room.node->estimate()(1),
+                                      2));
     if (dist_room_y_corr < min_dist_room_y_corr) {
       min_dist_room_y_corr = dist_room_y_corr;
       matched_y_infinite_room = current_y_infinite_room;
@@ -207,8 +213,8 @@ void FiniteRoomMapper::lookup_rooms(
 
   x_plane1_data.plane_id = room_data.x_planes[0].id;
   x_plane1_data.plane_unflipped = x_plane1;
-  x_plane1_data.plane_centroid(0) = room_data.room_center.x;
-  x_plane1_data.plane_centroid(1) = room_data.room_center.y;
+  x_plane1_data.plane_centroid(0) = room_data.room_center.position.x;
+  x_plane1_data.plane_centroid(1) = room_data.room_center.position.y;
   x_plane2_data.plane_id = room_data.x_planes[1].id;
   x_plane2_data.plane_unflipped = x_plane2;
 
@@ -680,7 +686,8 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
   std::pair<int, int> room_data_association;
 
   std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
-  Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
+  Eigen::Vector2d room_pose(det_room_data.room_center.position.x,
+                            det_room_data.room_center.position.y);
   room_data_association = associate_rooms(room_pose,
                                           rooms_vec,
                                           x_vert_planes,
@@ -733,7 +740,8 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
   std::pair<int, int> room_data_association;
 
   std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
-  Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
+  Eigen::Vector2d room_pose(det_room_data.room_center.position.x,
+                            det_room_data.room_center.position.y);
   room_data_association = associate_rooms(room_pose,
                                           rooms_vec,
                                           x_vert_planes,
@@ -791,7 +799,8 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
   std::pair<int, int> room_data_association;
 
   std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
-  Eigen::Vector2d room_pose(det_room_data.room_center.x, det_room_data.room_center.y);
+  Eigen::Vector2d room_pose(det_room_data.room_center.position.x,
+                            det_room_data.room_center.position.y);
   room_data_association = associate_rooms(room_pose,
                                           rooms_vec,
                                           x_vert_planes,

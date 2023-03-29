@@ -306,9 +306,10 @@ bool RoomAnalyzer::perform_room_segmentation(
         // std::cout << "returning as not a valid room configuration" << std::endl;
         return false;
       }
-      geometry_msgs::msg::Point room_center =
+      geometry_msgs::msg::Pose room_center =
           plane_utils->room_center(x_plane1, x_plane2, y_plane1, y_plane2);
-      bool centroid_inside = extract_centroid_location(cloud_cluster, room_center);
+      bool centroid_inside =
+          extract_centroid_location(cloud_cluster, room_center.position);
       if (!centroid_inside) {
         // std::cout << "returning as the room center is outside the cluster" <<
         // std::endl;
@@ -355,14 +356,15 @@ bool RoomAnalyzer::perform_room_segmentation(
       }
 
       Eigen::Vector2d cluster_center;
-      geometry_msgs::msg::Point room_center =
+      geometry_msgs::msg::Pose room_center =
           plane_utils->extract_infite_room_center(PlaneUtils::plane_class::X_VERT_PLANE,
                                                   p1,
                                                   p2,
                                                   room_planes.x_plane1,
                                                   room_planes.x_plane2,
                                                   cluster_center);
-      bool centroid_inside = extract_centroid_location(cloud_cluster, room_center);
+      bool centroid_inside =
+          extract_centroid_location(cloud_cluster, room_center.position);
       if (!centroid_inside) {
         // std::cout << "returning as the room center is outside the cluster" <<
         // std::endl;
@@ -409,14 +411,15 @@ bool RoomAnalyzer::perform_room_segmentation(
       }
 
       Eigen::Vector2d cluster_center;
-      geometry_msgs::msg::Point room_center =
+      geometry_msgs::msg::Pose room_center =
           plane_utils->extract_infite_room_center(PlaneUtils::plane_class::Y_VERT_PLANE,
                                                   p1,
                                                   p2,
                                                   room_planes.y_plane1,
                                                   room_planes.y_plane2,
                                                   cluster_center);
-      bool centroid_inside = extract_centroid_location(cloud_cluster, room_center);
+      bool centroid_inside =
+          extract_centroid_location(cloud_cluster, room_center.position);
       if (!centroid_inside) {
         // std::cout << "returning as the room center is outside the cluster" <<
         // std::endl;

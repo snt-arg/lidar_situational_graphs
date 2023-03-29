@@ -41,6 +41,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/edge_se3_plane.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 #include "s_graphs/msg/planes_data.hpp"
 
 namespace s_graphs {
@@ -213,11 +214,11 @@ class PlaneUtils {
    * @param
    * @return
    */
-  geometry_msgs::msg::Point room_center(const s_graphs::msg::PlaneData& x_plane1,
-                                        const s_graphs::msg::PlaneData& x_plane2,
-                                        const s_graphs::msg::PlaneData& y_plane1,
-                                        const s_graphs::msg::PlaneData& y_plane2) {
-    geometry_msgs::msg::Point center;
+  geometry_msgs::msg::Pose room_center(const s_graphs::msg::PlaneData& x_plane1,
+                                       const s_graphs::msg::PlaneData& x_plane2,
+                                       const s_graphs::msg::PlaneData& y_plane1,
+                                       const s_graphs::msg::PlaneData& y_plane2) {
+    geometry_msgs::msg::Pose center;
     Eigen::Vector3d vec_x, vec_y;
     Eigen::Vector3d x_plane1_eigen, x_plane2_eigen;
     Eigen::Vector3d y_plane1_eigen, y_plane2_eigen;
@@ -249,8 +250,9 @@ class PlaneUtils {
     }
 
     Eigen::Vector3d final_vec = vec_x + vec_y;
-    center.x = final_vec(0);
-    center.y = final_vec(1);
+    center.position.x = final_vec(0);
+    center.position.y = final_vec(1);
+    center.position.z = final_vec(2);
 
     return center;
   }
@@ -409,14 +411,13 @@ class PlaneUtils {
     return dot_product;
   }
 
-  geometry_msgs::msg::Point extract_infite_room_center(
-      int plane_type,
-      pcl::PointXY p1,
-      pcl::PointXY p2,
-      s_graphs::msg::PlaneData plane1,
-      s_graphs::msg::PlaneData plane2,
-      Eigen::Vector2d& cluster_center) {
-    geometry_msgs::msg::Point center_point;
+  geometry_msgs::msg::Pose extract_infite_room_center(int plane_type,
+                                                      pcl::PointXY p1,
+                                                      pcl::PointXY p2,
+                                                      s_graphs::msg::PlaneData plane1,
+                                                      s_graphs::msg::PlaneData plane2,
+                                                      Eigen::Vector2d& cluster_center) {
+    geometry_msgs::msg::Pose center_point;
     Eigen::Vector4d plane1_eigen, plane2_eigen;
     plane1_eigen << plane1.nx, plane1.ny, plane1.nz, plane1.d;
     plane2_eigen << plane2.nx, plane2.ny, plane2.nz, plane2.d;
@@ -453,11 +454,12 @@ class PlaneUtils {
     vec_normal = vec.head(2) / vec.norm();
     final_pose_vec =
         vec.head(2) + (cluster_center - (cluster_center.dot(vec_normal)) * vec_normal);
-    center_point.x = final_pose_vec(0);
-    center_point.y = final_pose_vec(1);
+    center_point.position.x = final_pose_vec(0);
+    center_point.position.y = final_pose_vec(1);
 
     return center_point;
   }
+
   double plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2) {
     Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
     Eigen::Vector3d error = plane1.ominus(plane2);

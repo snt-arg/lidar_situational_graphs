@@ -85,9 +85,9 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
         break;
       }
 
-      float dist_x_corr_room =
-          sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) +
-               pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
+      float dist_x_corr_room = sqrt(
+          pow(room_data.room_center.position.x - current_room.node->estimate()(0), 2) +
+          pow(room_data.room_center.position.y - current_room.node->estimate()(1), 2));
       if (dist_x_corr_room < min_dist_x_corr_room) {
         min_dist_x_corr_room = dist_x_corr_room;
         matched_room = current_room;
@@ -114,15 +114,15 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     plane_data_list x_plane1_data, x_plane2_data;
     x_plane1_data.plane_id = room_data.x_planes[0].id;
     x_plane1_data.plane_unflipped = x_plane1;
-    x_plane1_data.plane_centroid(0) = room_data.room_center.x;
-    x_plane1_data.plane_centroid(1) = room_data.room_center.y;
+    x_plane1_data.plane_centroid(0) = room_data.room_center.position.x;
+    x_plane1_data.plane_centroid(1) = room_data.room_center.position.y;
     x_plane1_data.cluster_center(0) = room_data.cluster_center.x;
     x_plane1_data.cluster_center(1) = room_data.cluster_center.y;
 
     x_plane2_data.plane_id = room_data.x_planes[1].id;
     x_plane2_data.plane_unflipped = x_plane2;
-    x_plane2_data.plane_centroid(0) = room_data.room_center.x;
-    x_plane2_data.plane_centroid(1) = room_data.room_center.y;
+    x_plane2_data.plane_centroid(0) = room_data.room_center.position.x;
+    x_plane2_data.plane_centroid(1) = room_data.room_center.position.y;
     x_plane2_data.cluster_center(0) = room_data.cluster_center.x;
     x_plane2_data.cluster_center(1) = room_data.cluster_center.y;
 
@@ -152,9 +152,9 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
         break;
       }
 
-      float dist_y_corr_room =
-          sqrt(pow(room_data.room_center.x - current_room.node->estimate()(0), 2) +
-               pow(room_data.room_center.y - current_room.node->estimate()(1), 2));
+      float dist_y_corr_room = sqrt(
+          pow(room_data.room_center.position.x - current_room.node->estimate()(0), 2) +
+          pow(room_data.room_center.position.y - current_room.node->estimate()(1), 2));
       if (dist_y_corr_room < min_dist_y_corr_room) {
         min_dist_y_corr_room = dist_y_corr_room;
         matched_room = current_room;
@@ -180,15 +180,15 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     plane_data_list y_plane1_data, y_plane2_data;
     y_plane1_data.plane_id = room_data.y_planes[0].id;
     y_plane1_data.plane_unflipped = y_plane1;
-    y_plane1_data.plane_centroid(0) = room_data.room_center.x;
-    y_plane1_data.plane_centroid(1) = room_data.room_center.y;
+    y_plane1_data.plane_centroid(0) = room_data.room_center.position.x;
+    y_plane1_data.plane_centroid(1) = room_data.room_center.position.y;
     y_plane1_data.cluster_center(0) = room_data.cluster_center.x;
     y_plane1_data.cluster_center(1) = room_data.cluster_center.y;
 
     y_plane2_data.plane_id = room_data.y_planes[1].id;
     y_plane2_data.plane_unflipped = y_plane2;
-    y_plane2_data.plane_centroid(0) = room_data.room_center.x;
-    y_plane2_data.plane_centroid(1) = room_data.room_center.y;
+    y_plane2_data.plane_centroid(0) = room_data.room_center.position.x;
+    y_plane2_data.plane_centroid(1) = room_data.room_center.position.y;
     y_plane2_data.cluster_center(0) = room_data.cluster_center.x;
     y_plane2_data.cluster_center(1) = room_data.cluster_center.y;
 
