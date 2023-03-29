@@ -7,3 +7,4 @@ geometry_msgs/Point room_center
 geometry_msgs/Point cluster_center
 PlaneData[] x_planes
 PlaneData[] y_planes
+visualization_msgs/MarkerArray cluster_array 

@@ -225,7 +225,6 @@ class RoomAnalyzer {
    *
    * @param current_x_vert_planes
    * @param current_y_vert_planes
-   * @param room_cluster_counter
    * @param cloud_cluster
    * @param cloud_hull
    * @param room_candidates_vec
@@ -234,9 +233,9 @@ class RoomAnalyzer {
    */
   bool perform_room_segmentation(
       RoomInfo& room_info,
-      int& room_cluster_counter,
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
-      std::vector<s_graphs::msg::RoomData>& room_candidates_vec);
+      std::vector<s_graphs::msg::RoomData>& room_candidates_vec,
+      const visualization_msgs::msg::MarkerArray& cloud_marker_array);
 
   /**
    * @brief

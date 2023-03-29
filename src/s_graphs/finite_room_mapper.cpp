@@ -217,12 +217,6 @@ void FiniteRoomMapper::lookup_rooms(
   y_plane2_data.plane_id = room_data.y_planes[1].id;
   y_plane2_data.plane_unflipped = y_plane2;
 
-  // get the room neighbours
-  x_plane1_data.connected_id = room_data.id;
-  for (const auto& room_neighbour_id : room_data.neighbour_ids) {
-    x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-  }
-
   std::vector<plane_data_list> x_planes_room, y_planes_room;
   x_planes_room.push_back(x_plane1_data);
   x_planes_room.push_back(x_plane2_data);
@@ -235,7 +229,8 @@ void FiniteRoomMapper::lookup_rooms(
                y_vert_planes,
                dupl_x_vert_planes,
                dupl_y_vert_planes,
-               rooms_vec);
+               rooms_vec,
+               room_data.cluster_array);
 }
 
 void FiniteRoomMapper::factor_rooms(
@@ -246,7 +241,8 @@ void FiniteRoomMapper::factor_rooms(
     const std::vector<VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-    std::vector<Rooms>& rooms_vec) {
+    std::vector<Rooms>& rooms_vec,
+    const visualization_msgs::msg::MarkerArray& cluster_array) {
   g2o::VertexRoomXYLB* room_node;
   std::pair<int, int> room_data_association;
 
@@ -354,9 +350,8 @@ void FiniteRoomMapper::factor_rooms(
     det_room.plane_x2_id = x_room_pair_vec[1].plane_id;
     det_room.plane_y1_id = y_room_pair_vec[0].plane_id;
     det_room.plane_y2_id = y_room_pair_vec[1].plane_id;
-    det_room.connected_id = x_room_pair_vec[0].connected_id;
-    det_room.connected_neighbour_ids = x_room_pair_vec[0].connected_neighbour_ids;
     det_room.node = room_node;
+    det_room.cluster_array = cluster_array;
     rooms_vec.push_back(det_room);
 
     auto edge_room_planes =
@@ -373,6 +368,9 @@ void FiniteRoomMapper::factor_rooms(
     std::cout << "Matched det room with pose " << room_pose
               << " to mapped room with id " << room_data_association.first
               << " and pose " << room_node->estimate() << std::endl;
+
+    /*update the cluster array */
+    rooms_vec[room_data_association.second].cluster_array = cluster_array;
 
     std::set<g2o::HyperGraph::Edge*> xplane1_edges =
         (*found_x_plane1).plane_node->edges();
@@ -707,9 +705,13 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     det_room.plane_x2_id = matched_x_infinite_room.plane2_id;
     det_room.plane_y1_id = matched_y_infinite_room.plane1_id;
     det_room.plane_y2_id = matched_y_infinite_room.plane2_id;
-    det_room.connected_id = det_room_data.id;
-    det_room.connected_neighbour_ids = det_room_data.neighbour_ids;
     det_room.node = room_node;
+    for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
+      det_room.cluster_array.markers.push_back(
+          matched_x_infinite_room.cluster_array.markers[i]);
+    for (int i = 0; i < matched_y_infinite_room.cluster_array.markers.size(); ++i)
+      det_room.cluster_array.markers.push_back(
+          matched_y_infinite_room.cluster_array.markers[i]);
     rooms_vec.push_back(det_room);
     return;
   } else
@@ -764,8 +766,9 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     det_room.plane_x2_id = matched_x_infinite_room.plane2_id;
     det_room.plane_y1_id = det_room_data.y_planes[0].id;
     det_room.plane_y2_id = det_room_data.y_planes[1].id;
-    det_room.connected_id = det_room_data.id;
-    det_room.connected_neighbour_ids = det_room_data.neighbour_ids;
+    for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
+      det_room.cluster_array.markers.push_back(
+          matched_x_infinite_room.cluster_array.markers[i]);
     det_room.node = room_node;
     rooms_vec.push_back(det_room);
     return;
@@ -821,9 +824,10 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     det_room.plane_x2_id = det_room_data.x_planes[1].id;
     det_room.plane_y1_id = matched_y_infinite_room.plane1_id;
     det_room.plane_y2_id = matched_y_infinite_room.plane2_id;
-    det_room.connected_id = det_room_data.id;
-    det_room.connected_neighbour_ids = det_room_data.neighbour_ids;
     det_room.node = room_node;
+    for (int i = 0; i < matched_y_infinite_room.cluster_array.markers.size(); ++i)
+      det_room.cluster_array.markers.push_back(
+          matched_y_infinite_room.cluster_array.markers[i]);
     rooms_vec.push_back(det_room);
     return;
   } else

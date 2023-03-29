@@ -125,12 +125,6 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     x_plane2_data.plane_centroid(1) = room_data.room_center.y;
     x_plane2_data.cluster_center(0) = room_data.cluster_center.x;
     x_plane2_data.cluster_center(1) = room_data.cluster_center.y;
-    x_plane1_data.connected_id = room_data.id;
-
-    // get the infinite_room neighbours
-    for (const auto& room_neighbour_id : room_data.neighbour_ids) {
-      x_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-    }
 
     factor_infinite_rooms(graph_slam,
                           PlaneUtils::plane_class::X_VERT_PLANE,
@@ -141,7 +135,8 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
                           dupl_x_vert_planes,
                           dupl_y_vert_planes,
                           x_infinite_rooms,
-                          y_infinite_rooms);
+                          y_infinite_rooms,
+                          room_data.cluster_array);
   }
 
   else if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
@@ -196,12 +191,7 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     y_plane2_data.plane_centroid(1) = room_data.room_center.y;
     y_plane2_data.cluster_center(0) = room_data.cluster_center.x;
     y_plane2_data.cluster_center(1) = room_data.cluster_center.y;
-    y_plane1_data.connected_id = room_data.id;
 
-    // get the infinite_room neighbours
-    for (const auto& room_neighbour_id : room_data.neighbour_ids) {
-      y_plane1_data.connected_neighbour_ids.push_back(room_neighbour_id);
-    }
     factor_infinite_rooms(graph_slam,
                           PlaneUtils::plane_class::Y_VERT_PLANE,
                           y_plane1_data,
@@ -211,7 +201,8 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
                           dupl_x_vert_planes,
                           dupl_y_vert_planes,
                           x_infinite_rooms,
-                          y_infinite_rooms);
+                          y_infinite_rooms,
+                          room_data.cluster_array);
   }
 }
 
@@ -225,7 +216,8 @@ void InfiniteRoomMapper::factor_infinite_rooms(
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
     std::vector<InfiniteRooms>& x_infinite_rooms,
-    std::vector<InfiniteRooms>& y_infinite_rooms) {
+    std::vector<InfiniteRooms>& y_infinite_rooms,
+    const visualization_msgs::msg::MarkerArray& cluster_array) {
   g2o::VertexRoomXYLB* corr_node;
   g2o::VertexRoomXYLB* cluster_center_node;
   std::pair<int, int> corr_data_association;
@@ -314,9 +306,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane2_id = corr_plane2_pair.plane_id;
       det_infinite_room.cluster_center_node = cluster_center_node;
       det_infinite_room.node = corr_node;
-      det_infinite_room.connected_id = corr_plane1_pair.connected_id;
-      det_infinite_room.connected_neighbour_ids =
-          corr_plane1_pair.connected_neighbour_ids;
+      det_infinite_room.cluster_array = cluster_array;
       x_infinite_rooms.push_back(det_infinite_room);
 
       auto edge_corr_plane =
@@ -333,6 +323,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       std::cout << "Matched det infinite_room X with pre pose " << corr_pose
                 << " to mapped infinite_room with id " << corr_data_association.first
                 << " and pose " << corr_node->estimate() << std::endl;
+      x_infinite_rooms[corr_data_association.second].cluster_array = cluster_array;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges =
           (*found_plane1).plane_node->edges();
@@ -411,9 +402,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane2_id = corr_plane2_pair.plane_id;
       det_infinite_room.cluster_center_node = cluster_center_node;
       det_infinite_room.node = corr_node;
-      det_infinite_room.connected_id = corr_plane1_pair.connected_id;
-      det_infinite_room.connected_neighbour_ids =
-          corr_plane1_pair.connected_neighbour_ids;
+      det_infinite_room.cluster_array = cluster_array;
       y_infinite_rooms.push_back(det_infinite_room);
 
       auto edge_corr_plane =
@@ -429,6 +418,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       std::cout << "Matched det infinite_room Y with pre pose " << corr_pose
                 << " to mapped infinite_room with id " << corr_data_association.first
                 << " and pose " << corr_node->estimate() << std::endl;
+      y_infinite_rooms[corr_data_association.second].cluster_array = cluster_array;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges =
           (*found_plane1).plane_node->edges();

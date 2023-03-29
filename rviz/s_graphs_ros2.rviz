@@ -4,7 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /TF1
         - /TF1/Frames1
+        - /PointCloud22
         - /MarkerArray1/Namespaces1
         - /MarkerArray2/Namespaces1
       Splitter Ratio: 0.5
@@ -48,37 +50,47 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        back:
-          Value: false
-        back_fisheye:
-          Value: false
+        base_footprint:
+          Value: true
         base_link:
           Value: false
         body:
-          Value: true
-        flat_body:
+          Value: false
+        camera_depth_frame:
+          Value: false
+        camera_depth_optical_frame:
+          Value: false
+        camera_link:
+          Value: false
+        camera_rgb_frame:
+          Value: false
+        camera_rgb_optical_frame:
           Value: false
         floors_layer:
           Value: false
+        front_left_ee:
+          Value: false
+        front_left_hip:
+          Value: false
+        front_left_lower_leg:
+          Value: false
+        front_left_upper_leg:
+          Value: false
         front_rail:
           Value: false
-        frontleft:
+        front_right_ee:
           Value: false
-        frontleft_fisheye:
+        front_right_hip:
           Value: false
-        frontright:
+        front_right_lower_leg:
           Value: false
-        frontright_fisheye:
+        front_right_upper_leg:
           Value: false
-        gpe:
+        imu_link:
           Value: false
-        head:
+        keyframe:
           Value: false
         keyframes_layer:
-          Value: false
-        left:
-          Value: false
-        left_fisheye:
           Value: false
         map:
           Value: true
@@ -86,17 +98,29 @@ Visualization Manager:
           Value: false
         odom:
           Value: true
+        rear_left_ee:
+          Value: false
+        rear_left_hip:
+          Value: false
+        rear_left_lower_leg:
+          Value: false
+        rear_left_upper_leg:
+          Value: false
         rear_rail:
           Value: false
-        right:
+        rear_right_ee:
           Value: false
-        right_fisheye:
+        rear_right_hip:
+          Value: false
+        rear_right_lower_leg:
+          Value: false
+        rear_right_upper_leg:
           Value: false
         rooms_layer:
           Value: false
         velodyne:
           Value: false
-        vision:
+        velodyne_base_link:
           Value: false
         walls_layer:
           Value: false
@@ -115,36 +139,46 @@ Visualization Manager:
           map_elevated:
             {}
           odom:
-            body:
-              base_link:
-                {}
-              flat_body:
-                {}
-              front_rail:
-                {}
-              head:
-                back:
-                  back_fisheye:
+            base_footprint:
+              body:
+                base_link:
+                  camera_link:
+                    camera_depth_frame:
+                      camera_depth_optical_frame:
+                        {}
+                    camera_rgb_frame:
+                      camera_rgb_optical_frame:
+                        {}
+                  imu_link:
                     {}
-                frontleft:
-                  frontleft_fisheye:
-                    {}
-                frontright:
-                  frontright_fisheye:
-                    {}
-                left:
-                  left_fisheye:
-                    {}
-                right:
-                  right_fisheye:
-                    {}
-              rear_rail:
-                {}
-              velodyne:
-                {}
-              vision:
-                {}
-            gpe:
+                  velodyne_base_link:
+                    velodyne:
+                      {}
+                front_left_hip:
+                  front_left_upper_leg:
+                    front_left_lower_leg:
+                      front_left_ee:
+                        {}
+                front_rail:
+                  {}
+                front_right_hip:
+                  front_right_upper_leg:
+                    front_right_lower_leg:
+                      front_right_ee:
+                        {}
+                rear_left_hip:
+                  rear_left_upper_leg:
+                    rear_left_lower_leg:
+                      rear_left_ee:
+                        {}
+                rear_rail:
+                  {}
+                rear_right_hip:
+                  rear_right_upper_leg:
+                    rear_right_lower_leg:
+                      rear_right_ee:
+                        {}
+            keyframe:
               {}
       Update Interval: 0
       Value: true
@@ -222,16 +256,17 @@ Visualization Manager:
         floors: true
         hort_planes: true
         imu: true
-        infinite_room_y_lines: true
+        infinite_room_x_lines: true
         keyframe_keyframe_edges: true
         keyframe_plane_edges: true
         loop_close_radius: true
         nodes: true
-        overlapped_infinite_room_y_lines: true
+        room_vertex: true
         rooms: true
         rooms_lines: true
+        x_infinite_room: true
+        x_infinite_vertex: true
         x_vert_planes: true
-        y_infinite_room: true
         y_vert_planes: true
       Topic:
         Depth: 5
@@ -241,31 +276,17 @@ Visualization Manager:
         Value: /s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: MarkerArray
       Namespaces:
-        closed_spaces: true
-        connected_edges_0: true
-        connected_edges_1: true
-        connected_edges_2: true
-        connected_edges_3: true
-        connected_edges_4: true
-        connected_edges_5: true
-        connected_vertices_0: true
-        connected_vertices_1: true
-        connected_vertices_2: true
-        connected_vertices_3: true
-        connected_vertices_4: true
-        connected_vertices_5: true
-        edges: true
-        vertices: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /voxblox_skeletonizer/sparse_graph
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -309,25 +330,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 67.24530029296875
+      Distance: 42.43859100341797
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 6.769857883453369
-        Y: -9.511758804321289
-        Z: -0.02529507875442505
+        X: 3.6339831352233887
+        Y: -0.254300594329834
+        Z: 0.8163976073265076
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.789797306060791
+      Pitch: 0.7697973251342773
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.109938859939575
+      Yaw: 3.644937038421631
     Saved: ~
 Window Geometry:
   Displays:

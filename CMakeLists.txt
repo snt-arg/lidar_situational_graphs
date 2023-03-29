@@ -77,7 +77,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/ScanMatchingStatus.msg"
   "srv/DumpGraph.srv"
   "srv/SaveMap.srv"
-  DEPENDENCIES builtin_interfaces std_msgs geometry_msgs sensor_msgs
+  DEPENDENCIES builtin_interfaces std_msgs geometry_msgs sensor_msgs visualization_msgs
 )
 
 ###########

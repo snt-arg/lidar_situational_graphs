@@ -49,14 +49,10 @@ namespace s_graphs {
  * @brief
  */
 struct plane_data_list {
-  plane_data_list() : plane_centroid(0, 0, 0), connected_id(-1) {
-    connected_neighbour_ids.clear();
-  }
+  plane_data_list() : plane_centroid(0, 0, 0) {}
   // g2o::Plane3D plane;
   g2o::Plane3D plane_unflipped;
   int plane_id;
-  int connected_id;
-  std::vector<int> connected_neighbour_ids;
   pcl::PointXY start_point, end_point;
   float plane_length;
   g2o::VertexSE3* keyframe_node;

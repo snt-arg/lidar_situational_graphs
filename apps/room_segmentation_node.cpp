@@ -234,19 +234,34 @@ class RoomSegmentationNode : public rclcpp::Node {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull(
           new pcl::PointCloud<pcl::PointXYZRGB>);
 
-      if (cloud_cluster->points.size() < 10) continue;
+      if (cloud_cluster->points.size() < 10) {
+        cluster_id++;
+        continue;
+      }
 
       float hull_area;
       room_analyzer->extract_convex_hull(cloud_cluster, cloud_hull, hull_area);
       if (hull_area < 1.5) {
         // std::cout << "subgraph area too small to be a room " << std::endl;
+        cluster_id++;
         continue;
       }
+
+      visualization_msgs::msg::MarkerArray current_cloud_marker;
+      current_cloud_marker.markers.push_back(
+          skeleton_marker_array.markers[cluster_id * 2]);
+      current_cloud_marker.markers.push_back(
+          skeleton_marker_array.markers[(cluster_id * 2) + 1]);
+
+      current_cloud_marker.markers.push_back(
+          skeleton_marker_array.markers[cluster_id * 2]);
+      current_cloud_marker.markers.push_back(
+          skeleton_marker_array.markers[(cluster_id * 2) + 1]);
 
       RoomInfo room_info = {
           current_x_vert_planes, current_y_vert_planes, cloud_cluster};
       bool found_room = room_analyzer->perform_room_segmentation(
-          room_info, room_cluster_counter, cloud_cluster, room_candidates_vec);
+          room_info, cloud_cluster, room_candidates_vec, current_cloud_marker);
 
       for (int i = 0; i < cloud_cluster->points.size(); ++i) {
         cloud_visualizer->points.push_back(cloud_cluster->points[i]);

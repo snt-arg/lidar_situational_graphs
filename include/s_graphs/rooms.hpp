@@ -35,6 +35,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_types.h>
 
 #include <Eigen/Eigen>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 namespace g2o {
 class VertexRoomXYLB;
@@ -48,24 +49,22 @@ namespace s_graphs {
  * @brief
  *
  * @param id
- * @param connected_id
- * @param connected_neighbour_ids
  * @param plane_x1, plane_x2, plane_y1, plane_y2
  * @param plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id
  * @param neighbour_ids
  * @param node
  * @param sub_room
+ * @param cluster_array
  */
 struct Rooms {
  public:
   int id;
-  int connected_id;
-  std::vector<int> connected_neighbour_ids;
   g2o::Plane3D plane_x1, plane_x2, plane_y1, plane_y2;
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   std::vector<int> neighbour_ids;
   g2o::VertexRoomXYLB* node;  // node instance
   bool sub_room;
+  visualization_msgs::msg::MarkerArray cluster_array;
 };
 
 }  // namespace s_graphs

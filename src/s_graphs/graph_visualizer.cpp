@@ -638,6 +638,15 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.pose.position.z = 0.0;
       infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
+      /* room clusters */
+      int cluster_id = 0;
+      for (auto& cluster : x_infinite_room_snapshot[i].cluster_array.markers) {
+        cluster.header.frame_id = walls_layer_id;
+        if (cluster_id == 0) cluster.ns = "x_infinite_vertex";
+        if (cluster_id == 1) cluster.ns = "x_infinite_vertex_edges";
+        cluster.id = markers.markers.size() + 1;
+        markers.markers.push_back(cluster);
+      }
     } else
       infinite_room_pose_marker.ns = "overlapped_x_infinite_room";
   }
@@ -812,6 +821,15 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.pose.position.z = 0.0;
       infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
+      /* room clusters */
+      int cluster_id = 0;
+      for (auto& cluster : y_infinite_room_snapshot[i].cluster_array.markers) {
+        cluster.header.frame_id = walls_layer_id;
+        if (cluster_id == 0) cluster.ns = "y_infinite_vertex";
+        if (cluster_id == 1) cluster.ns = "y_infinite_vertex_edges";
+        cluster.id = markers.markers.size() + 1;
+        markers.markers.push_back(cluster);
+      }
     } else
       infinite_room_pose_marker.ns = "overlapped_y_infinite_room";
   }
@@ -1026,6 +1044,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_line_marker.points.push_back(p5);
 
     markers.markers.push_back(room_line_marker);
+
+    /* room clusters */
+    int cluster_id = 0;
+    for (auto& cluster : room_snapshot[i].cluster_array.markers) {
+      cluster.header.frame_id = walls_layer_id;
+      if (cluster_id == 0) cluster.ns = "room_vertex";
+      if (cluster_id == 1) cluster.ns = "room_edges";
+      cluster.id = markers.markers.size() + 1;
+      markers.markers.push_back(cluster);
+    }
   }
   markers.markers.push_back(room_marker);
 
