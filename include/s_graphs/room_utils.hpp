@@ -202,7 +202,7 @@ pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
       new pcl::PointCloud<s_graphs::PointT>());
   for (auto it = begin; it != end; it++) {
     s_graphs::KeyFrame::Ptr keyframe = *it;
-    std::cout << "Keyframe:" << keyframe->id() << std::endl;
+    // std::cout << "Keyframe:" << keyframe->id() << std::endl;
     Eigen::Isometry3d rel_transform = room_centre.inverse() * keyframe->estimate();
     auto cloud = transform_pointcloud<s_graphs::KeyFrame::PointT>(keyframe->cloud,
                                                                   rel_transform);

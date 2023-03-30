@@ -66,32 +66,55 @@ class TestRoom : public ::testing::Test {
     x1_plane_data.ny = 0;
     x1_plane_data.nz = 0;
     x1_plane_data.d = 4;
+    x1_plane_data.plane_orientation.x = x1_plane_data.nx;
+    x1_plane_data.plane_orientation.y = x1_plane_data.ny;
+    x1_plane_data.plane_orientation.z = x1_plane_data.nz;
 
     x2_plane_data.id = 2;
     x2_plane_data.nx = -1;
     x2_plane_data.ny = 0;
     x2_plane_data.nz = 0;
     x2_plane_data.d = 4;
+    x2_plane_data.plane_orientation.x = x2_plane_data.nx;
+    x2_plane_data.plane_orientation.y = x2_plane_data.ny;
+    x2_plane_data.plane_orientation.z = x2_plane_data.nz;
 
     y1_plane_data.id = 3;
     y1_plane_data.nx = 0;
     y1_plane_data.ny = 1;
     y1_plane_data.nz = 0;
     y1_plane_data.d = 4;
+    y1_plane_data.plane_orientation.x = y1_plane_data.nx;
+    y1_plane_data.plane_orientation.y = y1_plane_data.ny;
+    y1_plane_data.plane_orientation.z = y1_plane_data.nz;
 
     y2_plane_data.id = 4;
     y2_plane_data.nx = 0;
     y2_plane_data.ny = -1;
     y2_plane_data.nz = 0;
     y2_plane_data.d = 4;
+    y2_plane_data.plane_orientation.x = y2_plane_data.nx;
+    y2_plane_data.plane_orientation.y = y2_plane_data.ny;
+    y2_plane_data.plane_orientation.z = y2_plane_data.nz;
 
     room_data.x_planes.push_back(x1_plane_data);
     room_data.x_planes.push_back(x2_plane_data);
     room_data.y_planes.push_back(y1_plane_data);
     room_data.y_planes.push_back(y2_plane_data);
 
+    plane_utils->correct_plane_direction(
+        s_graphs::PlaneUtils::plane_class::X_VERT_PLANE, x1_plane_data);
+    plane_utils->correct_plane_direction(
+        s_graphs::PlaneUtils::plane_class::X_VERT_PLANE, x2_plane_data);
+    plane_utils->correct_plane_direction(
+        s_graphs::PlaneUtils::plane_class::Y_VERT_PLANE, y1_plane_data);
+    plane_utils->correct_plane_direction(
+        s_graphs::PlaneUtils::plane_class::Y_VERT_PLANE, y2_plane_data);
+
     room_data.room_center = plane_utils->room_center(
         x1_plane_data, x2_plane_data, y1_plane_data, y2_plane_data);
+
+    pub_room_data = room_data;
 
     this->add_keyframe_node();
     this->add_plane_nodes();
@@ -159,6 +182,7 @@ class TestRoom : public ::testing::Test {
       dupl_x_vert_planes, dupl_y_vert_planes;
   std::vector<s_graphs::InfiniteRooms> x_infinite_rooms, y_infinite_rooms;
   std::vector<s_graphs::Rooms> rooms_vec;
+  s_graphs::msg::RoomData pub_room_data;
 };
 
 TEST_F(TestRoom, TestRoomCreation) {
@@ -178,6 +202,14 @@ TEST_F(TestRoom, TestRoomCreation) {
       EXPECT_EQ(v1->estimate()(1), 0);
     }
   }
+}
+
+TEST_F(TestRoom, TestRoomOrientation) {
+  this->testLookupRooms();
+  ASSERT_EQ(this->pub_room_data.room_center.orientation.x, 0.0);
+  ASSERT_EQ(this->pub_room_data.room_center.orientation.y, 0.0);
+  ASSERT_EQ(this->pub_room_data.room_center.orientation.z, 0.0);
+  ASSERT_EQ(this->pub_room_data.room_center.orientation.w, 1.0);
 }
 
 int main(int argc, char** argv) {
