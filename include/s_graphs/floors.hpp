@@ -37,7 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <Eigen/Eigen>
 
 namespace g2o {
-class VertexRoomXYLB;
+class VertexRoom;
 class HyperGraph;
 class SparseOptimizer;
 }  // namespace g2o
@@ -57,7 +57,7 @@ struct Floors {
   int id;
   int graph_id;
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
-  g2o::VertexRoomXYLB* node;  // node instance
+  g2o::VertexRoom* node;  // node instance
 };
 
 }  // namespace s_graphs

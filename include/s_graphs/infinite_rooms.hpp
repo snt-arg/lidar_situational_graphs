@@ -69,8 +69,8 @@ struct InfiniteRooms {
   g2o::Plane3D plane1, plane2;
   int plane1_id, plane2_id;
   std::vector<int> neighbour_ids;
-  g2o::VertexRoomXYLB* cluster_center_node;
-  g2o::VertexRoomXYLB* node;  // node instance
+  g2o::VertexRoom* cluster_center_node;
+  g2o::VertexRoom* node;  // node instance
   bool sub_infinite_room;
   visualization_msgs::msg::MarkerArray cluster_array;
 };

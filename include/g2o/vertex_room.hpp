@@ -66,10 +66,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 namespace g2o {
 
-class G2O_TYPES_SLAM3D_API VertexRoomXYLB : public BaseVertex<2, Vector2> {
+class G2O_TYPES_SLAM3D_API VertexRoom : public BaseVertex<2, Vector2> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-  VertexRoomXYLB() {}
+  VertexRoom() {}
 
   virtual void setToOriginImpl() { _estimate.fill(0.); }
 

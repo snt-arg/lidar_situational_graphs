@@ -69,15 +69,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 namespace g2o {
 
 class EdgeSE3Room
-    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB> {
+    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeSE3Room()
-      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoomXYLB>() {}
+      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoom>() {}
 
   void computeError() override {
     const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
-    const VertexRoomXYLB* v2 = static_cast<const VertexRoomXYLB*>(_vertices[1]);
+    const VertexRoom* v2 = static_cast<const VertexRoom*>(_vertices[1]);
 
     Eigen::Isometry3d m2l = v1->estimate().inverse();
     Eigen::Isometry3d room_map;
@@ -120,13 +120,13 @@ class EdgeSE3Room
   virtual void setMeasurement(const Eigen::Vector2d& m) override { _measurement = m; }
 };
 class EdgeRoomXPlane
-    : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
+    : public BaseBinaryEdge<1, double, VertexRoom, g2o::VertexPlane> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXPlane() : BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane>() {}
+  EdgeRoomXPlane() : BaseBinaryEdge<1, double, VertexRoom, g2o::VertexPlane>() {}
 
   void computeError() override {
-    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
@@ -186,13 +186,13 @@ class EdgeRoomXPlane
 };
 
 class EdgeRoomYPlane
-    : public BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane> {
+    : public BaseBinaryEdge<1, double, VertexRoom, g2o::VertexPlane> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomYPlane() : BaseBinaryEdge<1, double, VertexRoomXYLB, g2o::VertexPlane>() {}
+  EdgeRoomYPlane() : BaseBinaryEdge<1, double, VertexRoom, g2o::VertexPlane>() {}
 
   void computeError() override {
-    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane = v2->estimate().coeffs();
@@ -257,10 +257,10 @@ class EdgeRoom2Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
   EdgeRoom2Planes() : BaseMultiEdge<2, Eigen::Vector2d>() { resize(4); }
 
   void computeError() override {
-    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
-    const VertexRoomXYLB* v4 = static_cast<const VertexRoomXYLB*>(_vertices[3]);
+    const VertexRoom* v4 = static_cast<const VertexRoom*>(_vertices[3]);
 
     Eigen::Vector2d room_pose = v1->estimate();
     Eigen::Vector4d plane1 = v2->estimate().coeffs();
@@ -335,7 +335,7 @@ class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoom4Planes() : BaseMultiEdge<2, Eigen::Vector2d>() { resize(5); }
   void computeError() override {
-    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
     const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
     const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
     const VertexPlane* v4 = static_cast<const VertexPlane*>(_vertices[3]);
@@ -421,17 +421,17 @@ class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
 
 class EdgeRoomRoom : public BaseBinaryEdge<2,
                                            Eigen::Vector2d,
-                                           g2o::VertexRoomXYLB,
-                                           g2o::VertexRoomXYLB> {
+                                           g2o::VertexRoom,
+                                           g2o::VertexRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoomRoom()
-      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoomXYLB, g2o::VertexRoomXYLB>() {
+      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoom, g2o::VertexRoom>() {
   }
 
   void computeError() override {
-    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
-    const VertexRoomXYLB* v2 = static_cast<const VertexRoomXYLB*>(_vertices[1]);
+    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
+    const VertexRoom* v2 = static_cast<const VertexRoom*>(_vertices[1]);
 
     Eigen::Vector2d est;
     est(0) = v1->estimate()(0) - v2->estimate()(0);
@@ -472,14 +472,14 @@ class EdgeRoomRoom : public BaseBinaryEdge<2,
 };
 
 class EdgeRoomXInfiniteRoom
-    : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
+    : public BaseBinaryEdge<1, double, g2o::VertexRoom, g2o::VertexInfiniteRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoomXInfiniteRoom()
-      : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
+      : BaseBinaryEdge<1, double, g2o::VertexRoom, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
-    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
     const VertexInfiniteRoom* v2 =
         static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
 
@@ -520,14 +520,14 @@ class EdgeRoomXInfiniteRoom
 };
 
 class EdgeRoomYInfiniteRoom
-    : public BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom> {
+    : public BaseBinaryEdge<1, double, g2o::VertexRoom, g2o::VertexInfiniteRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeRoomYInfiniteRoom()
-      : BaseBinaryEdge<1, double, g2o::VertexRoomXYLB, g2o::VertexInfiniteRoom>() {}
+      : BaseBinaryEdge<1, double, g2o::VertexRoom, g2o::VertexInfiniteRoom>() {}
 
   void computeError() override {
-    const VertexRoomXYLB* v1 = static_cast<const VertexRoomXYLB*>(_vertices[0]);
+    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
     const VertexInfiniteRoom* v2 =
         static_cast<const g2o::VertexInfiniteRoom*>(_vertices[1]);
 
@@ -567,14 +567,14 @@ class EdgeRoomYInfiniteRoom
   virtual void setMeasurement(const double& m) override { _measurement = m; }
 };
 
-class EdgeRoomXPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB> {
+class EdgeRoomXPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomXPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>() {}
+  EdgeRoomXPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoom>() {}
 
   void computeError() override {
-    const g2o::VertexRoomXYLB* v1 =
-        static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
+    const g2o::VertexRoom* v1 =
+        static_cast<const g2o::VertexRoom*>(_vertices[0]);
 
     Eigen::Vector2d estimate = v1->estimate();
 
@@ -604,14 +604,14 @@ class EdgeRoomXPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>
   }
 };
 
-class EdgeRoomYPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB> {
+class EdgeRoomYPrior : public g2o::BaseUnaryEdge<1, double, g2o::VertexRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomYPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoomXYLB>() {}
+  EdgeRoomYPrior() : g2o::BaseUnaryEdge<1, double, g2o::VertexRoom>() {}
 
   void computeError() override {
-    const g2o::VertexRoomXYLB* v1 =
-        static_cast<const g2o::VertexRoomXYLB*>(_vertices[0]);
+    const g2o::VertexRoom* v1 =
+        static_cast<const g2o::VertexRoom*>(_vertices[0]);
 
     Eigen::Vector2d estimate = v1->estimate();
 

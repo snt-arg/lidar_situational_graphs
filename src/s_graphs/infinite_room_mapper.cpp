@@ -229,8 +229,8 @@ void InfiniteRoomMapper::factor_infinite_rooms(
     const Eigen::Isometry3d& room_center,
     const Eigen::Isometry3d& cluster_center,
     const visualization_msgs::msg::MarkerArray& cluster_array) {
-  g2o::VertexRoomXYLB* room_node;
-  g2o::VertexRoomXYLB* cluster_center_node;
+  g2o::VertexRoom* room_node;
+  g2o::VertexRoom* cluster_center_node;
   std::pair<int, int> room_data_association;
   double meas_plane1, meas_plane2;
 
@@ -625,14 +625,14 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
 bool InfiniteRoomMapper::check_infinite_room_ids(
     const int plane_type,
     const std::set<g2o::HyperGraph::Edge*>& plane_edges,
-    const g2o::VertexRoomXYLB* room_node) {
+    const g2o::VertexRoom* room_node) {
   for (auto edge_itr = plane_edges.begin(); edge_itr != plane_edges.end(); ++edge_itr) {
     if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
       g2o::EdgeRoom2Planes* edge_infinite_room_planes =
           dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
       if (edge_infinite_room_planes) {
-        g2o::VertexRoomXYLB* found_infinite_room_node =
-            dynamic_cast<g2o::VertexRoomXYLB*>(
+        g2o::VertexRoom* found_infinite_room_node =
+            dynamic_cast<g2o::VertexRoom*>(
                 edge_infinite_room_planes->vertices()[0]);
         if (found_infinite_room_node->id() == room_node->id()) return true;
       }
@@ -642,8 +642,8 @@ bool InfiniteRoomMapper::check_infinite_room_ids(
       g2o::EdgeRoom2Planes* edge_infinite_room_planes =
           dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
       if (edge_infinite_room_planes) {
-        g2o::VertexRoomXYLB* found_infinite_room_node =
-            dynamic_cast<g2o::VertexRoomXYLB*>(
+        g2o::VertexRoom* found_infinite_room_node =
+            dynamic_cast<g2o::VertexRoom*>(
                 edge_infinite_room_planes->vertices()[0]);
         if (found_infinite_room_node->id() == room_node->id()) return true;
       }

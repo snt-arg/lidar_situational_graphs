@@ -95,7 +95,7 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
       node_att_vec.clear();
     }
     for (int i = 0; i < rooms_vec_prior.size(); i++) {
-      g2o::VertexRoomXYLB* v_room = rooms_vec_prior[i].node;
+      g2o::VertexRoom* v_room = rooms_vec_prior[i].node;
       graph_manager_msgs::msg::Edge graph_edge;
       graph_manager_msgs::msg::Node graph_node;
       graph_manager_msgs::msg::Attribute edge_attribute;
@@ -185,7 +185,7 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
       node_att_vec.clear();
     }
     for (int i = 0; i < rooms_vec.size(); i++) {
-      g2o::VertexRoomXYLB* v_room = rooms_vec[i].node;
+      g2o::VertexRoom* v_room = rooms_vec[i].node;
       graph_manager_msgs::msg::Edge graph_edge;
       graph_manager_msgs::msg::Node graph_node;
       graph_manager_msgs::msg::Attribute edge_attribute;
@@ -237,7 +237,7 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
     }
 
     // for(int i = 0; i < x_infinite_rooms.size(); i++) {
-    //   g2o::VertexRoomXYLB* v_room = x_infinite_rooms[i].node;
+    //   g2o::VertexRoom* v_room = x_infinite_rooms[i].node;
     //   graph_manager_msgs::msg::Edge graph_edge;
     //   graph_manager_msgs::msg::Node graph_node;
     //   graph_manager_msgs::msg::Attribute edge_attribute;
@@ -276,7 +276,7 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
     // }
 
     // for(int i = 0; i < y_infinite_rooms.size(); i++) {
-    //   g2o::VertexRoomXYLB* v_room = y_infinite_rooms[i].node;
+    //   g2o::VertexRoom* v_room = y_infinite_rooms[i].node;
     //   graph_manager_msgs::msg::Edge graph_edge;
     //   graph_manager_msgs::msg::Node graph_node;
     //   graph_manager_msgs::msg::Attribute edge_attribute;
@@ -390,7 +390,7 @@ graph_manager_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
 }
 
 // std::vector<g2o::HyperGraph::Edge*> get_planes_from_room(
-//     g2o::VertexRoomXYLB* _room_ptr,
+//     g2o::VertexRoom* _room_ptr,
 //     const std::vector<s_graphs::Rooms>& rooms_vec) {
 //   std::vector<g2o::HyperGraph::Edge*> out_vec;
 //   auto room_edges_iter = _room_ptr->edges().begin();
@@ -415,7 +415,7 @@ graph_manager_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
 // }
 /* auto traj_edge_itr = local_graph->edges().begin();
 for (int i = 0; traj_edge_itr != local_graph->edges().end(); traj_edge_itr++, i++)
-{ g2o::HyperGraph::Edge* edge = *traj_edge_itr; g2o::VertexRoomXYLB* room =
+{ g2o::HyperGraph::Edge* edge = *traj_edge_itr; g2o::VertexRoom* room =
 
       g2o::EdgeSE3Plane* keyframe_to_plane =
 dynamic_cast<g2o::EdgeSE3Plane*>(edge);

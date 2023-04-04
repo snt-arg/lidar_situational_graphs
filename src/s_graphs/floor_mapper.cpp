@@ -85,7 +85,7 @@ void FloorMapper::factor_floor_node(
     const std::vector<s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  g2o::VertexRoomXYLB* floor_node;
+  g2o::VertexRoom* floor_node;
   Eigen::Vector2d floor_pose(room_data.room_center.position.x,
                              room_data.room_center.position.y);
 
@@ -110,7 +110,7 @@ void FloorMapper::factor_floor_node(
 
 void FloorMapper::update_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    g2o::VertexRoomXYLB* floor_node,
+    g2o::VertexRoom* floor_node,
     const s_graphs::msg::RoomData room_data,
     const std::vector<s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -129,7 +129,7 @@ void FloorMapper::update_floor_node(
 void FloorMapper::factor_floor_room_nodes(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const Eigen::Vector2d& floor_pose,
-    g2o::VertexRoomXYLB* floor_node,
+    g2o::VertexRoom* floor_node,
     const std::vector<s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
@@ -171,13 +171,13 @@ void FloorMapper::factor_floor_room_nodes(
 }
 
 void FloorMapper::remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
-                                          g2o::VertexRoomXYLB* floor_node) {
+                                          g2o::VertexRoom* floor_node) {
   std::set<g2o::HyperGraph::Edge*> floor_edges = floor_node->edges();
   for (auto edge_itr = floor_edges.begin(); edge_itr != floor_edges.end(); ++edge_itr) {
     g2o::EdgeRoomRoom* edge_floor_room = dynamic_cast<g2o::EdgeRoomRoom*>(*edge_itr);
     if (edge_floor_room) {
-      g2o::VertexRoomXYLB* found_room_node =
-          dynamic_cast<g2o::VertexRoomXYLB*>(edge_floor_room->vertices()[1]);
+      g2o::VertexRoom* found_room_node =
+          dynamic_cast<g2o::VertexRoom*>(edge_floor_room->vertices()[1]);
       graph_slam->remove_room_room_edge(edge_floor_room);
     }
   }

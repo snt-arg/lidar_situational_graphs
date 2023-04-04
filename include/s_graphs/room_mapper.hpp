@@ -289,7 +289,7 @@ class InfiniteRoomMapper : public MapperUtils {
    */
   bool check_infinite_room_ids(const int plane_type,
                                const std::set<g2o::HyperGraph::Edge*>& plane_edges,
-                               const g2o::VertexRoomXYLB* corr_node);
+                               const g2o::VertexRoom* corr_node);
 
  private:
   /**
@@ -429,7 +429,7 @@ class FiniteRoomMapper : public MapperUtils {
    */
   bool check_room_ids(const int plane_type,
                       const std::set<g2o::HyperGraph::Edge*>& plane_edges,
-                      const g2o::VertexRoomXYLB* room_node);
+                      const g2o::VertexRoom* room_node);
   bool check_plane_ids(const std::set<g2o::HyperGraph::Edge*>& plane_edges,
                        const g2o::VertexPlane* plane_node);
   /**

@@ -265,7 +265,7 @@ void FiniteRoomMapper::factor_rooms(
     std::vector<Rooms>& rooms_vec,
     const Eigen::Isometry3d& room_center,
     const visualization_msgs::msg::MarkerArray& cluster_array) {
-  g2o::VertexRoomXYLB* room_node;
+  g2o::VertexRoom* room_node;
   std::pair<int, int> room_data_association;
 
   Eigen::Matrix<double, 1, 1> information_room_plane;
@@ -635,14 +635,14 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(
 bool FiniteRoomMapper::check_room_ids(
     const int plane_type,
     const std::set<g2o::HyperGraph::Edge*>& plane_edges,
-    const g2o::VertexRoomXYLB* room_node) {
+    const g2o::VertexRoom* room_node) {
   for (auto edge_itr = plane_edges.begin(); edge_itr != plane_edges.end(); ++edge_itr) {
     if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
       g2o::EdgeRoom4Planes* edge_room_4planes =
           dynamic_cast<g2o::EdgeRoom4Planes*>(*edge_itr);
       if (edge_room_4planes) {
-        g2o::VertexRoomXYLB* found_room_node =
-            dynamic_cast<g2o::VertexRoomXYLB*>(edge_room_4planes->vertices()[0]);
+        g2o::VertexRoom* found_room_node =
+            dynamic_cast<g2o::VertexRoom*>(edge_room_4planes->vertices()[0]);
         if (found_room_node->id() == room_node->id()) return true;
       }
     }
@@ -651,8 +651,8 @@ bool FiniteRoomMapper::check_room_ids(
       g2o::EdgeRoom4Planes* edge_room_4planes =
           dynamic_cast<g2o::EdgeRoom4Planes*>(*edge_itr);
       if (edge_room_4planes) {
-        g2o::VertexRoomXYLB* found_room_node =
-            dynamic_cast<g2o::VertexRoomXYLB*>(edge_room_4planes->vertices()[0]);
+        g2o::VertexRoom* found_room_node =
+            dynamic_cast<g2o::VertexRoom*>(edge_room_4planes->vertices()[0]);
         if (found_room_node->id() == room_node->id()) return true;
       }
     }
@@ -674,7 +674,7 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     const VerticalPlanes& x_plane2,
     const VerticalPlanes& y_plane1,
     const VerticalPlanes& y_plane2) {
-  g2o::VertexRoomXYLB* room_node;
+  g2o::VertexRoom* room_node;
   std::pair<int, int> room_data_association;
 
   std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
@@ -727,7 +727,7 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     const VerticalPlanes& x_plane2,
     const VerticalPlanes& y_plane1,
     const VerticalPlanes& y_plane2) {
-  g2o::VertexRoomXYLB* room_node;
+  g2o::VertexRoom* room_node;
   std::pair<int, int> room_data_association;
 
   std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
@@ -785,7 +785,7 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     const VerticalPlanes& x_plane2,
     const VerticalPlanes& y_plane1,
     const VerticalPlanes& y_plane2) {
-  g2o::VertexRoomXYLB* room_node;
+  g2o::VertexRoom* room_node;
   std::pair<int, int> room_data_association;
 
   std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;

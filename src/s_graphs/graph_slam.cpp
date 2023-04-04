@@ -93,7 +93,7 @@ G2O_REGISTER_TYPE(EDGE_ROOM_XINFINITE_ROOM, EdgeRoomXInfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_ROOM_YINFINITE_ROOM, EdgeRoomYInfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_XINFINITE_ROOM_XINFINITE_ROOM, EdgeXInfiniteRoomXInfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_YINFINITE_ROOM_YINFINITE_ROOM, EdgeYInfiniteRoomYInfiniteRoom)
-G2O_REGISTER_TYPE(VERTEX_ROOMXYLB, VertexRoomXYLB)
+G2O_REGISTER_TYPE(VERTEX_ROOMXYLB, VertexRoom)
 G2O_REGISTER_TYPE(VERTEX_INFINITE_ROOM, VertexInfiniteRoom)
 }  // namespace g2o
 
@@ -204,7 +204,7 @@ bool GraphSLAM::remove_plane_node(g2o::VertexPlane* plane_vertex) {
   return graph->removeVertex(plane_vertex);
 }
 
-bool GraphSLAM::remove_room_node(g2o::VertexRoomXYLB* room_vertex) {
+bool GraphSLAM::remove_room_node(g2o::VertexRoom* room_vertex) {
   return graph->removeVertex(room_vertex);
 }
 
@@ -229,8 +229,8 @@ g2o::VertexInfiniteRoom* GraphSLAM::add_infinite_room_node(
   return vertex;
 }
 
-g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector3d& room_pose) {
-  g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
+g2o::VertexRoom* GraphSLAM::add_room_node(const Eigen::Vector3d& room_pose) {
+  g2o::VertexRoom* vertex(new g2o::VertexRoom());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(room_pose.head(2));
   graph->addVertex(vertex);
@@ -239,8 +239,8 @@ g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector3d& room_pose) 
   return vertex;
 }
 
-g2o::VertexRoomXYLB* GraphSLAM::add_floor_node(const Eigen::Vector2d& floor_pose) {
-  g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
+g2o::VertexRoom* GraphSLAM::add_floor_node(const Eigen::Vector2d& floor_pose) {
+  g2o::VertexRoom* vertex(new g2o::VertexRoom());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(floor_pose);
   graph->addVertex(vertex);
@@ -249,7 +249,7 @@ g2o::VertexRoomXYLB* GraphSLAM::add_floor_node(const Eigen::Vector2d& floor_pose
   return vertex;
 }
 
-void GraphSLAM::update_floor_node(g2o::VertexRoomXYLB* floor_node,
+void GraphSLAM::update_floor_node(g2o::VertexRoom* floor_node,
                                   const Eigen::Vector2d& floor_pose) {
   floor_node->setEstimate(floor_pose);
 
@@ -545,7 +545,7 @@ bool GraphSLAM::remove_infinite_room_yplane_edge(
 }
 
 g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
-                                               g2o::VertexRoomXYLB* v_room,
+                                               g2o::VertexRoom* v_room,
                                                const Eigen::Vector2d& measurement,
                                                const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Room* edge(new g2o::EdgeSE3Room());
@@ -559,7 +559,7 @@ g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
 }
 
 g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     g2o::VertexPlane* v_plane2,
     const double& measurement,
     const Eigen::MatrixXd& information) {
@@ -574,10 +574,10 @@ g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(
 }
 
 g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     g2o::VertexPlane* v_plane1,
     g2o::VertexPlane* v_plane2,
-    g2o::VertexRoomXYLB* v_cluster_center,
+    g2o::VertexRoom* v_cluster_center,
     const Eigen::MatrixXd& information) {
   g2o::EdgeRoom2Planes* edge(new g2o::EdgeRoom2Planes());
   edge->setInformation(information);
@@ -613,7 +613,7 @@ bool GraphSLAM::remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge) 
 }
 
 g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     g2o::VertexPlane* v_xplane1,
     g2o::VertexPlane* v_xplane2,
     g2o::VertexPlane* v_yplane1,
@@ -632,7 +632,7 @@ g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
 }
 
 g2o::EdgeRoomXPrior* GraphSLAM::add_room_xprior_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     const double& measurement,
     const Eigen::MatrixXd& information) {
   g2o::EdgeRoomXPrior* edge(new g2o::EdgeRoomXPrior());
@@ -645,7 +645,7 @@ g2o::EdgeRoomXPrior* GraphSLAM::add_room_xprior_edge(
 }
 
 g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     g2o::VertexPlane* v_plane2,
     const double& measurement,
     const Eigen::MatrixXd& information) {
@@ -660,7 +660,7 @@ g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(
 }
 
 g2o::EdgeRoomYPrior* GraphSLAM::add_room_yprior_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     const double& measurement,
     const Eigen::MatrixXd& information) {
   g2o::EdgeRoomYPrior* edge(new g2o::EdgeRoomYPrior());
@@ -672,8 +672,8 @@ g2o::EdgeRoomYPrior* GraphSLAM::add_room_yprior_edge(
   return edge;
 }
 
-g2o::EdgeRoomRoom* GraphSLAM::add_room_room_edge(g2o::VertexRoomXYLB* v_room1,
-                                                 g2o::VertexRoomXYLB* v_room2,
+g2o::EdgeRoomRoom* GraphSLAM::add_room_room_edge(g2o::VertexRoom* v_room1,
+                                                 g2o::VertexRoom* v_room2,
                                                  const Eigen::Vector2d& measurement,
                                                  const Eigen::MatrixXd& information) {
   g2o::EdgeRoomRoom* edge(new g2o::EdgeRoomRoom());
@@ -693,7 +693,7 @@ bool GraphSLAM::remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge) {
 }
 
 g2o::EdgeRoomXInfiniteRoom* GraphSLAM::add_room_x_infinite_room_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     g2o::VertexInfiniteRoom* v_xinfinite_room,
     const double& measurement,
     const Eigen::MatrixXd& information) {
@@ -708,7 +708,7 @@ g2o::EdgeRoomXInfiniteRoom* GraphSLAM::add_room_x_infinite_room_edge(
 }
 
 g2o::EdgeRoomYInfiniteRoom* GraphSLAM::add_room_y_infinite_room_edge(
-    g2o::VertexRoomXYLB* v_room,
+    g2o::VertexRoom* v_room,
     g2o::VertexInfiniteRoom* v_yinfinite_room,
     const double& measurement,
     const Eigen::MatrixXd& information) {

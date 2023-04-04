@@ -137,7 +137,7 @@ class FloorMapper {
    * @param y_infinite_rooms
    */
   void update_floor_node(std::shared_ptr<GraphSLAM>& graph_slam,
-                         g2o::VertexRoomXYLB* floor_node,
+                         g2o::VertexRoom* floor_node,
                          const s_graphs::msg::RoomData room_data,
                          const std::vector<s_graphs::Rooms>& rooms_vec,
                          const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -157,7 +157,7 @@ class FloorMapper {
   void factor_floor_room_nodes(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const Eigen::Vector2d& floor_pose,
-      g2o::VertexRoomXYLB* floor_node,
+      g2o::VertexRoom* floor_node,
       const std::vector<s_graphs::Rooms>& rooms_vec,
       const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
@@ -169,7 +169,7 @@ class FloorMapper {
    * @param floor_node
    */
   void remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
-                               g2o::VertexRoomXYLB* floor_node);
+                               g2o::VertexRoom* floor_node);
 };
 
 }  // namespace s_graphs
