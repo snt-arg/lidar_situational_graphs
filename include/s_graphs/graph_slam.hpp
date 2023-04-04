@@ -63,7 +63,7 @@ class EdgeInfiniteRoomYPlane;
 class EdgeSE3Room;
 class EdgeRoom2Planes;
 class EdgeRoom4Planes;
-class EdgeRoomRoom;
+class EdgeFloorRoom;
 class EdgeXInfiniteRoomXInfiniteRoom;
 class EdgeYInfiniteRoomYInfiniteRoom;
 class EdgePlanePerpendicular;
@@ -72,6 +72,7 @@ class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class RobustKernelFactory;
 class VertexRoom;
+class VertexFloor;
 }  // namespace g2o
 
 namespace s_graphs {
@@ -199,7 +200,7 @@ class GraphSLAM {
    * @param floor_pose
    * @return Registered node
    */
-  g2o::VertexRoom* add_floor_node(const Eigen::Isometry3d& floor_pose);
+  g2o::VertexFloor* add_floor_node(const Eigen::Isometry3d& floor_pose);
 
   /**
    * @brief Update the floor node estimate in the graph
@@ -208,7 +209,7 @@ class GraphSLAM {
    * @para floor_pose
    * @return Registered node
    */
-  void update_floor_node(g2o::VertexRoom* floor_node,
+  void update_floor_node(g2o::VertexFloor* floor_node,
                          const Eigen::Isometry3d& floor_pose);
 
   /**
@@ -542,16 +543,16 @@ class GraphSLAM {
   /**
    * @brief
    *
-   * @param v_room1
-   * @param v_room2
+   * @param v_floor
+   * @param v_room
    * @param measurement
    * @param information
    * @return registered edge
    */
-  g2o::EdgeRoomRoom* add_room_room_edge(g2o::VertexRoom* v_room1,
-                                        g2o::VertexRoom* v_room2,
-                                        const Eigen::Vector2d& measurement,
-                                        const Eigen::MatrixXd& information);
+  g2o::EdgeFloorRoom* add_floor_room_edge(g2o::VertexFloor* v_floor,
+                                          g2o::VertexRoom* v_room,
+                                          const Eigen::Vector2d& measurement,
+                                          const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -559,7 +560,7 @@ class GraphSLAM {
    * @param room_room_edge
    * @return Succes or failure
    */
-  bool remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge);
+  bool remove_room_room_edge(g2o::EdgeFloorRoom* room_room_edge);
 
   /**
    * @brief

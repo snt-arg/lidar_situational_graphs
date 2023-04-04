@@ -64,6 +64,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <Eigen/Dense>
 
+#include "g2o/vertex_floor.hpp"
 #include "g2o/vertex_infinite_room.hpp"
 #include "g2o/vertex_room.hpp"
 namespace g2o {
@@ -288,15 +289,15 @@ class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
   }
 };
 
-class EdgeRoomRoom
-    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoom, g2o::VertexRoom> {
+class EdgeFloorRoom
+    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexFloor, g2o::VertexRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoomRoom()
-      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoom, g2o::VertexRoom>() {}
+  EdgeFloorRoom()
+      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexFloor, g2o::VertexRoom>() {}
 
   void computeError() override {
-    const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
+    const VertexFloor* v1 = static_cast<const VertexFloor*>(_vertices[0]);
     const VertexRoom* v2 = static_cast<const VertexRoom*>(_vertices[1]);
 
     Eigen::Vector2d est;
