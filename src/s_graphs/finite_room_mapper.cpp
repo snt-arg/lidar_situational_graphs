@@ -78,49 +78,51 @@ void FiniteRoomMapper::lookup_rooms(
   room_center.translation().y() = room_data.room_center.position.y;
   room_center.translation().z() = room_data.room_center.position.z;
 
-  float min_dist_room_x_corr = 100;
+  float min_dist_room_x_inf_room = 100;
   s_graphs::InfiniteRooms matched_x_infinite_room;
   for (const auto& current_x_infinite_room : x_infinite_rooms) {
     if ((room_data.x_planes[0].id == current_x_infinite_room.plane1_id ||
          room_data.x_planes[0].id == current_x_infinite_room.plane2_id) &&
         (room_data.x_planes[1].id == current_x_infinite_room.plane1_id ||
          room_data.x_planes[1].id == current_x_infinite_room.plane2_id)) {
-      min_dist_room_x_corr = 0;
+      min_dist_room_x_inf_room = 0;
       matched_x_infinite_room = current_x_infinite_room;
       break;
     }
-    float dist_room_x_corr = sqrt(pow(room_data.room_center.position.x -
-                                          current_x_infinite_room.node->estimate()(0),
-                                      2) +
-                                  pow(room_data.room_center.position.y -
-                                          current_x_infinite_room.node->estimate()(1),
-                                      2));
-    if (dist_room_x_corr < min_dist_room_x_corr) {
-      min_dist_room_x_corr = dist_room_x_corr;
+    float dist_room_x_inf_room =
+        sqrt(pow(room_data.room_center.position.x -
+                     current_x_infinite_room.node->estimate()(0),
+                 2) +
+             pow(room_data.room_center.position.y -
+                     current_x_infinite_room.node->estimate()(1),
+                 2));
+    if (dist_room_x_inf_room < min_dist_room_x_inf_room) {
+      min_dist_room_x_inf_room = dist_room_x_inf_room;
       matched_x_infinite_room = current_x_infinite_room;
     }
   }
 
-  float min_dist_room_y_corr = 100;
+  float min_dist_room_y_inf_room = 100;
   s_graphs::InfiniteRooms matched_y_infinite_room;
   for (const auto& current_y_infinite_room : y_infinite_rooms) {
     if ((room_data.y_planes[0].id == current_y_infinite_room.plane1_id ||
          room_data.y_planes[0].id == current_y_infinite_room.plane2_id) &&
         (room_data.y_planes[1].id == current_y_infinite_room.plane1_id ||
          room_data.y_planes[1].id == current_y_infinite_room.plane2_id)) {
-      min_dist_room_y_corr = 0;
+      min_dist_room_y_inf_room = 0;
       matched_y_infinite_room = current_y_infinite_room;
       break;
     }
 
-    float dist_room_y_corr = sqrt(pow(room_data.room_center.position.x -
-                                          current_y_infinite_room.node->estimate()(0),
-                                      2) +
-                                  pow(room_data.room_center.position.y -
-                                          current_y_infinite_room.node->estimate()(1),
-                                      2));
-    if (dist_room_y_corr < min_dist_room_y_corr) {
-      min_dist_room_y_corr = dist_room_y_corr;
+    float dist_room_y_inf_room =
+        sqrt(pow(room_data.room_center.position.x -
+                     current_y_infinite_room.node->estimate()(0),
+                 2) +
+             pow(room_data.room_center.position.y -
+                     current_y_infinite_room.node->estimate()(1),
+                 2));
+    if (dist_room_y_inf_room < min_dist_room_y_inf_room) {
+      min_dist_room_y_inf_room = dist_room_y_inf_room;
       matched_y_infinite_room = current_y_infinite_room;
     }
   }
@@ -142,7 +144,7 @@ void FiniteRoomMapper::lookup_rooms(
                    y_vert_planes.end(),
                    boost::bind(&VerticalPlanes::id, _1) == room_data.y_planes[1].id);
 
-  if (min_dist_room_y_corr < 1.0 && min_dist_room_x_corr < 1.0) {
+  if (min_dist_room_y_inf_room < 1.0 && min_dist_room_x_inf_room < 1.0) {
     std::cout << "Adding a room using mapped x and y infinite_room planes "
               << std::endl;
     map_room_from_existing_infinite_rooms(graph_slam,
@@ -167,7 +169,7 @@ void FiniteRoomMapper::lookup_rooms(
                                 matched_y_infinite_room,
                                 x_infinite_rooms,
                                 y_infinite_rooms);
-  } else if (min_dist_room_x_corr < 1.0 && min_dist_room_y_corr > 1.0) {
+  } else if (min_dist_room_x_inf_room < 1.0 && min_dist_room_y_inf_room > 1.0) {
     map_room_from_existing_x_infinite_room(graph_slam,
                                            room_data,
                                            matched_x_infinite_room,
@@ -185,7 +187,7 @@ void FiniteRoomMapper::lookup_rooms(
                                 matched_x_infinite_room,
                                 x_infinite_rooms,
                                 y_infinite_rooms);
-  } else if (min_dist_room_y_corr < 1.0 && min_dist_room_x_corr > 1.0) {
+  } else if (min_dist_room_y_inf_room < 1.0 && min_dist_room_x_inf_room > 1.0) {
     std::cout << "Will add room using mapped y infinite_room planes " << std::endl;
     map_room_from_existing_y_infinite_room(graph_slam,
                                            room_data,
