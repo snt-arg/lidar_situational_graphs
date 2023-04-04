@@ -198,7 +198,7 @@ class GraphSLAM {
    * @param room_pose
    * @return Registered node
    */
-  g2o::VertexRoomXYLB* add_room_node(const Eigen::Vector2d& room_pose);
+  g2o::VertexRoomXYLB* add_room_node(const Eigen::Vector3d& room_pose);
 
   /**
    * @brief Add a floor node to the graph

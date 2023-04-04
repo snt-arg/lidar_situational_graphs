@@ -50,15 +50,9 @@ namespace s_graphs {
  * @brief
  */
 struct plane_data_list {
-  plane_data_list() : plane_centroid(0, 0, 0) {}
-  // g2o::Plane3D plane;
+  plane_data_list() {}
   g2o::Plane3D plane_unflipped;
   int plane_id;
-  pcl::PointXY start_point, end_point;
-  float plane_length;
-  g2o::VertexSE3* keyframe_node;
-  Eigen::Vector3d plane_centroid;
-  Eigen::Vector2d cluster_center;
 };
 
 /**
@@ -70,9 +64,6 @@ struct plane_data_list {
 struct structure_data_list {
   plane_data_list plane1;
   plane_data_list plane2;
-  float width;
-  float length_diff;
-  float avg_point_diff;
 };
 
 /**

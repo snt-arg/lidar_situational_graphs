@@ -229,10 +229,10 @@ g2o::VertexInfiniteRoom* GraphSLAM::add_infinite_room_node(
   return vertex;
 }
 
-g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector2d& room_pose) {
+g2o::VertexRoomXYLB* GraphSLAM::add_room_node(const Eigen::Vector3d& room_pose) {
   g2o::VertexRoomXYLB* vertex(new g2o::VertexRoomXYLB());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
-  vertex->setEstimate(room_pose);
+  vertex->setEstimate(room_pose.head(2));
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
 
