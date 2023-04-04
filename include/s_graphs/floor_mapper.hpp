@@ -156,7 +156,7 @@ class FloorMapper {
    */
   void factor_floor_room_nodes(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const Eigen::Vector2d& floor_pose,
+      const Eigen::Isometry3d& floor_pose,
       g2o::VertexRoom* floor_node,
       const std::vector<s_graphs::Rooms>& rooms_vec,
       const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,

@@ -107,9 +107,13 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
         break;
       }
 
-      float dist_x_inf_room_room = sqrt(
-          pow(room_data.room_center.position.x - current_room.node->estimate()(0), 2) +
-          pow(room_data.room_center.position.y - current_room.node->estimate()(1), 2));
+      float dist_x_inf_room_room =
+          sqrt(pow(room_data.room_center.position.x -
+                       current_room.node->estimate().translation()(0),
+                   2) +
+               pow(room_data.room_center.position.y -
+                       current_room.node->estimate().translation()(1),
+                   2));
       if (dist_x_inf_room_room < min_dist_x_inf_room_room) {
         min_dist_x_inf_room_room = dist_x_inf_room_room;
         matched_room = current_room;
@@ -168,9 +172,13 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
         break;
       }
 
-      float dist_y_inf_room_room = sqrt(
-          pow(room_data.room_center.position.x - current_room.node->estimate()(0), 2) +
-          pow(room_data.room_center.position.y - current_room.node->estimate()(1), 2));
+      float dist_y_inf_room_room =
+          sqrt(pow(room_data.room_center.position.x -
+                       current_room.node->estimate().translation()(0),
+                   2) +
+               pow(room_data.room_center.position.y -
+                       current_room.node->estimate().translation()(1),
+                   2));
       if (dist_y_inf_room_room < min_dist_y_inf_room_room) {
         min_dist_y_inf_room_room = dist_y_inf_room_room;
         matched_room = current_room;
@@ -299,8 +307,8 @@ void InfiniteRoomMapper::factor_infinite_rooms(
                 << room_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
       room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
-      room_node = graph_slam->add_room_node(room_center.translation());
-      cluster_center_node = graph_slam->add_room_node(cluster_center.translation());
+      room_node = graph_slam->add_room_node(room_center);
+      cluster_center_node = graph_slam->add_room_node(cluster_center);
       cluster_center_node->setFixed(true);
 
       InfiniteRooms det_infinite_room;
@@ -327,8 +335,8 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       room_node = x_infinite_rooms[room_data_association.second].node;
       std::cout << "Matched det infinite_room X with pre pose "
                 << room_center.translation() << " to mapped infinite_room with id "
-                << room_data_association.first << " and pose " << room_node->estimate()
-                << std::endl;
+                << room_data_association.first << " and pose "
+                << room_node->estimate().translation() << std::endl;
       x_infinite_rooms[room_data_association.second].cluster_array = cluster_array;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges =
@@ -394,8 +402,8 @@ void InfiniteRoomMapper::factor_infinite_rooms(
                 << room_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
       room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
-      room_node = graph_slam->add_room_node(room_center.translation());
-      cluster_center_node = graph_slam->add_room_node(cluster_center.translation());
+      room_node = graph_slam->add_room_node(room_center);
+      cluster_center_node = graph_slam->add_room_node(cluster_center);
       cluster_center_node->setFixed(true);
 
       InfiniteRooms det_infinite_room;
@@ -421,8 +429,8 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       room_node = y_infinite_rooms[room_data_association.second].node;
       std::cout << "Matched det infinite_room Y with pre pose "
                 << room_center.translation() << " to mapped infinite_room with id "
-                << room_data_association.first << " and pose " << room_node->estimate()
-                << std::endl;
+                << room_data_association.first << " and pose "
+                << room_node->estimate().translation() << std::endl;
       y_infinite_rooms[room_data_association.second].cluster_array = cluster_array;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges =
@@ -479,8 +487,9 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
 
   if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     for (int i = 0; i < x_infinite_rooms.size(); ++i) {
-      float dist = sqrt(pow(
-          room_center.translation()(0) - x_infinite_rooms[i].node->estimate()(0), 2));
+      float dist = sqrt(pow(room_center.translation()(0) -
+                                x_infinite_rooms[i].node->estimate().translation()(0),
+                            2));
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
           current_detected_mapped_plane_pairs;
@@ -548,8 +557,9 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
 
   if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     for (int i = 0; i < y_infinite_rooms.size(); ++i) {
-      float dist = sqrt(pow(
-          room_center.translation()(1) - y_infinite_rooms[i].node->estimate()(1), 2));
+      float dist = sqrt(pow(room_center.translation()(1) -
+                                y_infinite_rooms[i].node->estimate().translation()(1),
+                            2));
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
           current_detected_mapped_plane_pairs;
@@ -632,8 +642,7 @@ bool InfiniteRoomMapper::check_infinite_room_ids(
           dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
       if (edge_infinite_room_planes) {
         g2o::VertexRoom* found_infinite_room_node =
-            dynamic_cast<g2o::VertexRoom*>(
-                edge_infinite_room_planes->vertices()[0]);
+            dynamic_cast<g2o::VertexRoom*>(edge_infinite_room_planes->vertices()[0]);
         if (found_infinite_room_node->id() == room_node->id()) return true;
       }
     }
@@ -643,8 +652,7 @@ bool InfiniteRoomMapper::check_infinite_room_ids(
           dynamic_cast<g2o::EdgeRoom2Planes*>(*edge_itr);
       if (edge_infinite_room_planes) {
         g2o::VertexRoom* found_infinite_room_node =
-            dynamic_cast<g2o::VertexRoom*>(
-                edge_infinite_room_planes->vertices()[0]);
+            dynamic_cast<g2o::VertexRoom*>(edge_infinite_room_planes->vertices()[0]);
         if (found_infinite_room_node->id() == room_node->id()) return true;
       }
     }

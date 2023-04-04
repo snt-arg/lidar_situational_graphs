@@ -91,10 +91,10 @@ void FiniteRoomMapper::lookup_rooms(
     }
     float dist_room_x_inf_room =
         sqrt(pow(room_data.room_center.position.x -
-                     current_x_infinite_room.node->estimate()(0),
+                     current_x_infinite_room.node->estimate().translation()(0),
                  2) +
              pow(room_data.room_center.position.y -
-                     current_x_infinite_room.node->estimate()(1),
+                     current_x_infinite_room.node->estimate().translation()(1),
                  2));
     if (dist_room_x_inf_room < min_dist_room_x_inf_room) {
       min_dist_room_x_inf_room = dist_room_x_inf_room;
@@ -116,10 +116,10 @@ void FiniteRoomMapper::lookup_rooms(
 
     float dist_room_y_inf_room =
         sqrt(pow(room_data.room_center.position.x -
-                     current_y_infinite_room.node->estimate()(0),
+                     current_y_infinite_room.node->estimate().translation()(0),
                  2) +
              pow(room_data.room_center.position.y -
-                     current_y_infinite_room.node->estimate()(1),
+                     current_y_infinite_room.node->estimate().translation()(1),
                  2));
     if (dist_room_y_inf_room < min_dist_room_y_inf_room) {
       min_dist_room_y_inf_room = dist_room_y_inf_room;
@@ -358,7 +358,7 @@ void FiniteRoomMapper::factor_rooms(
   if ((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "found room with pose " << room_center.translation() << std::endl;
     room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
-    room_node = graph_slam->add_room_node(room_center.translation());
+    room_node = graph_slam->add_room_node(room_center);
     // room_node->setFixed(true);
     Rooms det_room;
     det_room.id = room_data_association.first;
@@ -387,7 +387,7 @@ void FiniteRoomMapper::factor_rooms(
     room_node = rooms_vec[room_data_association.second].node;
     std::cout << "Matched det room with pose " << room_center.translation()
               << " to mapped room with id " << room_data_association.first
-              << " and pose " << room_node->estimate() << std::endl;
+              << " and pose " << room_node->estimate().translation() << std::endl;
 
     /*update the cluster array */
     rooms_vec[room_data_association.second].cluster_array = cluster_array;
@@ -496,8 +496,10 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(
   bool y_plane1_min_segment = false, y_plane2_min_segment = false;
 
   for (int i = 0; i < rooms_vec.size(); ++i) {
-    float diff_x = room_center.translation()(0) - rooms_vec[i].node->estimate()(0);
-    float diff_y = room_center.translation()(1) - rooms_vec[i].node->estimate()(1);
+    float diff_x =
+        room_center.translation()(0) - rooms_vec[i].node->estimate().translation()(0);
+    float diff_y =
+        room_center.translation()(1) - rooms_vec[i].node->estimate().translation()(1);
     float dist = sqrt(std::pow(diff_x, 2) + std::pow(diff_y, 2));
     RCLCPP_DEBUG(node_obj->get_logger(), "room planes", "dist room %f", dist);
 
@@ -691,7 +693,7 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     std::cout << "Add a room using mapped x and y infinite_rooms at pose"
               << room_center.translation() << std::endl;
     room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
-    room_node = graph_slam->add_room_node(room_center.translation());
+    room_node = graph_slam->add_room_node(room_center);
     Rooms det_room;
     det_room.id = room_data_association.first;
     det_room.plane_x1 = matched_x_infinite_room.plane1;
@@ -744,7 +746,7 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     std::cout << "Add a room using mapped x infinite_rooms planes at pose"
               << room_center.translation() << std::endl;
     room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
-    room_node = graph_slam->add_room_node(room_center.translation());
+    room_node = graph_slam->add_room_node(room_center);
     Rooms det_room;
     det_room.id = room_data_association.first;
     det_room.plane_x1 = matched_x_infinite_room.plane1;
@@ -802,7 +804,7 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     std::cout << "Add a room using mapped y infinite_rooms planes at pose"
               << room_center.translation() << std::endl;
     room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
-    room_node = graph_slam->add_room_node(room_center.translation());
+    room_node = graph_slam->add_room_node(room_center);
     Rooms det_room;
     det_room.id = room_data_association.first;
     Eigen::Vector4d x_plane1(det_room_data.x_planes[0].nx,

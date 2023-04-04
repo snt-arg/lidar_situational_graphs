@@ -198,8 +198,8 @@ TEST_F(TestRoom, TestRoomCreation) {
     if (edge_room_4planes) {
       g2o::VertexRoom* v1 =
           dynamic_cast<g2o::VertexRoom*>(edge_room_4planes->vertices()[0]);
-      EXPECT_EQ(v1->estimate()(0), 0);
-      EXPECT_EQ(v1->estimate()(1), 0);
+      EXPECT_EQ(v1->estimate().translation()(0), 0);
+      EXPECT_EQ(v1->estimate().translation()(1), 0);
     }
   }
 }

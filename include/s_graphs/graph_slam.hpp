@@ -41,7 +41,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <memory>
 
 #include "rclcpp/rclcpp.hpp"
-
 namespace g2o {
 class VertexSE3;
 class VertexPlane;
@@ -62,15 +61,9 @@ class EdgeSE3InfiniteRoom;
 class EdgeInfiniteRoomXPlane;
 class EdgeInfiniteRoomYPlane;
 class EdgeSE3Room;
-class EdgeRoomXPlane;
 class EdgeRoom2Planes;
 class EdgeRoom4Planes;
-class EdgeRoomXPrior;
-class EdgeRoomYPlane;
-class EdgeRoomYPrior;
 class EdgeRoomRoom;
-class EdgeRoomXInfiniteRoom;
-class EdgeRoomYInfiniteRoom;
 class EdgeXInfiniteRoomXInfiniteRoom;
 class EdgeYInfiniteRoomYInfiniteRoom;
 class EdgePlanePerpendicular;
@@ -198,7 +191,7 @@ class GraphSLAM {
    * @param room_pose
    * @return Registered node
    */
-  g2o::VertexRoom* add_room_node(const Eigen::Vector3d& room_pose);
+  g2o::VertexRoom* add_room_node(const Eigen::Isometry3d& room_pose);
 
   /**
    * @brief Add a floor node to the graph
@@ -206,7 +199,7 @@ class GraphSLAM {
    * @param floor_pose
    * @return Registered node
    */
-  g2o::VertexRoom* add_floor_node(const Eigen::Vector2d& floor_pose);
+  g2o::VertexRoom* add_floor_node(const Eigen::Isometry3d& floor_pose);
 
   /**
    * @brief Update the floor node estimate in the graph
@@ -216,7 +209,7 @@ class GraphSLAM {
    * @return Registered node
    */
   void update_floor_node(g2o::VertexRoom* floor_node,
-                         const Eigen::Vector2d& floor_pose);
+                         const Eigen::Isometry3d& floor_pose);
 
   /**
    * @brief Add an edge between SE3 nodes
@@ -514,20 +507,6 @@ class GraphSLAM {
    * @brief
    *
    * @param v_room
-   * @param v_plane2
-   * @param measurement
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoom* v_room,
-                                            g2o::VertexPlane* v_plane2,
-                                            const double& measurement,
-                                            const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param v_room
    * @param v_plane1
    * @param v_plane2
    * @param v_cluster_center
@@ -563,43 +542,6 @@ class GraphSLAM {
   /**
    * @brief
    *
-   * @param v_room
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeRoomXPrior* add_room_xprior_edge(g2o::VertexRoom* v_room,
-                                            const double& measurement,
-                                            const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param v_room
-   * @param v_plane2
-   * @param measurement
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeRoomYPlane* add_room_yplane_edge(g2o::VertexRoom* v_room,
-                                            g2o::VertexPlane* v_plane2,
-                                            const double& measurement,
-                                            const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param v_room
-   * @param measurement
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeRoomYPrior* add_room_yprior_edge(g2o::VertexRoom* v_room,
-                                            const double& measurement,
-                                            const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
    * @param v_room1
    * @param v_room2
    * @param measurement
@@ -618,36 +560,6 @@ class GraphSLAM {
    * @return Succes or failure
    */
   bool remove_room_room_edge(g2o::EdgeRoomRoom* room_room_edge);
-
-  /**
-   * @brief
-   *
-   * @param v_room
-   * @param v_xinfinite_room
-   * @param measurement
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeRoomXInfiniteRoom* add_room_x_infinite_room_edge(
-      g2o::VertexRoom* v_room,
-      g2o::VertexInfiniteRoom* v_xinfinite_room,
-      const double& measurement,
-      const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param v_room
-   * @param v_yinfinite_room
-   * @param measurement
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeRoomYInfiniteRoom* add_room_y_infinite_room_edge(
-      g2o::VertexRoom* v_room,
-      g2o::VertexInfiniteRoom* v_yinfinite_room,
-      const double& measurement,
-      const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -678,22 +590,6 @@ class GraphSLAM {
       g2o::VertexInfiniteRoom* v_ycorr2,
       const double& measurement,
       const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param room_xplane_edge
-   * @return Success or failure
-   */
-  bool remove_room_xplane_edge(g2o::EdgeRoomXPlane* room_xplane_edge);
-
-  /**
-   * @brief
-   *
-   * @param room_yplane_edge
-   * @return Success or failure
-   */
-  bool remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge);
 
   g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall,
                                               g2o::VertexPlane* v_plane1,

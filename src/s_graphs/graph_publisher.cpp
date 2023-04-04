@@ -103,7 +103,7 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
       graph_node.id = rooms_vec_prior[i].id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
-      Eigen::Vector2d room_pose = v_room->estimate();
+      Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
       node_attribute.fl_value.push_back(room_pose.x());
       node_attribute.fl_value.push_back(room_pose.y());
       node_attribute.fl_value.push_back(0.0);
@@ -193,7 +193,7 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
       graph_node.id = rooms_vec[i].id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
-      Eigen::Vector2d room_pose = v_room->estimate();
+      Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
       node_attribute.fl_value.push_back(room_pose.x());
       node_attribute.fl_value.push_back(room_pose.y());
       node_attribute.fl_value.push_back(0.0);
