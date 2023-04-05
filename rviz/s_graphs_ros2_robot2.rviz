@@ -213,17 +213,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        floor_lines: true
-        floors: true
-        hort_planes: true
-        imu: true
-        keyframe_keyframe_edges: true
-        keyframe_plane_edges: true
-        loop_close_radius: true
-        nodes: true
-        rooms: true
-        x_vert_planes: true
-        y_vert_planes: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -237,15 +227,7 @@ Visualization Manager:
       Namespaces:
         closed_spaces: true
         connected_edges_0: true
-        connected_edges_1: true
-        connected_edges_2: true
-        connected_edges_3: true
-        connected_edges_4: true
         connected_vertices_0: true
-        connected_vertices_1: true
-        connected_vertices_2: true
-        connected_vertices_3: true
-        connected_vertices_4: true
         edges: true
         vertices: true
       Topic:

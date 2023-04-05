@@ -210,15 +210,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        hort_planes: true
-        imu: true
-        keyframe_keyframe_edges: true
-        keyframe_plane_edges: true
-        loop_close_radius: true
-        nodes: true
-        rooms: true
-        x_vert_planes: true
-        y_vert_planes: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -324,5 +316,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 924
-  X: 72
+  X: 1992
   Y: 27

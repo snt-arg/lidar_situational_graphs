@@ -111,7 +111,18 @@ set(DEPENDENCIES
 
 
 
-  add_library(s_graphs_lib 
+ SET(G2O_COMMON_LIBS 
+    ${PCL_LIBRARIES}
+    ${G2O_TYPES_DATA}
+    ${G2O_CORE_LIBRARY}
+    ${G2O_STUFF_LIBRARY}
+    ${G2O_SOLVER_PCG}
+    ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
+    ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
+    ${G2O_TYPES_SLAM3D}
+    ${G2O_TYPES_SLAM3D_ADDONS})
+
+add_library(s_graphs_core_lib   
     src/s_graphs/plane_analyzer.cpp
     src/s_graphs/graph_slam.cpp
     src/s_graphs/graph_visualizer.cpp
