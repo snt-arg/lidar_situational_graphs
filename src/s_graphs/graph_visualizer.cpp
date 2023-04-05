@@ -186,9 +186,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
     }
   }
   if(!got_trans_prior2map_) {
-    std::cout << "Publish !" << std::endl;
     for(int i = 0; i < rooms_vec_prior.size(); i++) {  // walls_x_coord.size()
-
       double r, g, b;
       visualization_msgs::Marker prior_room_marker;
       prior_room_marker.header.frame_id = "prior_map";
@@ -741,9 +739,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   for(int i = 0; i < x_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / x_plane_snapshot.size();
     std_msgs::ColorRGBA color;
-    color.r = 1;
-    color.g = 0;
-    color.b = 0;
+    color.r = x_plane_snapshot[i].color[0] / 255;
+    color.g = x_plane_snapshot[i].color[1] / 255;
+    color.b = x_plane_snapshot[i].color[2] / 255;
     color.a = 0.5;
     for(size_t j = 0; j < x_plane_snapshot[i].cloud_seg_map->size(); ++j) {
       geometry_msgs::Point point;
@@ -772,9 +770,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   for(int i = 0; i < y_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / y_plane_snapshot.size();
     std_msgs::ColorRGBA color;
-    color.r = 0;
-    color.g = 0;
-    color.b = 1;
+    color.r = y_plane_snapshot[i].color[0] / 255;
+    color.g = y_plane_snapshot[i].color[1] / 255;
+    color.b = y_plane_snapshot[i].color[2] / 255;
     color.a = 0.5;
     for(size_t j = 0; j < y_plane_snapshot[i].cloud_seg_map->size(); ++j) {
       geometry_msgs::Point point;
