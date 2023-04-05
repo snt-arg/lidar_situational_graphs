@@ -390,7 +390,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   x_vert_plane_marker.lifetime = duration_planes;
   x_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
 
-
   for (int i = 0; i < x_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / x_plane_snapshot.size();
     std_msgs::msg::ColorRGBA color;
@@ -408,7 +407,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     }
   }
   markers.markers.push_back(x_vert_plane_marker);
-
 
   // y vertical plane markers
   visualization_msgs::msg::Marker y_vert_plane_marker;
@@ -853,7 +851,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.ns = "overlapped_y_infinite_room";
   }
 
-
   // room markers
   for (int i = 0; i < room_snapshot.size(); ++i) {
     room_snapshot[i].sub_room = false;
@@ -902,7 +899,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_marker.pose.orientation.w = quat.w();
     room_marker.lifetime = duration_room;
     markers.markers.push_back(room_marker);
-
 
     // fill in the line marker
     visualization_msgs::msg::Marker room_line_marker;
