@@ -317,9 +317,12 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
       det_infinite_room.plane1_id = room_plane1_pair.plane_id;
       det_infinite_room.plane2_id = room_plane2_pair.plane_id;
+      det_infinite_room.cluster_array = cluster_array;
+
       det_infinite_room.cluster_center_node = cluster_center_node;
       det_infinite_room.node = room_node;
-      det_infinite_room.cluster_array = cluster_array;
+      det_infinite_room.plane1_node = (*found_plane1).plane_node;
+      det_infinite_room.plane2_node = (*found_plane2).plane_node;
       x_infinite_rooms.push_back(det_infinite_room);
 
       auto edge_room_plane =
@@ -412,9 +415,12 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
       det_infinite_room.plane1_id = room_plane1_pair.plane_id;
       det_infinite_room.plane2_id = room_plane2_pair.plane_id;
+      det_infinite_room.cluster_array = cluster_array;
+
       det_infinite_room.cluster_center_node = cluster_center_node;
       det_infinite_room.node = room_node;
-      det_infinite_room.cluster_array = cluster_array;
+      det_infinite_room.plane1_node = (*found_plane1).plane_node;
+      det_infinite_room.plane2_node = (*found_plane2).plane_node;
       y_infinite_rooms.push_back(det_infinite_room);
 
       auto edge_room_plane =

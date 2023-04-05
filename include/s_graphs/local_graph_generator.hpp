@@ -27,60 +27,47 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-#ifndef INFINITE_ROOMS_HPP
-#define INFINITE_ROOMS_HPP
+// SPDX-License-Identifier: BSD-2-Clause
 
-#include <g2o/types/slam3d_addons/plane3d.h>
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
+#ifndef LOCAL_GRAPH_GENERATOR_HPP
+#define LOCAL_GRAPH_GENERATOR_HPP
 
-#include <Eigen/Eigen>
-#include <g2o/vertex_infinite_room.hpp>
-#include <g2o/vertex_room.hpp>
+#include <stdio.h>
 
-#include "visualization_msgs/msg/marker_array.hpp"
-
-namespace g2o {
-class VertexSE3;
-class HyperGraph;
-class SparseOptimizer;
-}  // namespace g2o
+#include <s_graphs/graph_slam.hpp>
+#include <s_graphs/room_utils.hpp>
+#include <s_graphs/rooms.hpp>
 
 namespace s_graphs {
 
-/**
- * @brief Struct that holds information about an infinite room (infinite_room).
- *
- * @var id: Unique Id of the infinite room.
- * @var connected_id
- * @var connected_neighbour_ids
- * @var plane1, plane2: Planes that form the inifite room
- * @var plane1_id, plane2_id: Planes unique ids
- * @var plane1_node, plane2_node
- * @var cluster_center_node
- * @var node
- * @var cluster_array
- */
-class InfiniteRooms {
+class LocalGraphGenerator {
  public:
-  InfiniteRooms() {
-    plane1_node = plane2_node = nullptr;
-    node = nullptr;
-    // local_graph = std::make_shared<GraphSLAM>();
-  }
+  LocalGraphGenerator();
+  ~LocalGraphGenerator();
 
  public:
-  int id;
-  g2o::Plane3D plane1, plane2;
-  int plane1_id, plane2_id;
-  bool sub_infinite_room;
-  visualization_msgs::msg::MarkerArray cluster_array;
+  Rooms get_current_room(const Rooms& room,
+                         const std::vector<VerticalPlanes>& x_vert_planes,
+                         const std::vector<VerticalPlanes>& y_vert_planes,
+                         const KeyFrame::Ptr keyframe,
+                         const std::vector<KeyFrame::Ptr>& keyframes,
+                         const std::vector<Rooms> rooms_vec);
 
-  g2o::VertexPlane *plane1_node, *plane2_node;
-  g2o::VertexRoom* cluster_center_node;
-  g2o::VertexRoom* node;  // node instance in covisibility graph
-  // std::shared_ptr<GraphSLAM> local_graph;
+  std::vector<KeyFrame::Ptr> get_keyframes_inside_room(
+      const Rooms& current_room,
+      const std::vector<VerticalPlanes>& x_vert_planes,
+      const std::vector<VerticalPlanes>& y_vert_planes,
+      const std::vector<KeyFrame::Ptr>& keyframes);
+
+  std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
+      const Rooms& current_room,
+      const std::vector<VerticalPlanes>& x_vert_planes,
+      const std::vector<VerticalPlanes>& y_vert_planes);
+
+  void generate_local_graph(const std::vector<s_graphs::KeyFrame::Ptr>& room_keyframes,
+                            const Rooms& current_room,
+                            std::shared_ptr<GraphSLAM> local_graph);
 };
-
 }  // namespace s_graphs
-#endif  // INFINITE_ROOMS_HPP
+
+#endif  // LOCAL_GRAPH_GENERATOR_HPP

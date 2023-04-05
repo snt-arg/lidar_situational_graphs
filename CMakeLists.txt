@@ -110,9 +110,6 @@ set(DEPENDENCIES
     nmea_msgs
     geodesy)
 
-
-
-
  SET(G2O_COMMON_LIBS 
     ${PCL_LIBRARIES}
     ${G2O_TYPES_DATA}
@@ -138,6 +135,7 @@ add_library(s_graphs_core_lib
     src/s_graphs/registrations.cpp
     src/s_graphs/information_matrix_calculator.cpp
     src/s_graphs/keyframe_mapper.cpp
+    src/s_graphs/local_graph_generator.cpp
 )
 target_link_libraries(s_graphs_core_lib 
                       ${G2O_COMMON_LIBS}

@@ -72,14 +72,14 @@ struct VerticalPlanes {
       cloud_seg_body_vec;  // vector of segmented points of the plane in local body
                            // frame
   pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_map;              // segmented points of the plane in global map frame
-  Eigen::Matrix3d covariance;     // covariance of the landmark
-  bool parallel_pair;             // checking if the plane has parallel pair
-  g2o::VertexSE3* keyframe_node;  // keyframe node instance
+      cloud_seg_map;           // segmented points of the plane in global map frame
+  Eigen::Matrix3d covariance;  // covariance of the landmark
+  bool parallel_pair;          // checking if the plane has parallel pair
   std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
-  g2o::VertexPlane* plane_node;                    // node instance
   std::vector<double> color;
   int revit_id;
+  g2o::VertexSE3* keyframe_node = nullptr;  // keyframe node instance
+  g2o::VertexPlane* plane_node = nullptr;   // node instance
 };
 
 /**
@@ -110,13 +110,13 @@ struct HorizontalPlanes {
       cloud_seg_body_vec;  // vector of segmented points of the plane in local body
                            // frame
   pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_map;              // segmented points of the plane in global map frame
-  Eigen::Matrix3d covariance;     // covariance of the landmark
-  bool parallel_pair;             // checking if the plane has parallel pair
-  g2o::VertexSE3* keyframe_node;  // keyframe node instance
+      cloud_seg_map;           // segmented points of the plane in global map frame
+  Eigen::Matrix3d covariance;  // covariance of the landmark
+  bool parallel_pair;          // checking if the plane has parallel pair
   std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
-  g2o::VertexPlane* plane_node;                    // node instance
   std::vector<double> color;
+  g2o::VertexSE3* keyframe_node = nullptr;  // keyframe node instance
+  g2o::VertexPlane* plane_node = nullptr;   // node instance
 };
 
 }  // namespace s_graphs

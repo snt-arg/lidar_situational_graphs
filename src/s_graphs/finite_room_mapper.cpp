@@ -371,6 +371,10 @@ void FiniteRoomMapper::factor_rooms(
     det_room.plane_y1_id = y_room_pair_vec[0].plane_id;
     det_room.plane_y2_id = y_room_pair_vec[1].plane_id;
     det_room.node = room_node;
+    // det_room.plane_x1_node = (*found_x_plane1).plane_node;
+    // det_room.plane_x2_node = (*found_x_plane2).plane_node;
+    // det_room.plane_y1_node = (*found_y_plane1).plane_node;
+    // det_room.plane_y2_node = (*found_y_plane2).plane_node;
     det_room.cluster_array = cluster_array;
     rooms_vec.push_back(det_room);
 
@@ -704,6 +708,10 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     det_room.plane_x2_id = matched_x_infinite_room.plane2_id;
     det_room.plane_y1_id = matched_y_infinite_room.plane1_id;
     det_room.plane_y2_id = matched_y_infinite_room.plane2_id;
+    det_room.plane_x1_node = matched_x_infinite_room.plane1_node;
+    det_room.plane_x2_node = matched_x_infinite_room.plane2_node;
+    det_room.plane_y1_node = matched_y_infinite_room.plane1_node;
+    det_room.plane_y2_node = matched_y_infinite_room.plane2_node;
     det_room.node = room_node;
     for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
@@ -765,6 +773,19 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     det_room.plane_x2_id = matched_x_infinite_room.plane2_id;
     det_room.plane_y1_id = det_room_data.y_planes[0].id;
     det_room.plane_y2_id = det_room_data.y_planes[1].id;
+    det_room.plane_x1_node = matched_x_infinite_room.plane1_node;
+    det_room.plane_x2_node = matched_x_infinite_room.plane2_node;
+    auto found_y_plane1 = std::find_if(
+        y_vert_planes.begin(),
+        y_vert_planes.end(),
+        boost::bind(&VerticalPlanes::id, _1) == det_room_data.y_planes[0].id);
+    auto found_y_plane2 = std::find_if(
+        y_vert_planes.begin(),
+        y_vert_planes.end(),
+        boost::bind(&VerticalPlanes::id, _1) == det_room_data.y_planes[1].id);
+    det_room.plane_y1_node = (*found_y_plane1).plane_node;
+    det_room.plane_y2_node = (*found_y_plane2).plane_node;
+
     for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
           matched_x_infinite_room.cluster_array.markers[i]);
@@ -823,6 +844,21 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     det_room.plane_x2_id = det_room_data.x_planes[1].id;
     det_room.plane_y1_id = matched_y_infinite_room.plane1_id;
     det_room.plane_y2_id = matched_y_infinite_room.plane2_id;
+    det_room.plane_x1_id = det_room_data.x_planes[0].id;
+    det_room.plane_x2_id = det_room_data.x_planes[1].id;
+    auto found_x_plane1 = std::find_if(
+        x_vert_planes.begin(),
+        x_vert_planes.end(),
+        boost::bind(&VerticalPlanes::id, _1) == det_room_data.x_planes[0].id);
+    auto found_x_plane2 = std::find_if(
+        x_vert_planes.begin(),
+        x_vert_planes.end(),
+        boost::bind(&VerticalPlanes::id, _1) == det_room_data.x_planes[1].id);
+    det_room.plane_x1_node = (*found_x_plane1).plane_node;
+    det_room.plane_x2_node = (*found_x_plane2).plane_node;
+    det_room.plane_y1_node = matched_y_infinite_room.plane1_node;
+    det_room.plane_y2_node = matched_y_infinite_room.plane2_node;
+
     det_room.node = room_node;
     for (int i = 0; i < matched_y_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(

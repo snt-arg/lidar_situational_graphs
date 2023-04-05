@@ -160,6 +160,7 @@ std::set<std::pair<int, g2o::VertexSE3*>> obtain_keyframe_candidates_from_room(
   }
   return keyframe_candidates;
 }
+
 std::set<int> filter_keyframes_ids(
     const std::set<std::pair<int, g2o::VertexSE3*>>& candidate_keyframes,
     const std::vector<PlaneGlobalRep>& plane_reps) {
@@ -232,6 +233,7 @@ std::vector<s_graphs::KeyFrame::Ptr> obtain_keyframes_from_ids(
   }
   return keyframes;
 }
+
 std::optional<
     std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
 generate_room_keyframe(const s_graphs::Rooms& room,
@@ -252,6 +254,37 @@ generate_room_keyframe(const s_graphs::Rooms& room,
       room, room_centre.value(), keyframes_vec.begin(), keyframes_vec.end());
   return {{room_centre.value(), cloud}};
   // room_centre.value(), cloud)};
+}
+
+std::vector<s_graphs::KeyFrame::Ptr> get_room_keyframes(
+    const s_graphs::Rooms& room,
+    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
+    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+  auto global_planes =
+      obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
+  auto room_centre = obtain_global_centre_of_room(global_planes);
+
+  auto keyframe_candidates =
+      obtain_keyframe_candidates_from_room(room, x_vert_planes, y_vert_planes);
+  auto keyframes_ids = filter_keyframes_ids(keyframe_candidates, global_planes);
+  auto keyframes_vec = obtain_keyframes_from_ids(keyframes_ids, keyframes);
+
+  return keyframes_vec;
+}
+
+bool is_keyframe_inside_room(const s_graphs::Rooms& room,
+                             const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
+                             const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
+                             const s_graphs::KeyFrame::Ptr keyframe) {
+  auto global_planes =
+      obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
+
+  if (is_SE3_inside_a_room(keyframe->estimate(), global_planes)) {
+    return true;
+  }
+
+  return false;
 }
 
 graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
@@ -298,4 +331,3 @@ ExtendedRooms obtainExtendedRoomFromRosMsg(
 
   return room;
 }
-
