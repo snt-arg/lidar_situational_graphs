@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 // SPDX-License-Identifier: BSD-2-Clause
 
+#include <rclcpp/logger.hpp>
 #include <s_graphs/graph_visualizer.hpp>
 
 namespace s_graphs {
@@ -389,6 +390,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   x_vert_plane_marker.lifetime = duration_planes;
   x_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
 
+  RCLCPP_WARN(rclcpp::get_logger("visualizer"), "trace 1");
+
   for (int i = 0; i < x_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / x_plane_snapshot.size();
     std_msgs::msg::ColorRGBA color;
@@ -406,6 +409,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     }
   }
   markers.markers.push_back(x_vert_plane_marker);
+
+  RCLCPP_WARN(rclcpp::get_logger("visualizer"), "trace 2");
 
   // y vertical plane markers
   visualization_msgs::msg::Marker y_vert_plane_marker;
@@ -850,6 +855,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.ns = "overlapped_y_infinite_room";
   }
 
+  RCLCPP_WARN(rclcpp::get_logger("visualizer"), "trace 3");
+
   // room markers
   for (int i = 0; i < room_snapshot.size(); ++i) {
     room_snapshot[i].sub_room = false;
@@ -898,6 +905,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_marker.pose.orientation.w = quat.w();
     room_marker.lifetime = duration_room;
     markers.markers.push_back(room_marker);
+
+    RCLCPP_WARN(rclcpp::get_logger("visualizer"), "trace 4");
 
     // fill in the line marker
     visualization_msgs::msg::Marker room_line_marker;
@@ -1079,6 +1088,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       markers.markers.push_back(cluster);
     }
   }
+
+  RCLCPP_WARN(rclcpp::get_logger("visualizer"), "trace 5");
 
   rclcpp::Duration duration_floor = rclcpp::Duration::from_seconds(5);
   for (const auto& floor : floors_vec) {

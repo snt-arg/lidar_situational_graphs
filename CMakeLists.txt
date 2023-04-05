@@ -13,9 +13,11 @@ endif()
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 
 # pcl 1.7 causes a segfault when it is built with debug mode
-set(CMAKE_BUILD_TYPE "RELEASE")
+# set(CMAKE_BUILD_TYPE "RELEASE")
 find_package(rosidl_default_generators REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_python REQUIRED)
@@ -37,6 +39,7 @@ find_package(tf2_ros REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(graph_manager_msgs REQUIRED)
+find_package(backward_ros REQUIRED)
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -105,18 +108,11 @@ set(DEPENDENCIES
     nmea_msgs
     geodesy)
 
-SET(G2O_COMMON_LIBS 
-    ${PCL_LIBRARIES}
-    ${G2O_TYPES_DATA}
-    ${G2O_CORE_LIBRARY}
-    ${G2O_STUFF_LIBRARY}
-    ${G2O_SOLVER_PCG}
-    ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
-    ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
-    ${G2O_TYPES_SLAM3D}
-    ${G2O_TYPES_SLAM3D_ADDONS})
 
-add_library(s_graphs_core_lib  
+
+
+  add_library(s_graphs_lib 
+    src/s_graphs/plane_analyzer.cpp
     src/s_graphs/graph_slam.cpp
     src/s_graphs/graph_visualizer.cpp
     src/s_graphs/map_cloud_generator.cpp

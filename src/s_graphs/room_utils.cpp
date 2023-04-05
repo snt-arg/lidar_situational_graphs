@@ -278,6 +278,15 @@ ExtendedRooms obtainExtendedRoomFromRosMsg(
   room.id = msg.id;
   pcl::fromROSMsg(msg.pointcloud, *room.cloud);
   room.centre = s_graphs::pose2isometry(msg.pose);
+  if (msg.planes_ids.size() != 4) {
+    std::cout << "room doesnt contain 4 planes" << std::endl;
+    return room;
+  }
+  room.plane_x1_id = msg.planes_ids[0];
+  room.plane_x2_id = msg.planes_ids[1];
+  room.plane_y1_id = msg.planes_ids[2];
+  room.plane_y2_id = msg.planes_ids[3];
+
   // TODO: Fill these fields
   /* for (auto& keyframe : msg.keyframes_ids) {
     room.keyframes
