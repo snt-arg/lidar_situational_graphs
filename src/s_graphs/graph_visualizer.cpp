@@ -23,7 +23,6 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
   double plane_h = 15;
   double wall_vertex_h = 18;
   double prior_room_h = 22;
-  std::cout << "rooms vec prior size : " << rooms_vec_prior.size() << std::endl;
 
   for(int i = 0; i < x_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
     double r, g, b;
@@ -49,7 +48,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
     wall_visual_marker.color.r = x_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = x_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = x_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 0.7;
+    wall_visual_marker.color.a = 0.4;
     prior_markers.markers.push_back(wall_visual_marker);
   }
 
@@ -79,7 +78,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_prior_marker_array(const
     wall_visual_marker.color.r = y_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = y_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = y_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 0.7;
+    wall_visual_marker.color.a = 0.4;
     prior_markers.markers.push_back(wall_visual_marker);
   }
 
@@ -742,9 +741,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   for(int i = 0; i < x_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / x_plane_snapshot.size();
     std_msgs::ColorRGBA color;
-    color.r = x_plane_snapshot[i].color[0] / 255;
-    color.g = x_plane_snapshot[i].color[1] / 255;
-    color.b = x_plane_snapshot[i].color[2] / 255;
+    color.r = 1;
+    color.g = 0;
+    color.b = 0;
     color.a = 0.5;
     for(size_t j = 0; j < x_plane_snapshot[i].cloud_seg_map->size(); ++j) {
       geometry_msgs::Point point;
@@ -773,9 +772,9 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   for(int i = 0; i < y_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / y_plane_snapshot.size();
     std_msgs::ColorRGBA color;
-    color.r = y_plane_snapshot[i].color[0] / 255;
-    color.g = y_plane_snapshot[i].color[1] / 255;
-    color.b = y_plane_snapshot[i].color[2] / 255;
+    color.r = 0;
+    color.g = 0;
+    color.b = 1;
     color.a = 0.5;
     for(size_t j = 0; j < y_plane_snapshot[i].cloud_seg_map->size(); ++j) {
       geometry_msgs::Point point;
@@ -868,7 +867,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       corr_x_line_marker.color.g = color_g;
       corr_x_line_marker.color.b = color_b;
       corr_x_line_marker.color.a = 1.0;
-      corr_x_line_marker.lifetime = ros::Duration(150.0);
+      corr_x_line_marker.lifetime = ros::Duration(15.0);
     } else {
       x_infinite_room_snapshot[i].id = -1;
       corr_x_line_marker.ns = "overlapped_infinite_room_x_lines";
@@ -933,7 +932,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       infinite_room_pose_marker.pose.position.x = x_infinite_room_snapshot[i].node->estimate()(0);
       infinite_room_pose_marker.pose.position.y = x_infinite_room_snapshot[i].node->estimate()(1);
       infinite_room_pose_marker.pose.position.z = infinite_room_node_h;
-      infinite_room_pose_marker.lifetime = ros::Duration(150.0);
+      infinite_room_pose_marker.lifetime = ros::Duration(15.0);
       markers.markers.push_back(infinite_room_pose_marker);
     } else
       infinite_room_pose_marker.ns = "overlapped_x_infinite_room";
@@ -987,7 +986,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       corr_y_line_marker.color.g = color_g;
       corr_y_line_marker.color.b = color_b;
       corr_y_line_marker.color.a = 1.0;
-      corr_y_line_marker.lifetime = ros::Duration(150.0);
+      corr_y_line_marker.lifetime = ros::Duration(15.0);
     } else {
       y_infinite_room_snapshot[i].id = -1;
       corr_y_line_marker.ns = "overlapped_infinite_room_y_lines";
@@ -1053,7 +1052,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       infinite_room_pose_marker.pose.position.x = y_infinite_room_snapshot[i].node->estimate()(0);
       infinite_room_pose_marker.pose.position.y = y_infinite_room_snapshot[i].node->estimate()(1);
       infinite_room_pose_marker.pose.position.z = infinite_room_node_h;
-      infinite_room_pose_marker.lifetime = ros::Duration(150.0);
+      infinite_room_pose_marker.lifetime = ros::Duration(15.0);
       markers.markers.push_back(infinite_room_pose_marker);
     } else
       infinite_room_pose_marker.ns = "overlapped_y_infinite_room";
@@ -1078,7 +1077,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   room_marker.color.g = 0.07;
   room_marker.color.b = 0.57;
   room_marker.color.a = 1;
-  room_marker.lifetime = ros::Duration(150.0);
+  room_marker.lifetime = ros::Duration(15.0);
 
   for(int i = 0; i < room_snapshot.size(); ++i) {
     room_snapshot[i].sub_room = false;
@@ -1114,7 +1113,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
     room_line_marker.color.g = color_g;
     room_line_marker.color.b = color_b;
     room_line_marker.color.a = 1.0;
-    room_line_marker.lifetime = ros::Duration(150.0);
+    room_line_marker.lifetime = ros::Duration(15.0);
     geometry_msgs::Point p1, p2, p3, p4, p5;
     p1.x = room_snapshot[i].node->estimate()(0);
     p1.y = room_snapshot[i].node->estimate()(1);
@@ -1210,7 +1209,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   x_corr_neighbour_line_marker.color.g = 0;
   x_corr_neighbour_line_marker.color.b = 0;
   x_corr_neighbour_line_marker.color.a = 1.0;
-  x_corr_neighbour_line_marker.lifetime = ros::Duration(150.0);
+  x_corr_neighbour_line_marker.lifetime = ros::Duration(15.0);
 
   for(const auto& x_infinite_room : x_infinite_room_snapshot) {
     for(const auto& x_infinite_room_neighbour_id : x_infinite_room.neighbour_ids) {
@@ -1266,7 +1265,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   y_corr_neighbour_line_marker.color.g = 0;
   y_corr_neighbour_line_marker.color.b = 0;
   y_corr_neighbour_line_marker.color.a = 1.0;
-  y_corr_neighbour_line_marker.lifetime = ros::Duration(150.0);
+  y_corr_neighbour_line_marker.lifetime = ros::Duration(15.0);
 
   for(const auto& y_infinite_room : y_infinite_room_snapshot) {
     for(const auto& y_infinite_room_neighbour_id : y_infinite_room.neighbour_ids) {
@@ -1322,7 +1321,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
   room_neighbour_line_marker.color.g = 0;
   room_neighbour_line_marker.color.b = 0;
   room_neighbour_line_marker.color.a = 1.0;
-  room_neighbour_line_marker.lifetime = ros::Duration(150.0);
+  room_neighbour_line_marker.lifetime = ros::Duration(15.0);
 
   for(const auto& room : room_snapshot) {
     for(const auto& room_neighbour_id : room.neighbour_ids) {
@@ -1382,7 +1381,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       floor_marker.color.g = 0;
       floor_marker.color.b = 1;
       floor_marker.color.a = 1;
-      floor_marker.lifetime = ros::Duration(150.0);
+      floor_marker.lifetime = ros::Duration(15.0);
 
       floor_marker.pose.position.x = floor.node->estimate()(0);
       floor_marker.pose.position.y = floor.node->estimate()(1);
@@ -1401,7 +1400,7 @@ visualization_msgs::MarkerArray GraphVisualizer::create_marker_array(const ros::
       floor_line_marker.color.g = color_g;
       floor_line_marker.color.b = color_b;
       floor_line_marker.color.a = 1.0;
-      floor_line_marker.lifetime = ros::Duration(10.0);
+      floor_line_marker.lifetime = ros::Duration(15.0);
 
       for(const auto& room : room_snapshot) {
         if(room.sub_room) continue;
