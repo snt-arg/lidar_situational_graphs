@@ -10,7 +10,7 @@ Panels:
         - /MarkerArray1/Namespaces1
         - /MarkerArray2/Namespaces1
       Splitter Ratio: 0.5
-    Tree Height: 787
+    Tree Height: 363
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -50,12 +50,6 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        floors_layer:
-          Value: true
-        keyframes_layer:
-          Value: true
-        map:
-          Value: true
         map_elevated:
           Value: false
         robot1/back:
@@ -102,10 +96,6 @@ Visualization Manager:
           Value: false
         robot1/walls_layer:
           Value: false
-        rooms_layer:
-          Value: true
-        walls_layer:
-          Value: true
       Marker Scale: 5
       Name: TF
       Show Arrows: true
@@ -220,18 +210,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        floor_lines: true
-        floors: true
-        hort_planes: true
-        imu: true
-        keyframe_keyframe_edges: true
-        keyframe_plane_edges: true
-        loop_close_radius: true
-        nodes: true
-        rooms: true
-        rooms_lines: true
-        x_vert_planes: true
-        y_vert_planes: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -246,18 +225,8 @@ Visualization Manager:
         closed_spaces: true
         connected_edges_0: true
         connected_edges_1: true
-        connected_edges_2: true
-        connected_edges_3: true
-        connected_edges_4: true
-        connected_edges_5: true
-        connected_edges_6: true
         connected_vertices_0: true
         connected_vertices_1: true
-        connected_vertices_2: true
-        connected_vertices_3: true
-        connected_vertices_4: true
-        connected_vertices_5: true
-        connected_vertices_6: true
         edges: true
         vertices: true
       Topic:
@@ -313,25 +282,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 41.276512145996094
+      Distance: 51.777259826660156
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -1.2772921323776245
-        Y: -5.1753764152526855
-        Z: 6.607260227203369
+        X: 0.0844573974609375
+        Y: 6.019639015197754
+        Z: 5.621158599853516
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8547971248626709
+      Pitch: 1.1647969484329224
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.01314115524292
+      Yaw: 0.07814665138721466
     Saved: ~
 Window Geometry:
   Displays:

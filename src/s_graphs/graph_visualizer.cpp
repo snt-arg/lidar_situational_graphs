@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 // SPDX-License-Identifier: BSD-2-Clause
 
+#include <rclcpp/logger.hpp>
 #include <s_graphs/graph_visualizer.hpp>
 
 namespace s_graphs {

@@ -13,7 +13,7 @@ Panels:
         - /MarkerArray2
         - /MarkerArray2/Namespaces1
       Splitter Ratio: 0.5
-    Tree Height: 787
+    Tree Height: 363
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -53,14 +53,8 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        keyframe_layer:
-          Value: true
-        map:
-          Value: true
         map_elevated:
           Value: false
-        planes_layer:
-          Value: true
         robot2/back:
           Value: false
         robot2/back_fisheye:
@@ -219,15 +213,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        hort_planes: true
-        imu: true
-        keyframe_keyframe_edges: true
-        keyframe_plane_edges: true
-        loop_close_radius: true
-        nodes: true
-        rooms: true
-        x_vert_planes: true
-        y_vert_planes: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -297,25 +283,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 69.88490295410156
+      Distance: 47.624603271484375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.750600576400757
-        Y: -13.448716163635254
-        Z: 6.258066654205322
+        X: -3.2677555084228516
+        Y: -5.381920337677002
+        Z: 6.338479518890381
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1447968482971191
+      Pitch: 1.0897969007492065
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.718144416809082
+      Yaw: 0.04495862498879433
     Saved: ~
 Window Geometry:
   Displays:
@@ -331,5 +317,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 924
-  X: 1992
+  X: 2916
   Y: 27
