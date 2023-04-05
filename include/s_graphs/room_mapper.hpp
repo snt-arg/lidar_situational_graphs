@@ -134,8 +134,8 @@ class MapperUtils {
   }
 
   /**
-   * @brief This method adds perpendicular constraint between the planes of rooms or
-   * infinite_rooms
+   * @brief This method adds perpendicular constraint between the planes of
+   * rooms or infinite_rooms
    *
    * @param graph_slam
    * @pram plane1_node
@@ -174,8 +174,8 @@ class MapperUtils {
 };
 
 /**
- * @brief Class that provides tools for different analysis over open space clusters to
- * generate rooms
+ * @brief Class that provides tools for different analysis over open space
+ * clusters to generate rooms
  */
 class InfiniteRoomMapper : public MapperUtils {
   typedef pcl::PointXYZRGBNormal PointNormal;
@@ -222,36 +222,10 @@ class InfiniteRoomMapper : public MapperUtils {
       std::vector<InfiniteRooms>& y_infinite_rooms,
       const std::vector<Rooms>& rooms_vec);
 
-  /**
-   * @brief Compute the length of a infinite_room.
-   *
-   * @param plane_type
-   * @param infinite_room_pose
-   * @param plane
-   * @return Length of the infinite_room.
-   */
-  double infinite_room_measurement(const int plane_type,
-                                   const Eigen::Vector2d& infinite_room_pose,
-                                   const Eigen::Vector4d& plane);
-
-  /**
-   * @brief Compute the length of a infinite_room.
-   *
-   * @param plane_type
-   * @param infinite_room_pose
-   * @param plane1
-   * @param plane2
-   * @return Length of the infinite_room.
-   */
-  double infinite_room_measurement(const int plane_type,
-                                   const Eigen::Vector2d& infinite_room_pose,
-                                   const Eigen::Vector4d& plane1,
-                                   const Eigen::Vector4d& plane2);
-
  private:
   /**
-   * @brief Creates the infinite_room vertex and adds edges between the vertex the
-   * detected planes
+   * @brief Creates the infinite_room vertex and adds edges between the vertex
+   * the detected planes
    *
    * @param graph_slam
    * @param plane_type
@@ -275,22 +249,9 @@ class InfiniteRoomMapper : public MapperUtils {
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
       std::vector<InfiniteRooms>& x_infinite_rooms,
       std::vector<InfiniteRooms>& y_infinite_rooms,
+      const Eigen::Isometry3d& room_center,
+      const Eigen::Isometry3d& cluster_center,
       const visualization_msgs::msg::MarkerArray& cluster_array);
-
-  /**
-   * @brief
-   *
-   * @param plane_type
-   * @param corr_pose
-   * @param x_infinite_rooms
-   * @param y_infinite_rooms
-   * @return
-   */
-  std::pair<int, int> associate_infinite_rooms(
-      const int& plane_type,
-      const Eigen::Vector2d& corr_pose,
-      const std::vector<InfiniteRooms>& x_infinite_rooms,
-      const std::vector<InfiniteRooms>& y_infinite_rooms);
 
   /**
    * @brief
@@ -308,7 +269,7 @@ class InfiniteRoomMapper : public MapperUtils {
    */
   std::pair<int, int> associate_infinite_rooms(
       const int& plane_type,
-      const Eigen::Vector2d& corr_pose,
+      const Eigen::Isometry3d& room_center,
       const VerticalPlanes& plane1,
       const VerticalPlanes& plane2,
       const std::vector<VerticalPlanes>& x_vert_planes,
@@ -328,7 +289,7 @@ class InfiniteRoomMapper : public MapperUtils {
    */
   bool check_infinite_room_ids(const int plane_type,
                                const std::set<g2o::HyperGraph::Edge*>& plane_edges,
-                               const g2o::VertexRoomXYLB* corr_node);
+                               const g2o::VertexRoom* corr_node);
 
  private:
   /**
@@ -407,8 +368,8 @@ class FiniteRoomMapper : public MapperUtils {
 
  private:
   /**
-   * @brief Creates the room vertex and adds edges between the vertex and detected
-   * planes
+   * @brief Creates the room vertex and adds edges between the vertex and
+   * detected planes
    *
    * @param graph_slam
    * @param x_room_pair_vec
@@ -429,6 +390,7 @@ class FiniteRoomMapper : public MapperUtils {
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
       std::vector<Rooms>& rooms_vec,
+      const Eigen::Isometry3d& room_center,
       const visualization_msgs::msg::MarkerArray& cluster_array);
 
   /**
@@ -446,7 +408,7 @@ class FiniteRoomMapper : public MapperUtils {
    * @return
    */
   std::pair<int, int> associate_rooms(
-      const Eigen::Vector2d& room_pose,
+      const Eigen::Isometry3d& room_center,
       const std::vector<Rooms>& rooms_vec,
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes,
@@ -467,7 +429,7 @@ class FiniteRoomMapper : public MapperUtils {
    */
   bool check_room_ids(const int plane_type,
                       const std::set<g2o::HyperGraph::Edge*>& plane_edges,
-                      const g2o::VertexRoomXYLB* room_node);
+                      const g2o::VertexRoom* room_node);
   bool check_plane_ids(const std::set<g2o::HyperGraph::Edge*>& plane_edges,
                        const g2o::VertexPlane* plane_node);
   /**
@@ -490,6 +452,7 @@ class FiniteRoomMapper : public MapperUtils {
       const s_graphs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_x_infinite_room,
       const s_graphs::InfiniteRooms& matched_y_infinite_room,
+      const Eigen::Isometry3d& room_center,
       std::vector<Rooms>& rooms_vec,
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes,
@@ -516,6 +479,7 @@ class FiniteRoomMapper : public MapperUtils {
       std::shared_ptr<GraphSLAM>& graph_slam,
       const s_graphs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_x_infinite_room,
+      const Eigen::Isometry3d& room_center,
       std::vector<Rooms>& rooms_vec,
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes,
@@ -542,6 +506,7 @@ class FiniteRoomMapper : public MapperUtils {
       std::shared_ptr<GraphSLAM>& graph_slam,
       const s_graphs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_y_infinite_room,
+      const Eigen::Isometry3d& room_center,
       std::vector<Rooms>& rooms_vec,
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes,

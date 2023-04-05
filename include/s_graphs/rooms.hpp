@@ -38,7 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <visualization_msgs/msg/marker_array.hpp>
 
 namespace g2o {
-class VertexRoomXYLB;
+class VertexRoom;
 class HyperGraph;
 class SparseOptimizer;
 }  // namespace g2o
@@ -62,7 +62,7 @@ struct Rooms {
   g2o::Plane3D plane_x1, plane_x2, plane_y1, plane_y2;
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   std::vector<int> neighbour_ids;
-  g2o::VertexRoomXYLB* node;  // node instance
+  g2o::VertexRoom* node;  // node instance
   bool sub_room;
   visualization_msgs::msg::MarkerArray cluster_array;
 };

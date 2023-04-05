@@ -485,12 +485,13 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         overlapped_infinite_room = true;
         break;
       }
-      dist_room_x_corr = sqrt(pow(room.node->estimate()(0) -
-                                      x_infinite_room_snapshot[i].node->estimate()(0),
-                                  2) +
-                              pow(room.node->estimate()(1) -
-                                      x_infinite_room_snapshot[i].node->estimate()(1),
-                                  2));
+      dist_room_x_corr =
+          sqrt(pow(room.node->estimate().translation()(0) -
+                       x_infinite_room_snapshot[i].node->estimate().translation()(0),
+                   2) +
+               pow(room.node->estimate().translation()(1) -
+                       x_infinite_room_snapshot[i].node->estimate().translation()(1),
+                   2));
       if (dist_room_x_corr < 1.0) {
         overlapped_infinite_room = true;
         break;
@@ -501,12 +502,13 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     for (auto& current_x_infinite_room : x_infinite_room_snapshot) {
       if (current_x_infinite_room.id == x_infinite_room_snapshot[i].id) continue;
 
-      dist_x_corr = sqrt(pow(current_x_infinite_room.node->estimate()(0) -
-                                 x_infinite_room_snapshot[i].node->estimate()(0),
-                             2) +
-                         pow(current_x_infinite_room.node->estimate()(1) -
-                                 x_infinite_room_snapshot[i].node->estimate()(1),
-                             2));
+      dist_x_corr =
+          sqrt(pow(current_x_infinite_room.node->estimate().translation()(0) -
+                       x_infinite_room_snapshot[i].node->estimate().translation()(0),
+                   2) +
+               pow(current_x_infinite_room.node->estimate().translation()(1) -
+                       x_infinite_room_snapshot[i].node->estimate().translation()(1),
+                   2));
       if (dist_x_corr < 2.0) {
         current_x_infinite_room.sub_infinite_room = true;
         break;
@@ -523,28 +525,28 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         boost::bind(&VerticalPlanes::id, _1) == x_infinite_room_snapshot[i].plane2_id);
 
     // fill in the line marker
-    visualization_msgs::msg::Marker corr_x_line_marker;
-    corr_x_line_marker.scale.x = 0.02;
-    corr_x_line_marker.pose.orientation.w = 1.0;
+    visualization_msgs::msg::Marker x_infinite_room_line_marker;
+    x_infinite_room_line_marker.scale.x = 0.02;
+    x_infinite_room_line_marker.pose.orientation.w = 1.0;
     if (!overlapped_infinite_room) {
-      corr_x_line_marker.ns = "infinite_room_x_lines";
-      corr_x_line_marker.header.frame_id = rooms_layer_id;
-      corr_x_line_marker.header.stamp = stamp;
-      corr_x_line_marker.id = markers.markers.size() + 1;
-      corr_x_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-      corr_x_line_marker.color.r = color_r;
-      corr_x_line_marker.color.g = color_g;
-      corr_x_line_marker.color.b = color_b;
-      corr_x_line_marker.color.a = 1.0;
-      corr_x_line_marker.lifetime = duration_room;
+      x_infinite_room_line_marker.ns = "infinite_room_x_lines";
+      x_infinite_room_line_marker.header.frame_id = rooms_layer_id;
+      x_infinite_room_line_marker.header.stamp = stamp;
+      x_infinite_room_line_marker.id = markers.markers.size() + 1;
+      x_infinite_room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+      x_infinite_room_line_marker.color.r = color_r;
+      x_infinite_room_line_marker.color.g = color_g;
+      x_infinite_room_line_marker.color.b = color_b;
+      x_infinite_room_line_marker.color.a = 1.0;
+      x_infinite_room_line_marker.lifetime = duration_room;
     } else {
       x_infinite_room_snapshot[i].id = -1;
-      corr_x_line_marker.ns = "overlapped_infinite_room_x_lines";
+      x_infinite_room_line_marker.ns = "overlapped_infinite_room_x_lines";
     }
 
     geometry_msgs::msg::Point p1, p2, p3;
-    p1.x = x_infinite_room_snapshot[i].node->estimate()(0);
-    p1.y = x_infinite_room_snapshot[i].node->estimate()(1);
+    p1.x = x_infinite_room_snapshot[i].node->estimate().translation()(0);
+    p1.y = x_infinite_room_snapshot[i].node->estimate().translation()(1);
     p1.z = 0;
 
     float min_dist_plane1 = 100;
@@ -578,8 +580,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                          walls_layer_id);
 
     p2 = point2_stamped_transformed.point;
-    corr_x_line_marker.points.push_back(p1);
-    corr_x_line_marker.points.push_back(p2);
+    x_infinite_room_line_marker.points.push_back(p1);
+    x_infinite_room_line_marker.points.push_back(p2);
 
     float min_dist_plane2 = 100;
     for (int p = 0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
@@ -611,13 +613,12 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                          walls_layer_id);
 
     p3 = point3_stamped_transformed.point;
-    corr_x_line_marker.points.push_back(p1);
-    corr_x_line_marker.points.push_back(p3);
-    markers.markers.push_back(corr_x_line_marker);
+    x_infinite_room_line_marker.points.push_back(p1);
+    x_infinite_room_line_marker.points.push_back(p3);
+    markers.markers.push_back(x_infinite_room_line_marker);
 
     // x infinite_room cube
     visualization_msgs::msg::Marker infinite_room_pose_marker;
-    infinite_room_pose_marker.pose.orientation.w = 1.0;
     infinite_room_pose_marker.scale.x = 0.5;
     infinite_room_pose_marker.scale.y = 0.5;
     infinite_room_pose_marker.scale.z = 0.5;
@@ -632,10 +633,17 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.color.g = 0.64;
       infinite_room_pose_marker.color.a = 1;
       infinite_room_pose_marker.pose.position.x =
-          x_infinite_room_snapshot[i].node->estimate()(0);
+          x_infinite_room_snapshot[i].node->estimate().translation()(0);
       infinite_room_pose_marker.pose.position.y =
-          x_infinite_room_snapshot[i].node->estimate()(1);
-      infinite_room_pose_marker.pose.position.z = 0.0;
+          x_infinite_room_snapshot[i].node->estimate().translation()(1);
+      infinite_room_pose_marker.pose.position.z =
+          x_infinite_room_snapshot[i].node->estimate().translation()(2);
+      Eigen::Quaterniond quat(x_infinite_room_snapshot[i].node->estimate().linear());
+      infinite_room_pose_marker.pose.orientation.x = quat.x();
+      infinite_room_pose_marker.pose.orientation.y = quat.y();
+      infinite_room_pose_marker.pose.orientation.z = quat.z();
+      infinite_room_pose_marker.pose.orientation.w = quat.w();
+
       infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
       /* room clusters */
@@ -668,12 +676,13 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         overlapped_infinite_room = true;
         break;
       }
-      dist_room_y_corr = sqrt(pow(room.node->estimate()(0) -
-                                      y_infinite_room_snapshot[i].node->estimate()(0),
-                                  2) +
-                              pow(room.node->estimate()(1) -
-                                      y_infinite_room_snapshot[i].node->estimate()(1),
-                                  2));
+      dist_room_y_corr =
+          sqrt(pow(room.node->estimate().translation()(0) -
+                       y_infinite_room_snapshot[i].node->estimate().translation()(0),
+                   2) +
+               pow(room.node->estimate().translation()(1) -
+                       y_infinite_room_snapshot[i].node->estimate().translation()(1),
+                   2));
       if (dist_room_y_corr < 1.0) {
         overlapped_infinite_room = true;
         break;
@@ -683,12 +692,13 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     float dist_y_corr = 100;
     for (auto& current_y_infinite_room : y_infinite_room_snapshot) {
       if (current_y_infinite_room.id == y_infinite_room_snapshot[i].id) continue;
-      dist_y_corr = sqrt(pow(current_y_infinite_room.node->estimate()(0) -
-                                 y_infinite_room_snapshot[i].node->estimate()(0),
-                             2) +
-                         pow(current_y_infinite_room.node->estimate()(1) -
-                                 y_infinite_room_snapshot[i].node->estimate()(1),
-                             2));
+      dist_y_corr =
+          sqrt(pow(current_y_infinite_room.node->estimate().translation()(0) -
+                       y_infinite_room_snapshot[i].node->estimate().translation()(0),
+                   2) +
+               pow(current_y_infinite_room.node->estimate().translation()(1) -
+                       y_infinite_room_snapshot[i].node->estimate().translation()(1),
+                   2));
       if (dist_y_corr < 2.0) {
         current_y_infinite_room.sub_infinite_room = true;
         break;
@@ -705,28 +715,28 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         boost::bind(&VerticalPlanes::id, _1) == y_infinite_room_snapshot[i].plane2_id);
 
     // fill in the line marker
-    visualization_msgs::msg::Marker corr_y_line_marker;
-    corr_y_line_marker.scale.x = 0.02;
-    corr_y_line_marker.pose.orientation.w = 1.0;
+    visualization_msgs::msg::Marker y_infinite_room_line_marker;
+    y_infinite_room_line_marker.scale.x = 0.02;
+    y_infinite_room_line_marker.pose.orientation.w = 1.0;
     if (!overlapped_infinite_room) {
-      corr_y_line_marker.ns = "infinite_room_y_lines";
-      corr_y_line_marker.header.frame_id = rooms_layer_id;
-      corr_y_line_marker.header.stamp = stamp;
-      corr_y_line_marker.id = markers.markers.size() + 1;
-      corr_y_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-      corr_y_line_marker.color.r = color_r;
-      corr_y_line_marker.color.g = color_g;
-      corr_y_line_marker.color.b = color_b;
-      corr_y_line_marker.color.a = 1.0;
-      corr_y_line_marker.lifetime = duration_room;
+      y_infinite_room_line_marker.ns = "infinite_room_y_lines";
+      y_infinite_room_line_marker.header.frame_id = rooms_layer_id;
+      y_infinite_room_line_marker.header.stamp = stamp;
+      y_infinite_room_line_marker.id = markers.markers.size() + 1;
+      y_infinite_room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+      y_infinite_room_line_marker.color.r = color_r;
+      y_infinite_room_line_marker.color.g = color_g;
+      y_infinite_room_line_marker.color.b = color_b;
+      y_infinite_room_line_marker.color.a = 1.0;
+      y_infinite_room_line_marker.lifetime = duration_room;
     } else {
       y_infinite_room_snapshot[i].id = -1;
-      corr_y_line_marker.ns = "overlapped_infinite_room_y_lines";
+      y_infinite_room_line_marker.ns = "overlapped_infinite_room_y_lines";
     }
 
     geometry_msgs::msg::Point p1, p2, p3;
-    p1.x = y_infinite_room_snapshot[i].node->estimate()(0);
-    p1.y = y_infinite_room_snapshot[i].node->estimate()(1);
+    p1.x = y_infinite_room_snapshot[i].node->estimate().translation()(0);
+    p1.y = y_infinite_room_snapshot[i].node->estimate().translation()(1);
     p1.z = 0;
 
     float min_dist_plane1 = 100;
@@ -760,8 +770,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                          walls_layer_id);
 
     p2 = point2_stamped_transformed.point;
-    corr_y_line_marker.points.push_back(p1);
-    corr_y_line_marker.points.push_back(p2);
+    y_infinite_room_line_marker.points.push_back(p1);
+    y_infinite_room_line_marker.points.push_back(p2);
 
     float min_dist_plane2 = 100;
     for (int p = 0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
@@ -793,9 +803,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                          walls_layer_id);
 
     p3 = point3_stamped_transformed.point;
-    corr_y_line_marker.points.push_back(p1);
-    corr_y_line_marker.points.push_back(p3);
-    markers.markers.push_back(corr_y_line_marker);
+    y_infinite_room_line_marker.points.push_back(p1);
+    y_infinite_room_line_marker.points.push_back(p3);
+    markers.markers.push_back(y_infinite_room_line_marker);
 
     // y infinite_room cube
     visualization_msgs::msg::Marker infinite_room_pose_marker;
@@ -815,10 +825,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.color.b = 0.13;
       infinite_room_pose_marker.color.a = 1;
       infinite_room_pose_marker.pose.position.x =
-          y_infinite_room_snapshot[i].node->estimate()(0);
+          y_infinite_room_snapshot[i].node->estimate().translation()(0);
       infinite_room_pose_marker.pose.position.y =
-          y_infinite_room_snapshot[i].node->estimate()(1);
-      infinite_room_pose_marker.pose.position.z = 0.0;
+          y_infinite_room_snapshot[i].node->estimate().translation()(1);
+      infinite_room_pose_marker.pose.position.z =
+          y_infinite_room_snapshot[i].node->estimate().translation()(2);
+      Eigen::Quaterniond quat(y_infinite_room_snapshot[i].node->estimate().linear());
+      infinite_room_pose_marker.pose.orientation.x = quat.x();
+      infinite_room_pose_marker.pose.orientation.y = quat.y();
+      infinite_room_pose_marker.pose.orientation.z = quat.z();
+      infinite_room_pose_marker.pose.orientation.w = quat.w();
       infinite_room_pose_marker.lifetime = duration_room;
       markers.markers.push_back(infinite_room_pose_marker);
       /* room clusters */
@@ -835,23 +851,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   }
 
   // room markers
-  visualization_msgs::msg::Marker room_marker;
-  room_marker.pose.orientation.w = 1.0;
-  room_marker.scale.x = 0.5;
-  room_marker.scale.y = 0.5;
-  room_marker.scale.z = 0.5;
-  // plane_marker.points.resize(vert_planes.size());
-  room_marker.header.frame_id = rooms_layer_id;
-  room_marker.header.stamp = stamp;
-  room_marker.ns = "rooms";
-  room_marker.id = markers.markers.size();
-  room_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
-  room_marker.color.r = 1;
-  room_marker.color.g = 0.07;
-  room_marker.color.b = 0.57;
-  room_marker.color.a = 1;
-  room_marker.lifetime = duration_room;
-
   for (int i = 0; i < room_snapshot.size(); ++i) {
     room_snapshot[i].sub_room = false;
   }
@@ -862,24 +861,49 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     for (auto& room : room_snapshot) {
       if (room.id == room_snapshot[i].id) continue;
       float dist_room_room =
-          sqrt(pow(room.node->estimate()(0) - room_snapshot[i].node->estimate()(0), 2) +
-               pow(room.node->estimate()(1) - room_snapshot[i].node->estimate()(1), 2));
+          sqrt(pow(room.node->estimate().translation()(0) -
+                       room_snapshot[i].node->estimate().translation()(0),
+                   2) +
+               pow(room.node->estimate().translation()(1) -
+                       room_snapshot[i].node->estimate().translation()(1),
+                   2));
       if (dist_room_room < 2.0 && room.sub_room == false) {
         room.sub_room = true;
       }
     }
 
-    geometry_msgs::msg::Point point;
-    point.x = room_snapshot[i].node->estimate()(0);
-    point.y = room_snapshot[i].node->estimate()(1);
-    point.z = 0.0;
-    room_marker.points.push_back(point);
+    // fill the pose marker
+    visualization_msgs::msg::Marker room_marker;
+    room_marker.scale.x = 0.5;
+    room_marker.scale.y = 0.5;
+    room_marker.scale.z = 0.5;
+    // plane_marker.points.resize(vert_planes.size());
+    room_marker.header.frame_id = rooms_layer_id;
+    room_marker.header.stamp = stamp;
+    room_marker.ns = "rooms";
+    room_marker.id = markers.markers.size();
+    room_marker.type = visualization_msgs::msg::Marker::CUBE;
+    room_marker.color.r = 1;
+    room_marker.color.g = 0.07;
+    room_marker.color.b = 0.57;
+    room_marker.color.a = 1;
+
+    room_marker.pose.position.x = room_snapshot[i].node->estimate().translation()(0);
+    room_marker.pose.position.y = room_snapshot[i].node->estimate().translation()(1);
+    room_marker.pose.position.z = room_snapshot[i].node->estimate().translation()(2);
+    Eigen::Quaterniond quat(room_snapshot[i].node->estimate().linear());
+    room_marker.pose.orientation.x = quat.x();
+    room_marker.pose.orientation.y = quat.y();
+    room_marker.pose.orientation.z = quat.z();
+    room_marker.pose.orientation.w = quat.w();
+    room_marker.lifetime = duration_room;
+    markers.markers.push_back(room_marker);
 
     // fill in the line marker
     visualization_msgs::msg::Marker room_line_marker;
     room_line_marker.scale.x = 0.02;
     room_line_marker.pose.orientation.w = 1.0;
-    room_line_marker.ns = "rooms_lines";
+    room_line_marker.ns = "rooms_line";
     room_line_marker.header.frame_id = rooms_layer_id;
     room_line_marker.header.stamp = stamp;
     room_line_marker.id = markers.markers.size() + 1;
@@ -890,9 +914,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_line_marker.color.a = 1.0;
     room_line_marker.lifetime = duration_room;
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
-    p1.x = room_snapshot[i].node->estimate()(0);
-    p1.y = room_snapshot[i].node->estimate()(1);
-    p1.z = 0.0;
+    p1.x = room_snapshot[i].node->estimate().translation()(0);
+    p1.y = room_snapshot[i].node->estimate().translation()(1);
+    p1.z = room_snapshot[i].node->estimate().translation()(2);
 
     auto found_planex1 = std::find_if(
         x_plane_snapshot.begin(),
@@ -1055,7 +1079,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       markers.markers.push_back(cluster);
     }
   }
-  markers.markers.push_back(room_marker);
 
   rclcpp::Duration duration_floor = rclcpp::Duration::from_seconds(5);
   for (const auto& floor : floors_vec) {
@@ -1077,9 +1100,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_marker.color.a = 1;
       floor_marker.lifetime = duration_floor;
 
-      floor_marker.pose.position.x = floor.node->estimate()(0);
-      floor_marker.pose.position.y = floor.node->estimate()(1);
-      floor_marker.pose.position.z = 0.0;
+      floor_marker.pose.position.x = floor.node->estimate().translation()(0);
+      floor_marker.pose.position.y = floor.node->estimate().translation()(1);
+      floor_marker.pose.position.z = floor.node->estimate().translation()(2);
 
       // create line markers between floor and rooms/infinite_rooms
       visualization_msgs::msg::Marker floor_line_marker;
@@ -1101,10 +1124,10 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = 0.0;
-        p2.x = room.node->estimate()(0);
-        p2.y = room.node->estimate()(1);
-        p2.z = 0.0;
+        p1.z = floor_marker.pose.position.z;
+        p2.x = room.node->estimate().translation()(0);
+        p2.y = room.node->estimate().translation()(1);
+        p2.z = room.node->estimate().translation()(2);
 
         geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
         point2_stamped.header.frame_id = rooms_layer_id;
@@ -1127,10 +1150,10 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = 0.0;
-        p2.x = x_infinite_room.node->estimate()(0);
-        p2.y = x_infinite_room.node->estimate()(1);
-        p2.z = 0.0;
+        p1.z = floor_marker.pose.position.z;
+        p2.x = x_infinite_room.node->estimate().translation()(0);
+        p2.y = x_infinite_room.node->estimate().translation()(1);
+        p2.z = x_infinite_room.node->estimate().translation()(2);
 
         geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
         point2_stamped.header.frame_id = rooms_layer_id;
@@ -1153,10 +1176,10 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = 0.0;
-        p2.x = y_infinite_room.node->estimate()(0);
-        p2.y = y_infinite_room.node->estimate()(1);
-        p2.z = 0.0;
+        p1.z = floor_marker.pose.position.z;
+        p2.x = y_infinite_room.node->estimate().translation()(0);
+        p2.y = y_infinite_room.node->estimate().translation()(1);
+        p2.z = y_infinite_room.node->estimate().translation()(2);
 
         geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
         point2_stamped.header.frame_id = rooms_layer_id;

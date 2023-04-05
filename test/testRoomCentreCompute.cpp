@@ -207,8 +207,8 @@ TEST_F(TestRoom, TestRoomCentre) {
     ASSERT_TRUE(false);
   }
   auto centre_est = centre.value();
-  ASSERT_DOUBLE_EQ(centre_gt.x(), centre_est.translation().x());
-  ASSERT_DOUBLE_EQ(centre_gt.y(), centre_est.translation().y());
+  ASSERT_DOUBLE_EQ(centre_gt.translation()(0), centre_est.translation()(0));
+  ASSERT_DOUBLE_EQ(centre_gt.translation()(1), centre_est.translation()(1));
   // testFunction();
 }
 

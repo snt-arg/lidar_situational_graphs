@@ -219,7 +219,7 @@ class FloorPlanNode : public rclcpp::Node {
     floor_analyzer->perform_floor_segmentation(
         current_x_vert_planes, current_y_vert_planes, floor_plane_candidates_vec);
 
-    geometry_msgs::msg::Point floor_center;
+    geometry_msgs::msg::Pose floor_center;
     if (floor_plane_candidates_vec.size() == 4) {
       floor_center = plane_utils->room_center(floor_plane_candidates_vec[0],
                                               floor_plane_candidates_vec[1],
