@@ -35,7 +35,7 @@
 #include <s_graphs/plane_mapper.hpp>
 #include <s_graphs/neighbour_mapper.hpp>
 #include <s_graphs/plane_analyzer.hpp>
-
+#include <s_graphs/door_ways.hpp>
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/types/slam3d/edge_se3.h>
@@ -82,11 +82,13 @@ public:
    * @return A MarkerArray message.
    */
   visualization_msgs::MarkerArray create_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, const std::vector<VerticalPlanes>& x_plane_snapshot, const std::vector<VerticalPlanes>& y_plane_snapshot, const std::vector<HorizontalPlanes>& hort_plane_snapshot, std::vector<InfiniteRooms> x_infinite_room_snapshot, std::vector<InfiniteRooms> y_infinite_room_snapshot, std::vector<Rooms> room_snapshot, double loop_detector_radius, std::vector<KeyFrame::Ptr> keyframes, std::vector<Floors> floors_vec);
+  visualization_msgs::MarkerArray create_prior_marker_array(const ros::Time& stamp, const g2o::SparseOptimizer* local_graph, std::vector<VerticalPlanes> x_vert_planes_prior, std::vector<VerticalPlanes> y_vert_planes_prior, std::vector<Rooms> rooms_vec_prior, std::vector<Rooms> rooms_vec, bool got_trans_prior2map_, std::vector<DoorWays> doorways_vec_prior);
 
 private:
   ros::NodeHandle nh;
   std::string map_frame_id;
   double color_r, color_g, color_b;
+  bool prior_published = false;
 };
 
 }  // namespace s_graphs

@@ -37,6 +37,7 @@ public:
   g2o::VertexRoomXYLB* node;  // node instance
   int prior_id;
   bool sub_room;
+  std::string type;
 };
 
 }  // namespace s_graphs

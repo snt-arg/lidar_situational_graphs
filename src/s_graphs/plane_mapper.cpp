@@ -137,6 +137,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam, const int
         keyframe->x_plane_ids.push_back(vert_plane.id);
 
         ROS_DEBUG_NAMED("xplane association", "Added new x vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
+        std::cout << "new x plane :  " << vert_plane.plane_node->id() << "   " << vert_plane.plane_node->estimate().coeffs()(0) << "  " << vert_plane.plane_node->estimate().coeffs()(1) << "  " << vert_plane.plane_node->estimate().coeffs()(2) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
       } else {
         plane_node = x_vert_planes[data_association.second].plane_node;
         x_vert_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
@@ -174,6 +176,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam, const int
         y_vert_planes.push_back(vert_plane);
         keyframe->y_plane_ids.push_back(vert_plane.id);
         ROS_DEBUG_NAMED("yplane association", "Added new y vertical plane node with coeffs %f %f %f %f", det_plane_map_frame.coeffs()(0), det_plane_map_frame.coeffs()(1), det_plane_map_frame.coeffs()(2), det_plane_map_frame.coeffs()(3));
+        std::cout << "new y plane :  " << vert_plane.plane_node->id() << "   " << vert_plane.plane_node->estimate().coeffs()(0) << "  " << vert_plane.plane_node->estimate().coeffs()(1) << "  " << vert_plane.plane_node->estimate().coeffs()(2) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
       } else {
         plane_node = y_vert_planes[data_association.second].plane_node;
         y_vert_planes[data_association.second].cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);

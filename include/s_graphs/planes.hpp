@@ -45,7 +45,10 @@ public:
   std::vector<g2o::VertexSE3*> keyframe_node_vec;                     // vector keyframe node instance
   g2o::VertexPlane* plane_node;                                       // node instance
   std::vector<double> color;
-  int revit_id;
+  int revit_id;                 // I.D in case of prior knowledge
+  double length;                // length of Plane
+  Eigen::Vector2d start_point;  // starting point of prior planes
+  std::string type;
 };
 
 /**

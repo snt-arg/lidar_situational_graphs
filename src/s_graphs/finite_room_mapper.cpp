@@ -337,13 +337,13 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = x_plane1;
     } else if((x_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane1).plane, x_plane1.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane1).plane_node->estimate(), x_plane1.plane_node->estimate());
       if(maha_dist < 0.5) x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
 
     } else {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane2).plane, x_plane1.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane2).plane_node->estimate(), x_plane1.plane_node->estimate());
       if(maha_dist < 0.5) x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
@@ -355,13 +355,13 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = x_plane2;
     } else if((x_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane1).plane, x_plane2.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane1).plane_node->estimate(), x_plane2.plane_node->estimate());
       if(maha_dist < 0.5) x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
 
     } else {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane2).plane, x_plane2.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_xplane2).plane_node->estimate(), x_plane2.plane_node->estimate());
       if(maha_dist < 0.5) x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
@@ -378,13 +378,13 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = y_plane1;
     } else if((y_plane1).plane_node->estimate().coeffs().head(3).dot((*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane1).plane, y_plane1.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane1).plane_node->estimate(), y_plane1.plane_node->estimate());
       if(maha_dist < 0.5) y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
 
     } else {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane2).plane, y_plane1.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane2).plane_node->estimate(), y_plane1.plane_node->estimate());
       if(maha_dist < 0.5) y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
@@ -396,13 +396,13 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(const Eigen::Vector2d& roo
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = y_plane2;
     } else if((y_plane2).plane_node->estimate().coeffs().head(3).dot((*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) > 0) {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane1).plane, y_plane2.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane1).plane_node->estimate(), y_plane2.plane_node->estimate());
       if(maha_dist < 0.5) y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
 
     } else {
-      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane2).plane, y_plane2.plane);
+      double maha_dist = plane_utils->plane_difference((*found_mapped_yplane2).plane_node->estimate(), y_plane2.plane_node->estimate());
       if(maha_dist < 0.5) y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = (*found_mapped_yplane2);

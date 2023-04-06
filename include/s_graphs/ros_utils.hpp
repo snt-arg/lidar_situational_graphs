@@ -122,6 +122,30 @@ static geometry_msgs::Pose isometry2pose(const Eigen::Isometry3d& mat) {
  * @param
  * @return
  */
+static geometry_msgs::PoseStamped isometry2pose_stamped(const Eigen::Isometry3d& mat) {
+  geometry_msgs::PoseStamped pose_stamped;
+  pose_stamped.pose.position.x = mat.translation().x();
+  pose_stamped.pose.position.y = mat.translation().y();
+  pose_stamped.pose.position.z = mat.translation().z();
+  Eigen::Quaterniond quat(mat.linear());
+  tf2::Quaternion tf_quat;
+  tf_quat.setX(quat.x());
+  tf_quat.setY(quat.y());
+  tf_quat.setZ(quat.z());
+  tf_quat.setW(quat.w());
+  pose_stamped.pose.orientation.x = tf_quat.getX();
+  pose_stamped.pose.orientation.y = tf_quat.getY();
+  pose_stamped.pose.orientation.z = tf_quat.getZ();
+  pose_stamped.pose.orientation.w = tf_quat.getW();
+  return pose_stamped;
+}
+
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
 static Eigen::Isometry3d odom2isometry(const nav_msgs::OdometryConstPtr& odom_msg) {
   const auto& orientation = odom_msg->pose.pose.orientation;
   const auto& position = odom_msg->pose.pose.position;
