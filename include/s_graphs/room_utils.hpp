@@ -39,28 +39,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_types.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <boost/format.hpp>
 #include <cmath>
-#include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_plane.hpp>
 #include <g2o/edge_room.hpp>
-#include <g2o/edge_se3_plane.hpp>
-#include <g2o/edge_se3_point_to_plane.hpp>
-#include <g2o/edge_se3_priorquat.hpp>
-#include <g2o/edge_se3_priorvec.hpp>
-#include <g2o/edge_se3_priorxy.hpp>
-#include <g2o/edge_se3_priorxyz.hpp>
-#include <g2o/edge_wall_two_planes.hpp>
-#include <g2o/vertex_infinite_room.hpp>
-#include <g2o/vertex_room.hpp>
-#include <g2o/vertex_wall.hpp>
-#include <iostream>
 #include <s_graphs/floor_mapper.hpp>
 #include <s_graphs/floors.hpp>
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/graph_visualizer.hpp>
 #include <s_graphs/infinite_rooms.hpp>
-#include <s_graphs/information_matrix_calculator.hpp>
 #include <s_graphs/keyframe.hpp>
 #include <s_graphs/keyframe_mapper.hpp>
 #include <s_graphs/keyframe_updater.hpp>
@@ -145,7 +131,8 @@ typename pcl::PointCloud<PointT>::Ptr transform_pointcloud(
   cloud->width = cloud->size();
   cloud->height = 1;
   cloud->is_dense = false;
-  // std::cout << "cloud: " << cloud << " with size" << cloud->size() << std::endl;
+  // std::cout << "cloud: " << cloud << " with size" << cloud->size() <<
+  // std::endl;
   return cloud;
 }
 
@@ -157,7 +144,8 @@ pcl::PointCloud<s_graphs::PointT>::Ptr filter_room_pointcloud(
   pcl::PointCloud<s_graphs::PointT>::Ptr filtered(
       new pcl::PointCloud<s_graphs::PointT>());
 
-  // Easy filter, remove floor points -> Although this doesn't affect the descriptor
+  // Easy filter, remove floor points -> Although this doesn't affect the
+  // descriptor
   pcl::PassThrough<s_graphs::PointT> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");

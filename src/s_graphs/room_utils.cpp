@@ -1,12 +1,5 @@
 #include "s_graphs/room_utils.hpp"
 
-#include <algorithm>
-#include <iterator>
-#include <vector>
-
-#include "s_graphs/plane_analyzer.hpp"
-#include "s_graphs/rooms.hpp"
-
 /**
  * Obtain the vertical planes that form the boundaries of a given room.
  * @param room The room whose planes are to be obtained.

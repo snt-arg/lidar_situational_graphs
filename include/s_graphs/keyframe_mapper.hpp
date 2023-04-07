@@ -32,22 +32,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef KEYFRAME_MAPPER_HPP
 #define KEYFRAME_MAPPER_HPP
 
-#include <s_graphs/floor_mapper.hpp>
-#include <s_graphs/floors.hpp>
+#include <g2o/types/slam3d/edge_se3.h>
+
 #include <s_graphs/graph_slam.hpp>
-#include <s_graphs/infinite_rooms.hpp>
 #include <s_graphs/information_matrix_calculator.hpp>
 #include <s_graphs/keyframe.hpp>
 #include <s_graphs/keyframe_updater.hpp>
 #include <s_graphs/loop_detector.hpp>
 #include <s_graphs/map_cloud_generator.hpp>
-#include <s_graphs/nmea_sentence_parser.hpp>
-#include <s_graphs/plane_analyzer.hpp>
-#include <s_graphs/plane_mapper.hpp>
-#include <s_graphs/plane_utils.hpp>
-#include <s_graphs/planes.hpp>
-#include <s_graphs/room_mapper.hpp>
-#include <s_graphs/rooms.hpp>
 #include <s_graphs/ros_time_hash.hpp>
 
 #include "rclcpp/rclcpp.hpp"
@@ -83,15 +75,14 @@ class KeyframeMapper {
    * @param keyframe_hash
    * @return
    */
-  int map_keyframes(
-      std::shared_ptr<GraphSLAM>& graph_slam,
-      Eigen::Isometry3d odom2map,
-      std::deque<KeyFrame::Ptr>& keyframe_queue,
-      std::vector<KeyFrame::Ptr>& keyframes,
-      std::deque<KeyFrame::Ptr>& new_keyframes,
-      g2o::VertexSE3*& anchor_node,
-      g2o::EdgeSE3*& anchor_edge,
-      std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash>& keyframe_hash);
+  int map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
+                    Eigen::Isometry3d odom2map,
+                    std::deque<KeyFrame::Ptr>& keyframe_queue,
+                    std::vector<KeyFrame::Ptr>& keyframes,
+                    std::deque<KeyFrame::Ptr>& new_keyframes,
+                    g2o::VertexSE3*& anchor_node, g2o::EdgeSE3*& anchor_edge,
+                    std::unordered_map<rclcpp::Time, KeyFrame::Ptr,
+                                       RosTimeHash>& keyframe_hash);
 
  private:
   rclcpp::Node::SharedPtr node_obj;

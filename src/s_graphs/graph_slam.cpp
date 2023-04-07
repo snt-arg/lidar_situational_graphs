@@ -97,7 +97,7 @@ namespace s_graphs {
 /**
  * @brief constructor
  */
-GraphSLAM::GraphSLAM(const std::string& solver_type, bool save_time, bool verbose) {
+GraphSLAM::GraphSLAM(const std::string& solver_type, bool save_time) {
   graph.reset(new g2o::SparseOptimizer());
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
 

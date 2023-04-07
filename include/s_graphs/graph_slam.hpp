@@ -87,9 +87,7 @@ class GraphSLAM {
    *
    * @param solver_type Default value is lm_var
    */
-  GraphSLAM(const std::string& solver_type = "lm_var_cholmod",
-            bool save_time = false,
-            bool verbose = true);
+  GraphSLAM(const std::string& solver_type = "lm_var_cholmod", bool save_time = false);
   virtual ~GraphSLAM();
 
   /**

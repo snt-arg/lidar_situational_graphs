@@ -32,8 +32,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef PLANE_MAPPER_HPP
 #define PLANE_MAPPER_HPP
 
-#include <g2o/types/slam3d/edge_se3.h>
-#include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <math.h>
 #include <pcl/common/common.h>
@@ -43,24 +41,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <boost/format.hpp>
 #include <cmath>
-#include <g2o/edge_infinite_room_plane.hpp>
-#include <g2o/edge_plane.hpp>
-#include <g2o/edge_room.hpp>
-#include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_point_to_plane.hpp>
-#include <g2o/edge_se3_priorquat.hpp>
-#include <g2o/edge_se3_priorvec.hpp>
-#include <g2o/edge_se3_priorxy.hpp>
-#include <g2o/edge_se3_priorxyz.hpp>
-#include <g2o/vertex_infinite_room.hpp>
-#include <g2o/vertex_room.hpp>
-#include <iostream>
 #include <s_graphs/graph_slam.hpp>
-#include <s_graphs/infinite_rooms.hpp>
 #include <s_graphs/keyframe.hpp>
 #include <s_graphs/plane_utils.hpp>
 #include <s_graphs/planes.hpp>
-#include <s_graphs/rooms.hpp>
 #include <string>
 
 #include "geometry_msgs/msg/point.hpp"

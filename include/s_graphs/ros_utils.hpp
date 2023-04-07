@@ -58,10 +58,8 @@ namespace s_graphs {
  * @return converted TransformStamped
  */
 geometry_msgs::msg::TransformStamped matrix2transform(
-    const rclcpp::Time& stamp,
-    const Eigen::Matrix4f& pose,
-    const std::string& frame_id,
-    const std::string& child_frame_id);
+    const rclcpp::Time& stamp, const Eigen::Matrix4f& pose,
+    const std::string& frame_id, const std::string& child_frame_id);
 
 /**
  * @brief
@@ -86,7 +84,8 @@ Eigen::Isometry3d pose2isometry(const geometry_msgs::msg::Pose& pose);
  * @param
  * @return
  */
-Eigen::Isometry3d tf2isometry(const geometry_msgs::msg::TransformStamped& trans);
+Eigen::Isometry3d tf2isometry(
+    const geometry_msgs::msg::TransformStamped& trans);
 
 /**
  * @brief
@@ -102,7 +101,8 @@ geometry_msgs::msg::Pose isometry2pose(const Eigen::Isometry3d& mat);
  * @param
  * @return
  */
-Eigen::Isometry3d odom2isometry(const nav_msgs::msg::Odometry::SharedPtr& odom_msg);
+Eigen::Isometry3d odom2isometry(
+    const nav_msgs::msg::Odometry::SharedPtr& odom_msg);
 
 /**
  * @brief
