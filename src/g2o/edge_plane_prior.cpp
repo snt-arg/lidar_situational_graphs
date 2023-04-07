@@ -53,26 +53,62 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KKL_G2O_EDGE_SE3_PRIORQUAT_HPP
-#define KKL_G2O_EDGE_SE3_PRIORQUAT_HPP
+#include <g2o/core/base_unary_edge.h>
+#include <g2o/types/slam3d_addons/vertex_plane.h>
 
-#include <g2o/types/slam3d/types_slam3d.h>
-#include <g2o/types/slam3d_addons/types_slam3d_addons.h>
+#include <Eigen/Dense>
+#include <g2o/edge_plane_prior.hpp>
 
 namespace g2o {
-class EdgeSE3PriorQuat
-    : public g2o::BaseUnaryEdge<3, Eigen::Quaterniond, g2o::VertexSE3> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3PriorQuat() : g2o::BaseUnaryEdge<3, Eigen::Quaterniond, g2o::VertexSE3>() {}
+void EdgePlanePriorNormal::computeError() {
+  const g2o::VertexPlane* v1 = static_cast<const g2o::VertexPlane*>(_vertices[0]);
+  Eigen::Vector3d normal = v1->estimate().normal();
 
-  void computeError() override;
+  if (normal.dot(_measurement) < 0.0) {
+    normal = -normal;
+  }
 
-  void setMeasurement(const Eigen::Quaterniond& m) override;
+  _error = normal - _measurement;
+}
 
-  virtual bool read(std::istream& is) override;
-  virtual bool write(std::ostream& os) const override;
-};
+bool EdgePlanePriorNormal::read(std::istream& is) {
+  Eigen::Vector3d v;
+  is >> v(0) >> v(1) >> v(2);
+  setMeasurement(v);
+  for (int i = 0; i < information().rows(); ++i)
+    for (int j = i; j < information().cols(); ++j) {
+      is >> information()(i, j);
+      if (i != j) information()(j, i) = information()(i, j);
+    }
+  return true;
+}
+bool EdgePlanePriorNormal::write(std::ostream& os) const {
+  Eigen::Vector3d v = _measurement;
+  os << v(0) << " " << v(1) << " " << v(2) << " ";
+  for (int i = 0; i < information().rows(); ++i)
+    for (int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
+  return os.good();
+}
+
+void EdgePlanePriorDistance::computeError() {
+  const g2o::VertexPlane* v1 = static_cast<const g2o::VertexPlane*>(_vertices[0]);
+  _error[0] = _measurement - v1->estimate().distance();
+}
+
+bool EdgePlanePriorDistance::read(std::istream& is) {
+  is >> _measurement;
+  for (int i = 0; i < information().rows(); ++i)
+    for (int j = i; j < information().cols(); ++j) {
+      is >> information()(i, j);
+      if (i != j) information()(j, i) = information()(i, j);
+    }
+  return true;
+}
+bool EdgePlanePriorDistance::write(std::ostream& os) const {
+  os << _measurement;
+  for (int i = 0; i < information().rows(); ++i)
+    for (int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
+  return os.good();
+}
 }  // namespace g2o
 
-#endif

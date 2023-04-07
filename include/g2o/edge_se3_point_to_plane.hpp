@@ -68,45 +68,12 @@ class EdgeSE3PointToPlane
   EdgeSE3PointToPlane()
       : BaseBinaryEdge<1, Eigen::Matrix4d, g2o::VertexSE3, g2o::VertexPlane>() {}
 
-  void computeError() override {
-    const g2o::VertexSE3* v1 = static_cast<const g2o::VertexSE3*>(_vertices[0]);
-    const g2o::VertexPlane* v2 = static_cast<const g2o::VertexPlane*>(_vertices[1]);
-
-    Eigen::Matrix4d Ti = v1->estimate().matrix();
-    Eigen::Vector4d Pj = v2->estimate().toVector();
-    Eigen::Matrix4d Gij = _measurement;
-    _error = Pj.transpose() * Ti * Gij * Ti.transpose() * Pj / 2;
-  }
+  void computeError() override;
 
   void setMeasurement(const Eigen::Matrix4d& m) override { _measurement = m; }
 
-  virtual bool read(std::istream& is) override {
-    Eigen::Matrix4d v;
-    for (int i = 0; i < measurement().rows(); ++i)
-      for (int j = 0; j < measurement().cols(); ++j) {
-        is >> v(i, j);
-      }
-    setMeasurement(Eigen::Matrix4d(v));
-
-    for (int i = 0; i < information().rows(); ++i)
-      for (int j = i; j < information().cols(); ++j) {
-        is >> information()(i, j);
-        if (i != j) information()(j, i) = information()(i, j);
-      }
-    return true;
-  }
-  virtual bool write(std::ostream& os) const override {
-    Eigen::Matrix4d v = _measurement;
-
-    for (int i = 0; i < measurement().rows(); ++i)
-      for (int j = 0; j < measurement().cols(); ++j) {
-        os << " " << v(i, j);
-      }
-
-    for (int i = 0; i < information().rows(); ++i)
-      for (int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
-    return os.good();
-  }
+  virtual bool read(std::istream& is) override;
+  virtual bool write(std::ostream& os) const override;
 };
 }  // namespace g2o
 

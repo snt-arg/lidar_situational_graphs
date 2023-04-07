@@ -113,16 +113,37 @@ set(DEPENDENCIES
 
 
 
- SET(G2O_COMMON_LIBS 
-    ${PCL_LIBRARIES}
-    ${G2O_TYPES_DATA}
-    ${G2O_CORE_LIBRARY}
-    ${G2O_STUFF_LIBRARY}
-    ${G2O_SOLVER_PCG}
-    ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
-    ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
-    ${G2O_TYPES_SLAM3D}
-    ${G2O_TYPES_SLAM3D_ADDONS})
+SET(G2O_COMMON_LIBS 
+  ${PCL_LIBRARIES}
+  ${G2O_TYPES_DATA}
+  ${G2O_CORE_LIBRARY}
+  ${G2O_STUFF_LIBRARY}
+  ${G2O_SOLVER_PCG}
+  ${G2O_SOLVER_CSPARSE}   # be aware of that CSPARSE is released under LGPL
+  ${G2O_SOLVER_CHOLMOD}   # be aware of that cholmod is released under GPL
+  ${G2O_TYPES_SLAM3D}
+  ${G2O_TYPES_SLAM3D_ADDONS})
+
+
+add_library(g2o_sgraphs 
+  src/g2o/edge_infinite_room_plane.cpp
+  src/g2o/edge_plane.cpp
+  src/g2o/edge_plane_identity.cpp
+  src/g2o/edge_plane_prior.cpp
+  src/g2o/edge_room.cpp
+  src/g2o/edge_se3_plane.cpp
+  src/g2o/edge_se3_point_to_plane.cpp
+  src/g2o/edge_se3_priorquat.cpp
+  src/g2o/edge_se3_priorvec.cpp
+  src/g2o/edge_se3_priorxy.cpp
+  src/g2o/edge_se3_priorxyz.cpp
+  src/g2o/edge_wall_two_planes.cpp
+  src/g2o/robust_kernel_io.cpp
+  )
+target_link_libraries(g2o_sgraphs
+                    ${G2O_COMMON_LIBS}
+                    ${PCL_LIBRARIES}
+                    )
 
 add_library(s_graphs_core_lib   
     src/s_graphs/plane_analyzer.cpp
@@ -140,6 +161,7 @@ add_library(s_graphs_core_lib
     src/s_graphs/keyframe_mapper.cpp
 )
 target_link_libraries(s_graphs_core_lib 
+                      g2o_sgraphs
                       ${G2O_COMMON_LIBS}
                       ${PCL_LIBRARIES}
                       )
@@ -264,7 +286,7 @@ install(
 )
 
 install(
-  TARGETS s_graphs_core_lib room_segmentation_lib plane_segmentation_lib floor_segmentation_lib  
+  TARGETS s_graphs_core_lib room_segmentation_lib plane_segmentation_lib floor_segmentation_lib g2o_sgraphs
   EXPORT export_s_graph_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

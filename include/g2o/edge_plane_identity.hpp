@@ -76,50 +76,10 @@ class EdgePlaneIdentity
     _information.setIdentity();
     _error.setZero();
   }
-  void computeError() {
-    const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
-    const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
+  void computeError() override;
+  virtual bool read(std::istream& is) override;
 
-    Eigen::Vector4d p1 = v1->estimate().toVector();
-    Eigen::Vector4d p2 = v2->estimate().toVector();
-
-    if (p1.dot(p2) < 0.0) {
-      p2 = -p2;
-    }
-
-    _error = (p2 - p1) - _measurement;
-  }
-  virtual bool read(std::istream& is) override {
-    Eigen::Vector4d v;
-    for (int i = 0; i < 4; ++i) {
-      is >> v[i];
-    }
-
-    setMeasurement(v);
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        is >> information()(i, j);
-        if (i != j) {
-          information()(j, i) = information()(i, j);
-        }
-      }
-    }
-
-    return true;
-  }
-
-  virtual bool write(std::ostream& os) const override {
-    for (int i = 0; i < 4; ++i) {
-      os << _measurement[i] << " ";
-    }
-
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        os << " " << information()(i, j);
-      };
-    }
-    return os.good();
-  }
+  virtual bool write(std::ostream& os) const override;
 
   virtual void setMeasurement(const Eigen::Vector4d& m) override { _measurement = m; }
 

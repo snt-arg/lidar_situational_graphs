@@ -66,7 +66,7 @@ namespace g2o {
 
 class G2O_TYPES_SLAM3D_API VertexFloor : public VertexRoom {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   VertexFloor() {
     _numOplusCalls = 0;
     setToOriginImpl();
