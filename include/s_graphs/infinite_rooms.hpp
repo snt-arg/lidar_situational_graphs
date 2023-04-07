@@ -61,25 +61,24 @@ namespace s_graphs {
  * @var node
  * @var cluster_array
  */
-class InfiniteRooms {
+struct InfiniteRooms {
  public:
-  InfiniteRooms() {
-    plane1_node = plane2_node = nullptr;
-    node = nullptr;
-    // local_graph = std::make_shared<GraphSLAM>();
-  }
+  InfiniteRooms() {}
 
  public:
   int id;
-  g2o::Plane3D plane1, plane2;
-  int plane1_id, plane2_id;
+  g2o::Plane3D plane1;
+  g2o::Plane3D plane2;
+  int plane1_id;
+  int plane2_id;
   bool sub_infinite_room;
   visualization_msgs::msg::MarkerArray cluster_array;
 
-  g2o::VertexPlane *plane1_node, *plane2_node;
+  g2o::VertexPlane* plane1_node = nullptr;
+  g2o::VertexPlane* plane2_node = nullptr;
   g2o::VertexRoom* cluster_center_node;
-  g2o::VertexRoom* node;  // node instance in covisibility graph
-  // std::shared_ptr<GraphSLAM> local_graph;
+  g2o::VertexRoom* node = nullptr;  // node instance in covisibility graph
+  std::shared_ptr<GraphSLAM> local_graph;
 };
 
 }  // namespace s_graphs

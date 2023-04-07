@@ -56,24 +56,29 @@ namespace s_graphs {
  * @param sub_room
  * @param cluster_array
  */
-class Rooms {
+struct Rooms {
  public:
-  Rooms() {
-    plane_x1_node = plane_x2_node = plane_y1_node = plane_y2_node = nullptr;
-    node = nullptr;
-    // local_graph = std::make_shared<GraphSLAM>();
-  }
+  Rooms() {}
 
  public:
   int id;
-  g2o::Plane3D plane_x1, plane_x2, plane_y1, plane_y2;
-  int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
+  g2o::Plane3D plane_x1;
+  g2o::Plane3D plane_x2;
+  g2o::Plane3D plane_y1;
+  g2o::Plane3D plane_y2;
+  int plane_x1_id;
+  int plane_x2_id;
+  int plane_y1_id;
+  int plane_y2_id;
   bool sub_room;
   visualization_msgs::msg::MarkerArray cluster_array;
 
-  g2o::VertexPlane *plane_x1_node, *plane_x2_node, *plane_y1_node, *plane_y2_node;
-  g2o::VertexRoom* node;  // node instance in covisibility graph
-  // std::shared_ptr<GraphSLAM> local_graph;
+  g2o::VertexPlane *plane_x1_node = nullptr;
+  g2o::VertexPlane *plane_x2_node = nullptr;
+  g2o::VertexPlane *plane_y1_node = nullptr;
+  g2o::VertexPlane *plane_y2_node = nullptr;
+  g2o::VertexRoom *node = nullptr;  // node instance in covisibility graph
+  std::shared_ptr<GraphSLAM> local_graph;
 };
 
 }  // namespace s_graphs

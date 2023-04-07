@@ -371,11 +371,12 @@ void FiniteRoomMapper::factor_rooms(
     det_room.plane_y1_id = y_room_pair_vec[0].plane_id;
     det_room.plane_y2_id = y_room_pair_vec[1].plane_id;
     det_room.node = room_node;
-    // det_room.plane_x1_node = (*found_x_plane1).plane_node;
-    // det_room.plane_x2_node = (*found_x_plane2).plane_node;
-    // det_room.plane_y1_node = (*found_y_plane1).plane_node;
-    // det_room.plane_y2_node = (*found_y_plane2).plane_node;
+    det_room.plane_x1_node = (*found_x_plane1).plane_node;
+    det_room.plane_x2_node = (*found_x_plane2).plane_node;
+    det_room.plane_y1_node = (*found_y_plane1).plane_node;
+    det_room.plane_y2_node = (*found_y_plane2).plane_node;
     det_room.cluster_array = cluster_array;
+    det_room.local_graph = std::make_shared<GraphSLAM>();
     rooms_vec.push_back(det_room);
 
     auto edge_room_planes =
@@ -712,6 +713,7 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     det_room.plane_x2_node = matched_x_infinite_room.plane2_node;
     det_room.plane_y1_node = matched_y_infinite_room.plane1_node;
     det_room.plane_y2_node = matched_y_infinite_room.plane2_node;
+    det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
     for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
@@ -789,6 +791,7 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
           matched_x_infinite_room.cluster_array.markers[i]);
+    det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
     rooms_vec.push_back(det_room);
     return;
@@ -859,10 +862,11 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     det_room.plane_y1_node = matched_y_infinite_room.plane1_node;
     det_room.plane_y2_node = matched_y_infinite_room.plane2_node;
 
-    det_room.node = room_node;
     for (int i = 0; i < matched_y_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
           matched_y_infinite_room.cluster_array.markers[i]);
+    det_room.local_graph = std::make_shared<GraphSLAM>();
+    det_room.node = room_node;
     rooms_vec.push_back(det_room);
     return;
   } else

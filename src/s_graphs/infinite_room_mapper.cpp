@@ -323,6 +323,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.node = room_node;
       det_infinite_room.plane1_node = (*found_plane1).plane_node;
       det_infinite_room.plane2_node = (*found_plane2).plane_node;
+      det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
       x_infinite_rooms.push_back(det_infinite_room);
 
       auto edge_room_plane =
@@ -421,6 +422,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.node = room_node;
       det_infinite_room.plane1_node = (*found_plane1).plane_node;
       det_infinite_room.plane2_node = (*found_plane2).plane_node;
+      det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
       y_infinite_rooms.push_back(det_infinite_room);
 
       auto edge_room_plane =
