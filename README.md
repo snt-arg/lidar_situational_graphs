@@ -121,7 +121,7 @@ cd s_graphs && vcs import --recursive ../ < .rosinstall_ros2
 4. Install the required ROS2 packages
 
 ```bash
-cd ../../ && rosdep install --from-paths src -y --ignore-src
+cd ../../ && rosdep install --from-paths src -y --ignore-src -r
 ```
 
 5. Build workspace
@@ -129,11 +129,12 @@ cd ../../ && rosdep install --from-paths src -y --ignore-src
 ```bash
 colcon build --symlink-install
 ```
-> If you want to compile with debug traces (from backward_cpp ) run 
+
+> If you want to compile with debug traces (from backward_cpp ) run
+
 ```bash
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo 
 ```
-
 
 6. Source workspace
 

@@ -35,8 +35,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <stdio.h>
 
 #include <s_graphs/graph_slam.hpp>
+#include <s_graphs/keyframe_mapper.hpp>
 #include <s_graphs/room_utils.hpp>
 #include <s_graphs/rooms.hpp>
+#include <unordered_map>
 
 namespace s_graphs {
 
@@ -53,20 +55,22 @@ class LocalGraphGenerator {
                          const std::vector<KeyFrame::Ptr>& keyframes,
                          const std::vector<Rooms> rooms_vec);
 
-  std::vector<KeyFrame::Ptr> get_keyframes_inside_room(
+  std::deque<KeyFrame::Ptr> get_keyframes_inside_room(
       const Rooms& current_room,
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes,
-      const std::vector<KeyFrame::Ptr>& keyframes);
+      const std::deque<KeyFrame::Ptr>& new_keyframes);
 
   std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
       const Rooms& current_room,
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes);
 
-  void generate_local_graph(const std::vector<s_graphs::KeyFrame::Ptr>& room_keyframes,
-                            const Rooms& current_room,
-                            std::shared_ptr<GraphSLAM> local_graph);
+  void generate_local_graph(std::unique_ptr<KeyframeMapper>& keyframe_mapper,
+                            std::shared_ptr<GraphSLAM> covisibility_graph,
+                            std::deque<s_graphs::KeyFrame::Ptr> new_room_keyframes,
+                            const Eigen::Isometry3d& odom2map,
+                            Rooms& current_room);
 };
 }  // namespace s_graphs
 

@@ -694,6 +694,10 @@ class SGraphsNode : public rclcpp::Node {
                                            hort_planes);
       }
     }
+
+    // generate local graph per room
+    extract_keyframes_from_room(new_keyframes);
+
     std_msgs::msg::Header read_until;
     read_until.stamp = keyframe_queue[num_processed]->stamp + rclcpp::Duration(10, 0);
     read_until.frame_id = points_topic;
@@ -707,23 +711,27 @@ class SGraphsNode : public rclcpp::Node {
     return true;
   }
 
-  void extract_keyframes_from_room() {
+  void extract_keyframes_from_room(std::deque<KeyFrame::Ptr> new_keyframes) {
     // check if the current robot pose lies in a room
     Rooms current_room;
     for (const auto& room : rooms_vec)
-      current_room = local_graph_generator->get_current_room(
-          room, x_vert_planes, y_vert_planes, keyframes.back(), keyframes, rooms_vec);
+      current_room = local_graph_generator->get_current_room(room,
+                                                             x_vert_planes,
+                                                             y_vert_planes,
+                                                             new_keyframes.back(),
+                                                             keyframes,
+                                                             rooms_vec);
 
     // if current room is not empty then get the keyframes in the room
     if (current_room.node != nullptr) {
-      std::vector<s_graphs::KeyFrame::Ptr> room_keyframes =
+      Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
+      std::deque<s_graphs::KeyFrame::Ptr> room_keyframes =
           local_graph_generator->get_keyframes_inside_room(
-              current_room, x_vert_planes, y_vert_planes, keyframes);
+              current_room, x_vert_planes, y_vert_planes, new_keyframes);
+      // create the local graph for that room
+      local_graph_generator->generate_local_graph(
+          keyframe_mapper, covisibility_graph, room_keyframes, odom2map, current_room);
     }
-
-    // get the planes belonging to the rooms
-
-    // create the local graph for that room
   }
 
   void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {

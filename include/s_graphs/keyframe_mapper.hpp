@@ -75,14 +75,20 @@ class KeyframeMapper {
    * @param keyframe_hash
    * @return
    */
-  int map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
-                    Eigen::Isometry3d odom2map,
-                    std::deque<KeyFrame::Ptr>& keyframe_queue,
-                    std::vector<KeyFrame::Ptr>& keyframes,
-                    std::deque<KeyFrame::Ptr>& new_keyframes,
-                    g2o::VertexSE3*& anchor_node, g2o::EdgeSE3*& anchor_edge,
-                    std::unordered_map<rclcpp::Time, KeyFrame::Ptr,
-                                       RosTimeHash>& keyframe_hash);
+  int map_keyframes(
+      std::shared_ptr<GraphSLAM>& graph_slam,
+      Eigen::Isometry3d odom2map,
+      std::deque<KeyFrame::Ptr>& keyframe_queue,
+      std::vector<KeyFrame::Ptr>& keyframes,
+      std::deque<KeyFrame::Ptr>& new_keyframes,
+      g2o::VertexSE3*& anchor_node,
+      g2o::EdgeSE3*& anchor_edge,
+      std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash>& keyframe_hash);
+
+  void map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
+                     const Eigen::Isometry3d& odom2map,
+                     std::deque<KeyFrame::Ptr>& keyframe_queue,
+                     std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 
  private:
   rclcpp::Node::SharedPtr node_obj;

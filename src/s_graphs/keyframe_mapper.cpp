@@ -106,4 +106,34 @@ int KeyframeMapper::map_keyframes(
   return num_processed;
 }
 
+void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
+                                   const Eigen::Isometry3d& odom2map,
+                                   std::deque<KeyFrame::Ptr>& keyframe_queue,
+                                   std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+  int num_processed = 0;
+  for (int i = 0; i < std::min<int>(keyframe_queue.size(), max_keyframes_per_update);
+       i++) {
+    num_processed = i;
+    const auto& keyframe = keyframe_queue[i];
+
+    // add pose node
+    Eigen::Isometry3d odom = odom2map * keyframe->odom;
+    keyframe->node = graph_slam->add_se3_node(odom);
+
+    // add edge between consecutive keyframes
+    const auto& prev_keyframe = i == 0 ? keyframes.back() : keyframe_queue[i - 1];
+
+    Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
+
+    Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+        keyframe->cloud, prev_keyframe->cloud, relative_pose);
+
+    auto edge = graph_slam->add_se3_edge(
+        keyframe->node, prev_keyframe->node, relative_pose, information);
+    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+
+    keyframes.push_back(keyframe);
+  }
+}
+
 }  // namespace s_graphs

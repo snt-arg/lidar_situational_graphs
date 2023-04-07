@@ -35,6 +35,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_types.h>
 
 #include <Eigen/Eigen>
+#include <s_graphs/keyframe.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 namespace g2o {
@@ -78,6 +79,7 @@ struct Rooms {
   g2o::VertexPlane *plane_y1_node = nullptr;
   g2o::VertexPlane *plane_y2_node = nullptr;
   g2o::VertexRoom *node = nullptr;  // node instance in covisibility graph
+  std::vector<KeyFrame::Ptr> room_keyframes;
   std::shared_ptr<GraphSLAM> local_graph;
 };
 
