@@ -53,26 +53,63 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef KKL_G2O_EDGE_SE3_PRIORQUAT_HPP
-#define KKL_G2O_EDGE_SE3_PRIORQUAT_HPP
+#include <g2o/core/base_binary_edge.h>
+#include <g2o/types/slam3d_addons/vertex_plane.h>
 
-#include <g2o/types/slam3d/types_slam3d.h>
-#include <g2o/types/slam3d_addons/types_slam3d_addons.h>
+#include <Eigen/Dense>
+#include <g2o/edge_plane_identity.hpp>
 
 namespace g2o {
-class EdgeSE3PriorQuat
-    : public g2o::BaseUnaryEdge<3, Eigen::Quaterniond, g2o::VertexSE3> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3PriorQuat() : g2o::BaseUnaryEdge<3, Eigen::Quaterniond, g2o::VertexSE3>() {}
 
-  void computeError() override;
+/**
+ * @brief A modified version of g2o::EdgePlane. This class takes care of flipped plane
+ * normals.
+ *
+ */
+void EdgePlaneIdentity::computeError() {
+  const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
+  const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
 
-  void setMeasurement(const Eigen::Quaterniond& m) override;
+  Eigen::Vector4d p1 = v1->estimate().toVector();
+  Eigen::Vector4d p2 = v2->estimate().toVector();
 
-  virtual bool read(std::istream& is) override;
-  virtual bool write(std::ostream& os) const override;
-};
+  if (p1.dot(p2) < 0.0) {
+    p2 = -p2;
+  }
+
+  _error = (p2 - p1) - _measurement;
+}
+bool EdgePlaneIdentity::read(std::istream& is) {
+  Eigen::Vector4d v;
+  for (int i = 0; i < 4; ++i) {
+    is >> v[i];
+  }
+
+  setMeasurement(v);
+  for (int i = 0; i < information().rows(); ++i) {
+    for (int j = i; j < information().cols(); ++j) {
+      is >> information()(i, j);
+      if (i != j) {
+        information()(j, i) = information()(i, j);
+      }
+    }
+  }
+
+  return true;
+}
+
+bool EdgePlaneIdentity::write(std::ostream& os) const {
+  for (int i = 0; i < 4; ++i) {
+    os << _measurement[i] << " ";
+  }
+
+  for (int i = 0; i < information().rows(); ++i) {
+    for (int j = i; j < information().cols(); ++j) {
+      os << " " << information()(i, j);
+    };
+  }
+  return os.good();
+}
+
 }  // namespace g2o
 
-#endif

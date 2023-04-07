@@ -72,46 +72,10 @@ class EdgePlaneParallel
     _error.setZero();
   }
 
-  void computeError() override {
-    const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
-    const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
+  void computeError() override;
+  virtual bool read(std::istream& is) override;
 
-    double num = v1->estimate().normal().dot(v2->estimate().normal());
-    double den = v1->estimate().normal().norm() * (v2->estimate().normal().norm());
-
-    _error[0] = acos(fabs(num) / den);
-  }
-  virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    for (int i = 0; i < 3; ++i) {
-      is >> v[i];
-    }
-
-    setMeasurement(v);
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        is >> information()(i, j);
-        if (i != j) {
-          information()(j, i) = information()(i, j);
-        }
-      }
-    }
-
-    return true;
-  }
-
-  virtual bool write(std::ostream& os) const override {
-    for (int i = 0; i < 3; ++i) {
-      os << _measurement[i] << " ";
-    }
-
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        os << " " << information()(i, j);
-      };
-    }
-    return os.good();
-  }
+  virtual bool write(std::ostream& os) const override;
 
   virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
 
@@ -128,47 +92,11 @@ class EdgePlanePerpendicular
     _error.setZero();
   }
 
-  void computeError() override {
-    const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
-    const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
+  void computeError() override;
 
-    Eigen::Vector3d normal1 = v1->estimate().normal().normalized();
-    Eigen::Vector3d normal2 = v2->estimate().normal().normalized();
+  virtual bool read(std::istream& is) override;
 
-    _error[0] = normal1.dot(normal2);
-  }
-
-  virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    for (int i = 0; i < 3; ++i) {
-      is >> v[i];
-    }
-
-    setMeasurement(v);
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        is >> information()(i, j);
-        if (i != j) {
-          information()(j, i) = information()(i, j);
-        }
-      }
-    }
-
-    return true;
-  }
-
-  virtual bool write(std::ostream& os) const override {
-    for (int i = 0; i < 3; ++i) {
-      os << _measurement[i] << " ";
-    }
-
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        os << " " << information()(i, j);
-      };
-    }
-    return os.good();
-  }
+  virtual bool write(std::ostream& os) const override;
 
   virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
 
@@ -185,46 +113,11 @@ class Edge2Planes
     _error.setZero();
   }
 
-  void computeError() override {
-    const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
-    const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-    g2o::Plane3D plane1 = v1->estimate();
-    g2o::Plane3D plane2 = v2->estimate();
+  void computeError() override;
 
-    _error = plane1.ominus(plane2);
-  }
+  virtual bool read(std::istream& is) override;
 
-  virtual bool read(std::istream& is) override {
-    Eigen::Vector3d v;
-    for (int i = 0; i < 3; ++i) {
-      is >> v[i];
-    }
-
-    setMeasurement(v);
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        is >> information()(i, j);
-        if (i != j) {
-          information()(j, i) = information()(i, j);
-        }
-      }
-    }
-
-    return true;
-  }
-
-  virtual bool write(std::ostream& os) const override {
-    for (int i = 0; i < 3; ++i) {
-      os << _measurement[i] << " ";
-    }
-
-    for (int i = 0; i < information().rows(); ++i) {
-      for (int j = i; j < information().cols(); ++j) {
-        os << " " << information()(i, j);
-      };
-    }
-    return os.good();
-  }
+  virtual bool write(std::ostream& os) const override;
 };
 
 }  // namespace g2o
