@@ -199,10 +199,6 @@ class SGraphsNode : public rclcpp::Node {
         "room_segmentation/room_data",
         1,
         std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1));
-    all_room_data_sub = this->create_subscription<s_graphs::msg::RoomsData>(
-        "floor_plan/all_rooms_data",
-        1,
-        std::bind(&SGraphsNode::all_room_data_callback, this, std::placeholders::_1));
     floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
         "floor_plan/floor_data",
         1,
@@ -556,35 +552,6 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief get the entire room data from floor plan module to detect neighbours
-   *
-   */
-  void all_room_data_callback(const s_graphs::msg::RoomsData::SharedPtr rooms_msg) {
-    std::lock_guard<std::mutex> lock(all_room_data_queue_mutex);
-    all_room_data_queue.push_back(*rooms_msg);
-  }
-
-  void flush_all_room_data_queue() {
-    std::lock_guard<std::mutex> lock(all_room_data_queue_mutex);
-
-    if (keyframes.empty()) {
-      return;
-    } else if (all_room_data_queue.empty()) {
-      std::cout << "all room data queue is empty" << std::endl;
-      return;
-    }
-
-    for (const auto& room_data_msg : all_room_data_queue) {
-      // neighbour_mapper->detect_room_neighbours(covisibility_graph, room_data_msg,
-      // x_infinite_rooms, y_infinite_rooms, rooms_vec);
-      // neighbour_mapper->factor_room_neighbours(covisibility_graph, room_data_msg,
-      // x_infinite_rooms, y_infinite_rooms, rooms_vec);
-
-      all_room_data_queue.pop_front();
-    }
-  }
-
-  /**
    * @brief received point clouds are pushed to #keyframe_queue
    * @param odom_msg
    * @param cloud_msg
@@ -681,24 +648,24 @@ class SGraphsNode : public rclcpp::Node {
 
   void extract_keyframes_from_room(std::deque<KeyFrame::Ptr> new_keyframes) {
     // check if the current robot pose lies in a room
-    Rooms current_room;
-    for (const auto& room : rooms_vec)
-      current_room = local_graph_generator->get_current_room(room,
-                                                             x_vert_planes,
-                                                             y_vert_planes,
-                                                             new_keyframes.back(),
-                                                             keyframes,
-                                                             rooms_vec);
+    if (rooms_vec.empty()) return;
 
+    std::cout << "extracting the current room " << std::endl;
+    Rooms current_room;
+    current_room = local_graph_generator->get_current_room(
+        x_vert_planes, y_vert_planes, keyframes.back(), rooms_vec);
+
+    std::cout << "extracting room keyframes " << std::endl;
     // if current room is not empty then get the keyframes in the room
     if (current_room.node != nullptr) {
       Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
-      std::deque<s_graphs::KeyFrame::Ptr> room_keyframes =
+      std::vector<s_graphs::KeyFrame::Ptr> room_keyframes =
           local_graph_generator->get_keyframes_inside_room(
-              current_room, x_vert_planes, y_vert_planes, new_keyframes);
+              current_room, x_vert_planes, y_vert_planes, keyframes);
       // create the local graph for that room
-      local_graph_generator->generate_local_graph(
-          keyframe_mapper, covisibility_graph, room_keyframes, odom2map, current_room);
+      // local_graph_generator->generate_local_graph(
+      //     keyframe_mapper, covisibility_graph, room_keyframes, odom2map,
+      //     current_room);
     }
   }
 
@@ -922,9 +889,6 @@ class SGraphsNode : public rclcpp::Node {
     // flush the floor poses from the floor planner and no need to return if no floors
     // found
     flush_floor_data_queue();
-
-    // flush all the rooms queue to map neighbours
-    // flush_all_room_data_queue();
 
     // loop detection
     std::vector<Loop::Ptr> loops =
@@ -1420,7 +1384,6 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr raw_odom_sub;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
   rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
-  rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr all_room_data_sub;
   rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub;
 
@@ -1516,10 +1479,6 @@ class SGraphsNode : public rclcpp::Node {
   // room data queue
   std::mutex room_data_queue_mutex;
   std::deque<s_graphs::msg::RoomsData> room_data_queue;
-
-  // all room data queue
-  std::mutex all_room_data_queue_mutex;
-  std::deque<s_graphs::msg::RoomsData> all_room_data_queue;
 
   std::mutex floor_data_mutex;
   std::deque<s_graphs::msg::RoomData> floor_data_queue;
