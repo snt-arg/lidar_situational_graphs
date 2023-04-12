@@ -261,7 +261,7 @@ class SGraphsNode : public rclcpp::Node {
                   std::placeholders::_2));
 
     graph_updated = false;
-    prev_edge_count, curr_edge_count = 0;
+    prev_edge_count = curr_edge_count = 0;
 
     double graph_update_interval = this->get_parameter("graph_update_interval")
                                        .get_parameter_value()
@@ -290,7 +290,6 @@ class SGraphsNode : public rclcpp::Node {
 
     anchor_node = nullptr;
     anchor_edge = nullptr;
-    floor_plane_node = nullptr;
     // one time timer to initialize the classes with the current node obj
     main_timer = this->create_wall_timer(std::chrono::seconds(1),
                                          std::bind(&SGraphsNode::init_subclass, this));
@@ -615,6 +614,7 @@ class SGraphsNode : public rclcpp::Node {
                                                        anchor_edge,
                                                        keyframe_hash);
 
+    std::cout << "mapping keyframes " << std::endl;
     // perform planar segmentation
     for (int i = 0; i < new_keyframes.size(); i++) {
       // perform planar segmentation
@@ -631,7 +631,7 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     // generate local graph per room
-    extract_keyframes_from_room(new_keyframes);
+    // extract_keyframes_from_room(new_keyframes);
 
     std_msgs::msg::Header read_until;
     read_until.stamp = keyframe_queue[num_processed]->stamp + rclcpp::Duration(10, 0);
@@ -794,7 +794,6 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     std::vector<KeyFrameSnapshot::Ptr> snapshot;
-
     keyframes_snapshot_mutex.lock();
     snapshot = keyframes_snapshot;
     keyframes_snapshot_mutex.unlock();
@@ -959,7 +958,10 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     curr_edge_count = local_graph->retrive_total_nbr_of_edges();
-    if (curr_edge_count <= prev_edge_count) return;
+
+    if (curr_edge_count <= prev_edge_count) {
+      return;
+    }
 
     keyframes_mutex.lock();
     const auto& keyframe = keyframes.back();
@@ -971,8 +973,7 @@ class SGraphsNode : public rclcpp::Node {
                              .get<int>();
 
     try {
-      if ((local_graph->optimize(num_iterations)) > 0 && !constant_covariance)
-        compute_plane_cov();
+      local_graph->optimize(num_iterations);
     } catch (std::invalid_argument& e) {
       std::cout << e.what() << std::endl;
       throw 1;
@@ -1179,92 +1180,6 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief compute the plane covariances
-   */
-  void compute_plane_cov() {
-    g2o::SparseBlockMatrix<Eigen::MatrixXd> plane_spinv_vec;
-    std::vector<std::pair<int, int>> plane_pairs_vec;
-    for (int i = 0; i < x_vert_planes.size(); ++i) {
-      x_vert_planes[i].plane_node->unlockQuadraticForm();
-      plane_pairs_vec.push_back(
-          std::make_pair(x_vert_planes[i].plane_node->hessianIndex(),
-                         x_vert_planes[i].plane_node->hessianIndex()));
-    }
-    for (int i = 0; i < y_vert_planes.size(); ++i) {
-      y_vert_planes[i].plane_node->unlockQuadraticForm();
-      plane_pairs_vec.push_back(
-          std::make_pair(y_vert_planes[i].plane_node->hessianIndex(),
-                         y_vert_planes[i].plane_node->hessianIndex()));
-    }
-    for (int i = 0; i < hort_planes.size(); ++i) {
-      hort_planes[i].plane_node->unlockQuadraticForm();
-      plane_pairs_vec.push_back(
-          std::make_pair(hort_planes[i].plane_node->hessianIndex(),
-                         hort_planes[i].plane_node->hessianIndex()));
-    }
-
-    if (!plane_pairs_vec.empty()) {
-      if (covisibility_graph->compute_landmark_marginals(plane_spinv_vec,
-                                                         plane_pairs_vec)) {
-        int i = 0;
-        while (i < x_vert_planes.size()) {
-          // std::cout << "covariance of x plane " << i << " " <<
-          // y_vert_planes[i].covariance << std::endl;
-          x_vert_planes[i].covariance =
-              plane_spinv_vec
-                  .block(x_vert_planes[i].plane_node->hessianIndex(),
-                         x_vert_planes[i].plane_node->hessianIndex())
-                  ->eval()
-                  .cast<double>();
-          Eigen::LLT<Eigen::MatrixXd> lltOfCov(x_vert_planes[i].covariance);
-          if (lltOfCov.info() == Eigen::NumericalIssue) {
-            // std::cout << "covariance of x plane not PSD" << i << " " <<
-            // x_vert_planes[i].covariance << std::endl;
-            x_vert_planes[i].covariance = Eigen::Matrix3d::Identity();
-          }
-          i++;
-        }
-        i = 0;
-        while (i < y_vert_planes.size()) {
-          y_vert_planes[i].covariance =
-              plane_spinv_vec
-                  .block(y_vert_planes[i].plane_node->hessianIndex(),
-                         y_vert_planes[i].plane_node->hessianIndex())
-                  ->eval()
-                  .cast<double>();
-          // std::cout << "covariance of y plane " << i << " " <<
-          // y_vert_planes[i].covariance << std::endl;
-          Eigen::LLT<Eigen::MatrixXd> lltOfCov(y_vert_planes[i].covariance);
-          if (lltOfCov.info() == Eigen::NumericalIssue) {
-            // std::cout << "covariance of y plane not PSD " << i << " " <<
-            // y_vert_planes[i].covariance << std::endl;
-            y_vert_planes[i].covariance = Eigen::Matrix3d::Identity();
-          }
-          i++;
-        }
-        i = 0;
-        while (i < hort_planes.size()) {
-          hort_planes[i].covariance =
-              plane_spinv_vec
-                  .block(hort_planes[i].plane_node->hessianIndex(),
-                         hort_planes[i].plane_node->hessianIndex())
-                  ->eval()
-                  .cast<double>();
-          // std::cout << "covariance of y plane " << i << " " <<
-          // hort_planes[i].covariance << std::endl;
-          Eigen::LLT<Eigen::MatrixXd> lltOfCov(hort_planes[i].covariance);
-          if (lltOfCov.info() == Eigen::NumericalIssue) {
-            // std::cout << "covariance of y plane not PSD " << i << " " <<
-            // hort_planes[i].covariance << std::endl;
-            hort_planes[i].covariance = Eigen::Matrix3d::Identity();
-          }
-          i++;
-        }
-      }
-    }
-  }
-
-  /**
    * @brief dump all data to the current directory
    * @param req
    * @param res
@@ -1310,8 +1225,6 @@ class SGraphsNode : public rclcpp::Node {
     ofs << "anchor_node " << (anchor_node == nullptr ? -1 : anchor_node->id())
         << std::endl;
     ofs << "anchor_edge " << (anchor_edge == nullptr ? -1 : anchor_edge->id())
-        << std::endl;
-    ofs << "floor_node " << (floor_plane_node == nullptr ? -1 : floor_plane_node->id())
         << std::endl;
 
     res->success = true;
@@ -1500,7 +1413,6 @@ class SGraphsNode : public rclcpp::Node {
 
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;
-  g2o::VertexPlane* floor_plane_node;
   std::vector<KeyFrame::Ptr> keyframes;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
 
