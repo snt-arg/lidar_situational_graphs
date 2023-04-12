@@ -36,32 +36,30 @@ LocalGraphGenerator::LocalGraphGenerator() {}
 LocalGraphGenerator::~LocalGraphGenerator() {}
 
 Rooms LocalGraphGenerator::get_current_room(
-    const Rooms& room,
     const std::vector<VerticalPlanes>& x_vert_planes,
     const std::vector<VerticalPlanes>& y_vert_planes,
     const KeyFrame::Ptr keyframe,
-    const std::vector<KeyFrame::Ptr>& keyframes,
-    const std::vector<Rooms> rooms_vec) {
+    const std::vector<Rooms>& rooms_vec) {
   Rooms current_room;
   for (const auto& room : rooms_vec) {
-    if (is_keyframe_inside_room(room, x_vert_planes, y_vert_planes, keyframes.back())) {
+    if (is_keyframe_inside_room(room, x_vert_planes, y_vert_planes, keyframe)) {
       current_room = room;
       std::cout << "robot is currently in room with pose "
                 << room.node->estimate().translation() << std::endl;
-      return current_room;
     }
   }
+  return current_room;
 }
 
-std::deque<KeyFrame::Ptr> LocalGraphGenerator::get_keyframes_inside_room(
+std::vector<KeyFrame::Ptr> LocalGraphGenerator::get_keyframes_inside_room(
     const Rooms& current_room,
     const std::vector<VerticalPlanes>& x_vert_planes,
     const std::vector<VerticalPlanes>& y_vert_planes,
-    const std::deque<KeyFrame::Ptr>& new_keyframes) {
-  std::deque<s_graphs::KeyFrame::Ptr> room_keyframes;
+    const std::vector<KeyFrame::Ptr>& keyframes) {
+  std::vector<s_graphs::KeyFrame::Ptr> room_keyframes;
   if (current_room.node != nullptr) {
     room_keyframes =
-        get_room_keyframes(current_room, x_vert_planes, y_vert_planes, new_keyframes);
+        get_room_keyframes(current_room, x_vert_planes, y_vert_planes, keyframes);
     std::cout << "Room has keyframes with size: " << room_keyframes.size() << std::endl;
   }
   return room_keyframes;
@@ -78,10 +76,14 @@ std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
 void LocalGraphGenerator::generate_local_graph(
     std::unique_ptr<KeyframeMapper>& keyframe_mapper,
     std::shared_ptr<GraphSLAM> covisibility_graph,
-    std::deque<KeyFrame::Ptr> new_room_keyframes,
+    std::vector<KeyFrame::Ptr> filtered_keyframes,
     const Eigen::Isometry3d& odom2map,
     Rooms& current_room) {
-  // add the new keyframes to the local graph
+  // check which keyframes already exist in the local graph and add only new ones
+  for (const auto& filtered_keyframe : filtered_keyframes) {
+  }
+
+  std::deque<KeyFrame::Ptr> new_room_keyframes;
   keyframe_mapper->map_keyframes(current_room.local_graph,
                                  odom2map,
                                  new_room_keyframes,

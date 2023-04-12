@@ -48,18 +48,16 @@ class LocalGraphGenerator {
   ~LocalGraphGenerator();
 
  public:
-  Rooms get_current_room(const Rooms& room,
-                         const std::vector<VerticalPlanes>& x_vert_planes,
+  Rooms get_current_room(const std::vector<VerticalPlanes>& x_vert_planes,
                          const std::vector<VerticalPlanes>& y_vert_planes,
                          const KeyFrame::Ptr keyframe,
-                         const std::vector<KeyFrame::Ptr>& keyframes,
-                         const std::vector<Rooms> rooms_vec);
+                         const std::vector<Rooms>& rooms_vec);
 
-  std::deque<KeyFrame::Ptr> get_keyframes_inside_room(
+  std::vector<KeyFrame::Ptr> get_keyframes_inside_room(
       const Rooms& current_room,
       const std::vector<VerticalPlanes>& x_vert_planes,
       const std::vector<VerticalPlanes>& y_vert_planes,
-      const std::deque<KeyFrame::Ptr>& new_keyframes);
+      const std::vector<KeyFrame::Ptr>& keyframes);
 
   std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
       const Rooms& current_room,
@@ -68,7 +66,7 @@ class LocalGraphGenerator {
 
   void generate_local_graph(std::unique_ptr<KeyframeMapper>& keyframe_mapper,
                             std::shared_ptr<GraphSLAM> covisibility_graph,
-                            std::deque<s_graphs::KeyFrame::Ptr> new_room_keyframes,
+                            std::vector<s_graphs::KeyFrame::Ptr> filtered_keyframes,
                             const Eigen::Isometry3d& odom2map,
                             Rooms& current_room);
 };

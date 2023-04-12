@@ -208,11 +208,11 @@ generate_room_keyframe(const s_graphs::Rooms& room,
                        const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
                        const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 
-std::deque<s_graphs::KeyFrame::Ptr> get_room_keyframes(
+std::vector<s_graphs::KeyFrame::Ptr> get_room_keyframes(
     const s_graphs::Rooms& room,
     const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
     const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
-    const std::deque<s_graphs::KeyFrame::Ptr>& keyframes);
+    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 
 bool is_keyframe_inside_room(const s_graphs::Rooms& room,
                              const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
