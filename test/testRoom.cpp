@@ -30,11 +30,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <gtest/gtest.h>
 
 #include <rclcpp/rclcpp.hpp>
-#include <s_graphs/graph_slam.hpp>
-#include <s_graphs/keyframe.hpp>
-#include <s_graphs/plane_utils.hpp>
-#include <s_graphs/room_mapper.hpp>
-#include <s_graphs/rooms.hpp>
+#include <s_graphs/backend/graph_slam.hpp>
+#include <s_graphs/backend/room_mapper.hpp>
+#include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/plane_utils.hpp>
+#include <s_graphs/common/rooms.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
 #include "s_graphs/msg/plane_data.hpp"

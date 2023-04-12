@@ -72,6 +72,7 @@ endif()
 ########################
 ## message generation ##
 ########################
+
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PointClouds.msg"
   "msg/PlaneData.msg"

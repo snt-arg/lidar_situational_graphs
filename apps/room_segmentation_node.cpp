@@ -53,8 +53,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <boost/format.hpp>
 #include <cmath>
 #include <iostream>
-#include <s_graphs/plane_utils.hpp>
-#include <s_graphs/room_analyzer.hpp>
+#include <s_graphs/common/plane_utils.hpp>
+#include <s_graphs/frontend/room_analyzer.hpp>
 #include <string>
 
 #include "pcl_conversions/pcl_conversions.h"
