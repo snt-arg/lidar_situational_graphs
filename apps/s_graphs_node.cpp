@@ -778,8 +778,8 @@ class SGraphsNode : public rclcpp::Node {
                                                           y_infinite_rooms);
     graph_structure.name = graph_type;
 
-    auto graph_keyframes =
-        graph_publisher->publish_graph_keyframes(local_graph, this->keyframes);
+    auto graph_keyframes = graph_publisher->publish_graph_keyframes(
+        publish_graph->graph.get(), this->keyframes);
     graph_pub->publish(graph_structure);
     graph_keyframes_pub->publish(graph_keyframes);
 
