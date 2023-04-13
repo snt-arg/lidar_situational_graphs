@@ -30,17 +30,24 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
     if (vertex_floor) auto current_vertex = global_graph->copy_floor_node(vertex_floor);
   }
 
-  /* TODO:HB ADD ROBUST KERNEL to edges */
   for (g2o::HyperGraph::EdgeSet::iterator it =
            covisibility_graph->graph->edges().begin();
        it != covisibility_graph->graph->edges().end();
        ++it) {
     g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*it);
 
+    auto edge = std::find_if(global_graph->graph->edges().begin(),
+                             global_graph->graph->edges().end(),
+                             boost::bind(&g2o::HyperGraph::Edge::id, _1) == e->id());
+
+    if (edge != global_graph->graph->edges().end()) continue;
+
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(e);
     if (edge_se3) {
-      g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]);
-      g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]);
+      g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
+          global_graph->graph->vertices().at(edge_se3->vertices()[0]->id()));
+      g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(
+          global_graph->graph->vertices().at(edge_se3->vertices()[1]->id()));
       auto edge = global_graph->copy_se3_edge(edge_se3, v1, v2);
       global_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
@@ -48,9 +55,10 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(e);
     if (edge_se3_plane) {
-      g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_se3_plane->vertices()[0]);
-      g2o::VertexPlane* v2 =
-          dynamic_cast<g2o::VertexPlane*>(edge_se3_plane->vertices()[1]);
+      g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
+          global_graph->graph->vertices().at(edge_se3_plane->vertices()[0]->id()));
+      g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_se3_plane->vertices()[1]->id()));
       auto edge = global_graph->copy_se3_plane_edge(edge_se3_plane, v1, v2);
       global_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
@@ -58,14 +66,14 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::EdgeRoom2Planes* edge_room_2planes = dynamic_cast<g2o::EdgeRoom2Planes*>(e);
     if (edge_room_2planes) {
-      g2o::VertexRoom* v1 =
-          dynamic_cast<g2o::VertexRoom*>(edge_room_2planes->vertices()[0]);
-      g2o::VertexPlane* v2 =
-          dynamic_cast<g2o::VertexPlane*>(edge_room_2planes->vertices()[1]);
-      g2o::VertexPlane* v3 =
-          dynamic_cast<g2o::VertexPlane*>(edge_room_2planes->vertices()[2]);
-      g2o::VertexRoom* v4 =
-          dynamic_cast<g2o::VertexRoom*>(edge_room_2planes->vertices()[3]);
+      g2o::VertexRoom* v1 = dynamic_cast<g2o::VertexRoom*>(
+          global_graph->graph->vertices().at(edge_room_2planes->vertices()[0]->id()));
+      g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_room_2planes->vertices()[1]->id()));
+      g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_room_2planes->vertices()[2]->id()));
+      g2o::VertexRoom* v4 = dynamic_cast<g2o::VertexRoom*>(
+          global_graph->graph->vertices().at(edge_room_2planes->vertices()[3]->id()));
 
       auto edge =
           global_graph->copy_room_2planes_edge(edge_room_2planes, v1, v2, v3, v4);
@@ -75,16 +83,16 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::EdgeRoom4Planes* edge_room_4planes = dynamic_cast<g2o::EdgeRoom4Planes*>(e);
     if (edge_room_4planes) {
-      g2o::VertexRoom* v1 =
-          dynamic_cast<g2o::VertexRoom*>(edge_room_4planes->vertices()[0]);
-      g2o::VertexPlane* v2 =
-          dynamic_cast<g2o::VertexPlane*>(edge_room_4planes->vertices()[1]);
-      g2o::VertexPlane* v3 =
-          dynamic_cast<g2o::VertexPlane*>(edge_room_4planes->vertices()[2]);
-      g2o::VertexPlane* v4 =
-          dynamic_cast<g2o::VertexPlane*>(edge_room_4planes->vertices()[3]);
-      g2o::VertexPlane* v5 =
-          dynamic_cast<g2o::VertexPlane*>(edge_room_4planes->vertices()[4]);
+      g2o::VertexRoom* v1 = dynamic_cast<g2o::VertexRoom*>(
+          global_graph->graph->vertices().at(edge_room_4planes->vertices()[0]->id()));
+      g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_room_4planes->vertices()[1]->id()));
+      g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_room_4planes->vertices()[2]->id()));
+      g2o::VertexPlane* v4 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_room_4planes->vertices()[3]->id()));
+      g2o::VertexPlane* v5 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_room_4planes->vertices()[4]->id()));
       auto edge =
           global_graph->copy_room_4planes_edge(edge_room_4planes, v1, v2, v3, v4, v5);
       global_graph->add_robust_kernel(edge, "Huber", 1.0);
@@ -93,10 +101,10 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::Edge2Planes* edge_2planes = dynamic_cast<g2o::Edge2Planes*>(e);
     if (edge_2planes) {
-      g2o::VertexPlane* v1 =
-          dynamic_cast<g2o::VertexPlane*>(edge_2planes->vertices()[0]);
-      g2o::VertexPlane* v2 =
-          dynamic_cast<g2o::VertexPlane*>(edge_2planes->vertices()[1]);
+      g2o::VertexPlane* v1 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_2planes->vertices()[0]->id()));
+      g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
+          global_graph->graph->vertices().at(edge_2planes->vertices()[1]->id()));
       auto edge = global_graph->copy_2planes_edge(edge_2planes, v1, v2);
       global_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
@@ -104,10 +112,10 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::EdgeFloorRoom* edge_floor_room = dynamic_cast<g2o::EdgeFloorRoom*>(e);
     if (edge_floor_room) {
-      g2o::VertexFloor* v1 =
-          dynamic_cast<g2o::VertexFloor*>(edge_floor_room->vertices()[0]);
-      g2o::VertexRoom* v2 =
-          dynamic_cast<g2o::VertexRoom*>(edge_floor_room->vertices()[1]);
+      g2o::VertexFloor* v1 = dynamic_cast<g2o::VertexFloor*>(
+          global_graph->graph->vertices().at(edge_floor_room->vertices()[0]->id()));
+      g2o::VertexRoom* v2 = dynamic_cast<g2o::VertexRoom*>(
+          global_graph->graph->vertices().at(edge_floor_room->vertices()[1]->id()));
       auto edge = global_graph->copy_floor_room_edge(edge_floor_room, v1, v2);
       global_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;

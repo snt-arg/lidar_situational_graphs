@@ -126,6 +126,13 @@ class GraphSLAM {
   int increment_local_nbr_of_vertices();
 
   /**
+   * @brief
+   *
+   * @return
+   */
+  int increment_local_nbr_of_edges();
+
+  /**
    * @brief Set the current solver type
    *
    * @param solver_type

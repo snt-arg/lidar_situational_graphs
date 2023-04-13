@@ -170,6 +170,8 @@ int GraphSLAM::retrieve_local_nbr_of_edges() const { return nbr_of_edges; }
 
 int GraphSLAM::increment_local_nbr_of_vertices() { return nbr_of_vertices += 1; }
 
+int GraphSLAM::increment_local_nbr_of_edges() { return nbr_of_edges += 1; }
+
 g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
   g2o::VertexSE3* vertex(new g2o::VertexSE3());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
@@ -184,10 +186,7 @@ g2o::VertexSE3* GraphSLAM::copy_se3_node(const g2o::VertexSE3* node) {
   g2o::VertexSE3* vertex(new g2o::VertexSE3());
   vertex->setId(node->id());
   vertex->setEstimate(node->estimate());
-  if (node->fixed()) {
-    std::cout << "got se3 node fixed with id: " << node->id() << std::endl;
-    vertex->setFixed(true);
-  }
+  if (node->fixed()) vertex->setFixed(true);
   graph->addVertex(vertex);
 
   return vertex;
@@ -298,11 +297,13 @@ g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1,
                                       const Eigen::Isometry3d& relative_pose,
                                       const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3* edge(new g2o::EdgeSE3());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(relative_pose);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v1;
   edge->vertices()[1] = v2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -311,6 +312,7 @@ g2o::EdgeSE3* GraphSLAM::copy_se3_edge(g2o::EdgeSE3* e,
                                        g2o::VertexSE3* v1,
                                        g2o::VertexSE3* v2) {
   g2o::EdgeSE3* edge(new g2o::EdgeSE3());
+  edge->setId(e->id());
   edge->setMeasurement(e->measurement());
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
@@ -326,11 +328,13 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(
     const Eigen::Vector4d& plane_coeffs,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3Plane* edge(new g2o::EdgeSE3Plane());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(plane_coeffs);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_plane;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -339,6 +343,7 @@ g2o::EdgeSE3Plane* GraphSLAM::copy_se3_plane_edge(g2o::EdgeSE3Plane* e,
                                                   g2o::VertexSE3* v1,
                                                   g2o::VertexPlane* v2) {
   g2o::EdgeSE3Plane* edge(new g2o::EdgeSE3Plane());
+  edge->setId(e->id());
   edge->setMeasurement(e->measurement());
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
@@ -360,11 +365,13 @@ g2o::EdgeSE3PointToPlane* GraphSLAM::add_se3_point_to_plane_edge(
     const Eigen::Matrix4d& points_matrix,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PointToPlane* edge(new g2o::EdgeSE3PointToPlane());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(points_matrix);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_plane;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -375,11 +382,13 @@ g2o::EdgeSE3PointXYZ* GraphSLAM::add_se3_point_xyz_edge(
     const Eigen::Vector3d& xyz,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PointXYZ* edge(new g2o::EdgeSE3PointXYZ());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(xyz);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_xyz;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -389,10 +398,12 @@ g2o::EdgePlanePriorNormal* GraphSLAM::add_plane_normal_prior_edge(
     const Eigen::Vector3d& normal,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgePlanePriorNormal* edge(new g2o::EdgePlanePriorNormal());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(normal);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -402,10 +413,12 @@ g2o::EdgePlanePriorDistance* GraphSLAM::add_plane_distance_prior_edge(
     double distance,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgePlanePriorDistance* edge(new g2o::EdgePlanePriorDistance());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(distance);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -415,10 +428,12 @@ g2o::EdgeSE3PriorXY* GraphSLAM::add_se3_prior_xy_edge(
     const Eigen::Vector2d& xy,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PriorXY* edge(new g2o::EdgeSE3PriorXY());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(xy);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -428,10 +443,12 @@ g2o::EdgeSE3PriorXYZ* GraphSLAM::add_se3_prior_xyz_edge(
     const Eigen::Vector3d& xyz,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PriorXYZ* edge(new g2o::EdgeSE3PriorXYZ());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(xyz);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -446,10 +463,12 @@ g2o::EdgeSE3PriorVec* GraphSLAM::add_se3_prior_vec_edge(
   m.tail<3>() = measurement;
 
   g2o::EdgeSE3PriorVec* edge(new g2o::EdgeSE3PriorVec());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(m);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -459,10 +478,12 @@ g2o::EdgeSE3PriorQuat* GraphSLAM::add_se3_prior_quat_edge(
     const Eigen::Quaterniond& quat,
     const Eigen::MatrixXd& information_matrix) {
   g2o::EdgeSE3PriorQuat* edge(new g2o::EdgeSE3PriorQuat());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(quat);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -472,11 +493,13 @@ g2o::EdgePlane* GraphSLAM::add_plane_edge(g2o::VertexPlane* v_plane1,
                                           const Eigen::Vector4d& measurement,
                                           const Eigen::Matrix4d& information) {
   g2o::EdgePlane* edge(new g2o::EdgePlane());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_plane1;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -487,11 +510,13 @@ g2o::EdgePlaneIdentity* GraphSLAM::add_plane_identity_edge(
     const Eigen::Vector4d& measurement,
     const Eigen::Matrix4d& information) {
   g2o::EdgePlaneIdentity* edge(new g2o::EdgePlaneIdentity());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_plane1;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -502,11 +527,13 @@ g2o::EdgePlaneParallel* GraphSLAM::add_plane_parallel_edge(
     const Eigen::Vector3d& measurement,
     const Eigen::MatrixXd& information) {
   g2o::EdgePlaneParallel* edge(new g2o::EdgePlaneParallel());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_plane1;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -517,11 +544,13 @@ g2o::EdgePlanePerpendicular* GraphSLAM::add_plane_perpendicular_edge(
     const Eigen::Vector3d& measurement,
     const Eigen::MatrixXd& information) {
   g2o::EdgePlanePerpendicular* edge(new g2o::EdgePlanePerpendicular());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_plane1;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -530,10 +559,12 @@ g2o::Edge2Planes* GraphSLAM::add_2planes_edge(g2o::VertexPlane* v_plane1,
                                               g2o::VertexPlane* v_plane2,
                                               const Eigen::MatrixXd& information) {
   g2o::Edge2Planes* edge(new g2o::Edge2Planes());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setInformation(information);
   edge->vertices()[0] = v_plane1;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -542,6 +573,7 @@ g2o::Edge2Planes* GraphSLAM::copy_2planes_edge(g2o::Edge2Planes* e,
                                                g2o::VertexPlane* v1,
                                                g2o::VertexPlane* v2) {
   g2o::Edge2Planes* edge(new g2o::Edge2Planes());
+  edge->setId(e->id());
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
   edge->vertices()[1] = v2;
@@ -555,11 +587,13 @@ g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
                                                const Eigen::Vector2d& measurement,
                                                const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Room* edge(new g2o::EdgeSE3Room());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_room;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -571,12 +605,14 @@ g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(
     g2o::VertexRoom* v_cluster_center,
     const Eigen::MatrixXd& information) {
   g2o::EdgeRoom2Planes* edge(new g2o::EdgeRoom2Planes());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setInformation(information);
   edge->vertices()[0] = v_room;
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
   edge->vertices()[3] = v_cluster_center;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -588,11 +624,13 @@ g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(
     Eigen::Vector3d wall_point,
     const Eigen::MatrixXd& information) {
   g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(wall_point));
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setInformation(information);
   edge->vertices()[0] = v_wall;
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -609,6 +647,7 @@ g2o::EdgeRoom2Planes* GraphSLAM::copy_room_2planes_edge(g2o::EdgeRoom2Planes* e,
                                                         g2o::VertexPlane* v3,
                                                         g2o::VertexRoom* v4) {
   g2o::EdgeRoom2Planes* edge(new g2o::EdgeRoom2Planes());
+  edge->setId(e->id());
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
   edge->vertices()[1] = v2;
@@ -627,6 +666,7 @@ g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
     g2o::VertexPlane* v_yplane2,
     const Eigen::MatrixXd& information) {
   g2o::EdgeRoom4Planes* edge(new g2o::EdgeRoom4Planes());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setInformation(information);
   edge->vertices()[0] = v_room;
   edge->vertices()[1] = v_xplane1;
@@ -634,6 +674,7 @@ g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
   edge->vertices()[3] = v_yplane1;
   edge->vertices()[4] = v_yplane2;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -645,6 +686,7 @@ g2o::EdgeRoom4Planes* GraphSLAM::copy_room_4planes_edge(g2o::EdgeRoom4Planes* e,
                                                         g2o::VertexPlane* v4,
                                                         g2o::VertexPlane* v5) {
   g2o::EdgeRoom4Planes* edge(new g2o::EdgeRoom4Planes());
+  edge->setId(e->id());
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
   edge->vertices()[1] = v2;
@@ -661,11 +703,13 @@ g2o::EdgeFloorRoom* GraphSLAM::add_floor_room_edge(g2o::VertexFloor* v_floor,
                                                    const Eigen::Vector2d& measurement,
                                                    const Eigen::MatrixXd& information) {
   g2o::EdgeFloorRoom* edge(new g2o::EdgeFloorRoom());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(measurement);
   edge->setInformation(information);
   edge->vertices()[0] = v_floor;
   edge->vertices()[1] = v_room;
   graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
@@ -674,6 +718,7 @@ g2o::EdgeFloorRoom* GraphSLAM::copy_floor_room_edge(g2o::EdgeFloorRoom* e,
                                                     g2o::VertexFloor* v1,
                                                     g2o::VertexRoom* v2) {
   g2o::EdgeFloorRoom* edge(new g2o::EdgeFloorRoom());
+  edge->setId(e->id());
   edge->setMeasurement(e->measurement());
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
