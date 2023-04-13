@@ -141,6 +141,14 @@ class GraphSLAM {
   g2o::VertexSE3* add_se3_node(const Eigen::Isometry3d& pose);
 
   /**
+   * @brief copy an SE3 node from another graph.
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexSE3* copy_se3_node(const g2o::VertexSE3* node);
+
+  /**
    * @brief Add a plane node to the graph
    *
    * @param plane_coeffs
@@ -156,6 +164,14 @@ class GraphSLAM {
    * @return Registered node
    */
   g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs, const int id);
+
+  /**
+   * @brief copy a plane node from another graph
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexPlane* copy_plane_node(const g2o::VertexPlane* node);
 
   /**
    * @brief remove a plane node from the graph
@@ -179,14 +195,6 @@ class GraphSLAM {
   g2o::VertexPointXYZ* add_point_xyz_node(const Eigen::Vector3d& xyz);
 
   /**
-   * @brief Add a infinite_room node to the graph
-   *
-   * @param infinite_room_pose
-   * @return Registered node
-   */
-  g2o::VertexInfiniteRoom* add_infinite_room_node(const double& infinite_room_pose);
-
-  /**
    * @brief Add a room node to the graph
    *
    * @param room_pose
@@ -195,12 +203,28 @@ class GraphSLAM {
   g2o::VertexRoom* add_room_node(const Eigen::Isometry3d& room_pose);
 
   /**
+   * @brief copy a room node from another graph
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexRoom* copy_room_node(const g2o::VertexRoom* node);
+
+  /**
    * @brief Add a floor node to the graph
    *
    * @param floor_pose
    * @return Registered node
    */
   g2o::VertexFloor* add_floor_node(const Eigen::Isometry3d& floor_pose);
+
+  /**
+   * @brief copy a floor node from another
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexFloor* copy_floor_node(const g2o::VertexFloor* node);
 
   /**
    * @brief Update the floor node estimate in the graph
@@ -213,6 +237,13 @@ class GraphSLAM {
                          const Eigen::Isometry3d& floor_pose);
 
   /**
+   * @brief add a Wall node to the graph
+   * @param wall_center
+   * @return registered node
+   */
+  g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
+
+  /**
    * @brief Add an edge between SE3 nodes
    *
    * @param v1: node1
@@ -221,18 +252,18 @@ class GraphSLAM {
    * @param information_matrix: information matrix (it must be 6x6)
    * @return registered edge
    */
-
-  g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
-  /**
-   * @brief add a Wall node to the graph
-   * @param wall_center
-   * @return registered node
-   */
-
   g2o::EdgeSE3* add_se3_edge(g2o::VertexSE3* v1,
                              g2o::VertexSE3* v2,
                              const Eigen::Isometry3d& relative_pose,
                              const Eigen::MatrixXd& information_matrix);
+
+  /**
+   * @brief copy an edge from another graph
+   *
+   * @param e: edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3* copy_se3_edge(g2o::EdgeSE3* e, g2o::VertexSE3* v1, g2o::VertexSE3* v2);
 
   /**
    * @brief Add an edge between an SE3 node and a plane node
@@ -247,6 +278,17 @@ class GraphSLAM {
                                         g2o::VertexPlane* v_plane,
                                         const Eigen::Vector4d& plane_coeffs,
                                         const Eigen::MatrixXd& information_matrix);
+  /**
+   * @brief copy an edge from another graph
+   *
+   * @param e: SE3plane edge
+   * @param v1: se3 node
+   * @param v2: plane node
+   * @return registered edge
+   */
+  g2o::EdgeSE3Plane* copy_se3_plane_edge(g2o::EdgeSE3Plane* e,
+                                         g2o::VertexSE3* v1,
+                                         g2o::VertexPlane* v2);
 
   /**
    * @brief Remove a plane edge from the graph
@@ -423,72 +465,30 @@ class GraphSLAM {
       const Eigen::Vector3d& measurement,
       const Eigen::MatrixXd& information);
 
+  /**
+   * @brief add edges between duplicate planes
+   *
+   * @param v_plane1
+   * @param v_plane2
+   * @param measurement
+   * @param information
+   * @return registered edge
+   */
   g2o::Edge2Planes* add_2planes_edge(g2o::VertexPlane* v_plane1,
                                      g2o::VertexPlane* v_plane2,
                                      const Eigen::MatrixXd& information);
 
   /**
-   * @brief
+   * @brief copy the 2planes edges from another graph
    *
-   * @param v_se3
-   * @param v_infinite_room
-   * @param measurement
-   * @param information
+   * @param e: 2planes edge
+   * @param v1: plane1 edge
+   * @param v2: plane2 edge
    * @return registered edge
    */
-  g2o::EdgeSE3InfiniteRoom* add_se3_infinite_room_edge(
-      g2o::VertexSE3* v_se3,
-      g2o::VertexInfiniteRoom* v_infinite_room,
-      const double& measurement,
-      const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param v_infinite_room
-   * @param v_plane2
-   * @param measurement
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeInfiniteRoomXPlane* add_infinite_room_xplane_edge(
-      g2o::VertexInfiniteRoom* v_infinite_room,
-      g2o::VertexPlane* v_plane2,
-      const double& measurement,
-      const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param v_infinite_room
-   * @param v_plane2
-   * @param measurement
-   * @param information
-   * @return registered edge
-   */
-  g2o::EdgeInfiniteRoomYPlane* add_infinite_room_yplane_edge(
-      g2o::VertexInfiniteRoom* v_infinite_room,
-      g2o::VertexPlane* v_plane2,
-      const double& measurement,
-      const Eigen::MatrixXd& information);
-
-  /**
-   * @brief
-   *
-   * @param infinite_room_xplane_edge
-   * @return Success or failure
-   */
-  bool remove_infinite_room_xplane_edge(
-      g2o::EdgeInfiniteRoomXPlane* infinite_room_xplane_edge);
-
-  /**
-   * @brief
-   *
-   * @param infinite_room_yplane_edge
-   * @return Success or failure
-   */
-  bool remove_infinite_room_yplane_edge(
-      g2o::EdgeInfiniteRoomYPlane* infinite_room_yplane_edge);
+  g2o::Edge2Planes* copy_2planes_edge(g2o::Edge2Planes* e,
+                                      g2o::VertexPlane* v1,
+                                      g2o::VertexPlane* v2);
 
   /**
    * @brief
@@ -525,6 +525,21 @@ class GraphSLAM {
   /**
    * @brief
    *
+   * @param edge: edgeroom2plane
+   * @param v1: vertex room
+   * @param v2: vertex plane1
+   * @param v3: vertex plane2
+   * @return registered edge
+   */
+  g2o::EdgeRoom2Planes* copy_room_2planes_edge(g2o::EdgeRoom2Planes* e,
+                                               g2o::VertexRoom* v1,
+                                               g2o::VertexPlane* v2,
+                                               g2o::VertexPlane* v3,
+                                               g2o::VertexRoom* v4);
+
+  /**
+   * @brief
+   *
    * @param v_room
    * @param v_plane1
    * @param v_plane2
@@ -543,6 +558,24 @@ class GraphSLAM {
   /**
    * @brief
    *
+   * @param edge: edgeroom2plane
+   * @param v1: vertex room
+   * @param v2: vertex xplane1
+   * @param v3: vertex xplane2
+   * @param v4: vertex yplane1
+   * @param v5: vertex yplane2
+   * @return registered edge
+   */
+  g2o::EdgeRoom4Planes* copy_room_4planes_edge(g2o::EdgeRoom4Planes* e,
+                                               g2o::VertexRoom* v1,
+                                               g2o::VertexPlane* v2,
+                                               g2o::VertexPlane* v3,
+                                               g2o::VertexPlane* v4,
+                                               g2o::VertexPlane* v5);
+
+  /**
+   * @brief add edge between floor and its rooms
+   *
    * @param v_floor
    * @param v_room
    * @param measurement
@@ -553,6 +586,18 @@ class GraphSLAM {
                                           g2o::VertexRoom* v_room,
                                           const Eigen::Vector2d& measurement,
                                           const Eigen::MatrixXd& information);
+
+  /**
+   * @brief copy the floor room edge from a graph
+   *
+   * @param e: edge floor room
+   * @param v1: vertex floor
+   * @param v2: vertex room
+   * @return registered edge
+   */
+  g2o::EdgeFloorRoom* copy_floor_room_edge(g2o::EdgeFloorRoom* e,
+                                           g2o::VertexFloor* v1,
+                                           g2o::VertexRoom* v2);
 
   /**
    * @brief

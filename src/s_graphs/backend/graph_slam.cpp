@@ -180,6 +180,19 @@ g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
   return vertex;
 }
 
+g2o::VertexSE3* GraphSLAM::copy_se3_node(const g2o::VertexSE3* node) {
+  g2o::VertexSE3* vertex(new g2o::VertexSE3());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) {
+    std::cout << "got se3 node fixed with id: " << node->id() << std::endl;
+    vertex->setFixed(true);
+  }
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
 g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs) {
   return add_plane_node(plane_coeffs, retrieve_local_nbr_of_vertices());
 }
@@ -191,6 +204,16 @@ g2o::VertexPlane* GraphSLAM::add_plane_node(const Eigen::Vector4d& plane_coeffs,
   vertex->setEstimate(plane_coeffs);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
+
+  return vertex;
+}
+
+g2o::VertexPlane* GraphSLAM::copy_plane_node(const g2o::VertexPlane* node) {
+  g2o::VertexPlane* vertex(new g2o::VertexPlane());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
 
   return vertex;
 }
@@ -213,17 +236,6 @@ g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   return vertex;
 }
 
-g2o::VertexInfiniteRoom* GraphSLAM::add_infinite_room_node(
-    const double& infinite_room_pose) {
-  g2o::VertexInfiniteRoom* vertex(new g2o::VertexInfiniteRoom());
-  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
-  vertex->setEstimate(infinite_room_pose);
-  graph->addVertex(vertex);
-  this->increment_local_nbr_of_vertices();
-
-  return vertex;
-}
-
 g2o::VertexRoom* GraphSLAM::add_room_node(const Eigen::Isometry3d& room_pose) {
   g2o::VertexRoom* vertex(new g2o::VertexRoom());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
@@ -234,12 +246,32 @@ g2o::VertexRoom* GraphSLAM::add_room_node(const Eigen::Isometry3d& room_pose) {
   return vertex;
 }
 
+g2o::VertexRoom* GraphSLAM::copy_room_node(const g2o::VertexRoom* node) {
+  g2o::VertexRoom* vertex(new g2o::VertexRoom());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
 g2o::VertexFloor* GraphSLAM::add_floor_node(const Eigen::Isometry3d& floor_pose) {
   g2o::VertexFloor* vertex(new g2o::VertexFloor());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(floor_pose);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
+
+  return vertex;
+}
+
+g2o::VertexFloor* GraphSLAM::copy_floor_node(const g2o::VertexFloor* node) {
+  g2o::VertexFloor* vertex(new g2o::VertexFloor());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
 
   return vertex;
 }
@@ -275,6 +307,19 @@ g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1,
   return edge;
 }
 
+g2o::EdgeSE3* GraphSLAM::copy_se3_edge(g2o::EdgeSE3* e,
+                                       g2o::VertexSE3* v1,
+                                       g2o::VertexSE3* v2) {
+  g2o::EdgeSE3* edge(new g2o::EdgeSE3());
+  edge->setMeasurement(e->measurement());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(
     g2o::VertexSE3* v_se3,
     g2o::VertexPlane* v_plane,
@@ -285,6 +330,19 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_plane;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeSE3Plane* GraphSLAM::copy_se3_plane_edge(g2o::EdgeSE3Plane* e,
+                                                  g2o::VertexSE3* v1,
+                                                  g2o::VertexPlane* v2) {
+  g2o::EdgeSE3Plane* edge(new g2o::EdgeSE3Plane());
+  edge->setMeasurement(e->measurement());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
   graph->addEdge(edge);
 
   return edge;
@@ -480,63 +538,16 @@ g2o::Edge2Planes* GraphSLAM::add_2planes_edge(g2o::VertexPlane* v_plane1,
   return edge;
 }
 
-g2o::EdgeSE3InfiniteRoom* GraphSLAM::add_se3_infinite_room_edge(
-    g2o::VertexSE3* v_se3,
-    g2o::VertexInfiniteRoom* v_infinite_room,
-    const double& measurement,
-    const Eigen::MatrixXd& information) {
-  g2o::EdgeSE3InfiniteRoom* edge(new g2o::EdgeSE3InfiniteRoom());
-  edge->setMeasurement(measurement);
-  edge->setInformation(information);
-  edge->vertices()[0] = v_se3;
-  edge->vertices()[1] = v_infinite_room;
+g2o::Edge2Planes* GraphSLAM::copy_2planes_edge(g2o::Edge2Planes* e,
+                                               g2o::VertexPlane* v1,
+                                               g2o::VertexPlane* v2) {
+  g2o::Edge2Planes* edge(new g2o::Edge2Planes());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
   graph->addEdge(edge);
 
   return edge;
-}
-
-g2o::EdgeInfiniteRoomXPlane* GraphSLAM::add_infinite_room_xplane_edge(
-    g2o::VertexInfiniteRoom* v_infinite_room,
-    g2o::VertexPlane* v_plane2,
-    const double& measurement,
-    const Eigen::MatrixXd& information) {
-  g2o::EdgeInfiniteRoomXPlane* edge(new g2o::EdgeInfiniteRoomXPlane());
-  edge->setMeasurement(measurement);
-  edge->setInformation(information);
-  edge->vertices()[0] = v_infinite_room;
-  edge->vertices()[1] = v_plane2;
-  graph->addEdge(edge);
-
-  return edge;
-}
-
-g2o::EdgeInfiniteRoomYPlane* GraphSLAM::add_infinite_room_yplane_edge(
-    g2o::VertexInfiniteRoom* v_infinite_room,
-    g2o::VertexPlane* v_plane2,
-    const double& measurement,
-    const Eigen::MatrixXd& information) {
-  g2o::EdgeInfiniteRoomYPlane* edge(new g2o::EdgeInfiniteRoomYPlane());
-  edge->setMeasurement(measurement);
-  edge->setInformation(information);
-  edge->vertices()[0] = v_infinite_room;
-  edge->vertices()[1] = v_plane2;
-  graph->addEdge(edge);
-
-  return edge;
-}
-
-bool GraphSLAM::remove_infinite_room_xplane_edge(
-    g2o::EdgeInfiniteRoomXPlane* infinite_room_xplane_edge) {
-  bool ack = graph->removeEdge(infinite_room_xplane_edge);
-
-  return ack;
-}
-
-bool GraphSLAM::remove_infinite_room_yplane_edge(
-    g2o::EdgeInfiniteRoomYPlane* infinite_room_yplane_edge) {
-  bool ack = graph->removeEdge(infinite_room_yplane_edge);
-
-  return ack;
 }
 
 g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
@@ -592,6 +603,22 @@ bool GraphSLAM::remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge) 
   return ack;
 }
 
+g2o::EdgeRoom2Planes* GraphSLAM::copy_room_2planes_edge(g2o::EdgeRoom2Planes* e,
+                                                        g2o::VertexRoom* v1,
+                                                        g2o::VertexPlane* v2,
+                                                        g2o::VertexPlane* v3,
+                                                        g2o::VertexRoom* v4) {
+  g2o::EdgeRoom2Planes* edge(new g2o::EdgeRoom2Planes());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
+  edge->vertices()[3] = v4;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
     g2o::VertexRoom* v_room,
     g2o::VertexPlane* v_xplane1,
@@ -611,6 +638,24 @@ g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
   return edge;
 }
 
+g2o::EdgeRoom4Planes* GraphSLAM::copy_room_4planes_edge(g2o::EdgeRoom4Planes* e,
+                                                        g2o::VertexRoom* v1,
+                                                        g2o::VertexPlane* v2,
+                                                        g2o::VertexPlane* v3,
+                                                        g2o::VertexPlane* v4,
+                                                        g2o::VertexPlane* v5) {
+  g2o::EdgeRoom4Planes* edge(new g2o::EdgeRoom4Planes());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
+  edge->vertices()[3] = v4;
+  edge->vertices()[4] = v5;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgeFloorRoom* GraphSLAM::add_floor_room_edge(g2o::VertexFloor* v_floor,
                                                    g2o::VertexRoom* v_room,
                                                    const Eigen::Vector2d& measurement,
@@ -625,42 +670,23 @@ g2o::EdgeFloorRoom* GraphSLAM::add_floor_room_edge(g2o::VertexFloor* v_floor,
   return edge;
 }
 
+g2o::EdgeFloorRoom* GraphSLAM::copy_floor_room_edge(g2o::EdgeFloorRoom* e,
+                                                    g2o::VertexFloor* v1,
+                                                    g2o::VertexRoom* v2) {
+  g2o::EdgeFloorRoom* edge(new g2o::EdgeFloorRoom());
+  edge->setMeasurement(e->measurement());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 bool GraphSLAM::remove_room_room_edge(g2o::EdgeFloorRoom* room_room_edge) {
   bool ack = graph->removeEdge(room_room_edge);
 
   return ack;
-}
-
-g2o::EdgeXInfiniteRoomXInfiniteRoom*
-GraphSLAM::add_x_infinite_room_x_infinite_room_edge(
-    g2o::VertexInfiniteRoom* v_xcorr1,
-    g2o::VertexInfiniteRoom* v_xcorr2,
-    const double& measurement,
-    const Eigen::MatrixXd& information) {
-  g2o::EdgeXInfiniteRoomXInfiniteRoom* edge(new g2o::EdgeXInfiniteRoomXInfiniteRoom());
-  edge->setMeasurement(measurement);
-  edge->setInformation(information);
-  edge->vertices()[0] = v_xcorr1;
-  edge->vertices()[1] = v_xcorr2;
-  graph->addEdge(edge);
-
-  return edge;
-}
-
-g2o::EdgeYInfiniteRoomYInfiniteRoom*
-GraphSLAM::add_y_infinite_room_y_infinite_room_edge(
-    g2o::VertexInfiniteRoom* v_ycorr1,
-    g2o::VertexInfiniteRoom* v_ycorr2,
-    const double& measurement,
-    const Eigen::MatrixXd& information) {
-  g2o::EdgeYInfiniteRoomYInfiniteRoom* edge(new g2o::EdgeYInfiniteRoomYInfiniteRoom());
-  edge->setMeasurement(measurement);
-  edge->setInformation(information);
-  edge->vertices()[0] = v_ycorr1;
-  edge->vertices()[1] = v_ycorr2;
-  graph->addEdge(edge);
-
-  return edge;
 }
 
 void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge* edge,
