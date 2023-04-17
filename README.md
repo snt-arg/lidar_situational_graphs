@@ -214,6 +214,10 @@ source $Home/s_graphs_ros1_ws/devel/setup.bash && roslaunch voxblox_skeleton ske
 ```
 
 ```bash
+ros2 run ros1_bridge dynamic_bridge
+```
+
+```bash
 rosbag play PATH_TO_ROSBAG_DATASET --clock
 ```
 
