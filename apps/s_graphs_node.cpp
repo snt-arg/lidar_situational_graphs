@@ -601,8 +601,6 @@ class SGraphsNode : public rclcpp::Node {
    * @return if true, at least one keyframe was added to the pose graph
    */
   bool flush_keyframe_queue() {
-    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-
     if (keyframe_queue.empty()) {
       // std::cout << "keyframe_queue is empty " << std::endl;
       return false;
@@ -650,6 +648,7 @@ class SGraphsNode : public rclcpp::Node {
     read_until.frame_id = "/filtered_points";
     read_until_pub->publish(read_until);
 
+    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
     keyframe_queue.erase(keyframe_queue.begin(),
                          keyframe_queue.begin() + num_processed + 1);
 
@@ -752,128 +751,13 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief generate graph structure and publish it
-   * @param event
-   */
-  void graph_publisher_timer_callback() {
-    graph_mutex.lock();
-    graph_utils->copy_graph(covisibility_graph, publish_graph);
-    graph_mutex.unlock();
-
-    std::string graph_type;
-    if (std::string("/robot1") == this->get_namespace()) {
-      graph_type = "Prior";
-    } else {
-      graph_type = "Online";
-    }
-    auto graph_structure = graph_publisher->publish_graph(publish_graph->graph.get(),
-                                                          "Online",
-                                                          x_vert_planes_prior,
-                                                          y_vert_planes_prior,
-                                                          rooms_vec_prior,
-                                                          x_vert_planes,
-                                                          y_vert_planes,
-                                                          rooms_vec,
-                                                          x_infinite_rooms,
-                                                          y_infinite_rooms);
-    graph_structure.name = graph_type;
-
-    auto graph_keyframes = graph_publisher->publish_graph_keyframes(
-        publish_graph->graph.get(), this->keyframes);
-    graph_pub->publish(graph_structure);
-    graph_keyframes_pub->publish(graph_keyframes);
-
-    static RoomsKeyframeGenerator keyframe_generator(
-        &this->x_vert_planes, &this->y_vert_planes, &this->keyframes);
-
-    for (auto room : this->rooms_vec) {
-      keyframe_generator.addRoom(room);
-    }
-    for (auto room : keyframe_generator.getExtendedRooms()) {
-      graph_room_keyframe_pub->publish(convertExtendedRoomToRosMsg(room));
-    }
-  }
-
-  /**
-   * @brief generate map point cloud and publish it
-   * @param event
-   */
-  void map_points_publish_timer_callback() {
-    if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
-      return;
-    }
-
-    std::vector<KeyFrameSnapshot::Ptr> snapshot;
-    keyframes_snapshot_mutex.lock();
-    snapshot = keyframes_snapshot;
-    keyframes_snapshot_mutex.unlock();
-
-    auto cloud = map_cloud_generator->generate(snapshot, map_cloud_resolution);
-    if (!cloud) {
-      return;
-    }
-
-    cloud->header.frame_id = map_frame_id;
-    cloud->header.stamp = snapshot.back()->cloud->header.stamp;
-
-    sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg(
-        new sensor_msgs::msg::PointCloud2());
-    pcl::toROSMsg(*cloud, *cloud_msg);
-
-    graph_mutex.lock();
-    graph_utils->copy_graph(covisibility_graph, visualization_graph);
-    graph_mutex.unlock();
-
-    std::vector<VerticalPlanes> x_plane_snapshot, y_plane_snapshot;
-    vert_plane_snapshot_mutex.lock();
-    x_plane_snapshot = x_vert_planes_snapshot;
-    y_plane_snapshot = y_vert_planes_snapshot;
-    vert_plane_snapshot_mutex.unlock();
-
-    std::vector<HorizontalPlanes> hort_plane_snapshot;
-    hort_plane_snapshot_mutex.lock();
-    hort_plane_snapshot = hort_planes_snapshot;
-    hort_plane_snapshot_mutex.unlock();
-
-    std::vector<InfiniteRooms> x_infinite_room_snapshot, y_infinite_room_snapshot;
-    infinite_room_snapshot_mutex.lock();
-    x_infinite_room_snapshot = x_infinite_rooms_snapshot;
-    y_infinite_room_snapshot = y_infinite_rooms_snapshot;
-    infinite_room_snapshot_mutex.unlock();
-
-    std::vector<Rooms> room_snapshot;
-    room_snapshot_mutex.lock();
-    room_snapshot = rooms_vec_snapshot;
-    room_snapshot_mutex.unlock();
-
-    auto markers = graph_visualizer->create_marker_array(
-        this->now(),
-        visualization_graph->graph.get(),
-        x_plane_snapshot,
-        y_plane_snapshot,
-        hort_plane_snapshot,
-        x_infinite_room_snapshot,
-        y_infinite_room_snapshot,
-        room_snapshot,
-        loop_detector->get_distance_thresh() * 2.0,
-        keyframes,
-        floors_vec);
-    markers_pub->publish(markers);
-
-    publish_all_mapped_planes(x_plane_snapshot, y_plane_snapshot);
-    map_points_pub->publish(*cloud_msg);
-  }
-
-  /**
    * @brief this methods adds all the data in the queues to the pose graph, and then
    * optimizes the pose graph
    * @param event
    */
   void keyframe_update_timer_callback() {
     // add keyframes and floor coeffs in the queues to the pose graph
-    keyframes_mutex.lock();
     bool keyframe_updated = flush_keyframe_queue();
-    keyframes_mutex.unlock();
 
     if (!keyframe_updated) {
       std_msgs::msg::Header read_until;
@@ -924,34 +808,38 @@ class SGraphsNode : public rclcpp::Node {
       anchor_node->setEstimate(anchor_target);
     }
 
-    vert_plane_snapshot_mutex.lock();
-    x_vert_planes_snapshot = x_vert_planes;
-    y_vert_planes_snapshot = y_vert_planes;
-    vert_plane_snapshot_mutex.unlock();
-
-    hort_plane_snapshot_mutex.lock();
-    hort_planes_snapshot = hort_planes;
-    hort_plane_snapshot_mutex.unlock();
-
-    infinite_room_snapshot_mutex.lock();
-    x_infinite_rooms_snapshot = x_infinite_rooms;
-    y_infinite_rooms_snapshot = y_infinite_rooms;
-    infinite_room_snapshot_mutex.unlock();
-
-    room_snapshot_mutex.lock();
-    rooms_vec_snapshot = rooms_vec;
-    room_snapshot_mutex.unlock();
-
     std::vector<KeyFrameSnapshot::Ptr> snapshot(keyframes.size());
     std::transform(
         keyframes.begin(),
         keyframes.end(),
         snapshot.begin(),
         [=](const KeyFrame::Ptr& k) { return std::make_shared<KeyFrameSnapshot>(k); });
-
-    keyframes_snapshot_mutex.lock();
     keyframes_snapshot.swap(snapshot);
-    keyframes_snapshot_mutex.unlock();
+
+    std::vector<VerticalPlanes> current_x_planes(x_vert_planes.size());
+    std::transform(
+        x_vert_planes.begin(),
+        x_vert_planes.end(),
+        current_x_planes.begin(),
+        [](const VerticalPlanes& x_plane) { return VerticalPlanes(x_plane, true); });
+    x_planes_snapshot.swap(current_x_planes);
+
+    std::vector<VerticalPlanes> current_y_planes(y_vert_planes.size());
+    std::transform(
+        y_vert_planes.begin(),
+        y_vert_planes.end(),
+        current_y_planes.begin(),
+        [](const VerticalPlanes& y_plane) { return VerticalPlanes(y_plane, true); });
+    y_planes_snapshot.swap(current_y_planes);
+
+    std::vector<HorizontalPlanes> current_hort_planes(hort_planes.size());
+    std::transform(hort_planes.begin(),
+                   hort_planes.end(),
+                   current_hort_planes.begin(),
+                   [](const HorizontalPlanes& hort_plane) {
+                     return HorizontalPlanes(hort_plane, true);
+                   });
+    hort_planes_snapshot.swap(current_hort_planes);
   }
 
   /**
@@ -962,12 +850,13 @@ class SGraphsNode : public rclcpp::Node {
   void optimization_timer_callback() {
     if (keyframes.empty()) return;
 
+    const auto& keyframe = keyframes.back();
+
     graph_mutex.lock();
     graph_utils->copy_graph(covisibility_graph, global_graph);
     graph_mutex.unlock();
 
     curr_edge_count = covisibility_graph->retrive_total_nbr_of_edges();
-
     if (curr_edge_count <= prev_edge_count) {
       return;
     }
@@ -995,10 +884,6 @@ class SGraphsNode : public rclcpp::Node {
                               floors_vec);
     graph_mutex.unlock();
 
-    keyframes_mutex.lock();
-    const auto& keyframe = keyframes.back();
-    keyframes_mutex.unlock();
-
     // publish tf
     Eigen::Isometry3d trans = keyframe->node->estimate() * keyframe->odom.inverse();
     trans_odom2map_mutex.lock();
@@ -1009,10 +894,90 @@ class SGraphsNode : public rclcpp::Node {
         keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
     odom2map_pub->publish(ts);
 
-    // merge_duplicate_planes();
-
     graph_updated = true;
     prev_edge_count = curr_edge_count;
+  }
+
+  /**
+   * @brief generate graph structure and publish it
+   * @param event
+   */
+  void graph_publisher_timer_callback() {
+    std::string graph_type;
+    if (std::string("/robot1") == this->get_namespace()) {
+      graph_type = "Prior";
+    } else {
+      graph_type = "Online";
+    }
+    auto graph_structure =
+        graph_publisher->publish_graph(covisibility_graph->graph.get(),
+                                       "Online",
+                                       x_vert_planes_prior,
+                                       y_vert_planes_prior,
+                                       rooms_vec_prior,
+                                       x_planes_snapshot,
+                                       y_planes_snapshot,
+                                       rooms_vec,
+                                       x_infinite_rooms,
+                                       y_infinite_rooms);
+    graph_structure.name = graph_type;
+
+    auto graph_keyframes = graph_publisher->publish_graph_keyframes(
+        publish_graph->graph.get(), this->keyframes);
+    graph_pub->publish(graph_structure);
+    graph_keyframes_pub->publish(graph_keyframes);
+
+    static RoomsKeyframeGenerator keyframe_generator(
+        &this->x_vert_planes, &this->y_vert_planes, &this->keyframes);
+
+    for (auto room : this->rooms_vec) {
+      keyframe_generator.addRoom(room);
+    }
+    for (auto room : keyframe_generator.getExtendedRooms()) {
+      graph_room_keyframe_pub->publish(convertExtendedRoomToRosMsg(room));
+    }
+  }
+
+  /**
+   * @brief generate map point cloud and publish it
+   * @param event
+   */
+  void map_points_publish_timer_callback() {
+    if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
+      return;
+    }
+
+    std::vector<KeyFrameSnapshot::Ptr> snapshot;
+    snapshot = keyframes_snapshot;
+
+    auto cloud = map_cloud_generator->generate(snapshot, map_cloud_resolution);
+    if (!cloud) {
+      return;
+    }
+
+    cloud->header.frame_id = map_frame_id;
+    cloud->header.stamp = snapshot.back()->cloud->header.stamp;
+
+    sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg(
+        new sensor_msgs::msg::PointCloud2());
+    pcl::toROSMsg(*cloud, *cloud_msg);
+
+    auto markers = graph_visualizer->create_marker_array(
+        this->now(),
+        covisibility_graph->graph.get(),
+        x_planes_snapshot,
+        y_planes_snapshot,
+        hort_planes_snapshot,
+        x_infinite_rooms,
+        y_infinite_rooms,
+        rooms_vec,
+        loop_detector->get_distance_thresh() * 2.0,
+        keyframes,
+        floors_vec);
+    markers_pub->publish(markers);
+
+    publish_all_mapped_planes(x_vert_planes, y_vert_planes);
+    map_points_pub->publish(*cloud_msg);
   }
 
   /**
@@ -1258,9 +1223,7 @@ class SGraphsNode : public rclcpp::Node {
                         std::shared_ptr<s_graphs::srv::SaveMap::Response> res) {
     std::vector<KeyFrameSnapshot::Ptr> snapshot;
 
-    keyframes_snapshot_mutex.lock();
     snapshot = keyframes_snapshot;
-    keyframes_snapshot_mutex.unlock();
 
     auto cloud = map_cloud_generator->generate(snapshot, req->resolution);
     if (!cloud) {
@@ -1301,8 +1264,6 @@ class SGraphsNode : public rclcpp::Node {
 
   message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> cloud_sub;
-  // typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::msg::Image,
-  // sensor_msgs::msg::PointCloud2> approximate_policy;
   typedef message_filters::sync_policies::ApproximateTime<nav_msgs::msg::Odometry,
                                                           sensor_msgs::msg::PointCloud2>
       ApproxSyncPolicy;
@@ -1389,36 +1350,17 @@ class SGraphsNode : public rclcpp::Node {
   std::vector<Floors> floors_vec;
   int prev_edge_count, curr_edge_count;
 
-  std::mutex vert_plane_snapshot_mutex;
-  std::vector<VerticalPlanes> x_vert_planes_snapshot,
-      y_vert_planes_snapshot;  // snapshot of vertically segmented planes
-
-  std::mutex hort_plane_snapshot_mutex;
+  std::vector<VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
   std::vector<HorizontalPlanes> hort_planes_snapshot;
 
-  std::mutex infinite_room_snapshot_mutex;
-  std::vector<InfiniteRooms> x_infinite_rooms_snapshot, y_infinite_rooms_snapshot;
-
-  std::mutex room_snapshot_mutex;
-  std::vector<Rooms> rooms_vec_snapshot;
-
-  // Seg map queue
-  std::mutex cloud_seg_mutex;
-  std::deque<s_graphs::msg::PointClouds::Ptr> clouds_seg_queue;
-
   // room data queue
-  std::mutex room_data_queue_mutex;
+  std::mutex room_data_queue_mutex, floor_data_mutex;
   std::deque<s_graphs::msg::RoomsData> room_data_queue;
-
-  std::mutex floor_data_mutex;
   std::deque<s_graphs::msg::RoomData> floor_data_queue;
-
-  std::mutex keyframes_mutex;
 
   // for map cloud generation
   std::atomic_bool graph_updated;
   double map_cloud_resolution;
-  std::mutex keyframes_snapshot_mutex;
   std::vector<KeyFrameSnapshot::Ptr> keyframes_snapshot;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
 

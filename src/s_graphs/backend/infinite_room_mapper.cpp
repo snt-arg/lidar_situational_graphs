@@ -240,7 +240,6 @@ void InfiniteRoomMapper::factor_infinite_rooms(
   g2o::VertexRoom* room_node;
   g2o::VertexRoom* cluster_center_node;
   std::pair<int, int> room_data_association;
-  double meas_plane1, meas_plane2;
 
   Eigen::Matrix<double, 2, 2> information_infinite_room_planes;
   information_infinite_room_planes.setZero();

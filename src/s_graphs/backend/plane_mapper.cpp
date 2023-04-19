@@ -242,6 +242,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
+
       } else {
         plane_node = x_vert_planes[data_association.second].plane_node;
         x_vert_planes[data_association.second].cloud_seg_body_vec.push_back(
@@ -297,6 +298,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
+
       } else {
         plane_node = y_vert_planes[data_association.second].plane_node;
         y_vert_planes[data_association.second].cloud_seg_body_vec.push_back(
