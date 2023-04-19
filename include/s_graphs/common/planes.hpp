@@ -127,7 +127,7 @@ class HorizontalPlanes : public Planes {
   ~HorizontalPlanes() {}
 
   // copy constructor
-  HorizontalPlanes(const HorizontalPlanes& old_plane, const bool deep_copy)
+  HorizontalPlanes(const HorizontalPlanes& old_plane, const bool deep_copy = false)
       : Planes(old_plane, deep_copy) {}
 
   HorizontalPlanes& operator=(const HorizontalPlanes& old_plane) {
