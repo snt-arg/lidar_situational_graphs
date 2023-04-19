@@ -840,6 +840,27 @@ class SGraphsNode : public rclcpp::Node {
                      return HorizontalPlanes(hort_plane, true);
                    });
     hort_planes_snapshot.swap(current_hort_planes);
+
+    std::vector<Rooms> curent_rooms(rooms_vec.size());
+    std::transform(rooms_vec.begin(),
+                   rooms_vec.end(),
+                   curent_rooms.begin(),
+                   [](const Rooms& room) { return Rooms(room, true); });
+    rooms_vec_snapshot.swap(curent_rooms);
+
+    std::vector<InfiniteRooms> curent_x_inf_rooms(x_infinite_rooms.size());
+    std::transform(x_infinite_rooms.begin(),
+                   x_infinite_rooms.end(),
+                   curent_x_inf_rooms.begin(),
+                   [](const InfiniteRooms& room) { return InfiniteRooms(room, true); });
+    x_inf_rooms_snapshot.swap(curent_x_inf_rooms);
+
+    std::vector<InfiniteRooms> curent_y_inf_rooms(y_infinite_rooms.size());
+    std::transform(y_infinite_rooms.begin(),
+                   y_infinite_rooms.end(),
+                   curent_y_inf_rooms.begin(),
+                   [](const InfiniteRooms& room) { return InfiniteRooms(room, true); });
+    y_inf_rooms_snapshot.swap(curent_y_inf_rooms);
   }
 
   /**
@@ -917,9 +938,9 @@ class SGraphsNode : public rclcpp::Node {
                                        rooms_vec_prior,
                                        x_planes_snapshot,
                                        y_planes_snapshot,
-                                       rooms_vec,
-                                       x_infinite_rooms,
-                                       y_infinite_rooms);
+                                       rooms_vec_snapshot,
+                                       x_inf_rooms_snapshot,
+                                       y_inf_rooms_snapshot);
     graph_structure.name = graph_type;
 
     auto graph_keyframes = graph_publisher->publish_graph_keyframes(
@@ -968,9 +989,9 @@ class SGraphsNode : public rclcpp::Node {
         x_planes_snapshot,
         y_planes_snapshot,
         hort_planes_snapshot,
-        x_infinite_rooms,
-        y_infinite_rooms,
-        rooms_vec,
+        x_inf_rooms_snapshot,
+        y_inf_rooms_snapshot,
+        rooms_vec_snapshot,
         loop_detector->get_distance_thresh() * 2.0,
         keyframes,
         floors_vec);
@@ -1352,6 +1373,8 @@ class SGraphsNode : public rclcpp::Node {
 
   std::vector<VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
   std::vector<HorizontalPlanes> hort_planes_snapshot;
+  std::vector<Rooms> rooms_vec_snapshot;
+  std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
 
   // room data queue
   std::mutex room_data_queue_mutex, floor_data_mutex;

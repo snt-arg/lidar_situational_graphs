@@ -57,9 +57,56 @@ namespace s_graphs {
  * @param sub_room
  * @param cluster_array
  */
-struct Rooms {
+class Rooms {
  public:
   Rooms() {}
+  Rooms(const Rooms &old_room, const bool deep_copy = false) {
+    *this = old_room;
+
+    if (deep_copy) {
+      node = new g2o::VertexRoom();
+      node->setEstimate(old_room.node->estimate());
+
+      plane_x1_node = new g2o::VertexPlane();
+      plane_x1_node->setEstimate(old_room.plane_x1_node->estimate());
+      plane_x2_node = new g2o::VertexPlane();
+      plane_x2_node->setEstimate(old_room.plane_x2_node->estimate());
+      plane_y1_node = new g2o::VertexPlane();
+      plane_y1_node->setEstimate(old_room.plane_y1_node->estimate());
+      plane_y2_node = new g2o::VertexPlane();
+      plane_y2_node->setEstimate(old_room.plane_y2_node->estimate());
+
+      room_keyframes.reserve(old_room.room_keyframes.size());
+      for (const auto &k : old_room.room_keyframes) {
+        std::make_shared<KeyFrameSnapshot>(k);
+      }
+    }
+  }
+
+  Rooms &operator=(const Rooms &old_room) {
+    plane_x1 = old_room.plane_x1;
+    plane_x2 = old_room.plane_x2;
+    plane_y1 = old_room.plane_y1;
+    plane_y2 = old_room.plane_y2;
+
+    plane_x1_id = old_room.plane_x1_id;
+    plane_x2_id = old_room.plane_x2_id;
+    plane_y1_id = old_room.plane_y1_id;
+    plane_y2_id = old_room.plane_y2_id;
+    sub_room = old_room.sub_room;
+    cluster_array = old_room.cluster_array;
+
+    plane_x1_node = old_room.plane_x1_node;
+    plane_x2_node = old_room.plane_x2_node;
+    plane_y1_node = old_room.plane_y1_node;
+    plane_y2_node = old_room.plane_y2_node;
+
+    node = old_room.node;
+    room_keyframes = old_room.room_keyframes;
+    local_graph = old_room.local_graph;
+
+    return *this;
+  }
 
  public:
   int id;

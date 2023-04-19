@@ -61,9 +61,44 @@ namespace s_graphs {
  * @var node
  * @var cluster_array
  */
-struct InfiniteRooms {
+class InfiniteRooms {
  public:
   InfiniteRooms() {}
+
+  InfiniteRooms(const InfiniteRooms& old_room, const bool deep_copy = false) {
+    *this = old_room;
+
+    if (deep_copy) {
+      node = new g2o::VertexRoom();
+      node->setEstimate(old_room.node->estimate());
+
+      cluster_center_node = new g2o::VertexRoom();
+      cluster_center_node->setEstimate(old_room.cluster_center_node->estimate());
+
+      plane1_node = new g2o::VertexPlane();
+      plane1_node->setEstimate(old_room.plane1_node->estimate());
+      plane2_node = new g2o::VertexPlane();
+      plane2_node->setEstimate(old_room.plane2_node->estimate());
+    }
+  }
+
+  InfiniteRooms& operator=(const InfiniteRooms& old_room) {
+    id = old_room.id;
+    plane1 = old_room.plane1;
+    plane2 = old_room.plane2;
+    plane1_id = old_room.plane1_id;
+    plane2_id = old_room.plane2_id;
+    sub_infinite_room = old_room.sub_infinite_room;
+    cluster_array = old_room.cluster_array;
+
+    plane1_node = old_room.plane1_node;
+    plane2_node = old_room.plane2_node;
+    cluster_center_node = old_room.cluster_center_node;
+    node = old_room.node;
+    local_graph = old_room.local_graph;
+
+    return *this;
+  }
 
  public:
   int id;
