@@ -3,7 +3,7 @@
 GraphPublisher::GraphPublisher(const ros::NodeHandle& private_nh) {}
 
 GraphPublisher::~GraphPublisher() {}
-graph_manager_msgs::Graph GraphPublisher::publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
+graph_manager_msgs::Graph GraphPublisher::publish_graph(const g2o::SparseOptimizer* local_graph, std::string graph_type, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior, const std::vector<s_graphs::Rooms>& rooms_vec_prior, const std::vector<s_graphs::VerticalPlanes>& x_vert_planes, const std::vector<s_graphs::VerticalPlanes>& y_vert_planes, const std::vector<s_graphs::Rooms>& rooms_vec, const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms, const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms, std::vector<s_graphs::DoorWays> doorways_vec_prior) {
   std::vector<graph_manager_msgs::Edge> edges_vec;
   std::vector<graph_manager_msgs::Node> nodes_vec;
   graph_manager_msgs::Graph graph_msg;
@@ -100,7 +100,54 @@ graph_manager_msgs::Graph GraphPublisher::publish_graph(const g2o::SparseOptimiz
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
     }
+    for(int i = 0; i < doorways_vec_prior.size(); i++) {
+      g2o::VertexDoorWayXYZ* v_door = doorways_vec_prior[i].node;
+      graph_manager_msgs::Edge graph_edge;
+      graph_manager_msgs::Node graph_node;
+      graph_manager_msgs::Attribute edge_attribute;
+      graph_manager_msgs::Attribute node_attribute;
+      graph_node.id = doorways_vec_prior[i].id;
+      graph_node.type = "Doorway";
+      node_attribute.name = "Geometric_info";
 
+      Eigen::Vector3d doorway_pose = doorways_vec_prior[i].door_pos_w;
+      node_attribute.fl_value.push_back(doorway_pose.x());
+      node_attribute.fl_value.push_back(doorway_pose.y());
+      node_attribute.fl_value.push_back(0.0);
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // first edge
+
+      graph_edge.origin_node = doorways_vec_prior[i].id;
+      graph_edge.target_node = doorways_vec_prior[i].room1_id;
+      for(int j = 0; j < rooms_vec_prior.size(); j++) {
+        if(doorways_vec_prior[i].room1_id == rooms_vec_prior[j].prior_id) {
+          graph_edge.target_node = rooms_vec_prior[j].id;
+        }
+      }
+      edge_attribute.name = "Geometric_info";
+      edge_att_vec.push_back(edge_attribute);
+      graph_edge.attributes = edge_att_vec;
+      edges_vec.push_back(graph_edge);
+      edge_att_vec.clear();
+
+      // 2nd edge
+
+      graph_edge.target_node = doorways_vec_prior[i].room2_id;
+      for(int j = 0; j < rooms_vec_prior.size(); j++) {
+        if(doorways_vec_prior[i].room2_id == rooms_vec_prior[j].prior_id) {
+          graph_edge.target_node = rooms_vec_prior[j].id;
+        }
+      }
+      edge_att_vec.push_back(edge_attribute);
+      graph_edge.attributes = edge_att_vec;
+      edges_vec.push_back(graph_edge);
+      edge_att_vec.clear();
+    }
   } else {
     graph_msg.name = "ONLINE";
     for(int i = 0; i < x_vert_planes.size(); i++) {

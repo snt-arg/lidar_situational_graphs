@@ -77,6 +77,7 @@
 #include <s_graphs/graph_visualizer.hpp>
 #include <s_graphs/keyframe_mapper.hpp>
 #include <s_graphs/graph_publisher.hpp>
+#include <s_graphs/door_ways.hpp>
 
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_infinite_room.hpp>
@@ -709,7 +710,7 @@ private:
     graph_mutex.lock();
     local_graph = graph_slam->graph.get();
     graph_mutex.unlock();
-    auto graph_structure = graph_publisher->publish_graph(local_graph, "Online", x_vert_planes_prior, y_vert_planes_prior, rooms_vec_prior, x_vert_planes, y_vert_planes, rooms_vec, x_infinite_rooms, y_infinite_rooms);
+    auto graph_structure = graph_publisher->publish_graph(local_graph, "Online", x_vert_planes_prior, y_vert_planes_prior, rooms_vec_prior, x_vert_planes, y_vert_planes, rooms_vec, x_infinite_rooms, y_infinite_rooms, doorways_vec_prior);
     graph_pub.publish(graph_structure);
   }
 
@@ -1569,6 +1570,7 @@ private:
   std::vector<Rooms> rooms_vec;                                   // rooms segmented from planes
   std::vector<Rooms> rooms_vec_prior;
   std::vector<Floors> floors_vec;
+  std::vector<DoorWays> doorways_vec_prior;
 
   std::mutex vert_plane_snapshot_mutex;
   std::vector<VerticalPlanes> x_vert_planes_snapshot, y_vert_planes_snapshot;  // snapshot of vertically segmented planes
