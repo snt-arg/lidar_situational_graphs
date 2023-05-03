@@ -1,6 +1,6 @@
 
 map_frame_id: "map"
-odom_frame_id: "odom_reset"
+odom_frame_id: "odom"
 
 # Optimization params
 g2o_solver_type: "lm_var_cholmod" # gn_var, gn_fix6_3, gn_var_cholmod, lm_var, lm_fix6_3, lm_var_cholmod
@@ -76,27 +76,30 @@ graph_update_interval: 3.0
 map_cloud_update_interval: 10.0
 map_cloud_resolution: 0.05
 
-plane_dist_threshold:       0.20
+plane_dist_threshold:       0.35
+plane_points_dist:          0.5
+constant_covariance:        true
 use_point_to_plane:         false 
-use_parallel_plane_constraint: true 
-use_perpendicular_plane_constraint: true
-use_corridor_constraint:              true
-corridor_information:                 0.01       
-corridor_dist_threshold:              0.5
-corridor_min_plane_length:            5.0 
+min_plane_points:           100
+use_parallel_plane_constraint: false 
+use_perpendicular_plane_constraint: false
+use_corridor_constraint:              true       
+corridor_dist_threshold:              1.5
+corridor_min_plane_length:            4.0 
 corridor_min_width:                   1.5 
 corridor_max_width:                   2.5
-corridor_plane_length_diff_threshold: 3.0
+corridor_plane_length_diff_threshold: 3.5
 corridor_point_diff_threshold:        3.5
-use_room_constraint:                  true      
-room_information:                     0.01       
+corridor_min_seg_dist:                1.0
+use_room_constraint:                  true       
 room_dist_threshold:                  1.0 
 room_min_plane_length:                2.0
-room_max_plane_length:                10.0 
-room_min_width:                       2.5 
-room_plane_length_diff_threshold:     3.0 
-room_point_diff_threshold:            2.5
-room_width_diff_threshold:            2.5
+room_max_plane_length:                9.0 
+room_min_width:                       2.5
+room_max_width:                       6.0
+room_plane_length_diff_threshold:     3.5
+room_point_diff_threshold:            3.5
+room_width_diff_threshold:            3.5
 color_r:                              0.0
 color_g:                              0.0
 color_b:                              0.0
