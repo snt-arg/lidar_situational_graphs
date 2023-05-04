@@ -62,10 +62,73 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <Eigen/Dense>
 #include <g2o/edge_room.hpp>
 
+#include "g2o/types/slam3d/isometry3d_gradients.h"
 #include "g2o/vertex_floor.hpp"
 #include "g2o/vertex_infinite_room.hpp"
 #include "g2o/vertex_room.hpp"
+
 namespace g2o {
+
+EdgeRoomRoom::EdgeRoomRoom() : BaseBinaryEdge<6, Isometry3, VertexRoom, VertexRoom>() {
+  information().setIdentity();
+}
+
+bool EdgeRoomRoom::read(std::istream& is) {
+  Vector7 meas;
+  internal::readVector(is, meas);
+  // normalize the quaternion to recover numerical precision lost by storing as
+  // human readable text
+  Vector4::MapType(meas.data() + 3).normalize();
+  setMeasurement(internal::fromVectorQT(meas));
+  if (is.bad()) return false;
+  readInformationMatrix(is);
+  return is.good() || is.eof();
+}
+
+bool EdgeRoomRoom::write(std::ostream& os) const {
+  internal::writeVector(os, internal::toVectorQT(measurement()));
+  return writeInformationMatrix(os);
+}
+
+void EdgeRoomRoom::computeError() {
+  VertexRoom* from = static_cast<VertexRoom*>(_vertices[0]);
+  VertexRoom* to = static_cast<VertexRoom*>(_vertices[1]);
+  Isometry3 delta = _inverseMeasurement * from->estimate().inverse() * to->estimate();
+  _error = internal::toVectorMQT(delta);
+}
+
+bool EdgeRoomRoom::setMeasurementFromState() {
+  VertexRoom* from = static_cast<VertexRoom*>(_vertices[0]);
+  VertexRoom* to = static_cast<VertexRoom*>(_vertices[1]);
+  Isometry3 delta = from->estimate().inverse() * to->estimate();
+  setMeasurement(delta);
+  return true;
+}
+
+void EdgeRoomRoom::linearizeOplus() {
+  // BaseBinaryEdge<6, Isometry3, VertexSE3, VertexSE3>::linearizeOplus();
+  // return;
+
+  VertexRoom* from = static_cast<VertexRoom*>(_vertices[0]);
+  VertexRoom* to = static_cast<VertexRoom*>(_vertices[1]);
+  Isometry3 E;
+  const Isometry3& Xi = from->estimate();
+  const Isometry3& Xj = to->estimate();
+  const Isometry3& Z = _measurement;
+  internal::computeEdgeSE3Gradient(E, _jacobianOplusXi, _jacobianOplusXj, Z, Xi, Xj);
+}
+
+void EdgeRoomRoom::initialEstimate(const OptimizableGraph::VertexSet& from_,
+                                   OptimizableGraph::Vertex* /*to_*/) {
+  VertexRoom* from = static_cast<VertexRoom*>(_vertices[0]);
+  VertexRoom* to = static_cast<VertexRoom*>(_vertices[1]);
+
+  if (from_.count(from) > 0) {
+    to->setEstimate(from->estimate() * _measurement);
+  } else
+    from->setEstimate(to->estimate() * _measurement.inverse());
+  // cerr << "IE" << endl;
+}
 
 void EdgeSE3Room::computeError() {
   const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
