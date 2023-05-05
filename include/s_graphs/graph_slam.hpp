@@ -37,6 +37,9 @@ class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class RobustKernelFactory;
 class VertexRoomXYLB;
+class EdgeRoom2Planes;
+class EdgeRoom4Planes;
+class Edge2Planes;
 }  // namespace g2o
 
 namespace s_graphs {
@@ -84,14 +87,14 @@ public:
 
   /**
    * @brief add a corridor node to the graph
-   * @param corridor 
+   * @param corridor
    * @return registered node
    */
   g2o::VertexCorridor* add_corridor_node(const double& corridor_pose);
 
   /**
    * @brief add a room node to the graph
-   * @param room 
+   * @param room
    * @return registered node
    */
   g2o::VertexRoomXYLB* add_room_node(const Eigen::Vector2d& room_pose);
@@ -138,6 +141,12 @@ public:
    */
   g2o::EdgeSE3PointXYZ* add_se3_point_xyz_edge(g2o::VertexSE3* v_se3, g2o::VertexPointXYZ* v_xyz, const Eigen::Vector3d& xyz, const Eigen::MatrixXd& information_matrix);
 
+  g2o::EdgeRoom4Planes* add_room_4planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_xplane1, g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1, g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoom2Planes* add_room_2planes_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, g2o::VertexRoomXYLB* v_cluster_center, const Eigen::MatrixXd& information);
+
+  g2o::Edge2Planes* add_2planes_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::MatrixXd& information);
+
   /**
    * @brief add a prior edge to an SE3 node
    * @param v_se3
@@ -174,7 +183,7 @@ public:
   bool remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge);
 
   bool remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge);
-  
+
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
@@ -192,7 +201,7 @@ public:
    */
   int optimize(int num_iterations);
 
-  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd> &spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
+  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
 
   /**
    * @brief save the pose graph to a file
@@ -209,7 +218,8 @@ public:
 public:
   g2o::RobustKernelFactory* robust_kernel_factory;
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
-  int vertex_count; int edge_count;
+  int vertex_count;
+  int edge_count;
 };
 
 }  // namespace s_graphs

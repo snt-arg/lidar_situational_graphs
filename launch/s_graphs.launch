@@ -36,14 +36,14 @@
   </node>
 
   <!--PLANE SEGMENTATION -->
-  <!-- <node pkg="nodelet" type="nodelet" name="hdl_plane_seg_nodelet_manager" args="manager" output="screen" />
+  <node pkg="nodelet" type="nodelet" name="hdl_plane_seg_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="hdl_plane_segmentor" args="load s_graphs/PlaneSegmentationNodelet hdl_plane_seg_nodelet_manager">
     <param name="plane_extraction_frame_id" value="$(arg base_link_frame)" />
     <param name="min_seg_points" value="$(arg min_seg_points)" />
     <param name="min_horizontal_inliers" value="$(arg min_horizontal_inliers)" />
     <param name="min_vertical_inliers" value="$(arg min_vertical_inliers)" />
     <remap from="velodyne_points" to="/hdl_prefilter/filtered_point_cloud" />
-  </node> -->
+  </node>
 
   <!-- SCAN MATCHING -->
   <node pkg="nodelet" type="nodelet" name="hdl_scan_matching_nodelet_manager" args="manager" output="screen" />

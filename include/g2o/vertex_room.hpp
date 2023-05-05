@@ -36,59 +36,60 @@
 
 namespace g2o {
 
-  class G2O_TYPES_SLAM3D_API VertexRoomXYLB : public BaseVertex<2, Vector2>
-  {
-    public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-      VertexRoomXYLB() {}
+class G2O_TYPES_SLAM3D_API VertexRoomXYLB : public BaseVertex<2, Vector2> {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+  VertexRoomXYLB() {}
 
-      virtual void setToOriginImpl() {
-        _estimate.fill(0.);
-      }
+  virtual void setToOriginImpl() {
+    _estimate.fill(0.);
+  }
 
-      virtual bool setEstimateDataImpl(const number_t* est){
-        Eigen::Map<const Vector2> _est(est);
-        _estimate = _est;
+  virtual bool setEstimateDataImpl(const number_t* est) {
+    Eigen::Map<const Vector2> _est(est);
+    _estimate = _est;
 
-        return true;
-      }
+    return true;
+  }
 
-      virtual bool getEstimateData(number_t* est) const{
-        Eigen::Map<Vector2> _est(est);
-        _est = _estimate;
-        return true;
-      }
+  virtual bool getEstimateData(number_t* est) const {
+    Eigen::Map<Vector2> _est(est);
+    _est = _estimate;
+    return true;
+  }
 
-      virtual int estimateDimension() const { 
-        return 2;
-      }
+  virtual int estimateDimension() const {
+    return 2;
+  }
 
-      virtual bool setMinimalEstimateDataImpl(const number_t* est){
-        _estimate = Eigen::Map<const Vector2>(est);
-        return true;
-      }
+  virtual bool setMinimalEstimateDataImpl(const number_t* est) {
+    _estimate = Eigen::Map<const Vector2>(est);
+    return true;
+  }
 
-      virtual bool getMinimalEstimateData(number_t* est) const{
-        Eigen::Map<Vector2> v(est);
-        v = _estimate;
-        return true;
-      }
+  virtual bool getMinimalEstimateData(number_t* est) const {
+    Eigen::Map<Vector2> v(est);
+    v = _estimate;
+    return true;
+  }
 
-      virtual int minimalEstimateDimension() const { 
-        return 2;
-      }
+  virtual int minimalEstimateDimension() const {
+    return 2;
+  }
 
-      virtual void oplusImpl(const number_t* update)
-      {
-        _estimate[0] += update[0];
-        _estimate[1] += update[1];
-      }
+  virtual void oplusImpl(const number_t* update) {
+    _estimate[0] += update[0];
+    _estimate[1] += update[1];
+  }
 
-      virtual bool read(std::istream& is) { return internal::readVector(is, _estimate); }
-      virtual bool write(std::ostream& os) const { return internal::writeVector(os, estimate()); }
+  virtual bool read(std::istream& is) {
+    return internal::readVector(is, _estimate);
+  }
+  virtual bool write(std::ostream& os) const {
+    return internal::writeVector(os, estimate());
+  }
+};
 
-  };
-
-}
+}  // namespace g2o
 
 #endif

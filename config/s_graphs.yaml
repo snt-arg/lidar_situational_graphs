@@ -87,7 +87,7 @@ use_corridor_constraint:              true
 corridor_dist_threshold:              1.5
 corridor_min_plane_length:            4.0 
 corridor_min_width:                   1.5 
-corridor_max_width:                   2.5
+corridor_max_width:                   3.5
 corridor_plane_length_diff_threshold: 3.5
 corridor_point_diff_threshold:        3.5
 corridor_min_seg_dist:                1.0
