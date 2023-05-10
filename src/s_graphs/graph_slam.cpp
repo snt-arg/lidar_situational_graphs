@@ -30,7 +30,6 @@
 #include <g2o/edge_corridor_plane.hpp>
 #include <g2o/edge_room.hpp>
 
-
 G2O_USE_OPTIMIZATION_LIBRARY(pcg)
 G2O_USE_OPTIMIZATION_LIBRARY(cholmod)  // be aware of that cholmod brings GPL dependency
 G2O_USE_OPTIMIZATION_LIBRARY(csparse)  // be aware of that csparse brings LGPL unless it is dynamically linked
@@ -121,14 +120,14 @@ int GraphSLAM::num_edges() const {
 }
 
 int GraphSLAM::num_vertices_local() const {
-  return vertex_count;    
+  return vertex_count;
 }
 int GraphSLAM::num_edges_local() const {
-  return edge_count;    
+  return edge_count;
 }
 
 int GraphSLAM::add_vertices() {
-  return vertex_count += 1;    
+  return vertex_count += 1;
 }
 
 g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
@@ -156,7 +155,6 @@ bool GraphSLAM::remove_plane_node(g2o::VertexPlane* plane_vertex) {
 
   return ack;
 }
-
 
 g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   g2o::VertexPointXYZ* vertex(new g2o::VertexPointXYZ());
@@ -212,7 +210,7 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(g2o::VertexSE3* v_se3, g2o::Ver
 
 bool GraphSLAM::remove_se3_plane_edge(g2o::EdgeSE3Plane* se3_plane_edge) {
   bool ack = graph->removeEdge(se3_plane_edge);
-  
+
   return ack;
 }
 
@@ -332,7 +330,7 @@ g2o::EdgePlaneParallel* GraphSLAM::add_plane_parallel_edge(g2o::VertexPlane* v_p
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
 
- return edge;
+  return edge;
 }
 
 g2o::EdgePlanePerpendicular* GraphSLAM::add_plane_perpendicular_edge(g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2, const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information) {
@@ -353,7 +351,7 @@ g2o::EdgeSE3Corridor* GraphSLAM::add_se3_corridor_edge(g2o::VertexSE3* v_se3, g2
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_corridor;
   graph->addEdge(edge);
- 
+
   return edge;
 }
 
@@ -364,7 +362,7 @@ g2o::EdgeCorridorXPlane* GraphSLAM::add_corridor_xplane_edge(g2o::VertexCorridor
   edge->vertices()[0] = v_corridor;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
- 
+
   return edge;
 }
 
@@ -375,7 +373,7 @@ g2o::EdgeCorridorYPlane* GraphSLAM::add_corridor_yplane_edge(g2o::VertexCorridor
   edge->vertices()[0] = v_corridor;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
- 
+
   return edge;
 }
 
@@ -398,7 +396,7 @@ g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::Verte
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_room;
   graph->addEdge(edge);
- 
+
   return edge;
 }
 
@@ -409,7 +407,7 @@ g2o::EdgeRoomXPlane* GraphSLAM::add_room_xplane_edge(g2o::VertexRoomXYLB* v_room
   edge->vertices()[0] = v_room;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
- 
+
   return edge;
 }
 
@@ -420,7 +418,7 @@ g2o::EdgeRoomYPlane* GraphSLAM::add_room_yplane_edge(g2o::VertexRoomXYLB* v_room
   edge->vertices()[0] = v_room;
   edge->vertices()[1] = v_plane2;
   graph->addEdge(edge);
- 
+
   return edge;
 }
 
@@ -435,8 +433,6 @@ bool GraphSLAM::remove_room_yplane_edge(g2o::EdgeRoomYPlane* room_yplane_edge) {
 
   return ack;
 }
-
-
 
 void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size) {
   if(kernel_type == "NONE") {
@@ -485,8 +481,8 @@ int GraphSLAM::optimize(int num_iterations) {
   return iterations;
 }
 
-bool GraphSLAM::compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd> &spinv, std::vector<std::pair<int, int>> vert_pairs_vec) {
-  if (graph->computeMarginals(spinv, vert_pairs_vec)) {
+bool GraphSLAM::compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv, std::vector<std::pair<int, int>> vert_pairs_vec) {
+  if(graph->computeMarginals(spinv, vert_pairs_vec)) {
     return true;
   } else {
     return false;

@@ -84,14 +84,14 @@ public:
 
   /**
    * @brief add a corridor node to the graph
-   * @param corridor 
+   * @param corridor
    * @return registered node
    */
   g2o::VertexCorridor* add_corridor_node(const double& corridor_pose);
 
   /**
    * @brief add a room node to the graph
-   * @param room 
+   * @param room
    * @return registered node
    */
   g2o::VertexRoomXYLB* add_room_node(const Eigen::Vector2d& room_pose);
@@ -174,7 +174,7 @@ public:
   bool remove_corridor_xplane_edge(g2o::EdgeCorridorXPlane* corridor_xplane_edge);
 
   bool remove_corridor_yplane_edge(g2o::EdgeCorridorYPlane* corridor_yplane_edge);
-  
+
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3, g2o::VertexRoomXYLB* v_room, const Eigen::Vector2d& measurement, const Eigen::MatrixXd& information);
 
   g2o::EdgeRoomXPlane* add_room_xplane_edge(g2o::VertexRoomXYLB* v_room, g2o::VertexPlane* v_plane2, const double& measurement, const Eigen::MatrixXd& information);
@@ -188,11 +188,17 @@ public:
   void add_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& kernel_type, double kernel_size);
 
   /**
+   * @brief remove a room node from the graph
+   * @param room vertex
+   * @return success or failure
+   */
+  bool remove_room_node(g2o::VertexRoomXYLB* room_vertex);
+  /**
    * @brief perform graph optimization
    */
   int optimize(int num_iterations);
 
-  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd> &spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
+  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv, std::vector<std::pair<int, int>> vert_pairs_vec);
 
   /**
    * @brief save the pose graph to a file
@@ -209,7 +215,8 @@ public:
 public:
   g2o::RobustKernelFactory* robust_kernel_factory;
   std::unique_ptr<g2o::SparseOptimizer> graph;  // g2o graph
-  int vertex_count; int edge_count;
+  int vertex_count;
+  int edge_count;
 };
 
 }  // namespace s_graphs

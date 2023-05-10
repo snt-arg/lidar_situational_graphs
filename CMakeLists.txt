@@ -58,6 +58,10 @@ add_message_files(FILES
   FloorCoeffs.msg
   ScanMatchingStatus.msg
   PointClouds.msg
+  RoomData.msg
+  RoomsData.msg
+  PlaneData.msg
+  PlanesData.msg
 )
 
 add_service_files(FILES
@@ -65,7 +69,7 @@ add_service_files(FILES
   DumpGraph.srv
 )
 
-generate_messages(DEPENDENCIES std_msgs geometry_msgs sensor_msgs)
+generate_messages(DEPENDENCIES std_msgs geometry_msgs sensor_msgs visualization_msgs)
 
 ###################################
 ## catkin specific configuration ##
@@ -100,6 +104,16 @@ target_link_libraries(s_graphs_plane_segmentation_nodelet
 )
 add_dependencies(s_graphs_plane_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
 
+add_library(s_graphs_room_segmentation_nodelet 
+  apps/room_segmentation_nodelet.cpp 
+  src/s_graphs/room_analyzer.cpp
+)
+target_link_libraries(s_graphs_room_segmentation_nodelet
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+)
+add_dependencies(s_graphs_room_segmentation_nodelet ${PROJECT_NAME}_gencpp {${PROJECT_NAME}_EXPORTED_TARGETS})
+
 add_library(s_graphs_floor_detection_nodelet apps/floor_detection_nodelet.cpp)
 target_link_libraries(s_graphs_floor_detection_nodelet
   ${catkin_LIBRARIES}
@@ -125,6 +139,7 @@ add_library(s_graphs_nodelet
   src/s_graphs/registrations.cpp
   src/s_graphs/information_matrix_calculator.cpp
   src/s_graphs/plane_analyzer.cpp
+  src/s_graphs/room_analyzer.cpp
   src/g2o/robust_kernel_io.cpp
 )
 target_link_libraries(s_graphs_nodelet
@@ -140,7 +155,7 @@ target_link_libraries(s_graphs_nodelet
   ${G2O_TYPES_SLAM3D_ADDONS}
 )
 add_dependencies(s_graphs_nodelet ${PROJECT_NAME}_gencpp ${${PROJECT_NAME}_EXPORTED_TARGETS})
-
+  
 catkin_install_python(
   PROGRAMS
     src/${PROJECT_NAME}/bag_player.py

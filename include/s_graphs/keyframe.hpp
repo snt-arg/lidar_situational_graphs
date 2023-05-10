@@ -40,11 +40,12 @@ public:
   Eigen::Isometry3d estimate() const;
 
 public:
-  ros::Time stamp;                                // timestamp
-  Eigen::Isometry3d odom;                         // odometry (estimated by scan_matching_odometry)
-  double accum_distance;                          // accumulated distance from the first node (by scan_matching_odometry)
-  pcl::PointCloud<PointT>::ConstPtr cloud;        // point cloud
-  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;  // semantically segmented pointcloud
+  ros::Time stamp;                                            // timestamp
+  Eigen::Isometry3d odom;                                     // odometry (estimated by scan_matching_odometry)
+  double accum_distance;                                      // accumulated distance from the first node (by scan_matching_odometry)
+  pcl::PointCloud<PointT>::ConstPtr cloud;                    // point cloud
+  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;           // semantically segmented pointcloud
+  std::vector<int> x_plane_ids, y_plane_ids, hort_plane_ids;  // list of planes associated with the keyframe
 
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS

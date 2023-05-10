@@ -1,7 +1,7 @@
 <launch>
 
   <arg name="env" default="$(optenv ENV real)" doc="Define whether we are running on an actual robot or on a virtual replica" />
-  <arg name="use_free_space_graph" default="false" doc="Define whether to use free space cluster graph" />
+  <arg name="use_free_space_graph" default="true" doc="Define whether to use free space cluster graph" />
   <arg name="wait_odom_to_map_tf" default="false" />
   <arg name="april_tag_enabled" default="false" />
   <arg name="compute_odom" default="false" />
@@ -60,6 +60,13 @@
     <remap from="/scan_matching_odometry/status" to="hdl_scan_matcher/status" />
   </node>
 
+  <!--ROOM SEGMENTATION -->
+  <node pkg="nodelet" type="nodelet" name="s_graphs_room_seg_nodelet_manager" args="manager" output="screen" />
+  <node pkg="nodelet" type="nodelet" name="s_graphs_room_segmentor" args="load s_graphs/RoomSegmentationNodelet s_graphs_room_seg_nodelet_manager">
+    <param name="vertex_neigh_thres" value="2" />
+  </node>
+
+
   <!-- GRAPH SLAM -->
   <node pkg="nodelet" type="nodelet" name="s_graphs_nodelet_manager" args="manager" output="screen" />
   <node pkg="nodelet" type="nodelet" name="s_graphs" args="load s_graphs/SGraphsNodelet s_graphs_nodelet_manager" output="screen">
@@ -95,5 +102,6 @@
 
   <node pkg="tf" type="static_transform_publisher" name="body_to_body_elevated" args="0 0 10.0 0 0 0 body body_elevated 100" />
 
+  <include if='$(arg use_free_space_graph)' file="$(find voxblox_skeleton)/launch/skeletonize_map_realtime.launch" />
 
 </launch>
