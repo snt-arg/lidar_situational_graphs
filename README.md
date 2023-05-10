@@ -165,7 +165,7 @@ cd s_graphs && vcs import --recursive ../ < .rosinstall_ros1
 4. Install the required ROS packages
 
 ```bash
-cd ../../ && rosdep install --from-paths src -ignore-src -y
+cd ../../ && rosdep install --from-paths src --ignore-src -y -r
 ```
 
 5. Build workspace
@@ -185,7 +185,7 @@ cd $Home/s_graphs_ros2_ws && source $Home/s_graphs_ros2_ws/install/setup.bash &&
 ```
 
 ```bash
-ros2 launch s_graphs s_graphs_ros2_launch.py compute_odom:=false
+ros2 launch s_graphs s_graphs_launch.py compute_odom:=false
 ```
 
 ```bash
@@ -193,7 +193,11 @@ source $Home/s_graphs_ros1_ws/devel/setup.bash && roslaunch voxblox_skeleton ske
 ```
 
 ```bash
-rosbag PATH_TO_ROSBAG_DATASET --clock
+ros2 run ros1_bridge dynamic_bridge
+```
+
+```bash
+rosbag play PATH_TO_ROSBAG_DATASET --clock
 ```
 
 ### Virtual Dataset
@@ -208,6 +212,10 @@ ros2 launch s_graphs s_graphs_ros2_launch.py compute_odom:=true
 
 ```bash
 source $Home/s_graphs_ros1_ws/devel/setup.bash && roslaunch voxblox_skeleton skeletonize_map_realtime.launch 2>/dev/null
+```
+
+```bash
+ros2 run ros1_bridge dynamic_bridge
 ```
 
 ```bash
