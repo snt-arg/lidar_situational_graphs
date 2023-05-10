@@ -947,16 +947,6 @@ class SGraphsNode : public rclcpp::Node {
         publish_graph->graph.get(), this->keyframes);
     graph_pub->publish(graph_structure);
     graph_keyframes_pub->publish(graph_keyframes);
-
-    static RoomsKeyframeGenerator keyframe_generator(
-        &this->x_vert_planes, &this->y_vert_planes, &this->keyframes);
-
-    for (auto room : this->rooms_vec) {
-      keyframe_generator.addRoom(room);
-    }
-    for (auto room : keyframe_generator.getExtendedRooms()) {
-      graph_room_keyframe_pub->publish(convertExtendedRoomToRosMsg(room));
-    }
   }
 
   /**

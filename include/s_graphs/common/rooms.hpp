@@ -84,6 +84,8 @@ class Rooms {
   }
 
   Rooms &operator=(const Rooms &old_room) {
+    id = old_room.id;
+
     plane_x1 = old_room.plane_x1;
     plane_x2 = old_room.plane_x2;
     plane_y1 = old_room.plane_y1;
