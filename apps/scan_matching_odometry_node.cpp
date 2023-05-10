@@ -35,15 +35,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <iostream>
 #include <memory>
+#include <s_graphs/common/ros_utils.hpp>
 #include <s_graphs/msg/scan_matching_status.hpp>
-#include <s_graphs/ros_utils.hpp>
 
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "pcl_conversions/pcl_conversions.h"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs/registrations.hpp"
+#include "s_graphs/common/registrations.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "tf2_eigen/tf2_eigen.h"
 #include "tf2_ros/transform_broadcaster.h"

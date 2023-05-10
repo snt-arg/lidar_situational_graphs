@@ -129,11 +129,12 @@ cd ../../ && rosdep install --from-paths src -y --ignore-src -r
 ```bash
 colcon build --symlink-install
 ```
-> If you want to compile with debug traces (from backward_cpp ) run 
+
+> If you want to compile with debug traces (from backward_cpp ) run
+
 ```bash
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo 
 ```
-
 
 6. Source workspace
 

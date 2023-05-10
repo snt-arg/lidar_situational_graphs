@@ -69,6 +69,52 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "g2o/vertex_room.hpp"
 namespace g2o {
 
+// ADAPTED FROM G2O SE3 edge
+class EdgeRoomRoom
+    : public BaseBinaryEdge<6, Eigen::Isometry3d, g2o::VertexRoom, g2o::VertexRoom> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeRoomRoom();
+  virtual bool read(std::istream& is);
+  virtual bool write(std::ostream& os) const;
+
+  void computeError();
+
+  virtual void setMeasurement(const Isometry3& m) {
+    _measurement = m;
+    _inverseMeasurement = m.inverse();
+  }
+
+  virtual bool setMeasurementData(const number_t* d) {
+    Eigen::Map<const Vector7> v(d);
+    setMeasurement(internal::fromVectorQT(v));
+    return true;
+  }
+
+  virtual bool getMeasurementData(number_t* d) const {
+    Eigen::Map<Vector7> v(d);
+    v = internal::toVectorQT(_measurement);
+    return true;
+  }
+
+  void linearizeOplus();
+
+  virtual int measurementDimension() const { return 7; }
+
+  virtual bool setMeasurementFromState();
+
+  virtual number_t initialEstimatePossible(const OptimizableGraph::VertexSet& /*from*/,
+                                           OptimizableGraph::Vertex* /*to*/) {
+    return 1.;
+  }
+
+  virtual void initialEstimate(const OptimizableGraph::VertexSet& from,
+                               OptimizableGraph::Vertex* to);
+
+ protected:
+  Isometry3 _inverseMeasurement;
+};
+
 class EdgeSE3Room
     : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoom> {
  public:
