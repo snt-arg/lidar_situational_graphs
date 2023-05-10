@@ -80,6 +80,9 @@ struct VerticalPlanes {
   g2o::VertexPlane* plane_node;                    // node instance
   std::vector<double> color;
   int revit_id;
+  std::string type;
+  double length;
+  Eigen::Vector2d start_point;
 };
 
 /**

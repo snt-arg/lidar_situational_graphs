@@ -43,6 +43,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/types/slam3d_addons/types_slam3d_addons.h>
 
 #include <boost/format.hpp>
+#include <g2o/edge_doorway_two_rooms.hpp>
 #include <g2o/edge_infinite_room_plane.hpp>
 #include <g2o/edge_plane.hpp>
 #include <g2o/edge_plane_identity.hpp>
@@ -228,6 +229,16 @@ g2o::VertexRoom* GraphSLAM::add_room_node(const Eigen::Isometry3d& room_pose) {
   g2o::VertexRoom* vertex(new g2o::VertexRoom());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(room_pose);
+  graph->addVertex(vertex);
+  this->increment_local_nbr_of_vertices();
+
+  return vertex;
+}
+
+g2o::VertexDoorWay* GraphSLAM::add_doorway_node(const Eigen::Isometry3d& doorway_pose) {
+  g2o::VertexDoorWay* vertex(new g2o::VertexDoorWay());
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  vertex->setEstimate(doorway_pose);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
 
@@ -581,6 +592,23 @@ g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(
   edge->vertices()[0] = v_wall;
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeDoorWay2Rooms* GraphSLAM::add_doorway_2rooms_edge(
+    g2o::VertexDoorWay* v_door_r1,
+    g2o::VertexDoorWay* v_door_r2,
+    g2o::VertexRoom* v_room1,
+    g2o::VertexRoom* v_room2,
+    const Eigen::MatrixXd& information) {
+  g2o::EdgeDoorWay2Rooms* edge(new g2o::EdgeDoorWay2Rooms());
+  edge->setInformation(information);
+  edge->vertices()[0] = v_door_r1;
+  edge->vertices()[1] = v_door_r2;
+  edge->vertices()[2] = v_room1;
+  edge->vertices()[3] = v_room2;
   graph->addEdge(edge);
 
   return edge;

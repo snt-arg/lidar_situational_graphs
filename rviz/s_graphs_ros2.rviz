@@ -49,104 +49,13 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        back:
-          Value: true
-        back_fisheye:
-          Value: true
-        base_link:
-          Value: false
-        body:
-          Value: false
-        flat_body:
-          Value: true
-        floors_layer:
-          Value: false
-        front_rail:
-          Value: false
-        frontleft:
-          Value: true
-        frontleft_fisheye:
-          Value: true
-        frontright:
-          Value: true
-        frontright_fisheye:
-          Value: true
-        gpe:
-          Value: true
-        head:
-          Value: true
-        keyframes_layer:
-          Value: false
-        left:
-          Value: true
-        left_fisheye:
-          Value: true
-        map:
-          Value: true
-        map_elevated:
-          Value: false
-        odom:
-          Value: true
-        rear_rail:
-          Value: false
-        right:
-          Value: true
-        right_fisheye:
-          Value: true
-        rooms_layer:
-          Value: false
-        velodyne:
-          Value: false
-        vision:
-          Value: true
-        walls_layer:
-          Value: false
       Marker Scale: 5
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: false
       Tree:
-        map:
-          keyframes_layer:
-            walls_layer:
-              rooms_layer:
-                floors_layer:
-                  {}
-          map_elevated:
-            {}
-          odom:
-            body:
-              base_link:
-                {}
-              flat_body:
-                {}
-              front_rail:
-                {}
-              head:
-                back:
-                  back_fisheye:
-                    {}
-                frontleft:
-                  frontleft_fisheye:
-                    {}
-                frontright:
-                  frontright_fisheye:
-                    {}
-                left:
-                  left_fisheye:
-                    {}
-                right:
-                  right_fisheye:
-                    {}
-              rear_rail:
-                {}
-              velodyne:
-                {}
-              vision:
-                {}
-            gpe:
-              {}
+        {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -219,15 +128,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        hort_planes: true
-        imu: true
-        keyframe_keyframe_edges: true
-        keyframe_plane_edges: true
-        loop_close_radius: true
-        nodes: true
-        rooms: true
-        x_vert_planes: true
-        y_vert_planes: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -236,7 +137,7 @@ Visualization Manager:
         Value: /s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: MarkerArray
       Namespaces:
         {}
@@ -246,7 +147,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /voxblox_skeletonizer/sparse_graph
-      Value: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -324,5 +225,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1848
-  X: 1992
+  X: 72
   Y: 27
