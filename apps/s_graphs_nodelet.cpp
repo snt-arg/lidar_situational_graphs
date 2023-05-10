@@ -338,14 +338,14 @@ private:
         if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
           lookup_rooms(room_data);
         }
-        // // x infinite_room
-        // else if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
-        //   inf_room_mapper->lookup_infinite_rooms(graph_slam, PlaneUtils::plane_class::X_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms, rooms_vec);
-        // }
-        // // y infinite_room
-        // else if(room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
-        //   inf_room_mapper->lookup_infinite_rooms(graph_slam, PlaneUtils::plane_class::Y_VERT_PLANE, room_data, x_vert_planes, y_vert_planes, dupl_x_vert_planes, dupl_y_vert_planes, x_infinite_rooms, y_infinite_rooms, rooms_vec);
-        // }
+        // x infinite_room
+        else if(room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
+          lookup_corridors(plane_class::X_VERT_PLANE, room_data);
+        }
+        // y infinite_room
+        else if(room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
+          lookup_corridors(plane_class::Y_VERT_PLANE, room_data);
+        }
       }
 
       room_data_queue_mutex.lock();
@@ -839,6 +839,48 @@ private:
 
     std::vector<plane_data_list> y_corridor_refined = refine_corridors(y_corridor);
     if(y_corridor_refined.size() == 2) factor_corridors(plane_class::Y_VERT_PLANE, y_corridor_refined[0], y_corridor_refined[1]);
+  }
+
+  void lookup_corridors(const int& plane_type, const s_graphs::RoomData room_data) {
+    if(plane_type == plane_class::X_VERT_PLANE) {
+      // check the distance with the current room vector
+
+      // factor the infinite_room here
+      std::cout << "factoring x corridor" << std::endl;
+      Eigen::Vector4d x_plane1(room_data.x_planes[0].nx, room_data.x_planes[0].ny, room_data.x_planes[0].nz, room_data.x_planes[0].d);
+      Eigen::Vector4d x_plane2(room_data.x_planes[1].nx, room_data.x_planes[1].ny, room_data.x_planes[1].nz, room_data.x_planes[1].d);
+      plane_data_list x_plane1_data, x_plane2_data;
+      x_plane1_data.plane_id = room_data.x_planes[0].id;
+      x_plane1_data.plane_unflipped = x_plane1;
+      x_plane1_data.plane_centroid(0) = room_data.room_center.x;
+      x_plane1_data.plane_centroid(1) = room_data.room_center.y;
+
+      x_plane2_data.plane_id = room_data.x_planes[1].id;
+      x_plane2_data.plane_unflipped = x_plane2;
+      x_plane2_data.plane_centroid(0) = room_data.room_center.x;
+      x_plane2_data.plane_centroid(1) = room_data.room_center.y;
+
+      factor_corridors(plane_class::X_VERT_PLANE, x_plane1_data, x_plane2_data);
+    }
+
+    else if(plane_type == plane_class::Y_VERT_PLANE) {
+      // factor the infinite_room here
+      std::cout << "factoring y corridors" << std::endl;
+      Eigen::Vector4d y_plane1(room_data.y_planes[0].nx, room_data.y_planes[0].ny, room_data.y_planes[0].nz, room_data.y_planes[0].d);
+      Eigen::Vector4d y_plane2(room_data.y_planes[1].nx, room_data.y_planes[1].ny, room_data.y_planes[1].nz, room_data.y_planes[1].d);
+      plane_data_list y_plane1_data, y_plane2_data;
+      y_plane1_data.plane_id = room_data.y_planes[0].id;
+      y_plane1_data.plane_unflipped = y_plane1;
+      y_plane1_data.plane_centroid(0) = room_data.room_center.x;
+      y_plane1_data.plane_centroid(1) = room_data.room_center.y;
+
+      y_plane2_data.plane_id = room_data.y_planes[1].id;
+      y_plane2_data.plane_unflipped = y_plane2;
+      y_plane2_data.plane_centroid(0) = room_data.room_center.x;
+      y_plane2_data.plane_centroid(1) = room_data.room_center.y;
+
+      factor_corridors(plane_class::Y_VERT_PLANE, y_plane1_data, y_plane2_data);
+    }
   }
 
   void lookup_rooms(std::vector<plane_data_list> x_det_room_candidates, std::vector<plane_data_list> y_det_room_candidates) {
@@ -1984,7 +2026,7 @@ private:
     }
 
     if(use_corridor_constraint) {
-      // std::cout << "x_det_corridor_candidates: " << x_det_corridor_candidates.size() << std::endl;
+      // std::cout << "x_det_corridor_candidates: " << x_det_corridor_candidates.size() << std::endl;sg
       // std::cout << "y_det_corridor_candidates: " << y_det_corridor_candidates.size() << std::endl;
       // lookup_corridors(x_det_corridor_candidates, y_det_corridor_candidates);
     }

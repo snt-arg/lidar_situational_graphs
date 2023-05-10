@@ -318,6 +318,10 @@ bool RoomAnalyzer::perform_room_segmentation(RoomInfo& room_info, int& room_clus
     else if(room_planes.found_x1_plane && room_planes.found_x2_plane && (!room_planes.found_y1_plane || !room_planes.found_y2_plane)) {
       if(sub_cloud_cluster->points.size() > 0) extract_cluster_endpoints(sub_cloud_cluster, p1, p2);
 
+      // create a copy of the planes:
+      s_graphs::PlaneData x_plane1_copy = room_planes.x_plane1;
+      s_graphs::PlaneData x_plane2_copy = room_planes.x_plane2;
+
       plane_utils->correct_plane_direction(plane_class::X_VERT_PLANE, room_planes.x_plane1);
       plane_utils->correct_plane_direction(plane_class::X_VERT_PLANE, room_planes.x_plane2);
 
@@ -349,6 +353,9 @@ bool RoomAnalyzer::perform_room_segmentation(RoomInfo& room_info, int& room_clus
       room_planes.y_plane1.plane_points.clear();
       room_planes.y_plane2.plane_points.clear();
 
+      plane_utils->correct_plane_d(plane_class::X_VERT_PLANE, x_plane1_copy);
+      plane_utils->correct_plane_d(plane_class::X_VERT_PLANE, x_plane2_copy);
+
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
       room_candidate.neighbour_ids = neighbour_ids;
@@ -356,8 +363,8 @@ bool RoomAnalyzer::perform_room_segmentation(RoomInfo& room_info, int& room_clus
       room_candidate.room_center = room_center;
       room_candidate.cluster_center.x = cluster_center(0);
       room_candidate.cluster_center.y = cluster_center(1);
-      room_candidate.x_planes.push_back(room_planes.x_plane1);
-      room_candidate.x_planes.push_back(room_planes.x_plane2);
+      room_candidate.x_planes.push_back(x_plane1_copy);
+      room_candidate.x_planes.push_back(x_plane2_copy);
       room_candidates_vec.push_back(room_candidate);
       room_cluster_counter++;
       return true;
@@ -365,6 +372,9 @@ bool RoomAnalyzer::perform_room_segmentation(RoomInfo& room_info, int& room_clus
     // if found only two y planes are found at y infinite_room
     else if(room_planes.found_y1_plane && room_planes.found_y2_plane && (!room_planes.found_x1_plane || !room_planes.found_x2_plane)) {
       if(sub_cloud_cluster->points.size() > 0) extract_cluster_endpoints(sub_cloud_cluster, p1, p2);
+
+      s_graphs::PlaneData y_plane1_copy = room_planes.y_plane1;
+      s_graphs::PlaneData y_plane2_copy = room_planes.y_plane2;
 
       plane_utils->correct_plane_direction(plane_class::Y_VERT_PLANE, room_planes.y_plane1);
       plane_utils->correct_plane_direction(plane_class::Y_VERT_PLANE, room_planes.y_plane2);
@@ -397,6 +407,9 @@ bool RoomAnalyzer::perform_room_segmentation(RoomInfo& room_info, int& room_clus
       room_planes.y_plane1.plane_points.clear();
       room_planes.y_plane2.plane_points.clear();
 
+      plane_utils->correct_plane_d(plane_class::Y_VERT_PLANE, y_plane1_copy);
+      plane_utils->correct_plane_d(plane_class::Y_VERT_PLANE, y_plane2_copy);
+
       s_graphs::RoomData room_candidate;
       room_candidate.id = cloud_cluster->header.seq;
       room_candidate.neighbour_ids = neighbour_ids;
@@ -404,8 +417,8 @@ bool RoomAnalyzer::perform_room_segmentation(RoomInfo& room_info, int& room_clus
       room_candidate.room_center = room_center;
       room_candidate.cluster_center.x = cluster_center(0);
       room_candidate.cluster_center.y = cluster_center(1);
-      room_candidate.y_planes.push_back(room_planes.y_plane1);
-      room_candidate.y_planes.push_back(room_planes.y_plane2);
+      room_candidate.y_planes.push_back(y_plane1_copy);
+      room_candidate.y_planes.push_back(y_plane2_copy);
       room_candidates_vec.push_back(room_candidate);
       return true;
     } else {
