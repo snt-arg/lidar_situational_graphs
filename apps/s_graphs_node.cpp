@@ -181,16 +181,16 @@ class SGraphsNode : public rclcpp::Node {
       usleep(1e6);
     }
 
-    odom_sub.subscribe(this, "odom");
-    cloud_sub.subscribe(this, "filtered_points");
-    sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
-        ApproxSyncPolicy(32), odom_sub, cloud_sub));
-    sync->registerCallback(&SGraphsNode::cloud_callback, this);
-
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
         "odom",
-        1,
+        100,
         std::bind(&SGraphsNode::raw_odom_callback, this, std::placeholders::_1));
+
+    point_cloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+        "filtered_points",
+        100,
+        std::bind(&SGraphsNode::point_cloud_callback, this, std::placeholders::_1));
+
     imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
         "gpsimu_driver/imu_data",
         1024,
@@ -198,11 +198,11 @@ class SGraphsNode : public rclcpp::Node {
 
     room_data_sub = this->create_subscription<s_graphs::msg::RoomsData>(
         "room_segmentation/room_data",
-        1,
+        10,
         std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1));
     floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
         "floor_plan/floor_data",
-        1,
+        10,
         std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1));
 
     if (this->get_parameter("enable_gps").get_parameter_value().get<bool>()) {
@@ -419,6 +419,7 @@ class SGraphsNode : public rclcpp::Node {
    *
    */
   void raw_odom_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
+    odom_queue.push_back(odom_msg);
     Eigen::Isometry3d odom = odom2isometry(odom_msg);
     Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
 
@@ -429,6 +430,10 @@ class SGraphsNode : public rclcpp::Node {
     geometry_msgs::msg::TransformStamped odom2map_transform = matrix2transform(
         odom_msg->header.stamp, trans_odom2map, map_frame_id, odom_frame_id);
     odom2map_broadcaster->sendTransform(odom2map_transform);
+  }
+
+  void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
+    cloud_queue.push_back(cloud_msg);
   }
 
   /**
@@ -557,42 +562,79 @@ class SGraphsNode : public rclcpp::Node {
     }
   }
 
-  /**
-   * @brief received point clouds are pushed to #keyframe_queue
-   * @param odom_msg
-   * @param cloud_msg
-   */
-  void cloud_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg,
-                      const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
-    const rclcpp::Time& stamp = cloud_msg->header.stamp;
-    Eigen::Isometry3d odom = odom2isometry(odom_msg);
+  void sync_odom_cloud() {
+    for (auto odom_msg = odom_queue.begin(); odom_msg != odom_queue.end(); ++odom_msg) {
+      const rclcpp::Time& stamp = (*odom_msg)->header.stamp;
+      Eigen::Isometry3d odom = odom2isometry((*odom_msg));
 
-    pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-    pcl::fromROSMsg(*cloud_msg, *cloud);
-
-    if (base_frame_id.empty()) {
-      base_frame_id = cloud_msg->header.frame_id;
-    }
-
-    if (!keyframe_updater->update(odom)) {
-      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-      if (keyframe_queue.empty()) {
-        std_msgs::msg::Header read_until;
-        read_until.stamp = stamp + rclcpp::Duration(10, 0);
-        read_until.frame_id = points_topic;
-        read_until_pub->publish(read_until);
-        read_until.frame_id = "/filtered_points";
-        read_until_pub->publish(read_until);
+      // check in the cloud queue the message closest to odom
+      pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+      double min_time_diff = 100;
+      int matched_cloud_id;
+      for (int i = 0; i < cloud_queue.size(); ++i) {
+        double time_diff = fabs((rclcpp::Time(cloud_queue[i]->header.stamp).seconds() -
+                                 rclcpp::Time((*odom_msg)->header.stamp).seconds()));
+        if (time_diff < min_time_diff) {
+          matched_cloud_id = i;
+          min_time_diff = time_diff;
+        }
       }
 
-      return;
+      if (min_time_diff < 0.1) {
+        pcl::fromROSMsg((*cloud_queue[matched_cloud_id]), *cloud);
+        if (base_frame_id.empty()) {
+          base_frame_id = cloud_queue[matched_cloud_id]->header.frame_id;
+        }
+        cloud_queue.erase(cloud_queue.begin(), cloud_queue.begin() + matched_cloud_id);
+      }
+
+      if (keyframe_updater->update(odom)) {
+        double accum_d = keyframe_updater->get_accum_distance();
+        KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
+        keyframe_queue.push_back(keyframe);
+      }
     }
+    odom_queue.clear();
+    return;
+  }
 
-    double accum_d = keyframe_updater->get_accum_distance();
-    KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
+  void integrate_delayed_cloud() {
+    for (const auto& keyframe : keyframes) {
+      if (keyframe->cloud->points.empty()) {
+        // check which cloud measurement lies close to this keyframe
+        pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+        double min_time_diff = 100;
+        int matched_cloud_id;
+        for (int i = 0; i < cloud_queue.size(); ++i) {
+          double time_diff = fabs(rclcpp::Time(keyframe->stamp).seconds() -
+                                  rclcpp::Time(cloud_queue[i]->header.stamp).seconds());
+          if (time_diff < min_time_diff) {
+            matched_cloud_id = i;
+            min_time_diff = time_diff;
+          }
+        }
 
-    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-    keyframe_queue.push_back(keyframe);
+        if (min_time_diff < 0.1) {
+          pcl::fromROSMsg((*cloud_queue[matched_cloud_id]), *cloud);
+          if (base_frame_id.empty()) {
+            base_frame_id = cloud_queue[matched_cloud_id]->header.frame_id;
+          }
+          if (extract_planar_surfaces) {
+            std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
+                plane_analyzer->extract_segmented_planes(keyframe->cloud);
+            plane_mapper->map_extracted_planes(covisibility_graph,
+                                               keyframe,
+                                               extracted_cloud_vec,
+                                               x_vert_planes,
+                                               y_vert_planes,
+                                               hort_planes);
+          }
+
+          cloud_queue.erase(cloud_queue.begin(),
+                            cloud_queue.begin() + matched_cloud_id);
+        }
+      }
+    }
   }
 
   /**
@@ -601,6 +643,13 @@ class SGraphsNode : public rclcpp::Node {
    * @return if true, at least one keyframe was added to the pose graph
    */
   bool flush_keyframe_queue() {
+    if (odom_queue.empty()) {
+      return false;
+    }
+
+    sync_odom_cloud();
+    integrate_delayed_cloud();
+
     if (keyframe_queue.empty()) {
       // std::cout << "keyframe_queue is empty " << std::endl;
       return false;
@@ -1037,13 +1086,15 @@ class SGraphsNode : public rclcpp::Node {
          ++it) {
       for (const auto& x_plane_id : (*it)->x_plane_ids) {
         auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));
-        // if(result.second == false) std::cout << "x plane already existed with id : "
+        // if(result.second == false) std::cout << "x plane already existed with id :
+        // "
         // << x_plane_id << std::endl;
       }
 
       for (const auto& y_plane_id : (*it)->y_plane_ids) {
         auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));
-        // if(result.second == false) std::cout << "y plane already existed with id : "
+        // if(result.second == false) std::cout << "y plane already existed with id :
+        // "
         // << y_plane_id << std::endl;
       }
     }
@@ -1273,13 +1324,6 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr graph_publish_timer;
   rclcpp::TimerBase::SharedPtr map_to_odom_broadcast_timer;
 
-  message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub;
-  message_filters::Subscriber<sensor_msgs::msg::PointCloud2> cloud_sub;
-  typedef message_filters::sync_policies::ApproximateTime<nav_msgs::msg::Odometry,
-                                                          sensor_msgs::msg::PointCloud2>
-      ApproxSyncPolicy;
-  std::shared_ptr<message_filters::Synchronizer<ApproxSyncPolicy>> sync;
-
   rclcpp::Subscription<geographic_msgs::msg::GeoPointStamped>::SharedPtr gps_sub;
   rclcpp::Subscription<nmea_msgs::msg::Sentence>::SharedPtr nmea_sub;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr navsat_sub;
@@ -1288,6 +1332,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
   rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
 
   std::mutex trans_odom2map_mutex;
   Eigen::Matrix4f trans_odom2map;
@@ -1318,6 +1363,12 @@ class SGraphsNode : public rclcpp::Node {
 
   rclcpp::Service<s_graphs::srv::DumpGraph>::SharedPtr dump_service_server;
   rclcpp::Service<s_graphs::srv::SaveMap>::SharedPtr save_map_service_server;
+
+  // odom queue
+  std::deque<nav_msgs::msg::Odometry::SharedPtr> odom_queue;
+
+  // cloud queue
+  std::deque<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_queue;
 
   // keyframe queue
   std::string base_frame_id;

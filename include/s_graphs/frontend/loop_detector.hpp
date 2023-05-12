@@ -249,7 +249,7 @@ class LoopDetector {
                      const KeyFrame::Ptr& new_keyframe,
                      s_graphs::GraphSLAM& graph_slam,
                      bool use_prior = true) {
-    if (candidate_keyframes.empty()) {
+    if (candidate_keyframes.empty() || new_keyframe->cloud->points.empty()) {
       return nullptr;
     }
 
@@ -267,6 +267,7 @@ class LoopDetector {
 
     pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
     for (const auto& candidate : candidate_keyframes) {
+      if (candidate->cloud->points.empty()) continue;
       registration->setInputSource(candidate->cloud);
       Eigen::Isometry3d new_keyframe_estimate = new_keyframe->node->estimate();
       new_keyframe_estimate.linear() =
