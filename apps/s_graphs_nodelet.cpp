@@ -1982,6 +1982,7 @@ private:
       graph_slam->add_robust_kernel(edge, private_nh.param<std::string>("odometry_edge_robust_kernel", "NONE"), private_nh.param<double>("odometry_edge_robust_kernel_size", 1.0));
 
       // Segment the planes and rooms here
+      // std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec;
       std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec = plane_analyzer->extract_segmented_planes(keyframe->cloud);
 
       // From all the current segmented planes at a keyframe detect rooms/corridors
