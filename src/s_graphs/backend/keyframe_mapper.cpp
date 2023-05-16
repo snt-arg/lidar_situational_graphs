@@ -136,4 +136,25 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
   }
 }
 
+void KeyframeMapper::remap_delayed_keyframe(std::shared_ptr<GraphSLAM>& graph_slam,
+                                            KeyFrame::Ptr keyframe,
+                                            KeyFrame::Ptr prev_keyframe) {
+  Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
+  Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+      keyframe->cloud, prev_keyframe->cloud, relative_pose);
+
+  std::set<g2o::HyperGraph::Edge*> edges = keyframe->node->edges();
+  for (const auto& edge : edges) {
+    g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
+    if (edge_se3) {
+      g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]);
+      g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]);
+
+      if (v1->id() == prev_keyframe->id() || v2->id() == prev_keyframe->id()) {
+        graph_slam->update_se3edge_information(edge_se3, information);
+      }
+    }
+  }
+}
+
 }  // namespace s_graphs

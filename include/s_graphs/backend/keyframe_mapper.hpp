@@ -90,6 +90,10 @@ class KeyframeMapper {
                      std::deque<KeyFrame::Ptr>& keyframe_queue,
                      std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 
+  void remap_delayed_keyframe(std::shared_ptr<GraphSLAM>& graph_slam,
+                              KeyFrame::Ptr keyframe,
+                              KeyFrame::Ptr prev_keyframe);
+
  private:
   rclcpp::Node::SharedPtr node_obj;
   int max_keyframes_per_update;

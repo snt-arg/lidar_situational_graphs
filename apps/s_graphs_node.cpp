@@ -562,6 +562,10 @@ class SGraphsNode : public rclcpp::Node {
     }
   }
 
+  /**
+   * @brief sync the messages from odom and pointcloud
+   *
+   */
   void sync_odom_cloud() {
     for (auto odom_msg = odom_queue.begin(); odom_msg != odom_queue.end(); ++odom_msg) {
       const rclcpp::Time& stamp = (*odom_msg)->header.stamp;
@@ -598,7 +602,13 @@ class SGraphsNode : public rclcpp::Node {
     return;
   }
 
+  /**
+   * @brief integrate keyframes with missing pointcloud data
+   * Note: This case will only happen when odom is faster than pointcloud data
+   *
+   */
   void integrate_delayed_cloud() {
+    int keyframe_pos = 0;
     for (const auto& keyframe : keyframes) {
       if (keyframe->cloud->points.empty()) {
         // check which cloud measurement lies close to this keyframe
@@ -616,9 +626,19 @@ class SGraphsNode : public rclcpp::Node {
 
         if (min_time_diff < 0.1) {
           pcl::fromROSMsg((*cloud_queue[matched_cloud_id]), *cloud);
+          keyframe->cloud = cloud;
+
           if (base_frame_id.empty()) {
             base_frame_id = cloud_queue[matched_cloud_id]->header.frame_id;
           }
+
+          // update the information matrix
+          if (keyframe_pos != 0) {
+            auto prev_keyframe = keyframes[keyframe_pos - 1];
+            keyframe_mapper->remap_delayed_keyframe(
+                covisibility_graph, keyframe, prev_keyframe);
+          }
+
           if (extract_planar_surfaces) {
             std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
                 plane_analyzer->extract_segmented_planes(keyframe->cloud);
@@ -634,6 +654,7 @@ class SGraphsNode : public rclcpp::Node {
                             cloud_queue.begin() + matched_cloud_id);
         }
       }
+      keyframe_pos++;
     }
   }
 

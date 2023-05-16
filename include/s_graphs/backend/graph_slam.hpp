@@ -306,6 +306,14 @@ class GraphSLAM {
   bool remove_se3_plane_edge(g2o::EdgeSE3Plane* se3_plane_edge);
 
   /**
+   * @brief Update the information of an se3 edge
+   *
+   * @param edge_se3
+   */
+  void update_se3edge_information(g2o::EdgeSE3* edge_se3,
+                                  Eigen::MatrixXd information_matrix);
+
+  /**
    * @brief Add an edge between an SE3 node and to a plane using point to plane
    * distances
    *
