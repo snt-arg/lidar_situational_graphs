@@ -994,6 +994,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void graph_publisher_timer_callback() {
+    if (keyframes.empty()) return;
     std::string graph_type;
     if (std::string("/robot1") == this->get_namespace()) {
       graph_type = "Prior";
