@@ -47,6 +47,7 @@ bool is_SE3_inside_a_room(const Eigen::Isometry3d& pose,
   for (auto& plane : planes) {
     const Eigen::Vector3d plane_point = plane.point;
     auto diff_point = point - plane_point;
+
     if (plane.normal.dot(diff_point) < 0) {
       return false;
     }

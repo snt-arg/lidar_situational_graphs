@@ -81,6 +81,13 @@ void LocalGraphGenerator::generate_local_graph(
     Rooms& current_room) {
   // check which keyframes already exist in the local graph and add only new ones
   for (const auto& filtered_keyframe : filtered_keyframes) {
+    for (g2o::HyperGraph::VertexIDMap::iterator it =
+             current_room.local_graph->graph->vertices().begin();
+         it != current_room.local_graph->graph->vertices().end();
+         ++it) {
+      g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+      if (current_room.local_graph->graph->vertex(v->id())) continue;
+    }
   }
 
   std::deque<KeyFrame::Ptr> new_room_keyframes;
@@ -89,6 +96,8 @@ void LocalGraphGenerator::generate_local_graph(
                                  new_room_keyframes,
                                  current_room.room_keyframes);
   // and to the local graph
+  std::cout << "local graph keyframes size: "
+            << current_room.local_graph->graph->vertices().size() << std::endl;
 
   // get the edges of the keyframe in the cov graph and add them to the local graph
 }

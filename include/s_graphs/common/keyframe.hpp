@@ -82,6 +82,34 @@ struct KeyFrame {
    * @param graph
    */
   KeyFrame(const std::string& directory, g2o::HyperGraph* graph);
+
+  /* Copy Constructor */
+  KeyFrame(const KeyFrame::Ptr& old_keyframe, const bool deep_copy) {
+    *this = old_keyframe;
+    if (deep_copy) {
+      node = new g2o::VertexSE3();
+      node->setEstimate(old_keyframe->node->estimate());
+    }
+  }
+
+  KeyFrame& operator=(const KeyFrame::Ptr& old_keyframe) {
+    stamp = old_keyframe->stamp;
+    odom = old_keyframe->odom;
+    accum_distance = old_keyframe->accum_distance;
+    cloud = old_keyframe->cloud;
+    cloud_seg_body = old_keyframe->cloud_seg_body;
+    x_plane_ids = old_keyframe->x_plane_ids;
+    y_plane_ids = old_keyframe->y_plane_ids;
+    hort_plane_ids = old_keyframe->hort_plane_ids;
+    floor_coeffs = old_keyframe->floor_coeffs;
+    utm_coord = old_keyframe->utm_coord;
+    acceleration = old_keyframe->acceleration;
+    orientation = old_keyframe->orientation;
+    node = old_keyframe->node;
+
+    return *this;
+  }
+
   virtual ~KeyFrame();
 
   /**
