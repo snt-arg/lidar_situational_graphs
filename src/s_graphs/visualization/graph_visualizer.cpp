@@ -73,7 +73,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     std::vector<KeyFrame::Ptr> keyframes,
     std::vector<Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
-  // markers.markers.resize(11);
 
   // node markers
   double wall_vertex_h = 18;
