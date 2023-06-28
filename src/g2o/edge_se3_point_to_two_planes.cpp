@@ -53,134 +53,64 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <g2o/core/base_binary_edge.h>
+#include <g2o/types/slam3d/edge_se3.h>
+#include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 
-#include <Eigen/Dense>
-#include <g2o/edge_plane.hpp>
+#include <g2o/edge_se3_point_to_two_planes.hpp>
 
 namespace g2o {
 
-void EdgePlaneParallel::computeError() {
-  const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
-  const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
+void EdgeSE3PlanePlane::computeError() {
+  const g2o::VertexSE3* v1 = static_cast<const g2o::VertexSE3*>(_vertices[0]);
+  const g2o::VertexPlane* v2 = static_cast<const g2o::VertexPlane*>(_vertices[1]);
+  const g2o::VertexPlane* v3 = static_cast<const g2o::VertexPlane*>(_vertices[2]);
 
-  double num = v1->estimate().normal().dot(v2->estimate().normal());
-  double den = v1->estimate().normal().norm() * (v2->estimate().normal().norm());
+  const g2o::Plane3D& s_graph_plane = v2->estimate();
+  const g2o::Plane3D& a_graph_plane = v3->estimate();
 
-  _error[0] = acos(fabs(num) / den);
+  // Compute the translation vector as the difference between the normal vectors of the
+  // planes
+  Eigen::Vector3d translation = a_graph_plane.normal() - s_graph_plane.normal();
+
+  // double angleDifference = s_graph_plane.normal().angle(a_graph_plane.normal());
+  // Eigen::Matrix3d rotation =
+  //     Eigen::AngleAxisd(angleDifference,
+  //     Eigen::Vector3d::UnitZ()).toRotationMatrix();
+  // v1->setEstimate(g2o::SE3Quat(rotation, translation));
+  // _error =;
 }
-bool EdgePlaneParallel::read(std::istream& is) {
-  Eigen::Vector3d v;
-  for (int i = 0; i < 3; ++i) {
-    is >> v[i];
-  }
 
-  setMeasurement(v);
+bool EdgeSE3PlanePlane::read(std::istream& is) {
+  Eigen::Matrix4d v;
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      is >> v(i, j);
+    }
+  }
+  setMeasurement(Isometry3(v));
+
   for (int i = 0; i < information().rows(); ++i) {
     for (int j = i; j < information().cols(); ++j) {
       is >> information()(i, j);
-      if (i != j) {
-        information()(j, i) = information()(i, j);
-      }
+      if (i != j) information()(j, i) = information()(i, j);
     }
   }
-
   return true;
 }
+bool EdgeSE3PlanePlane::write(std::ostream& os) const {
+  Eigen::Matrix4d v = measurement().matrix();
 
-bool EdgePlaneParallel::write(std::ostream& os) const {
-  for (int i = 0; i < 3; ++i) {
-    os << _measurement[i] << " ";
+  for (int i = 0; i < 4; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      os << " " << v(i, j);
+    }
   }
 
   for (int i = 0; i < information().rows(); ++i) {
     for (int j = i; j < information().cols(); ++j) {
       os << " " << information()(i, j);
-    };
-  }
-  return os.good();
-}
-
-void EdgePlanePerpendicular::computeError() {
-  const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
-  const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-
-  Eigen::Vector3d normal1 = v1->estimate().normal().normalized();
-  Eigen::Vector3d normal2 = v2->estimate().normal().normalized();
-
-  _error[0] = normal1.dot(normal2);
-}
-
-bool EdgePlanePerpendicular::read(std::istream& is) {
-  Eigen::Vector3d v;
-  for (int i = 0; i < 3; ++i) {
-    is >> v[i];
-  }
-
-  setMeasurement(v);
-  for (int i = 0; i < information().rows(); ++i) {
-    for (int j = i; j < information().cols(); ++j) {
-      is >> information()(i, j);
-      if (i != j) {
-        information()(j, i) = information()(i, j);
-      }
     }
-  }
-
-  return true;
-}
-
-bool EdgePlanePerpendicular::write(std::ostream& os) const {
-  for (int i = 0; i < 3; ++i) {
-    os << _measurement[i] << " ";
-  }
-
-  for (int i = 0; i < information().rows(); ++i) {
-    for (int j = i; j < information().cols(); ++j) {
-      os << " " << information()(i, j);
-    };
-  }
-  return os.good();
-}
-
-void Edge2Planes::computeError() {
-  const VertexPlane* v1 = static_cast<const VertexPlane*>(_vertices[0]);
-  const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
-  g2o::Plane3D plane1 = v1->estimate();
-  g2o::Plane3D plane2 = v2->estimate();
-
-  _error = plane1.ominus(plane2);
-}
-
-bool Edge2Planes::read(std::istream& is) {
-  Eigen::Vector3d v;
-  for (int i = 0; i < 3; ++i) {
-    is >> v[i];
-  }
-
-  setMeasurement(v);
-  for (int i = 0; i < information().rows(); ++i) {
-    for (int j = i; j < information().cols(); ++j) {
-      is >> information()(i, j);
-      if (i != j) {
-        information()(j, i) = information()(i, j);
-      }
-    }
-  }
-
-  return true;
-}
-
-bool Edge2Planes::write(std::ostream& os) const {
-  for (int i = 0; i < 3; ++i) {
-    os << _measurement[i] << " ";
-  }
-
-  for (int i = 0; i < information().rows(); ++i) {
-    for (int j = i; j < information().cols(); ++j) {
-      os << " " << information()(i, j);
-    };
   }
   return os.good();
 }

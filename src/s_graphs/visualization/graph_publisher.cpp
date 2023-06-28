@@ -206,7 +206,7 @@ graph_manager_msgs::msg::Graph GraphPublisher::publish_graph(
       // first edge
       graph_edge.origin_node = v_room->id();
       graph_edge.target_node = rooms_vec[i].plane_x1_id;
-      edge_attribute.name = "EdgeRoom4Planes";
+      edge_attribute.name = "Geometric_info";
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);

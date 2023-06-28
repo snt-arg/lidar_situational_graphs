@@ -53,73 +53,86 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef EDGE_PLANE_PARALLEL_HPP
-#define EDGE_PLANE_PARALLEL_HPP
+#ifndef G2O_VERTEX_DEVIATION
+#define G2O_VERTEX_DEVIATION
 
-#include <g2o/core/base_binary_edge.h>
-#include <g2o/types/slam3d_addons/vertex_plane.h>
+#include <g2o/types/slam3d/g2o_types_slam3d_api.h>
 
-#include <Eigen/Dense>
+#include <Eigen/Core>
+
+#include "g2o/config.h"
+#include "g2o/core/base_vertex.h"
+#include "g2o/core/hyper_graph_action.h"
 
 namespace g2o {
 
-class EdgePlaneParallel
-    : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
+class G2O_TYPES_SLAM3D_API VertexDeviation : public BaseVertex<6, Isometry3> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgePlaneParallel() : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
-    _information.setIdentity();
-    _error.setZero();
+  VertexDeviation() {
+    _numOplusCalls = 0;
+    setToOriginImpl();
+    updateCache();
+  }
+  static const int orthogonalizeAfter =
+      1000;  //< orthogonalize the rotation matrix after N updates
+
+  virtual void setToOriginImpl() { _estimate = Isometry3::Identity(); }
+
+  virtual bool setEstimateDataImpl(const number_t* est) {
+    Eigen::Map<const Vector7> v(est);
+    _estimate = internal::fromVectorQT(v);
+    return true;
   }
 
-  void computeError() override;
-  virtual bool read(std::istream& is) override;
-
-  virtual bool write(std::ostream& os) const override;
-
-  virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
-
-  virtual int measurementDimension() const override { return 3; }
-};
-
-class EdgePlanePerpendicular
-    : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgePlanePerpendicular()
-      : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
-    _information.setIdentity();
-    _error.setZero();
+  virtual bool getEstimateData(number_t* est) const {
+    Eigen::Map<Vector7> v(est);
+    v = internal::toVectorQT(_estimate);
+    return true;
   }
 
-  void computeError() override;
+  virtual int estimateDimension() const { return 7; }
 
-  virtual bool read(std::istream& is) override;
-
-  virtual bool write(std::ostream& os) const override;
-
-  virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
-
-  virtual int measurementDimension() const override { return 3; }
-};
-
-class Edge2Planes
-    : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Edge2Planes()
-      : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane>() {
-    // _information.setIdentity();
-    _error.setZero();
+  virtual bool setMinimalEstimateDataImpl(const number_t* est) {
+    Eigen::Map<const Vector6> v(est);
+    _estimate = internal::fromVectorMQT(v);
+    return true;
   }
 
-  void computeError() override;
+  virtual bool getMinimalEstimateData(number_t* est) const {
+    Eigen::Map<Vector6> v(est);
+    v = internal::toVectorMQT(_estimate);
+    return true;
+  }
 
-  virtual bool read(std::istream& is) override;
+  virtual int minimalEstimateDimension() const { return 6; }
 
-  virtual bool write(std::ostream& os) const override;
+  virtual void oplusImpl(const number_t* update) {
+    Eigen::Map<const Vector6> v(update);
+    Isometry3 increment = internal::fromVectorMQT(v);
+    _estimate = _estimate * increment;
+    if (++_numOplusCalls > orthogonalizeAfter) {
+      _numOplusCalls = 0;
+      internal::approximateNearestOrthogonalMatrix(
+          _estimate.matrix().topLeftCorner<3, 3>());
+    }
+  }
+
+  virtual bool read(std::istream& is) {
+    Vector7 est;
+    bool state = internal::readVector(is, est);
+    setEstimate(internal::fromVectorQT(est));
+    return state;
+  }
+  virtual bool write(std::ostream& os) const {
+    return internal::writeVector(os, internal::toVectorQT(estimate()));
+  }
+
+ protected:
+  int _numOplusCalls;  ///< store how often opluse was called to trigger
+                       ///< orthogonaliation of the rotation matrix
 };
 
 }  // namespace g2o
 
-#endif  // EDGE_PLANE_PARALLEL_HPP
+#endif

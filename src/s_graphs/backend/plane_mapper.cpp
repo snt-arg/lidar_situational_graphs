@@ -234,7 +234,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.color = color;
         x_vert_planes.push_back(vert_plane);
         keyframe->x_plane_ids.push_back(vert_plane.id);
-
         RCLCPP_DEBUG(node_obj->get_logger(),
                      "xplane association",
                      "Added new x vertical plane node with coeffs %f %f %f %f",

@@ -86,6 +86,8 @@ class Rooms {
   Rooms &operator=(const Rooms &old_room) {
     id = old_room.id;
 
+    prior_id = old_room.prior_id;
+
     plane_x1 = old_room.plane_x1;
     plane_x2 = old_room.plane_x2;
     plane_y1 = old_room.plane_y1;
@@ -112,6 +114,7 @@ class Rooms {
 
  public:
   int id;
+  int prior_id;
   g2o::Plane3D plane_x1;
   g2o::Plane3D plane_x2;
   g2o::Plane3D plane_y1;

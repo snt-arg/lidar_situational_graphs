@@ -53,73 +53,28 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef EDGE_PLANE_PARALLEL_HPP
-#define EDGE_PLANE_PARALLEL_HPP
-
-#include <g2o/core/base_binary_edge.h>
+#ifndef KKL_G2O_EDGE_SE3_POINT_TO_2_PLANES_HPP
+#define KKL_G2O_EDGE_SE3_POINT_TO_2_PLANES_HPP
+#include <g2o/core/base_multi_edge.h>
+#include <g2o/types/slam3d/edge_se3.h>
+#include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 
 #include <Eigen/Dense>
 
 namespace g2o {
-
-class EdgePlaneParallel
-    : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
+class EdgeSE3PlanePlane : public g2o::BaseMultiEdge<6, Isometry3> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgePlaneParallel() : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
-
-  void computeError() override;
-  virtual bool read(std::istream& is) override;
-
-  virtual bool write(std::ostream& os) const override;
-
-  virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
-
-  virtual int measurementDimension() const override { return 3; }
-};
-
-class EdgePlanePerpendicular
-    : public BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgePlanePerpendicular()
-      : BaseBinaryEdge<1, Eigen::Vector3d, VertexPlane, VertexPlane>() {
-    _information.setIdentity();
-    _error.setZero();
-  }
+  EdgeSE3PlanePlane() : BaseMultiEdge<6, Isometry3>() {}
 
   void computeError() override;
 
-  virtual bool read(std::istream& is) override;
-
-  virtual bool write(std::ostream& os) const override;
-
-  virtual void setMeasurement(const Eigen::Vector3d& m) override { _measurement = m; }
-
-  virtual int measurementDimension() const override { return 3; }
-};
-
-class Edge2Planes
-    : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane> {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  Edge2Planes()
-      : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexPlane, g2o::VertexPlane>() {
-    // _information.setIdentity();
-    _error.setZero();
-  }
-
-  void computeError() override;
+  void setMeasurement(const Isometry3& m) override { _measurement = m; }
 
   virtual bool read(std::istream& is) override;
-
   virtual bool write(std::ostream& os) const override;
 };
-
 }  // namespace g2o
 
-#endif  // EDGE_PLANE_PARALLEL_HPP
+#endif

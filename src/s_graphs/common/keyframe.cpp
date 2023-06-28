@@ -93,7 +93,7 @@ void KeyFrame::save(const std::string& directory) {
   }
 
   if (node) {
-    ofs << "id " << node->id() << "\n";
+    ofs << "iddd " << node->id() << "\n";
   }
 
   pcl::io::savePCDFileBinary(directory + "/cloud.pcd", *cloud);

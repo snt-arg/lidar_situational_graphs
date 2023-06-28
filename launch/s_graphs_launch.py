@@ -44,7 +44,7 @@ def launch_sgraphs(context, *args, **kwargs):
     if str(ns_prefix).startswith("/"):
         ns_prefix = ns_prefix[1:]
 
-    base_link_frame = "body"
+    base_link_frame = "base_link"
     if env_arg == "sim":
         base_link_frame = "base_footprint"
 
@@ -96,6 +96,23 @@ def launch_sgraphs(context, *args, **kwargs):
             ("velodyne_points", "platform/velodyne_points"),
             ("odom", "platform/odometry"),
         ],
+    )
+
+    body_velodyne_static_transform = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="body_velodyne_static_transform",
+        arguments=[
+            "0.0",
+            "0.0",
+            "0.125",
+            "0.0",
+            "0.0",
+            "0.0",
+            ns_prefix + "body",
+            ns_prefix + "velodyne",
+        ],
+        output="screen",
     )
 
     map_keyframe_static_transform = Node(
@@ -176,4 +193,5 @@ def launch_sgraphs(context, *args, **kwargs):
         keyframe_wall_static_transform,
         wall_room_static_transform,
         room_floor_static_transform,
+        body_velodyne_static_transform,
     ]

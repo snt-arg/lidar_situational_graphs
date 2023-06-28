@@ -4,12 +4,16 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /TF1
         - /TF1/Frames1
+        - /PointCloud21
         - /PointCloud22
         - /MarkerArray1/Namespaces1
+        - /MarkerArray2
         - /MarkerArray2/Namespaces1
+        - /MarkerArray3
       Splitter Ratio: 0.5
-    Tree Height: 1654
+    Tree Height: 363
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -49,13 +53,140 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_footprint:
+          Value: true
+        base_link:
+          Value: false
+        body:
+          Value: false
+        camera_depth_frame:
+          Value: false
+        camera_depth_optical_frame:
+          Value: false
+        camera_link:
+          Value: false
+        camera_rgb_frame:
+          Value: false
+        camera_rgb_optical_frame:
+          Value: false
+        floors_layer:
+          Value: false
+        front_left_ee:
+          Value: false
+        front_left_hip:
+          Value: false
+        front_left_lower_leg:
+          Value: false
+        front_left_upper_leg:
+          Value: false
+        front_rail:
+          Value: false
+        front_right_ee:
+          Value: false
+        front_right_hip:
+          Value: false
+        front_right_lower_leg:
+          Value: false
+        front_right_upper_leg:
+          Value: false
+        imu_link:
+          Value: false
+        keyframe:
+          Value: false
+        keyframes_layer:
+          Value: false
+        map:
+          Value: true
+        map_elevated:
+          Value: false
+        odom:
+          Value: false
+        prior_map:
+          Value: true
+        rear_left_ee:
+          Value: false
+        rear_left_hip:
+          Value: false
+        rear_left_lower_leg:
+          Value: false
+        rear_left_upper_leg:
+          Value: false
+        rear_rail:
+          Value: false
+        rear_right_ee:
+          Value: false
+        rear_right_hip:
+          Value: false
+        rear_right_lower_leg:
+          Value: false
+        rear_right_upper_leg:
+          Value: false
+        rooms_layer:
+          Value: false
+        velodyne:
+          Value: false
+        velodyne_base_link:
+          Value: false
+        walls_layer:
+          Value: false
       Marker Scale: 5
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: false
       Tree:
-        {}
+        map:
+          keyframes_layer:
+            walls_layer:
+              rooms_layer:
+                floors_layer:
+                  {}
+          map_elevated:
+            {}
+          odom:
+            base_footprint:
+              body:
+                base_link:
+                  camera_link:
+                    camera_depth_frame:
+                      camera_depth_optical_frame:
+                        {}
+                    camera_rgb_frame:
+                      camera_rgb_optical_frame:
+                        {}
+                  imu_link:
+                    {}
+                  velodyne_base_link:
+                    velodyne:
+                      {}
+                front_left_hip:
+                  front_left_upper_leg:
+                    front_left_lower_leg:
+                      front_left_ee:
+                        {}
+                front_rail:
+                  {}
+                front_right_hip:
+                  front_right_upper_leg:
+                    front_right_lower_leg:
+                      front_right_ee:
+                        {}
+                rear_left_hip:
+                  rear_left_upper_leg:
+                    rear_left_lower_leg:
+                      rear_left_ee:
+                        {}
+                rear_rail:
+                  {}
+                rear_right_hip:
+                  rear_right_upper_leg:
+                    rear_right_lower_leg:
+                      rear_right_ee:
+                        {}
+            keyframe:
+              {}
+          prior_map:
+            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -67,7 +198,7 @@ Visualization Manager:
       Axis: Z
       Channel Name: intensity
       Class: rviz_default_plugins/PointCloud2
-      Color: 136; 138; 133
+      Color: 255; 0; 0
       Color Transformer: FlatColor
       Decay Time: 5
       Enabled: true
@@ -87,7 +218,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /filtered_points
+        Value: /platform/velodyne_points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -137,7 +268,25 @@ Visualization Manager:
         Value: /s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        closed_spaces: true
+        connected_edges_0: true
+        connected_edges_1: true
+        connected_vertices_0: true
+        connected_vertices_1: true
+        edges: true
+        vertices: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /voxblox_skeletonizer/sparse_graph
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
       Name: MarkerArray
       Namespaces:
         {}
@@ -146,8 +295,8 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /voxblox_skeletonizer/sparse_graph
-      Value: false
+        Value: /graph_manager/best_match_visualization
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -190,40 +339,35 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz_default_plugins/Orbit
-      Distance: 31.379924774169922
+      Angle: 0
+      Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Focal Point:
-        X: 1.502182126045227
-        Y: -0.052396319806575775
-        Z: -1.0097227096557617
-      Focal Shape Fixed Size: true
-      Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3097970485687256
+      Scale: 36.030914306640625
       Target Frame: <Fixed Frame>
-      Value: Orbit (rviz)
-      Yaw: 3.799938201904297
+      Value: TopDownOrtho (rviz_default_plugins)
+      X: -0.5353478193283081
+      Y: 7.135100841522217
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: true
-  Height: 1883
+  Height: 1043
   Hide Left Dock: true
   Hide Right Dock: true
-  QMainWindow State: 000000ff00000000fd0000000400000000000002c700000701fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000003d00000701000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000701fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d00000701000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d00650100000000000004500000000000000000000004380000070100000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000002c7000003b9fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073000000003d000003b9000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003b9fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000003b9000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004420000003efc0100000002fb0000000800540069006d00650100000000000004420000000000000000fb0000000800540069006d0065010000000000000450000000000000000000000780000003b900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Tool Properties:
     collapsed: false
   Views:
     collapsed: true
-  Width: 1080
-  X: 3840
+  Width: 1920
+  X: 4890
   Y: 0

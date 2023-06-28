@@ -36,8 +36,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/core/sparse_block_matrix.h>
 #include <g2o/core/sparse_optimizer.h>
 
+#include <g2o/edge_doorway_two_rooms.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
-#include <g2o/vertex_wall.hpp>
 #include <memory>
 
 #include "rclcpp/rclcpp.hpp"
@@ -63,6 +63,7 @@ class EdgeInfiniteRoomYPlane;
 class EdgeSE3Room;
 class EdgeRoom2Planes;
 class EdgeRoom4Planes;
+class EdgeRoomRoom;
 class EdgeFloorRoom;
 class EdgeXInfiniteRoomXInfiniteRoom;
 class EdgeYInfiniteRoomYInfiniteRoom;
@@ -70,9 +71,13 @@ class EdgePlanePerpendicular;
 class Edge2Planes;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
+class Edge2Rooms;
 class RobustKernelFactory;
 class VertexRoom;
 class VertexFloor;
+class VertexDoorWay;
+class VertexWallXYZ;
+
 }  // namespace g2o
 
 namespace s_graphs {
@@ -208,6 +213,14 @@ class GraphSLAM {
    * @return Registered node
    */
   g2o::VertexRoom* add_room_node(const Eigen::Isometry3d& room_pose);
+
+  /**
+   * @brief Add a doorway node to the graph
+   *
+   * @param doorway_pose
+   * @return Registered node
+   */
+  g2o::VertexDoorWay* add_doorway_node(const Eigen::Isometry3d& doorway_pose);
 
   /**
    * @brief copy a room node from another graph
@@ -594,6 +607,19 @@ class GraphSLAM {
                                           const Eigen::Vector2d& measurement,
                                           const Eigen::MatrixXd& information);
 
+  g2o::EdgeDoorWay2Rooms* add_doorway_2rooms_edge(g2o::VertexDoorWay* v_door_r1,
+                                                  g2o::VertexDoorWay* v_door_r2,
+                                                  g2o::VertexRoom* v_room1,
+                                                  g2o::VertexRoom* v_room2,
+                                                  const Eigen::MatrixXd& information);
+
+  g2o::EdgeRoomRoom* add_room_room_edge(g2o::VertexRoom* v1,
+                                        g2o::VertexRoom* v2,
+                                        const Eigen::MatrixXd& information);
+
+  g2o::Edge2Rooms* add_2rooms_edge(g2o::VertexRoom* v1,
+                                   g2o::VertexRoom* v2,
+                                   const Eigen::MatrixXd& information);
   /**
    * @brief copy the floor room edge from a graph
    *

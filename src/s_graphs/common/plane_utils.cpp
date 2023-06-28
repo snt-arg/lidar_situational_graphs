@@ -99,11 +99,11 @@ Eigen::Quaterniond PlaneUtils::euler_to_quaternion(const double roll,
   return q;
 }
 
-Eigen::Vector2d PlaneUtils::room_center(const Eigen::Vector4d& x_plane1,
+Eigen::Vector3d PlaneUtils::room_center(const Eigen::Vector4d& x_plane1,
                                         const Eigen::Vector4d& x_plane2,
                                         const Eigen::Vector4d& y_plane1,
                                         const Eigen::Vector4d& y_plane2) {
-  Eigen::Vector2d center;
+  Eigen::Vector3d center;
   Eigen::Vector3d vec_x, vec_y;
 
   if (fabs(x_plane1(3)) > fabs(x_plane2(3))) {
@@ -129,6 +129,7 @@ Eigen::Vector2d PlaneUtils::room_center(const Eigen::Vector4d& x_plane1,
   Eigen::Vector3d final_vec = vec_x + vec_y;
   center(0) = final_vec(0);
   center(1) = final_vec(1);
+  center(2) = final_vec(2);
 
   return center;
 }

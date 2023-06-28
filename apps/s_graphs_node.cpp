@@ -183,8 +183,7 @@ class SGraphsNode : public rclcpp::Node {
 
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
-    sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
-        ApproxSyncPolicy(32), odom_sub, cloud_sub));
+    sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(ApproxSyncPolicy(32), odom_sub, cloud_sub));
     sync->registerCallback(&SGraphsNode::cloud_callback, this);
 
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(

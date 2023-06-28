@@ -130,7 +130,7 @@ class PlaneUtils {
    * @param
    * @return
    */
-  Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1,
+  Eigen::Vector3d room_center(const Eigen::Vector4d& x_plane1,
                               const Eigen::Vector4d& x_plane2,
                               const Eigen::Vector4d& y_plane1,
                               const Eigen::Vector4d& y_plane2);
