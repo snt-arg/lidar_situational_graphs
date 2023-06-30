@@ -318,7 +318,7 @@ class SGraphsNode : public rclcpp::Node {
 
     map_publish_timer = this->create_wall_timer(
         std::chrono::seconds(int(map_cloud_update_interval)),
-        std::bind(&SGraphsNode::map_points_publish_timer_callback, this),
+        std::bind(&SGraphsNode::map_publish_timer_callback, this),
         callback_map_pub_timer);
 
     anchor_node = nullptr;
@@ -1027,7 +1027,7 @@ class SGraphsNode : public rclcpp::Node {
    * @brief generate map point cloud and publish it
    * @param event
    */
-  void map_points_publish_timer_callback() {
+  void map_publish_timer_callback() {
     if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
       return;
     }
