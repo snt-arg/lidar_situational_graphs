@@ -70,7 +70,7 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
     std::vector<InfiniteRooms>& x_infinite_rooms,
     std::vector<InfiniteRooms>& y_infinite_rooms,
-    const std::vector<Rooms>& rooms_vec) {
+    const std::unordered_map<int, Rooms>& rooms_vec) {
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
   room_quat.x() = room_data.room_center.orientation.x;
@@ -98,25 +98,25 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     Rooms matched_room;
     float min_dist_x_inf_room_room = 100;
     for (const auto& current_room : rooms_vec) {
-      if ((room_data.x_planes[0].id == current_room.plane_x1_id ||
-           room_data.x_planes[0].id == current_room.plane_x2_id) &&
-          (room_data.x_planes[1].id == current_room.plane_x1_id ||
-           room_data.x_planes[1].id == current_room.plane_x2_id)) {
+      if ((room_data.x_planes[0].id == current_room.second.plane_x1_id ||
+           room_data.x_planes[0].id == current_room.second.plane_x2_id) &&
+          (room_data.x_planes[1].id == current_room.second.plane_x1_id ||
+           room_data.x_planes[1].id == current_room.second.plane_x2_id)) {
         min_dist_x_inf_room_room = 0;
-        matched_room = current_room;
+        matched_room = current_room.second;
         break;
       }
 
       float dist_x_inf_room_room =
           sqrt(pow(room_data.room_center.position.x -
-                       current_room.node->estimate().translation()(0),
+                       current_room.second.node->estimate().translation()(0),
                    2) +
                pow(room_data.room_center.position.y -
-                       current_room.node->estimate().translation()(1),
+                       current_room.second.node->estimate().translation()(1),
                    2));
       if (dist_x_inf_room_room < min_dist_x_inf_room_room) {
         min_dist_x_inf_room_room = dist_x_inf_room_room;
-        matched_room = current_room;
+        matched_room = current_room.second;
       }
     }
 
@@ -163,25 +163,25 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     float min_dist_y_inf_room_room = 100;
     Rooms matched_room;
     for (const auto& current_room : rooms_vec) {
-      if ((room_data.y_planes[0].id == current_room.plane_y1_id ||
-           room_data.y_planes[0].id == current_room.plane_y2_id) &&
-          (room_data.y_planes[1].id == current_room.plane_y1_id ||
-           room_data.y_planes[1].id == current_room.plane_y2_id)) {
+      if ((room_data.y_planes[0].id == current_room.second.plane_y1_id ||
+           room_data.y_planes[0].id == current_room.second.plane_y2_id) &&
+          (room_data.y_planes[1].id == current_room.second.plane_y1_id ||
+           room_data.y_planes[1].id == current_room.second.plane_y2_id)) {
         min_dist_y_inf_room_room = 0;
-        matched_room = current_room;
+        matched_room = current_room.second;
         break;
       }
 
       float dist_y_inf_room_room =
           sqrt(pow(room_data.room_center.position.x -
-                       current_room.node->estimate().translation()(0),
+                       current_room.second.node->estimate().translation()(0),
                    2) +
                pow(room_data.room_center.position.y -
-                       current_room.node->estimate().translation()(1),
+                       current_room.second.node->estimate().translation()(1),
                    2));
       if (dist_y_inf_room_room < min_dist_y_inf_room_room) {
         min_dist_y_inf_room_room = dist_y_inf_room_room;
-        matched_room = current_room;
+        matched_room = current_room.second;
       }
     }
     if (min_dist_y_inf_room_room < 1.0) {

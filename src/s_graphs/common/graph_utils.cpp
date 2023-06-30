@@ -127,7 +127,7 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
                               std::vector<KeyFrame::Ptr> keyframes,
                               std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                               std::unordered_map<int, VerticalPlanes>& y_vert_planes,
-                              std::vector<Rooms>& rooms_vec,
+                              std::unordered_map<int, Rooms>& rooms_vec,
                               std::vector<InfiniteRooms>& x_infinite_rooms,
                               std::vector<InfiniteRooms>& y_infinite_rooms,
                               std::vector<Floors>& floors_vec) {
@@ -171,11 +171,10 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
     g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
     if (vertex_room) {
       int id = vertex_room->id();
+      auto room = rooms_vec.find(id);
 
-      auto room = std::find_if(
-          rooms_vec.begin(), rooms_vec.end(), boost::bind(&Rooms::id, _1) == id);
       if (room != rooms_vec.end()) {
-        (*room).node->setEstimate(vertex_room->estimate());
+        (room->second).node->setEstimate(vertex_room->estimate());
         continue;
       } else {
         auto x_inf_room = std::find_if(x_infinite_rooms.begin(),

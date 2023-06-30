@@ -41,7 +41,7 @@ void FloorMapper::lookup_floors(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const s_graphs::msg::RoomData room_data,
     std::vector<s_graphs::Floors>& floors_vec,
-    const std::vector<s_graphs::Rooms>& rooms_vec,
+    const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   double floor_threshold = 0.5;
@@ -85,7 +85,7 @@ void FloorMapper::factor_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const s_graphs::msg::RoomData room_data,
     std::vector<s_graphs::Floors>& floors_vec,
-    const std::vector<s_graphs::Rooms>& rooms_vec,
+    const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   g2o::VertexFloor* floor_node;
@@ -123,7 +123,7 @@ void FloorMapper::update_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
     g2o::VertexFloor* floor_node,
     const s_graphs::msg::RoomData room_data,
-    const std::vector<s_graphs::Rooms>& rooms_vec,
+    const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   Eigen::Isometry3d floor_pose;
@@ -150,7 +150,7 @@ void FloorMapper::factor_floor_room_nodes(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const Eigen::Isometry3d& floor_pose,
     g2o::VertexFloor* floor_node,
-    const std::vector<s_graphs::Rooms>& rooms_vec,
+    const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
   Eigen::Matrix2d information_floor;
@@ -162,12 +162,12 @@ void FloorMapper::factor_floor_room_nodes(
   for (const auto& room : rooms_vec) {
     Eigen::Vector2d measurement;
     measurement(0) =
-        floor_pose.translation()(0) - room.node->estimate().translation()(0);
+        floor_pose.translation()(0) - room.second.node->estimate().translation()(0);
     measurement(1) =
-        floor_pose.translation()(1) - room.node->estimate().translation()(1);
+        floor_pose.translation()(1) - room.second.node->estimate().translation()(1);
 
     auto edge = graph_slam->add_floor_room_edge(
-        floor_node, room.node, measurement, information_floor);
+        floor_node, room.second.node, measurement, information_floor);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   }
 

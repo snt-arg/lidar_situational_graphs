@@ -177,7 +177,7 @@ class TestRoom : public ::testing::Test {
   std::deque<std::pair<s_graphs::VerticalPlanes, s_graphs::VerticalPlanes>>
       dupl_x_vert_planes, dupl_y_vert_planes;
   std::vector<s_graphs::InfiniteRooms> x_infinite_rooms, y_infinite_rooms;
-  std::vector<s_graphs::Rooms> rooms_vec;
+  std::unordered_map<int, s_graphs::Rooms> rooms_vec;
   // s_graphs::KeyFrame::Ptr keyframe;
 };
 
@@ -199,9 +199,10 @@ void testFunction() {
 
 TEST_F(TestRoom, TestRoomCentre) {
   this->testLookupRooms();
-  auto centre_gt = rooms_vec[0].node->estimate();
+  auto it = rooms_vec.begin();
+  auto centre_gt = it->second.node->estimate();
   auto global_planes = obtain_global_planes_from_room(
-      this->rooms_vec[0], this->x_vert_planes, this->y_vert_planes);
+      it->second, this->x_vert_planes, this->y_vert_planes);
   auto centre = obtain_global_centre_of_room(global_planes);
   if (!centre.has_value()) {
     ASSERT_TRUE(false);
