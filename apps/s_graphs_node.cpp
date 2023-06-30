@@ -760,27 +760,28 @@ class SGraphsNode : public rclcpp::Node {
     return true;
   }
 
-  void extract_keyframes_from_room(std::deque<KeyFrame::Ptr> new_keyframes) {
-    // check if the current robot pose lies in a room
-    if (rooms_vec.empty()) return;
+  // void extract_keyframes_from_room(std::deque<KeyFrame::Ptr> new_keyframes) {
+  //   // check if the current robot pose lies in a room
+  //   if (rooms_vec.empty()) return;
 
-    std::cout << "extracting the current room " << std::endl;
-    Rooms current_room;
-    current_room = local_graph_generator->get_current_room(
-        x_vert_planes, y_vert_planes, keyframes.back(), rooms_vec);
+  //   std::cout << "extracting the current room " << std::endl;
+  //   Rooms current_room;
+  //   current_room = local_graph_generator->get_current_room(
+  //       x_vert_planes, y_vert_planes, keyframes.back(), rooms_vec);
 
-    std::cout << "extracting room keyframes " << std::endl;
-    // if current room is not empty then get the keyframes in the room
-    if (current_room.node != nullptr) {
-      Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
-      std::vector<s_graphs::KeyFrame::Ptr> room_keyframes =
-          local_graph_generator->get_keyframes_inside_room(
-              current_room, x_vert_planes, y_vert_planes, keyframes);
-      // create the local graph for that room
-      local_graph_generator->generate_local_graph(
-          keyframe_mapper, covisibility_graph, room_keyframes, odom2map, current_room);
-    }
-  }
+  //   std::cout << "extracting room keyframes " << std::endl;
+  //   // if current room is not empty then get the keyframes in the room
+  //   if (current_room.node != nullptr) {
+  //     Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
+  //     std::vector<s_graphs::KeyFrame::Ptr> room_keyframes =
+  //         local_graph_generator->get_keyframes_inside_room(
+  //             current_room, x_vert_planes, y_vert_planes, keyframes);
+  //     // create the local graph for that room
+  //     local_graph_generator->generate_local_graph(
+  //         keyframe_mapper, covisibility_graph, room_keyframes, odom2map,
+  //         current_room);
+  //   }
+  // }
 
   void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
     GPRMC grmc = nmea_parser->parse(nmea_msg->sentence);
@@ -935,15 +936,15 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& x_plane : x_vert_planes) {
-      x_planes_queue.push(x_plane);
+      x_planes_queue.push(x_plane.second);
     }
 
     for (const auto& y_plane : y_vert_planes) {
-      y_planes_queue.push(y_plane);
+      y_planes_queue.push(y_plane.second);
     }
 
     for (const auto& hort_plane : hort_planes) {
-      hort_planes_queue.push(hort_plane);
+      hort_planes_queue.push(hort_plane.second);
     }
 
     for (const auto& room : rooms_vec) {
@@ -1179,8 +1180,9 @@ class SGraphsNode : public rclcpp::Node {
    * @brief publish the mapped plane information from the last n keyframes
    *
    */
-  void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot,
-                             std::vector<VerticalPlanes> y_vert_planes_snapshot) {
+  void publish_mapped_planes(
+      std::unordered_map<int, VerticalPlanes> x_vert_planes_snapshot,
+      std::unordered_map<int, VerticalPlanes> y_vert_planes_snapshot) {
     if (keyframes.empty()) return;
 
     std::vector<KeyFrame::Ptr> keyframe_window(
@@ -1202,20 +1204,20 @@ class SGraphsNode : public rclcpp::Node {
     s_graphs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.back()->stamp;
     for (const auto& unique_x_plane_id : unique_x_plane_ids) {
-      auto local_x_vert_plane =
-          std::find_if(x_vert_planes_snapshot.begin(),
-                       x_vert_planes_snapshot.end(),
-                       boost::bind(&VerticalPlanes::id, _1) == unique_x_plane_id.first);
+      auto local_x_vert_plane = x_vert_planes_snapshot.find(unique_x_plane_id.first);
+
       if (local_x_vert_plane == x_vert_planes_snapshot.end()) continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = (*local_x_vert_plane).plane_node->estimate().coeffs();
-      plane_data.id = (*local_x_vert_plane).id;
+      mapped_plane_coeffs =
+          (local_x_vert_plane->second).plane_node->estimate().coeffs();
+      plane_data.id = (local_x_vert_plane->second).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      for (const auto& plane_point_data : (*local_x_vert_plane).cloud_seg_map->points) {
+      for (const auto& plane_point_data :
+           (local_x_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -1226,20 +1228,20 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& unique_y_plane_id : unique_y_plane_ids) {
-      auto local_y_vert_plane =
-          std::find_if(y_vert_planes_snapshot.begin(),
-                       y_vert_planes_snapshot.end(),
-                       boost::bind(&VerticalPlanes::id, _1) == unique_y_plane_id.first);
+      auto local_y_vert_plane = y_vert_planes_snapshot.find(unique_y_plane_id.first);
+
       if (local_y_vert_plane == y_vert_planes_snapshot.end()) continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = (*local_y_vert_plane).plane_node->estimate().coeffs();
-      plane_data.id = (*local_y_vert_plane).id;
+      mapped_plane_coeffs =
+          (local_y_vert_plane->second).plane_node->estimate().coeffs();
+      plane_data.id = (local_y_vert_plane->second).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      for (const auto& plane_point_data : (*local_y_vert_plane).cloud_seg_map->points) {
+      for (const auto& plane_point_data :
+           (local_y_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -1320,7 +1322,7 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief dump all data to the current directory
+   * @brief dump all data to the current directorycurrent_floors_vec
    * @param req
    * @param res
    * @return
@@ -1501,12 +1503,15 @@ class SGraphsNode : public rclcpp::Node {
   double min_plane_points;
   double infinite_room_information;
   double room_information;
-  std::vector<VerticalPlanes> x_vert_planes,
+
+  std::unordered_map<int, VerticalPlanes> x_vert_planes,
       y_vert_planes;  // vertically segmented planes
+
   std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
   std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes,
-      dupl_y_vert_planes;                     // vertically segmented planes
-  std::vector<HorizontalPlanes> hort_planes;  // horizontally segmented planes
+      dupl_y_vert_planes;  // vertically segmented planes
+  std::unordered_map<int, HorizontalPlanes>
+      hort_planes;  // horizontally segmented planes
   std::vector<InfiniteRooms> x_infinite_rooms,
       y_infinite_rooms;          // infinite_rooms segmented from planes
   std::vector<Rooms> rooms_vec;  // rooms segmented from planes

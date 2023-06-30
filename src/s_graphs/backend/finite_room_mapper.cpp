@@ -60,8 +60,8 @@ FiniteRoomMapper::~FiniteRoomMapper() {}
 void FiniteRoomMapper::lookup_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const s_graphs::msg::RoomData room_data,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
     std::vector<InfiniteRooms>& x_infinite_rooms,
@@ -127,22 +127,10 @@ void FiniteRoomMapper::lookup_rooms(
     }
   }
 
-  auto found_x_plane1 =
-      std::find_if(x_vert_planes.begin(),
-                   x_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == room_data.x_planes[0].id);
-  auto found_x_plane2 =
-      std::find_if(x_vert_planes.begin(),
-                   x_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == room_data.x_planes[1].id);
-  auto found_y_plane1 =
-      std::find_if(y_vert_planes.begin(),
-                   y_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == room_data.y_planes[0].id);
-  auto found_y_plane2 =
-      std::find_if(y_vert_planes.begin(),
-                   y_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == room_data.y_planes[1].id);
+  auto found_x_plane1 = x_vert_planes.find(room_data.x_planes[0].id);
+  auto found_x_plane2 = x_vert_planes.find(room_data.x_planes[1].id);
+  auto found_y_plane1 = y_vert_planes.find(room_data.y_planes[0].id);
+  auto found_y_plane2 = y_vert_planes.find(room_data.y_planes[1].id);
 
   if (min_dist_room_y_inf_room < 1.0 && min_dist_room_x_inf_room < 1.0) {
     std::cout << "Adding a room using mapped x and y infinite_room planes "
@@ -155,10 +143,10 @@ void FiniteRoomMapper::lookup_rooms(
                                           rooms_vec,
                                           x_vert_planes,
                                           y_vert_planes,
-                                          (*found_x_plane1),
-                                          (*found_x_plane2),
-                                          (*found_y_plane1),
-                                          (*found_y_plane1));
+                                          (found_x_plane1->second),
+                                          (found_x_plane2->second),
+                                          (found_y_plane1->second),
+                                          (found_y_plane1->second));
     remove_mapped_infinite_room(PlaneUtils::plane_class::X_VERT_PLANE,
                                 graph_slam,
                                 matched_x_infinite_room,
@@ -177,10 +165,10 @@ void FiniteRoomMapper::lookup_rooms(
                                            rooms_vec,
                                            x_vert_planes,
                                            y_vert_planes,
-                                           (*found_x_plane1),
-                                           (*found_x_plane2),
-                                           (*found_y_plane1),
-                                           (*found_y_plane1));
+                                           (found_x_plane1->second),
+                                           (found_x_plane2->second),
+                                           (found_y_plane1->second),
+                                           (found_y_plane1->second));
     std::cout << "Will add room using mapped x infinite_room planes " << std::endl;
     remove_mapped_infinite_room(PlaneUtils::plane_class::X_VERT_PLANE,
                                 graph_slam,
@@ -196,10 +184,10 @@ void FiniteRoomMapper::lookup_rooms(
                                            rooms_vec,
                                            x_vert_planes,
                                            y_vert_planes,
-                                           (*found_x_plane1),
-                                           (*found_x_plane2),
-                                           (*found_y_plane1),
-                                           (*found_y_plane1));
+                                           (found_x_plane1->second),
+                                           (found_x_plane2->second),
+                                           (found_y_plane1->second),
+                                           (found_y_plane1->second));
     remove_mapped_infinite_room(PlaneUtils::plane_class::Y_VERT_PLANE,
                                 graph_slam,
                                 matched_y_infinite_room,
@@ -258,8 +246,8 @@ void FiniteRoomMapper::factor_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
     std::vector<plane_data_list> x_room_pair_vec,
     std::vector<plane_data_list> y_room_pair_vec,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
     std::vector<Rooms>& rooms_vec,
@@ -322,22 +310,10 @@ void FiniteRoomMapper::factor_rooms(
                y_room_pair_vec[1].plane_unflipped.coeffs()(2),
                y_room_pair_vec[1].plane_unflipped.coeffs()(3));
 
-  found_x_plane1 =
-      std::find_if(x_vert_planes.begin(),
-                   x_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[0].plane_id);
-  found_x_plane2 =
-      std::find_if(x_vert_planes.begin(),
-                   x_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == x_room_pair_vec[1].plane_id);
-  found_y_plane1 =
-      std::find_if(y_vert_planes.begin(),
-                   y_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[0].plane_id);
-  found_y_plane2 =
-      std::find_if(y_vert_planes.begin(),
-                   y_vert_planes.end(),
-                   boost::bind(&VerticalPlanes::id, _1) == y_room_pair_vec[1].plane_id);
+  found_x_plane1 = x_vert_planes.find(x_room_pair_vec[0].plane_id);
+  found_x_plane2 = x_vert_planes.find(x_room_pair_vec[1].plane_id);
+  found_y_plane1 = y_vert_planes.find(y_room_pair_vec[0].plane_id);
+  found_y_plane2 = y_vert_planes.find(y_room_pair_vec[1].plane_id);
 
   if (found_x_plane1 == x_vert_planes.end() || found_x_plane2 == x_vert_planes.end() ||
       found_y_plane1 == y_vert_planes.end() || found_y_plane2 == y_vert_planes.end()) {
@@ -350,10 +326,10 @@ void FiniteRoomMapper::factor_rooms(
                                           rooms_vec,
                                           x_vert_planes,
                                           y_vert_planes,
-                                          (*found_x_plane1),
-                                          (*found_x_plane2),
-                                          (*found_y_plane1),
-                                          (*found_y_plane2),
+                                          (found_x_plane1->second),
+                                          (found_x_plane2->second),
+                                          (found_y_plane1->second),
+                                          (found_y_plane2->second),
                                           detected_mapped_plane_pairs);
   if ((rooms_vec.empty() || room_data_association.first == -1)) {
     std::cout << "found room with pose " << room_center.translation() << std::endl;
@@ -371,20 +347,20 @@ void FiniteRoomMapper::factor_rooms(
     det_room.plane_y1_id = y_room_pair_vec[0].plane_id;
     det_room.plane_y2_id = y_room_pair_vec[1].plane_id;
     det_room.node = room_node;
-    det_room.plane_x1_node = (*found_x_plane1).plane_node;
-    det_room.plane_x2_node = (*found_x_plane2).plane_node;
-    det_room.plane_y1_node = (*found_y_plane1).plane_node;
-    det_room.plane_y2_node = (*found_y_plane2).plane_node;
+    det_room.plane_x1_node = (found_x_plane1->second).plane_node;
+    det_room.plane_x2_node = (found_x_plane2->second).plane_node;
+    det_room.plane_y1_node = (found_y_plane1->second).plane_node;
+    det_room.plane_y2_node = (found_y_plane2->second).plane_node;
     det_room.cluster_array = cluster_array;
     det_room.local_graph = std::make_shared<GraphSLAM>();
     rooms_vec.push_back(det_room);
 
     auto edge_room_planes =
         graph_slam->add_room_4planes_edge(room_node,
-                                          (*found_x_plane1).plane_node,
-                                          (*found_x_plane2).plane_node,
-                                          (*found_y_plane1).plane_node,
-                                          (*found_y_plane2).plane_node,
+                                          (found_x_plane1->second).plane_node,
+                                          (found_x_plane2->second).plane_node,
+                                          (found_y_plane1->second).plane_node,
+                                          (found_y_plane2->second).plane_node,
                                           information_room_planes);
     graph_slam->add_robust_kernel(edge_room_planes, "Huber", 1.0);
   } else {
@@ -398,13 +374,13 @@ void FiniteRoomMapper::factor_rooms(
     rooms_vec[room_data_association.second].cluster_array = cluster_array;
 
     std::set<g2o::HyperGraph::Edge*> xplane1_edges =
-        (*found_x_plane1).plane_node->edges();
+        (found_x_plane1->second).plane_node->edges();
     std::set<g2o::HyperGraph::Edge*> xplane2_edges =
-        (*found_x_plane2).plane_node->edges();
+        (found_x_plane2->second).plane_node->edges();
     std::set<g2o::HyperGraph::Edge*> yplane1_edges =
-        (*found_y_plane1).plane_node->edges();
+        (found_y_plane1->second).plane_node->edges();
     std::set<g2o::HyperGraph::Edge*> yplane2_edges =
-        (*found_y_plane2).plane_node->edges();
+        (found_y_plane2->second).plane_node->edges();
 
     if (detected_mapped_plane_pairs[0].first.id !=
         detected_mapped_plane_pairs[0].second.id) {
@@ -486,8 +462,8 @@ void FiniteRoomMapper::factor_rooms(
 std::pair<int, int> FiniteRoomMapper::associate_rooms(
     const Eigen::Isometry3d& room_center,
     const std::vector<Rooms>& rooms_vec,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const VerticalPlanes& x_plane1,
     const VerticalPlanes& x_plane2,
     const VerticalPlanes& y_plane1,
@@ -510,117 +486,116 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(
 
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
         current_detected_mapped_plane_pairs;
-    auto found_mapped_xplane1 =
-        std::find_if(x_vert_planes.begin(),
-                     x_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x1_id);
-    auto found_mapped_xplane2 =
-        std::find_if(x_vert_planes.begin(),
-                     x_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_x2_id);
+
+    auto found_mapped_xplane1 = x_vert_planes.find(rooms_vec[i].plane_x1_id);
+    auto found_mapped_xplane2 = x_vert_planes.find(rooms_vec[i].plane_x2_id);
+
     std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
     std::pair<VerticalPlanes, VerticalPlanes> x2_detected_mapped_plane_pair;
 
-    if (x_plane1.id == (*found_mapped_xplane1).id ||
-        x_plane1.id == (*found_mapped_xplane2).id) {
+    if (x_plane1.id == (found_mapped_xplane1->second).id ||
+        x_plane1.id == (found_mapped_xplane2->second).id) {
       x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = x_plane1;
     } else if ((x_plane1).plane_node->estimate().coeffs().head(3).dot(
-                   (*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) >
-               0) {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_xplane1).plane, x_plane1.plane);
+                   (found_mapped_xplane1->second)
+                       .plane_node->estimate()
+                       .coeffs()
+                       .head(3)) > 0) {
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_xplane1->second).plane, x_plane1.plane);
       if (maha_dist < 0.5) x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
-      x1_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
+      x1_detected_mapped_plane_pair.second = (found_mapped_xplane1->second);
 
     } else {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_xplane2).plane, x_plane1.plane);
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_xplane2->second).plane, x_plane1.plane);
       if (maha_dist < 0.5) x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
-      x1_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
+      x1_detected_mapped_plane_pair.second = (found_mapped_xplane2->second);
     }
 
     current_detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
-    if (x_plane2.id == (*found_mapped_xplane1).id ||
-        x_plane2.id == (*found_mapped_xplane2).id) {
+    if (x_plane2.id == (found_mapped_xplane1->second).id ||
+        x_plane2.id == (found_mapped_xplane2->second).id) {
       x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = x_plane2;
     } else if ((x_plane2).plane_node->estimate().coeffs().head(3).dot(
-                   (*found_mapped_xplane1).plane_node->estimate().coeffs().head(3)) >
-               0) {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_xplane1).plane, x_plane2.plane);
+                   (found_mapped_xplane1->second)
+                       .plane_node->estimate()
+                       .coeffs()
+                       .head(3)) > 0) {
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_xplane1->second).plane, x_plane2.plane);
       if (maha_dist < 0.5) x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
-      x2_detected_mapped_plane_pair.second = (*found_mapped_xplane1);
+      x2_detected_mapped_plane_pair.second = (found_mapped_xplane1->second);
 
     } else {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_xplane2).plane, x_plane2.plane);
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_xplane2->second).plane, x_plane2.plane);
       if (maha_dist < 0.5) x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
-      x2_detected_mapped_plane_pair.second = (*found_mapped_xplane2);
+      x2_detected_mapped_plane_pair.second = (found_mapped_xplane2->second);
     }
     current_detected_mapped_plane_pairs.push_back(x2_detected_mapped_plane_pair);
 
-    auto found_mapped_yplane1 =
-        std::find_if(y_vert_planes.begin(),
-                     y_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y1_id);
-    auto found_mapped_yplane2 =
-        std::find_if(y_vert_planes.begin(),
-                     y_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == rooms_vec[i].plane_y2_id);
+    auto found_mapped_yplane1 = y_vert_planes.find(rooms_vec[i].plane_y1_id);
+    auto found_mapped_yplane2 = y_vert_planes.find(rooms_vec[i].plane_y2_id);
+
     std::pair<VerticalPlanes, VerticalPlanes> y1_detected_mapped_plane_pair;
     std::pair<VerticalPlanes, VerticalPlanes> y2_detected_mapped_plane_pair;
 
-    if (y_plane1.id == (*found_mapped_yplane1).id ||
-        y_plane1.id == (*found_mapped_yplane2).id) {
+    if (y_plane1.id == (found_mapped_yplane1->second).id ||
+        y_plane1.id == (found_mapped_yplane2->second).id) {
       y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = y_plane1;
     } else if ((y_plane1).plane_node->estimate().coeffs().head(3).dot(
-                   (*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) >
-               0) {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_yplane1).plane, y_plane1.plane);
+                   (found_mapped_yplane1->second)
+                       .plane_node->estimate()
+                       .coeffs()
+                       .head(3)) > 0) {
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_yplane1->second).plane, y_plane1.plane);
       if (maha_dist < 0.5) y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
-      y1_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
+      y1_detected_mapped_plane_pair.second = (found_mapped_yplane1->second);
 
     } else {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_yplane2).plane, y_plane1.plane);
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_yplane2->second).plane, y_plane1.plane);
       if (maha_dist < 0.5) y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
-      y1_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
+      y1_detected_mapped_plane_pair.second = (found_mapped_yplane2->second);
     }
     current_detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
 
-    if (y_plane2.id == (*found_mapped_yplane1).id ||
-        y_plane2.id == (*found_mapped_yplane2).id) {
+    if (y_plane2.id == (found_mapped_yplane1->second).id ||
+        y_plane2.id == (found_mapped_yplane2->second).id) {
       y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = y_plane2;
     } else if ((y_plane2).plane_node->estimate().coeffs().head(3).dot(
-                   (*found_mapped_yplane1).plane_node->estimate().coeffs().head(3)) >
-               0) {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_yplane1).plane, y_plane2.plane);
+                   (found_mapped_yplane1->second)
+                       .plane_node->estimate()
+                       .coeffs()
+                       .head(3)) > 0) {
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_yplane1->second).plane, y_plane2.plane);
       if (maha_dist < 0.5) y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
-      y2_detected_mapped_plane_pair.second = (*found_mapped_yplane1);
+      y2_detected_mapped_plane_pair.second = (found_mapped_yplane1->second);
 
     } else {
-      double maha_dist =
-          plane_utils->plane_difference((*found_mapped_yplane2).plane, y_plane2.plane);
+      double maha_dist = plane_utils->plane_difference(
+          (found_mapped_yplane2->second).plane, y_plane2.plane);
       if (maha_dist < 0.5) y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
-      y2_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
+      y2_detected_mapped_plane_pair.second = (found_mapped_yplane2->second);
     }
     current_detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
 
@@ -675,8 +650,8 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     const s_graphs::InfiniteRooms& matched_y_infinite_room,
     const Eigen::Isometry3d& room_center,
     std::vector<Rooms>& rooms_vec,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const VerticalPlanes& x_plane1,
     const VerticalPlanes& x_plane2,
     const VerticalPlanes& y_plane1,
@@ -733,8 +708,8 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     const s_graphs::InfiniteRooms& matched_x_infinite_room,
     const Eigen::Isometry3d& room_center,
     std::vector<Rooms>& rooms_vec,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const VerticalPlanes& x_plane1,
     const VerticalPlanes& x_plane2,
     const VerticalPlanes& y_plane1,
@@ -777,16 +752,11 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     det_room.plane_y2_id = det_room_data.y_planes[1].id;
     det_room.plane_x1_node = matched_x_infinite_room.plane1_node;
     det_room.plane_x2_node = matched_x_infinite_room.plane2_node;
-    auto found_y_plane1 = std::find_if(
-        y_vert_planes.begin(),
-        y_vert_planes.end(),
-        boost::bind(&VerticalPlanes::id, _1) == det_room_data.y_planes[0].id);
-    auto found_y_plane2 = std::find_if(
-        y_vert_planes.begin(),
-        y_vert_planes.end(),
-        boost::bind(&VerticalPlanes::id, _1) == det_room_data.y_planes[1].id);
-    det_room.plane_y1_node = (*found_y_plane1).plane_node;
-    det_room.plane_y2_node = (*found_y_plane2).plane_node;
+    auto found_y_plane1 = y_vert_planes.find(det_room_data.y_planes[0].id);
+    auto found_y_plane2 = y_vert_planes.find(det_room_data.y_planes[1].id);
+
+    det_room.plane_y1_node = (found_y_plane1->second).plane_node;
+    det_room.plane_y2_node = (found_y_plane2->second).plane_node;
 
     for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
@@ -805,8 +775,8 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     const s_graphs::InfiniteRooms& matched_y_infinite_room,
     const Eigen::Isometry3d& room_center,
     std::vector<Rooms>& rooms_vec,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const VerticalPlanes& x_plane1,
     const VerticalPlanes& x_plane2,
     const VerticalPlanes& y_plane1,
@@ -849,16 +819,12 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     det_room.plane_y2_id = matched_y_infinite_room.plane2_id;
     det_room.plane_x1_id = det_room_data.x_planes[0].id;
     det_room.plane_x2_id = det_room_data.x_planes[1].id;
-    auto found_x_plane1 = std::find_if(
-        x_vert_planes.begin(),
-        x_vert_planes.end(),
-        boost::bind(&VerticalPlanes::id, _1) == det_room_data.x_planes[0].id);
-    auto found_x_plane2 = std::find_if(
-        x_vert_planes.begin(),
-        x_vert_planes.end(),
-        boost::bind(&VerticalPlanes::id, _1) == det_room_data.x_planes[1].id);
-    det_room.plane_x1_node = (*found_x_plane1).plane_node;
-    det_room.plane_x2_node = (*found_x_plane2).plane_node;
+
+    auto found_x_plane1 = x_vert_planes.find(det_room_data.x_planes[0].id);
+    auto found_x_plane2 = x_vert_planes.find(det_room_data.x_planes[1].id);
+
+    det_room.plane_x1_node = (found_x_plane1->second).plane_node;
+    det_room.plane_x2_node = (found_x_plane2->second).plane_node;
     det_room.plane_y1_node = matched_y_infinite_room.plane1_node;
     det_room.plane_y2_node = matched_y_infinite_room.plane2_node;
 

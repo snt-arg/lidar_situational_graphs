@@ -36,8 +36,8 @@ LocalGraphGenerator::LocalGraphGenerator() {}
 LocalGraphGenerator::~LocalGraphGenerator() {}
 
 Rooms LocalGraphGenerator::get_current_room(
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const KeyFrame::Ptr keyframe,
     const std::vector<Rooms>& rooms_vec) {
   Rooms current_room;
@@ -53,8 +53,8 @@ Rooms LocalGraphGenerator::get_current_room(
 
 std::vector<KeyFrame::Ptr> LocalGraphGenerator::get_keyframes_inside_room(
     const Rooms& current_room,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const std::vector<KeyFrame::Ptr>& keyframes) {
   std::vector<s_graphs::KeyFrame::Ptr> room_keyframes;
   if (current_room.node != nullptr) {
@@ -67,8 +67,8 @@ std::vector<KeyFrame::Ptr> LocalGraphGenerator::get_keyframes_inside_room(
 
 std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
     const Rooms& current_room,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes) {
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes) {
   auto planes = obtain_planes_from_room(current_room, x_vert_planes, y_vert_planes);
   return planes;
 }

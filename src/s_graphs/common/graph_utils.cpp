@@ -125,8 +125,8 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
 void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
                               std::vector<KeyFrame::Ptr> keyframes,
-                              std::vector<VerticalPlanes>& x_vert_planes,
-                              std::vector<VerticalPlanes>& y_vert_planes,
+                              std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                              std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                               std::vector<Rooms>& rooms_vec,
                               std::vector<InfiniteRooms>& x_infinite_rooms,
                               std::vector<InfiniteRooms>& y_infinite_rooms,
@@ -153,18 +153,16 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
     g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
     if (vertex_plane) {
       int id = vertex_plane->id();
-      auto x_plane = std::find_if(x_vert_planes.begin(),
-                                  x_vert_planes.end(),
-                                  boost::bind(&VerticalPlanes::id, _1) == id);
+      auto x_plane = x_vert_planes.find(id);
+
       if (x_plane != x_vert_planes.end()) {
-        (*x_plane).plane_node->setEstimate(vertex_plane->estimate());
+        (x_plane->second).plane_node->setEstimate(vertex_plane->estimate());
         continue;
       } else {
-        auto y_plane = std::find_if(y_vert_planes.begin(),
-                                    y_vert_planes.end(),
-                                    boost::bind(&VerticalPlanes::id, _1) == id);
+        auto y_plane = y_vert_planes.find(id);
+
         if (y_plane != y_vert_planes.end()) {
-          (*y_plane).plane_node->setEstimate(vertex_plane->estimate());
+          (y_plane->second).plane_node->setEstimate(vertex_plane->estimate());
           continue;
         }
       }

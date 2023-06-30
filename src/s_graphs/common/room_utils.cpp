@@ -10,8 +10,8 @@
  */
 std::vector<const s_graphs::VerticalPlanes*> obtain_planes_from_room(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes) {
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes) {
   std::vector<const s_graphs::VerticalPlanes*> planes;
   std::array<int, 4> ids = {room.plane_x1_id,
                             room.plane_x2_id,
@@ -25,15 +25,15 @@ std::vector<const s_graphs::VerticalPlanes*> obtain_planes_from_room(
     };
     // search over x_vert_planes
     if (planes.size() < 2) {
-      auto it_x = std::find_if(x_vert_planes.begin(), x_vert_planes.end(), funct);
+      auto it_x = x_vert_planes.find(id);
       if (it_x != x_vert_planes.end()) {
-        planes.emplace_back(&(*it_x));
+        planes.emplace_back(&(it_x->second));
       }
     } else {
       // search over y_vert_planes
-      auto it_y = std::find_if(y_vert_planes.begin(), y_vert_planes.end(), funct);
+      auto it_y = y_vert_planes.find(id);
       if (it_y != y_vert_planes.end()) {
-        planes.emplace_back(&(*it_y));
+        planes.emplace_back(&(it_y->second));
       }
     }
   }
@@ -124,8 +124,8 @@ std::optional<Eigen::Isometry3d> obtain_global_centre_of_room(
 
 std::vector<PlaneGlobalRep> obtain_global_planes_from_room(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes) {
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes) {
   std::vector<PlaneGlobalRep> plane_reps;
   auto planes = obtain_planes_from_room(room, x_vert_planes, y_vert_planes);
   if (planes.size() != 4) return {};
@@ -142,8 +142,8 @@ std::vector<PlaneGlobalRep> obtain_global_planes_from_room(
 
 std::set<std::pair<int, g2o::VertexSE3*>> obtain_keyframe_candidates_from_room(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes) {
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes) {
   std::set<std::pair<int, g2o::VertexSE3*>> keyframe_candidates;
   auto planes = obtain_planes_from_room(room, x_vert_planes, y_vert_planes);
   if (planes.size() != 4) return {};
@@ -172,8 +172,8 @@ std::set<int> filter_keyframes_ids(
 
 std::set<g2o::VertexSE3*> publish_room_keyframes_ids(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes) {
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes) {
   std::set<g2o::VertexSE3*> keyframe_candidates;
   std::vector<PlaneGlobalRep> plane_reps;
   auto planes = obtain_planes_from_room(room, x_vert_planes, y_vert_planes);
@@ -230,10 +230,11 @@ KeyFramePtrVec obtain_keyframes_from_ids(const std::set<int>& id_list,
 
 std::optional<
     std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
-generate_room_keyframe(const s_graphs::Rooms& room,
-                       const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-                       const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
-                       const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+generate_room_keyframe(
+    const s_graphs::Rooms& room,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
+    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
   auto global_planes =
       obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
   auto room_centre = obtain_global_centre_of_room(global_planes);
@@ -252,8 +253,8 @@ generate_room_keyframe(const s_graphs::Rooms& room,
 
 std::vector<s_graphs::KeyFrame::Ptr> get_room_keyframes(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
     const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
   auto global_planes =
       obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
@@ -269,10 +270,11 @@ std::vector<s_graphs::KeyFrame::Ptr> get_room_keyframes(
   return keyframes_vec;
 }
 
-bool is_keyframe_inside_room(const s_graphs::Rooms& room,
-                             const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-                             const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
-                             const s_graphs::KeyFrame::Ptr keyframe) {
+bool is_keyframe_inside_room(
+    const s_graphs::Rooms& room,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
+    const s_graphs::KeyFrame::Ptr keyframe) {
   auto global_planes =
       obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
 

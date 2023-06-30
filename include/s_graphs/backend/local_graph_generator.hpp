@@ -48,21 +48,21 @@ class LocalGraphGenerator {
   ~LocalGraphGenerator();
 
  public:
-  Rooms get_current_room(const std::vector<VerticalPlanes>& x_vert_planes,
-                         const std::vector<VerticalPlanes>& y_vert_planes,
+  Rooms get_current_room(const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                         const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                          const KeyFrame::Ptr keyframe,
                          const std::vector<Rooms>& rooms_vec);
 
   std::vector<KeyFrame::Ptr> get_keyframes_inside_room(
       const Rooms& current_room,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       const std::vector<KeyFrame::Ptr>& keyframes);
 
   std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
       const Rooms& current_room,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes);
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 
   void generate_local_graph(std::unique_ptr<KeyframeMapper>& keyframe_mapper,
                             std::shared_ptr<GraphSLAM> covisibility_graph,
