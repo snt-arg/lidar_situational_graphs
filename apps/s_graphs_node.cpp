@@ -952,15 +952,15 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& x_infinite_room : x_infinite_rooms) {
-      x_inf_rooms_queue.push(x_infinite_room);
+      x_inf_rooms_queue.push(x_infinite_room.second);
     }
 
     for (const auto& y_infinite_room : y_infinite_rooms) {
-      y_inf_rooms_queue.push(y_infinite_room);
+      y_inf_rooms_queue.push(y_infinite_room.second);
     }
 
     for (const auto& floor : floors_vec) {
-      floors_queue.push(floor);
+      floors_queue.push(floor.second);
     }
   }
 
@@ -1512,11 +1512,11 @@ class SGraphsNode : public rclcpp::Node {
       dupl_y_vert_planes;  // vertically segmented planes
   std::unordered_map<int, HorizontalPlanes>
       hort_planes;  // horizontally segmented planes
-  std::vector<InfiniteRooms> x_infinite_rooms,
+  std::unordered_map<int, InfiniteRooms> x_infinite_rooms,
       y_infinite_rooms;                      // infinite_rooms segmented from planes
   std::unordered_map<int, Rooms> rooms_vec;  // rooms segmented from planes
   std::vector<Rooms> rooms_vec_prior;
-  std::vector<Floors> floors_vec;
+  std::unordered_map<int, Floors> floors_vec;
   int prev_edge_count, curr_edge_count;
 
   std::vector<VerticalPlanes> current_x_planes, current_y_planes;

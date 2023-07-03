@@ -64,8 +64,8 @@ void FiniteRoomMapper::lookup_rooms(
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-    std::vector<InfiniteRooms>& x_infinite_rooms,
-    std::vector<InfiniteRooms>& y_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::unordered_map<int, Rooms>& rooms_vec) {
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
@@ -81,49 +81,49 @@ void FiniteRoomMapper::lookup_rooms(
   float min_dist_room_x_inf_room = 100;
   s_graphs::InfiniteRooms matched_x_infinite_room;
   for (const auto& current_x_infinite_room : x_infinite_rooms) {
-    if ((room_data.x_planes[0].id == current_x_infinite_room.plane1_id ||
-         room_data.x_planes[0].id == current_x_infinite_room.plane2_id) &&
-        (room_data.x_planes[1].id == current_x_infinite_room.plane1_id ||
-         room_data.x_planes[1].id == current_x_infinite_room.plane2_id)) {
+    if ((room_data.x_planes[0].id == current_x_infinite_room.second.plane1_id ||
+         room_data.x_planes[0].id == current_x_infinite_room.second.plane2_id) &&
+        (room_data.x_planes[1].id == current_x_infinite_room.second.plane1_id ||
+         room_data.x_planes[1].id == current_x_infinite_room.second.plane2_id)) {
       min_dist_room_x_inf_room = 0;
-      matched_x_infinite_room = current_x_infinite_room;
+      matched_x_infinite_room = current_x_infinite_room.second;
       break;
     }
     float dist_room_x_inf_room =
         sqrt(pow(room_data.room_center.position.x -
-                     current_x_infinite_room.node->estimate().translation()(0),
+                     current_x_infinite_room.second.node->estimate().translation()(0),
                  2) +
              pow(room_data.room_center.position.y -
-                     current_x_infinite_room.node->estimate().translation()(1),
+                     current_x_infinite_room.second.node->estimate().translation()(1),
                  2));
     if (dist_room_x_inf_room < min_dist_room_x_inf_room) {
       min_dist_room_x_inf_room = dist_room_x_inf_room;
-      matched_x_infinite_room = current_x_infinite_room;
+      matched_x_infinite_room = current_x_infinite_room.second;
     }
   }
 
   float min_dist_room_y_inf_room = 100;
   s_graphs::InfiniteRooms matched_y_infinite_room;
   for (const auto& current_y_infinite_room : y_infinite_rooms) {
-    if ((room_data.y_planes[0].id == current_y_infinite_room.plane1_id ||
-         room_data.y_planes[0].id == current_y_infinite_room.plane2_id) &&
-        (room_data.y_planes[1].id == current_y_infinite_room.plane1_id ||
-         room_data.y_planes[1].id == current_y_infinite_room.plane2_id)) {
+    if ((room_data.y_planes[0].id == current_y_infinite_room.second.plane1_id ||
+         room_data.y_planes[0].id == current_y_infinite_room.second.plane2_id) &&
+        (room_data.y_planes[1].id == current_y_infinite_room.second.plane1_id ||
+         room_data.y_planes[1].id == current_y_infinite_room.second.plane2_id)) {
       min_dist_room_y_inf_room = 0;
-      matched_y_infinite_room = current_y_infinite_room;
+      matched_y_infinite_room = current_y_infinite_room.second;
       break;
     }
 
     float dist_room_y_inf_room =
         sqrt(pow(room_data.room_center.position.x -
-                     current_y_infinite_room.node->estimate().translation()(0),
+                     current_y_infinite_room.second.node->estimate().translation()(0),
                  2) +
              pow(room_data.room_center.position.y -
-                     current_y_infinite_room.node->estimate().translation()(1),
+                     current_y_infinite_room.second.node->estimate().translation()(1),
                  2));
     if (dist_room_y_inf_room < min_dist_room_y_inf_room) {
       min_dist_room_y_inf_room = dist_room_y_inf_room;
-      matched_y_infinite_room = current_y_infinite_room;
+      matched_y_infinite_room = current_y_infinite_room.second;
     }
   }
 
@@ -842,8 +842,8 @@ void FiniteRoomMapper::remove_mapped_infinite_room(
     const int plane_type,
     std::shared_ptr<GraphSLAM>& graph_slam,
     s_graphs::InfiniteRooms matched_infinite_room,
-    std::vector<InfiniteRooms>& x_infinite_rooms,
-    std::vector<InfiniteRooms>& y_infinite_rooms) {
+    std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms) {
   std::set<g2o::HyperGraph::Edge*> edges = matched_infinite_room.node->edges();
   for (auto edge_itr = edges.begin(); edge_itr != edges.end(); ++edge_itr) {
     g2o::EdgeRoom2Planes* edge_room_2planes =
@@ -857,19 +857,13 @@ void FiniteRoomMapper::remove_mapped_infinite_room(
 
   if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     if (graph_slam->remove_room_node(matched_infinite_room.node)) {
-      auto mapped_infinite_room =
-          std::find_if(x_infinite_rooms.begin(),
-                       x_infinite_rooms.end(),
-                       boost::bind(&InfiniteRooms::id, _1) == matched_infinite_room.id);
+      auto mapped_infinite_room = x_infinite_rooms.find(matched_infinite_room.id);
       x_infinite_rooms.erase(mapped_infinite_room);
       std::cout << "removed overlapped x-infinite_room " << std::endl;
     }
   } else if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     if (graph_slam->remove_room_node(matched_infinite_room.node)) {
-      auto mapped_infinite_room =
-          std::find_if(y_infinite_rooms.begin(),
-                       y_infinite_rooms.end(),
-                       boost::bind(&InfiniteRooms::id, _1) == matched_infinite_room.id);
+      auto mapped_infinite_room = y_infinite_rooms.find(matched_infinite_room.id);
       y_infinite_rooms.erase(mapped_infinite_room);
       std::cout << "removed overlapped y-infinite_room " << std::endl;
     }

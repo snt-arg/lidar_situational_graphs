@@ -68,8 +68,8 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-    std::vector<InfiniteRooms>& x_infinite_rooms,
-    std::vector<InfiniteRooms>& y_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     const std::unordered_map<int, Rooms>& rooms_vec) {
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
@@ -232,14 +232,14 @@ void InfiniteRoomMapper::factor_infinite_rooms(
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-    std::vector<InfiniteRooms>& x_infinite_rooms,
-    std::vector<InfiniteRooms>& y_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     const Eigen::Isometry3d& room_center,
     const Eigen::Isometry3d& cluster_center,
     const visualization_msgs::msg::MarkerArray& cluster_array) {
   g2o::VertexRoom* room_node;
   g2o::VertexRoom* cluster_center_node;
-  std::pair<int, int> room_data_association;
+  int room_data_association;
 
   Eigen::Matrix<double, 2, 2> information_infinite_room_planes;
   information_infinite_room_planes.setZero();
@@ -293,19 +293,19 @@ void InfiniteRoomMapper::factor_infinite_rooms(
                                                      y_infinite_rooms,
                                                      detected_mapped_plane_pairs);
 
-    if ((x_infinite_rooms.empty() || room_data_association.first == -1)) {
+    if ((x_infinite_rooms.empty() || room_data_association == -1)) {
       std::cout << "found an X infinite_room with pre pose "
                 << room_center.translation() << " between plane "
                 << room_plane1_pair.plane_unflipped.coeffs() << " and plane "
                 << room_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
-      room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
+      room_data_association = graph_slam->retrieve_local_nbr_of_vertices();
       room_node = graph_slam->add_room_node(room_center);
       cluster_center_node = graph_slam->add_room_node(cluster_center);
       cluster_center_node->setFixed(true);
 
       InfiniteRooms det_infinite_room;
-      det_infinite_room.id = room_data_association.first;
+      det_infinite_room.id = room_data_association;
       det_infinite_room.plane1 = room_plane1_pair.plane_unflipped;
       det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
       det_infinite_room.plane1_id = room_plane1_pair.plane_id;
@@ -317,7 +317,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane1_node = (found_plane1->second).plane_node;
       det_infinite_room.plane2_node = (found_plane2->second).plane_node;
       det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
-      x_infinite_rooms.push_back(det_infinite_room);
+      x_infinite_rooms.insert({det_infinite_room.id, det_infinite_room});
 
       auto edge_room_plane =
           graph_slam->add_room_2planes_edge(room_node,
@@ -329,12 +329,12 @@ void InfiniteRoomMapper::factor_infinite_rooms(
 
     } else {
       /* add the edge between detected planes and the infinite_room */
-      room_node = x_infinite_rooms[room_data_association.second].node;
+      room_node = x_infinite_rooms[room_data_association].node;
       std::cout << "Matched det infinite_room X with pre pose "
                 << room_center.translation() << " to mapped infinite_room with id "
-                << room_data_association.first << " and pose "
+                << room_data_association << " and pose "
                 << room_node->estimate().translation() << std::endl;
-      x_infinite_rooms[room_data_association.second].cluster_array = cluster_array;
+      x_infinite_rooms[room_data_association].cluster_array = cluster_array;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges =
           (found_plane1->second).plane_node->edges();
@@ -370,7 +370,6 @@ void InfiniteRoomMapper::factor_infinite_rooms(
 
   if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     auto found_plane1 = y_vert_planes.find(room_plane1_pair.plane_id);
-
     auto found_plane2 = y_vert_planes.find(room_plane2_pair.plane_id);
 
     if (found_plane1 == y_vert_planes.end() || found_plane2 == y_vert_planes.end())
@@ -387,19 +386,19 @@ void InfiniteRoomMapper::factor_infinite_rooms(
                                                      y_infinite_rooms,
                                                      detected_mapped_plane_pairs);
 
-    if ((y_infinite_rooms.empty() || room_data_association.first == -1)) {
+    if ((y_infinite_rooms.empty() || room_data_association == -1)) {
       std::cout << "found an Y infinite_room with pre pose "
                 << room_center.translation() << " between plane "
                 << room_plane1_pair.plane_unflipped.coeffs() << " and plane "
                 << room_plane2_pair.plane_unflipped.coeffs() << std::endl;
 
-      room_data_association.first = graph_slam->retrieve_local_nbr_of_vertices();
+      room_data_association = graph_slam->retrieve_local_nbr_of_vertices();
       room_node = graph_slam->add_room_node(room_center);
       cluster_center_node = graph_slam->add_room_node(cluster_center);
       cluster_center_node->setFixed(true);
 
       InfiniteRooms det_infinite_room;
-      det_infinite_room.id = room_data_association.first;
+      det_infinite_room.id = room_data_association;
       det_infinite_room.plane1 = room_plane1_pair.plane_unflipped;
       det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
       det_infinite_room.plane1_id = room_plane1_pair.plane_id;
@@ -411,7 +410,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane1_node = (found_plane1->second).plane_node;
       det_infinite_room.plane2_node = (found_plane2->second).plane_node;
       det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
-      y_infinite_rooms.push_back(det_infinite_room);
+      y_infinite_rooms.insert({det_infinite_room.id, det_infinite_room});
 
       auto edge_room_plane =
           graph_slam->add_room_2planes_edge(room_node,
@@ -422,12 +421,12 @@ void InfiniteRoomMapper::factor_infinite_rooms(
       graph_slam->add_robust_kernel(edge_room_plane, "Huber", 1.0);
     } else {
       /* add the edge between detected planes and the infinite_room */
-      room_node = y_infinite_rooms[room_data_association.second].node;
+      room_node = y_infinite_rooms[room_data_association].node;
       std::cout << "Matched det infinite_room Y with pre pose "
                 << room_center.translation() << " to mapped infinite_room with id "
-                << room_data_association.first << " and pose "
+                << room_data_association << " and pose "
                 << room_node->estimate().translation() << std::endl;
-      y_infinite_rooms[room_data_association.second].cluster_array = cluster_array;
+      y_infinite_rooms[room_data_association].cluster_array = cluster_array;
 
       std::set<g2o::HyperGraph::Edge*> plane1_edges =
           (found_plane1->second).plane_node->edges();
@@ -464,36 +463,37 @@ void InfiniteRoomMapper::factor_infinite_rooms(
   return;
 }
 
-std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
+int InfiniteRoomMapper::associate_infinite_rooms(
     const int& plane_type,
     const Eigen::Isometry3d& room_center,
     const VerticalPlanes& plane1,
     const VerticalPlanes& plane2,
     const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
-    const std::vector<InfiniteRooms>& x_infinite_rooms,
-    const std::vector<InfiniteRooms>& y_infinite_rooms,
+    const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
         detected_mapped_plane_pairs) {
   float min_dist = 100;
   bool plane1_min_segment = false, plane2_min_segment = false;
 
-  std::pair<int, int> data_association;
-  data_association.first = -1;
+  int data_association;
+  data_association = -1;
 
   if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    for (int i = 0; i < x_infinite_rooms.size(); ++i) {
-      float dist = sqrt(pow(room_center.translation()(0) -
-                                x_infinite_rooms[i].node->estimate().translation()(0),
-                            2));
+    for (const auto& x_infinite_room : x_infinite_rooms) {
+      float dist =
+          sqrt(pow(room_center.translation()(0) -
+                       x_infinite_room.second.node->estimate().translation()(0),
+                   2));
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
           current_detected_mapped_plane_pairs;
       std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
       std::pair<VerticalPlanes, VerticalPlanes> x2_detected_mapped_plane_pair;
 
-      auto found_mapped_plane1 = x_vert_planes.find(x_infinite_rooms[i].plane1_id);
-      auto found_mapped_plane2 = x_vert_planes.find(x_infinite_rooms[i].plane2_id);
+      auto found_mapped_plane1 = x_vert_planes.find(x_infinite_room.second.plane1_id);
+      auto found_mapped_plane2 = x_vert_planes.find(x_infinite_room.second.plane2_id);
 
       if (plane1.id == (found_mapped_plane1->second).id ||
           plane1.id == (found_mapped_plane2->second).id) {
@@ -541,8 +541,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
 
       if (dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
-        data_association.first = x_infinite_rooms[i].id;
-        data_association.second = i;
+        data_association = x_infinite_room.second.id;
         detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
         RCLCPP_DEBUG(
             node_obj->get_logger(), "infinite_room planes", "dist x room %f", dist);
@@ -551,18 +550,19 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
   }
 
   if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    for (int i = 0; i < y_infinite_rooms.size(); ++i) {
-      float dist = sqrt(pow(room_center.translation()(1) -
-                                y_infinite_rooms[i].node->estimate().translation()(1),
-                            2));
+    for (const auto& y_infinite_room : y_infinite_rooms) {
+      float dist =
+          sqrt(pow(room_center.translation()(1) -
+                       y_infinite_room.second.node->estimate().translation()(1),
+                   2));
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
           current_detected_mapped_plane_pairs;
       std::pair<VerticalPlanes, VerticalPlanes> y1_detected_mapped_plane_pair;
       std::pair<VerticalPlanes, VerticalPlanes> y2_detected_mapped_plane_pair;
 
-      auto found_mapped_plane1 = y_vert_planes.find(y_infinite_rooms[i].plane1_id);
-      auto found_mapped_plane2 = y_vert_planes.find(y_infinite_rooms[i].plane2_id);
+      auto found_mapped_plane1 = y_vert_planes.find(y_infinite_room.second.plane1_id);
+      auto found_mapped_plane2 = y_vert_planes.find(y_infinite_room.second.plane2_id);
 
       if (plane1.id == (found_mapped_plane1->second).id ||
           plane1.id == (found_mapped_plane2->second).id) {
@@ -610,8 +610,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
 
       if (dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
-        data_association.first = y_infinite_rooms[i].id;
-        data_association.second = i;
+        data_association = y_infinite_room.second.id;
         detected_mapped_plane_pairs = current_detected_mapped_plane_pairs;
         RCLCPP_DEBUG(
             node_obj->get_logger(), "infinite_room planes", "dist y room %f", dist);
@@ -621,7 +620,7 @@ std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(
 
   // RCLCPP_DEBUG(node_obj->get_logger(),"infinite_room planes", "min dist %f",
   // min_dist);
-  if (min_dist > infinite_room_dist_threshold) data_association.first = -1;
+  if (min_dist > infinite_room_dist_threshold) data_association = -1;
 
   return data_association;
 }

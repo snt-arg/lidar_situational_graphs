@@ -180,7 +180,7 @@ class TestRoom : public ::testing::Test {
   std::unordered_map<int, s_graphs::VerticalPlanes> y_vert_planes;
   std::deque<std::pair<s_graphs::VerticalPlanes, s_graphs::VerticalPlanes>>
       dupl_x_vert_planes, dupl_y_vert_planes;
-  std::vector<s_graphs::InfiniteRooms> x_infinite_rooms, y_infinite_rooms;
+  std::unordered_map<int, s_graphs::InfiniteRooms> x_infinite_rooms, y_infinite_rooms;
   std::unordered_map<int, s_graphs::Rooms> rooms_vec;
   s_graphs::msg::RoomData pub_room_data;
 };

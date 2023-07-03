@@ -60,9 +60,9 @@ class GraphUtils {
                     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                     std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                     std::unordered_map<int, Rooms>& rooms_vec,
-                    std::vector<InfiniteRooms>& x_infinite_rooms,
-                    std::vector<InfiniteRooms>& y_infinite_rooms,
-                    std::vector<Floors>& floors_vec);
+                    std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+                    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+                    std::unordered_map<int, Floors>& floors_vec);
 };
 
 }  // namespace s_graphs
