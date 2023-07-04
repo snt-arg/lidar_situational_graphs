@@ -546,6 +546,7 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& room_data_msg : room_data_queue) {
       for (const auto& room_data : room_data_msg.rooms) {
         if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
+          int current_room_id;
           finite_room_mapper->lookup_rooms(covisibility_graph,
                                            room_data,
                                            x_vert_planes,
@@ -554,7 +555,12 @@ class SGraphsNode : public rclcpp::Node {
                                            dupl_y_vert_planes,
                                            x_infinite_rooms,
                                            y_infinite_rooms,
-                                           rooms_vec);
+                                           rooms_vec,
+                                           current_room_id);
+
+          // generate local graph per room
+          extract_keyframes_from_room(rooms_vec[current_room_id]);
+
         }
         // x infinite_room
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
@@ -587,6 +593,27 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue_mutex.lock();
       room_data_queue.pop_front();
       room_data_queue_mutex.unlock();
+    }
+  }
+
+  /**
+   *@brief extract all the keyframes from the found room
+   **/
+
+  void extract_keyframes_from_room(Rooms current_room) {
+    // check if the current robot pose lies in a room
+    if (rooms_vec.empty()) return;
+
+    std::cout << "extracting room keyframes " << std::endl;
+    // if current room is not empty then get the keyframes in the room
+    if (current_room.node != nullptr) {
+      Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
+      std::vector<s_graphs::KeyFrame::Ptr> room_keyframes =
+          local_graph_generator->get_keyframes_inside_room(
+              current_room, x_vert_planes, y_vert_planes, keyframes);
+      // create the local graph for that room
+      local_graph_generator->generate_local_graph(
+          keyframe_mapper, covisibility_graph, room_keyframes, odom2map, current_room);
     }
   }
 
@@ -743,9 +770,6 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
-    // generate local graph per room
-    // extract_keyframes_from_room(new_keyframes);
-
     std_msgs::msg::Header read_until;
     read_until.stamp = keyframe_queue[num_processed]->stamp + rclcpp::Duration(10, 0);
     read_until.frame_id = points_topic;
@@ -759,29 +783,6 @@ class SGraphsNode : public rclcpp::Node {
 
     return true;
   }
-
-  // void extract_keyframes_from_room(std::deque<KeyFrame::Ptr> new_keyframes) {
-  //   // check if the current robot pose lies in a room
-  //   if (rooms_vec.empty()) return;
-
-  //   std::cout << "extracting the current room " << std::endl;
-  //   Rooms current_room;
-  //   current_room = local_graph_generator->get_current_room(
-  //       x_vert_planes, y_vert_planes, keyframes.back(), rooms_vec);
-
-  //   std::cout << "extracting room keyframes " << std::endl;
-  //   // if current room is not empty then get the keyframes in the room
-  //   if (current_room.node != nullptr) {
-  //     Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
-  //     std::vector<s_graphs::KeyFrame::Ptr> room_keyframes =
-  //         local_graph_generator->get_keyframes_inside_room(
-  //             current_room, x_vert_planes, y_vert_planes, keyframes);
-  //     // create the local graph for that room
-  //     local_graph_generator->generate_local_graph(
-  //         keyframe_mapper, covisibility_graph, room_keyframes, odom2map,
-  //         current_room);
-  //   }
-  // }
 
   void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
     GPRMC grmc = nmea_parser->parse(nmea_msg->sentence);

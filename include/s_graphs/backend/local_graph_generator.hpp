@@ -51,7 +51,7 @@ class LocalGraphGenerator {
   Rooms get_current_room(const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                          const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                          const KeyFrame::Ptr keyframe,
-                         const std::vector<Rooms>& rooms_vec);
+                         const std::unordered_map<int, Rooms>& rooms_vec);
 
   std::vector<KeyFrame::Ptr> get_keyframes_inside_room(
       const Rooms& current_room,

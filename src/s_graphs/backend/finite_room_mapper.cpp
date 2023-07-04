@@ -66,7 +66,8 @@ void FiniteRoomMapper::lookup_rooms(
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-    std::unordered_map<int, Rooms>& rooms_vec) {
+    std::unordered_map<int, Rooms>& rooms_vec,
+    int& room_id) {
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
   room_quat.x() = room_data.room_center.orientation.x;
@@ -238,6 +239,7 @@ void FiniteRoomMapper::lookup_rooms(
                dupl_x_vert_planes,
                dupl_y_vert_planes,
                rooms_vec,
+               room_id,
                room_center,
                room_data.cluster_array);
 }
@@ -251,6 +253,7 @@ void FiniteRoomMapper::factor_rooms(
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
     std::unordered_map<int, Rooms>& rooms_vec,
+    int& room_id,
     const Eigen::Isometry3d& room_center,
     const visualization_msgs::msg::MarkerArray& cluster_array) {
   g2o::VertexRoom* room_node;
@@ -338,6 +341,7 @@ void FiniteRoomMapper::factor_rooms(
     // room_node->setFixed(true);
     Rooms det_room;
     det_room.id = room_data_association;
+    room_id = det_room.id;
     det_room.plane_x1 = x_room_pair_vec[0].plane_unflipped;
     det_room.plane_x2 = x_room_pair_vec[1].plane_unflipped;
     det_room.plane_y1 = y_room_pair_vec[0].plane_unflipped;
@@ -366,6 +370,7 @@ void FiniteRoomMapper::factor_rooms(
   } else {
     /* add the edge between detected planes and the infinite_room */
     room_node = rooms_vec[room_data_association].node;
+    room_id = room_data_association;
     std::cout << "Matched det room with pose " << room_center.translation()
               << " to mapped room with id " << room_data_association << " and pose "
               << room_node->estimate().translation() << std::endl;

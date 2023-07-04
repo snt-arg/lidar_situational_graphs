@@ -119,6 +119,7 @@ class TestRoom : public ::testing::Test {
     this->add_keyframe_node();
     this->add_plane_nodes();
 
+    int current_room_id;
     finite_room_mapper->lookup_rooms(graph_slam,
                                      room_data,
                                      x_vert_planes,
@@ -127,7 +128,8 @@ class TestRoom : public ::testing::Test {
                                      dupl_y_vert_planes,
                                      x_infinite_rooms,
                                      y_infinite_rooms,
-                                     rooms_vec);
+                                     rooms_vec,
+                                     current_room_id);
   }
 
   void add_keyframe_node() {

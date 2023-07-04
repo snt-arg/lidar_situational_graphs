@@ -39,13 +39,13 @@ Rooms LocalGraphGenerator::get_current_room(
     const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const KeyFrame::Ptr keyframe,
-    const std::vector<Rooms>& rooms_vec) {
+    const std::unordered_map<int, Rooms>& rooms_vec) {
   Rooms current_room;
   for (const auto& room : rooms_vec) {
-    if (is_keyframe_inside_room(room, x_vert_planes, y_vert_planes, keyframe)) {
-      current_room = room;
+    if (is_keyframe_inside_room(room.second, x_vert_planes, y_vert_planes, keyframe)) {
+      current_room = room.second;
       std::cout << "robot is currently in room with pose "
-                << room.node->estimate().translation() << std::endl;
+                << room.second.node->estimate().translation() << std::endl;
     }
   }
   return current_room;
