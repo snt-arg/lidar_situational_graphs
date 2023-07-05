@@ -62,7 +62,15 @@ std::vector<KeyFrame::Ptr> LocalGraphGenerator::get_keyframes_inside_room(
         get_room_keyframes(current_room, x_vert_planes, y_vert_planes, keyframes);
     std::cout << "Room has keyframes with size: " << room_keyframes.size() << std::endl;
   }
-  return room_keyframes;
+
+  std::vector<s_graphs::KeyFrame::Ptr> filtered_room_keyframes;
+  for (const auto& room_keyframe : room_keyframes) {
+    s_graphs::KeyFrame::Ptr new_room_keyframe =
+        std::make_shared<KeyFrame>(*room_keyframe);
+    filtered_room_keyframes.push_back(new_room_keyframe);
+  }
+
+  return filtered_room_keyframes;
 }
 
 std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
@@ -79,18 +87,17 @@ void LocalGraphGenerator::generate_local_graph(
     std::vector<KeyFrame::Ptr> filtered_keyframes,
     const Eigen::Isometry3d& odom2map,
     Rooms& current_room) {
+  std::deque<KeyFrame::Ptr> new_room_keyframes;
+
   // check which keyframes already exist in the local graph and add only new ones
   for (const auto& filtered_keyframe : filtered_keyframes) {
-    for (g2o::HyperGraph::VertexIDMap::iterator it =
-             current_room.local_graph->graph->vertices().begin();
-         it != current_room.local_graph->graph->vertices().end();
-         ++it) {
-      g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
-      if (current_room.local_graph->graph->vertex(v->id())) continue;
-    }
+    if (current_room.local_graph->graph->vertex(filtered_keyframe->id())) {
+      continue;
+
+    } else
+      new_room_keyframes.push_back(filtered_keyframe);
   }
 
-  std::deque<KeyFrame::Ptr> new_room_keyframes;
   keyframe_mapper->map_keyframes(current_room.local_graph,
                                  odom2map,
                                  new_room_keyframes,

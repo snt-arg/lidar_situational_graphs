@@ -117,11 +117,14 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
     const auto& keyframe = keyframe_queue[i];
 
     // add pose node
-    Eigen::Isometry3d odom = odom2map * keyframe->odom;
-    keyframe->node = graph_slam->add_se3_node(odom);
+    keyframe->node = graph_slam->copy_se3_node(keyframe->node);
 
     // add edge between consecutive keyframes
     const auto& prev_keyframe = i == 0 ? keyframes.back() : keyframe_queue[i - 1];
+
+    if (i == 0 && keyframes.empty()) {
+      continue;
+    }
 
     Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
 
