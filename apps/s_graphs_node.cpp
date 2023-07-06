@@ -560,7 +560,9 @@ class SGraphsNode : public rclcpp::Node {
 
           // generate local graph per room
           extract_keyframes_from_room(rooms_vec[current_room_id]);
-
+          local_graph_mutex.lock();
+          room_local_graph_id_queue.push_back(current_room_id);
+          local_graph_mutex.unlock();
         }
         // x infinite_room
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
@@ -973,6 +975,28 @@ class SGraphsNode : public rclcpp::Node {
   void optimization_timer_callback() {
     if (keyframes.empty()) return;
 
+    int num_iterations = this->get_parameter("g2o_solver_num_iterations")
+                             .get_parameter_value()
+                             .get<int>();
+
+    int counter = -1;
+    for (const auto& room_local_graph_id : room_local_graph_id_queue) {
+      // optimize_room_local_graph
+      rooms_vec[room_local_graph_id].local_graph->optimize(num_iterations);
+      counter++;
+    }
+    if (!room_local_graph_id_queue.empty()) {
+      local_graph_mutex.lock();
+      room_local_graph_id_queue.erase(room_local_graph_id_queue.begin(),
+                                      room_local_graph_id_queue.begin() + counter);
+      local_graph_mutex.unlock();
+    }
+
+    // TODO:empty the room_local_graph_id_queue until the processed
+    //  marginalize_room_local_graph();
+    //  broadcast_marginalized_info_to_global_graph();
+    //  update_global_graph() && optimize_global_graph();
+
     graph_mutex.lock();
     const int keyframe_size = keyframes.size();
     graph_utils->copy_graph(covisibility_graph, global_graph);
@@ -984,10 +1008,6 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     // optimize the pose graph
-    int num_iterations = this->get_parameter("g2o_solver_num_iterations")
-                             .get_parameter_value()
-                             .get<int>();
-
     try {
       global_graph->optimize(num_iterations);
     } catch (std::invalid_argument& e) {
@@ -1557,6 +1577,10 @@ class SGraphsNode : public rclcpp::Node {
   g2o::EdgeSE3* anchor_edge;
   std::vector<KeyFrame::Ptr> keyframes;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
+
+  // hierarchical optimization related
+  std::deque<int> room_local_graph_id_queue;
+  std::mutex local_graph_mutex;
 
   boost::lockfree::spsc_queue<std::shared_ptr<GraphSLAM>> covisibility_graph_queue{100};
   std::shared_ptr<GraphSLAM> current_covisibility_graph;

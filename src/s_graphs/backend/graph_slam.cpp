@@ -761,7 +761,7 @@ void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge* edge,
 
 int GraphSLAM::optimize(int num_iterations) {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
-  if (graph->edges().size() < 10) {
+  if (graph->edges().size() < 1) {
     return -1;
   }
 
