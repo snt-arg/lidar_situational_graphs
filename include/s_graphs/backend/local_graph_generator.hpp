@@ -53,11 +53,11 @@ class LocalGraphGenerator {
                          const KeyFrame::Ptr keyframe,
                          const std::unordered_map<int, Rooms>& rooms_vec);
 
-  std::vector<KeyFrame::Ptr> get_keyframes_inside_room(
+  std::map<int, KeyFrame::Ptr> get_keyframes_inside_room(
       const Rooms& current_room,
       const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
       const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
-      const std::vector<KeyFrame::Ptr>& keyframes);
+      const std::map<int, KeyFrame::Ptr>& keyframes);
 
   std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
       const Rooms& current_room,
@@ -66,7 +66,7 @@ class LocalGraphGenerator {
 
   void generate_local_graph(std::unique_ptr<KeyframeMapper>& keyframe_mapper,
                             std::shared_ptr<GraphSLAM> covisibility_graph,
-                            std::vector<s_graphs::KeyFrame::Ptr> filtered_keyframes,
+                            std::map<int, s_graphs::KeyFrame::Ptr> filtered_keyframes,
                             const Eigen::Isometry3d& odom2map,
                             Rooms& current_room);
 };

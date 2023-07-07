@@ -189,7 +189,7 @@ pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
   pcl::PointCloud<s_graphs::PointT>::Ptr room_cloud(
       new pcl::PointCloud<s_graphs::PointT>());
   for (auto it = begin; it != end; it++) {
-    s_graphs::KeyFrame::Ptr keyframe = *it;
+    s_graphs::KeyFrame::Ptr keyframe = it->second;
     // std::cout << "Keyframe:" << keyframe->id() << std::endl;
     Eigen::Isometry3d rel_transform = room_centre.inverse() * keyframe->estimate();
     auto cloud = transform_pointcloud<s_graphs::KeyFrame::PointT>(keyframe->cloud,
@@ -209,11 +209,11 @@ generate_room_keyframe(
     const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
     const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 
-std::vector<s_graphs::KeyFrame::Ptr> get_room_keyframes(
+std::map<int, s_graphs::KeyFrame::Ptr> get_room_keyframes(
     const s_graphs::Rooms& room,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
-    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 
 bool is_keyframe_inside_room(
     const s_graphs::Rooms& room,

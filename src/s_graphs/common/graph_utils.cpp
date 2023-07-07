@@ -124,7 +124,7 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 }
 
 void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
-                              std::vector<KeyFrame::Ptr> keyframes,
+                              std::map<int, KeyFrame::Ptr> keyframes,
                               std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                               std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                               std::unordered_map<int, Rooms>& rooms_vec,
@@ -141,12 +141,9 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
     // if vertex is se3 check for it in keyframes vector and update its node estimate
     if (vertex_se3) {
       int id = vertex_se3->id();
-      auto keyframe =
-          std::find_if(keyframes.begin(), keyframes.end(), [id](auto& keyframe) {
-            return keyframe->id() == id;
-          });
+      auto keyframe = keyframes.find(id);
       if (keyframe != keyframes.end())
-        (*keyframe)->node->setEstimate(vertex_se3->estimate());
+        (keyframe)->second->node->setEstimate(vertex_se3->estimate());
       continue;
     }
 

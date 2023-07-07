@@ -48,7 +48,7 @@ int KeyframeMapper::map_keyframes(
     std::shared_ptr<GraphSLAM>& graph_slam,
     Eigen::Isometry3d odom2map,
     std::deque<KeyFrame::Ptr>& keyframe_queue,
-    std::vector<KeyFrame::Ptr>& keyframes,
+    std::map<int, KeyFrame::Ptr>& keyframes,
     std::deque<KeyFrame::Ptr>& new_keyframes,
     g2o::VertexSE3*& anchor_node,
     g2o::EdgeSE3*& anchor_edge,
@@ -94,7 +94,8 @@ int KeyframeMapper::map_keyframes(
     }
 
     // add edge between consecutive keyframes
-    const auto& prev_keyframe = i == 0 ? keyframes.back() : keyframe_queue[i - 1];
+    const auto& prev_keyframe =
+        i == 0 ? keyframes.rbegin()->second : keyframe_queue[i - 1];
 
     Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
     Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
@@ -109,7 +110,7 @@ int KeyframeMapper::map_keyframes(
 void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
                                    const Eigen::Isometry3d& odom2map,
                                    std::deque<KeyFrame::Ptr>& keyframe_queue,
-                                   std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+                                   std::map<int, s_graphs::KeyFrame::Ptr>& keyframes) {
   int num_processed = 0;
   for (int i = 0; i < std::min<int>(keyframe_queue.size(), max_keyframes_per_update);
        i++) {
@@ -120,7 +121,8 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
     keyframe->node = graph_slam->copy_se3_node(keyframe->node);
 
     // add edge between consecutive keyframes
-    const auto& prev_keyframe = i == 0 ? keyframes.back() : keyframe_queue[i - 1];
+    const auto& prev_keyframe =
+        i == 0 ? (keyframes.rbegin()->second) : keyframe_queue[i - 1];
 
     if (i == 0 && keyframes.empty()) {
       continue;
@@ -135,7 +137,7 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
         keyframe->node, prev_keyframe->node, relative_pose, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
 
-    keyframes.push_back(keyframe);
+    keyframes.insert({keyframe->id(), keyframe});
   }
 }
 

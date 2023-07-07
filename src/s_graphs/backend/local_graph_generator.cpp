@@ -51,23 +51,23 @@ Rooms LocalGraphGenerator::get_current_room(
   return current_room;
 }
 
-std::vector<KeyFrame::Ptr> LocalGraphGenerator::get_keyframes_inside_room(
+std::map<int, KeyFrame::Ptr> LocalGraphGenerator::get_keyframes_inside_room(
     const Rooms& current_room,
     const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
-    const std::vector<KeyFrame::Ptr>& keyframes) {
-  std::vector<s_graphs::KeyFrame::Ptr> room_keyframes;
+    const std::map<int, KeyFrame::Ptr>& keyframes) {
+  std::map<int, s_graphs::KeyFrame::Ptr> room_keyframes;
   if (current_room.node != nullptr) {
     room_keyframes =
         get_room_keyframes(current_room, x_vert_planes, y_vert_planes, keyframes);
     std::cout << "Room has keyframes with size: " << room_keyframes.size() << std::endl;
   }
 
-  std::vector<s_graphs::KeyFrame::Ptr> filtered_room_keyframes;
+  std::map<int, s_graphs::KeyFrame::Ptr> filtered_room_keyframes;
   for (const auto& room_keyframe : room_keyframes) {
     s_graphs::KeyFrame::Ptr new_room_keyframe =
-        std::make_shared<KeyFrame>(*room_keyframe);
-    filtered_room_keyframes.push_back(new_room_keyframe);
+        std::make_shared<KeyFrame>(*room_keyframe.second);
+    filtered_room_keyframes.insert({room_keyframe.first, new_room_keyframe});
   }
 
   return filtered_room_keyframes;
@@ -84,18 +84,18 @@ std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
 void LocalGraphGenerator::generate_local_graph(
     std::unique_ptr<KeyframeMapper>& keyframe_mapper,
     std::shared_ptr<GraphSLAM> covisibility_graph,
-    std::vector<KeyFrame::Ptr> filtered_keyframes,
+    std::map<int, KeyFrame::Ptr> filtered_keyframes,
     const Eigen::Isometry3d& odom2map,
     Rooms& current_room) {
   std::deque<KeyFrame::Ptr> new_room_keyframes;
 
   // check which keyframes already exist in the local graph and add only new ones
   for (const auto& filtered_keyframe : filtered_keyframes) {
-    if (current_room.local_graph->graph->vertex(filtered_keyframe->id())) {
+    if (current_room.local_graph->graph->vertex(filtered_keyframe.second->id())) {
       continue;
 
     } else
-      new_room_keyframes.push_back(filtered_keyframe);
+      new_room_keyframes.push_back(filtered_keyframe.second);
   }
 
   keyframe_mapper->map_keyframes(current_room.local_graph,

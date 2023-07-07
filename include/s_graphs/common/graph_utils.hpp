@@ -56,7 +56,7 @@ class GraphUtils {
                   std::unique_ptr<GraphSLAM>& global_graph);
 
   void update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
-                    std::vector<KeyFrame::Ptr> keyframes,
+                    std::map<int, KeyFrame::Ptr> keyframes,
                     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                     std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                     std::unordered_map<int, Rooms>& rooms_vec,

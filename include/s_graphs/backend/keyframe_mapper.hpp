@@ -79,7 +79,7 @@ class KeyframeMapper {
       std::shared_ptr<GraphSLAM>& graph_slam,
       Eigen::Isometry3d odom2map,
       std::deque<KeyFrame::Ptr>& keyframe_queue,
-      std::vector<KeyFrame::Ptr>& keyframes,
+      std::map<int, KeyFrame::Ptr>& keyframes,
       std::deque<KeyFrame::Ptr>& new_keyframes,
       g2o::VertexSE3*& anchor_node,
       g2o::EdgeSE3*& anchor_edge,
@@ -88,7 +88,7 @@ class KeyframeMapper {
   void map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
                      const Eigen::Isometry3d& odom2map,
                      std::deque<KeyFrame::Ptr>& keyframe_queue,
-                     std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+                     std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 
   void remap_delayed_keyframe(std::shared_ptr<GraphSLAM>& graph_slam,
                               KeyFrame::Ptr keyframe,

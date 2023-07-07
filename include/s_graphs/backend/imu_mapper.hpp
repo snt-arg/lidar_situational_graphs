@@ -65,7 +65,7 @@ class IMUMapper {
   bool map_imu_data(std::shared_ptr<GraphSLAM>& graph_slam,
                     const std::unique_ptr<tf2_ros::Buffer>& tf_buffer,
                     std::deque<sensor_msgs::msg::Imu::SharedPtr>& imu_queue,
-                    const std::vector<KeyFrame::Ptr>& keyframes,
+                    const std::map<int, KeyFrame::Ptr>& keyframes,
                     const std::string base_frame_id);
 
  private:

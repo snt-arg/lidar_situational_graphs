@@ -136,7 +136,7 @@ class LoopDetector {
    *          Pose graph
    * @return Loop vector
    */
-  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes,
+  std::vector<Loop::Ptr> detect(const std::map<int, KeyFrame::Ptr>& keyframes,
                                 const std::deque<KeyFrame::Ptr>& new_keyframes,
                                 s_graphs::GraphSLAM& graph_slam) {
     std::vector<Loop::Ptr> detected_loops;
@@ -151,7 +151,7 @@ class LoopDetector {
     return detected_loops;
   }
 
-  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes,
+  std::vector<Loop::Ptr> detect(const std::map<int, KeyFrame::Ptr>& keyframes,
                                 const std::vector<KeyFrame::Ptr>& new_keyframes,
                                 s_graphs::GraphSLAM& graph_slam) {
     std::vector<Loop::Ptr> detected_loops;
@@ -167,7 +167,7 @@ class LoopDetector {
   }
 
   std::vector<Loop::Ptr> detectWithAllKeyframes(
-      const std::vector<KeyFrame::Ptr>& keyframes,
+      const std::map<int, KeyFrame::Ptr>& keyframes,
       const std::vector<KeyFrame::Ptr>& new_keyframes,
       s_graphs::GraphSLAM& graph_slam) {
     std::vector<Loop::Ptr> detected_loops;
@@ -199,25 +199,26 @@ class LoopDetector {
    *          Loop end keyframe
    * @return Loop candidates
    */
-  std::vector<KeyFrame::Ptr> find_candidates(
-      const std::vector<KeyFrame::Ptr>& keyframes,
+  std::map<int, KeyFrame::Ptr> find_candidates(
+      const std::map<int, KeyFrame::Ptr>& keyframes,
       const KeyFrame::Ptr& new_keyframe) const {
     // too close to the last registered loop edge
     if (new_keyframe->accum_distance - last_edge_accum_distance <
         distance_from_last_edge_thresh) {
-      return std::vector<KeyFrame::Ptr>();
+      return std::map<int, KeyFrame::Ptr>();
     }
 
-    std::vector<KeyFrame::Ptr> candidates;
-    candidates.reserve(32);
+    std::map<int, KeyFrame::Ptr> candidates;
+    // candidates.reserve(32);
 
     for (const auto& k : keyframes) {
       // traveled distance between keyframes is too small
-      if (new_keyframe->accum_distance - k->accum_distance < accum_distance_thresh) {
+      if (new_keyframe->accum_distance - k.second->accum_distance <
+          accum_distance_thresh) {
         continue;
       }
 
-      const auto& pos1 = k->node->estimate().translation();
+      const auto& pos1 = k.second->node->estimate().translation();
       const auto& pos2 = new_keyframe->node->estimate().translation();
 
       // estimated distance between keyframes is too small
@@ -226,7 +227,7 @@ class LoopDetector {
         continue;
       }
 
-      candidates.push_back(k);
+      candidates.insert({k.first, k.second});
     }
 
     return candidates;
@@ -245,7 +246,7 @@ class LoopDetector {
    *          graph slam
    * @return Loop pointer
    */
-  Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes,
+  Loop::Ptr matching(const std::map<int, KeyFrame::Ptr>& candidate_keyframes,
                      const KeyFrame::Ptr& new_keyframe,
                      s_graphs::GraphSLAM& graph_slam,
                      bool use_prior = true) {
@@ -267,14 +268,14 @@ class LoopDetector {
 
     pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
     for (const auto& candidate : candidate_keyframes) {
-      if (candidate->cloud->points.empty()) continue;
-      registration->setInputSource(candidate->cloud);
+      if (candidate.second->cloud->points.empty()) continue;
+      registration->setInputSource(candidate.second->cloud);
       Eigen::Isometry3d new_keyframe_estimate = new_keyframe->node->estimate();
       new_keyframe_estimate.linear() =
           Eigen::Quaterniond(new_keyframe_estimate.linear())
               .normalized()
               .toRotationMatrix();
-      Eigen::Isometry3d candidate_estimate = candidate->node->estimate();
+      Eigen::Isometry3d candidate_estimate = candidate.second->node->estimate();
       candidate_estimate.linear() = Eigen::Quaterniond(candidate_estimate.linear())
                                         .normalized()
                                         .toRotationMatrix();
@@ -300,7 +301,7 @@ class LoopDetector {
       }
 
       best_score = score;
-      best_matched = candidate;
+      best_matched = candidate.second;
       relative_pose = registration->getFinalTransformation();
     }
 

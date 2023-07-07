@@ -217,13 +217,11 @@ KeyFramePtrVec obtain_keyframes_from_ids(const std::set<int>& id_list,
                                          const KeyFramePtrVec& _keyframes) {
   KeyFramePtrVec keyframes;
   for (auto& id : id_list) {
-    auto it = std::find_if(_keyframes.begin(), _keyframes.end(), [id](auto& keyframe) {
-      return keyframe->id() == id;
-    });
+    auto it = _keyframes.find(id);
     if (it == _keyframes.end()) {
       continue;
     }
-    keyframes.emplace_back(*it);
+    keyframes.insert({id, it->second});
   }
   return keyframes;
 }
@@ -234,7 +232,7 @@ generate_room_keyframe(
     const s_graphs::Rooms& room,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
-    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes) {
   auto global_planes =
       obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
   auto room_centre = obtain_global_centre_of_room(global_planes);
@@ -251,11 +249,11 @@ generate_room_keyframe(
   // room_centre.value(), cloud)};
 }
 
-std::vector<s_graphs::KeyFrame::Ptr> get_room_keyframes(
+std::map<int, s_graphs::KeyFrame::Ptr> get_room_keyframes(
     const s_graphs::Rooms& room,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
-    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes) {
   auto global_planes =
       obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
   auto room_centre = obtain_global_centre_of_room(global_planes);
