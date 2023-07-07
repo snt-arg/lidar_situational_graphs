@@ -991,18 +991,19 @@ class SGraphsNode : public rclcpp::Node {
                              .get_parameter_value()
                              .get<int>();
 
-    // int counter = -1;
-    // for (const auto& room_local_graph_id : room_local_graph_id_queue) {
-    //   // optimize_room_local_graph
-    //   rooms_vec[room_local_graph_id].local_graph->optimize(num_iterations);
-    //   counter++;
-    // }
-    // if (!room_local_graph_id_queue.empty()) {
-    //   local_graph_mutex.lock();
-    //   room_local_graph_id_queue.erase(room_local_graph_id_queue.begin(),
-    //                                   room_local_graph_id_queue.begin() + counter);
-    //   local_graph_mutex.unlock();
-    // }
+    int counter = 0;
+    for (const auto& room_local_graph_id : room_local_graph_id_queue) {
+      // optimize_room_local_graph
+      rooms_vec[room_local_graph_id].local_graph->optimize(num_iterations);
+      counter++;
+    }
+
+    if (!room_local_graph_id_queue.empty()) {
+      local_graph_mutex.lock();
+      room_local_graph_id_queue.erase(room_local_graph_id_queue.begin(),
+                                      room_local_graph_id_queue.begin() + counter);
+      local_graph_mutex.unlock();
+    }
 
     // TODO:empty the room_local_graph_id_queue until the processed
     //  marginalize_room_local_graph();
