@@ -43,6 +43,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/infinite_rooms.hpp>
 #include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
 #include <s_graphs/common/rooms.hpp>
 
@@ -63,6 +64,10 @@ class GraphUtils {
                     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
                     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
                     std::unordered_map<int, Floors>& floors_vec);
+
+  void marginalize_graph(const std::shared_ptr<GraphSLAM>& local_graph,
+                         std::shared_ptr<GraphSLAM>& covisibility_graph,
+                         const std::map<int, KeyFrame::Ptr>& room_keyframes);
 };
 
 }  // namespace s_graphs

@@ -560,9 +560,9 @@ class SGraphsNode : public rclcpp::Node {
 
           // generate local graph per room
           extract_keyframes_from_room(rooms_vec[current_room_id]);
-          local_graph_mutex.lock();
+          graph_mutex.lock();
           room_local_graph_id_queue.push_back(current_room_id);
-          local_graph_mutex.unlock();
+          graph_mutex.unlock();
         }
         // x infinite_room
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
@@ -995,18 +995,22 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& room_local_graph_id : room_local_graph_id_queue) {
       // optimize_room_local_graph
       rooms_vec[room_local_graph_id].local_graph->optimize(num_iterations);
+      graph_mutex.lock();
+      graph_utils->marginalize_graph(rooms_vec[room_local_graph_id].local_graph,
+                                     covisibility_graph,
+                                     rooms_vec[room_local_graph_id].room_keyframes);
+      graph_mutex.unlock();
       counter++;
     }
 
     if (!room_local_graph_id_queue.empty()) {
-      local_graph_mutex.lock();
+      graph_mutex.lock();
       room_local_graph_id_queue.erase(room_local_graph_id_queue.begin(),
                                       room_local_graph_id_queue.begin() + counter);
-      local_graph_mutex.unlock();
+      graph_mutex.unlock();
     }
 
     // TODO:empty the room_local_graph_id_queue until the processed
-    //  marginalize_room_local_graph();
     //  broadcast_marginalized_info_to_global_graph();
     //  update_global_graph() && optimize_global_graph();
 

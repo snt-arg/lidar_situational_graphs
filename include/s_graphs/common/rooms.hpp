@@ -60,7 +60,7 @@ namespace s_graphs {
 class Rooms {
  public:
   Rooms() {}
-  Rooms(const Rooms &old_room, const bool deep_copy = false) {
+  Rooms(const Rooms& old_room, const bool deep_copy = false) {
     *this = old_room;
 
     if (deep_copy) {
@@ -77,13 +77,13 @@ class Rooms {
       plane_y2_node->setEstimate(old_room.plane_y2_node->estimate());
 
       // room_keyframes.reserve(old_room.room_keyframes.size());
-      for (const auto &k : old_room.room_keyframes) {
+      for (const auto& k : old_room.room_keyframes) {
         std::make_shared<KeyFrameSnapshot>(k.second);
       }
     }
   }
 
-  Rooms &operator=(const Rooms &old_room) {
+  Rooms& operator=(const Rooms& old_room) {
     id = old_room.id;
 
     plane_x1 = old_room.plane_x1;
@@ -123,11 +123,11 @@ class Rooms {
   bool sub_room;
   visualization_msgs::msg::MarkerArray cluster_array;
 
-  g2o::VertexPlane *plane_x1_node = nullptr;
-  g2o::VertexPlane *plane_x2_node = nullptr;
-  g2o::VertexPlane *plane_y1_node = nullptr;
-  g2o::VertexPlane *plane_y2_node = nullptr;
-  g2o::VertexRoom *node = nullptr;  // node instance in covisibility graph
+  g2o::VertexPlane* plane_x1_node = nullptr;
+  g2o::VertexPlane* plane_x2_node = nullptr;
+  g2o::VertexPlane* plane_y1_node = nullptr;
+  g2o::VertexPlane* plane_y2_node = nullptr;
+  g2o::VertexRoom* node = nullptr;  // node instance in covisibility graph
   std::map<int, KeyFrame::Ptr> room_keyframes;
   std::shared_ptr<GraphSLAM> local_graph;
 };
