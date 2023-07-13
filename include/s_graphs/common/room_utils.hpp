@@ -207,7 +207,7 @@ generate_room_keyframe(
     const s_graphs::Rooms& room,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
-    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 
 std::map<int, s_graphs::KeyFrame::Ptr> get_room_keyframes(
     const s_graphs::Rooms& room,
@@ -249,7 +249,7 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
   RoomsKeyframeGenerator(
       const std::unordered_map<int, s_graphs::VerticalPlanes>* x_vert_planes,
       const std::unordered_map<int, s_graphs::VerticalPlanes>* y_vert_planes,
-      const std::vector<s_graphs::KeyFrame::Ptr>* keyframes)
+      const std::map<int, s_graphs::KeyFrame::Ptr>* keyframes)
       : x_vert_planes_(x_vert_planes),
         y_vert_planes_(y_vert_planes),
         keyframes_(keyframes){};
@@ -317,7 +317,7 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
   std::unordered_map<int, ExtendedRooms> room_keyframe_dict_;
   const std::unordered_map<int, s_graphs::VerticalPlanes>* x_vert_planes_;
   const std::unordered_map<int, s_graphs::VerticalPlanes>* y_vert_planes_;
-  const std::vector<s_graphs::KeyFrame::Ptr>* keyframes_;
+  const std::map<int, s_graphs::KeyFrame::Ptr>* keyframes_;
 };
 
 graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
