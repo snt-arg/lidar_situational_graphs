@@ -602,11 +602,10 @@ class SGraphsNode : public rclcpp::Node {
    *@brief extract all the keyframes from the found room
    **/
 
-  void extract_keyframes_from_room(Rooms current_room) {
+  void extract_keyframes_from_room(Rooms& current_room) {
     // check if the current robot pose lies in a room
     if (rooms_vec.empty()) return;
 
-    std::cout << "extracting room keyframes " << std::endl;
     // if current room is not empty then get the keyframes in the room
     if (current_room.node != nullptr) {
       Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
@@ -996,9 +995,9 @@ class SGraphsNode : public rclcpp::Node {
       // optimize_room_local_graph
       rooms_vec[room_local_graph_id].local_graph->optimize(num_iterations);
       graph_mutex.lock();
-      graph_utils->marginalize_graph(rooms_vec[room_local_graph_id].local_graph,
-                                     covisibility_graph,
-                                     rooms_vec[room_local_graph_id].room_keyframes);
+      graph_utils->set_marginalize_info(rooms_vec[room_local_graph_id].local_graph,
+                                        covisibility_graph,
+                                        rooms_vec[room_local_graph_id].room_keyframes);
       graph_mutex.unlock();
       counter++;
     }

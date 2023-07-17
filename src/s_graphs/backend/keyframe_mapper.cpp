@@ -119,14 +119,15 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
 
     // add pose node
     keyframe->node = graph_slam->copy_se3_node(keyframe->node);
-
-    // add edge between consecutive keyframes
-    const auto& prev_keyframe =
-        i == 0 ? (keyframes.rbegin()->second) : keyframe_queue[i - 1];
+    keyframes.insert({keyframe->id(), keyframe});
 
     if (i == 0 && keyframes.empty()) {
       continue;
     }
+
+    // add edge between consecutive keyframes
+    const auto& prev_keyframe =
+        i == 0 ? (keyframes.rbegin()->second) : keyframe_queue[i - 1];
 
     Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
 
@@ -136,8 +137,6 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& graph_slam,
     auto edge = graph_slam->add_se3_edge(
         keyframe->node, prev_keyframe->node, relative_pose, information);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-
-    keyframes.insert({keyframe->id(), keyframe});
   }
 }
 

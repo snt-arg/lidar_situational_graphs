@@ -65,9 +65,9 @@ class GraphUtils {
                     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
                     std::unordered_map<int, Floors>& floors_vec);
 
-  void marginalize_graph(const std::shared_ptr<GraphSLAM>& local_graph,
-                         std::shared_ptr<GraphSLAM>& covisibility_graph,
-                         const std::map<int, KeyFrame::Ptr>& room_keyframes);
+  void set_marginalize_info(const std::shared_ptr<GraphSLAM>& local_graph,
+                            std::shared_ptr<GraphSLAM>& covisibility_graph,
+                            const std::map<int, KeyFrame::Ptr>& room_keyframes);
 };
 
 }  // namespace s_graphs

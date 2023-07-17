@@ -202,10 +202,12 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
   }
 }
 
-void GraphUtils::marginalize_graph(const std::shared_ptr<GraphSLAM>& local_graph,
-                                   std::shared_ptr<GraphSLAM>& covisibility_graph,
-                                   const std::map<int, KeyFrame::Ptr>& room_keyframes) {
+void GraphUtils::set_marginalize_info(
+    const std::shared_ptr<GraphSLAM>& local_graph,
+    std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const std::map<int, KeyFrame::Ptr>& room_keyframes) {
   int k_counter = 0;
+
   for (const auto& keyframe : room_keyframes) {
     g2o::OptimizableGraph::Vertex* local_vertex =
         (g2o::OptimizableGraph::Vertex*)(local_graph->graph->vertex(keyframe.first));
@@ -219,17 +221,26 @@ void GraphUtils::marginalize_graph(const std::shared_ptr<GraphSLAM>& local_graph
 
       if (covis_vertex_se3) {
         covis_vertex_se3->setEstimate((local_vertex_se3)->estimate());
-        if (k_counter != 0) {
+
+        auto current_data =
+            dynamic_cast<OptimizationData*>(covis_vertex_se3->userData());
+        bool marginalized = false;
+        if (current_data) {
+          current_data->get_marginalized_info(marginalized);
+        }
+
+        if (k_counter != 0 && !marginalized) {
           OptimizationData* data = new OptimizationData();
-          std::stringstream os;
-          bool marginalized = true;
-          os << marginalized;
-          data->write(os);
+          marginalized = true;
+          data->set_marginalize_info(marginalized);
           covis_vertex_se3->setUserData(data);
 
           std::cout << "keyframe counter: " << k_counter << std::endl;
           std::cout << "will marginalize keyframe with id in covis graph: "
                     << covis_vertex_se3->id() << std::endl;
+        } else {
+          std::cout << "Keyframe " << covis_vertex_se3->id()
+                    << " will not be marginalized" << std::endl;
         }
       }
     }
