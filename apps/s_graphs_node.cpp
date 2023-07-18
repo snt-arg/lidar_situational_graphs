@@ -284,7 +284,7 @@ class SGraphsNode : public rclcpp::Node {
                   std::placeholders::_2));
 
     graph_updated = false;
-    prev_edge_count = curr_edge_count = 0;
+    covis_prev_edge_count = covis_curr_edge_count = 0;
 
     double graph_update_interval = this->get_parameter("graph_update_interval")
                                        .get_parameter_value()
@@ -1013,15 +1013,15 @@ class SGraphsNode : public rclcpp::Node {
     //  broadcast_marginalized_info_to_global_graph();
     //  update_global_graph() && optimize_global_graph();
 
+    covis_curr_edge_count = covisibility_graph->retrive_total_nbr_of_edges();
+    if (covis_curr_edge_count <= covis_prev_edge_count) {
+      return;
+    }
+
     graph_mutex.lock();
     const int keyframe_id = keyframes.rbegin()->first;
     graph_utils->copy_graph(covisibility_graph, global_graph);
     graph_mutex.unlock();
-
-    curr_edge_count = global_graph->retrive_total_nbr_of_edges();
-    if (curr_edge_count <= prev_edge_count) {
-      return;
-    }
 
     // optimize the pose graph
     try {
@@ -1058,7 +1058,7 @@ class SGraphsNode : public rclcpp::Node {
     trans_odom2map_mutex.unlock();
 
     graph_updated = true;
-    prev_edge_count = curr_edge_count;
+    covis_prev_edge_count = covis_curr_edge_count;
   }
 
   /**
@@ -1560,7 +1560,7 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<int, Rooms> rooms_vec;  // rooms segmented from planes
   std::vector<Rooms> rooms_vec_prior;
   std::unordered_map<int, Floors> floors_vec;
-  int prev_edge_count, curr_edge_count;
+  int covis_prev_edge_count, covis_curr_edge_count;
 
   std::vector<VerticalPlanes> current_x_planes, current_y_planes;
   std::vector<HorizontalPlanes> current_hort_planes;
