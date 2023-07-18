@@ -106,7 +106,6 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
     if (edge_room_4planes) {
       g2o::VertexRoom* v1 = dynamic_cast<g2o::VertexRoom*>(
           global_graph->graph->vertices().at(edge_room_4planes->vertices()[0]->id()));
-      std::cout << "vertex room id in edge: " << v1->id() << std::endl;
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
           global_graph->graph->vertices().at(edge_room_4planes->vertices()[1]->id()));
       g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(
