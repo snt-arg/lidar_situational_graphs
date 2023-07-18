@@ -9,6 +9,7 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
        it != covisibility_graph->graph->vertices().end();
        ++it) {
     g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+
     if (global_graph->graph->vertex(v->id())) continue;
 
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
@@ -21,14 +22,34 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
       auto current_vertex = global_graph->copy_plane_node(vertex_plane);
       continue;
     }
+
+    g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
+    if (vertex_floor) {
+      auto current_vertex = global_graph->copy_floor_node(vertex_floor);
+      continue;
+    }
+
     g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
     if (vertex_room) {
       auto current_vertex = global_graph->copy_room_node(vertex_room);
       continue;
     }
-    g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
-    if (vertex_floor) auto current_vertex = global_graph->copy_floor_node(vertex_floor);
   }
+
+  // remove floor-room edges from the global graph
+  std::vector<g2o::EdgeFloorRoom*> edge_floor_room_vec;
+  for (g2o::HyperGraph::EdgeSet::iterator it = global_graph->graph->edges().begin();
+       it != global_graph->graph->edges().end();
+       ++it) {
+    g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*it);
+    g2o::EdgeFloorRoom* edge_floor_room = dynamic_cast<g2o::EdgeFloorRoom*>(e);
+    if (edge_floor_room) {
+      edge_floor_room_vec.push_back(edge_floor_room);
+    }
+  }
+
+  for (auto& edge_floor_room : edge_floor_room_vec)
+    global_graph->remove_floor_room_edge(edge_floor_room);
 
   for (g2o::HyperGraph::EdgeSet::iterator it =
            covisibility_graph->graph->edges().begin();
@@ -85,6 +106,7 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
     if (edge_room_4planes) {
       g2o::VertexRoom* v1 = dynamic_cast<g2o::VertexRoom*>(
           global_graph->graph->vertices().at(edge_room_4planes->vertices()[0]->id()));
+      std::cout << "vertex room id in edge: " << v1->id() << std::endl;
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
           global_graph->graph->vertices().at(edge_room_4planes->vertices()[1]->id()));
       g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(

@@ -52,6 +52,10 @@ FiniteRoomMapper::FiniteRoomMapper(const rclcpp::Node::SharedPtr node) {
           .get_parameter_value()
           .get<bool>();
 
+  information_room_planes.setZero();
+  information_room_planes(0, 0) = room_information;
+  information_room_planes(1, 1) = room_information;
+
   plane_utils.reset(new PlaneUtils());
 }
 
@@ -261,11 +265,6 @@ void FiniteRoomMapper::factor_rooms(
 
   Eigen::Matrix<double, 1, 1> information_room_plane;
   information_room_plane(0, 0) = room_information;
-
-  Eigen::Matrix<double, 2, 2> information_room_planes;
-  information_room_planes.setZero();
-  information_room_planes(0, 0) = room_information;
-  information_room_planes(1, 1) = room_information;
 
   Eigen::Matrix<double, 3, 3> information_2planes;
   information_2planes.setZero();
@@ -701,6 +700,16 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
       det_room.cluster_array.markers.push_back(
           matched_y_infinite_room.cluster_array.markers[i]);
     rooms_vec.insert({det_room.id, det_room});
+
+    auto edge_room_planes =
+        graph_slam->add_room_4planes_edge(room_node,
+                                          (matched_x_infinite_room).plane1_node,
+                                          (matched_x_infinite_room).plane2_node,
+                                          (matched_y_infinite_room).plane1_node,
+                                          (matched_y_infinite_room).plane2_node,
+                                          information_room_planes);
+    graph_slam->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+
     return;
   } else
     return;
@@ -768,6 +777,16 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
     rooms_vec.insert({det_room.id, det_room});
+
+    auto edge_room_planes =
+        graph_slam->add_room_4planes_edge(room_node,
+                                          (matched_x_infinite_room).plane1_node,
+                                          (matched_x_infinite_room).plane2_node,
+                                          (found_y_plane1->second).plane_node,
+                                          (found_y_plane2->second).plane_node,
+                                          information_room_planes);
+    graph_slam->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+
     return;
   } else
     return;
@@ -838,6 +857,16 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
     rooms_vec.insert({det_room.id, det_room});
+
+    auto edge_room_planes =
+        graph_slam->add_room_4planes_edge(room_node,
+                                          (found_x_plane1->second).plane_node,
+                                          (found_x_plane2->second).plane_node,
+                                          matched_y_infinite_room.plane1_node,
+                                          matched_y_infinite_room.plane2_node,
+                                          information_room_planes);
+    graph_slam->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+
     return;
   } else
     return;

@@ -312,6 +312,7 @@ class FiniteRoomMapper : public MapperUtils {
  private:
   rclcpp::Node::SharedPtr node_obj;
   std::unique_ptr<PlaneUtils> plane_utils;
+  Eigen::Matrix<double, 2, 2> information_room_planes;
 
  public:
   /**

@@ -87,7 +87,8 @@ class GraphSLAM {
    *
    * @param solver_type Default value is lm_var
    */
-  GraphSLAM(const std::string& solver_type = "lm_var_cholmod", bool save_time = false);
+  GraphSLAM(const std::string& solver_type = "lm_var_cholmod",
+            bool save_time = false);
   virtual ~GraphSLAM();
 
   /**
@@ -170,7 +171,8 @@ class GraphSLAM {
    * @param id
    * @return Registered node
    */
-  g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs, const int id);
+  g2o::VertexPlane* add_plane_node(const Eigen::Vector4d& plane_coeffs,
+                                   const int id);
 
   /**
    * @brief copy a plane node from another graph
@@ -259,8 +261,7 @@ class GraphSLAM {
    * @param information_matrix: information matrix (it must be 6x6)
    * @return registered edge
    */
-  g2o::EdgeSE3* add_se3_edge(g2o::VertexSE3* v1,
-                             g2o::VertexSE3* v2,
+  g2o::EdgeSE3* add_se3_edge(g2o::VertexSE3* v1, g2o::VertexSE3* v2,
                              const Eigen::Isometry3d& relative_pose,
                              const Eigen::MatrixXd& information_matrix);
 
@@ -270,7 +271,8 @@ class GraphSLAM {
    * @param e: edge
    * @return registered edge
    */
-  g2o::EdgeSE3* copy_se3_edge(g2o::EdgeSE3* e, g2o::VertexSE3* v1, g2o::VertexSE3* v2);
+  g2o::EdgeSE3* copy_se3_edge(g2o::EdgeSE3* e, g2o::VertexSE3* v1,
+                              g2o::VertexSE3* v2);
 
   /**
    * @brief Add an edge between an SE3 node and a plane node
@@ -281,10 +283,10 @@ class GraphSLAM {
    * @param information_matrix: information matrix (it must be 3x3)
    * @return registered edge
    */
-  g2o::EdgeSE3Plane* add_se3_plane_edge(g2o::VertexSE3* v_se3,
-                                        g2o::VertexPlane* v_plane,
-                                        const Eigen::Vector4d& plane_coeffs,
-                                        const Eigen::MatrixXd& information_matrix);
+  g2o::EdgeSE3Plane* add_se3_plane_edge(
+      g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane,
+      const Eigen::Vector4d& plane_coeffs,
+      const Eigen::MatrixXd& information_matrix);
   /**
    * @brief copy an edge from another graph
    *
@@ -324,8 +326,7 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeSE3PointToPlane* add_se3_point_to_plane_edge(
-      g2o::VertexSE3* v_se3,
-      g2o::VertexPlane* v_plane,
+      g2o::VertexSE3* v_se3, g2o::VertexPlane* v_plane,
       const Eigen::Matrix4d& points_matrix,
       const Eigen::MatrixXd& information_matrix);
 
@@ -339,10 +340,8 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeSE3PointXYZ* add_se3_point_xyz_edge(
-      g2o::VertexSE3* v_se3,
-      g2o::VertexPointXYZ* v_xyz,
-      const Eigen::Vector3d& xyz,
-      const Eigen::MatrixXd& information_matrix);
+      g2o::VertexSE3* v_se3, g2o::VertexPointXYZ* v_xyz,
+      const Eigen::Vector3d& xyz, const Eigen::MatrixXd& information_matrix);
 
   /**
    * @brief Add a prior edge to an SE3 node
@@ -353,8 +352,7 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgePlanePriorNormal* add_plane_normal_prior_edge(
-      g2o::VertexPlane* v,
-      const Eigen::Vector3d& normal,
+      g2o::VertexPlane* v, const Eigen::Vector3d& normal,
       const Eigen::MatrixXd& information_matrix);
 
   /**
@@ -366,8 +364,7 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgePlanePriorDistance* add_plane_distance_prior_edge(
-      g2o::VertexPlane* v,
-      double distance,
+      g2o::VertexPlane* v, double distance,
       const Eigen::MatrixXd& information_matrix);
 
   /**
@@ -378,9 +375,9 @@ class GraphSLAM {
    * @param information_matrix
    * @return registered edge
    */
-  g2o::EdgeSE3PriorXY* add_se3_prior_xy_edge(g2o::VertexSE3* v_se3,
-                                             const Eigen::Vector2d& xy,
-                                             const Eigen::MatrixXd& information_matrix);
+  g2o::EdgeSE3PriorXY* add_se3_prior_xy_edge(
+      g2o::VertexSE3* v_se3, const Eigen::Vector2d& xy,
+      const Eigen::MatrixXd& information_matrix);
 
   /**
    * @brief
@@ -391,8 +388,7 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeSE3PriorXYZ* add_se3_prior_xyz_edge(
-      g2o::VertexSE3* v_se3,
-      const Eigen::Vector3d& xyz,
+      g2o::VertexSE3* v_se3, const Eigen::Vector3d& xyz,
       const Eigen::MatrixXd& information_matrix);
 
   /**
@@ -404,8 +400,7 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeSE3PriorQuat* add_se3_prior_quat_edge(
-      g2o::VertexSE3* v_se3,
-      const Eigen::Quaterniond& quat,
+      g2o::VertexSE3* v_se3, const Eigen::Quaterniond& quat,
       const Eigen::MatrixXd& information_matrix);
 
   /**
@@ -418,8 +413,7 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeSE3PriorVec* add_se3_prior_vec_edge(
-      g2o::VertexSE3* v_se3,
-      const Eigen::Vector3d& direction,
+      g2o::VertexSE3* v_se3, const Eigen::Vector3d& direction,
       const Eigen::Vector3d& measurement,
       const Eigen::MatrixXd& information_matrix);
 
@@ -446,10 +440,9 @@ class GraphSLAM {
    * @param information
    * @return registered edge
    */
-  g2o::EdgePlaneIdentity* add_plane_identity_edge(g2o::VertexPlane* v_plane1,
-                                                  g2o::VertexPlane* v_plane2,
-                                                  const Eigen::Vector4d& measurement,
-                                                  const Eigen::Matrix4d& information);
+  g2o::EdgePlaneIdentity* add_plane_identity_edge(
+      g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2,
+      const Eigen::Vector4d& measurement, const Eigen::Matrix4d& information);
 
   /**
    * @brief
@@ -460,10 +453,9 @@ class GraphSLAM {
    * @param information
    * @return registered edge
    */
-  g2o::EdgePlaneParallel* add_plane_parallel_edge(g2o::VertexPlane* v_plane1,
-                                                  g2o::VertexPlane* v_plane2,
-                                                  const Eigen::Vector3d& measurement,
-                                                  const Eigen::MatrixXd& information);
+  g2o::EdgePlaneParallel* add_plane_parallel_edge(
+      g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2,
+      const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -475,10 +467,8 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgePlanePerpendicular* add_plane_perpendicular_edge(
-      g2o::VertexPlane* v_plane1,
-      g2o::VertexPlane* v_plane2,
-      const Eigen::Vector3d& measurement,
-      const Eigen::MatrixXd& information);
+      g2o::VertexPlane* v_plane1, g2o::VertexPlane* v_plane2,
+      const Eigen::Vector3d& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief add edges between duplicate planes
@@ -501,8 +491,7 @@ class GraphSLAM {
    * @param v2: plane2 edge
    * @return registered edge
    */
-  g2o::Edge2Planes* copy_2planes_edge(g2o::Edge2Planes* e,
-                                      g2o::VertexPlane* v1,
+  g2o::Edge2Planes* copy_2planes_edge(g2o::Edge2Planes* e, g2o::VertexPlane* v1,
                                       g2o::VertexPlane* v2);
 
   /**
@@ -529,11 +518,10 @@ class GraphSLAM {
    * @param information
    * @return registered edge
    */
-  g2o::EdgeRoom2Planes* add_room_2planes_edge(g2o::VertexRoom* v_room,
-                                              g2o::VertexPlane* v_plane1,
-                                              g2o::VertexPlane* v_plane2,
-                                              g2o::VertexRoom* v_cluster_center,
-                                              const Eigen::MatrixXd& information);
+  g2o::EdgeRoom2Planes* add_room_2planes_edge(
+      g2o::VertexRoom* v_room, g2o::VertexPlane* v_plane1,
+      g2o::VertexPlane* v_plane2, g2o::VertexRoom* v_cluster_center,
+      const Eigen::MatrixXd& information);
 
   bool remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge);
 
@@ -563,12 +551,10 @@ class GraphSLAM {
    * @param information
    * @return registered edge
    */
-  g2o::EdgeRoom4Planes* add_room_4planes_edge(g2o::VertexRoom* v_room,
-                                              g2o::VertexPlane* v_xplane1,
-                                              g2o::VertexPlane* v_xplane2,
-                                              g2o::VertexPlane* v_yplane1,
-                                              g2o::VertexPlane* v_yplane2,
-                                              const Eigen::MatrixXd& information);
+  g2o::EdgeRoom4Planes* add_room_4planes_edge(
+      g2o::VertexRoom* v_room, g2o::VertexPlane* v_xplane1,
+      g2o::VertexPlane* v_xplane2, g2o::VertexPlane* v_yplane1,
+      g2o::VertexPlane* v_yplane2, const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -581,12 +567,9 @@ class GraphSLAM {
    * @param v5: vertex yplane2
    * @return registered edge
    */
-  g2o::EdgeRoom4Planes* copy_room_4planes_edge(g2o::EdgeRoom4Planes* e,
-                                               g2o::VertexRoom* v1,
-                                               g2o::VertexPlane* v2,
-                                               g2o::VertexPlane* v3,
-                                               g2o::VertexPlane* v4,
-                                               g2o::VertexPlane* v5);
+  g2o::EdgeRoom4Planes* copy_room_4planes_edge(
+      g2o::EdgeRoom4Planes* e, g2o::VertexRoom* v1, g2o::VertexPlane* v2,
+      g2o::VertexPlane* v3, g2o::VertexPlane* v4, g2o::VertexPlane* v5);
 
   /**
    * @brief add edge between floor and its rooms
@@ -617,10 +600,10 @@ class GraphSLAM {
   /**
    * @brief
    *
-   * @param room_room_edge
+   * @param floor_room_edge
    * @return Succes or failure
    */
-  bool remove_room_room_edge(g2o::EdgeFloorRoom* room_room_edge);
+  bool remove_floor_room_edge(g2o::EdgeFloorRoom* room_room_edge);
 
   /**
    * @brief
@@ -632,10 +615,8 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeXInfiniteRoomXInfiniteRoom* add_x_infinite_room_x_infinite_room_edge(
-      g2o::VertexInfiniteRoom* v_xcorr1,
-      g2o::VertexInfiniteRoom* v_xcorr2,
-      const double& measurement,
-      const Eigen::MatrixXd& information);
+      g2o::VertexInfiniteRoom* v_xcorr1, g2o::VertexInfiniteRoom* v_xcorr2,
+      const double& measurement, const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -647,16 +628,13 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeYInfiniteRoomYInfiniteRoom* add_y_infinite_room_y_infinite_room_edge(
-      g2o::VertexInfiniteRoom* v_ycorr1,
-      g2o::VertexInfiniteRoom* v_ycorr2,
-      const double& measurement,
-      const Eigen::MatrixXd& information);
+      g2o::VertexInfiniteRoom* v_ycorr1, g2o::VertexInfiniteRoom* v_ycorr2,
+      const double& measurement, const Eigen::MatrixXd& information);
 
-  g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall,
-                                              g2o::VertexPlane* v_plane1,
-                                              g2o::VertexPlane* v_plane2,
-                                              Eigen::Vector3d wall_point,
-                                              const Eigen::MatrixXd& information);
+  g2o::EdgeWall2Planes* add_wall_2planes_edge(
+      g2o::VertexWallXYZ* v_wall, g2o::VertexPlane* v_plane1,
+      g2o::VertexPlane* v_plane2, Eigen::Vector3d wall_point,
+      const Eigen::MatrixXd& information);
 
   /**
    * @brief
@@ -666,8 +644,7 @@ class GraphSLAM {
    * @param kernel_size
    */
   void add_robust_kernel(g2o::HyperGraph::Edge* edge,
-                         const std::string& kernel_type,
-                         double kernel_size);
+                         const std::string& kernel_type, double kernel_size);
 
   /**
    * @brief Perform graph optimization
@@ -684,8 +661,9 @@ class GraphSLAM {
    * @param vert_pairs_vec
    * @return Success or failure
    */
-  bool compute_landmark_marginals(g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv,
-                                  std::vector<std::pair<int, int>> vert_pairs_vec);
+  bool compute_landmark_marginals(
+      g2o::SparseBlockMatrix<Eigen::MatrixXd>& spinv,
+      std::vector<std::pair<int, int>> vert_pairs_vec);
 
   /**
    * @brief Save the pose graph to a file

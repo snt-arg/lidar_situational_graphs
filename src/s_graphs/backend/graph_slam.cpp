@@ -734,8 +734,8 @@ g2o::EdgeFloorRoom* GraphSLAM::copy_floor_room_edge(g2o::EdgeFloorRoom* e,
   return edge;
 }
 
-bool GraphSLAM::remove_room_room_edge(g2o::EdgeFloorRoom* room_room_edge) {
-  bool ack = graph->removeEdge(room_room_edge);
+bool GraphSLAM::remove_floor_room_edge(g2o::EdgeFloorRoom* floor_room_edge) {
+  bool ack = graph->removeEdge(floor_room_edge);
 
   return ack;
 }
