@@ -30,17 +30,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef PLANES_HPP
 #define PLANES_HPP
 
-#include <Eigen/Eigen>
-#include <boost/filesystem.hpp>
 #include <g2o/core/sparse_optimizer.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/slam3d_addons/plane3d.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
-
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <Eigen/Eigen>
+#include <boost/filesystem.hpp>
+#include <s_graphs/common/keyframe.hpp>
 namespace s_graphs {
 /**
  * @brief
@@ -59,7 +59,7 @@ namespace s_graphs {
 
 using PointNormal = pcl::PointXYZRGBNormal;
 class Planes {
-public:
+ public:
   Planes() {}
 
   Planes(const Planes &old_plane, const bool deep_copy) {
@@ -88,135 +88,30 @@ public:
 
     return *this;
   }
-  // void save(const std::string &directory) {
-  //   std::cout << "writing start" << std::endl;
-  //   std::ofstream ofs(directory + "/data");
 
-  //   ofs << "id\n";
-  //   ofs << id << "\n";
-
-  // ofs << "Plane\n";
-  // ofs << plane.coeffs() << "\n";
-
-  // ofs << "Covariance\n";
-  // ofs << covariance << "\n";
-
-  // ofs << "keyframe_node_id\n";
-  // ofs << keyframe_node->id() << "\n";
-
-  // ofs << "keyframe_node_pose\n";
-  // ofs << keyframe_node->estimate().matrix() << "\n";
-
-  // ofs << "plane_node_id\n";
-  // ofs << plane_node->id() << "\n";
-
-  // ofs << "plane_node_pose\n";
-  // ofs << plane_node->estimate().coeffs() << "\n";
-
-  // ofs << "type\n";
-  // ofs << type << "\n";
-
-  // pcl::io::savePCDFileBinary(directory + "/cloud_seg_body.pcd",
-  //                            *cloud_seg_body);
-
-  // pcl::io::savePCDFileBinary(directory + "/cloud_seg_map.pcd",
-  //                            *cloud_seg_map);
-  // }
-
-  bool load(const std::string &directory, g2o::SparseOptimizer *local_graph) {
-    std::ifstream ifs(directory + "/data");
-    if (!ifs) {
-      return false;
-    }
-    while (!ifs.eof()) {
-      std::string token;
-      ifs >> token;
-      if (token == "id") {
-        ifs >> id;
-      } else if (token == "Plane") {
-        Eigen::Vector4d coeffs;
-        ifs >> coeffs[0] >> coeffs[1] >> coeffs[2] >> coeffs[3];
-        plane.fromVector(coeffs);
-      } else if (token == "covariance") {
-        Eigen::Matrix3d mat;
-        for (int i = 0; i < 3; i++) {
-          for (int j = 0; j < 3; j++) {
-            ifs >> mat(i, j);
-          }
-        }
-        covariance = mat;
-      } else if (token == "keyframe_node_id") {
-        int node_id;
-        ifs >> node_id;
-        keyframe_node->setId(node_id);
-      } else if (token == "keyframe_node_pose") {
-        Eigen::Matrix4d mat;
-        for (int i = 0; i < 4; i++) {
-          for (int j = 0; j < 4; j++) {
-            ifs >> mat(i, j);
-          }
-        }
-        Eigen::Isometry3d pose;
-        pose.matrix() = mat;
-        keyframe_node->setEstimate(pose);
-      } else if (token == "type") {
-        std::string plane_type;
-        ifs >> plane_type;
-        type = plane_type;
-      } else if (token == "plane_node_id") {
-        int plane_node_id;
-        ifs >> plane_node_id;
-        plane_node->setId(plane_node_id);
-      } else if (token == "plane_node_pose") {
-        Eigen::Vector4d coeffs;
-        ifs >> coeffs[0] >> coeffs[1] >> coeffs[2] >> coeffs[3];
-        g2o::Plane3D plane_pose;
-        plane_pose.fromVector(coeffs);
-        plane_node->setEstimate(plane_pose);
-      }
-    }
-    if (id < 0) {
-      std::cerr << "invalid plane node id!!" << std::endl;
-      std::cerr << directory << std::endl;
-      return false;
-    }
-    pcl::PointCloud<PointNormal>::Ptr body_cloud(
-        new pcl::PointCloud<PointNormal>());
-    pcl::io::loadPCDFile(directory + "/cloud_seg_body.pcd", *body_cloud);
-    cloud_seg_body = body_cloud;
-
-    pcl::PointCloud<PointNormal>::Ptr map_cloud(
-        new pcl::PointCloud<PointNormal>());
-    pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
-    cloud_seg_map = map_cloud;
-
-    return true;
-  }
-
-public:
+ public:
   int id;
   g2o::Plane3D plane;
   pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_body; // segmented points of the plane in local body frame
+      cloud_seg_body;  // segmented points of the plane in local body frame
   std::vector<pcl::PointCloud<PointNormal>::Ptr>
-      cloud_seg_body_vec; // vector of segmented points of the plane in local
-                          // body frame
+      cloud_seg_body_vec;  // vector of segmented points of the plane in local
+                           // body frame
   pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_map; // segmented points of the plane in global map frame
-  Eigen::Matrix3d covariance; // covariance of the landmark
-  std::vector<g2o::VertexSE3 *>
-      keyframe_node_vec; // vector keyframe node instance
+      cloud_seg_map;           // segmented points of the plane in global map frame
+  Eigen::Matrix3d covariance;  // covariance of the landmark
+  std::vector<g2o::VertexSE3 *> keyframe_node_vec;  // vector keyframe node instance
   std::vector<double> color;
   int revit_id;
-  g2o::VertexSE3 *keyframe_node = nullptr; // keyframe node instance
-  g2o::VertexPlane *plane_node = nullptr;  // node instance
-  std::string type;                        // Type online or prior
+  g2o::VertexSE3 *keyframe_node = nullptr;  // keyframe node instance
+  g2o::VertexPlane *plane_node = nullptr;   // node instance
+  std::string type;                         // Type online or prior
   double length;
   Eigen::Vector2d start_point;
 };
 
 class VerticalPlanes : public Planes {
-public:
+ public:
   VerticalPlanes() : Planes() {}
   ~VerticalPlanes() {}
 
@@ -238,7 +133,6 @@ public:
 
     std::string y_planes_directory = directory + '/' + "y_planes";
     if (type == 'x') {
-
       if (!boost::filesystem::is_directory(x_planes_directory)) {
         boost::filesystem::create_directory(x_planes_directory);
       }
@@ -310,17 +204,74 @@ public:
 
     std::cout << "written" << std::endl;
   }
-  bool load(const std::string &directory, g2o::SparseOptimizer *local_graph) {}
+  bool load(const std::string &directory,
+            g2o::SparseOptimizer *local_graph,
+            std::string type) {
+    std::cout << "inside load func" << std::endl;
+    std::ifstream ifs;
+    if (type == "y") {
+      ifs.open(directory + "/y_plane_data");
+    } else if (type == "x") {
+      ifs.open(directory + "/x_plane_data");
+    } else {
+      std::cout << "plane type not mentioned !" << std::endl;
+      return false;
+    }
+    if (!ifs) {
+      return false;
+    }
+    while (!ifs.eof()) {
+      std::string token;
+      ifs >> token;
+      if (token == "id") {
+        ifs >> id;
+        plane_node->setId(id);
+      } else if (token == "Plane") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane.fromVector(plane_coeffs);
+      } else if (token == "Covariance") {
+        Eigen::Matrix3d mat;
+        for (int i = 0; i < 3; i++) {
+          for (int j = 0; j < 3; j++) {
+            ifs >> mat(i, j);
+          }
+        }
+        covariance = mat;
+      } else if (token == "keyframe_node_id") {
+        int node_id;
+        ifs >> node_id;
+        keyframe_node =
+            dynamic_cast<g2o::VertexSE3 *>(local_graph->vertices()[node_id]);
+      } else if (token == "plane_node_pose") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_node->setEstimate(plane_coeffs);
+      }
+    }
+    pcl::PointCloud<PointNormal>::Ptr map_cloud(new pcl::PointCloud<PointNormal>());
+    pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
+    cloud_seg_map = map_cloud;
+
+    pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
+    pcl::io::loadPCDFile(directory + "/cloud_seg_body.pcd", *body_cloud);
+    cloud_seg_body = body_cloud;
+
+    return true;
+  }
 };
 
 class HorizontalPlanes : public Planes {
-public:
+ public:
   HorizontalPlanes() : Planes() {}
   ~HorizontalPlanes() {}
 
   // copy constructor
-  HorizontalPlanes(const HorizontalPlanes &old_plane,
-                   const bool deep_copy = false)
+  HorizontalPlanes(const HorizontalPlanes &old_plane, const bool deep_copy = false)
       : Planes(old_plane, deep_copy) {}
 
   HorizontalPlanes &operator=(const HorizontalPlanes &old_plane) {
@@ -331,6 +282,6 @@ public:
   }
 };
 
-} // namespace s_graphs
+}  // namespace s_graphs
 
-#endif // PLANES_HPP
+#endif  // PLANES_HPP
