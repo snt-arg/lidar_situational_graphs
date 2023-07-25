@@ -161,6 +161,11 @@ class VerticalPlanes : public Planes {
       ofs << "type\n";
       ofs << type << "\n";
 
+      ofs << "color\n";
+      ofs << color[0] << "\n";
+      ofs << color[1] << "\n";
+      ofs << color[2] << "\n";
+
       pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_body.pcd",
                                  *cloud_seg_body);
 
@@ -194,7 +199,10 @@ class VerticalPlanes : public Planes {
 
       ofs << "type\n";
       ofs << type << "\n";
-
+      ofs << "color\n";
+      ofs << color[0] << "\n";
+      ofs << color[1] << "\n";
+      ofs << color[2] << "\n";
       pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_body.pcd",
                                  *cloud_seg_body);
 
@@ -271,6 +279,12 @@ class VerticalPlanes : public Planes {
           ifs >> plane_coeffs[i];
         }
         plane_node->setEstimate(plane_coeffs);
+      } else if (token == "color") {
+        Eigen::Vector3d color_values;
+        for (int i = 0; i < 3; i++) {
+          ifs >> color_values[i];
+        }
+        color = {color_values[0], color_values[1], color_values[2]};
       }
     }
     pcl::PointCloud<PointNormal>::Ptr map_cloud(new pcl::PointCloud<PointNormal>());
