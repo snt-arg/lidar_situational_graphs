@@ -93,7 +93,7 @@ void KeyFrame::save(const std::string& directory) {
   }
 
   if (node) {
-    ofs << "iddd " << node->id() << "\n";
+    ofs << "id " << node->id() << "\n";
   }
 
   pcl::io::savePCDFileBinary(directory + "/cloud.pcd", *cloud);
@@ -105,15 +105,15 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
     return false;
   }
 
-  long node_id = -1;
+  int node_id = -1;
   boost::optional<Eigen::Isometry3d> estimate;
-
   while (!ifs.eof()) {
     std::string token;
     ifs >> token;
+
     if (token == "stamp") {
-      double seconds = stamp.seconds();
-      double nanoseconds = stamp.nanoseconds();
+      double seconds;
+      double nanoseconds;
       ifs >> seconds >> nanoseconds;
     } else if (token == "estimate") {
       Eigen::Matrix4d mat;
@@ -132,11 +132,11 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
           ifs >> odom_mat(i, j);
         }
       }
-
       odom.setIdentity();
       odom.linear() = odom_mat.block<3, 3>(0, 0);
       odom.translation() = odom_mat.block<3, 1>(0, 3);
     } else if (token == "accum_distance") {
+      double distance;
       ifs >> accum_distance;
     } else if (token == "floor_coeffs") {
       Eigen::Vector4d coeffs;
@@ -155,7 +155,10 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
       ifs >> quat.w() >> quat.x() >> quat.y() >> quat.z();
       orientation = quat;
     } else if (token == "id") {
-      ifs >> node_id;
+      int id;
+      ifs >> id;
+      node_id = id;
+      std::cout << "keyframe id : " << node_id << std::endl;
     }
   }
 
@@ -165,20 +168,23 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
     return false;
   }
 
-  if (graph->vertices().find(node_id) == graph->vertices().end()) {
-    std::cerr << "vertex ID=" << node_id << " does not exist!!" << std::endl;
-    return false;
-  }
+  // if (graph->vertices().find(node_id) == graph->vertices().end()) {
+  //   std::cerr << "vertex ID=" << node_id << " does not exist!!" << std::endl;
+  //   return false;
+  // }
+  node->setEstimate(*estimate);
+  node->setId(node_id);
+  // node = dynamic_cast<g2o::VertexSE3*>(graph->vertices()[node_id]);
+  // if (node == nullptr) {
+  //   std::cerr << "failed to downcast!!" << std::endl;
+  //   return false;
+  // }
 
-  node = dynamic_cast<g2o::VertexSE3*>(graph->vertices()[node_id]);
-  if (node == nullptr) {
-    std::cerr << "failed to downcast!!" << std::endl;
-    return false;
-  }
-
-  if (estimate) {
-    node->setEstimate(*estimate);
-  }
+  // if (estimate) {
+  //   std::cout << "setting estimate" << std::endl;
+  //   node->setEstimate(*estimate);
+  //   std::cout << "estimate set " << std::endl;
+  // }
 
   pcl::PointCloud<PointT>::Ptr cloud_(new pcl::PointCloud<PointT>());
   pcl::io::loadPCDFile(directory + "/cloud.pcd", *cloud_);
