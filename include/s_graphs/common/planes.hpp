@@ -243,8 +243,28 @@ class VerticalPlanes : public Planes {
       } else if (token == "keyframe_node_id") {
         int node_id;
         ifs >> node_id;
-        keyframe_node =
-            dynamic_cast<g2o::VertexSE3 *>(local_graph->vertices()[node_id]);
+
+        std::cout << "loaded node id  : " << node_id << std::endl;
+
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexSE3 *vertex = dynamic_cast<g2o::VertexSE3 *>(vertex_pair.second);
+          if (vertex && vertex->id() == node_id) {
+            // Found the vertex with the given keyframe_id
+            keyframe_node = vertex;
+
+            break;
+          }
+        }
+        if (keyframe_node) {
+          std::cout << "keyframe ID : " << keyframe_node->id() << std::endl;
+          std::cout << "keyframe estimate : " << keyframe_node->estimate().matrix()
+                    << std::endl;
+        } else {
+          // The vertex with the given keyframe_id was not found in the graph
+          std::cout << "Vertex with keyframe_id " << node_id
+                    << " not found in the graph." << std::endl;
+        }
+
       } else if (token == "plane_node_pose") {
         Eigen::Vector4d plane_coeffs;
         for (int i = 0; i < 4; i++) {
