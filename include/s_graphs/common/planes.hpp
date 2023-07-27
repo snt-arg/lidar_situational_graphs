@@ -140,7 +140,7 @@ class VerticalPlanes : public Planes {
       ofs << "id\n";
       ofs << id << "\n";
 
-      ofs << "Plane\n";
+      ofs << "Plane \n";
       ofs << plane.coeffs() << "\n";
 
       ofs << "Covariance\n";
@@ -166,11 +166,21 @@ class VerticalPlanes : public Planes {
       ofs << color[1] << "\n";
       ofs << color[2] << "\n";
 
-      pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_body.pcd",
-                                 *cloud_seg_body);
-
+      ofs << "keyframe_vec_node_ids\n";
+      for (int i = 0; i < keyframe_node_vec.size(); i++) {
+        ofs << keyframe_node_vec[i]->id() << "\n";
+        std::cout << "keyframe id at :  " << i << "   " << keyframe_node_vec[i]->id()
+                  << std::endl;
+      }
       pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_map.pcd",
                                  *cloud_seg_map);
+      pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_body.pcd",
+                                 *cloud_seg_body);
+      for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
+        std::string filename =
+            x_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+        pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
+      }
     } else if (type == 'y') {
       if (!boost::filesystem::is_directory(y_planes_directory)) {
         boost::filesystem::create_directory(y_planes_directory);
@@ -203,11 +213,22 @@ class VerticalPlanes : public Planes {
       ofs << color[0] << "\n";
       ofs << color[1] << "\n";
       ofs << color[2] << "\n";
-      pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_body.pcd",
-                                 *cloud_seg_body);
 
+      ofs << "keyframe_vec_node_ids\n";
+      for (int i = 0; i < keyframe_node_vec.size(); i++) {
+        ofs << keyframe_node_vec[i]->id() << "\n";
+        std::cout << "keyframe id at :  " << i << "   " << keyframe_node_vec[i]->id()
+                  << std::endl;
+      }
       pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_map.pcd",
                                  *cloud_seg_map);
+      pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_body.pcd",
+                                 *cloud_seg_body);
+      for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
+        std::string filename =
+            y_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+        pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
+      }
     }
 
     std::cout << "written" << std::endl;
@@ -248,11 +269,30 @@ class VerticalPlanes : public Planes {
           }
         }
         covariance = mat;
-      } else if (token == "keyframe_node_id") {
+      } else if (token == "keyframe_vec_node_ids") {
+        std::vector<int> ids;
+        int id;
+        while (ifs >> id) {
+          ids.push_back(id);
+        }
+        std::cout << "before keyframe vec size : " << ids.size() << std::endl;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexSE3 *vertex = dynamic_cast<g2o::VertexSE3 *>(vertex_pair.second);
+          for (int i = 0; i < ids.size(); i++) {
+            if (vertex && vertex->id() == ids[i]) {
+              // Found the vertex with the given keyframe_id
+              keyframe_node_vec.push_back(vertex);
+              std::cout << "keyframe id : " << vertex->id() << std::endl;
+            }
+          }
+        }
+        std::cout << "loaded keyframe vec size : " << keyframe_node_vec.size()
+                  << std::endl;
+      }
+
+      else if (token == "keyframe_node_id") {
         int node_id;
         ifs >> node_id;
-
-        std::cout << "loaded node id  : " << node_id << std::endl;
 
         for (const auto &vertex_pair : local_graph->vertices()) {
           g2o::VertexSE3 *vertex = dynamic_cast<g2o::VertexSE3 *>(vertex_pair.second);
@@ -264,9 +304,6 @@ class VerticalPlanes : public Planes {
           }
         }
         if (keyframe_node) {
-          std::cout << "keyframe ID : " << keyframe_node->id() << std::endl;
-          std::cout << "keyframe estimate : " << keyframe_node->estimate().matrix()
-                    << std::endl;
         } else {
           // The vertex with the given keyframe_id was not found in the graph
           std::cout << "Vertex with keyframe_id " << node_id
@@ -287,14 +324,29 @@ class VerticalPlanes : public Planes {
         color = {color_values[0], color_values[1], color_values[2]};
       }
     }
+
+    int cloud_seg_body_vec_size = 0;
+    boost::filesystem::path dir(directory);
+    for (boost::filesystem::directory_iterator it(dir);
+         it != boost::filesystem::directory_iterator();
+         ++it) {
+      if (boost::filesystem::is_regular_file(*it) && it->path().extension() == ".pcd") {
+        cloud_seg_body_vec_size++;
+      }
+    }
+
+    for (int i = 0; i < cloud_seg_body_vec_size; ++i) {
+      std::string filename = "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+      pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
+      pcl::io::loadPCDFile(directory + filename, *body_cloud);
+      cloud_seg_body_vec.push_back(body_cloud);
+    }
     pcl::PointCloud<PointNormal>::Ptr map_cloud(new pcl::PointCloud<PointNormal>());
     pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
     cloud_seg_map = map_cloud;
-
     pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
     pcl::io::loadPCDFile(directory + "/cloud_seg_body.pcd", *body_cloud);
     cloud_seg_body = body_cloud;
-
     return true;
   }
 };
