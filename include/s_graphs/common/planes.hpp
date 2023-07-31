@@ -92,6 +92,7 @@ class Planes {
  public:
   int id;
   g2o::Plane3D plane;
+  g2o::Plane3D plane_body;
   pcl::PointCloud<PointNormal>::Ptr
       cloud_seg_body;  // segmented points of the plane in local body frame
   std::vector<pcl::PointCloud<PointNormal>::Ptr>
@@ -142,6 +143,9 @@ class VerticalPlanes : public Planes {
 
       ofs << "Plane \n";
       ofs << plane.coeffs() << "\n";
+
+      ofs << "plane_body\n";
+      ofs << plane_node->estimate().coeffs() << "\n";
 
       ofs << "Covariance\n";
       ofs << covariance << "\n";
@@ -276,9 +280,9 @@ class VerticalPlanes : public Planes {
           ids.push_back(id);
         }
         std::cout << "before keyframe vec size : " << ids.size() << std::endl;
-        for (const auto &vertex_pair : local_graph->vertices()) {
-          g2o::VertexSE3 *vertex = dynamic_cast<g2o::VertexSE3 *>(vertex_pair.second);
-          for (int i = 0; i < ids.size(); i++) {
+        for (int i = 0; i < ids.size(); i++) {
+          for (const auto &vertex_pair : local_graph->vertices()) {
+            g2o::VertexSE3 *vertex = dynamic_cast<g2o::VertexSE3 *>(vertex_pair.second);
             if (vertex && vertex->id() == ids[i]) {
               // Found the vertex with the given keyframe_id
               keyframe_node_vec.push_back(vertex);
@@ -286,9 +290,33 @@ class VerticalPlanes : public Planes {
             }
           }
         }
+
         std::cout << "loaded keyframe vec size : " << keyframe_node_vec.size()
                   << std::endl;
       }
+
+      // else if (token == "keyframe_vec_node_ids") {
+      //   std::vector<int> ids;
+      //   int id;
+      //   while (ifs >> id) {
+      //     ids.push_back(id);
+      //   }
+      //   std::cout << "before keyframe vec size : " << ids.size() << std::endl;
+      //   // for (const auto &vertex_pair : local_graph->vertices()) {
+      //   for (int i = 0; i < ids.size(); i++) {
+      //     std::cout << "loaded ids : " << ids[i] << std::endl;
+
+      //     g2o::HyperGraph::Vertex *hyper_graph_vertex = local_graph->vertex(ids[i]);
+      //     if (hyper_graph_vertex) {
+      //       // Found the vertex with the given keyframe_id
+      //       g2o::VertexSE3 *vertex = dynamic_cast<g2o::VertexSE3
+      //       *>(hyper_graph_vertex); if (vertex) keyframe_node_vec.push_back(vertex);
+      //       std::cout << "keyframe id : " << vertex->id() << std::endl;
+      //     }
+      //   }
+      //   std::cout << "loaded keyframe vec size : " << keyframe_node_vec.size()
+      //             << std::endl;
+      // }
 
       else if (token == "keyframe_node_id") {
         int node_id;
@@ -309,7 +337,6 @@ class VerticalPlanes : public Planes {
           std::cout << "Vertex with keyframe_id " << node_id
                     << " not found in the graph." << std::endl;
         }
-
       } else if (token == "plane_node_pose") {
         Eigen::Vector4d plane_coeffs;
         for (int i = 0; i < 4; i++) {
@@ -335,7 +362,7 @@ class VerticalPlanes : public Planes {
       }
     }
 
-    for (int i = 0; i < cloud_seg_body_vec_size; ++i) {
+    for (int i = 0; i < cloud_seg_body_vec_size; i++) {
       std::string filename = "/cloud_seg_body_" + std::to_string(i) + ".pcd";
       pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
       pcl::io::loadPCDFile(directory + filename, *body_cloud);
@@ -349,7 +376,7 @@ class VerticalPlanes : public Planes {
     cloud_seg_body = body_cloud;
     return true;
   }
-};
+};  // namespace s_graphs
 
 class HorizontalPlanes : public Planes {
  public:
