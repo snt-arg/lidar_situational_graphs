@@ -362,8 +362,9 @@ class VerticalPlanes : public Planes {
       }
     }
 
-    for (int i = 0; i < cloud_seg_body_vec_size; i++) {
+    for (int i = 0; i < cloud_seg_body_vec_size - 2; i++) {
       std::string filename = "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+      std::cout << "cloud file name : " << filename << std::endl;
       pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
       pcl::io::loadPCDFile(directory + filename, *body_cloud);
       cloud_seg_body_vec.push_back(body_cloud);
