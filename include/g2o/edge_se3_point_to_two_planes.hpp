@@ -63,14 +63,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <Eigen/Dense>
 
 namespace g2o {
-class EdgeSE3PlanePlane : public g2o::BaseMultiEdge<6, Isometry3> {
+class EdgeSE3PlanePlane : public g2o::BaseMultiEdge<4, Eigen::Vector4d> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeSE3PlanePlane() : BaseMultiEdge<6, Isometry3>() {}
+  EdgeSE3PlanePlane() : BaseMultiEdge<4, Eigen::Vector4d>() {}
 
   void computeError() override;
 
-  void setMeasurement(const Isometry3& m) override { _measurement = m; }
+  void setMeasurement(const Eigen::Vector4d& m) override { _measurement = m; }
 
   virtual bool read(std::istream& is) override;
   virtual bool write(std::ostream& os) const override;

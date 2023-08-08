@@ -66,52 +66,38 @@ void EdgeSE3PlanePlane::computeError() {
   const g2o::VertexPlane* v2 = static_cast<const g2o::VertexPlane*>(_vertices[1]);
   const g2o::VertexPlane* v3 = static_cast<const g2o::VertexPlane*>(_vertices[2]);
 
-  const g2o::Plane3D& s_graph_plane = v2->estimate();
-  const g2o::Plane3D& a_graph_plane = v3->estimate();
+  Eigen::Vector4d s_graph_plane = v2->estimate().toVector();
+  Eigen::Vector4d a_graph_plane = v3->estimate().toVector();
 
+  Eigen::Matrix4d deviation = v1->estimate().matrix();
   // Compute the translation vector as the difference between the normal vectors of the
   // planes
-  Eigen::Vector3d translation = a_graph_plane.normal() - s_graph_plane.normal();
+  // Eigen::Vector3d translation = a_graph_plane.normal() - s_graph_plane.normal();
 
   // double angleDifference = s_graph_plane.normal().angle(a_graph_plane.normal());
   // Eigen::Matrix3d rotation =
   //     Eigen::AngleAxisd(angleDifference,
   //     Eigen::Vector3d::UnitZ()).toRotationMatrix();
   // v1->setEstimate(g2o::SE3Quat(rotation, translation));
-  // _error =;
+  _error = deviation * a_graph_plane - s_graph_plane;
 }
 
 bool EdgeSE3PlanePlane::read(std::istream& is) {
-  Eigen::Matrix4d v;
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      is >> v(i, j);
-    }
-  }
-  setMeasurement(Isometry3(v));
-
-  for (int i = 0; i < information().rows(); ++i) {
+  Eigen::Vector4d v;
+  is >> v(0) >> v(1) >> v(2) >> v(3);
+  setMeasurement(v);
+  for (int i = 0; i < information().rows(); ++i)
     for (int j = i; j < information().cols(); ++j) {
       is >> information()(i, j);
       if (i != j) information()(j, i) = information()(i, j);
     }
-  }
   return true;
 }
 bool EdgeSE3PlanePlane::write(std::ostream& os) const {
-  Eigen::Matrix4d v = measurement().matrix();
-
-  for (int i = 0; i < 4; ++i) {
-    for (int j = 0; j < 4; ++j) {
-      os << " " << v(i, j);
-    }
-  }
-
-  for (int i = 0; i < information().rows(); ++i) {
-    for (int j = i; j < information().cols(); ++j) {
-      os << " " << information()(i, j);
-    }
-  }
+  Eigen::Vector4d v = _measurement;
+  os << v(0) << " " << v(1) << " " << v(2) << " " << v(3) << " ";
+  for (int i = 0; i < information().rows(); ++i)
+    for (int j = i; j < information().cols(); ++j) os << " " << information()(i, j);
   return os.good();
 }
 
