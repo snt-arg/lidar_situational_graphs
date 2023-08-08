@@ -293,32 +293,7 @@ class VerticalPlanes : public Planes {
 
         std::cout << "loaded keyframe vec size : " << keyframe_node_vec.size()
                   << std::endl;
-      }
-
-      // else if (token == "keyframe_vec_node_ids") {
-      //   std::vector<int> ids;
-      //   int id;
-      //   while (ifs >> id) {
-      //     ids.push_back(id);
-      //   }
-      //   std::cout << "before keyframe vec size : " << ids.size() << std::endl;
-      //   // for (const auto &vertex_pair : local_graph->vertices()) {
-      //   for (int i = 0; i < ids.size(); i++) {
-      //     std::cout << "loaded ids : " << ids[i] << std::endl;
-
-      //     g2o::HyperGraph::Vertex *hyper_graph_vertex = local_graph->vertex(ids[i]);
-      //     if (hyper_graph_vertex) {
-      //       // Found the vertex with the given keyframe_id
-      //       g2o::VertexSE3 *vertex = dynamic_cast<g2o::VertexSE3
-      //       *>(hyper_graph_vertex); if (vertex) keyframe_node_vec.push_back(vertex);
-      //       std::cout << "keyframe id : " << vertex->id() << std::endl;
-      //     }
-      //   }
-      //   std::cout << "loaded keyframe vec size : " << keyframe_node_vec.size()
-      //             << std::endl;
-      // }
-
-      else if (token == "keyframe_node_id") {
+      } else if (token == "keyframe_node_id") {
         int node_id;
         ifs >> node_id;
 
