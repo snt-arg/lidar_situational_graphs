@@ -170,6 +170,9 @@ class VerticalPlanes : public Planes {
       ofs << color[1] << "\n";
       ofs << color[2] << "\n";
 
+      ofs << "fixed\n";
+      ofs << plane_node->fixed() << "\n";
+
       ofs << "keyframe_vec_node_ids\n";
       for (int i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
@@ -217,6 +220,9 @@ class VerticalPlanes : public Planes {
       ofs << color[0] << "\n";
       ofs << color[1] << "\n";
       ofs << color[2] << "\n";
+
+      ofs << "fixed\n";
+      ofs << plane_node->fixed() << "\n";
 
       ofs << "keyframe_vec_node_ids\n";
       for (int i = 0; i < keyframe_node_vec.size(); i++) {
@@ -324,6 +330,13 @@ class VerticalPlanes : public Planes {
           ifs >> color_values[i];
         }
         color = {color_values[0], color_values[1], color_values[2]};
+      } else if (token == "fixed") {
+        int fixed;
+        ifs >> fixed;
+        if (fixed == 1) {
+          plane_node->setFixed(true);
+          std::cout << "plane set fixed true  !" << std::endl;
+        }
       }
     }
 
