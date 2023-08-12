@@ -72,16 +72,6 @@ void EdgeSE3PlanePlane::computeError() {
   g2o::Plane3D s_graph_plane = v3->estimate();
 
   Eigen::Isometry3d deviation = v1->estimate();
-  // Compute the translation vector as the difference between the normal vectors of the
-  // planes
-  // Eigen::Vector3d translation = a_graph_plane.normal() - s_graph_plane.normal();
-
-  // double angleDifference = s_graph_plane.normal().angle(a_graph_plane.normal());
-  // Eigen::Matrix3d rotation =
-  //     Eigen::AngleAxisd(angleDifference,
-  //     Eigen::Vector3d::UnitZ()).toRotationMatrix();
-  // v1->setEstimate(g2o::SE3Quat(rotation, translation));
-  // _error = deviation * a_graph_plane - s_graph_plane;
   Eigen::Isometry3d dev_inverse = v1->estimate().inverse();
   g2o::Plane3D modified_s_graph_plane = dev_inverse * v3->estimate();
   _error = modified_s_graph_plane.ominus(v2->estimate());
