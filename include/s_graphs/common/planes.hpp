@@ -109,6 +109,7 @@ class Planes {
   std::string type;                         // Type online or prior
   double length;
   Eigen::Vector2d start_point;
+  bool matched = false;
 };
 
 class VerticalPlanes : public Planes {

@@ -4,7 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /TF1
         - /TF1/Frames1
         - /PointCloud21
         - /PointCloud22
@@ -13,7 +12,7 @@ Panels:
         - /MarkerArray2/Namespaces1
         - /MarkerArray3
       Splitter Ratio: 0.5
-    Tree Height: 363
+    Tree Height: 814
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -97,8 +96,6 @@ Visualization Manager:
           Value: false
         map:
           Value: true
-        map_elevated:
-          Value: false
         odom:
           Value: false
         prior_map:
@@ -135,58 +132,50 @@ Visualization Manager:
       Show Axes: true
       Show Names: false
       Tree:
-        map:
-          keyframes_layer:
-            walls_layer:
-              rooms_layer:
-                floors_layer:
-                  {}
-          map_elevated:
-            {}
-          odom:
-            base_footprint:
-              body:
-                base_link:
-                  camera_link:
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_rgb_frame:
-                      camera_rgb_optical_frame:
-                        {}
-                  imu_link:
-                    {}
-                  velodyne_base_link:
-                    velodyne:
+        prior_map:
+          map:
+            odom:
+              base_footprint:
+                body:
+                  base_link:
+                    camera_link:
+                      camera_depth_frame:
+                        camera_depth_optical_frame:
+                          {}
+                      camera_rgb_frame:
+                        camera_rgb_optical_frame:
+                          {}
+                    imu_link:
                       {}
-                front_left_hip:
-                  front_left_upper_leg:
-                    front_left_lower_leg:
-                      front_left_ee:
+                    velodyne_base_link:
+                      velodyne:
                         {}
-                front_rail:
-                  {}
-                front_right_hip:
-                  front_right_upper_leg:
-                    front_right_lower_leg:
-                      front_right_ee:
-                        {}
-                rear_left_hip:
-                  rear_left_upper_leg:
-                    rear_left_lower_leg:
-                      rear_left_ee:
-                        {}
-                rear_rail:
-                  {}
-                rear_right_hip:
-                  rear_right_upper_leg:
-                    rear_right_lower_leg:
-                      rear_right_ee:
-                        {}
-            keyframe:
-              {}
-          prior_map:
-            {}
+                  front_left_hip:
+                    front_left_upper_leg:
+                      front_left_lower_leg:
+                        front_left_ee:
+                          {}
+                  front_rail:
+                    {}
+                  front_right_hip:
+                    front_right_upper_leg:
+                      front_right_lower_leg:
+                        front_right_ee:
+                          {}
+                  rear_left_hip:
+                    rear_left_upper_leg:
+                      rear_left_lower_leg:
+                        rear_left_ee:
+                          {}
+                  rear_rail:
+                    {}
+                  rear_right_hip:
+                    rear_right_upper_leg:
+                      rear_right_lower_leg:
+                        rear_right_ee:
+                          {}
+              keyframe:
+                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -259,7 +248,17 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        floor_lines: true
+        floors: true
+        hort_planes: true
+        imu: true
+        keyframe_keyframe_edges: true
+        keyframe_plane_edges: true
+        loop_close_radius: true
+        nodes: true
+        wall_center_marker: true
+        x_vert_planes: true
+        y_vert_planes: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -271,13 +270,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        closed_spaces: true
-        connected_edges_0: true
-        connected_edges_1: true
-        connected_vertices_0: true
-        connected_vertices_1: true
-        edges: true
-        vertices: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
