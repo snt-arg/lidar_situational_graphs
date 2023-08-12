@@ -125,17 +125,22 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
       estimate = Eigen::Isometry3d::Identity();
       estimate->linear() = mat.block<3, 3>(0, 0);
       estimate->translation() = mat.block<3, 1>(0, 3);
-    } else if (token == "odom") {
-      Eigen::Matrix4d odom_mat = Eigen::Matrix4d::Identity();
-      for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-          ifs >> odom_mat(i, j);
-        }
-      }
-      odom.setIdentity();
-      odom.linear() = odom_mat.block<3, 3>(0, 0);
-      odom.translation() = odom_mat.block<3, 1>(0, 3);
-    } else if (token == "accum_distance") {
+      odom.linear() = mat.block<3, 3>(0, 0);
+      odom.translation() = mat.block<3, 1>(0, 3);
+
+    }
+    // else if (token == "odom") {
+    //   Eigen::Matrix4d odom_mat = Eigen::Matrix4d::Identity();
+    //   for (int i = 0; i < 4; i++) {
+    //     for (int j = 0; j < 4; j++) {
+    //       ifs >> odom_mat(i, j);
+    //     }
+    //   }
+    //   odom.setIdentity();
+    //   odom.linear() = odom_mat.block<3, 3>(0, 0);
+    //   odom.translation() = odom_mat.block<3, 1>(0, 3);
+    // }
+    else if (token == "accum_distance") {
       double distance;
       ifs >> accum_distance;
     } else if (token == "floor_coeffs") {
@@ -158,7 +163,7 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
       int id;
       ifs >> id;
       node_id = id;
-      std::cout << "keyframe id : " << node_id << std::endl;
+      // std::cout << "keyframe id : " << node_id << std::endl;
     }
   }
 
