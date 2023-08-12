@@ -222,6 +222,13 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.keyframe_node = keyframe->node;
         vert_plane.plane_node = plane_node;
+        std::cout << "X vert_plane.plane_node fixed : "
+                  << vert_plane.plane_node->fixed() << std::endl;
+        std::cout << "x plane id : " << vert_plane.plane_node->id() << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(0) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(1) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(2) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         std::vector<double> color;
@@ -290,6 +297,11 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.color = color;
         y_vert_planes.push_back(vert_plane);
         keyframe->y_plane_ids.push_back(vert_plane.id);
+        std::cout << "y plane id : " << vert_plane.plane_node->id() << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(0) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(1) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(2) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
         RCLCPP_DEBUG(node_obj->get_logger(),
                      "yplane association",
                      "Added new y vertical plane node with coeffs %f %f %f %f",
