@@ -281,6 +281,7 @@ class Rooms {
   int plane_y1_id;
   int plane_y2_id;
   bool sub_room;
+  bool matched = false;
   visualization_msgs::msg::MarkerArray cluster_array;
 
   g2o::VertexPlane *plane_x1_node = nullptr;
