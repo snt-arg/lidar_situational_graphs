@@ -83,7 +83,7 @@ Hierarchical Representations
 1. Create a workspace for S-Graphs
 
 ```bash
-mkdir -p $Home/s_graphs_ros2_ws/src && cd $HOME/s_graphs_ros2_ws/src
+mkdir -p $HOME/s_graphs_ros2_ws/src && cd $HOME/s_graphs_ros2_ws/src
 ```
 
 2. Clone the S-Graphs repository into the created workspace (please setup your ssh keys first)
