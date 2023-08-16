@@ -1,5 +1,7 @@
 #include "s_graphs/common/room_utils.hpp"
 
+#include <string>
+
 /**
  * Obtain the vertical planes that form the boundaries of a given room.
  * @param room The room whose planes are to be obtained.
@@ -236,8 +238,15 @@ generate_room_keyframe(
   auto global_planes =
       obtain_global_planes_from_room(room, x_vert_planes, y_vert_planes);
   auto room_centre = obtain_global_centre_of_room(global_planes);
+  // print room centre and room centre estimate (4x4 matrix)
+  // room.node->estimate();
+  std::cout << "Room centre: " << room_centre->matrix() << std::endl;
+  std::cout << "Room centre estimate: " << room.node->estimate().matrix() << std::endl;
+
   // If room centre coudn't be computed return
   if (!room_centre.has_value()) return {};
+
+  room_centre = room.node->estimate();
 
   auto keyframe_candidates =
       obtain_keyframe_candidates_from_room(room, x_vert_planes, y_vert_planes);
@@ -245,7 +254,61 @@ generate_room_keyframe(
   auto keyframes_vec = obtain_keyframes_from_ids(keyframes_ids, keyframes);
   auto cloud = generate_room_pointcloud(
       room, room_centre.value(), keyframes_vec.begin(), keyframes_vec.end());
-  return {{room_centre.value(), cloud}};
+
+  std::vector<PlaneGlobalRep> local_plane_rep;
+  for (auto& plane : global_planes) {
+    PlaneGlobalRep local_plane;
+    auto transform_point = room_centre->inverse() * plane.point;
+    local_plane.point = transform_point;
+    local_plane.normal = room_centre->linear().inverse() * plane.normal;
+    local_plane_rep.emplace_back(local_plane);
+  }
+
+  double max_dist = 0;
+  for (size_t i = 0; i < local_plane_rep.size() - 2; i++) {
+    auto& plane_i_1 = local_plane_rep[i];
+    auto& plane_i_2 = local_plane_rep[i + 2];
+    auto intersection = find_intersection(
+        plane_i_1.point, plane_i_2.normal, plane_i_2.point, plane_i_1.normal);
+    if (intersection.has_value()) {
+      auto intersec = intersection.value();
+      intersec.z() = 0;
+      auto dist = intersec.norm();
+      if (dist > max_dist) {
+        max_dist = dist;
+      }
+    }
+  }
+  auto room_pc = filter_room_pointcloud(cloud, max_dist);
+
+  // // draw a sphere in the room centre to check if it is correct
+  // // use spherical coordinates to generate the sphere
+  // double radius = 0.1;
+  // double theta = 0;
+  // double phi = 0;
+  // double step = 0.1;
+  // for (; theta < 2 * M_PI; theta += step) {
+  //   for (; phi < M_PI; phi += step) {
+  //     s_graphs::PointT point;
+  //     point.x = radius * sin(phi) * cos(theta);
+  //     point.y = radius * sin(phi) * sin(theta);
+  //     point.z = radius * cos(phi);
+  //     room_pc->points.emplace_back(point);
+  //   }
+  // }
+  // room_pc->width = room_pc->points.size();
+  // room_pc->height = 1;
+
+  // std::string initial_path =
+  //     "/home/miguel/lux_stay_ws/ros2_ws/src/multirobot_sgraphs_server/pointcloud_data/";
+  // pcl::io::savePCDFileASCII(initial_path + std::to_string(room.id) + "_room.pcd",
+  //                           *room_pc);
+
+  // // ext_room.cloud = transform_pointcloud<s_graphs::PointT>(ext_room.cloud,
+  // // ext_room.centre.inverse());
+
+  // return {{room_centre.value(), cloud}};
+  return {{room_centre.value(), room_pc}};
   // room_centre.value(), cloud)};
 }
 
@@ -327,3 +390,46 @@ ExtendedRooms obtainExtendedRoomFromRosMsg(
 
   return room;
 }
+
+pcl::PointCloud<s_graphs::PointT>::Ptr filter_room_pointcloud(
+    pcl::PointCloud<s_graphs::PointT>::Ptr cloud,
+    double max_dist) {
+  pcl::PointCloud<s_graphs::PointT>::Ptr filtered(
+      new pcl::PointCloud<s_graphs::PointT>());
+
+  // Easy filter, remove floor points -> Although this doesn't affect the
+  // descriptor
+  pcl::PassThrough<s_graphs::PointT> pass;
+  pass.setInputCloud(cloud);
+  pass.setFilterFieldName("z");
+  pass.setFilterLimits(0.3, 3.0);
+  pass.filter(*filtered);
+  if (max_dist) {
+    pcl::PointCloud<s_graphs::PointT>::Ptr more_filtered(
+        new pcl::PointCloud<s_graphs::PointT>());
+    for (auto& pnt : filtered->points) {
+      Eigen::Vector3d point = pnt.getVector3fMap().cast<double>();
+      point.z() = 0;
+      if (point.norm() > max_dist + 0.3) {
+        continue;
+      }
+      more_filtered->points.emplace_back(pnt);
+    }
+
+    filtered = more_filtered;
+  }
+  filtered->width = filtered->size();
+  filtered->height = 1;
+
+  // pass.setInputCloud(filtered);
+  // pass.setFilterFieldName("x");
+  // pass.setFilterLimits(-5, 5);
+  // pass.filter(*filtered);
+
+  // pass.setInputCloud(filtered);
+  // pass.setFilterFieldName("y");
+  // pass.setFilterLimits(-5, 5);
+  // pass.filter(*filtered);
+  return filtered;
+}
+

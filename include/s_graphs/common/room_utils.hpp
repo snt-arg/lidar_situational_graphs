@@ -137,48 +137,9 @@ typename pcl::PointCloud<PointT>::Ptr transform_pointcloud(
 }
 
 // REMOVE THIS
-template <typename T>
 pcl::PointCloud<s_graphs::PointT>::Ptr filter_room_pointcloud(
     pcl::PointCloud<s_graphs::PointT>::Ptr cloud,
-    double max_dist = 0) {
-  pcl::PointCloud<s_graphs::PointT>::Ptr filtered(
-      new pcl::PointCloud<s_graphs::PointT>());
-
-  // Easy filter, remove floor points -> Although this doesn't affect the
-  // descriptor
-  pcl::PassThrough<s_graphs::PointT> pass;
-  pass.setInputCloud(cloud);
-  pass.setFilterFieldName("z");
-  pass.setFilterLimits(0.3, 3.0);
-  pass.filter(*filtered);
-  if (max_dist) {
-    pcl::PointCloud<s_graphs::PointT>::Ptr more_filtered(
-        new pcl::PointCloud<s_graphs::PointT>());
-    for (auto& pnt : filtered->points) {
-      Eigen::Vector3d point = pnt.getVector3fMap().cast<double>();
-      point.z() = 0;
-      if (point.norm() > max_dist + 0.3) {
-        continue;
-      }
-      more_filtered->points.emplace_back(pnt);
-    }
-
-    filtered = more_filtered;
-  }
-  filtered->width = filtered->size();
-  filtered->height = 1;
-
-  // pass.setInputCloud(filtered);
-  // pass.setFilterFieldName("x");
-  // pass.setFilterLimits(-5, 5);
-  // pass.filter(*filtered);
-
-  // pass.setInputCloud(filtered);
-  // pass.setFilterFieldName("y");
-  // pass.setFilterLimits(-5, 5);
-  // pass.filter(*filtered);
-  return filtered;
-}
+    double max_dist = 0);
 
 template <class IterI>
 pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
@@ -268,30 +229,34 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
     ext_room.global_planes =
         obtain_global_planes_from_room(room, *x_vert_planes_, *y_vert_planes_);
 
-    std::vector<PlaneGlobalRep> local_plane_rep;
-    for (auto& plane : ext_room.global_planes) {
-      PlaneGlobalRep local_plane;
-      auto transform_point = ext_room.centre.inverse() * plane.point;
-      local_plane.point = transform_point;
-      local_plane.normal = ext_room.centre.linear().inverse() * plane.normal;
-      local_plane_rep.emplace_back(local_plane);
-    }
+    // std::vector<PlaneGlobalRep> local_plane_rep;
+    // for (auto& plane : ext_room.global_planes) {
+    //   PlaneGlobalRep local_plane;
+    //   auto transform_point = ext_room.centre.inverse() * plane.point;
+    //   local_plane.point = transform_point;
+    //   local_plane.normal = ext_room.centre.linear().inverse() * plane.normal;
+    //   local_plane_rep.emplace_back(local_plane);
+    // }
 
-    double max_dist = 0;
-    for (size_t i = 0; i < local_plane_rep.size() - 2; i++) {
-      auto& plane_i_1 = local_plane_rep[i];
-      auto& plane_i_2 = local_plane_rep[i + 2];
-      auto intersection = find_intersection(
-          plane_i_1.point, plane_i_2.normal, plane_i_2.point, plane_i_1.normal);
-      if (intersection.has_value()) {
-        auto intersec = intersection.value();
-        intersec.z() = 0;
-        auto dist = intersec.norm();
-        if (dist > max_dist) {
-          max_dist = dist;
-        }
-      }
-    }
+    // double max_dist = 0;
+    // for (size_t i = 0; i < local_plane_rep.size() - 2; i++) {
+    //   auto& plane_i_1 = local_plane_rep[i];
+    //   auto& plane_i_2 = local_plane_rep[i + 2];
+    //   auto intersection = find_intersection(
+    //       plane_i_1.point, plane_i_2.normal, plane_i_2.point, plane_i_1.normal);
+    //   if (intersection.has_value()) {
+    //     auto intersec = intersection.value();
+    //     intersec.z() = 0;
+    //     auto dist = intersec.norm();
+    //     if (dist > max_dist) {
+    //       max_dist = dist;
+    //     }
+    //   }
+    // }
+    // auto room_pc = filter_room_pointcloud(ext_room.cloud, max_dist);
+    // // ext_room.cloud = transform_pointcloud<s_graphs::PointT>(ext_room.cloud,
+    // // ext_room.centre.inverse());
+
     // std::cout << "max_dist:" << max_dist << std::endl;
     room_keyframe_dict_.insert({ext_room.id, ext_room});
   }
