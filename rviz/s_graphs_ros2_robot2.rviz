@@ -248,6 +248,10 @@ Visualization Manager:
         closed_spaces: true
         connected_edges_0: true
         connected_edges_1: true
+        connected_edges_10: true
+        connected_edges_11: true
+        connected_edges_12: true
+        connected_edges_13: true
         connected_edges_2: true
         connected_edges_3: true
         connected_edges_4: true
@@ -255,8 +259,13 @@ Visualization Manager:
         connected_edges_6: true
         connected_edges_7: true
         connected_edges_8: true
+        connected_edges_9: true
         connected_vertices_0: true
         connected_vertices_1: true
+        connected_vertices_10: true
+        connected_vertices_11: true
+        connected_vertices_12: true
+        connected_vertices_13: true
         connected_vertices_2: true
         connected_vertices_3: true
         connected_vertices_4: true
@@ -264,6 +273,7 @@ Visualization Manager:
         connected_vertices_6: true
         connected_vertices_7: true
         connected_vertices_8: true
+        connected_vertices_9: true
         edges: true
         vertices: true
       Topic:
@@ -333,7 +343,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 53.33955383300781
+      Distance: 66.90913391113281
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -348,10 +358,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2847970724105835
+      Pitch: 0.4047975242137909
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.8531057834625244
+      Yaw: 1.6431057453155518
     Saved: ~
 Window Geometry:
   Displays:

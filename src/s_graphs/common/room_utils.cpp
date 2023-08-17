@@ -240,8 +240,9 @@ generate_room_keyframe(
   auto room_centre = obtain_global_centre_of_room(global_planes);
   // print room centre and room centre estimate (4x4 matrix)
   // room.node->estimate();
-  std::cout << "Room centre: " << room_centre->matrix() << std::endl;
-  std::cout << "Room centre estimate: " << room.node->estimate().matrix() << std::endl;
+  // std::cout << "Room centre: " << room_centre->matrix() << std::endl;
+  // std::cout << "Room centre estimate: " << room.node->estimate().matrix() <<
+  // std::endl;
 
   // If room centre coudn't be computed return
   if (!room_centre.has_value()) return {};
