@@ -590,7 +590,7 @@ g2o::Edge2Planes* GraphSLAM::copy_2planes_edge(g2o::Edge2Planes* e,
 
 g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
                                                g2o::VertexRoom* v_room,
-                                               const Eigen::Vector2d& measurement,
+                                               const Eigen::Isometry3d& measurement,
                                                const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Room* edge(new g2o::EdgeSE3Room());
   edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));

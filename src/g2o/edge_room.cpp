@@ -131,45 +131,41 @@ void EdgeRoomRoom::initialEstimate(const OptimizableGraph::VertexSet& from_,
 }
 
 void EdgeSE3Room::computeError() {
-  const VertexSE3* v1 = static_cast<const VertexSE3*>(_vertices[0]);
-  const VertexRoom* v2 = static_cast<const VertexRoom*>(_vertices[1]);
-
-  Eigen::Isometry3d m2l = v1->estimate().inverse();
-  Eigen::Isometry3d room_map;
-  room_map.matrix().block<4, 4>(0, 0) = Eigen::Matrix4d::Identity();
-  room_map.matrix().block<2, 1>(0, 3) = v2->estimate().translation().head(2);
-
-  Eigen::Isometry3d room_local = room_map * m2l;
-  Eigen::Vector2d est = room_local.matrix().block<2, 1>(0, 3);
-  _error = est - _measurement;
+  VertexRoom* from = static_cast<VertexRoom*>(_vertices[0]);
+  VertexRoom* to = static_cast<VertexRoom*>(_vertices[1]);
+  Isometry3 delta = _inverseMeasurement * from->estimate().inverse() * to->estimate();
+  _error = internal::toVectorMQT(delta);
 }
 
+void EdgeSE3Room::linearizeOplus() {
+  // BaseBinaryEdge<6, Isometry3, VertexSE3, VertexSE3>::linearizeOplus();
+  // return;
+
+  VertexRoom* from = static_cast<VertexRoom*>(_vertices[0]);
+  VertexRoom* to = static_cast<VertexRoom*>(_vertices[1]);
+  Isometry3 E;
+  const Isometry3& Xi = from->estimate();
+  const Isometry3& Xj = to->estimate();
+  const Isometry3& Z = _measurement;
+  internal::computeEdgeSE3Gradient(E, _jacobianOplusXi, _jacobianOplusXj, Z, Xi, Xj);
+}
 bool EdgeSE3Room::read(std::istream& is) {
+  Vector7 meas;
+  internal::readVector(is, meas);
+  // normalize the quaternion to recover numerical precision lost by storing as
+  // human readable text
+  Vector4::MapType(meas.data() + 3).normalize();
+  setMeasurement(internal::fromVectorQT(meas));
+  if (is.bad()) return false;
+  readInformationMatrix(is);
+  return is.good() || is.eof();
   Eigen::Vector2d v;
   is >> v(0) >> v(1);
-
-  setMeasurement(v);
-  for (int i = 0; i < information().rows(); ++i) {
-    for (int j = i; j < information().cols(); ++j) {
-      is >> information()(i, j);
-      if (i != j) {
-        information()(j, i) = information()(i, j);
-      }
-    }
-  }
-  return true;
 }
 
 bool EdgeSE3Room::write(std::ostream& os) const {
-  Eigen::Vector2d v = _measurement;
-  os << v(0) << " " << v(1) << " ";
-
-  for (int i = 0; i < information().rows(); ++i) {
-    for (int j = i; j < information().cols(); ++j) {
-      os << " " << information()(i, j);
-    };
-  }
-  return os.good();
+  internal::writeVector(os, internal::toVectorQT(measurement()));
+  return writeInformationMatrix(os);
 }
 
 void EdgeRoom2Planes::computeError() {
