@@ -2,7 +2,7 @@
 
 namespace s_graphs {
 
-void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+void GraphUtils::copy_graph(const GraphSLAM* covisibility_graph,
                             std::unique_ptr<GraphSLAM>& global_graph) {
   for (g2o::HyperGraph::VertexIDMap::iterator it =
            covisibility_graph->graph->vertices().begin();
@@ -267,6 +267,16 @@ void GraphUtils::set_marginalize_info(
     }
     k_counter++;
   }
+}
+
+void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                            std::unique_ptr<GraphSLAM>& global_graph) {
+  GraphUtils::copy_graph(covisibility_graph.get(), global_graph);
+}
+
+void GraphUtils::copy_graph(const std::unique_ptr<GraphSLAM>& covisibility_graph,
+                            std::unique_ptr<GraphSLAM>& global_graph) {
+  GraphUtils::copy_graph(covisibility_graph.get(), global_graph);
 }
 
 }  // namespace s_graphs

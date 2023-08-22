@@ -53,7 +53,11 @@ class GraphUtils {
  public:
   GraphUtils() {}
 
+  void copy_graph(const GraphSLAM* covisibility_graph,
+                  std::unique_ptr<GraphSLAM>& global_graph);
   void copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                  std::unique_ptr<GraphSLAM>& global_graph);
+  void copy_graph(const std::unique_ptr<GraphSLAM>& covisibility_graph,
                   std::unique_ptr<GraphSLAM>& global_graph);
 
   void update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
