@@ -238,6 +238,11 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         // color.push_back(255);  // red
         // color.push_back(0.0);  // green
         // color.push_back(0.0);  // blue
+        std::cout << "X Plane id : " << plane_node->id() << "  "
+                  << plane_node->estimate().coeffs()(0) << "  "
+                  << plane_node->estimate().coeffs()(1) << "  "
+                  << plane_node->estimate().coeffs()(2) << "  "
+                  << plane_node->estimate().coeffs()(3) << std::endl;
         vert_plane.color = color;
         x_vert_planes.push_back(vert_plane);
         keyframe->x_plane_ids.push_back(vert_plane.id);
@@ -317,11 +322,26 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         y_vert_planes[data_association.second].keyframe_node_vec.push_back(
             keyframe->node);
         keyframe->y_plane_ids.push_back(y_vert_planes[data_association.second].id);
-
+        std::cout << "matched y vert plane with coeffs : "
+                  << det_plane_map_frame.coeffs()(0) << "  "
+                  << det_plane_map_frame.coeffs()(1) << "  "
+                  << det_plane_map_frame.coeffs()(2) << "  "
+                  << det_plane_map_frame.coeffs()(3) << "  " << std::endl;
+        std::cout
+            << "To plane coeffs : "
+            << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(0)
+            << "  "
+            << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(1)
+            << "  "
+            << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(2)
+            << "  "
+            << y_vert_planes[data_association.second].plane_node->estimate().coeffs()(3)
+            << std::endl;
         RCLCPP_DEBUG(
             node_obj->get_logger(),
             "yplane association",
-            "matched y vert plane with coeffs %f %f %f %f to mapped y vert plane of "
+            "matched y vert plane with coeffs %f %f %f %f to mapped y "
+            "vert plane of "
             "coeffs %f %f %f %f",
             det_plane_map_frame.coeffs()(0),
             det_plane_map_frame.coeffs()(1),

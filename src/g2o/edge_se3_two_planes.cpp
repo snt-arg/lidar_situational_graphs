@@ -75,17 +75,18 @@ void EdgeSE3PlanePlane::computeError() {
   Eigen::Isometry3d dev_inverse = v1->estimate().inverse();
   g2o::Plane3D modified_s_graph_plane = dev_inverse * v3->estimate();
   _error = modified_s_graph_plane.ominus(v2->estimate());
-
-  std::cout << "a_graph plane fixed : " << v2->fixed() << std::endl;
-  std::cout << "s_graph plane fixed : " << v3->fixed() << std::endl;
-  std::cout << "error : " << std::endl;
-  std::cout << _error << std::endl;
-  std::cout << "deviation : " << std::endl;
-  std::cout << v1->estimate().matrix() << std::endl;
-  std::cout << "a_graph_plane : " << std::endl;
-  std::cout << v2->estimate().toVector() << std::endl;
-  std::cout << "s_graph_plane : " << std::endl;
-  std::cout << v3->estimate().toVector() << std::endl;
+  // if (v2->id() == 18 || v2->id() == 12) {
+  //   std::cout << "a_graph plane fixed : " << v2->fixed() << std::endl;
+  //   std::cout << "s_graph plane fixed : " << v3->fixed() << std::endl;
+  //   std::cout << "error : " << std::endl;
+  //   std::cout << _error << std::endl;
+  //   std::cout << "deviation : " << std::endl;
+  //   std::cout << v1->estimate().matrix() << std::endl;
+  //   std::cout << "a_graph_plane : " << std::endl;
+  //   std::cout << v2->estimate().toVector() << std::endl;
+  //   std::cout << "s_graph_plane : " << std::endl;
+  //   std::cout << v3->estimate().toVector() << std::endl;
+  // }
 }
 bool EdgeSE3PlanePlane::read(std::istream& is) {
   Eigen::Vector3d v;

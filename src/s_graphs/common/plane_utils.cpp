@@ -315,6 +315,10 @@ bool PlaneUtils::plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* p
   std::cout << "dot product : " << dot_product << std::endl;
   return dot_product > 0.9;
 }
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 geometry_msgs::msg::Pose PlaneUtils::extract_infite_room_center(
     int plane_type,
     pcl::PointXY p1,

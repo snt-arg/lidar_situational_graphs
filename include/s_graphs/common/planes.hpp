@@ -85,7 +85,10 @@ class Planes {
     revit_id = old_plane.revit_id;
     keyframe_node = old_plane.keyframe_node;
     plane_node = old_plane.plane_node;
-
+    type = old_plane.type;
+    wall_point = old_plane.wall_point;
+    start_point = old_plane.start_point;
+    length = old_plane.length;
     return *this;
   }
 
@@ -108,8 +111,9 @@ class Planes {
   g2o::VertexPlane *plane_node = nullptr;   // node instance
   std::string type;                         // Type online or prior
   double length;
-  Eigen::Vector2d start_point;
   bool matched = false;
+  Eigen::Vector2d start_point = Eigen::Vector2d::Ones();
+  Eigen::Vector3d wall_point;
 };
 
 class VerticalPlanes : public Planes {

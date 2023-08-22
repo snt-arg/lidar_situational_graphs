@@ -46,12 +46,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/edge_plane.hpp>
 #include <g2o/edge_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
+#include <g2o/vertex_deviation.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/vertex_room.hpp>
 #include <iostream>
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/backend/plane_mapper.hpp>
 #include <s_graphs/backend/room_mapper.hpp>
+#include <s_graphs/common/door_ways.hpp>
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/infinite_rooms.hpp>
 #include <s_graphs/common/keyframe.hpp>
@@ -90,7 +92,7 @@ class GraphVisualizer {
 
  public:
   /**
-   * @brief Creates a marker array
+   * @brief Creates a marker array for online s-graph
    *
    * @param stamp
    * @param local_graph
@@ -113,6 +115,39 @@ class GraphVisualizer {
       double loop_detector_radius,
       std::vector<KeyFrame::Ptr> keyframes,
       std::vector<Floors> floors_vec);
+
+  /**
+   * @brief Creates a marker array for prior a-graph
+   *
+   * @param stamp
+   * @param local_graph
+   * @param x_vert_planes_prior
+   * @param y_vert_planes_prior
+   * @param rooms_vec_prior
+   * @param rooms_vec
+   * @param got_trans_prior2map_
+   * @param doorways_vec_prior
+   * @param wall_deviations_vector
+   * @return A MarkerArray message.
+   */
+
+  visualization_msgs::msg::MarkerArray create_prior_marker_array(
+      const rclcpp::Time& stamp,
+      const g2o::SparseOptimizer* local_graph,
+      std::vector<VerticalPlanes>& x_vert_planes_prior,
+      std::vector<VerticalPlanes>& y_vert_planes_prior,
+      std::vector<Rooms> rooms_vec_prior,
+      std::vector<Rooms> rooms_vec,
+      bool got_trans_prior2map_,
+      const std::vector<DoorWays> doorways_vec_prio,
+      std::vector<VerticalPlanes>& x_vert_planes,
+      std::vector<VerticalPlanes>& y_vert_planes);
+
+  struct WallDeviations {
+    g2o::VertexDeviation* deviation_node = nullptr;
+    g2o::VertexPlane* a_graph_plane_node = nullptr;
+    g2o::VertexPlane* s_graph_plane_node = nullptr;
+  };
 
  private:
   std::string map_frame_id;

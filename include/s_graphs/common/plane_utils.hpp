@@ -218,6 +218,7 @@ class PlaneUtils {
                                                       s_graphs::msg::PlaneData plane1,
                                                       s_graphs::msg::PlaneData plane2,
                                                       Eigen::Vector2d& cluster_center);
+
   /**
    * @brief
    *

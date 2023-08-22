@@ -58,7 +58,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 namespace g2o {
 
 void EdgeSE3RoomRoom::computeError() {
-  std::cout << "defining edge !" << std::endl;
+  // std::cout << "defining edge !" << std::endl;
   const g2o::VertexDeviation *v1 =
       static_cast<const g2o::VertexDeviation *>(_vertices[0]);
   const g2o::VertexRoom *v2 = static_cast<const g2o::VertexRoom *>(_vertices[1]);
@@ -72,14 +72,16 @@ void EdgeSE3RoomRoom::computeError() {
   Eigen::Quaterniond q_error(error_matrix.rotation());
   _error.tail(3) =
       Eigen::Vector3d(q_error.x(), q_error.y(), q_error.z()) * 2.0 * q_error.w();
-  std::cout << "error : " << std::endl;
-  std::cout << _error << std::endl;
-  std::cout << "Deviation : " << std::endl;
-  std::cout << v1->estimate().matrix() << std::endl;
-  std::cout << "A-Graph room : " << std::endl;
-  std::cout << v2->estimate().matrix() << std::endl;
-  std::cout << "S-Graph room : " << std::endl;
-  std::cout << v3->estimate().matrix() << std::endl;
+  // if (v2->id() == 56) {
+  //   std::cout << "error : " << std::endl;
+  //   std::cout << _error << std::endl;
+  //   std::cout << "Deviation : " << std::endl;
+  //   std::cout << v1->estimate().matrix() << std::endl;
+  //   std::cout << "A-Graph room : " << std::endl;
+  //   std::cout << v2->estimate().matrix() << std::endl;
+  //   std::cout << "S-Graph room : " << std::endl;
+  //   std::cout << v3->estimate().matrix() << std::endl;
+  // }
 }
 
 bool EdgeSE3RoomRoom::read(std::istream &is) {
