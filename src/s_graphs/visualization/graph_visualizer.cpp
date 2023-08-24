@@ -1458,8 +1458,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       Eigen::Matrix3d rotation_matrix = dev_pose.block<3, 3>(0, 0);
       Eigen::Quaterniond quaternion(rotation_matrix);
       quaternion.normalize();
-      std::cout << " marker pose x : " << translation.x() << " y : " << translation.y()
-                << std::endl;
       deviation_marker.pose.position.x = translation.x();
       deviation_marker.pose.position.y = translation.y();
       deviation_marker.pose.position.z = prior_room_h;
@@ -1553,13 +1551,13 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       prior_room_marker.pose.orientation.z = 0.0;
       prior_room_marker.pose.orientation.w = 1;
 
-      prior_room_marker.scale.y = 0.5;
-      prior_room_marker.scale.x = 0.5;
-      prior_room_marker.scale.z = 0.5;
-      prior_room_marker.color.r = 1.0;
-      prior_room_marker.color.g = 0.07;
-      prior_room_marker.color.b = 0.57;
-      prior_room_marker.color.a = 1.0;
+      prior_room_marker.scale.y = 0.2;
+      prior_room_marker.scale.x = 0.2;
+      prior_room_marker.scale.z = 0.2;
+      prior_room_marker.color.r = 0.0;
+      prior_room_marker.color.g = 0.7;
+      prior_room_marker.color.b = 1.0;
+      prior_room_marker.color.a = 0.5;
       prior_markers.markers.push_back(prior_room_marker);
 
       // Edge plane 1
