@@ -65,6 +65,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/point.h"
 #include "geometry_msgs/msg/point_stamped.h"
 #include "rclcpp/rclcpp.hpp"
+#include "rviz_visual_tools/rviz_visual_tools.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/buffer_interface.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -114,12 +115,19 @@ class GraphVisualizer {
       std::vector<KeyFrame::Ptr> keyframes,
       std::vector<Floors> floors_vec);
 
+
+  Eigen::Isometry3d compute_plane_pose(const VerticalPlanes& plane,
+                                       pcl::PointXYZRGBNormal& p_min,
+                                       pcl::PointXYZRGBNormal& p_max);
+
  private:
   std::string map_frame_id;
   double color_r, color_g, color_b;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   rclcpp::Node* node_ptr_;
+  std::string walls_layer_id;
+  rviz_visual_tools::RvizVisualToolsPtr plane_node_visual_tools;
 };
 
 }  // namespace s_graphs

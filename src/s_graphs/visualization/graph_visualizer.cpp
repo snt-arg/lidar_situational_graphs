@@ -48,6 +48,15 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node) {
     std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
     map_frame_id = ns_prefix + "/" + map_frame_id;
   }
+  
+  
+  walls_layer_id = "walls_layer";
+  plane_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
+      walls_layer_id, "/rviz_plane_node_visual_tools", node);
+  plane_node_visual_tools->loadMarkerPub();
+  plane_node_visual_tools->deleteAllMarkers();
+  plane_node_visual_tools->enableBatchPublishing();
+  plane_node_visual_tools->setAlpha(0.5);
 
   tf_buffer = std::make_unique<tf2_ros::Buffer>(node->get_clock());
   tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -80,7 +89,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   rclcpp::Duration duration_planes = rclcpp::Duration::from_seconds(5);
 
   std::string keyframes_layer_id = "keyframes_layer";
-  std::string walls_layer_id = "walls_layer";
   std::string rooms_layer_id = "rooms_layer";
   std::string floors_layer_id = "floors_layer";
 
@@ -1203,7 +1211,59 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     }
   }
 
+  plane_node_visual_tools->deleteAllMarkers();
+  for (const auto& x_plane : x_plane_snapshot) {
+    pcl::PointXYZRGBNormal p_min, p_max;
+    Eigen::Isometry3d pose = compute_plane_pose(x_plane, p_min, p_max);
+
+    double depth, width, height;
+    depth = rviz_visual_tools::SMALL_SCALE;
+    width = fabs(p_min.y - p_max.y);
+    height = fabs(p_min.z - p_max.z);
+    if (height > 3.0) height = 3.0;
+    plane_node_visual_tools->publishCuboid(pose, depth, width, height, plane_node_visual_tools->intToRvizColor(x_plane.rviz_color));
+  }
+  for (const auto& y_plane : y_plane_snapshot) {
+    pcl::PointXYZRGBNormal p_min, p_max;
+    Eigen::Isometry3d pose = compute_plane_pose(y_plane, p_min, p_max);
+
+    double depth, width, height;
+    depth = rviz_visual_tools::SMALL_SCALE;
+    width = fabs(p_min.x - p_max.x);
+    height = fabs(p_min.z - p_max.z);
+    if (height > 3.0) height = 3.0;
+    plane_node_visual_tools->publishCuboid(pose, depth, width, height, plane_node_visual_tools->intToRvizColor(y_plane.rviz_color));
+  }
+  
+  plane_node_visual_tools->trigger();
+  
   return markers;
+}
+
+Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,
+                                                      pcl::PointXYZRGBNormal& p_min,
+                                                      pcl::PointXYZRGBNormal& p_max) {
+  double length = pcl::getMaxSegment(*plane.cloud_seg_map, p_min, p_max);
+
+  Eigen::Isometry3d pose;
+  pose.translation() = Eigen::Vector3d((p_min.x - p_max.x) / 2.0 + p_max.x,
+                                       (p_min.y - p_max.y) / 2.0 + p_max.y,
+                                       (p_min.z - p_max.z) / 2.0 + p_max.z);
+
+  pose.linear().setIdentity();
+  double yaw = std::atan2(plane.plane_node->estimate().coeffs()(1),
+                          plane.plane_node->estimate().coeffs()(0));
+
+  double pitch = std::atan2(plane.plane_node->estimate().coeffs()(2),
+                            plane.plane_node->estimate().coeffs().head<2>().norm());
+
+  double roll = 0.0;
+  Eigen::Quaterniond q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
+                         Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+                         Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+
+  pose.linear() = q.toRotationMatrix();
+  return pose;
 }
 
 }  // namespace s_graphs

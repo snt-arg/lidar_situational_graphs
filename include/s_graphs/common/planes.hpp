@@ -78,6 +78,7 @@ class Planes {
     cloud_seg_map = old_plane.cloud_seg_map;
     covariance = old_plane.covariance;
     keyframe_node_vec = old_plane.keyframe_node_vec;
+    rviz_color = old_plane.rviz_color; 
     color = old_plane.color;
     revit_id = old_plane.revit_id;
     keyframe_node = old_plane.keyframe_node;
@@ -99,6 +100,8 @@ class Planes {
   Eigen::Matrix3d covariance;  // covariance of the landmark
   std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
   std::vector<double> color;
+  std::size_t rviz_color;
+
   int revit_id;
   g2o::VertexSE3* keyframe_node = nullptr;  // keyframe node instance
   g2o::VertexPlane* plane_node = nullptr;   // node instance

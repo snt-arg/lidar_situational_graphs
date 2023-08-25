@@ -155,26 +155,28 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
         extracted_cloud->points.push_back(tmp_cloud);
       }
 
-      pcl::PointCloud<PointNormal>::Ptr extracted_cloud_filtered;
+      std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_filtered_vec;
+
       if (use_euclidean_filter)
-        extracted_cloud_filtered = compute_clusters(extracted_cloud);
+        extracted_cloud_filtered_vec = compute_clusters(extracted_cloud);
       else if (use_shadow_filter) {
         pcl::PointCloud<pcl::Normal>::Ptr normals =
             compute_cloud_normals(extracted_cloud);
-        extracted_cloud_filtered = shadow_filter(extracted_cloud, normals);
+        extracted_cloud_filtered_vec.push_back(shadow_filter(extracted_cloud, normals));
       } else {
-        extracted_cloud_filtered = extracted_cloud;
+        extracted_cloud_filtered_vec.push_back(extracted_cloud);
       }
 
       // visulazing the pointcloud
-      for (int pc = 0; pc < extracted_cloud_filtered->points.size(); ++pc) {
-        segmented_cloud->points.push_back(extracted_cloud_filtered->points[pc]);
-        // segmented_cloud->back().r = 254;
-        // segmented_cloud->back().g = 216;
-        // segmented_cloud->back().b = 177;
+      for (const auto ec : extracted_cloud_filtered_vec) {
+        for (int pc = 0; pc < ec->points.size(); ++pc) {
+          segmented_cloud->points.push_back(ec->points[pc]);
+          // segmented_cloud->back().r = 254;
+          // segmented_cloud->back().g = 216;
+          // segmented_cloud->back().b = 177;
+        }
+        extracted_cloud_vec.push_back(ec);
       }
-
-      extracted_cloud_vec.push_back(extracted_cloud_filtered);
 
       // sensor_msgs::PointCloud2 extracted_cloud_msg;
       // pcl::toROSMsg(*extracted_cloud_filtered, extracted_cloud_msg);
@@ -213,7 +215,7 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
   return extracted_cloud_vec;
 }
 
-pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(
+std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::compute_clusters(
     const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud) {
   pcl::search::KdTree<PointNormal>::Ptr tree(new pcl::search::KdTree<PointNormal>);
   tree->setInputCloud(extracted_cloud);
@@ -230,11 +232,12 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(
   // std::end(cluster_indices), [](const pcl::PointIndices& lhs, const
   // pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
 
-  pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
+  std::vector<pcl::PointCloud<PointNormal>::Ptr> cloud_cluster_vec;
   int cluster_id = 0;
   for (auto single_cluster : cluster_indices) {
     // std_msgs::msg::ColorRGBA color =
     // rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
+    pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
     std_msgs::msg::ColorRGBA color = random_color();
     double r = color.r;
     double g = color.g;
@@ -252,10 +255,11 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(
       cloud_cluster->back().g = g;
       cloud_cluster->back().b = b;
     }
+    cloud_cluster_vec.push_back(cloud_cluster);
     cluster_id++;
   }
 
-  return cloud_cluster;
+  return cloud_cluster_vec;
 }
 
 pcl::PointCloud<pcl::Normal>::Ptr PlaneAnalyzer::compute_cloud_normals(

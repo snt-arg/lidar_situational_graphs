@@ -228,6 +228,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
         color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
         color.push_back(keyframe->cloud_seg_body->points.back().b);  // blue
+        vert_plane.rviz_color = std::rand() % 18;
         // color.push_back(255);  // red
         // color.push_back(0.0);  // green
         // color.push_back(0.0);  // blue
@@ -281,13 +282,14 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.plane_node = plane_node;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
-        std::vector<double> color;
+        std::vector<double >color;
         color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
         color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
         color.push_back(keyframe->cloud_seg_body->points.back().b);  // blue
         // color.push_back(0.0);  // red
         // color.push_back(0.0);  // green
         // color.push_back(255);  // blue
+        vert_plane.rviz_color =  std::rand() % 18;
         vert_plane.color = color;
         y_vert_planes.push_back(vert_plane);
         keyframe->y_plane_ids.push_back(vert_plane.id);
