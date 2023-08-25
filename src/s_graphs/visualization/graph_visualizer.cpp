@@ -357,9 +357,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   for (int i = 0; i < x_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / x_plane_snapshot.size();
     std_msgs::msg::ColorRGBA color;
-    color.r = x_plane_snapshot[i].color[0] / 255;
-    color.g = x_plane_snapshot[i].color[1] / 255;
-    color.b = x_plane_snapshot[i].color[2] / 255;
+    color.r = 0.0;  // x_plane_snapshot[i].color[0] / 255;
+    color.g = 1.0;  // x_plane_snapshot[i].color[1] / 255;
+    color.b = 0.0;  // x_plane_snapshot[i].color[2] / 255;
     color.a = 0.5;
     for (size_t j = 0; j < x_plane_snapshot[i].cloud_seg_map->size(); ++j) {
       geometry_msgs::msg::Point point;
@@ -389,9 +389,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   for (int i = 0; i < y_plane_snapshot.size(); ++i) {
     double p = static_cast<double>(i) / y_plane_snapshot.size();
     std_msgs::msg::ColorRGBA color;
-    color.r = y_plane_snapshot[i].color[0] / 255;
-    color.g = y_plane_snapshot[i].color[1] / 255;
-    color.b = y_plane_snapshot[i].color[2] / 255;
+    color.r = 0.0;  // y_plane_snapshot[i].color[0] / 255;
+    color.g = 1.0;  // y_plane_snapshot[i].color[1] / 255;
+    color.b = 0.0;  // y_plane_snapshot[i].color[2] / 255;
     color.a = 0.5;
     for (size_t j = 0; j < y_plane_snapshot[i].cloud_seg_map->size(); ++j) {
       geometry_msgs::msg::Point point;
@@ -839,9 +839,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
     // fill the pose marker
     visualization_msgs::msg::Marker room_marker;
-    room_marker.scale.x = 0.5;
-    room_marker.scale.y = 0.5;
-    room_marker.scale.z = 0.5;
+    room_marker.scale.x = 0.2;
+    room_marker.scale.y = 0.2;
+    room_marker.scale.z = 0.2;
     // plane_marker.points.resize(vert_planes.size());
     room_marker.header.frame_id = rooms_layer_id;
     room_marker.header.stamp = stamp;
@@ -1212,9 +1212,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.scale.x = 3.0;
     wall_visual_marker.scale.y = x_vert_planes_prior[i].length;
 
-    wall_visual_marker.color.r = x_vert_planes_prior[i].color[0] / 255;
-    wall_visual_marker.color.g = x_vert_planes_prior[i].color[1] / 255;
-    wall_visual_marker.color.b = x_vert_planes_prior[i].color[2] / 255;
+    wall_visual_marker.color.r = 1.0;  // x_vert_planes_prior[i].color[0] / 255;
+    wall_visual_marker.color.g = 0.0;  // x_vert_planes_prior[i].color[1] / 255;
+    wall_visual_marker.color.b = 0.0;  // x_vert_planes_prior[i].color[2] / 255;
     wall_visual_marker.color.a = 0.2;
     prior_markers.markers.push_back(wall_visual_marker);
   }
@@ -1246,9 +1246,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.scale.z = y_vert_planes_prior[i].length;
     std_msgs::msg::ColorRGBA color;
 
-    wall_visual_marker.color.r = y_vert_planes_prior[i].color[0] / 255;
-    wall_visual_marker.color.g = y_vert_planes_prior[i].color[1] / 255;
-    wall_visual_marker.color.b = y_vert_planes_prior[i].color[2] / 255;
+    wall_visual_marker.color.r = 1.0;  // y_vert_planes_prior[i].color[0] / 255;
+    wall_visual_marker.color.g = 0.0;  // y_vert_planes_prior[i].color[1] / 255;
+    wall_visual_marker.color.b = 0.0;  // y_vert_planes_prior[i].color[2] / 255;
     wall_visual_marker.color.a = 0.2;
     prior_markers.markers.push_back(wall_visual_marker);
   }
