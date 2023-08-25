@@ -318,44 +318,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   }
   markers.markers.push_back(traj_plane_edge_marker);
 
-  // Wall edge markers
-  // visualization_msgs::msg::Marker wall_center_marker;
-  // auto wall_edge_itr = local_graph->edges().begin();
-  // for (int i = 0; wall_edge_itr != local_graph->edges().end(); wall_edge_itr++, i++)
-  // {
-  //   g2o::HyperGraph::Edge* edge = *wall_edge_itr;
-  //   g2o::EdgeWall2Planes* edge_wall = dynamic_cast<g2o::EdgeWall2Planes*>(edge);
-  //   if (edge_wall) {
-  //     g2o::VertexWallXYZ* v1 =
-  //         dynamic_cast<g2o::VertexWallXYZ*>(edge_wall->vertices()[0]);
-  //     g2o::VertexPlane* v2 =
-  //     dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[1]); g2o::VertexPlane* v3
-  //     = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[2]); Eigen::Vector3d
-  //     wall_center = v1->estimate();
-
-  //     wall_center_marker.ns = "wall_center_marker";
-  //     wall_center_marker.header.frame_id = map_frame_id;
-  //     wall_center_marker.header.stamp = stamp;
-  //     wall_center_marker.id = markers.markers.size() + 1;
-  //     wall_center_marker.type = visualization_msgs::msg::Marker::SPHERE;
-  //     wall_center_marker.color.r = color_r;
-  //     wall_center_marker.color.g = color_g;
-  //     wall_center_marker.color.b = color_b;
-  //     wall_center_marker.color.a = 1.0;
-  //     wall_center_marker.scale.x = 0.3;
-  //     wall_center_marker.scale.y = 0.3;
-  //     wall_center_marker.scale.z = 0.3;
-  //     wall_center_marker.pose.position.x = wall_center.x();
-  //     wall_center_marker.pose.position.y = wall_center.y();
-  //     wall_center_marker.pose.position.z = wall_vertex_h;
-  //     wall_center_marker.pose.orientation.x = 0.0;
-  //     wall_center_marker.pose.orientation.y = 0.0;
-  //     wall_center_marker.pose.orientation.z = 0.0;
-  //     wall_center_marker.pose.orientation.w = 1.0;
-  //     markers.markers.push_back(wall_center_marker);
-  //   }
-  // }
-
   // sphere
   visualization_msgs::msg::Marker sphere_marker;
   sphere_marker.header.frame_id = keyframes_layer_id;
@@ -656,7 +618,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         if (cluster_id == 0) cluster.ns = "x_infinite_vertex";
         if (cluster_id == 1) cluster.ns = "x_infinite_vertex_edges";
         cluster.id = markers.markers.size() + 1;
-        markers.markers.push_back(cluster);
+        // markers.markers.push_back(cluster);
       }
     } else
       infinite_room_pose_marker.ns = "overlapped_x_infinite_room";
@@ -847,7 +809,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         if (cluster_id == 0) cluster.ns = "y_infinite_vertex";
         if (cluster_id == 1) cluster.ns = "y_infinite_vertex_edges";
         cluster.id = markers.markers.size() + 1;
-        markers.markers.push_back(cluster);
+        // markers.markers.push_back(cluster);
       }
     } else
       infinite_room_pose_marker.ns = "overlapped_y_infinite_room";
@@ -1079,7 +1041,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       if (cluster_id == 0) cluster.ns = "room_vertex";
       if (cluster_id == 1) cluster.ns = "room_edges";
       cluster.id = markers.markers.size() + 1;
-      markers.markers.push_back(cluster);
+      // markers.markers.push_back(cluster);
     }
   }
 
@@ -1702,7 +1664,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     prior_door_marker.header.stamp = stamp;
     prior_door_marker.ns = "prior_doorways";
     prior_door_marker.id = prior_markers.markers.size() + i;
-    prior_door_marker.type = visualization_msgs::msg::Marker::CUBE;
+    prior_door_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
+    prior_door_marker.mesh_resource = "package://is_graphs/meshes/door.dae";
     Eigen::Vector3d door_pose = doorways_vec_prior[i].door_pos_w;
     prior_door_marker.pose.position.x = door_pose.x();
     prior_door_marker.pose.position.y = door_pose.y();
