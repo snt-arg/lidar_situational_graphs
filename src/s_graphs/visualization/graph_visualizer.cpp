@@ -183,11 +183,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       std_msgs::msg::ColorRGBA color1, color2;
       color1.r = 1.0 - p1;
       color1.g = p1;
-      color1.a = 1.0;
+      color1.a = 0.5;
 
       color2.r = 1.0 - p2;
       color2.g = p2;
-      color2.a = 1.0;
+      color2.a = 0.5;
       traj_edge_marker.colors.push_back(color1);
       traj_edge_marker.colors.push_back(color2);
 
@@ -306,12 +306,12 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       color1.r = 0;
       color1.g = 0;
       color1.b = 0;
-      color1.a = 1.0;
+      color1.a = 0.5;
 
       color2.r = 0;
       color2.g = 0;
       color2.b = 0;
-      color2.a = 1.0;
+      color2.a = 0.5;
       traj_plane_edge_marker.colors.push_back(color1);
       traj_plane_edge_marker.colors.push_back(color2);
     }
@@ -502,7 +502,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       x_infinite_room_line_marker.color.r = color_r;
       x_infinite_room_line_marker.color.g = color_g;
       x_infinite_room_line_marker.color.b = color_b;
-      x_infinite_room_line_marker.color.a = 1.0;
+      x_infinite_room_line_marker.color.a = 0.5;
       x_infinite_room_line_marker.lifetime = duration_room;
     } else {
       x_infinite_room_snapshot[i].id = -1;
@@ -692,7 +692,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       y_infinite_room_line_marker.color.r = color_r;
       y_infinite_room_line_marker.color.g = color_g;
       y_infinite_room_line_marker.color.b = color_b;
-      y_infinite_room_line_marker.color.a = 1.0;
+      y_infinite_room_line_marker.color.a = 0.5;
       y_infinite_room_line_marker.lifetime = duration_room;
     } else {
       y_infinite_room_snapshot[i].id = -1;
@@ -876,7 +876,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_line_marker.color.r = color_r;
     room_line_marker.color.g = color_g;
     room_line_marker.color.b = color_b;
-    room_line_marker.color.a = 1.0;
+    room_line_marker.color.a = 0.5;
     room_line_marker.lifetime = duration_room;
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
     p1.x = room_snapshot[i].node->estimate().translation()(0);
@@ -1081,7 +1081,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_line_marker.color.r = color_r;
       floor_line_marker.color.g = color_g;
       floor_line_marker.color.b = color_b;
-      floor_line_marker.color.a = 1.0;
+      floor_line_marker.color.a = 0.5;
       floor_line_marker.lifetime = duration_floor;
 
       for (const auto& room : room_snapshot) {
@@ -1215,7 +1215,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.color.r = x_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = x_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = x_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 1.0;
+    wall_visual_marker.color.a = 0.2;
     prior_markers.markers.push_back(wall_visual_marker);
   }
 
@@ -1249,7 +1249,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.color.r = y_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = y_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = y_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 0.4;
+    wall_visual_marker.color.a = 0.2;
     prior_markers.markers.push_back(wall_visual_marker);
   }
 
