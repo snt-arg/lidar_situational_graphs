@@ -1554,7 +1554,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       room_edge_plane_marker1.color.r = 0.0;
       room_edge_plane_marker1.color.g = 0.0;
       room_edge_plane_marker1.color.b = 0.0;
-      room_edge_plane_marker1.color.a = 1.0;
+      room_edge_plane_marker1.color.a = 0.5;
       room_edge_plane_marker1.points.push_back(point1);
       room_edge_plane_marker1.points.push_back(point2);
       prior_markers.markers.push_back(room_edge_plane_marker1);
@@ -1586,7 +1586,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       room_edge_plane_marker2.color.r = 0.0;
       room_edge_plane_marker2.color.g = 0.0;
       room_edge_plane_marker2.color.b = 0.0;
-      room_edge_plane_marker2.color.a = 1.0;
+      room_edge_plane_marker2.color.a = 0.5;
       room_edge_plane_marker2.points.push_back(point1);
       room_edge_plane_marker2.points.push_back(point3);
       prior_markers.markers.push_back(room_edge_plane_marker2);
@@ -1618,7 +1618,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       room_edge_plane_marker3.color.r = 0.0;
       room_edge_plane_marker3.color.g = 0.0;
       room_edge_plane_marker3.color.b = 0.0;
-      room_edge_plane_marker3.color.a = 1.0;
+      room_edge_plane_marker3.color.a = 0.5;
       room_edge_plane_marker3.points.push_back(point1);
       room_edge_plane_marker3.points.push_back(point4);
       prior_markers.markers.push_back(room_edge_plane_marker3);
@@ -1650,7 +1650,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       room_edge_plane_marker4.color.r = 0.0;
       room_edge_plane_marker4.color.g = 0.0;
       room_edge_plane_marker4.color.b = 0.0;
-      room_edge_plane_marker4.color.a = 1.0;
+      room_edge_plane_marker4.color.a = 0.5;
       room_edge_plane_marker4.points.push_back(point1);
       room_edge_plane_marker4.points.push_back(point5);
       prior_markers.markers.push_back(room_edge_plane_marker4);
@@ -1704,11 +1704,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
         }
       }
 
-      door_edge_plane_marker1.scale.x = 0.02;
+      door_edge_plane_marker1.scale.x = 0.01;
       door_edge_plane_marker1.color.r = 0.0;
       door_edge_plane_marker1.color.g = 0.0;
       door_edge_plane_marker1.color.b = 0.0;
-      door_edge_plane_marker1.color.a = 1.0;
+      door_edge_plane_marker1.color.a = 0.5;
       door_edge_plane_marker1.points.push_back(point1);
       door_edge_plane_marker1.points.push_back(point2);
       prior_markers.markers.push_back(door_edge_plane_marker1);
@@ -1728,11 +1728,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           point3.z = prior_room_h;
         }
       }
-      door_edge_plane_marker2.scale.x = 0.02;
+      door_edge_plane_marker2.scale.x = 0.01;
       door_edge_plane_marker2.color.r = 0.0;
       door_edge_plane_marker2.color.g = 0.0;
       door_edge_plane_marker2.color.b = 0.0;
-      door_edge_plane_marker2.color.a = 1.0;
+      door_edge_plane_marker2.color.a = 0.5;
       door_edge_plane_marker2.points.push_back(point1);
       door_edge_plane_marker2.points.push_back(point3);
       prior_markers.markers.push_back(door_edge_plane_marker2);
@@ -1763,7 +1763,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       door_edge_plane_marker1.color.r = 0.0;
       door_edge_plane_marker1.color.g = 0.0;
       door_edge_plane_marker1.color.b = 0.0;
-      door_edge_plane_marker1.color.a = 1.0;
+      door_edge_plane_marker1.color.a = 0.5;
       door_edge_plane_marker1.points.push_back(point1);
       door_edge_plane_marker1.points.push_back(point2);
       prior_markers.markers.push_back(door_edge_plane_marker1);
@@ -1787,7 +1787,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       door_edge_plane_marker2.color.r = 0.0;
       door_edge_plane_marker2.color.g = 0.0;
       door_edge_plane_marker2.color.b = 0.0;
-      door_edge_plane_marker2.color.a = 1.0;
+      door_edge_plane_marker2.color.a = 0.5;
       door_edge_plane_marker2.points.push_back(point1);
       door_edge_plane_marker2.points.push_back(point3);
       prior_markers.markers.push_back(door_edge_plane_marker2);
