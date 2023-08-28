@@ -101,7 +101,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   traj_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
 
   traj_marker.pose.orientation.w = 1.0;
-  traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.1;
+  traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.15;
 
   visualization_msgs::msg::Marker imu_marker;
   imu_marker.header = traj_marker.header;
@@ -1373,6 +1373,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           dynamic_cast<g2o::VertexPlane*>(edge_wall_dev->vertices()[2]);
       std::cout << "Deviation between : " << v2->id() << "  and: " << v3->id()
                 << std::endl;
+      int d = 0;
       if (abs(v2->estimate().coeffs()(0)) > abs(v2->estimate().coeffs()(1))) {
         Eigen::Vector4d a_graph_wall_coeffs = v2->estimate().toVector();
         pcl::PointXYZRGBNormal p_min, p_max;
@@ -1391,15 +1392,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           deviation_marker.header.stamp = stamp;
           deviation_marker.ns = "deviations";
           deviation_marker.id = prior_markers.markers.size() + i;
-          deviation_marker.type = visualization_msgs::msg::Marker::SPHERE;
+          deviation_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
           deviation_marker.action = visualization_msgs::msg::Marker::ADD;
-          deviation_marker.scale.x = 0.1;
-          deviation_marker.scale.y = 0.1;
-          deviation_marker.scale.z = 0.1;
-          deviation_marker.color.r = 0.0;
-          deviation_marker.color.g = 0.0;
-          deviation_marker.color.b = 1.0;
-          deviation_marker.color.a = 0.4;
+          deviation_marker.scale.x = 0.5;
+          deviation_marker.scale.y = 0.5;
+          deviation_marker.scale.z = 0.5;
+          deviation_marker.color.r = 255.0;
+          deviation_marker.color.g = 255.0;
+          deviation_marker.color.b = 255.0;
+          deviation_marker.color.a = 0.7;
+          deviation_marker.text = "d";
           // std::cout << " A-graph plane : " << std::endl;
           // std::cout << v2->estimate().toVector() << std::endl;
           // std::cout << " S-graph plane : " << std::endl;
@@ -1498,10 +1500,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
 
           Eigen::Vector3d dev_value = v1->estimate().matrix().block<3, 1>(0, 3);
           Eigen::Vector3d truncated_values;
-          truncated_values[0] = std::floor(dev_value[0] * 100) / 100.0;
-          truncated_values[1] = std::floor(dev_value[1] * 100) / 100.0;
-          text_marker.text =
-              std::to_string(truncated_values[0]) + std::to_string(truncated_values[1]);
+
+          truncated_values[0] = std::floor(dev_value[0] * 100);
+          truncated_values[1] = std::floor(dev_value[1] * 100);
+          text_marker.text = std::to_string(truncated_values[0]) + "," +
+                             std::to_string(truncated_values[1]);
           prior_markers.markers.push_back(text_marker);
 
           visualization_msgs::msg::Marker deviation_wall_edge_marker2;
@@ -1520,6 +1523,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           deviation_wall_edge_marker2.points.push_back(p1);
           deviation_wall_edge_marker2.points.push_back(p2);
           prior_markers.markers.push_back(deviation_wall_edge_marker2);
+          d++;
         }
       } else if (abs(v2->estimate().coeffs()(1)) > abs(v2->estimate().coeffs()(0))) {
         Eigen::Vector4d a_graph_wall_coeffs = v2->estimate().toVector();
@@ -1541,15 +1545,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           deviation_marker.header.stamp = stamp;
           deviation_marker.ns = "deviations";
           deviation_marker.id = prior_markers.markers.size() + i;
-          deviation_marker.type = visualization_msgs::msg::Marker::SPHERE;
+          deviation_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
           deviation_marker.action = visualization_msgs::msg::Marker::ADD;
-          deviation_marker.scale.x = 0.1;
-          deviation_marker.scale.y = 0.1;
-          deviation_marker.scale.z = 0.1;
-          deviation_marker.color.r = 0.0;
-          deviation_marker.color.g = 0.0;
-          deviation_marker.color.b = 1.0;
-          deviation_marker.color.a = 0.4;
+          deviation_marker.scale.x = 0.5;
+          deviation_marker.scale.y = 0.5;
+          deviation_marker.scale.z = 0.5;
+          deviation_marker.color.r = 255.0;
+          deviation_marker.color.g = 255.0;
+          deviation_marker.color.b = 255.0;
+          deviation_marker.color.a = 0.7;
+          deviation_marker.text = "d";
           // std::cout << " A-graph plane : " << std::endl;
           // std::cout << v2->estimate().toVector() << std::endl;
           // std::cout << " S-graph plane : " << std::endl;
@@ -1649,10 +1654,10 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
 
           Eigen::Vector3d dev_value = v1->estimate().matrix().block<3, 1>(0, 3);
           Eigen::Vector3d truncated_values;
-          truncated_values[0] = std::floor(dev_value[0] * 100) / 100.0;
-          truncated_values[1] = std::floor(dev_value[1] * 100) / 100.0;
-          text_marker.text =
-              std::to_string(truncated_values[0]) + std::to_string(truncated_values[1]);
+          truncated_values[0] = std::floor(dev_value[0] * 100);
+          truncated_values[1] = std::floor(dev_value[1] * 100);
+          text_marker.text = std::to_string(truncated_values[0]) + "," +
+                             std::to_string(truncated_values[1]);
           prior_markers.markers.push_back(text_marker);
 
           visualization_msgs::msg::Marker deviation_wall_edge_marker2;
@@ -1671,6 +1676,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           deviation_wall_edge_marker2.points.push_back(p1);
           deviation_wall_edge_marker2.points.push_back(p2);
           prior_markers.markers.push_back(deviation_wall_edge_marker2);
+          d++;
         }
       }
     }
