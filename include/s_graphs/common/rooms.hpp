@@ -108,6 +108,7 @@ class Rooms {
     node = old_room.node;
     room_keyframes = old_room.room_keyframes;
     local_graph = old_room.local_graph;
+    matched = old_room.matched;
 
     return *this;
   }
