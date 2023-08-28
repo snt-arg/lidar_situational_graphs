@@ -1415,7 +1415,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           p2.x = deviation_marker.pose.position.x;
           deviation_marker.pose.position.y = translation.y();
           p2.y = deviation_marker.pose.position.y;
-          deviation_marker.pose.position.z = deviation_h;
           p2.z = plane_h;
           deviation_marker.pose.position.z = wall_vertex_h;
           deviation_marker.pose.orientation.x = quaternion.x();
@@ -1448,7 +1447,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
 
           p1.x = translation.x();
           p1.y = translation.y();
-          p1.z = prior_room_h;
+          p1.z = wall_vertex_h;
           p3.x = (*found_a_graph_plane).wall_point.x();
           p3.y = (*found_a_graph_plane).wall_point.y();
           p3.z = plane_h;
@@ -1567,7 +1566,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           p2.y = deviation_marker.pose.position.y;
           deviation_marker.pose.position.z = wall_vertex_h;
           p2.z = plane_h;
-          deviation_marker.pose.position.z = prior_room_h;
           deviation_marker.pose.orientation.x = quaternion.x();
           deviation_marker.pose.orientation.y = quaternion.y();
           deviation_marker.pose.orientation.z = quaternion.z();
