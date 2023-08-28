@@ -1185,7 +1185,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
   double plane_h = 15;
   double wall_vertex_h = 18;
   double prior_room_h = 22;
-
+  prior_markers.markers.clear();
   for (int i = 0; i < x_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
     double r, g, b;
     visualization_msgs::msg::Marker wall_visual_marker;
@@ -1370,6 +1370,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           dynamic_cast<g2o::VertexPlane*>(edge_wall_dev->vertices()[1]);
       g2o::VertexPlane* v3 =
           dynamic_cast<g2o::VertexPlane*>(edge_wall_dev->vertices()[2]);
+      std::cout << "Deviation between : " << v2->id() << "  and: " << v3->id()
+                << std::endl;
       if (abs(v2->estimate().coeffs()(0)) > abs(v2->estimate().coeffs()(1))) {
         Eigen::Vector4d a_graph_wall_coeffs = v2->estimate().toVector();
         Eigen::Isometry3d a_graph_wall_pose;
@@ -1413,6 +1415,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
         // std::cout << v3->estimate().toVector() << std::endl;
         // std::cout << " dev pose  : " << std::endl;
         // std::cout << v1->estimate().matrix() << std::endl;
+
         Eigen::Vector3d translation = dev_pose.block<3, 1>(0, 3);
         Eigen::Matrix3d rotation_matrix = dev_pose.block<3, 3>(0, 0);
         Eigen::Quaterniond quaternion(rotation_matrix);
@@ -1426,39 +1429,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
         deviation_marker.pose.orientation.w = quaternion.w();
 
         prior_markers.markers.push_back(deviation_marker);
-
-        visualization_msgs::msg::Marker text_marker;
-        text_marker.header.frame_id = "prior_map";  // Set the appropriate frame ID
-        text_marker.header.stamp = stamp;
-        text_marker.ns = "deviation_display";
-        text_marker.id = prior_markers.markers.size();
-        text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-
-        text_marker.pose.position.x = deviation_marker.pose.position.x;
-        text_marker.pose.position.y = deviation_marker.pose.position.y;
-        text_marker.pose.position.z = prior_room_h - 1;
-        text_marker.pose.orientation.x = 0.0;
-        text_marker.pose.orientation.y = 0.0;
-        text_marker.pose.orientation.z = 0.0;
-        text_marker.pose.orientation.w = 1.0;
-
-        text_marker.scale.z = 0.1;
-
-        text_marker.color.r = 255.0;
-        text_marker.color.g = 255.0;
-        text_marker.color.b = 255.0;
-        text_marker.color.a = 1.0;
-
-        Eigen::Vector3d dev_value = v1->estimate().matrix().block<3, 1>(0, 3);
-        std::ostringstream oss;
-        oss << "[" << dev_value.x() << "," << dev_value.y() << "," << dev_value.z()
-            << "]";
-        std::string vector_string = oss.str();
-
-        text_marker.text = vector_string;
-
-        visualization_msgs::msg::MarkerArray marker_array;
-        prior_markers.markers.push_back(text_marker);
 
         geometry_msgs::msg::Point p1, p2, p3;
         p1.x = translation.x();
@@ -1485,12 +1455,14 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
         deviation_wall_edge_marker.points.push_back(p3);
 
         prior_markers.markers.push_back(deviation_wall_edge_marker);
-
+        pcl::PointXYZRGBNormal p_min, p_max;
+        Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
         auto found_s_graph_plane =
             std::find_if(x_vert_planes.begin(),
                          x_vert_planes.end(),
                          boost::bind(&VerticalPlanes::id, _1) == v3->id());
         if (found_s_graph_plane != x_vert_planes.end()) {
+          pose = compute_plane_pose(*found_s_graph_plane, p_min, p_max);
           float min_dist_x1 = 100;
           for (int p = 0; p < (*found_s_graph_plane).cloud_seg_map->points.size();
                ++p) {
@@ -1508,6 +1480,40 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
               p2 = p_tmp;
             }
           }
+          Eigen::Vector3d text_marker_pose;
+          text_marker_pose.x() = (p_min.x - p_max.x) / 2.0 + p_max.x;
+          text_marker_pose.y() = (p_min.y - p_max.y) / 2.0 + p_max.y;
+          text_marker_pose.z() = (p_min.z - p_max.z) / 2.0 + p_max.z;
+          visualization_msgs::msg::Marker text_marker;
+          text_marker.header.frame_id = "prior_map";  // Set the appropriate frame ID
+          text_marker.header.stamp = stamp;
+          text_marker.ns = "deviation_display";
+          text_marker.id = prior_markers.markers.size();
+          text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+
+          text_marker.pose.position.x = text_marker_pose.x();
+          text_marker.pose.position.y = text_marker_pose.y();
+          text_marker.pose.position.z = prior_room_h - 1;
+          text_marker.pose.orientation.x = 0.0;
+          text_marker.pose.orientation.y = 0.0;
+          text_marker.pose.orientation.z = 0.0;
+          text_marker.pose.orientation.w = 1.0;
+
+          text_marker.scale.z = 0.1;
+
+          text_marker.color.r = 255.0;
+          text_marker.color.g = 255.0;
+          text_marker.color.b = 255.0;
+          text_marker.color.a = 1.0;
+
+          Eigen::Vector3d dev_value = v1->estimate().matrix().block<3, 1>(0, 3);
+          std::ostringstream oss;
+          oss << "[" << dev_value.x() << " " << dev_value.y() << "]";
+          std::string vector_string = oss.str();
+
+          text_marker.text = vector_string;
+          prior_markers.markers.push_back(text_marker);
+
           visualization_msgs::msg::Marker deviation_wall_edge_marker;
           deviation_wall_edge_marker.header.frame_id = "prior_map";
           deviation_wall_edge_marker.header.stamp = stamp;
@@ -1581,41 +1587,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
         deviation_marker.pose.orientation.y = quaternion.y();
         deviation_marker.pose.orientation.z = quaternion.z();
         deviation_marker.pose.orientation.w = quaternion.w();
-
         prior_markers.markers.push_back(deviation_marker);
-
-        visualization_msgs::msg::Marker text_marker;
-        text_marker.header.frame_id = "prior_map";  // Set the appropriate frame ID
-        text_marker.header.stamp = stamp;
-        text_marker.ns = "deviation_display";
-        text_marker.id = prior_markers.markers.size();
-        text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-
-        text_marker.pose.position.x = deviation_marker.pose.position.x;
-        text_marker.pose.position.y = deviation_marker.pose.position.y;
-        text_marker.pose.position.z = prior_room_h - 1;
-        text_marker.pose.orientation.x = 0.0;
-        text_marker.pose.orientation.y = 0.0;
-        text_marker.pose.orientation.z = 0.0;
-        text_marker.pose.orientation.w = 1.0;
-
-        text_marker.scale.z = 0.1;
-
-        text_marker.color.r = 255.0;
-        text_marker.color.g = 255.0;
-        text_marker.color.b = 255.0;
-        text_marker.color.a = 1.0;
-
-        Eigen::Vector3d dev_value = v1->estimate().matrix().block<3, 1>(0, 3);
-        std::ostringstream oss;
-        oss << "[" << dev_value.x() << "," << dev_value.y() << "," << dev_value.z()
-            << "]";
-        std::string vector_string = oss.str();
-
-        text_marker.text = vector_string;
-
-        visualization_msgs::msg::MarkerArray marker_array;
-        prior_markers.markers.push_back(text_marker);
 
         geometry_msgs::msg::Point p1, p2, p3;
         p1.x = translation.x();
@@ -1643,12 +1615,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
 
         prior_markers.markers.push_back(deviation_wall_edge_marker);
 
+        pcl::PointXYZRGBNormal p_min, p_max;
+        Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
+
         auto found_s_graph_plane =
             std::find_if(y_vert_planes.begin(),
                          y_vert_planes.end(),
                          boost::bind(&VerticalPlanes::id, _1) == v3->id());
         if (found_s_graph_plane != y_vert_planes.end()) {
           float min_dist_x1 = 100;
+          pose = compute_plane_pose(*found_s_graph_plane, p_min, p_max);
           for (int p = 0; p < (*found_s_graph_plane).cloud_seg_map->points.size();
                ++p) {
             geometry_msgs::msg::Point p_tmp;
@@ -1665,6 +1641,42 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
               p2 = p_tmp;
             }
           }
+
+          Eigen::Vector3d text_marker_pose;
+          text_marker_pose.x() = (p_min.x - p_max.x) / 2.0 + p_max.x;
+          text_marker_pose.y() = (p_min.y - p_max.y) / 2.0 + p_max.y;
+          text_marker_pose.z() = (p_min.z - p_max.z) / 2.0 + p_max.z;
+
+          visualization_msgs::msg::Marker text_marker;
+          text_marker.header.frame_id = "prior_map";  // Set the appropriate frame ID
+          text_marker.header.stamp = stamp;
+          text_marker.ns = "deviation_display";
+          text_marker.id = prior_markers.markers.size();
+          text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
+
+          text_marker.pose.position.x = text_marker_pose.x();
+          text_marker.pose.position.y = text_marker_pose.y();
+          text_marker.pose.position.z = prior_room_h - 1;
+          text_marker.pose.orientation.x = 0.0;
+          text_marker.pose.orientation.y = 0.0;
+          text_marker.pose.orientation.z = 0.0;
+          text_marker.pose.orientation.w = 1.0;
+
+          text_marker.scale.z = 0.1;
+
+          text_marker.color.r = 255.0;
+          text_marker.color.g = 255.0;
+          text_marker.color.b = 255.0;
+          text_marker.color.a = 1.0;
+
+          Eigen::Vector3d dev_value = v1->estimate().matrix().block<3, 1>(0, 3);
+          std::ostringstream oss;
+          oss << "[" << dev_value.x() << " " << dev_value.y() << "]";
+          std::string vector_string = oss.str();
+
+          text_marker.text = vector_string;
+          prior_markers.markers.push_back(text_marker);
+
           visualization_msgs::msg::Marker deviation_wall_edge_marker;
           deviation_wall_edge_marker.header.frame_id = "prior_map";
           deviation_wall_edge_marker.header.stamp = stamp;
@@ -1984,5 +1996,30 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     }
   }
   return prior_markers;
+}
+Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,
+                                                      pcl::PointXYZRGBNormal& p_min,
+                                                      pcl::PointXYZRGBNormal& p_max) {
+  double length = pcl::getMaxSegment(*plane.cloud_seg_map, p_min, p_max);
+
+  Eigen::Isometry3d pose;
+  pose.translation() = Eigen::Vector3d((p_min.x - p_max.x) / 2.0 + p_max.x,
+                                       (p_min.y - p_max.y) / 2.0 + p_max.y,
+                                       (p_min.z - p_max.z) / 2.0 + p_max.z);
+
+  pose.linear().setIdentity();
+  double yaw = std::atan2(plane.plane_node->estimate().coeffs()(1),
+                          plane.plane_node->estimate().coeffs()(0));
+
+  double pitch = std::atan2(plane.plane_node->estimate().coeffs()(2),
+                            plane.plane_node->estimate().coeffs().head<2>().norm());
+
+  double roll = 0.0;
+  Eigen::Quaterniond q = Eigen::AngleAxisd(roll, Eigen::Vector3d::UnitX()) *
+                         Eigen::AngleAxisd(pitch, Eigen::Vector3d::UnitY()) *
+                         Eigen::AngleAxisd(yaw, Eigen::Vector3d::UnitZ());
+
+  pose.linear() = q.toRotationMatrix();
+  return pose;
 }
 }  // namespace s_graphs

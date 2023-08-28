@@ -143,6 +143,9 @@ class GraphVisualizer {
       std::vector<VerticalPlanes>& x_vert_planes,
       std::vector<VerticalPlanes>& y_vert_planes);
 
+  Eigen::Isometry3d compute_plane_pose(const VerticalPlanes& plane,
+                                       pcl::PointXYZRGBNormal& p_min,
+                                       pcl::PointXYZRGBNormal& p_max);
   struct WallDeviations {
     g2o::VertexDeviation* deviation_node = nullptr;
     g2o::VertexPlane* a_graph_plane_node = nullptr;
