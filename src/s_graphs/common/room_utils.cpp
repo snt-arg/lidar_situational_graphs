@@ -403,7 +403,8 @@ pcl::PointCloud<s_graphs::PointT>::Ptr filter_room_pointcloud(
   pcl::PassThrough<s_graphs::PointT> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
-  pass.setFilterLimits(0.3, 3.0);
+  // pass.setFilterLimits(0.3, 3.0);
+  pass.setFilterLimits(-5, 3);
   pass.filter(*filtered);
   if (max_dist) {
     pcl::PointCloud<s_graphs::PointT>::Ptr more_filtered(
