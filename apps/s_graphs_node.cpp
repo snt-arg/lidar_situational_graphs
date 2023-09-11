@@ -505,8 +505,8 @@ class SGraphsNode : public rclcpp::Node {
     // std::cout << "walls_msg size :" << pre_wall_data_vec.size() << std::endl;
     std::vector<s_graphs::msg::WallData> walls_msg_vector = walls_msg->walls;
     for (int j = 0; j < walls_msg_vector.size(); j++) {
-      std::vector<VerticalPlanes> x_planes;
-      std::vector<VerticalPlanes> y_planes;
+      std::vector<s_graphs::msg::PlaneData> x_planes;
+      std::vector<s_graphs::msg::PlaneData> y_planes;
     }
 
     // plane1 = y_vert_planes_prior[i].plane.coeffs(); 
