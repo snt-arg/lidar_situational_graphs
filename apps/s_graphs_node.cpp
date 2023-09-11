@@ -533,10 +533,18 @@ class SGraphsNode : public rclcpp::Node {
             x_vert_planes_prior.end(),
             boost::bind(&s_graphs::VerticalPlanes::revit_id, _1) == x_planes_msg[2].id);
 
-        plane_1_coeffs = (*matched_x_plane1).plane_node->estimate().coeffs();
-        plane_2_coeffs = (*matched_x_plane2).plane_node->estimate().coeffs();
-        correct_plane_d(plane_1_coeffs);
-        correct_plane_d(plane_2_coeffs);
+        Eigen::Matrix<double, 3, 3> information_wall_surfaces;
+        information_wall_surfaces.setZero();
+        information_wall_surfaces(0, 0) = 1e10;
+        information_wall_surfaces(1, 1) = 1e10;
+        information_wall_surfaces(2, 2) = 1e10;
+        auto wall_edge =
+            global_graph->add_wall_2planes_edge(wall_node,
+                                                (*matched_x_plane1).plane_node,
+                                                (*matched_x_plane2).plane_node,
+                                                wall_pose,
+                                                information_wall_surfaces);
+        global_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
       }
       if (!y_planes_msg.size() == 2) {
         std::cout << "y planes" << std::endl;
@@ -549,16 +557,6 @@ class SGraphsNode : public rclcpp::Node {
     // plane2 = y_vert_planes_prior[j].plane.coeffs();
   }
 
-  void correct_plane_d(Eigen::Vector4d& plane) {
-    if (plane(3) > 0) {
-      plane(0) = -1 * plane(0);
-      plane(1) = -1 * plane(1);
-      plane(2) = -1 * plane(2);
-      plane(3) = -1 * plane(3);
-    } else {
-      plane = plane;
-    }
-  }
   /**
    * @brief flush the room data from room data queue
    *
