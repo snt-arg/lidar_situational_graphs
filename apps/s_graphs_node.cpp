@@ -507,35 +507,58 @@ class SGraphsNode : public rclcpp::Node {
     std::vector<s_graphs::msg::PlaneData> x_planes_msg;
     std::vector<s_graphs::msg::PlaneData> y_planes_msg;
     int plane_1_id, plane_2_id;
-    std::vector<VerticalPlanes> y_planes = [];
+    g2o::Plane3D plane_1, plane_2;
+    Eigen::Vector4d plane_1_coeffs = Eigen::Vector4d::Identity();
+    Eigen::Vector4d plane_2_coeffs = Eigen::Vector4d::Identity();
+    std::vector<VerticalPlanes> y_planes;
     std::cout << "wall vector size" << walls_msg_vector.size() << std::endl;
     for (int j = 0; j < walls_msg_vector.size(); j++) {
       x_planes_msg = walls_msg->walls[j].x_planes;
       y_planes_msg = walls_msg->walls[j].y_planes;
-      if (x_planes_msg.size() == 2){
-        // &SGraphsNode::associate_plane(x_planes_msg[0].id);
+      if (x_planes_msg.size() == 2) {
+        Eigen::Vector3d wall_pose;
+        wall_pose << walls_msg->walls[j].wall_center.position.x,
+            walls_msg->walls[j].wall_center.position.y,
+            walls_msg->walls[j].wall_center.position.z;
+        g2o::VertexWallXYZ* wall_node = global_graph->add_wall_node(wall_pose);
+        auto matched_x_plane1 = x_vert_planes.begin();
+        auto matched_x_plane2 = x_vert_planes.begin();
+
+        matched_x_plane1 = std::find_if(
+            x_vert_planes_prior.begin(),
+            x_vert_planes_prior.end(),
+            boost::bind(&s_graphs::VerticalPlanes::revit_id, _1) == x_planes_msg[0].id);
+        matched_x_plane2 = std::find_if(
+            x_vert_planes_prior.begin(),
+            x_vert_planes_prior.end(),
+            boost::bind(&s_graphs::VerticalPlanes::revit_id, _1) == x_planes_msg[2].id);
+
+        plane_1_coeffs = (*matched_x_plane1).plane_node->estimate().coeffs();
+        plane_2_coeffs = (*matched_x_plane2).plane_node->estimate().coeffs();
+        correct_plane_d(plane_1_coeffs);
+        correct_plane_d(plane_2_coeffs);
       }
-      if (!y_planes_msg.size() == 2){
+      if (!y_planes_msg.size() == 2) {
         std::cout << "y planes" << std::endl;
       }
       // std::vector<s_graphs::msg::PlaneData> x_planes;
       // std::vector<s_graphs::msg::PlaneData> y_planes;
-
     }
 
-    // plane1 = y_vert_planes_prior[i].plane.coeffs(); 
+    // plane1 = y_vert_planes_prior[i].plane.coeffs();
     // plane2 = y_vert_planes_prior[j].plane.coeffs();
   }
 
-  g2o::Plane3D associate_plane(int plane_id){
-    auto found_x_plane1 = x_vert_planes.begin();
-    found_x_plane1 = std::find_if(
-        x_vert_planes.begin(),
-        x_vert_planes.end(),
-        boost::bind(VerticalPlanes::id, _1) == plane_id);
-    return (*found_x_plane1).plane;
+  void correct_plane_d(Eigen::Vector4d& plane) {
+    if (plane(3) > 0) {
+      plane(0) = -1 * plane(0);
+      plane(1) = -1 * plane(1);
+      plane(2) = -1 * plane(2);
+      plane(3) = -1 * plane(3);
+    } else {
+      plane = plane;
+    }
   }
-
   /**
    * @brief flush the room data from room data queue
    *
