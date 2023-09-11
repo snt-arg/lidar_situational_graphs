@@ -6,7 +6,7 @@ build/
 
 # - Rviz
 rviz/
-
+s_graphs_ros2.rviz
 # - Clangd
 compile_commands.json
 .cache
