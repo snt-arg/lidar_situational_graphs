@@ -84,6 +84,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "s_graphs/msg/point_clouds.hpp"
 #include "s_graphs/msg/room_data.hpp"
 #include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs/msg/wall_data.hpp"
+#include "s_graphs/msg/walls_data.hpp"
 #include "s_graphs/srv/dump_graph.hpp"
 #include "s_graphs/srv/save_map.hpp"
 #include "sensor_msgs/msg/imu.h"
@@ -200,6 +202,10 @@ class SGraphsNode : public rclcpp::Node {
         "room_segmentation/room_data",
         1,
         std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1));
+    wall_data_sub = this->create_subscription<s_graphs::msg::WallsData>(
+        "wall_segmentation/wall_data",
+        1,
+        std::bind(&SGraphsNode::wall_data_callback, this, std::placeholders::_1));
     floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
         "floor_plan/floor_data",
         1,
@@ -491,6 +497,13 @@ class SGraphsNode : public rclcpp::Node {
     std::lock_guard<std::mutex> lock(room_data_queue_mutex);
     room_data_queue.push_back(*rooms_msg);
     // std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
+  }
+
+  void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
+    std::cout << "wall subscriber callback called!!"  << std::endl;
+    // std::lock_guard<std::mutex> lock(wall_data_queue_mutex);
+    // wall_data_queue.push_back(*walls_msg);
+    // std::cout << "pre_wall_data_vec size :" << pre_wall_data_vec.size() << std::endl;
   }
 
   /**
@@ -1286,6 +1299,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr raw_odom_sub;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
   rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
+  rclcpp::Subscription<s_graphs::msg::WallsData>::SharedPtr wall_data_sub;
   rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub;
 
