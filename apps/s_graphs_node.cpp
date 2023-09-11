@@ -504,13 +504,36 @@ class SGraphsNode : public rclcpp::Node {
     // wall_data_queue.push_back(*walls_msg);
     // std::cout << "walls_msg size :" << pre_wall_data_vec.size() << std::endl;
     std::vector<s_graphs::msg::WallData> walls_msg_vector = walls_msg->walls;
+    std::vector<s_graphs::msg::PlaneData> x_planes_msg;
+    std::vector<s_graphs::msg::PlaneData> y_planes_msg;
+    int plane_1_id, plane_2_id;
+    std::vector<VerticalPlanes> y_planes = [];
+    std::cout << "wall vector size" << walls_msg_vector.size() << std::endl;
     for (int j = 0; j < walls_msg_vector.size(); j++) {
-      std::vector<s_graphs::msg::PlaneData> x_planes;
-      std::vector<s_graphs::msg::PlaneData> y_planes;
+      x_planes_msg = walls_msg->walls[j].x_planes;
+      y_planes_msg = walls_msg->walls[j].y_planes;
+      if (x_planes_msg.size() == 2){
+        // &SGraphsNode::associate_plane(x_planes_msg[0].id);
+      }
+      if (!y_planes_msg.size() == 2){
+        std::cout << "y planes" << std::endl;
+      }
+      // std::vector<s_graphs::msg::PlaneData> x_planes;
+      // std::vector<s_graphs::msg::PlaneData> y_planes;
+
     }
 
     // plane1 = y_vert_planes_prior[i].plane.coeffs(); 
     // plane2 = y_vert_planes_prior[j].plane.coeffs();
+  }
+
+  g2o::Plane3D associate_plane(int plane_id){
+    auto found_x_plane1 = x_vert_planes.begin();
+    found_x_plane1 = std::find_if(
+        x_vert_planes.begin(),
+        x_vert_planes.end(),
+        boost::bind(VerticalPlanes::id, _1) == plane_id);
+    return (*found_x_plane1).plane;
   }
 
   /**
