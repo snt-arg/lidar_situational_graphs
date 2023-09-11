@@ -500,10 +500,17 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
-    std::cout << "wall subscriber callback called!!"  << std::endl;
-    // std::lock_guard<std::mutex> lock(wall_data_queue_mutex);
+    std::lock_guard<std::mutex> lock(wall_data_queue_mutex);
     // wall_data_queue.push_back(*walls_msg);
-    // std::cout << "pre_wall_data_vec size :" << pre_wall_data_vec.size() << std::endl;
+    // std::cout << "walls_msg size :" << pre_wall_data_vec.size() << std::endl;
+    std::vector<s_graphs::msg::WallData> walls_msg_vector = walls_msg->walls;
+    for (int j = 0; j < walls_msg_vector.size(); j++) {
+      std::vector<VerticalPlanes> x_planes;
+      std::vector<VerticalPlanes> y_planes;
+    }
+
+    // plane1 = y_vert_planes_prior[i].plane.coeffs(); 
+    // plane2 = y_vert_planes_prior[j].plane.coeffs();
   }
 
   /**
@@ -1381,7 +1388,7 @@ class SGraphsNode : public rclcpp::Node {
   std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
 
   // room data queue
-  std::mutex room_data_queue_mutex, floor_data_mutex;
+  std::mutex room_data_queue_mutex, floor_data_mutex, wall_data_queue_mutex;
   std::deque<s_graphs::msg::RoomsData> room_data_queue;
   std::deque<s_graphs::msg::RoomData> floor_data_queue;
 

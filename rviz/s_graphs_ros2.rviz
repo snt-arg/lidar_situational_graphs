@@ -131,17 +131,12 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        floor_lines: true
-        floors: true
         hort_planes: false
         imu: false
         keyframe_keyframe_edges: false
         keyframe_plane_edges: false
         loop_close_radius: false
         nodes: false
-        room_vertex: true
-        rooms: true
-        rooms_line: true
         x_vert_planes: false
         y_vert_planes: false
       Topic:
@@ -152,7 +147,7 @@ Visualization Manager:
         Value: /s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: MarkerArray
       Namespaces:
         {}
@@ -162,6 +157,18 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /voxblox_skeletonizer/sparse_graph
+      Value: true
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: MarkerArray
+      Namespaces:
+        Cuboid: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /rviz_plane_node_visual_tools
       Value: true
   Enabled: true
   Global Options:
@@ -206,25 +213,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 48.292083740234375
+      Distance: 55.07911682128906
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 5.741478443145752
-        Y: 4.724539279937744
-        Z: 14.530272483825684
+        X: -5.698462009429932
+        Y: -7.215991020202637
+        Z: 10.091689109802246
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5747971534729004
+      Pitch: 0.2797974944114685
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.8249378204345703
+      Yaw: 3.5699398517608643
     Saved: ~
 Window Geometry:
   Displays:
