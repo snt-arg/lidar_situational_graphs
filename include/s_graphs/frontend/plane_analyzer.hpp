@@ -105,7 +105,7 @@ class PlaneAnalyzer {
    * @param extracted_cloud
    * @return
    */
-  std::vector<pcl::PointCloud<PointNormal>::Ptr> compute_clusters(
+  pcl::PointCloud<PointNormal>::Ptr compute_clusters(
       const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
 
   /**

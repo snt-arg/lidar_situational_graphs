@@ -99,6 +99,8 @@ class RoomSegmentationNode : public rclcpp::Node {
       time_recorder << "#time \n";
       time_recorder.close();
     }
+    count_computation_time = 0;
+    sum_computation_time = 0.0;
   }
 
   void init_ros() {
@@ -150,8 +152,13 @@ class RoomSegmentationNode : public rclcpp::Node {
     auto t1 = this->now();
     extract_rooms(current_x_vert_planes, current_y_vert_planes);
     auto t2 = this->now();
-    // std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 -
-    // t1).seconds() << std::endl;
+    std::cout << "duration to extract clusters: " << boost::format("%.3f") % (t2 -
+    t1).seconds() << std::endl;
+    sum_computation_time += (t2 - t1).seconds();
+    count_computation_time++;
+    std::cout << "avg room Computation Time: "
+          << boost::format("%.6f") % (sum_computation_time / count_computation_time) << "[sec]"
+          << std::endl;
     if (save_timings) {
       time_recorder.open("/tmp/room_seg_computation_time.txt",
                          std::ofstream::out | std::ofstream::app);
@@ -346,6 +353,8 @@ class RoomSegmentationNode : public rclcpp::Node {
   std::string map_frame_id = "map";
   bool save_timings;
   std::ofstream time_recorder;
+  double sum_computation_time;
+  int count_computation_time;
 };
 
 }  // namespace s_graphs

@@ -9,6 +9,7 @@ Panels:
         - /MarkerArray1
         - /MarkerArray1/Topic1
         - /MarkerArray1/Namespaces1
+        - /MarkerArray2
         - /MarkerArray2/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 814
@@ -130,14 +131,17 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        floor_lines: false
-        floors: false
+        floor_lines: true
+        floors: true
         hort_planes: false
         imu: false
         keyframe_keyframe_edges: false
         keyframe_plane_edges: false
         loop_close_radius: false
         nodes: false
+        room_vertex: true
+        rooms: true
+        rooms_line: true
         x_vert_planes: false
         y_vert_planes: false
       Topic:
@@ -148,7 +152,7 @@ Visualization Manager:
         Value: /s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: MarkerArray
       Namespaces:
         {}
@@ -158,18 +162,6 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /voxblox_skeletonizer/sparse_graph
-      Value: true
-    - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
-      Name: MarkerArray
-      Namespaces:
-        Cuboid: true
-      Topic:
-        Depth: 5
-        Durability Policy: Volatile
-        History Policy: Keep Last
-        Reliability Policy: Reliable
-        Value: /rviz_plane_node_visual_tools
       Value: true
   Enabled: true
   Global Options:
@@ -214,25 +206,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 23.198749542236328
+      Distance: 48.292083740234375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -3.443695068359375
-        Y: 4.114715099334717
-        Z: 13.966609954833984
+        X: 5.741478443145752
+        Y: 4.724539279937744
+        Z: 14.530272483825684
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6347970962524414
+      Pitch: 0.5747971534729004
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 5.024941921234131
+      Yaw: 3.8249378204345703
     Saved: ~
 Window Geometry:
   Displays:
