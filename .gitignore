@@ -4,6 +4,8 @@ imgui.ini
 .vscode
 build/
 
+# - Rviz
+rviz/
 
 # - Clangd
 compile_commands.json
