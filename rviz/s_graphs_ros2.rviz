@@ -134,6 +134,11 @@ Visualization Manager:
       Tree:
         prior_map:
           map:
+            keyframes_layer:
+              walls_layer:
+                rooms_layer:
+                  floors_layer:
+                    {}
             odom:
               base_footprint:
                 body:
@@ -248,15 +253,18 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        floor_lines: true
-        floors: true
         hort_planes: true
         imu: true
         keyframe_keyframe_edges: true
         keyframe_plane_edges: true
         loop_close_radius: true
         nodes: true
-        wall_center_marker: true
+        prior_door_edges: true
+        prior_doorways: true
+        prior_room_to_plane_markers: true
+        prior_rooms: true
+        prior_x_walls: true
+        prior_y_walls: true
         x_vert_planes: true
         y_vert_planes: true
       Topic:
@@ -267,7 +275,7 @@ Visualization Manager:
         Value: /s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: true
+      Enabled: false
       Name: MarkerArray
       Namespaces:
         {}
@@ -277,7 +285,7 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /voxblox_skeletonizer/sparse_graph
-      Value: true
+      Value: false
     - Class: rviz_default_plugins/MarkerArray
       Enabled: true
       Name: MarkerArray
