@@ -511,7 +511,6 @@ class SGraphsNode : public rclcpp::Node {
     Eigen::Vector4d plane_1_coeffs = Eigen::Vector4d::Identity();
     Eigen::Vector4d plane_2_coeffs = Eigen::Vector4d::Identity();
     std::vector<VerticalPlanes> y_planes;
-    std::cout << "wall vector size" << walls_msg_vector.size() << std::endl;
     for (int j = 0; j < walls_msg_vector.size(); j++) {
       x_planes_msg = walls_msg->walls[j].x_planes;
       y_planes_msg = walls_msg->walls[j].y_planes;
@@ -520,18 +519,18 @@ class SGraphsNode : public rclcpp::Node {
         wall_pose << walls_msg->walls[j].wall_center.position.x,
             walls_msg->walls[j].wall_center.position.y,
             walls_msg->walls[j].wall_center.position.z;
-        g2o::VertexWallXYZ* wall_node = global_graph->add_wall_node(wall_pose);
+        g2o::VertexWallXYZ* wall_node = covisibility_graph->add_wall_node(wall_pose);
         auto matched_x_plane1 = x_vert_planes.begin();
         auto matched_x_plane2 = x_vert_planes.begin();
 
         matched_x_plane1 = std::find_if(
             x_vert_planes.begin(),
             x_vert_planes.end(),
-            boost::bind(&s_graphs::VerticalPlanes::revit_id, _1) == x_planes_msg[0].id);
+            boost::bind(&VerticalPlanes::id, _1) == x_planes_msg[0].id);
         matched_x_plane2 = std::find_if(
             x_vert_planes.begin(),
             x_vert_planes.end(),
-            boost::bind(&s_graphs::VerticalPlanes::revit_id, _1) == x_planes_msg[2].id);
+            boost::bind(&VerticalPlanes::id, _1) == x_planes_msg[1].id);
 
         Eigen::Matrix<double, 3, 3> information_wall_surfaces;
         information_wall_surfaces.setZero();
@@ -539,30 +538,30 @@ class SGraphsNode : public rclcpp::Node {
         information_wall_surfaces(1, 1) = 1e10;
         information_wall_surfaces(2, 2) = 1e10;
         auto wall_edge =
-            global_graph->add_wall_2planes_edge(wall_node,
+            covisibility_graph->add_wall_2planes_edge(wall_node,
                                                 (*matched_x_plane1).plane_node,
                                                 (*matched_x_plane2).plane_node,
                                                 wall_pose,
                                                 information_wall_surfaces);
-        global_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
+        covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
       }
-      if (!y_planes_msg.size() == 2) {
+      if (y_planes_msg.size() == 2) {
         Eigen::Vector3d wall_pose;
         wall_pose << walls_msg->walls[j].wall_center.position.y,
             walls_msg->walls[j].wall_center.position.y,
             walls_msg->walls[j].wall_center.position.z;
-        g2o::VertexWallXYZ* wall_node = global_graph->add_wall_node(wall_pose);
+        g2o::VertexWallXYZ* wall_node = covisibility_graph->add_wall_node(wall_pose);
         auto matched_y_plane1 = y_vert_planes.begin();
         auto matched_y_plane2 = y_vert_planes.begin();
 
         matched_y_plane1 = std::find_if(
             y_vert_planes.begin(),
             y_vert_planes.end(),
-            boost::bind(&s_graphs::VerticalPlanes::revit_id, _1) == y_planes_msg[0].id);
+            boost::bind(&VerticalPlanes::id, _1) == y_planes_msg[0].id);
         matched_y_plane2 = std::find_if(
             y_vert_planes.begin(),
             y_vert_planes.end(),
-            boost::bind(&s_graphs::VerticalPlanes::revit_id, _1) == y_planes_msg[2].id);
+            boost::bind(&VerticalPlanes::id, _1) == y_planes_msg[1].id);
 
         Eigen::Matrix<double, 3, 3> information_wall_surfaces;
         information_wall_surfaces.setZero();
@@ -570,12 +569,12 @@ class SGraphsNode : public rclcpp::Node {
         information_wall_surfaces(1, 1) = 1e10;
         information_wall_surfaces(2, 2) = 1e10;
         auto wall_edge =
-            global_graph->add_wall_2planes_edge(wall_node,
+            covisibility_graph->add_wall_2planes_edge(wall_node,
                                                 (*matched_y_plane1).plane_node,
                                                 (*matched_y_plane2).plane_node,
                                                 wall_pose,
                                                 information_wall_surfaces);
-        global_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
+        covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
       }
       // std::vector<s_graphs::msg::PlaneData> x_planes;
       // std::vector<s_graphs::msg::PlaneData> y_planes;
