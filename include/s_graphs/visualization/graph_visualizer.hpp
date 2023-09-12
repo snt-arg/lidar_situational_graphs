@@ -115,7 +115,6 @@ class GraphVisualizer {
       std::vector<KeyFrame::Ptr> keyframes,
       std::vector<Floors> floors_vec);
 
-
   Eigen::Isometry3d compute_plane_pose(const VerticalPlanes& plane,
                                        pcl::PointXYZRGBNormal& p_min,
                                        pcl::PointXYZRGBNormal& p_max);

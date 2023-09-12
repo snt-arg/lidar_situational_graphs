@@ -48,8 +48,7 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node) {
     std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
     map_frame_id = ns_prefix + "/" + map_frame_id;
   }
-  
-  
+
   walls_layer_id = "walls_layer";
   plane_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       walls_layer_id, "/rviz_plane_node_visual_tools", node);
@@ -1221,7 +1220,12 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     width = fabs(p_min.y - p_max.y);
     height = fabs(p_min.z - p_max.z);
     if (height > 3.0) height = 3.0;
-    plane_node_visual_tools->publishCuboid(pose, depth, width, height, plane_node_visual_tools->intToRvizColor(x_plane.rviz_color));
+    plane_node_visual_tools->publishCuboid(
+        pose,
+        depth,
+        width,
+        height,
+        plane_node_visual_tools->intToRvizColor(x_plane.rviz_color));
   }
   for (const auto& y_plane : y_plane_snapshot) {
     pcl::PointXYZRGBNormal p_min, p_max;
@@ -1232,11 +1236,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     width = fabs(p_min.x - p_max.x);
     height = fabs(p_min.z - p_max.z);
     if (height > 3.0) height = 3.0;
-    plane_node_visual_tools->publishCuboid(pose, depth, width, height, plane_node_visual_tools->intToRvizColor(y_plane.rviz_color));
+    plane_node_visual_tools->publishCuboid(
+        pose,
+        depth,
+        width,
+        height,
+        plane_node_visual_tools->intToRvizColor(y_plane.rviz_color));
   }
-  
+
   plane_node_visual_tools->trigger();
-  
+
   return markers;
 }
 
