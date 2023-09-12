@@ -83,6 +83,8 @@ class Planes {
     revit_id = old_plane.revit_id;
     keyframe_node = old_plane.keyframe_node;
     plane_node = old_plane.plane_node;
+    on_wall = old_plane.on_wall;
+
 
     return *this;
   }
@@ -102,6 +104,7 @@ class Planes {
   std::vector<double> color;
   std::size_t rviz_color;
 
+  bool on_wall = false;
   int revit_id;
   g2o::VertexSE3* keyframe_node = nullptr;  // keyframe node instance
   g2o::VertexPlane* plane_node = nullptr;   // node instance

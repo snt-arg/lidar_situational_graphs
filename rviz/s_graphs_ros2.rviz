@@ -131,12 +131,17 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
+        floor_lines: false
+        floors: false
         hort_planes: false
         imu: false
-        keyframe_keyframe_edges: false
+        keyframe_keyframe_edges: true
         keyframe_plane_edges: false
         loop_close_radius: false
-        nodes: false
+        nodes: true
+        rooms: true
+        rooms_line: true
+        wall_center_marker: true
         x_vert_planes: false
         y_vert_planes: false
       Topic:
@@ -213,25 +218,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 55.07911682128906
+      Distance: 45.73749923706055
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -5.698462009429932
-        Y: -7.215991020202637
-        Z: 10.091689109802246
+        X: 1.3358300924301147
+        Y: -3.2021450996398926
+        Z: 21.474191665649414
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.2797974944114685
+      Pitch: 0.20979802310466766
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.5699398517608643
+      Yaw: 3.654961109161377
     Saved: ~
 Window Geometry:
   Displays:

@@ -342,17 +342,17 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       wall_center_marker.header.frame_id = map_frame_id;
       wall_center_marker.header.stamp = stamp;
       wall_center_marker.id = markers.markers.size() + 1;
-      wall_center_marker.type = visualization_msgs::msg::Marker::SPHERE;
-      wall_center_marker.color.r = color_r;
-      wall_center_marker.color.g = color_g;
-      wall_center_marker.color.b = color_b;
+      wall_center_marker.type = visualization_msgs::msg::Marker::CUBE;
+      wall_center_marker.color.r = 0.0;
+      wall_center_marker.color.g = 1.0;
+      wall_center_marker.color.b = 1.0;
       wall_center_marker.color.a = 1.0;
-      wall_center_marker.scale.x = 0.3;
-      wall_center_marker.scale.y = 0.3;
-      wall_center_marker.scale.z = 0.3;
+      wall_center_marker.scale.x = 0.5;
+      wall_center_marker.scale.y = 0.5;
+      wall_center_marker.scale.z = 0.5;
       wall_center_marker.pose.position.x = wall_center.x();
       wall_center_marker.pose.position.y = wall_center.y();
-      wall_center_marker.pose.position.z = wall_vertex_h;
+      wall_center_marker.pose.position.z = 29.5;
       wall_center_marker.pose.orientation.x = 0.0;
       wall_center_marker.pose.orientation.y = 0.0;
       wall_center_marker.pose.orientation.z = 0.0;
@@ -555,7 +555,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3;
     p1.x = x_infinite_room_snapshot[i].node->estimate().translation()(0);
     p1.y = x_infinite_room_snapshot[i].node->estimate().translation()(1);
-    p1.z = 0;
+    p1.z = 7.5;
 
     float min_dist_plane1 = 100;
     for (int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
@@ -644,8 +644,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
           x_infinite_room_snapshot[i].node->estimate().translation()(0);
       infinite_room_pose_marker.pose.position.y =
           x_infinite_room_snapshot[i].node->estimate().translation()(1);
-      infinite_room_pose_marker.pose.position.z =
-          x_infinite_room_snapshot[i].node->estimate().translation()(2);
+      infinite_room_pose_marker.pose.position.z = 7.5;
       Eigen::Quaterniond quat(x_infinite_room_snapshot[i].node->estimate().linear());
       infinite_room_pose_marker.pose.orientation.x = quat.x();
       infinite_room_pose_marker.pose.orientation.y = quat.y();
@@ -745,7 +744,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3;
     p1.x = y_infinite_room_snapshot[i].node->estimate().translation()(0);
     p1.y = y_infinite_room_snapshot[i].node->estimate().translation()(1);
-    p1.z = 0;
+    p1.z = 7.5;
 
     float min_dist_plane1 = 100;
     for (int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
@@ -836,8 +835,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
           y_infinite_room_snapshot[i].node->estimate().translation()(0);
       infinite_room_pose_marker.pose.position.y =
           y_infinite_room_snapshot[i].node->estimate().translation()(1);
-      infinite_room_pose_marker.pose.position.z =
-          y_infinite_room_snapshot[i].node->estimate().translation()(2);
+      infinite_room_pose_marker.pose.position.z = 7.5;
       Eigen::Quaterniond quat(y_infinite_room_snapshot[i].node->estimate().linear());
       infinite_room_pose_marker.pose.orientation.x = quat.x();
       infinite_room_pose_marker.pose.orientation.y = quat.y();
@@ -898,7 +896,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
     room_marker.pose.position.x = room_snapshot[i].node->estimate().translation()(0);
     room_marker.pose.position.y = room_snapshot[i].node->estimate().translation()(1);
-    room_marker.pose.position.z = room_snapshot[i].node->estimate().translation()(2);
+    room_marker.pose.position.z = 7.5;
     Eigen::Quaterniond quat(room_snapshot[i].node->estimate().linear());
     room_marker.pose.orientation.x = quat.x();
     room_marker.pose.orientation.y = quat.y();
@@ -924,7 +922,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
     p1.x = room_snapshot[i].node->estimate().translation()(0);
     p1.y = room_snapshot[i].node->estimate().translation()(1);
-    p1.z = room_snapshot[i].node->estimate().translation()(2);
+    p1.z = 7.5;
 
     auto found_planex1 = std::find_if(
         x_plane_snapshot.begin(),
@@ -1110,7 +1108,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
       floor_marker.pose.position.x = floor.node->estimate().translation()(0);
       floor_marker.pose.position.y = floor.node->estimate().translation()(1);
-      floor_marker.pose.position.z = floor.node->estimate().translation()(2);
+      floor_marker.pose.position.z = 0.0;
 
       // create line markers between floor and rooms/infinite_rooms
       visualization_msgs::msg::Marker floor_line_marker;
@@ -1132,10 +1130,10 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = floor_marker.pose.position.z;
+        p1.z = 0.0;
         p2.x = room.node->estimate().translation()(0);
         p2.y = room.node->estimate().translation()(1);
-        p2.z = room.node->estimate().translation()(2);
+        p2.z = 0.0;
 
         geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
         point2_stamped.header.frame_id = rooms_layer_id;
