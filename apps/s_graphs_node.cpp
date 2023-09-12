@@ -557,7 +557,7 @@ class SGraphsNode : public rclcpp::Node {
       }
       if (y_planes_msg.size() == 2) {
         Eigen::Vector3d wall_pose;
-        wall_pose << walls_msg->walls[j].wall_center.position.y,
+        wall_pose << walls_msg->walls[j].wall_center.position.x,
             walls_msg->walls[j].wall_center.position.y,
             walls_msg->walls[j].wall_center.position.z;
         auto matched_y_plane1 = y_vert_planes.begin();
