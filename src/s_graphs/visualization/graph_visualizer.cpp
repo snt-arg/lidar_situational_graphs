@@ -338,6 +338,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[2]);
       Eigen::Vector3d wall_center = v1->estimate();
 
+
+
       wall_center_marker.ns = "wall_center_marker";
       wall_center_marker.header.frame_id = map_frame_id;
       wall_center_marker.header.stamp = stamp;
@@ -358,6 +360,184 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       wall_center_marker.pose.orientation.z = 0.0;
       wall_center_marker.pose.orientation.w = 1.0;
       markers.markers.push_back(wall_center_marker);
+
+      // wall surface plane edge markers
+            if (abs(v2->estimate().coeffs()(0)) > abs(v2->estimate().coeffs()(1))) {
+        Eigen::Vector4d wall_1_coeffs = v2->estimate().toVector();
+        pcl::PointXYZRGBNormal p_min, p_max;
+        
+        auto found_plane1 =
+            std::find_if(x_plane_snapshot.begin(),
+                         x_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v2->id());
+
+      visualization_msgs::msg::Marker wall_edge_plane_marker_1;
+      wall_edge_plane_marker_1.header.frame_id = map_frame_id;
+      wall_edge_plane_marker_1.header.stamp = stamp;
+      wall_edge_plane_marker_1.ns = "wall_to_plane_edges";
+      wall_edge_plane_marker_1.id = markers.markers.size() + 1;
+      wall_edge_plane_marker_1.type = visualization_msgs::msg::Marker::LINE_LIST;
+      wall_edge_plane_marker_1.pose.orientation.w = 1.0;
+      wall_edge_plane_marker_1.scale.x = 0.03;
+      geometry_msgs::msg::Point point1, point2, point3;
+      point1.x = wall_center.x();
+      point1.y = wall_center.y();
+      point1.z = 29.5;
+     float min_dist_plane1 = 100;
+    for (int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+      geometry_msgs::msg::Point p_tmp;
+      p_tmp.x = (*found_plane1).cloud_seg_map->points[p].x;
+      p_tmp.y = (*found_plane1).cloud_seg_map->points[p].y;
+      p_tmp.z = 15;
+
+      float norm =
+          std::sqrt(std::pow((point1.x - p_tmp.x), 2) + std::pow((point1.y - p_tmp.y), 2) +
+                    std::pow((point1.z - p_tmp.z), 2));
+
+      if (norm < min_dist_plane1) {
+        min_dist_plane1 = norm;
+        point2 = p_tmp;
+      }
+    }
+      wall_edge_plane_marker_1.points.push_back(point1);
+      wall_edge_plane_marker_1.points.push_back(point2);
+      wall_edge_plane_marker_1.color.r = 0.0;
+      wall_edge_plane_marker_1.color.g = 0.0;
+      wall_edge_plane_marker_1.color.b = 0.0;
+      wall_edge_plane_marker_1.color.a = 1.0;
+      markers.markers.push_back(wall_edge_plane_marker_1);
+
+            }
+ if (abs(v3->estimate().coeffs()(0)) > abs(v3->estimate().coeffs()(1))) {
+  geometry_msgs::msg::Point point1, point2, point3;
+        auto found_plane2 =
+            std::find_if(x_plane_snapshot.begin(),
+                         x_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v3->id());
+            visualization_msgs::msg::Marker wall_edge_plane_marker_2;
+      wall_edge_plane_marker_2.header.frame_id = map_frame_id;
+      wall_edge_plane_marker_2.header.stamp = stamp;
+      wall_edge_plane_marker_2.ns = "wall_to_plane_edges";
+      wall_edge_plane_marker_2.id = markers.markers.size() + 1;
+      wall_edge_plane_marker_2.type = visualization_msgs::msg::Marker::LINE_LIST;
+      wall_edge_plane_marker_2.pose.orientation.w = 1.0;
+      wall_edge_plane_marker_2.scale.x = 0.03;
+
+      point1.x = wall_center.x();
+      point1.y = wall_center.y();
+      point1.z = 29.5;
+float min_dist_plane1 = 100;
+    for (int p = 0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
+      geometry_msgs::msg::Point p_tmp;
+      p_tmp.x = (*found_plane2).cloud_seg_map->points[p].x;
+      p_tmp.y = (*found_plane2).cloud_seg_map->points[p].y;
+      p_tmp.z = 15;
+
+      float norm =
+          std::sqrt(std::pow((point1.x - p_tmp.x), 2) + std::pow((point1.y - p_tmp.y), 2) +
+                    std::pow((point1.z - p_tmp.z), 2));
+
+      if (norm < min_dist_plane1) {
+        min_dist_plane1 = norm;
+        point3 = p_tmp;
+      }
+    }
+      wall_edge_plane_marker_2.points.push_back(point1);
+      wall_edge_plane_marker_2.points.push_back(point3);
+      wall_edge_plane_marker_2.color.r = 0.0;
+      wall_edge_plane_marker_2.color.g = 0.0;
+      wall_edge_plane_marker_2.color.b = 0.0;
+      wall_edge_plane_marker_2.color.a = 1.0;
+      markers.markers.push_back(wall_edge_plane_marker_2);
+      }
+      // wall surface plane edge markers
+             if (abs(v2->estimate().coeffs()(1)) > abs(v2->estimate().coeffs()(0))) {
+        Eigen::Vector4d wall_1_coeffs = v2->estimate().toVector();
+        pcl::PointXYZRGBNormal p_min, p_max;
+
+        auto found_plane1 =
+            std::find_if(y_plane_snapshot.begin(),
+                         y_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v2->id());
+
+      visualization_msgs::msg::Marker wall_edge_plane_marker_1;
+      wall_edge_plane_marker_1.header.frame_id = map_frame_id;
+      wall_edge_plane_marker_1.header.stamp = stamp;
+      wall_edge_plane_marker_1.ns = "wall_to_plane_edges";
+      wall_edge_plane_marker_1.id = markers.markers.size() + 1;
+      wall_edge_plane_marker_1.type = visualization_msgs::msg::Marker::LINE_LIST;
+      wall_edge_plane_marker_1.pose.orientation.w = 1.0;
+      wall_edge_plane_marker_1.scale.x = 0.03;
+      geometry_msgs::msg::Point point1, point2, point3;
+      point1.x = wall_center.x();
+      point1.y = wall_center.y();
+      point1.z = 29.5;
+     float min_dist_plane1 = 100;
+    for (int p = 0; p < (*found_plane1).cloud_seg_map->points.size(); ++p) {
+      geometry_msgs::msg::Point p_tmp;
+      p_tmp.x = (*found_plane1).cloud_seg_map->points[p].x;
+      p_tmp.y = (*found_plane1).cloud_seg_map->points[p].y;
+      p_tmp.z = 15;
+
+      float norm =
+          std::sqrt(std::pow((point1.x - p_tmp.x), 2) + std::pow((point1.y - p_tmp.y), 2) +
+                    std::pow((point1.z - p_tmp.z), 2));
+
+      if (norm < min_dist_plane1) {
+        min_dist_plane1 = norm;
+        point2 = p_tmp;
+      }
+    }
+      wall_edge_plane_marker_1.points.push_back(point1);
+      wall_edge_plane_marker_1.points.push_back(point2);
+      wall_edge_plane_marker_1.color.r = 0.0;
+      wall_edge_plane_marker_1.color.g = 0.0;
+      wall_edge_plane_marker_1.color.b = 0.0;
+      wall_edge_plane_marker_1.color.a = 1.0;
+      markers.markers.push_back(wall_edge_plane_marker_1);
+             }
+ if (abs(v3->estimate().coeffs()(1)) > abs(v3->estimate().coeffs()(0))) {
+geometry_msgs::msg::Point point1, point2, point3;
+        auto found_plane2 =
+            std::find_if(y_plane_snapshot.begin(),
+                         y_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v3->id());
+            visualization_msgs::msg::Marker wall_edge_plane_marker_2;
+      wall_edge_plane_marker_2.header.frame_id = map_frame_id;
+      wall_edge_plane_marker_2.header.stamp = stamp;
+      wall_edge_plane_marker_2.ns = "wall_to_plane_edges";
+      wall_edge_plane_marker_2.id = markers.markers.size() + 1;
+      wall_edge_plane_marker_2.type = visualization_msgs::msg::Marker::LINE_LIST;
+      wall_edge_plane_marker_2.pose.orientation.w = 1.0;
+      wall_edge_plane_marker_2.scale.x = 0.03;
+
+      point1.x = wall_center.x();
+      point1.y = wall_center.y();
+      point1.z = 29.5;
+float min_dist_plane1 = 100;
+    for (int p = 0; p < (*found_plane2).cloud_seg_map->points.size(); ++p) {
+      geometry_msgs::msg::Point p_tmp;
+      p_tmp.x = (*found_plane2).cloud_seg_map->points[p].x;
+      p_tmp.y = (*found_plane2).cloud_seg_map->points[p].y;
+      p_tmp.z = 15;
+
+      float norm =
+          std::sqrt(std::pow((point1.x - p_tmp.x), 2) + std::pow((point1.y - p_tmp.y), 2) +
+                    std::pow((point1.z - p_tmp.z), 2));
+
+      if (norm < min_dist_plane1) {
+        min_dist_plane1 = norm;
+        point3 = p_tmp;
+      }
+    }
+      wall_edge_plane_marker_2.points.push_back(point1);
+      wall_edge_plane_marker_2.points.push_back(point3);
+      wall_edge_plane_marker_2.color.r = 0.0;
+      wall_edge_plane_marker_2.color.g = 0.0;
+      wall_edge_plane_marker_2.color.b = 0.0;
+      wall_edge_plane_marker_2.color.a = 1.0;
+      markers.markers.push_back(wall_edge_plane_marker_2);
+      }
     }
   }
 
