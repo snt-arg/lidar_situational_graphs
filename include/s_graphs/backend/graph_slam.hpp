@@ -36,6 +36,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/core/sparse_block_matrix.h>
 #include <g2o/core/sparse_optimizer.h>
 
+#include <g2o/edge_doorway_two_rooms.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
 #include <g2o/vertex_wall.hpp>
 #include <memory>
@@ -70,9 +71,11 @@ class EdgePlanePerpendicular;
 class Edge2Planes;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
+class EdgeDoorWay2Rooms;
 class RobustKernelFactory;
 class VertexRoom;
 class VertexFloor;
+class VertexDoorWay;
 }  // namespace g2o
 
 namespace s_graphs {
@@ -208,6 +211,14 @@ class GraphSLAM {
    * @return Registered node
    */
   g2o::VertexRoom* add_room_node(const Eigen::Isometry3d& room_pose);
+
+  /**
+   * @brief Add a Doorway node to the graph
+   *
+   * @param doorway_pose
+   * @return Registered node
+   */
+  g2o::VertexDoorWay* add_doorway_node(const Eigen::Isometry3d& doorway_pose);
 
   /**
    * @brief copy a room node from another graph
@@ -649,6 +660,22 @@ class GraphSLAM {
                                               g2o::VertexPlane* v_plane2,
                                               Eigen::Vector3d wall_point,
                                               const Eigen::MatrixXd& information);
+
+  /**
+   * @brief
+   *
+   * @param v_door_r1
+   * @param v_door_r2
+   * @param v_room1
+   * @param v_room2
+   * @param information
+   * @return registered edge
+   */
+  g2o::EdgeDoorWay2Rooms* add_doorway_2rooms_edge(g2o::VertexDoorWay* v_door_r1,
+                                                  g2o::VertexDoorWay* v_door_r2,
+                                                  g2o::VertexRoom* v_room1,
+                                                  g2o::VertexRoom* v_room2,
+                                                  const Eigen::MatrixXd& information);
 
   /**
    * @brief
