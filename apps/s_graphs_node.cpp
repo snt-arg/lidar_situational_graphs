@@ -85,6 +85,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "s_graphs/msg/room_data.hpp"
 #include "s_graphs/msg/rooms_data.hpp"
 #include "s_graphs/srv/dump_graph.hpp"
+#include "s_graphs/srv/load_graph.hpp"
 #include "s_graphs/srv/save_map.hpp"
 #include "sensor_msgs/msg/imu.h"
 #include "sensor_msgs/msg/imu.hpp"
