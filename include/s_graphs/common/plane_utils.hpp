@@ -211,6 +211,8 @@ class PlaneUtils {
   float plane_dot_product(const s_graphs::msg::PlaneData& plane1,
                           const s_graphs::msg::PlaneData& plane2);
 
+  bool plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* plane2);
+
   geometry_msgs::msg::Pose extract_infite_room_center(int plane_type,
                                                       pcl::PointXY p1,
                                                       pcl::PointXY p2,
