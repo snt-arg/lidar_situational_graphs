@@ -38,6 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <g2o/edge_doorway_two_rooms.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
+#include <g2o/vertex_deviation.hpp>
 #include <g2o/vertex_wall.hpp>
 #include <memory>
 
@@ -77,6 +78,7 @@ class RobustKernelFactory;
 class VertexRoom;
 class VertexFloor;
 class VertexDoorWay;
+class VertexDeviation;
 }  // namespace g2o
 
 namespace s_graphs {
@@ -261,6 +263,14 @@ class GraphSLAM {
    * @return registered node
    */
   g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
+  /**
+   * @brief Add a SE3 Deviation node to the graph.
+   *
+   * @param pose
+   * @return Registered node
+   */
+
+  g2o::VertexDeviation* add_deviation_node(const Eigen::Isometry3d& pose);
 
   /**
    * @brief Add an edge between SE3 nodes

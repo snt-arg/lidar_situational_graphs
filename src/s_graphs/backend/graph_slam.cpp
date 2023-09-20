@@ -91,6 +91,7 @@ G2O_REGISTER_TYPE(EDGE_YINFINITE_ROOM_YINFINITE_ROOM, EdgeYInfiniteRoomYInfinite
 G2O_REGISTER_TYPE(VERTEX_ROOM, VertexRoom)
 G2O_REGISTER_TYPE(VERTEX_FLOOR, VertexFloor)
 G2O_REGISTER_TYPE(VERTEX_INFINITE_ROOM, VertexInfiniteRoom)
+G2O_REGISTER_TYPE(VERTEX_DEVIATION, VertexDeviation)
 }  // namespace g2o
 
 namespace s_graphs {
@@ -300,6 +301,15 @@ g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center)
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
 
+  return vertex;
+}
+
+g2o::VertexDeviation* GraphSLAM::add_deviation_node(const Eigen::Isometry3d& pose) {
+  g2o::VertexDeviation* vertex(new g2o::VertexDeviation());
+  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  vertex->setEstimate(pose);
+  graph->addVertex(vertex);
+  this->increment_local_nbr_of_vertices();
   return vertex;
 }
 
