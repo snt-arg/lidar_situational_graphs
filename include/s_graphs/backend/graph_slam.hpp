@@ -65,6 +65,7 @@ class EdgeSE3Room;
 class EdgeRoom2Planes;
 class EdgeRoom4Planes;
 class EdgeFloorRoom;
+class Edge2Rooms;
 class EdgeXInfiniteRoomXInfiniteRoom;
 class EdgeYInfiniteRoomYInfiniteRoom;
 class EdgePlanePerpendicular;
@@ -676,6 +677,17 @@ class GraphSLAM {
                                                   g2o::VertexRoom* v_room1,
                                                   g2o::VertexRoom* v_room2,
                                                   const Eigen::MatrixXd& information);
+
+  /**
+   * @brief Merge prior and online rooms with 0 error
+   *
+   * @param v1: vertex room 1
+   * @param v2: vertex room 2
+   * @return registered edge
+   */
+  g2o::Edge2Rooms* add_2rooms_edge(g2o::VertexRoom* v1,
+                                   g2o::VertexRoom* v2,
+                                   const Eigen::MatrixXd& information);
 
   /**
    * @brief

@@ -707,6 +707,19 @@ g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
   return edge;
 }
 
+g2o::Edge2Rooms* GraphSLAM::add_2rooms_edge(g2o::VertexRoom* v1,
+                                            g2o::VertexRoom* v2,
+                                            const Eigen::MatrixXd& information) {
+  g2o::Edge2Rooms* edge(new g2o::Edge2Rooms());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  edge->setInformation(information);
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
+  return edge;
+}
+
 g2o::EdgeRoom4Planes* GraphSLAM::copy_room_4planes_edge(g2o::EdgeRoom4Planes* e,
                                                         g2o::VertexRoom* v1,
                                                         g2o::VertexPlane* v2,
