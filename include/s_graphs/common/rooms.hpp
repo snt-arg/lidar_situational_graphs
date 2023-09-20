@@ -168,6 +168,108 @@ class Rooms {
     return true;
   }
 
+  bool load(const std::string &directory, g2o::SparseOptimizer *local_graph) {
+    std::ifstream ifs(directory + "/room_data");
+    if (!ifs) {
+      return false;
+    }
+    while (!ifs.eof()) {
+      std::string token;
+      ifs >> token;
+      if (token == "id") {
+        ifs >> id;
+        node->setId(id);
+        std::cout << "room node id : " << node->id() << std::endl;
+      } else if (token == "plane_x1_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_x1_node = vertex;
+            // std::cout << "plane_x1_node id : " << plane_x1_node->id() << std::endl;
+            // std::cout << "plane_x1_node estimate : "
+            //           << plane_x1_node->estimate().toVector() << std::endl;
+          }
+        }
+        plane_x1_id = id;
+      } else if (token == "plane_x2_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_x2_node = vertex;
+            // std::cout << "plane_x2_node id : " << plane_x2_node->id() << std::endl;
+            // std::cout << "plane_x2_node estimate : "
+            //           << plane_x2_node->estimate().toVector() << std::endl;
+          }
+        }
+        plane_x2_id = id;
+      } else if (token == "plane_y1_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_y1_node = vertex;
+            // std::cout << "plane_y1_node id : " << plane_y1_node->id() << std::endl;
+          }
+        }
+        plane_y1_id = id;
+      } else if (token == "plane_y2_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_y2_node = vertex;
+            // std::cout << "plane_y2_node id : " << plane_y2_node->id() << std::endl;
+          }
+        }
+        plane_y2_id = id;
+      } else if (token == "Plane_x1") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_x1.fromVector(plane_coeffs);
+      } else if (token == "Plane_x2") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_x2.fromVector(plane_coeffs);
+      } else if (token == "Plane_y1") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_y1.fromVector(plane_coeffs);
+      } else if (token == "Plane_y2") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_y2.fromVector(plane_coeffs);
+      } else if (token == "room_node") {
+        Eigen::Matrix4d room_pose = Eigen::Matrix4d::Identity();
+        for (int i = 0; i < 4; i++) {
+          for (int j = 0; j < 4; j++) {
+            ifs >> room_pose(i, j);
+          }
+        }
+        Eigen::Isometry3d room_isometry_pose(room_pose);
+        node->setEstimate(room_isometry_pose);
+      }
+    }
+    return true;
+  }
+
  public:
   int id;
   int prior_id;
