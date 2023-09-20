@@ -82,18 +82,22 @@ class Planes {
     revit_id = old_plane.revit_id;
     keyframe_node = old_plane.keyframe_node;
     plane_node = old_plane.plane_node;
-
+    type = old_plane.type;
+    wall_point = old_plane.wall_point;
+    start_point = old_plane.start_point;
+    length = old_plane.length;
     return *this;
   }
 
  public:
   int id;
   g2o::Plane3D plane;
+  g2o::Plane3D plane_body;
   pcl::PointCloud<PointNormal>::Ptr
       cloud_seg_body;  // segmented points of the plane in local body frame
   std::vector<pcl::PointCloud<PointNormal>::Ptr>
-      cloud_seg_body_vec;  // vector of segmented points of the plane in local body
-                           // frame
+      cloud_seg_body_vec;  // vector of segmented points of the plane in local
+                           // body frame
   pcl::PointCloud<PointNormal>::Ptr
       cloud_seg_map;           // segmented points of the plane in global map frame
   Eigen::Matrix3d covariance;  // covariance of the landmark
@@ -102,6 +106,12 @@ class Planes {
   int revit_id;
   g2o::VertexSE3* keyframe_node = nullptr;  // keyframe node instance
   g2o::VertexPlane* plane_node = nullptr;   // node instance
+  std::string type;                         // Type online or prior
+  double length;                            // Length of plane
+  bool matched = false;                     // Flag if matched with prior/online or not
+  Eigen::Vector2d start_point =
+      Eigen::Vector2d::Ones();  // start point of the prior wall in revit
+  Eigen::Vector3d wall_point;   // point used to calculate prior wall center
 };
 
 class VerticalPlanes : public Planes {
