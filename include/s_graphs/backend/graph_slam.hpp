@@ -37,6 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/core/sparse_optimizer.h>
 
 #include <g2o/edge_doorway_two_rooms.hpp>
+#include <g2o/edge_se3_two_planes.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
 #include <g2o/vertex_deviation.hpp>
 #include <g2o/vertex_wall.hpp>
@@ -71,6 +72,7 @@ class EdgeXInfiniteRoomXInfiniteRoom;
 class EdgeYInfiniteRoomYInfiniteRoom;
 class EdgePlanePerpendicular;
 class Edge2Planes;
+class EdgeSE3PlanePlane;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class EdgeDoorWay2Rooms;
@@ -518,6 +520,20 @@ class GraphSLAM {
   g2o::Edge2Planes* copy_2planes_edge(g2o::Edge2Planes* e,
                                       g2o::VertexPlane* v1,
                                       g2o::VertexPlane* v2);
+
+  /**
+   * @brief Deviation connection edge between two planes
+   *
+   * @param v_se3: Deviation vertex
+   * @param v1: plane1 edge
+   * @param v2: plane2 edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3PlanePlane* add_se3_point_to_2planes_edge(
+      g2o::VertexDeviation* v_se3,
+      g2o::VertexPlane* v_plane1,
+      g2o::VertexPlane* v_plane2,
+      const Eigen::MatrixXd& information);
 
   /**
    * @brief

@@ -54,7 +54,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/edge_se3_priorvec.hpp>
 #include <g2o/edge_se3_priorxy.hpp>
 #include <g2o/edge_se3_priorxyz.hpp>
+#include <g2o/edge_se3_two_planes.hpp>
 #include <g2o/robust_kernel_io.hpp>
+#include <g2o/vertex_deviation.hpp>
 #include <g2o/vertex_infinite_room.hpp>
 #include <g2o/vertex_room.hpp>
 #include <g2o/vertex_wall.hpp>
@@ -78,6 +80,7 @@ G2O_REGISTER_TYPE(EDGE_PLANE_IDENTITY, EdgePlaneIdentity)
 G2O_REGISTER_TYPE(EDGE_PLANE_PARALLEL, EdgePlaneParallel)
 G2O_REGISTER_TYPE(EDGE_PLANE_PAERPENDICULAR, EdgePlanePerpendicular)
 G2O_REGISTER_TYPE(EDGE_2PLANES, Edge2Planes)
+G2O_REGISTER_TYPE(EDGE_SE3_PLANE_PLANE, EdgeSE3PlanePlane)
 G2O_REGISTER_TYPE(EDGE_SE3_INFINITE_ROOM, EdgeSE3InfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_XPLANE, EdgeInfiniteRoomXPlane)
 G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_YPLANE, EdgeInfiniteRoomYPlane)
@@ -90,8 +93,8 @@ G2O_REGISTER_TYPE(EDGE_XINFINITE_ROOM_XINFINITE_ROOM, EdgeXInfiniteRoomXInfinite
 G2O_REGISTER_TYPE(EDGE_YINFINITE_ROOM_YINFINITE_ROOM, EdgeYInfiniteRoomYInfiniteRoom)
 G2O_REGISTER_TYPE(VERTEX_ROOM, VertexRoom)
 G2O_REGISTER_TYPE(VERTEX_FLOOR, VertexFloor)
-G2O_REGISTER_TYPE(VERTEX_INFINITE_ROOM, VertexInfiniteRoom)
 G2O_REGISTER_TYPE(VERTEX_DEVIATION, VertexDeviation)
+G2O_REGISTER_TYPE(VERTEX_INFINITE_ROOM, VertexInfiniteRoom)
 }  // namespace g2o
 
 namespace s_graphs {
@@ -599,6 +602,26 @@ g2o::Edge2Planes* GraphSLAM::copy_2planes_edge(g2o::Edge2Planes* e,
   edge->vertices()[0] = v1;
   edge->vertices()[1] = v2;
   graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeSE3PlanePlane* GraphSLAM::add_se3_point_to_2planes_edge(
+    g2o::VertexDeviation* v_se3,
+    g2o::VertexPlane* v_plane1,
+    g2o::VertexPlane* v_plane2,
+    const Eigen::MatrixXd& information) {
+  std::cout << "inside graph slam function" << std::endl;
+  g2o::EdgeSE3PlanePlane* edge(new g2o::EdgeSE3PlanePlane());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  edge->setInformation(information);
+  std::cout << "information set" << std::endl;
+  edge->vertices()[0] = v_se3;
+  edge->vertices()[1] = v_plane1;
+  edge->vertices()[2] = v_plane2;
+  graph->addEdge(edge);
+  std::cout << "Edge added" << std::endl;
+  this->increment_local_nbr_of_edges();
 
   return edge;
 }
