@@ -30,13 +30,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef PLANES_HPP
 #define PLANES_HPP
 
+#include <g2o/core/sparse_optimizer.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/slam3d_addons/plane3d.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
+#include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
 #include <Eigen/Eigen>
+#include <boost/filesystem.hpp>
+#include <s_graphs/common/keyframe.hpp>
 
 namespace s_graphs {
 /**
@@ -128,6 +132,123 @@ class VerticalPlanes : public Planes {
       Planes::operator=(old_plane);
     }
     return *this;
+  }
+  void save(const std::string& directory, char type) {
+    if (!boost::filesystem::is_directory(directory)) {
+      boost::filesystem::create_directory(directory);
+    }
+    std::string x_planes_directory = directory + '/' + "x_planes";
+
+    std::string y_planes_directory = directory + '/' + "y_planes";
+    if (type == 'x') {
+      if (!boost::filesystem::is_directory(x_planes_directory)) {
+        boost::filesystem::create_directory(x_planes_directory);
+      }
+      std::ofstream ofs(x_planes_directory + "/x_plane_data");
+      ofs << "id\n";
+      ofs << id << "\n";
+
+      ofs << "Plane \n";
+      ofs << plane.coeffs() << "\n";
+
+      ofs << "plane_body\n";
+      ofs << plane_node->estimate().coeffs() << "\n";
+
+      ofs << "Covariance\n";
+      ofs << covariance << "\n";
+
+      ofs << "keyframe_node_id\n";
+      ofs << keyframe_node->id() << "\n";
+
+      ofs << "keyframe_node_pose\n";
+      ofs << keyframe_node->estimate().matrix() << "\n";
+
+      ofs << "plane_node_id\n";
+      ofs << plane_node->id() << "\n";
+
+      ofs << "plane_node_pose\n";
+      ofs << plane_node->estimate().coeffs() << "\n";
+
+      ofs << "type\n";
+      ofs << type << "\n";
+
+      ofs << "color\n";
+      ofs << color[0] << "\n";
+      ofs << color[1] << "\n";
+      ofs << color[2] << "\n";
+
+      ofs << "fixed\n";
+      ofs << plane_node->fixed() << "\n";
+
+      ofs << "keyframe_vec_node_ids\n";
+      for (int i = 0; i < keyframe_node_vec.size(); i++) {
+        ofs << keyframe_node_vec[i]->id() << "\n";
+        std::cout << "keyframe id at :  " << i << "   " << keyframe_node_vec[i]->id()
+                  << std::endl;
+      }
+      pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_map.pcd",
+                                 *cloud_seg_map);
+      pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_body.pcd",
+                                 *cloud_seg_body);
+      for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
+        std::string filename =
+            x_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+        pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
+      }
+    } else if (type == 'y') {
+      if (!boost::filesystem::is_directory(y_planes_directory)) {
+        boost::filesystem::create_directory(y_planes_directory);
+      }
+      std::ofstream ofs(y_planes_directory + "/y_plane_data");
+      ofs << "id\n";
+      ofs << id << "\n";
+
+      ofs << "Plane\n";
+      ofs << plane.coeffs() << "\n";
+
+      ofs << "Covariance\n";
+      ofs << covariance << "\n";
+
+      ofs << "keyframe_node_id\n";
+      ofs << keyframe_node->id() << "\n";
+
+      ofs << "keyframe_node_pose\n";
+      ofs << keyframe_node->estimate().matrix() << "\n";
+
+      ofs << "plane_node_id\n";
+      ofs << plane_node->id() << "\n";
+
+      ofs << "plane_node_pose\n";
+      ofs << plane_node->estimate().coeffs() << "\n";
+
+      ofs << "type\n";
+      ofs << type << "\n";
+      ofs << "color\n";
+      ofs << color[0] << "\n";
+      ofs << color[1] << "\n";
+      ofs << color[2] << "\n";
+
+      ofs << "fixed\n";
+      ofs << plane_node->fixed() << "\n";
+
+      ofs << "keyframe_vec_node_ids\n";
+      for (int i = 0; i < keyframe_node_vec.size(); i++) {
+        ofs << keyframe_node_vec[i]->id() << "\n";
+        std::cout << "keyframe id at :  " << i << "   " << keyframe_node_vec[i]->id()
+                  << std::endl;
+      }
+      pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_map.pcd",
+                                 *cloud_seg_map);
+      pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_body.pcd",
+                                 *cloud_seg_body);
+      for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
+        std::string filename =
+            y_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+        pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
+      }
+    }
+
+    // std::cout << "written" << std::endl;
   }
 };
 
