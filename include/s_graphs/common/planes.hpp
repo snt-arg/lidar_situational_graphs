@@ -250,6 +250,129 @@ class VerticalPlanes : public Planes {
 
     // std::cout << "written" << std::endl;
   }
+
+  bool load(const std::string& directory,
+            g2o::SparseOptimizer* local_graph,
+            std::string type) {
+    std::cout << "inside load func" << std::endl;
+    std::ifstream ifs;
+    if (type == "y") {
+      ifs.open(directory + "/y_plane_data");
+    } else if (type == "x") {
+      ifs.open(directory + "/x_plane_data");
+    } else {
+      std::cout << "plane type not mentioned !" << std::endl;
+      return false;
+    }
+    if (!ifs) {
+      return false;
+    }
+    while (!ifs.eof()) {
+      std::string token;
+      ifs >> token;
+      if (token == "id") {
+        ifs >> id;
+        plane_node->setId(id);
+      } else if (token == "Plane") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane.fromVector(plane_coeffs);
+      } else if (token == "Covariance") {
+        Eigen::Matrix3d mat;
+        for (int i = 0; i < 3; i++) {
+          for (int j = 0; j < 3; j++) {
+            ifs >> mat(i, j);
+          }
+        }
+        covariance = mat;
+      } else if (token == "keyframe_vec_node_ids") {
+        std::vector<int> ids;
+        int id;
+        while (ifs >> id) {
+          ids.push_back(id);
+        }
+        std::cout << "before keyframe vec size : " << ids.size() << std::endl;
+        for (int i = 0; i < ids.size(); i++) {
+          for (const auto& vertex_pair : local_graph->vertices()) {
+            g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(vertex_pair.second);
+            if (vertex && vertex->id() == ids[i]) {
+              // Found the vertex with the given keyframe_id
+              keyframe_node_vec.push_back(vertex);
+              std::cout << "keyframe id : " << vertex->id() << std::endl;
+            }
+          }
+        }
+
+        std::cout << "loaded keyframe vec size : " << keyframe_node_vec.size()
+                  << std::endl;
+      } else if (token == "keyframe_node_id") {
+        int node_id;
+        ifs >> node_id;
+
+        for (const auto& vertex_pair : local_graph->vertices()) {
+          g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(vertex_pair.second);
+          if (vertex && vertex->id() == node_id) {
+            // Found the vertex with the given keyframe_id
+            keyframe_node = vertex;
+
+            break;
+          }
+        }
+        if (keyframe_node) {
+        } else {
+          // The vertex with the given keyframe_id was not found in the graph
+          std::cout << "Vertex with keyframe_id " << node_id
+                    << " not found in the graph." << std::endl;
+        }
+      } else if (token == "plane_node_pose") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_node->setEstimate(plane_coeffs);
+      } else if (token == "color") {
+        Eigen::Vector3d color_values;
+        for (int i = 0; i < 3; i++) {
+          ifs >> color_values[i];
+        }
+        color = {color_values[0], color_values[1], color_values[2]};
+      } else if (token == "fixed") {
+        int fixed;
+        ifs >> fixed;
+        if (fixed == 1) {
+          plane_node->setFixed(true);
+          std::cout << "plane set fixed true  !" << std::endl;
+        }
+      }
+    }
+
+    int cloud_seg_body_vec_size = 0;
+    boost::filesystem::path dir(directory);
+    for (boost::filesystem::directory_iterator it(dir);
+         it != boost::filesystem::directory_iterator();
+         ++it) {
+      if (boost::filesystem::is_regular_file(*it) && it->path().extension() == ".pcd") {
+        cloud_seg_body_vec_size++;
+      }
+    }
+
+    for (int i = 0; i < cloud_seg_body_vec_size - 2; i++) {
+      std::string filename = "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+      std::cout << "cloud file name : " << filename << std::endl;
+      pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
+      pcl::io::loadPCDFile(directory + filename, *body_cloud);
+      cloud_seg_body_vec.push_back(body_cloud);
+    }
+    pcl::PointCloud<PointNormal>::Ptr map_cloud(new pcl::PointCloud<PointNormal>());
+    pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
+    cloud_seg_map = map_cloud;
+    pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
+    pcl::io::loadPCDFile(directory + "/cloud_seg_body.pcd", *body_cloud);
+    cloud_seg_body = body_cloud;
+    return true;
+  }
 };
 
 class HorizontalPlanes : public Planes {
