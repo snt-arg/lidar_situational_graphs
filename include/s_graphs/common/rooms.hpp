@@ -107,6 +107,7 @@ class Rooms {
     node = old_room.node;
     room_keyframes = old_room.room_keyframes;
     local_graph = old_room.local_graph;
+    matched = old_room.matched;
 
     return *this;
   }
@@ -123,6 +124,7 @@ class Rooms {
   int plane_y1_id;
   int plane_y2_id;
   bool sub_room;
+  bool matched = false;
   visualization_msgs::msg::MarkerArray cluster_array;
 
   g2o::VertexPlane *plane_x1_node = nullptr;
