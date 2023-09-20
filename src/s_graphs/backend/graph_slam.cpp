@@ -89,6 +89,7 @@ G2O_REGISTER_TYPE(EDGE_ROOM_2PLANES, EdgeRoom2Planes)
 G2O_REGISTER_TYPE(EDGE_ROOM_4PLANES, EdgeRoom4Planes)
 G2O_REGISTER_TYPE(EDGE_FLOOR_ROOM, EdgeFloorRoom)
 G2O_REGISTER_TYPE(EDGE_ROOM_ROOM, EdgeRoomRoom)
+G2O_REGISTER_TYPE(EDGE_SE3_ROOM_ROOM, EdgeSE3RoomRoom)
 G2O_REGISTER_TYPE(EDGE_XINFINITE_ROOM_XINFINITE_ROOM, EdgeXInfiniteRoomXInfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_YINFINITE_ROOM_YINFINITE_ROOM, EdgeYInfiniteRoomYInfiniteRoom)
 G2O_REGISTER_TYPE(VERTEX_ROOM, VertexRoom)
@@ -737,6 +738,24 @@ g2o::EdgeRoom4Planes* GraphSLAM::add_room_4planes_edge(
   graph->addEdge(edge);
   this->increment_local_nbr_of_edges();
 
+  return edge;
+}
+
+g2o::EdgeSE3RoomRoom* GraphSLAM::add_deviation_two_rooms_edge(
+    g2o::VertexDeviation* v1,
+    g2o::VertexRoom* v2,
+    g2o::VertexRoom* v3,
+    const Eigen::MatrixXd& information) {
+  g2o::EdgeSE3RoomRoom* edge(new g2o::EdgeSE3RoomRoom());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  edge->setInformation(information);
+  std::cout << "Information Set !" << std::endl;
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
+  graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
+  std::cout << "edge added !" << std::endl;
   return edge;
 }
 

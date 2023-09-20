@@ -38,6 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <g2o/edge_doorway_two_rooms.hpp>
 #include <g2o/edge_se3_two_planes.hpp>
+#include <g2o/edge_se3_two_rooms.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
 #include <g2o/vertex_deviation.hpp>
 #include <g2o/vertex_wall.hpp>
@@ -73,6 +74,7 @@ class EdgeYInfiniteRoomYInfiniteRoom;
 class EdgePlanePerpendicular;
 class Edge2Planes;
 class EdgeSE3PlanePlane;
+class EdgeSE3RoomRoom;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class EdgeDoorWay2Rooms;
@@ -703,6 +705,20 @@ class GraphSLAM {
                                                   g2o::VertexRoom* v_room1,
                                                   g2o::VertexRoom* v_room2,
                                                   const Eigen::MatrixXd& information);
+
+  /**
+   * @brief deviations betwen rooms edge
+   *
+   * @param v1: vertex deviation
+   * @param v2: vertex room
+   * @param v3: vertex room
+   * @return registered edge
+   */
+  g2o::EdgeSE3RoomRoom* add_deviation_two_rooms_edge(
+      g2o::VertexDeviation* v1,
+      g2o::VertexRoom* v2,
+      g2o::VertexRoom* v3,
+      const Eigen::MatrixXd& information);
 
   /**
    * @brief Merge prior and online rooms with 0 error
