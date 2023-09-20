@@ -111,6 +111,62 @@ class Rooms {
 
     return *this;
   }
+  bool save(const std::string &directory) {
+    if (!boost::filesystem::is_directory(directory)) {
+      boost::filesystem::create_directory(directory);
+    }
+    std::ofstream ofs(directory + "/room_data");
+    ofs << "id\n";
+    ofs << id << "\n";
+
+    ofs << "Plane_x1 \n";
+    ofs << plane_x1.coeffs() << "\n";
+
+    ofs << "Plane_x2 \n";
+    ofs << plane_x2.coeffs() << "\n";
+
+    ofs << "Plane_y1 \n";
+    ofs << plane_y1.coeffs() << "\n";
+
+    ofs << "Plane_y2 \n";
+    ofs << plane_y2.coeffs() << "\n";
+
+    ofs << "plane_x1_id \n";
+    ofs << plane_x1_id << "\n";
+
+    ofs << "plane_x2_id \n";
+    ofs << plane_x2_id << "\n";
+
+    ofs << "plane_y1_id \n";
+    ofs << plane_y1_id << "\n";
+
+    ofs << "plane_y2_id \n";
+    ofs << plane_y2_id << "\n";
+
+    ofs << "plane_x1_node \n";
+    ofs << plane_x1_node->estimate().coeffs() << "\n";
+
+    ofs << "plane_x2_node \n";
+    ofs << plane_x2_node->estimate().coeffs() << "\n";
+
+    ofs << "plane_y1_node \n";
+    ofs << plane_y1_node->estimate().coeffs() << "\n";
+
+    ofs << "plane_y2_node \n";
+    ofs << plane_y2_node->estimate().coeffs() << "\n";
+
+    ofs << "room_node \n";
+    ofs << node->estimate().matrix() << "\n";
+
+    ofs << "room_keyframes_ids\n";
+    std::cout << "room_keyframes.size() : " << room_keyframes.size() << std::endl;
+    for (int i = 0; i < room_keyframes.size(); i++) {
+      ofs << room_keyframes[i]->id() << "\n";
+      std::cout << "keyframe id at :  " << i << "   " << room_keyframes[i]->id()
+                << std::endl;
+    }
+    return true;
+  }
 
  public:
   int id;
