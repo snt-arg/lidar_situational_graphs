@@ -56,6 +56,7 @@
 #include <s_graphs/RoomsData.h>
 #include <s_graphs/PlaneData.h>
 #include <s_graphs/PlanesData.h>
+#include <s_graphs/ExportKeyframes.h>
 
 #include <s_graphs/graph_slam.hpp>
 #include <s_graphs/keyframe.hpp>
@@ -225,6 +226,7 @@ public:
     graph_pub = mt_nh.advertise<graph_manager_msgs::Graph>("/s_graphs/graph_structure", 32);
     dump_service_server = mt_nh.advertiseService("/s_graphs/dump", &SGraphsNodelet::dump_service, this);
     save_map_service_server = mt_nh.advertiseService("/s_graphs/save_map", &SGraphsNodelet::save_map_service, this);
+    export_keyframes_service_server = mt_nh.advertiseService("/s_graphs/export_keyframes", &SGraphsNodelet::export_keyframes, this);
 
     graph_updated = false;
     double graph_update_interval = private_nh.param<double>("graph_update_interval", 3.0);
@@ -1428,6 +1430,24 @@ private:
     return true;
   }
 
+  bool export_keyframes(s_graphs::ExportKeyframesRequest& req, s_graphs::ExportKeyframesResponse& res) {
+    for(const auto& kf : keyframes) {
+      sensor_msgs::PointCloud2 keyframe_cloud_msg;
+      pcl::toROSMsg(*kf->cloud, keyframe_cloud_msg);
+      res.pc.push_back(keyframe_cloud_msg);
+
+      auto pose_msg = isometry2pose(kf->estimate());
+
+      geometry_msgs::PoseStamped pose_stamped;
+      pose_stamped.header.frame_id = map_frame_id;
+      pose_stamped.pose = pose_msg;
+
+      res.pose.push_back(pose_stamped);
+    }
+
+    return true;
+  }
+
   /**
    * @brief save map data as pcd
    * @param req
@@ -1515,6 +1535,7 @@ private:
 
   ros::ServiceServer dump_service_server;
   ros::ServiceServer save_map_service_server;
+  ros::ServiceServer export_keyframes_service_server;
 
   // keyframe queue
   std::string base_frame_id;
