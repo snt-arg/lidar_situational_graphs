@@ -1207,7 +1207,21 @@ class SGraphsNode : public rclcpp::Node {
 
       keyframes[i]->save(sst.str());
     }
-
+    for (int i = 0; i < x_vert_planes.size(); i++) {
+      std::stringstream sst;
+      sst << boost::format("%s/%06d") % directory % i;
+      x_vert_planes[i].save(sst.str(), 'x');
+    }
+    for (int i = 0; i < y_vert_planes.size(); i++) {
+      std::stringstream sst;
+      sst << boost::format("%s/%06d") % directory % i;
+      y_vert_planes[i].save(sst.str(), 'y');
+    }
+    for (int i = 0; i < rooms_vec.size(); i++) {
+      std::stringstream sst;
+      sst << boost::format("%s/%06d") % directory % i;
+      rooms_vec[i].save(sst.str());
+    }
     if (zero_utm) {
       std::ofstream zero_utm_ofs(directory + "/zero_utm");
       zero_utm_ofs << boost::format("%.6f %.6f %.6f") % zero_utm->x() % zero_utm->y() %
