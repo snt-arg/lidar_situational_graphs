@@ -128,9 +128,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     traj_marker.points[i].z = pos.z();
 
     double p = static_cast<double>(i) / keyframes.size();
-    traj_marker.colors[i].r = 1.0 - p;
-    traj_marker.colors[i].g = p;
-    traj_marker.colors[i].b = 0.0;
+    traj_marker.colors[i].r = 0.7;
+    traj_marker.colors[i].g = 0.7;
+    traj_marker.colors[i].b = 0.7;
     traj_marker.colors[i].a = 1.0;
 
     if (keyframes[i]->acceleration) {
@@ -188,12 +188,14 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       double p2 = static_cast<double>(v2->id()) / local_graph->vertices().size();
 
       std_msgs::msg::ColorRGBA color1, color2;
-      color1.r = 1.0 - p1;
-      color1.g = p1;
-      color1.a = 1.0;
+      color1.r = 0.7;
+      color1.g = 0.7;
+      color1.b = 0.7;
+      color1.a = 0.5;
 
-      color2.r = 1.0 - p2;
-      color2.g = p2;
+      color2.r = 0.7;
+      color2.g = 0.7;
+      color1.b = 0.7;
       color2.a = 1.0;
       traj_edge_marker.colors.push_back(color1);
       traj_edge_marker.colors.push_back(color2);
@@ -1288,7 +1290,7 @@ float min_dist_plane1 = 100;
 
       floor_marker.pose.position.x = floor.node->estimate().translation()(0);
       floor_marker.pose.position.y = floor.node->estimate().translation()(1);
-      floor_marker.pose.position.z = 0.0;
+      floor_marker.pose.position.z = 7.5;
 
       // create line markers between floor and rooms/infinite_rooms
       visualization_msgs::msg::Marker floor_line_marker;
@@ -1310,7 +1312,7 @@ float min_dist_plane1 = 100;
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
-        p1.z = 0.0;
+        p1.z = 7.5;
         p2.x = room.node->estimate().translation()(0);
         p2.y = room.node->estimate().translation()(1);
         p2.z = 0.0;

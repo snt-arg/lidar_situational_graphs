@@ -271,9 +271,11 @@ class RoomSegmentationNode : public rclcpp::Node {
       bool found_room = room_analyzer->perform_room_segmentation(
           room_info, cloud_cluster, room_candidates_vec, current_cloud_marker);
 
-      if(room_candidates_vec.back().x_planes.size() == 2 && room_candidates_vec.back().y_planes.size() == 2) 
+      if(!room_candidates_vec.empty()) {
+        if(room_candidates_vec.back().x_planes.size() == 2 && room_candidates_vec.back().y_planes.size() == 2) 
+          std::cout << "flag!!!!!!!!!!!! got a four walled room at time: " <<  (this->now() - start_time).seconds() << std::endl;
+      }
 
-      std::cout << "flag!!!!!!!!!!!! got a four walled room at time: " <<  (this->now() - start_time).seconds() << std::endl;
 
       for (int i = 0; i < cloud_cluster->points.size(); ++i) {
         cloud_visualizer->points.push_back(cloud_cluster->points[i]);
