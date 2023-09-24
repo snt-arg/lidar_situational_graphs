@@ -39,6 +39,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <Eigen/Dense>
 #include <g2o/edge_se3_plane.hpp>
+#include <s_graphs/common/planes.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -226,6 +227,8 @@ class PlaneUtils {
    * @return
    */
   double plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2);
+
+  void get_start_and_end_points(VerticalPlanes& plane);
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP
