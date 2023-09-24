@@ -90,6 +90,8 @@ class Planes {
     wall_point = old_plane.wall_point;
     start_point = old_plane.start_point;
     length = old_plane.length;
+    starting_point = old_plane.starting_point;
+    ending_point = old_plane.ending_point;
     return *this;
   }
 
@@ -114,8 +116,10 @@ class Planes {
   double length;                            // Length of plane
   bool matched = false;                     // Flag if matched with prior/online or not
   Eigen::Vector2d start_point =
-      Eigen::Vector2d::Ones();  // start point of the prior wall in revit
+      Eigen::Vector2d::Ones();  // start point of the PRIOR wall in revit
   Eigen::Vector3d wall_point;   // point used to calculate prior wall center
+  PointNormal starting_point,
+      ending_point;  // starting and ending points of the S-GRAPH plane
 };
 
 class VerticalPlanes : public Planes {
