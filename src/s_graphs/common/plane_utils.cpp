@@ -390,28 +390,17 @@ void PlaneUtils::get_start_and_end_points(VerticalPlanes& plane) {
   // Loop through the point cloud
   for (const auto& point : plane.cloud_seg_map->points) {
     // Calculate the Euclidean distance from the origin (0, 0, 0)
-    double distance =
-        std::sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
-
-    // Update closest and farthest points
-    if (distance < min_distance) {
-      min_distance = distance;
+    if (point.x > closest_point.x) {
       closest_point = point;
     }
-
-    if (distance > max_distance) {
-      max_distance = distance;
+    if (point.x < farthest_point.x) {
       farthest_point = point;
     }
   }
 
   // Output the coordinates of the closest and farthest points
-  plane.starting_point = closest_point;
-  plane.ending_point = farthest_point;
-  // std::cout << "Closest Point: (" << plane.starting_point.x << ", "
-  //           << plane.starting_point.y << "," << plane.starting_point.z << ")\n";
-  // std::cout << "Farthest Point: (" << farthest_point.x << ", " << farthest_point.y
-  //           << ", " << farthest_point.z << ")\n";
+  plane.starting_point = farthest_point;
+  plane.ending_point = closest_point;
 }
 
 }  // namespace s_graphs
