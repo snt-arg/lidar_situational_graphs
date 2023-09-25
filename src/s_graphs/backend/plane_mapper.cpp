@@ -232,6 +232,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         // color.push_back(0.0);  // green
         // color.push_back(0.0);  // blue
         vert_plane.color = color;
+
         x_vert_planes.push_back(vert_plane);
         keyframe->x_plane_ids.push_back(vert_plane.id);
 
@@ -242,6 +243,11 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
+        std::cout << "X plane id : " << vert_plane.plane_node->id() << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(0) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(1) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(2) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
 
       } else {
         plane_node = x_vert_planes[data_association.second].plane_node;
@@ -298,6 +304,11 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
+        std::cout << "Y plane id : " << vert_plane.plane_node->id() << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(0) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(1) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(2) << "   "
+                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
 
       } else {
         plane_node = y_vert_planes[data_association.second].plane_node;
@@ -576,6 +587,7 @@ void PlaneMapper::convert_plane_points_to_map(
       }
     }
     x_vert_planes[i].cloud_seg_map = cloud_seg_map;
+    plane_utils->get_start_and_end_points(x_vert_planes[i]);
   }
 
   for (int i = 0; i < y_vert_planes.size(); ++i) {
@@ -594,6 +606,7 @@ void PlaneMapper::convert_plane_points_to_map(
       }
     }
     y_vert_planes[i].cloud_seg_map = cloud_seg_map;
+    plane_utils->get_start_and_end_points(y_vert_planes[i]);
   }
 
   for (int i = 0; i < hort_planes.size(); ++i) {
