@@ -179,7 +179,6 @@ class Rooms {
       if (token == "id") {
         ifs >> id;
         node->setId(id);
-        std::cout << "room node id : " << node->id() << std::endl;
       } else if (token == "plane_x1_id") {
         int id;
         ifs >> id;
@@ -188,9 +187,6 @@ class Rooms {
               dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
           if (vertex && vertex->id() == id) {
             plane_x1_node = vertex;
-            // std::cout << "plane_x1_node id : " << plane_x1_node->id() << std::endl;
-            // std::cout << "plane_x1_node estimate : "
-            //           << plane_x1_node->estimate().toVector() << std::endl;
           }
         }
         plane_x1_id = id;
@@ -202,9 +198,6 @@ class Rooms {
               dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
           if (vertex && vertex->id() == id) {
             plane_x2_node = vertex;
-            // std::cout << "plane_x2_node id : " << plane_x2_node->id() << std::endl;
-            // std::cout << "plane_x2_node estimate : "
-            //           << plane_x2_node->estimate().toVector() << std::endl;
           }
         }
         plane_x2_id = id;
@@ -216,7 +209,6 @@ class Rooms {
               dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
           if (vertex && vertex->id() == id) {
             plane_y1_node = vertex;
-            // std::cout << "plane_y1_node id : " << plane_y1_node->id() << std::endl;
           }
         }
         plane_y1_id = id;
@@ -228,7 +220,6 @@ class Rooms {
               dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
           if (vertex && vertex->id() == id) {
             plane_y2_node = vertex;
-            // std::cout << "plane_y2_node id : " << plane_y2_node->id() << std::endl;
           }
         }
         plane_y2_id = id;
