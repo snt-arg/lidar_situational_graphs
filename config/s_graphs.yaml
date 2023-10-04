@@ -5,6 +5,7 @@
     odom_frame_id: "odom"
     plane_extraction_frame_id: body
     plane_visualization_frame_id: body_elevated
+    use_map2map_transform: true   # True if loading a previous posegraph for multi-session
 
     # Optimization params
     g2o_solver_type: "lm_var_cholmod" # gn_var, gn_fix6_3, gn_var_cholmod, lm_var, lm_fix6_3, lm_var_cholmod
