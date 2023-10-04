@@ -125,6 +125,8 @@ class SGraphsNode : public rclcpp::Node {
         this->get_parameter("map_cloud_resolution").get_parameter_value().get<double>();
     wait_trans_odom2map =
         this->get_parameter("wait_trans_odom2map").get_parameter_value().get<bool>();
+    use_map2map_transform =
+        this->get_parameter("use_map2map_transform").get_parameter_value().get<bool>();
     got_trans_odom2map = false;
     trans_odom2map.setIdentity();
     odom_path_vec.clear();
@@ -181,7 +183,11 @@ class SGraphsNode : public rclcpp::Node {
       rclcpp::spin_some(shared_from_this());
       usleep(1e6);
     }
-
+    map_2map_transform_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
+        "map2map/transform",
+        1,
+        std::bind(
+            &SGraphsNode::map2map_transform_callback, this, std::placeholders::_1));
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
@@ -261,6 +267,12 @@ class SGraphsNode : public rclcpp::Node {
                   this,
                   std::placeholders::_1,
                   std::placeholders::_2));
+    load_service_server = this->create_service<s_graphs::srv::LoadGraph>(
+        "s_graphs/load",
+        std::bind(&SGraphsNode::load_service,
+                  this,
+                  std::placeholders::_1,
+                  std::placeholders::_2));
 
     graph_updated = false;
     prev_edge_count = curr_edge_count = 0;
@@ -303,6 +315,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("odom_frame_id", "odom");
     this->declare_parameter("map_cloud_resolution", 0.05);
     this->declare_parameter("wait_trans_odom2map", false);
+    this->declare_parameter("use_map2map_transform", false);
     this->declare_parameter("color_r", 0.0);
     this->declare_parameter("color_g", 0.0);
     this->declare_parameter("color_b", 0.0);
@@ -421,14 +434,31 @@ class SGraphsNode : public rclcpp::Node {
    */
   void raw_odom_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
     Eigen::Isometry3d odom = odom2isometry(odom_msg);
-    Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
-
+    geometry_msgs::msg::TransformStamped odom2map_transform;
+    Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
+    Eigen::Matrix4f odom_corrected;
+    if (use_map2map_transform) {
+      Eigen::Isometry3d odom_trans = map2map_trans * odom;
+      odom_corrected = trans_odom2map * odom_trans.matrix().cast<float>();
+    } else {
+      odom_corrected = trans_odom2map * odom.matrix().cast<float>();
+    }
     geometry_msgs::msg::PoseStamped pose_stamped_corrected =
         matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id);
     publish_corrected_odom(pose_stamped_corrected);
 
-    geometry_msgs::msg::TransformStamped odom2map_transform = matrix2transform(
-        odom_msg->header.stamp, trans_odom2map, map_frame_id, odom_frame_id);
+    // this is dirty but temp solution for no /clock topic in ros2
+    if (use_map2map_transform) {
+      Eigen::Matrix4f current_map2map_trans = map2map_trans.matrix().cast<float>();
+      odom2map_transform =
+          matrix2transform(odom_msg->header.stamp,
+                           trans_odom2map * map2map_trans.matrix().cast<float>(),
+                           map_frame_id,
+                           odom_frame_id);
+    } else {
+      odom2map_transform = matrix2transform(
+          odom_msg->header.stamp, trans_odom2map, map_frame_id, odom_frame_id);
+    }
     odom2map_broadcaster->sendTransform(odom2map_transform);
   }
 
@@ -456,6 +486,25 @@ class SGraphsNode : public rclcpp::Node {
     else {
       got_trans_odom2map = true;
     }
+  }
+
+  /**
+   * @brief receive the between loaded and new map frame
+   * @param map2odom_pose_msg
+   */
+  void map2map_transform_callback(
+      const geometry_msgs::msg::PoseStamped::SharedPtr pose_msg) {
+    std::cout << "inside callback" << std::endl;
+    Eigen::Matrix3f mat3 = Eigen::Quaternionf(pose_msg->pose.orientation.w,
+                                              pose_msg->pose.orientation.x,
+                                              pose_msg->pose.orientation.y,
+                                              pose_msg->pose.orientation.z)
+                               .toRotationMatrix();
+    trans_map2map.setIdentity();
+    trans_map2map.block<3, 3>(0, 0) = mat3;
+    trans_map2map(0, 3) = pose_msg->pose.position.x;
+    trans_map2map(1, 3) = pose_msg->pose.position.y;
+    trans_map2map(2, 3) = pose_msg->pose.position.z;
   }
 
   void floor_data_callback(const s_graphs::msg::RoomData::SharedPtr floor_data_msg) {
@@ -590,10 +639,26 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     double accum_d = keyframe_updater->get_accum_distance();
-    KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
-
-    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-    keyframe_queue.push_back(keyframe);
+    if (use_map2map_transform) {
+      Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
+      std::cout << "map2map translation : " << map2map_trans.translation().transpose()
+                << std::endl;
+      Eigen::Quaterniond quaternion(map2map_trans.rotation());
+      std::cout << "map2map Rotation" << quaternion.coeffs().transpose() << std::endl;
+      Eigen::Isometry3d odom_trans = map2map_trans * odom;
+      std::cout << "Odom_Trans translation : " << odom_trans.translation().transpose()
+                << std::endl;
+      Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
+      std::cout << "Odom_Trans Rotation" << odom_quaternion.coeffs().transpose()
+                << std::endl;
+      KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom_trans, accum_d, cloud));
+      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+      keyframe_queue.push_back(keyframe);
+    } else {
+      KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
+      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+      keyframe_queue.push_back(keyframe);
+    }
   }
 
   /**
@@ -1279,6 +1344,187 @@ class SGraphsNode : public rclcpp::Node {
     return true;
   }
 
+  bool load_service(const std::shared_ptr<s_graphs::srv::LoadGraph::Request> req,
+                    std::shared_ptr<s_graphs::srv::LoadGraph::Response> res) {
+    std::string directory = req->destination;
+    std::vector<std::string> keyframe_directories, y_planes_directories,
+        x_planes_directories, room_directories;
+    ;
+    std::stringstream sst;
+    bool keyframe_load_success = false;
+    bool plane_load_success = false;
+    bool room_load_success = false;
+    rclcpp::Time stamp;
+    Eigen::Isometry3d odom;
+    double accum_distance;
+    pcl::PointCloud<PointT>::ConstPtr cloud;
+    sst << boost::format("%s") % directory;
+    std::vector<KeyFrame::Ptr> loaded_keyframes;
+    g2o::SparseOptimizer* local_graph;
+    local_graph = covisibility_graph->graph.get();
+    VerticalPlanes load_x_planes;
+    // load_x_planes.load(sst.str(), local_graph);
+    boost::filesystem::path parentPath(directory);
+    int numSubdirectories = 0;
+    int iterator = 0;
+    if (boost::filesystem::is_directory(parentPath)) {
+      for (const auto& entry : boost::filesystem::directory_iterator(parentPath)) {
+        if (boost::filesystem::is_directory(entry.path())) {
+          keyframe_directories.push_back(entry.path().string());
+        }
+      }
+    }
+    std::sort(keyframe_directories.begin(), keyframe_directories.end());
+
+    loaded_keyframes.resize(keyframe_directories.size());
+
+    for (int i = 0; i < keyframe_directories.size(); i++) {
+      loaded_keyframes[i] =
+          std::make_shared<KeyFrame>(stamp, odom, accum_distance, cloud);
+      loaded_keyframes[i]->node =
+          covisibility_graph->add_se3_node(loaded_keyframes[i]->odom);
+      keyframe_load_success =
+          loaded_keyframes[i]->load(keyframe_directories[i], local_graph);
+    }
+
+    for (int i = 0; i < loaded_keyframes.size() - 1; i++) {
+      KeyFrame::Ptr& prev_keyframe = loaded_keyframes[i];
+      KeyFrame::Ptr& next_keyframe = loaded_keyframes[i + 1];
+
+      Eigen::Isometry3d relative_pose =
+          next_keyframe->odom.inverse() * prev_keyframe->odom;
+      Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+          next_keyframe->cloud, prev_keyframe->cloud, relative_pose);
+      auto edge = covisibility_graph->add_se3_edge(
+          next_keyframe->node, prev_keyframe->node, relative_pose, information);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    }
+    keyframes = loaded_keyframes;
+    std::cout << " loaded keyframes size : " << keyframes.size() << std::endl;
+
+    for (const auto& directoryPath : keyframe_directories) {
+      for (const auto& entry : boost::filesystem::directory_iterator(directoryPath)) {
+        if (boost::filesystem::is_directory(entry)) {
+          size_t lastSlashPos = entry.path().string().find_last_of("/");
+
+          // Extract the substring after the last '/'
+          std::string lastPart = entry.path().string().substr(lastSlashPos + 1);
+
+          if (lastPart == "y_planes") {
+            y_planes_directories.push_back(entry.path().string());
+          } else if (lastPart == "x_planes") {
+            x_planes_directories.push_back(entry.path().string());
+          }
+        }
+      }
+    }
+
+    for (int i = 0; i < y_planes_directories.size(); i++) {
+      VerticalPlanes vert_plane;
+      g2o::Plane3D loaded_plane;
+      g2o::VertexPlane* p_node =
+          covisibility_graph->add_plane_node(loaded_plane.coeffs());
+      vert_plane.plane_node = p_node;
+      y_vert_planes.push_back(vert_plane);
+      plane_load_success =
+          y_vert_planes.back().load(y_planes_directories[i], local_graph, "y");
+    }
+
+    for (int i = 0; i < x_planes_directories.size(); i++) {
+      VerticalPlanes vert_plane;
+      g2o::Plane3D loaded_plane;
+      g2o::VertexPlane* p_node =
+          covisibility_graph->add_plane_node(loaded_plane.coeffs());
+      vert_plane.plane_node = p_node;
+      x_vert_planes.push_back(vert_plane);
+      plane_load_success =
+          x_vert_planes.back().load(x_planes_directories[i], local_graph, "x");
+    }
+    for (int i = 0; i < y_vert_planes.size(); i++) {
+      Eigen::Matrix3d plane_information_mat =
+          Eigen::Matrix3d::Identity() * plane_information;
+      plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
+
+      assert(y_vert_planes[i].cloud_seg_body_vec.size() ==
+             y_vert_planes[i].keyframe_node_vec.size());
+
+      for (int j = 0; j < y_vert_planes[i].keyframe_node_vec.size(); j++) {
+        // std::cout << "Y keyframe node id : "
+        //           << y_vert_planes[i].keyframe_node_vec[j]->id() << std::endl;
+        // std::cout << "plane : " << i << "  cloud : " << j << std::endl;
+        g2o::Plane3D det_plane_body_frame =
+            Eigen::Vector4d(y_vert_planes[i].cloud_seg_body_vec[j]->back().normal_x,
+                            y_vert_planes[i].cloud_seg_body_vec[j]->back().normal_y,
+                            y_vert_planes[i].cloud_seg_body_vec[j]->back().normal_z,
+                            y_vert_planes[i].cloud_seg_body_vec[j]->back().curvature);
+
+        auto edge = covisibility_graph->add_se3_plane_edge(
+            y_vert_planes[i].keyframe_node_vec[j],
+            y_vert_planes[i].plane_node,
+            det_plane_body_frame.coeffs(),
+            plane_information_mat);
+        covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      }
+    }
+    for (int i = 0; i < x_vert_planes.size(); i++) {
+      Eigen::Matrix3d plane_information_mat =
+          Eigen::Matrix3d::Identity() * plane_information;
+      plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
+
+      assert(x_vert_planes[i].cloud_seg_body_vec.size() ==
+             x_vert_planes[i].keyframe_node_vec.size());
+      for (int j = 0; j < x_vert_planes[i].keyframe_node_vec.size(); j++) {
+        g2o::Plane3D det_plane_body_frame =
+            Eigen::Vector4d(x_vert_planes[i].cloud_seg_body_vec[j]->back().normal_x,
+                            x_vert_planes[i].cloud_seg_body_vec[j]->back().normal_y,
+                            x_vert_planes[i].cloud_seg_body_vec[j]->back().normal_z,
+                            x_vert_planes[i].cloud_seg_body_vec[j]->back().curvature);
+
+        auto edge = covisibility_graph->add_se3_plane_edge(
+            x_vert_planes[i].keyframe_node_vec[j],
+            x_vert_planes[i].plane_node,
+            det_plane_body_frame.coeffs(),
+            plane_information_mat);
+        covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      }
+    }
+    for (const auto& entry : boost::filesystem::directory_iterator(parentPath)) {
+      if (boost::filesystem::is_directory(entry)) {
+        boost::filesystem::path room_data_path = entry.path();
+        room_data_path /= "room_data";
+        if (boost::filesystem::exists(room_data_path)) {
+          room_directories.push_back(entry.path().string());
+        }
+      }
+    }
+    std::sort(room_directories.begin(), room_directories.end());
+    for (int i = 0; i < room_directories.size(); i++) {
+      Rooms loaded_room;
+      Eigen::Isometry3d room_center;
+      auto r_node = covisibility_graph->add_room_node(room_center);
+      loaded_room.node = r_node;
+      rooms_vec.push_back(loaded_room);
+      room_load_success =
+          rooms_vec.back().load(room_directories[i], covisibility_graph->graph.get());
+    }
+    Eigen::Matrix<double, 2, 2> information_room_planes;
+    information_room_planes.setZero();
+    information_room_planes(0, 0) = room_information;
+    information_room_planes(1, 1) = room_information;
+    for (int i = 0; i < rooms_vec.size(); i++) {
+      auto edge_room_planes =
+          covisibility_graph->add_room_4planes_edge(rooms_vec[i].node,
+                                                    rooms_vec[i].plane_x1_node,
+                                                    rooms_vec[i].plane_x2_node,
+                                                    rooms_vec[i].plane_y1_node,
+                                                    rooms_vec[i].plane_y2_node,
+                                                    information_room_planes);
+      covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+    }
+    res->success = true;
+    return true;
+  }
+
  private:
   // ROS
   rclcpp::TimerBase::SharedPtr main_timer;
@@ -1302,11 +1548,12 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
   rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
   rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
-  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub;
+  rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
+      map_2map_transform_sub;
 
   std::mutex trans_odom2map_mutex;
-  Eigen::Matrix4f trans_odom2map;
-  bool wait_trans_odom2map, got_trans_odom2map;
+  Eigen::Matrix4f trans_odom2map, trans_map2map;
+  bool wait_trans_odom2map, got_trans_odom2map, use_map2map_transform;
   std::vector<geometry_msgs::msg::PoseStamped> odom_path_vec;
   std::string map_frame_id;
   std::string odom_frame_id;
@@ -1332,6 +1579,7 @@ class SGraphsNode : public rclcpp::Node {
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom2map_broadcaster;
 
   rclcpp::Service<s_graphs::srv::DumpGraph>::SharedPtr dump_service_server;
+  rclcpp::Service<s_graphs::srv::LoadGraph>::SharedPtr load_service_server;
   rclcpp::Service<s_graphs::srv::SaveMap>::SharedPtr save_map_service_server;
 
   // keyframe queue
@@ -1362,7 +1610,7 @@ class SGraphsNode : public rclcpp::Node {
   bool constant_covariance;
   double min_plane_points;
   double infinite_room_information;
-  double room_information;
+  double room_information, plane_information;
   std::vector<VerticalPlanes> x_vert_planes,
       y_vert_planes;  // vertically segmented planes
   std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
