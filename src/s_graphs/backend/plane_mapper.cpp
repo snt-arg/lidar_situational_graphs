@@ -243,11 +243,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
-        std::cout << "X plane id : " << vert_plane.plane_node->id() << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(0) << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(1) << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(2) << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
 
       } else {
         plane_node = x_vert_planes[data_association.second].plane_node;
@@ -304,11 +299,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
-        std::cout << "Y plane id : " << vert_plane.plane_node->id() << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(0) << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(1) << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(2) << "   "
-                  << vert_plane.plane_node->estimate().coeffs()(3) << std::endl;
 
       } else {
         plane_node = y_vert_planes[data_association.second].plane_node;
