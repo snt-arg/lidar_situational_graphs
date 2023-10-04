@@ -187,8 +187,6 @@ class VerticalPlanes : public Planes {
       ofs << "keyframe_vec_node_ids\n";
       for (int i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
-        std::cout << "keyframe id at :  " << i << "   " << keyframe_node_vec[i]->id()
-                  << std::endl;
       }
       pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_map.pcd",
                                  *cloud_seg_map);
@@ -251,14 +249,11 @@ class VerticalPlanes : public Planes {
         pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
       }
     }
-
-    // std::cout << "written" << std::endl;
   }
 
   bool load(const std::string& directory,
             g2o::SparseOptimizer* local_graph,
             std::string type) {
-    std::cout << "inside load func" << std::endl;
     std::ifstream ifs;
     if (type == "y") {
       ifs.open(directory + "/y_plane_data");
@@ -297,20 +292,16 @@ class VerticalPlanes : public Planes {
         while (ifs >> id) {
           ids.push_back(id);
         }
-        std::cout << "before keyframe vec size : " << ids.size() << std::endl;
         for (int i = 0; i < ids.size(); i++) {
           for (const auto& vertex_pair : local_graph->vertices()) {
             g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(vertex_pair.second);
             if (vertex && vertex->id() == ids[i]) {
               // Found the vertex with the given keyframe_id
               keyframe_node_vec.push_back(vertex);
-              std::cout << "keyframe id : " << vertex->id() << std::endl;
             }
           }
         }
 
-        std::cout << "loaded keyframe vec size : " << keyframe_node_vec.size()
-                  << std::endl;
       } else if (token == "keyframe_node_id") {
         int node_id;
         ifs >> node_id;
@@ -364,7 +355,6 @@ class VerticalPlanes : public Planes {
 
     for (int i = 0; i < cloud_seg_body_vec_size - 2; i++) {
       std::string filename = "/cloud_seg_body_" + std::to_string(i) + ".pcd";
-      std::cout << "cloud file name : " << filename << std::endl;
       pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
       pcl::io::loadPCDFile(directory + filename, *body_cloud);
       cloud_seg_body_vec.push_back(body_cloud);
