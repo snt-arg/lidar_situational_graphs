@@ -84,6 +84,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "s_graphs/msg/point_clouds.hpp"
 #include "s_graphs/msg/room_data.hpp"
 #include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs/msg/wall_data.hpp"
+#include "s_graphs/msg/walls_data.hpp"
 #include "s_graphs/srv/dump_graph.hpp"
 #include "s_graphs/srv/load_graph.hpp"
 #include "s_graphs/srv/save_map.hpp"
@@ -207,6 +209,10 @@ class SGraphsNode : public rclcpp::Node {
         "room_segmentation/room_data",
         1,
         std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1));
+    wall_data_sub = this->create_subscription<s_graphs::msg::WallsData>(
+        "wall_segmentation/wall_data",
+        1,
+        std::bind(&SGraphsNode::wall_data_callback, this, std::placeholders::_1));
     floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
         "floor_plan/floor_data",
         1,
@@ -742,6 +748,17 @@ class SGraphsNode : public rclcpp::Node {
       //     keyframe_mapper, covisibility_graph, room_keyframes, odom2map,
       //     current_room);
     }
+  }
+
+  void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
+    std::vector<s_graphs::msg::WallData> walls_msg_vector = walls_msg->walls;
+    std::vector<s_graphs::msg::PlaneData> x_planes_msg;
+    std::vector<s_graphs::msg::PlaneData> y_planes_msg;
+    int plane_1_id, plane_2_id;
+    g2o::Plane3D plane_1, plane_2;
+    Eigen::Vector4d plane_1_coeffs = Eigen::Vector4d::Identity();
+    Eigen::Vector4d plane_2_coeffs = Eigen::Vector4d::Identity();
+    std::vector<VerticalPlanes> y_planes;
   }
 
   void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
@@ -1547,6 +1564,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr raw_odom_sub;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
   rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
+  rclcpp::Subscription<s_graphs::msg::WallsData>::SharedPtr wall_data_sub;
   rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
       map_2map_transform_sub;
