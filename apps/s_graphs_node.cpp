@@ -49,6 +49,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/local_graph_generator.hpp>
 #include <s_graphs/backend/plane_mapper.hpp>
 #include <s_graphs/backend/room_mapper.hpp>
+#include <s_graphs/backend/wall_mapper.hpp>
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/infinite_rooms.hpp>
@@ -430,6 +431,7 @@ class SGraphsNode : public rclcpp::Node {
     imu_mapper = std::make_unique<IMUMapper>(shared_from_this());
     graph_utils = std::make_unique<GraphUtils>();
     graph_publisher = std::make_unique<GraphPublisher>();
+    wall_mapper = std::make_unique<WallMapper>(shared_from_this());
     main_timer->cancel();
   }
 
@@ -1681,6 +1683,7 @@ class SGraphsNode : public rclcpp::Node {
   std::unique_ptr<NmeaSentenceParser> nmea_parser;
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
   std::unique_ptr<PlaneUtils> plane_utils;
+  std::unique_ptr<WallMapper> wall_mapper;
   std::unique_ptr<PlaneMapper> plane_mapper;
   std::unique_ptr<InfiniteRoomMapper> inf_room_mapper;
   std::unique_ptr<FiniteRoomMapper> finite_room_mapper;
