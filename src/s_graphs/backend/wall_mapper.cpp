@@ -37,13 +37,47 @@ WallMapper::WallMapper(const rclcpp::Node::SharedPtr node) { node_obj = node; }
 
 WallMapper::~WallMapper() {}
 
-int WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& graph_slam,
+int WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
                             std::vector<s_graphs::msg::PlaneData> x_planes_msg,
+                            Eigen::Vector3d x_wall_pose,
                             std::vector<s_graphs::msg::PlaneData> y_planes_msg,
+                            Eigen::Vector3d y_wall_pose,
                             std::vector<VerticalPlanes>& x_vert_planes,
                             std::vector<VerticalPlanes>& y_vert_planes) {
   if (x_planes_msg.size() == 2) {
+    auto matched_x_plane1 = x_vert_planes.begin();
+    auto matched_x_plane2 = x_vert_planes.begin();
+
+    matched_x_plane1 =
+        std::find_if(x_vert_planes.begin(),
+                     x_vert_planes.end(),
+                     boost::bind(&VerticalPlanes::id, _1) == x_planes_msg[0].id);
+    matched_x_plane2 =
+        std::find_if(x_vert_planes.begin(),
+                     x_vert_planes.end(),
+                     boost::bind(&VerticalPlanes::id, _1) == x_planes_msg[1].id);
+
+    if (!(*matched_x_plane1).on_wall && !(*matched_x_plane2).on_wall) {
+      add_wall_node_and_edge(
+          covisibility_graph, x_wall_pose, *matched_x_plane1, *matched_x_plane2);
+    }
   } else if (y_planes_msg.size() == 2) {
+    auto matched_y_plane1 = y_vert_planes.begin();
+    auto matched_y_plane2 = y_vert_planes.begin();
+
+    matched_y_plane1 =
+        std::find_if(y_vert_planes.begin(),
+                     y_vert_planes.end(),
+                     boost::bind(&VerticalPlanes::id, _1) == y_planes_msg[0].id);
+    matched_y_plane2 =
+        std::find_if(y_vert_planes.begin(),
+                     y_vert_planes.end(),
+                     boost::bind(&VerticalPlanes::id, _1) == y_planes_msg[1].id);
+
+    if (!(*matched_y_plane1).on_wall && !(*matched_y_plane2).on_wall) {
+      add_wall_node_and_edge(
+          covisibility_graph, y_wall_pose, *matched_y_plane1, *matched_y_plane2);
+    }
   } else {
     std::cout << "Message size is not 2 !! " << std::endl;
   }
@@ -60,5 +94,24 @@ std::pair<int, int> WallMapper::associate_wall(
     const std::vector<HorizontalPlanes>& hort_planes) {
   std::pair<int, int> data_association;
   return data_association;
+}
+void WallMapper::add_wall_node_and_edge(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                        Eigen::Vector3d wall_pose,
+                                        VerticalPlanes& plane1,
+                                        VerticalPlanes& plane2) {
+  g2o::VertexWallXYZ* wall_node = covisibility_graph->add_wall_node(wall_pose);
+  Eigen::Matrix<double, 3, 3> information_wall_surfaces;
+  information_wall_surfaces.setZero();
+  information_wall_surfaces(0, 0) = 1e10;
+  information_wall_surfaces(1, 1) = 1e10;
+  information_wall_surfaces(2, 2) = 1e10;
+  auto wall_edge = covisibility_graph->add_wall_2planes_edge(wall_node,
+                                                             (plane1).plane_node,
+                                                             (plane2).plane_node,
+                                                             wall_pose,
+                                                             information_wall_surfaces);
+  covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
+  (plane1).on_wall = true;
+  (plane2).on_wall = true;
 }
 }  // namespace s_graphs

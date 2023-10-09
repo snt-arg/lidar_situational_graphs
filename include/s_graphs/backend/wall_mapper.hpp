@@ -94,7 +94,7 @@ class WallMapper {
       const std::vector<VerticalPlanes>& y_vert_planes,
       const std::vector<HorizontalPlanes>& hort_planes);
 
- private:
+ public:
   /**
    * @brief
    *
@@ -108,11 +108,29 @@ class WallMapper {
    * @param hort_planes
    * @return
    */
-  int factor_wall(std::shared_ptr<GraphSLAM>& graph_slam,
+
+ public:
+  int factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
                   std::vector<s_graphs::msg::PlaneData> x_planes_msg,
+                  Eigen::Vector3d x_wall_pose,
                   std::vector<s_graphs::msg::PlaneData> y_planes_msg,
+                  Eigen::Vector3d y_wall_pose,
                   std::vector<VerticalPlanes>& x_vert_planes,
                   std::vector<VerticalPlanes>& y_vert_planes);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param wall_pose
+   * @param plane1
+   * @param plane2
+   * @return
+   */
+  void add_wall_node_and_edge(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                              Eigen::Vector3d wall_pose,
+                              VerticalPlanes& plane1,
+                              VerticalPlanes& plane2);
 
  private:
   bool use_point_to_plane;
