@@ -751,14 +751,13 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
-    std::vector<s_graphs::msg::WallData> walls_msg_vector = walls_msg->walls;
-    std::vector<s_graphs::msg::PlaneData> x_planes_msg;
-    std::vector<s_graphs::msg::PlaneData> y_planes_msg;
-    int plane_1_id, plane_2_id;
-    g2o::Plane3D plane_1, plane_2;
-    Eigen::Vector4d plane_1_coeffs = Eigen::Vector4d::Identity();
-    Eigen::Vector4d plane_2_coeffs = Eigen::Vector4d::Identity();
-    std::vector<VerticalPlanes> y_planes;
+    walls_msg_vector = walls_msg->walls;
+    std::unique_lock<std::mutex> lock(wall_data_queue_mutex);
+    for (int j = 0; j < walls_msg_vector.size(); j++) {
+      x_planes_msg = walls_msg->walls[j].x_planes;
+      y_planes_msg = walls_msg->walls[j].y_planes;
+    }
+    lock.unlock();
   }
 
   void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
@@ -1623,6 +1622,8 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<sensor_msgs::msg::Imu::SharedPtr> imu_queue;
 
   // vertical and horizontal planes
+  std::mutex wall_data_queue_mutex;
+
   int keyframe_window_size;
   bool extract_planar_surfaces;
   bool constant_covariance;
@@ -1646,6 +1647,9 @@ class SGraphsNode : public rclcpp::Node {
   std::vector<HorizontalPlanes> hort_planes_snapshot;
   std::vector<Rooms> rooms_vec_snapshot;
   std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
+  std::vector<s_graphs::msg::WallData> walls_msg_vector;
+  std::vector<s_graphs::msg::PlaneData> x_planes_msg;
+  std::vector<s_graphs::msg::PlaneData> y_planes_msg;
 
   // room data queue
   std::mutex room_data_queue_mutex, floor_data_mutex;
