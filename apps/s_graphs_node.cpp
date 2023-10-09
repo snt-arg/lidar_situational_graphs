@@ -754,11 +754,30 @@ class SGraphsNode : public rclcpp::Node {
 
   void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
     walls_msg_vector = walls_msg->walls;
+    Eigen::Vector3d x_wall_pose = Eigen::Vector3d::Identity();
+    Eigen::Vector3d y_wall_pose = Eigen::Vector3d::Identity();
     std::unique_lock<std::mutex> lock(wall_data_queue_mutex);
     for (int j = 0; j < walls_msg_vector.size(); j++) {
       x_planes_msg = walls_msg->walls[j].x_planes;
+      if (x_planes_msg.size() == 2) {
+        x_wall_pose << walls_msg->walls[j].wall_center.position.x,
+            walls_msg->walls[j].wall_center.position.y,
+            walls_msg->walls[j].wall_center.position.z;
+      }
       y_planes_msg = walls_msg->walls[j].y_planes;
+      if (y_planes_msg.size() == 2) {
+        y_wall_pose << walls_msg->walls[j].wall_center.position.x,
+            walls_msg->walls[j].wall_center.position.y,
+            walls_msg->walls[j].wall_center.position.z;
+      }
     }
+    wall_mapper->factor_wall(covisibility_graph,
+                             x_planes_msg,
+                             x_wall_pose,
+                             y_planes_msg,
+                             y_wall_pose,
+                             x_vert_planes,
+                             y_vert_planes);
     lock.unlock();
   }
 
