@@ -76,47 +76,24 @@ class WallMapper {
   /**
    * @brief
    *
-   * @param plane_type
-   * @param keyframe
-   * @param det_plane
-   * @param cloud_seg_body
+   * @param covisibility_graph
+   * @param x_planes_msg
+   * @param x_wall_pose
+   * @param y_planes_msg
+   * @param y_wall_pose
    * @param x_vert_planes
    * @param y_vert_planes
-   * @param hort_planes
-   * @return
-   */
-  std::pair<int, int> associate_wall(
-      const int& plane_type,
-      const KeyFrame::Ptr& keyframe,
-      const g2o::Plane3D& det_plane,
-      const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
-      const std::vector<HorizontalPlanes>& hort_planes);
-
- public:
-  /**
-   * @brief
-   *
-   * @param graph_slam
-   * @param plane_type
-   * @param keyframe
-   * @param det_plane_map_frame
-   * @param det_plane_body_frame
-   * @param x_vert_planes
-   * @param y_vert_planes
-   * @param hort_planes
    * @return
    */
 
  public:
-  int factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
-                  std::vector<s_graphs::msg::PlaneData> x_planes_msg,
-                  Eigen::Vector3d x_wall_pose,
-                  std::vector<s_graphs::msg::PlaneData> y_planes_msg,
-                  Eigen::Vector3d y_wall_pose,
-                  std::vector<VerticalPlanes>& x_vert_planes,
-                  std::vector<VerticalPlanes>& y_vert_planes);
+  void factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                   std::vector<s_graphs::msg::PlaneData> x_planes_msg,
+                   Eigen::Vector3d x_wall_pose,
+                   std::vector<s_graphs::msg::PlaneData> y_planes_msg,
+                   Eigen::Vector3d y_wall_pose,
+                   std::vector<VerticalPlanes>& x_vert_planes,
+                   std::vector<VerticalPlanes>& y_vert_planes);
 
   /**
    * @brief

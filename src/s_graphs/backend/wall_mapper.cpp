@@ -37,13 +37,13 @@ WallMapper::WallMapper(const rclcpp::Node::SharedPtr node) { node_obj = node; }
 
 WallMapper::~WallMapper() {}
 
-int WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
-                            std::vector<s_graphs::msg::PlaneData> x_planes_msg,
-                            Eigen::Vector3d x_wall_pose,
-                            std::vector<s_graphs::msg::PlaneData> y_planes_msg,
-                            Eigen::Vector3d y_wall_pose,
-                            std::vector<VerticalPlanes>& x_vert_planes,
-                            std::vector<VerticalPlanes>& y_vert_planes) {
+void WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                             std::vector<s_graphs::msg::PlaneData> x_planes_msg,
+                             Eigen::Vector3d x_wall_pose,
+                             std::vector<s_graphs::msg::PlaneData> y_planes_msg,
+                             Eigen::Vector3d y_wall_pose,
+                             std::vector<VerticalPlanes>& x_vert_planes,
+                             std::vector<VerticalPlanes>& y_vert_planes) {
   if (x_planes_msg.size() == 2) {
     auto matched_x_plane1 = x_vert_planes.begin();
     auto matched_x_plane2 = x_vert_planes.begin();
@@ -81,20 +81,8 @@ int WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
   } else {
     std::cout << "Message size is not 2 !! " << std::endl;
   }
-  return 0;
 }
 
-std::pair<int, int> WallMapper::associate_wall(
-    const int& plane_type,
-    const KeyFrame::Ptr& keyframe,
-    const g2o::Plane3D& det_plane,
-    const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
-    const std::vector<VerticalPlanes>& x_vert_planes,
-    const std::vector<VerticalPlanes>& y_vert_planes,
-    const std::vector<HorizontalPlanes>& hort_planes) {
-  std::pair<int, int> data_association;
-  return data_association;
-}
 void WallMapper::add_wall_node_and_edge(std::shared_ptr<GraphSLAM>& covisibility_graph,
                                         Eigen::Vector3d wall_pose,
                                         VerticalPlanes& plane1,
