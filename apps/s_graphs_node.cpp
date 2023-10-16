@@ -1229,6 +1229,11 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
+      if (x_vert_plane.type == "Prior") {
+        plane_data.data_source = "PRIOR";
+      } else {
+        plane_data.data_source = "Online";
+      }
       for (const auto& plane_point_data : (x_vert_plane).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
@@ -1250,6 +1255,11 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
+      if (y_vert_plane.type == "Prior") {
+        plane_data.data_source = "PRIOR";
+      } else {
+        plane_data.data_source = "Online";
+      }
       for (const auto& plane_point_data : (y_vert_plane).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
