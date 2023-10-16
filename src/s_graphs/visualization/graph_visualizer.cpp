@@ -1223,35 +1223,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
   double deviation_h = 16;
   prior_markers.markers.clear();
 
-  visualization_msgs::msg::MarkerArray mark_array;
-  visualization_msgs::msg::Marker mesh_marker;
-  mesh_marker.header.frame_id = "prior_map";
-  mesh_marker.header.stamp = stamp;
-  mesh_marker.ns = "mesh";
-  mesh_marker.id = prior_markers.markers.size();
-  mesh_marker.type = visualization_msgs::msg::Marker::MESH_RESOURCE;
-  mesh_marker.mesh_resource =
-      "file:///home/shaheer/Workspace/s_graphs_ros2_ws/src/s_graphs/meshes/"
-      "1st_build_EX_114551_2nd_floor.dae";
-
-  mesh_marker.pose.position.x = 0;
-  mesh_marker.pose.position.y = 0;
-  mesh_marker.pose.position.z = -0.94;
-  mesh_marker.pose.orientation.x = 0.0;
-  mesh_marker.pose.orientation.y = 0.0;
-  mesh_marker.pose.orientation.z = 0.0;
-  mesh_marker.pose.orientation.w = 1.0;
-  mesh_marker.scale.x = 1.0;
-  mesh_marker.scale.y = 1.0;
-  mesh_marker.scale.z = 1.0;
-
-  mesh_marker.color.r = 0.6f;
-  mesh_marker.color.g = 0.6f;
-  mesh_marker.color.b = 0.7f;
-  mesh_marker.color.a = 0.4;
-
-  prior_markers.markers.push_back(mesh_marker);
-
   for (int i = 0; i < x_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
     double r, g, b;
     visualization_msgs::msg::Marker wall_visual_marker;
