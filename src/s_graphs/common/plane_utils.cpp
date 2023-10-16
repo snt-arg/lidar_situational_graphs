@@ -371,36 +371,4 @@ double PlaneUtils::plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2) {
   double maha_dist = sqrt(error.transpose() * information * error);
   return maha_dist;
 }
-
-void PlaneUtils::get_start_and_end_points(VerticalPlanes& plane) {
-  if (plane.cloud_seg_map->empty()) {
-    std::cerr << "Point cloud is empty." << std::endl;
-  }
-
-  // Initialize variables to store the closest and farthest points
-  auto closest_point = plane.cloud_seg_map->points[0];
-  auto farthest_point = plane.cloud_seg_map->points[0];
-
-  double min_distance =
-      std::sqrt(closest_point.x * closest_point.x + closest_point.y * closest_point.y +
-                closest_point.z * closest_point.z);
-
-  double max_distance = min_distance;
-
-  // Loop through the point cloud
-  for (const auto& point : plane.cloud_seg_map->points) {
-    // Calculate the Euclidean distance from the origin (0, 0, 0)
-    if (point.x > closest_point.x) {
-      closest_point = point;
-    }
-    if (point.x < farthest_point.x) {
-      farthest_point = point;
-    }
-  }
-
-  // Output the coordinates of the closest and farthest points
-  plane.starting_point = farthest_point;
-  plane.ending_point = closest_point;
-}
-
 }  // namespace s_graphs

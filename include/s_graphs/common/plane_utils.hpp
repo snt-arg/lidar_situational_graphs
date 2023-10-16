@@ -227,8 +227,6 @@ class PlaneUtils {
    * @return
    */
   double plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2);
-
-  void get_start_and_end_points(VerticalPlanes& plane);
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP

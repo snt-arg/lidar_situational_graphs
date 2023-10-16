@@ -580,7 +580,6 @@ void PlaneMapper::convert_plane_points_to_map(
       }
     }
     x_vert_planes[i].cloud_seg_map = cloud_seg_map;
-    plane_utils->get_start_and_end_points(x_vert_planes[i]);
   }
 
   for (int i = 0; i < y_vert_planes.size(); ++i) {
@@ -599,7 +598,6 @@ void PlaneMapper::convert_plane_points_to_map(
       }
     }
     y_vert_planes[i].cloud_seg_map = cloud_seg_map;
-    plane_utils->get_start_and_end_points(y_vert_planes[i]);
   }
 
   for (int i = 0; i < hort_planes.size(); ++i) {
