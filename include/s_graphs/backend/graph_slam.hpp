@@ -37,7 +37,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/core/sparse_optimizer.h>
 
 #include <g2o/edge_doorway_two_rooms.hpp>
+#include <g2o/edge_se3_two_planes.hpp>
+#include <g2o/edge_se3_two_rooms.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
+#include <g2o/vertex_deviation.hpp>
 #include <g2o/vertex_wall.hpp>
 #include <memory>
 
@@ -65,10 +68,13 @@ class EdgeSE3Room;
 class EdgeRoom2Planes;
 class EdgeRoom4Planes;
 class EdgeFloorRoom;
+class Edge2Rooms;
 class EdgeXInfiniteRoomXInfiniteRoom;
 class EdgeYInfiniteRoomYInfiniteRoom;
 class EdgePlanePerpendicular;
 class Edge2Planes;
+class EdgeSE3PlanePlane;
+class EdgeSE3RoomRoom;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class EdgeDoorWay2Rooms;
@@ -76,6 +82,7 @@ class RobustKernelFactory;
 class VertexRoom;
 class VertexFloor;
 class VertexDoorWay;
+class VertexDeviation;
 }  // namespace g2o
 
 namespace s_graphs {
@@ -260,6 +267,14 @@ class GraphSLAM {
    * @return registered node
    */
   g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
+  /**
+   * @brief Add a SE3 Deviation node to the graph.
+   *
+   * @param pose
+   * @return Registered node
+   */
+
+  g2o::VertexDeviation* add_deviation_node(const Eigen::Isometry3d& pose);
 
   /**
    * @brief Add an edge between SE3 nodes
@@ -509,6 +524,20 @@ class GraphSLAM {
                                       g2o::VertexPlane* v2);
 
   /**
+   * @brief Deviation connection edge between two planes
+   *
+   * @param v_se3: Deviation vertex
+   * @param v1: plane1 edge
+   * @param v2: plane2 edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3PlanePlane* add_se3_point_to_2planes_edge(
+      g2o::VertexDeviation* v_se3,
+      g2o::VertexPlane* v_plane1,
+      g2o::VertexPlane* v_plane2,
+      const Eigen::MatrixXd& information);
+
+  /**
    * @brief
    *
    * @param v_se3
@@ -676,6 +705,31 @@ class GraphSLAM {
                                                   g2o::VertexRoom* v_room1,
                                                   g2o::VertexRoom* v_room2,
                                                   const Eigen::MatrixXd& information);
+
+  /**
+   * @brief deviations betwen rooms edge
+   *
+   * @param v1: vertex deviation
+   * @param v2: vertex room
+   * @param v3: vertex room
+   * @return registered edge
+   */
+  g2o::EdgeSE3RoomRoom* add_deviation_two_rooms_edge(
+      g2o::VertexDeviation* v1,
+      g2o::VertexRoom* v2,
+      g2o::VertexRoom* v3,
+      const Eigen::MatrixXd& information);
+
+  /**
+   * @brief Merge prior and online rooms with 0 error
+   *
+   * @param v1: vertex room 1
+   * @param v2: vertex room 2
+   * @return registered edge
+   */
+  g2o::Edge2Rooms* add_2rooms_edge(g2o::VertexRoom* v1,
+                                   g2o::VertexRoom* v2,
+                                   const Eigen::MatrixXd& information);
 
   /**
    * @brief

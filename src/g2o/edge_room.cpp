@@ -366,4 +366,43 @@ bool EdgeFloorRoom::write(std::ostream& os) const {
   return os.good();
 }
 
+void Edge2Rooms::computeError() {
+  const VertexRoom* v1 = static_cast<const VertexRoom*>(_vertices[0]);
+  const VertexRoom* v2 = static_cast<const VertexRoom*>(_vertices[1]);
+  Eigen::Vector2d v1_est, v2_est;
+  v1_est(0) = v1->estimate().translation().x();
+  v1_est(1) = v1->estimate().translation().y();
+  v2_est(0) = v2->estimate().translation().x();
+  v2_est(1) = v2->estimate().translation().y();
+
+  _error = v1_est - v2_est;
+}
+
+bool Edge2Rooms::read(std::istream& is) {
+  Eigen::Vector2d v;
+  is >> v(0) >> v(1);
+
+  for (int i = 0; i < information().rows(); ++i) {
+    for (int j = i; j < information().cols(); ++j) {
+      is >> information()(i, j);
+      if (i != j) {
+        information()(j, i) = information()(i, j);
+      }
+    }
+  }
+  return true;
+}
+
+bool Edge2Rooms::write(std::ostream& os) const {
+  Eigen::Vector2d v;
+  os << v(0) << " " << v(1) << " ";
+
+  for (int i = 0; i < information().rows(); ++i) {
+    for (int j = i; j < information().cols(); ++j) {
+      os << " " << information()(i, j);
+    };
+  }
+  return os.good();
+}
+
 }  // namespace g2o

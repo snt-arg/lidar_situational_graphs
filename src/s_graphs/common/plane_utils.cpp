@@ -305,6 +305,16 @@ float PlaneUtils::plane_dot_product(const s_graphs::msg::PlaneData& plane1,
   return dot_product;
 }
 
+bool PlaneUtils::plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* plane2) {
+  Eigen::Vector4d coeffs1 = plane1->estimate().coeffs();
+  Eigen::Vector4d coeffs2 = plane2->estimate().coeffs();
+  Eigen::Vector3d normal1(coeffs1[0], coeffs1[1], coeffs1[2]);
+  Eigen::Vector3d normal2(coeffs2[0], coeffs2[1], coeffs2[2]);
+  double dot_product = normal1.dot(normal2);
+  std::cout << "dot product : " << dot_product << std::endl;
+  return dot_product > 0.9;
+}
+
 geometry_msgs::msg::Pose PlaneUtils::extract_infite_room_center(
     int plane_type,
     pcl::PointXY p1,
@@ -361,5 +371,4 @@ double PlaneUtils::plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2) {
   double maha_dist = sqrt(error.transpose() * information * error);
   return maha_dist;
 }
-
 }  // namespace s_graphs

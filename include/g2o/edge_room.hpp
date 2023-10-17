@@ -177,5 +177,19 @@ class EdgeFloorRoom
   virtual void setMeasurement(const Eigen::Vector2d& m) override { _measurement = m; }
 };
 
+class Edge2Rooms
+    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoom, g2o::VertexRoom> {
+ public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  Edge2Rooms()
+      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexRoom, g2o::VertexRoom>() {}
+
+  void computeError() override;
+
+  virtual bool read(std::istream& is) override;
+
+  virtual bool write(std::ostream& os) const override;
+};
+
 }  // namespace g2o
 #endif  // EDGE_ROOM_HPP

@@ -85,6 +85,7 @@ class Rooms {
 
   Rooms &operator=(const Rooms &old_room) {
     id = old_room.id;
+    prior_id = old_room.prior_id;
 
     plane_x1 = old_room.plane_x1;
     plane_x2 = old_room.plane_x2;
@@ -106,12 +107,163 @@ class Rooms {
     node = old_room.node;
     room_keyframes = old_room.room_keyframes;
     local_graph = old_room.local_graph;
+    matched = old_room.matched;
 
     return *this;
+  }
+  bool save(const std::string &directory) {
+    if (!boost::filesystem::is_directory(directory)) {
+      boost::filesystem::create_directory(directory);
+    }
+    std::ofstream ofs(directory + "/room_data");
+    ofs << "id\n";
+    ofs << id << "\n";
+
+    ofs << "Plane_x1 \n";
+    ofs << plane_x1.coeffs() << "\n";
+
+    ofs << "Plane_x2 \n";
+    ofs << plane_x2.coeffs() << "\n";
+
+    ofs << "Plane_y1 \n";
+    ofs << plane_y1.coeffs() << "\n";
+
+    ofs << "Plane_y2 \n";
+    ofs << plane_y2.coeffs() << "\n";
+
+    ofs << "plane_x1_id \n";
+    ofs << plane_x1_id << "\n";
+
+    ofs << "plane_x2_id \n";
+    ofs << plane_x2_id << "\n";
+
+    ofs << "plane_y1_id \n";
+    ofs << plane_y1_id << "\n";
+
+    ofs << "plane_y2_id \n";
+    ofs << plane_y2_id << "\n";
+
+    ofs << "plane_x1_node \n";
+    ofs << plane_x1_node->estimate().coeffs() << "\n";
+
+    ofs << "plane_x2_node \n";
+    ofs << plane_x2_node->estimate().coeffs() << "\n";
+
+    ofs << "plane_y1_node \n";
+    ofs << plane_y1_node->estimate().coeffs() << "\n";
+
+    ofs << "plane_y2_node \n";
+    ofs << plane_y2_node->estimate().coeffs() << "\n";
+
+    ofs << "room_node \n";
+    ofs << node->estimate().matrix() << "\n";
+
+    ofs << "room_keyframes_ids\n";
+    std::cout << "room_keyframes.size() : " << room_keyframes.size() << std::endl;
+    for (int i = 0; i < room_keyframes.size(); i++) {
+      ofs << room_keyframes[i]->id() << "\n";
+      std::cout << "keyframe id at :  " << i << "   " << room_keyframes[i]->id()
+                << std::endl;
+    }
+    return true;
+  }
+
+  bool load(const std::string &directory, g2o::SparseOptimizer *local_graph) {
+    std::ifstream ifs(directory + "/room_data");
+    if (!ifs) {
+      return false;
+    }
+    while (!ifs.eof()) {
+      std::string token;
+      ifs >> token;
+      if (token == "id") {
+        ifs >> id;
+        node->setId(id);
+      } else if (token == "plane_x1_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_x1_node = vertex;
+          }
+        }
+        plane_x1_id = id;
+      } else if (token == "plane_x2_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_x2_node = vertex;
+          }
+        }
+        plane_x2_id = id;
+      } else if (token == "plane_y1_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_y1_node = vertex;
+          }
+        }
+        plane_y1_id = id;
+      } else if (token == "plane_y2_id") {
+        int id;
+        ifs >> id;
+        for (const auto &vertex_pair : local_graph->vertices()) {
+          g2o::VertexPlane *vertex =
+              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
+          if (vertex && vertex->id() == id) {
+            plane_y2_node = vertex;
+          }
+        }
+        plane_y2_id = id;
+      } else if (token == "Plane_x1") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_x1.fromVector(plane_coeffs);
+      } else if (token == "Plane_x2") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_x2.fromVector(plane_coeffs);
+      } else if (token == "Plane_y1") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_y1.fromVector(plane_coeffs);
+      } else if (token == "Plane_y2") {
+        Eigen::Vector4d plane_coeffs;
+        for (int i = 0; i < 4; i++) {
+          ifs >> plane_coeffs[i];
+        }
+        plane_y2.fromVector(plane_coeffs);
+      } else if (token == "room_node") {
+        Eigen::Matrix4d room_pose = Eigen::Matrix4d::Identity();
+        for (int i = 0; i < 4; i++) {
+          for (int j = 0; j < 4; j++) {
+            ifs >> room_pose(i, j);
+          }
+        }
+        Eigen::Isometry3d room_isometry_pose(room_pose);
+        node->setEstimate(room_isometry_pose);
+      }
+    }
+    return true;
   }
 
  public:
   int id;
+  int prior_id;
   g2o::Plane3D plane_x1;
   g2o::Plane3D plane_x2;
   g2o::Plane3D plane_y1;
@@ -121,6 +273,7 @@ class Rooms {
   int plane_y1_id;
   int plane_y2_id;
   bool sub_room;
+  bool matched = false;
   visualization_msgs::msg::MarkerArray cluster_array;
 
   g2o::VertexPlane *plane_x1_node = nullptr;

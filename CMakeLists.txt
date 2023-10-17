@@ -81,8 +81,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/RoomsData.msg"
   "msg/FloorCoeffs.msg"
   "msg/ScanMatchingStatus.msg"
+  "msg/WallData.msg"
+  "msg/WallsData.msg"
   "srv/DumpGraph.srv"
   "srv/SaveMap.srv"
+  "srv/LoadGraph.srv"
   DEPENDENCIES builtin_interfaces std_msgs geometry_msgs sensor_msgs visualization_msgs
 )
 

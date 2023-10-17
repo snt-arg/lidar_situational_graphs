@@ -39,6 +39,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <Eigen/Dense>
 #include <g2o/edge_se3_plane.hpp>
+#include <s_graphs/common/planes.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
@@ -210,6 +211,8 @@ class PlaneUtils {
    */
   float plane_dot_product(const s_graphs::msg::PlaneData& plane1,
                           const s_graphs::msg::PlaneData& plane2);
+
+  bool plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* plane2);
 
   geometry_msgs::msg::Pose extract_infite_room_center(int plane_type,
                                                       pcl::PointXY p1,

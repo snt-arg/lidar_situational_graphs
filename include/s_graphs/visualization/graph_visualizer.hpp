@@ -52,6 +52,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/backend/plane_mapper.hpp>
 #include <s_graphs/backend/room_mapper.hpp>
+#include <s_graphs/common/door_ways.hpp>
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/infinite_rooms.hpp>
 #include <s_graphs/common/keyframe.hpp>
@@ -113,6 +114,22 @@ class GraphVisualizer {
       double loop_detector_radius,
       std::vector<KeyFrame::Ptr> keyframes,
       std::vector<Floors> floors_vec);
+
+  visualization_msgs::msg::MarkerArray create_prior_marker_array(
+      const rclcpp::Time& stamp,
+      const g2o::SparseOptimizer* local_graph,
+      std::vector<VerticalPlanes>& x_vert_planes_prior,
+      std::vector<VerticalPlanes>& y_vert_planes_prior,
+      std::vector<Rooms> rooms_vec_prior,
+      std::vector<Rooms> rooms_vec,
+      bool got_trans_prior2map_,
+      const std::vector<DoorWays> doorways_vec_prio,
+      std::vector<VerticalPlanes>& x_vert_planes,
+      std::vector<VerticalPlanes>& y_vert_planes);
+
+  Eigen::Isometry3d compute_plane_pose(const VerticalPlanes& plane,
+                                       pcl::PointXYZRGBNormal& p_min,
+                                       pcl::PointXYZRGBNormal& p_max);
 
  private:
   std::string map_frame_id;
