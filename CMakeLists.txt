@@ -151,6 +151,7 @@ target_link_libraries(s_graphs_core_lib
                       g2o_sgraphs
                       ${G2O_COMMON_LIBS}
                       ${PCL_LIBRARIES}
+                      ${TORCH_LIBRARIES}
                       )
 target_include_directories(s_graphs_core_lib
   PUBLIC
