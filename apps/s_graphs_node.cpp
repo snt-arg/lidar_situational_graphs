@@ -253,13 +253,13 @@ class SGraphsNode : public rclcpp::Node {
         this->create_publisher<s_graphs::msg::PlanesData>("s_graphs/all_map_planes", 1);
     read_until_pub =
         this->create_publisher<std_msgs::msg::Header>("s_graphs/read_until", 32);
-    graph_pub = this->create_publisher<graph_manager_msgs::msg::Graph>(
+    graph_pub = this->create_publisher<reasoning_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32);
     graph_keyframes_pub =
-        this->create_publisher<graph_manager_msgs::msg::GraphKeyframes>(
+        this->create_publisher<reasoning_msgs::msg::GraphKeyframes>(
             "s_graphs/graph_keyframes", 32);
     graph_room_keyframe_pub =
-        this->create_publisher<graph_manager_msgs::msg::RoomKeyframe>(
+        this->create_publisher<reasoning_msgs::msg::RoomKeyframe>(
             "s_graphs/graph_room_keyframes", 32);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
@@ -1616,10 +1616,10 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr keyframe_map_points_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr all_map_planes_pub;
-  rclcpp::Publisher<graph_manager_msgs::msg::Graph>::SharedPtr graph_pub;
-  rclcpp::Publisher<graph_manager_msgs::msg::GraphKeyframes>::SharedPtr
+  rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_pub;
+  rclcpp::Publisher<reasoning_msgs::msg::GraphKeyframes>::SharedPtr
       graph_keyframes_pub;
-  rclcpp::Publisher<graph_manager_msgs::msg::RoomKeyframe>::SharedPtr
+  rclcpp::Publisher<reasoning_msgs::msg::RoomKeyframe>::SharedPtr
       graph_room_keyframe_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};

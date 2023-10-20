@@ -33,6 +33,7 @@ find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(reasoning_msgs REQUIRED)
 find_package(interactive_markers REQUIRED)
 find_package(ndt_omp REQUIRED)
 find_package(fast_gicp REQUIRED)
@@ -40,7 +41,6 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
-find_package(graph_manager_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
 
 find_package(PCL REQUIRED)
@@ -62,6 +62,9 @@ if (OPENMP_FOUND)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 endif()
+
+find_package(Torch REQUIRED)
+include_directories(${TORCH_INCLUDE_DIRS})
 
 find_library(VGICP_CUDA_FOUND NAMES fast_vgicp_cuda)
 message(STATUS "VGICP_CUDA_FOUND:" ${VGICP_CUDA_FOUND})
@@ -107,12 +110,12 @@ set(DEPENDENCIES
     tf2 
     tf2_ros
     pcl_ros 
-    graph_manager_msgs 
     visualization_msgs 
     message_filters 
     geographic_msgs
     nmea_msgs
-    geodesy)
+    geodesy
+    reasoning_msgs)
 
 SET(G2O_COMMON_LIBS 
   ${PCL_LIBRARIES}
