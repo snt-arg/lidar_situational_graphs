@@ -116,21 +116,26 @@ class EdgeRoomRoom
 };
 
 class EdgeSE3Room
-    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoom> {
+    : public BaseBinaryEdge<6, Eigen::Isometry3d, g2o::VertexSE3, g2o::VertexRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeSE3Room()
-      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexSE3, g2o::VertexRoom>() {}
+      : BaseBinaryEdge<6, Eigen::Isometry3d, g2o::VertexSE3, g2o::VertexRoom>(){};
 
   void computeError() override;
 
   virtual bool read(std::istream& is) override;
+  void linearizeOplus() override;
 
   virtual bool write(std::ostream& os) const override;
 
-  virtual void setMeasurement(const Eigen::Vector2d& m) override { _measurement = m; }
-};
+  virtual void setMeasurement(const Isometry3& m) override {
+    _measurement = m;
+    _inverseMeasurement = m.inverse();
+  }
 
+  Isometry3 _inverseMeasurement;
+};
 class EdgeRoom2Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
