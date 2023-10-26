@@ -37,6 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/core/sparse_optimizer.h>
 
 #include <g2o/edge_doorway_two_rooms.hpp>
+#include <g2o/edge_multi_se3.hpp>
 #include <g2o/edge_se3_two_planes.hpp>
 #include <g2o/edge_se3_two_rooms.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
@@ -78,6 +79,7 @@ class EdgeSE3RoomRoom;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class EdgeDoorWay2Rooms;
+class EdgeMultiSE3;
 class RobustKernelFactory;
 class VertexRoom;
 class VertexFloor;
@@ -566,6 +568,20 @@ class GraphSLAM {
                                               g2o::VertexPlane* v_plane2,
                                               g2o::VertexRoom* v_cluster_center,
                                               const Eigen::MatrixXd& information);
+
+  /**
+   * @brief
+   *
+   * @param v_a_graph_origin
+   * @param v_s_graph_origin
+   * @param v_transformation
+   * @param information
+   * @return registered edge
+   */
+  g2o::EdgeMultiSE3* add_origin_to_origin_edge(g2o::VertexSE3* v_a_graph_origin,
+                                               g2o::VertexSE3* v_s_graph_origin,
+                                               g2o::VertexSE3* v_transformation,
+                                               const Eigen::MatrixXd& information);
 
   bool remove_room_2planes_edge(g2o::EdgeRoom2Planes* room_plane_edge);
 
