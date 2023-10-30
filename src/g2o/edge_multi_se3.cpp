@@ -72,9 +72,10 @@ void EdgeMultiSE3::computeError() {
   const g2o::VertexSE3* transformation_node =
       static_cast<const g2o::VertexSE3*>(_vertices[2]);
 
-  Isometry3 delta = transformation_node->estimate().inverse() *
-                    s_graph_origin_node->estimate() *
-                    a_graph_origin_node->estimate().inverse();
+  Isometry3 delta =
+      (transformation_node->estimate() * s_graph_origin_node->estimate()) *
+      a_graph_origin_node->estimate().inverse();
+
   _error = internal::toVectorMQT(delta);
 }
 
