@@ -1407,8 +1407,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           dynamic_cast<g2o::VertexPlane*>(edge_wall_dev->vertices()[1]);
       g2o::VertexPlane* v3 =
           dynamic_cast<g2o::VertexPlane*>(edge_wall_dev->vertices()[2]);
-      std::cout << "Deviation between : " << v2->id() << "  and: " << v3->id()
-                << std::endl;
+      // std::cout << "Deviation between : " << v2->id() << "  and: " << v3->id()
+      //           << std::endl;
       int d = 0;
       if (abs(v2->estimate().coeffs()(0)) > abs(v2->estimate().coeffs()(1))) {
         Eigen::Vector4d a_graph_wall_coeffs = v2->estimate().toVector();
