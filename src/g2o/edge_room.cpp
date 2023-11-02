@@ -263,58 +263,7 @@ void EdgeRoom4Planes::computeError() {
   correct_plane_direction(y_plane1);
   correct_plane_direction(y_plane2);
 
-  Eigen::Vector2d final_vec;
-  // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-
-  // Eigen::Vector3d vec_x, vec_y;
-  // if (fabs(x_plane1(3)) > fabs(x_plane2(3))) {
-  //   vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) -
-  //                   fabs(x_plane2(3)) * x_plane2.head(3))) +
-  //           fabs(x_plane2(3)) * x_plane2.head(3);
-  // } else {
-  //   vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) -
-  //                   fabs(x_plane1(3)) * x_plane1.head(3))) +
-  //           fabs(x_plane1(3)) * x_plane1.head(3);
-  // }
-
-  // if (fabs(y_plane1(3)) > fabs(y_plane2(3))) {
-  //   vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) -
-  //                   fabs(y_plane2(3)) * y_plane2.head(3))) +
-  //           fabs(y_plane2(3)) * y_plane2.head(3);
-  // } else {
-  //   vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) -
-  //                   fabs(y_plane1(3)) * y_plane1.head(3))) +
-  //           fabs(y_plane1(3)) * y_plane1.head(3);
-  // }
-
-  // final_vec = vec_x.head(2) + vec_y.head(2);
-  // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-  // std::cout << "Hand-coded Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (end - begin).count() << "[ns]" << std::endl;
-
-  /// NEURAL NETWORK
-  std::chrono::steady_clock::time_point nn_begin = std::chrono::steady_clock::now();
-  std::vector<Eigen::Vector4d> vectorList;
-    vectorList.push_back(x_plane1);
-    vectorList.push_back(x_plane2);
-    vectorList.push_back(y_plane1);
-    vectorList.push_back(y_plane2);
-
-  std::vector<float> concatenatedVector;
-  for (const Eigen::Vector4d& vector : vectorList) {
-      concatenatedVector.push_back(static_cast<float>(vector(0)));
-      concatenatedVector.push_back(static_cast<float>(vector(1)));
-      concatenatedVector.push_back(static_cast<float>(vector(2)));
-      concatenatedVector.push_back(static_cast<float>(vector(3)));
-  }
-
-  std::cout << "FLAG concatenatedVector " << concatenatedVector << '\n';
-  Eigen::Vector2d output = factor_nn.infer(concatenatedVector);
-  std::cout << "FLAG output " << output << '\n';
-  final_vec = output;
-  std::chrono::steady_clock::time_point nn_end = std::chrono::steady_clock::now();
-  std::cout << "NN Time difference = " << std::chrono::duration_cast<std::chrono::nanoseconds> (nn_end - nn_begin).count() << "[ns]" << std::endl;
-
-  /// END NEURAL NETWORK
+  Eigen::Vector2d final_vec = compute_factor_legacy(x_plane1, x_plane2, y_plane1, y_plane2);
 
   _error = room_pose - final_vec;
 }
@@ -357,6 +306,56 @@ void EdgeRoom4Planes::correct_plane_direction(Eigen::Vector4d& plane) {
   } else {
     plane = plane;
   }
+}
+
+Eigen::Vector2d EdgeRoom4Planes::compute_factor_legacy(Eigen::Vector4d x_plane1, Eigen::Vector4d x_plane2, Eigen::Vector4d y_plane1, Eigen::Vector4d y_plane2) {
+  Eigen::Vector3d vec_x, vec_y;
+  if (fabs(x_plane1(3)) > fabs(x_plane2(3))) {
+    vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) -
+                    fabs(x_plane2(3)) * x_plane2.head(3))) +
+            fabs(x_plane2(3)) * x_plane2.head(3);
+  } else {
+    vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) -
+                    fabs(x_plane1(3)) * x_plane1.head(3))) +
+            fabs(x_plane1(3)) * x_plane1.head(3);
+  }
+
+  if (fabs(y_plane1(3)) > fabs(y_plane2(3))) {
+    vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) -
+                    fabs(y_plane2(3)) * y_plane2.head(3))) +
+            fabs(y_plane2(3)) * y_plane2.head(3);
+  } else {
+    vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) -
+                    fabs(y_plane1(3)) * y_plane1.head(3))) +
+            fabs(y_plane1(3)) * y_plane1.head(3);
+
+  Eigen::Vector2d final_vec = vec_x.head(2) + vec_y.head(2);
+  return final_vec;
+  }
+}
+
+Eigen::Vector2d EdgeRoom4Planes::compute_factor_nn(Eigen::Vector4d x_plane1, Eigen::Vector4d x_plane2, Eigen::Vector4d y_plane1, Eigen::Vector4d y_plane2) {
+  float normalization = 30;
+  std::vector<Eigen::Vector4d> vectorList;
+    vectorList.push_back(x_plane1);
+    vectorList.push_back(x_plane2);
+    vectorList.push_back(y_plane1);
+    vectorList.push_back(y_plane2/normalization);
+
+  std::vector<float> concatenatedVector;
+  for (const Eigen::Vector4d& vector : vectorList) {
+      concatenatedVector.push_back(static_cast<float>(vector(0)));
+      concatenatedVector.push_back(static_cast<float>(vector(1)));
+      concatenatedVector.push_back(static_cast<float>(vector(2)));
+      concatenatedVector.push_back(static_cast<float>(vector(3)));
+  }
+
+  std::cout << "FLAG concatenatedVector " << concatenatedVector << '\n';
+  Eigen::Vector2d output = factor_nn.infer(concatenatedVector);
+  std::cout << "FLAG output " << output << '\n';
+  output[0] = output[0] * normalization;
+  output[1] = output[1] * normalization;
+  return output;
 }
 
 void EdgeFloorRoom::computeError() {

@@ -164,6 +164,8 @@ class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
 
  private:
   void correct_plane_direction(Eigen::Vector4d& plane);
+  Eigen::Vector2d compute_factor_legacy(Eigen::Vector4d x_plane1, Eigen::Vector4d x_plane2, Eigen::Vector4d y_plane1, Eigen::Vector4d y_plane2);
+  Eigen::Vector2d compute_factor_nn(Eigen::Vector4d x_plane1, Eigen::Vector4d x_plane2, Eigen::Vector4d y_plane1, Eigen::Vector4d y_plane2);
 };
 
 class EdgeFloorRoom
