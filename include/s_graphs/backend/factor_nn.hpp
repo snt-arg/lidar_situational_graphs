@@ -31,6 +31,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <torch/script.h>
 #include "rclcpp/rclcpp.hpp"
+#include <Eigen/Dense>
+
 
 /**
  * @brief Class that provides tools for different analysis over open space
@@ -50,7 +52,8 @@ class FactorNN{
 //   FactorNN(const rclcpp::Node::SharedPtr node);
   FactorNN();
 //   ~FactorNN();
-  void infer();
+  // void infer();
+  Eigen::Vector2d infer(std::vector<float> input_vector);
 
  private:
   torch::jit::script::Module module;

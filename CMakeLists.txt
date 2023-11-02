@@ -66,6 +66,8 @@ endif()
 find_package(Torch REQUIRED)
 include_directories(${TORCH_INCLUDE_DIRS})
 
+message("TORCH_LIBRARIES" ${TORCH_LIBRARIES})
+
 find_library(VGICP_CUDA_FOUND NAMES fast_vgicp_cuda)
 message(STATUS "VGICP_CUDA_FOUND:" ${VGICP_CUDA_FOUND})
 if(VGICP_CUDA_FOUND)
@@ -142,7 +144,10 @@ add_library(g2o_sgraphs
 target_link_libraries(g2o_sgraphs
                     ${G2O_COMMON_LIBS}
                     ${PCL_LIBRARIES}
+                    ${TORCH_LIBRARIES}
                     )
+
+    
 
 add_library(s_graphs_core_lib   
     ${S_GRAPHS_SOURCE_FILES}
@@ -151,7 +156,6 @@ target_link_libraries(s_graphs_core_lib
                       g2o_sgraphs
                       ${G2O_COMMON_LIBS}
                       ${PCL_LIBRARIES}
-                      ${TORCH_LIBRARIES}
                       )
 target_include_directories(s_graphs_core_lib
   PUBLIC
@@ -172,6 +176,7 @@ add_executable(s_graphs_node
 ament_target_dependencies(s_graphs_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_node
   s_graphs_core_lib
+  ${TORCH_LIBRARIES}
 )
 rosidl_target_interfaces(s_graphs_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
@@ -189,6 +194,7 @@ ament_target_dependencies(s_graphs_room_segmentation_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_room_segmentation_node
   s_graphs_core_lib
   ${PCL_LIBRARIES}
+  ${TORCH_LIBRARIES}
 )
 rosidl_target_interfaces(s_graphs_room_segmentation_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
@@ -199,6 +205,7 @@ ament_target_dependencies(s_graphs_floor_plan_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_floor_plan_node
   s_graphs_core_lib  
   ${PCL_LIBRARIES}
+  ${TORCH_LIBRARIES}
 )
 rosidl_target_interfaces(s_graphs_floor_plan_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
@@ -207,6 +214,7 @@ ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_scan_matching_odometry_node
   ${PCL_LIBRARIES}
   s_graphs_core_lib
+  ${TORCH_LIBRARIES}
 )
 rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 

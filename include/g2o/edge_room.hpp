@@ -67,6 +67,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "g2o/vertex_floor.hpp"
 #include "g2o/vertex_infinite_room.hpp"
 #include "g2o/vertex_room.hpp"
+
+#include "s_graphs/backend/factor_nn.hpp"
+
 namespace g2o {
 
 // ADAPTED FROM G2O SE3 edge
@@ -156,6 +159,8 @@ class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
   virtual bool read(std::istream& is) override;
 
   virtual bool write(std::ostream& os) const override;
+
+  s_graphs::FactorNN factor_nn;
 
  private:
   void correct_plane_direction(Eigen::Vector4d& plane);

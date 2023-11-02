@@ -34,12 +34,12 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <iostream>
 #include <memory>
+#include <chrono>
 
 namespace s_graphs {
 
 // FactorNN::FactorNN(const rclcpp::Node::SharedPtr node) {
 FactorNN::FactorNN() {
-  std::cout << "FLAG" << '\n';
   path = "/home/adminpc/reasoning_ws/src/graph_reasoning/torchscripts/test.pt";
   try {
     module = torch::jit::load(path);
@@ -50,10 +50,19 @@ FactorNN::FactorNN() {
   }
 }
 
-void FactorNN::infer(){
-  std::vector<torch::jit::IValue> inputs;
-  inputs.push_back(torch::ones({8}));
-  at::Tensor output = module.forward(inputs).toTensor();
-  std::cout << output.slice(/*dim=*/1, /*start=*/0, /*end=*/5) << '\n';
+Eigen::Vector2d FactorNN::infer(std::vector<float> input_vector){
+  // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+  torch::Tensor torchTensor = torch::from_blob(input_vector.data(), {1, input_vector.size()}, torch::kFloat);
+  std::vector<torch::IValue> ivalueVector;
+  ivalueVector.push_back(torchTensor);
+  at::Tensor output = module.forward(ivalueVector).toTensor();
+  // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  // std::cout << "NN Time difference = " << std::chrono::duration_cast<std::chrono::microseconds> (end - begin).count() << "[µs]" << std::endl;
+
+  Eigen::Vector2d eigenVector;
+  for (int i = 0; i < 2; ++i) {
+    eigenVector[i] = output[0][i].item<double>();
+  }
+  return eigenVector;
 }
 }
