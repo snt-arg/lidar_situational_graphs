@@ -342,19 +342,19 @@ Eigen::Vector2d EdgeRoom4Planes::compute_factor_legacy(Eigen::Vector4d x_plane1,
 }
 
 Eigen::Vector2d EdgeRoom4Planes::compute_factor_nn(Eigen::Vector4d x_plane1, Eigen::Vector4d x_plane2, Eigen::Vector4d y_plane1, Eigen::Vector4d y_plane2) {
-  float normalization = 30;
+  float normalization = 30.0;
   std::vector<Eigen::Vector4d> vectorList;
     vectorList.push_back(x_plane1);
     vectorList.push_back(x_plane2);
     vectorList.push_back(y_plane1);
-    vectorList.push_back(y_plane2/normalization);
+    vectorList.push_back(y_plane2);
 
   std::vector<float> concatenatedVector;
   for (const Eigen::Vector4d& vector : vectorList) {
       concatenatedVector.push_back(static_cast<float>(vector(0)));
       concatenatedVector.push_back(static_cast<float>(vector(1)));
       concatenatedVector.push_back(static_cast<float>(vector(2)));
-      concatenatedVector.push_back(static_cast<float>(vector(3)));
+      concatenatedVector.push_back(static_cast<float>(vector(3))/normalization);
   }
 
   std::cout << "FLAG concatenatedVector " << concatenatedVector << '\n';
