@@ -793,6 +793,7 @@ int RoomAnalyzer::find_plane_points(
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster) {
   int num_neighbours = 0;
   double point_hull_dist_thres = 1.5;
+  // double point_hull_dist_thres = 0.8;
 
   for (int i = 0; i < cloud_hull->points.size(); ++i) {
     double min_point_hull_dist = 1000;

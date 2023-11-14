@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "pcl/filters/voxel_grid.h"
+
 /**
  * Obtain the vertical planes that form the boundaries of a given room.
  * @param room The room whose planes are to be obtained.
@@ -228,6 +230,20 @@ KeyFramePtrVec obtain_keyframes_from_ids(const std::set<int>& id_list,
   return keyframes;
 }
 
+static pcl::PointCloud<s_graphs::PointT>::Ptr filter_cloud(
+    pcl::PointCloud<s_graphs::PointT>::Ptr cloud) {
+  pcl::VoxelGrid<s_graphs::PointT> sor;
+  pcl::PointCloud<s_graphs::PointT>::Ptr cloud_filtered(
+      new pcl::PointCloud<s_graphs::PointT>);
+  sor.setInputCloud(cloud);
+  sor.setLeafSize(0.1f, 0.1f, 0.1f);
+  sor.filter(*cloud_filtered);
+
+  cloud_filtered->width = cloud_filtered->size();
+  cloud_filtered->height = 1;
+  return cloud_filtered;
+}
+
 std::optional<
     std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
 generate_room_keyframe(
@@ -281,6 +297,7 @@ generate_room_keyframe(
     }
   }
   auto room_pc = filter_room_pointcloud(cloud, max_dist);
+  room_pc = filter_cloud(cloud);
 
   // // draw a sphere in the room centre to check if it is correct
   // // use spherical coordinates to generate the sphere
