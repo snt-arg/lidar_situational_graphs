@@ -335,10 +335,10 @@ Eigen::Vector2d EdgeRoom4Planes::compute_factor_legacy(Eigen::Vector4d x_plane1,
     vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) -
                     fabs(y_plane1(3)) * y_plane1.head(3))) +
             fabs(y_plane1(3)) * y_plane1.head(3);
+  }
 
   Eigen::Vector2d final_vec = vec_x.head(2) + vec_y.head(2);
   return final_vec;
-  }
 }
 
 Eigen::Vector2d EdgeRoom4Planes::compute_factor_nn(Eigen::Vector4d x_plane1, Eigen::Vector4d x_plane2, Eigen::Vector4d y_plane1, Eigen::Vector4d y_plane2) {
