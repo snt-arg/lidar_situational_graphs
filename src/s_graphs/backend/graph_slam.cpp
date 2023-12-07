@@ -44,6 +44,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <boost/format.hpp>
 #include <g2o/edge_infinite_room_plane.hpp>
+#include <g2o/edge_loop_closure.hpp>
 #include <g2o/edge_plane.hpp>
 #include <g2o/edge_plane_identity.hpp>
 #include <g2o/edge_plane_prior.hpp>
@@ -68,6 +69,7 @@ G2O_USE_OPTIMIZATION_LIBRARY(
     csparse)  // be aware of that csparse brings LGPL unless it is dynamically linked
 
 namespace g2o {
+G2O_REGISTER_TYPE(EDGE_LOOP_CLOSURE, EdgeLoopClosure)
 G2O_REGISTER_TYPE(EDGE_SE3_PLANE, EdgeSE3Plane)
 G2O_REGISTER_TYPE(EDGE_SE3_POINT_TO_PLANE, EdgeSE3PointToPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_PRIORXY, EdgeSE3PriorXY)
@@ -333,6 +335,23 @@ g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1,
   return edge;
 }
 
+g2o::EdgeLoopClosure* GraphSLAM::add_loop_closure_edge(
+    g2o::VertexSE3* v1,
+    g2o::VertexSE3* v2,
+    const Eigen::Isometry3d& relative_pose,
+    const Eigen::MatrixXd& information_matrix) {
+  g2o::EdgeLoopClosure* edge(new g2o::EdgeLoopClosure());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  edge->setMeasurement(relative_pose);
+  edge->setInformation(information_matrix);
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
+
+  return edge;
+}
+
 g2o::EdgeSE3* GraphSLAM::copy_se3_edge(g2o::EdgeSE3* e,
                                        g2o::VertexSE3* v1,
                                        g2o::VertexSE3* v2) {
@@ -360,6 +379,20 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(
   edge->vertices()[1] = v_plane;
   graph->addEdge(edge);
   this->increment_local_nbr_of_edges();
+
+  return edge;
+}
+
+g2o::EdgeSE3* GraphSLAM::copy_loop_closure_edge(g2o::EdgeLoopClosure* e,
+                                                g2o::VertexSE3* v1,
+                                                g2o::VertexSE3* v2) {
+  g2o::EdgeLoopClosure* edge(new g2o::EdgeLoopClosure());
+  edge->setId(e->id());
+  edge->setMeasurement(e->measurement());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  graph->addEdge(edge);
 
   return edge;
 }

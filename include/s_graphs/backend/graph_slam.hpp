@@ -51,6 +51,7 @@ class VertexPlane;
 class VertexPointXYZ;
 class VertexInfiniteRoom;
 class EdgeSE3;
+class EdgeLoopClosure;
 class EdgeSE3Plane;
 class EdgeSE3PointToPlane;
 class EdgeSE3PointXYZ;
@@ -291,12 +292,37 @@ class GraphSLAM {
                              const Eigen::MatrixXd& information_matrix);
 
   /**
+   * @brief Add loop closure edge between SE3 nodes
+   *
+   * @param v1: node1
+   * @param v2: node2
+   * @param relative_pose: relative pose between node1 and node2
+   * @param information_matrix: information matrix (it must be 6x6)
+   * @return registered edge
+   */
+  g2o::EdgeLoopClosure* add_loop_closure_edge(
+      g2o::VertexSE3* v1,
+      g2o::VertexSE3* v2,
+      const Eigen::Isometry3d& relative_pose,
+      const Eigen::MatrixXd& information_matrix);
+
+  /**
    * @brief copy an edge from another graph
    *
    * @param e: edge
    * @return registered edge
    */
   g2o::EdgeSE3* copy_se3_edge(g2o::EdgeSE3* e, g2o::VertexSE3* v1, g2o::VertexSE3* v2);
+
+  /**
+   * @brief copy a loop closure edge from another graph
+   *
+   * @param e: edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3* copy_loop_closure_edge(g2o::EdgeLoopClosure* e,
+                                       g2o::VertexSE3* v1,
+                                       g2o::VertexSE3* v2);
 
   /**
    * @brief Add an edge between an SE3 node and a plane node

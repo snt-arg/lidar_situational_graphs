@@ -47,6 +47,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/imu_mapper.hpp>
 #include <s_graphs/backend/keyframe_mapper.hpp>
 #include <s_graphs/backend/local_graph_generator.hpp>
+#include <s_graphs/backend/loop_mapper.hpp>
 #include <s_graphs/backend/plane_mapper.hpp>
 #include <s_graphs/backend/room_mapper.hpp>
 #include <s_graphs/backend/wall_mapper.hpp>
@@ -281,6 +282,7 @@ class SGraphsNode : public rclcpp::Node {
                   std::placeholders::_1,
                   std::placeholders::_2));
 
+    loop_found = false;
     graph_updated = false;
     prev_edge_count = curr_edge_count = 0;
 
@@ -409,13 +411,14 @@ class SGraphsNode : public rclcpp::Node {
     covisibility_graph = std::make_shared<GraphSLAM>(
         this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>(),
         this->get_parameter("save_timings").get_parameter_value().get<bool>());
-    global_graph = std::make_unique<GraphSLAM>(
+    compressed_graph = std::make_unique<GraphSLAM>(
         this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>(),
         this->get_parameter("save_timings").get_parameter_value().get<bool>());
     publish_graph = std::make_unique<GraphSLAM>();
     visualization_graph = std::make_unique<GraphSLAM>();
     keyframe_updater = std::make_unique<KeyframeUpdater>(shared_from_this());
     plane_analyzer = std::make_unique<PlaneAnalyzer>(shared_from_this());
+    loop_mapper = std::make_unique<LoopMapper>(shared_from_this());
     loop_detector = std::make_unique<LoopDetector>(shared_from_this());
     map_cloud_generator = std::make_unique<MapCloudGenerator>();
     inf_calclator = std::make_unique<InformationMatrixCalculator>(shared_from_this());
@@ -888,13 +891,9 @@ class SGraphsNode : public rclcpp::Node {
     // loop detection
     std::vector<Loop::Ptr> loops =
         loop_detector->detect(keyframes, new_keyframes, *covisibility_graph);
-    for (const auto& loop : loops) {
-      Eigen::Isometry3d relpose(loop->relative_pose.cast<double>());
-      Eigen::MatrixXd information_matrix = inf_calclator->calc_information_matrix(
-          loop->key1->cloud, loop->key2->cloud, relpose);
-      auto edge = covisibility_graph->add_se3_edge(
-          loop->key1->node, loop->key2->node, relpose, information_matrix);
-      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    if (loops.size() > 0) {
+      loop_found = true;
+      loop_mapper->add_loops(covisibility_graph, loops, graph_mutex);
     }
 
     std::copy(
@@ -977,7 +976,17 @@ class SGraphsNode : public rclcpp::Node {
     const auto& keyframe = keyframes.back();
 
     graph_mutex.lock();
-    graph_utils->copy_graph(covisibility_graph, global_graph);
+    if (!loop_found) {
+      std::map<int, KeyFrame::Ptr> keyframe_map;
+      for (const auto& curr_k : keyframes) {
+        keyframe_map.insert({curr_k->id(), curr_k});
+      }
+      graph_utils->copy_windowed_graph(
+          10, covisibility_graph, compressed_graph, keyframe_map);
+    } else {
+      graph_utils->copy_graph(covisibility_graph, compressed_graph);
+      loop_found = false;
+    }
     graph_mutex.unlock();
 
     curr_edge_count = covisibility_graph->retrive_total_nbr_of_edges();
@@ -991,14 +1000,14 @@ class SGraphsNode : public rclcpp::Node {
                              .get<int>();
 
     try {
-      global_graph->optimize(num_iterations);
+      compressed_graph->optimize(num_iterations);
     } catch (std::invalid_argument& e) {
       std::cout << e.what() << std::endl;
       throw 1;
     }
 
     graph_mutex.lock();
-    graph_utils->update_graph(global_graph,
+    graph_utils->update_graph(compressed_graph,
                               keyframes,
                               x_vert_planes,
                               y_vert_planes,
@@ -1655,6 +1664,7 @@ class SGraphsNode : public rclcpp::Node {
   // vertical and horizontal planes
   std::mutex wall_data_queue_mutex;
 
+  bool loop_found;
   int keyframe_window_size;
   bool extract_planar_surfaces;
   bool constant_covariance;
@@ -1703,10 +1713,11 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
-  std::unique_ptr<GraphSLAM> global_graph;
+  std::unique_ptr<GraphSLAM> compressed_graph;
   std::unique_ptr<GraphSLAM> publish_graph;
   std::unique_ptr<GraphSLAM> visualization_graph;
   std::unique_ptr<LoopDetector> loop_detector;
+  std::unique_ptr<LoopMapper> loop_mapper;
   std::unique_ptr<KeyframeUpdater> keyframe_updater;
   std::unique_ptr<PlaneAnalyzer> plane_analyzer;
   std::unique_ptr<NmeaSentenceParser> nmea_parser;
