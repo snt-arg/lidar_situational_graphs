@@ -282,9 +282,9 @@ bool is_keyframe_inside_room(const s_graphs::Rooms& room,
   return false;
 }
 
-graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
+reasoning_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
     const ExtendedRooms& room) {
-  graph_manager_msgs::msg::RoomKeyframe msg;
+  reasoning_msgs::msg::RoomKeyframe msg;
   msg.header.frame_id = "room";
   msg.id = room.id;
   pcl::toROSMsg(*room.cloud, msg.pointcloud);
@@ -301,7 +301,7 @@ graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
 }
 
 ExtendedRooms obtainExtendedRoomFromRosMsg(
-    const graph_manager_msgs::msg::RoomKeyframe& msg) {
+    const reasoning_msgs::msg::RoomKeyframe& msg) {
   ExtendedRooms room;
   room.id = msg.id;
   pcl::fromROSMsg(msg.pointcloud, *room.cloud);

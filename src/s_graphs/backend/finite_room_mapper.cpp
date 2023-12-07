@@ -623,7 +623,6 @@ std::pair<int, int> FiniteRoomMapper::associate_rooms(
       y2_detected_mapped_plane_pair.second = (*found_mapped_yplane2);
     }
     current_detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
-
     if (dist < min_dist && (x_plane1_min_segment && x_plane2_min_segment &&
                             y_plane1_min_segment && y_plane2_min_segment)) {
       min_dist = dist;

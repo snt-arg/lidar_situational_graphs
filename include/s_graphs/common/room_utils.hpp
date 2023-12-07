@@ -64,14 +64,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <unordered_map>
 
 #include "geometry_msgs/msg/point.hpp"
-#include "graph_manager_msgs/msg/attribute.hpp"
-#include "graph_manager_msgs/msg/edge.hpp"
-#include "graph_manager_msgs/msg/graph.hpp"
-#include "graph_manager_msgs/msg/graph_keyframes.hpp"
-#include "graph_manager_msgs/msg/node.hpp"
-#include "graph_manager_msgs/msg/room_keyframe.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "reasoning_msgs/msg/attribute.hpp"
+#include "reasoning_msgs/msg/edge.hpp"
+#include "reasoning_msgs/msg/graph.hpp"
+#include "reasoning_msgs/msg/graph_keyframes.hpp"
+#include "reasoning_msgs/msg/node.hpp"
+#include "reasoning_msgs/msg/room_keyframe.hpp"
 #include "s_graphs/msg/plane_data.hpp"
 #include "s_graphs/msg/planes_data.hpp"
 #include "s_graphs/msg/room_data.hpp"
@@ -317,10 +317,10 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
   const std::vector<s_graphs::KeyFrame::Ptr>* keyframes_;
 };
 
-graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
+reasoning_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
     const ExtendedRooms& room);
 
 ExtendedRooms obtainExtendedRoomFromRosMsg(
-    const graph_manager_msgs::msg::RoomKeyframe& msg);
+    const reasoning_msgs::msg::RoomKeyframe& msg);
 
 #endif
