@@ -184,7 +184,7 @@ void GraphUtils::copy_windowed_graph(
   connect_planes_rooms(covisibility_graph, compressed_graph.get());
 
   // Check from all rooms added to which floor they are connected
-  // connect_rooms_floors(covisibility_graph, compressed_graph.get());
+  connect_rooms_floors(covisibility_graph, compressed_graph.get());
 }
 
 int GraphUtils::copy_keyframes_to_graph(
@@ -585,6 +585,45 @@ void GraphUtils::connect_planes_rooms(
         compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
         edge->setLevel(0);
         continue;
+      }
+    }
+  }
+}
+
+void GraphUtils::connect_rooms_floors(
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    GraphSLAM* compressed_graph) {
+  for (g2o::HyperGraph::EdgeSet::iterator it =
+           covisibility_graph->graph->edges().begin();
+       it != covisibility_graph->graph->edges().end();
+       ++it) {
+    g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*it);
+    g2o::EdgeFloorRoom* edge_floor_room = dynamic_cast<g2o::EdgeFloorRoom*>(e);
+    if (edge_floor_room) {
+      g2o::VertexRoom* rv2 =
+          dynamic_cast<g2o::VertexRoom*>(covisibility_graph->graph->vertices().at(
+              edge_floor_room->vertices()[1]->id()));
+
+      auto current_vertex_v2 =
+          dynamic_cast<g2o::VertexRoom*>(compressed_graph->graph->vertex(rv2->id()));
+
+      if (current_vertex_v2) {
+        g2o::VertexFloor* current_vertex_v1;
+        if (!compressed_graph->graph->vertex(edge_floor_room->vertices()[0]->id())) {
+          g2o::VertexFloor* vertex_floor =
+              dynamic_cast<g2o::VertexFloor*>(covisibility_graph->graph->vertices().at(
+                  edge_floor_room->vertices()[0]->id()));
+          current_vertex_v1 = compressed_graph->copy_floor_node(vertex_floor);
+        } else if (compressed_graph->graph->vertex(
+                       edge_floor_room->vertices()[0]->id())) {
+          current_vertex_v1 = dynamic_cast<g2o::VertexFloor*>(
+              compressed_graph->graph->vertex(edge_floor_room->vertices()[0]->id()));
+        } else
+          continue;
+        auto edge = compressed_graph->copy_floor_room_edge(
+            edge_floor_room, current_vertex_v1, current_vertex_v2);
+        compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+        edge->setLevel(0);
       }
     }
   }

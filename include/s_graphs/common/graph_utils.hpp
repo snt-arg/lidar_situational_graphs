@@ -35,6 +35,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/types/slam3d/edge_se3.h>
 
 #include <boost/bind.hpp>
+#include <g2o/edge_loop_closure.hpp>
 #include <g2o/edge_plane.hpp>
 #include <g2o/edge_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
@@ -123,6 +124,16 @@ class GraphUtils {
    * @return * void
    */
   void connect_planes_rooms(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                            GraphSLAM* compressed_graph);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @return * void
+   */
+  void connect_rooms_floors(const std::shared_ptr<GraphSLAM>& covisibility_graph,
                             GraphSLAM* compressed_graph);
 
   /**
