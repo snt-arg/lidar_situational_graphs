@@ -1024,6 +1024,11 @@ class SGraphsNode : public rclcpp::Node {
       graph_utils->copy_graph(covisibility_graph, compressed_graph);
       duplicate_planes_found = false;
       global_optimization = true;
+    } else if (loop_found && duplicate_planes_found) {
+      graph_utils->copy_graph(covisibility_graph, compressed_graph);
+      duplicate_planes_found = false;
+      loop_found = false;
+      global_optimization = true;
     }
     graph_mutex.unlock();
 
