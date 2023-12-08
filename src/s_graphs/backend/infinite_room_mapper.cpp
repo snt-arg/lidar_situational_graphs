@@ -60,7 +60,7 @@ InfiniteRoomMapper::InfiniteRoomMapper(const rclcpp::Node::SharedPtr node) {
 
 InfiniteRoomMapper::~InfiniteRoomMapper() {}
 
-void InfiniteRoomMapper::lookup_infinite_rooms(
+bool InfiniteRoomMapper::lookup_infinite_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const int& plane_type,
     const s_graphs::msg::RoomData room_data,
@@ -73,6 +73,8 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     const std::vector<Rooms>& rooms_vec) {
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
+  bool duplicate_found = false;
+
   room_quat.x() = room_data.room_center.orientation.x;
   room_quat.y() = room_data.room_center.orientation.y;
   room_quat.z() = room_data.room_center.orientation.z;
@@ -124,7 +126,7 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
       std::cout << "Room already exists in the given location, not inserting an x "
                    "infinite_room"
                 << std::endl;
-      return;
+      return duplicate_found;
     }
 
     // factor the infinite_room here
@@ -144,19 +146,19 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     x_plane2_data.plane_id = room_data.x_planes[1].id;
     x_plane2_data.plane_unflipped = x_plane2;
 
-    factor_infinite_rooms(graph_slam,
-                          PlaneUtils::plane_class::X_VERT_PLANE,
-                          x_plane1_data,
-                          x_plane2_data,
-                          x_vert_planes,
-                          y_vert_planes,
-                          dupl_x_vert_planes,
-                          dupl_y_vert_planes,
-                          x_infinite_rooms,
-                          y_infinite_rooms,
-                          room_center,
-                          cluster_center,
-                          room_data.cluster_array);
+    duplicate_found = factor_infinite_rooms(graph_slam,
+                                            PlaneUtils::plane_class::X_VERT_PLANE,
+                                            x_plane1_data,
+                                            x_plane2_data,
+                                            x_vert_planes,
+                                            y_vert_planes,
+                                            dupl_x_vert_planes,
+                                            dupl_y_vert_planes,
+                                            x_infinite_rooms,
+                                            y_infinite_rooms,
+                                            room_center,
+                                            cluster_center,
+                                            room_data.cluster_array);
   }
 
   else if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
@@ -188,7 +190,7 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
       std::cout << "Room already exists in the given location, not inserting a y "
                    "infinite_room"
                 << std::endl;
-      return;
+      return duplicate_found;
     }
 
     // factor the infinite_room here
@@ -207,23 +209,25 @@ void InfiniteRoomMapper::lookup_infinite_rooms(
     y_plane2_data.plane_id = room_data.y_planes[1].id;
     y_plane2_data.plane_unflipped = y_plane2;
 
-    factor_infinite_rooms(graph_slam,
-                          PlaneUtils::plane_class::Y_VERT_PLANE,
-                          y_plane1_data,
-                          y_plane2_data,
-                          x_vert_planes,
-                          y_vert_planes,
-                          dupl_x_vert_planes,
-                          dupl_y_vert_planes,
-                          x_infinite_rooms,
-                          y_infinite_rooms,
-                          room_center,
-                          cluster_center,
-                          room_data.cluster_array);
+    duplicate_found = factor_infinite_rooms(graph_slam,
+                                            PlaneUtils::plane_class::Y_VERT_PLANE,
+                                            y_plane1_data,
+                                            y_plane2_data,
+                                            x_vert_planes,
+                                            y_vert_planes,
+                                            dupl_x_vert_planes,
+                                            dupl_y_vert_planes,
+                                            x_infinite_rooms,
+                                            y_infinite_rooms,
+                                            room_center,
+                                            cluster_center,
+                                            room_data.cluster_array);
   }
+
+  return duplicate_found;
 }
 
-void InfiniteRoomMapper::factor_infinite_rooms(
+bool InfiniteRoomMapper::factor_infinite_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const int plane_type,
     const plane_data_list& room_plane1_pair,
@@ -240,6 +244,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
   g2o::VertexRoom* room_node;
   g2o::VertexRoom* cluster_center_node;
   std::pair<int, int> room_data_association;
+  bool duplicate_found = false;
 
   Eigen::Matrix<double, 2, 2> information_infinite_room_planes;
   information_infinite_room_planes.setZero();
@@ -285,7 +290,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
 
     if (found_plane1 == x_vert_planes.end() || found_plane2 == x_vert_planes.end()) {
       std::cout << "did not find planes for x infinite_room " << std::endl;
-      return;
+      return duplicate_found;
     }
 
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
@@ -356,6 +361,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
               detected_mapped_plane_pairs[0].second.plane_node,
               information_2planes);
           graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+          duplicate_found = true;
           std::cout << "Adding new x1 plane " << std::endl;
         }
       }
@@ -368,6 +374,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
               detected_mapped_plane_pairs[1].second.plane_node,
               information_2planes);
           graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+          duplicate_found = true;
           std::cout << "Adding new x2 plane " << std::endl;
         }
       }
@@ -385,7 +392,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
                      boost::bind(&VerticalPlanes::id, _1) == room_plane2_pair.plane_id);
 
     if (found_plane1 == y_vert_planes.end() || found_plane2 == y_vert_planes.end())
-      return;
+      return duplicate_found;
 
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
     room_data_association = associate_infinite_rooms(plane_type,
@@ -454,6 +461,7 @@ void InfiniteRoomMapper::factor_infinite_rooms(
               detected_mapped_plane_pairs[0].second.plane_node,
               information_2planes);
           graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+          duplicate_found = true;
           std::cout << "Adding new y1 plane " << std::endl;
         }
       }
@@ -466,13 +474,14 @@ void InfiniteRoomMapper::factor_infinite_rooms(
               detected_mapped_plane_pairs[1].second.plane_node,
               information_2planes);
           graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+          duplicate_found = true;
           std::cout << "Adding new y2 plane " << std::endl;
         }
       }
     }
   }
 
-  return;
+  return duplicate_found;
 }
 
 std::pair<int, int> InfiniteRoomMapper::associate_infinite_rooms(

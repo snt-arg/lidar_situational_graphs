@@ -286,6 +286,7 @@ class SGraphsNode : public rclcpp::Node {
                   std::placeholders::_2));
 
     loop_found = false;
+    duplicate_planes_found = false;
     global_optimization = false;
     graph_updated = false;
     prev_edge_count = curr_edge_count = 0;
@@ -582,47 +583,51 @@ class SGraphsNode : public rclcpp::Node {
 
     for (const auto& room_data_msg : room_data_queue) {
       for (const auto& room_data : room_data_msg.rooms) {
-        // float dist_robot_room = sqrt(pow(room_data.room_center.x -
-        // latest_keyframe->node->estimate().matrix()(0,3),2) +
-        // pow(room_data.room_center.y -
-        // latest_keyframe->node->estimate().matrix()(1,3),2)); std::cout << "dist robot
-        // room: " << dist_robot_room << std::endl;
         if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
-          finite_room_mapper->lookup_rooms(covisibility_graph,
-                                           room_data,
-                                           x_vert_planes,
-                                           y_vert_planes,
-                                           dupl_x_vert_planes,
-                                           dupl_y_vert_planes,
-                                           x_infinite_rooms,
-                                           y_infinite_rooms,
-                                           rooms_vec);
+          bool duplicate_planes_rooms =
+              finite_room_mapper->lookup_rooms(covisibility_graph,
+                                               room_data,
+                                               x_vert_planes,
+                                               y_vert_planes,
+                                               dupl_x_vert_planes,
+                                               dupl_y_vert_planes,
+                                               x_infinite_rooms,
+                                               y_infinite_rooms,
+                                               rooms_vec);
+
+          if (duplicate_planes_rooms) duplicate_planes_found = true;
         }
         // x infinite_room
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
-          inf_room_mapper->lookup_infinite_rooms(covisibility_graph,
-                                                 PlaneUtils::plane_class::X_VERT_PLANE,
-                                                 room_data,
-                                                 x_vert_planes,
-                                                 y_vert_planes,
-                                                 dupl_x_vert_planes,
-                                                 dupl_y_vert_planes,
-                                                 x_infinite_rooms,
-                                                 y_infinite_rooms,
-                                                 rooms_vec);
+          bool duplicate_planes_x_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
+              covisibility_graph,
+              PlaneUtils::plane_class::X_VERT_PLANE,
+              room_data,
+              x_vert_planes,
+              y_vert_planes,
+              dupl_x_vert_planes,
+              dupl_y_vert_planes,
+              x_infinite_rooms,
+              y_infinite_rooms,
+              rooms_vec);
+
+          if (duplicate_planes_x_inf_rooms) duplicate_planes_found = true;
         }
         // y infinite_room
         else if (room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
-          inf_room_mapper->lookup_infinite_rooms(covisibility_graph,
-                                                 PlaneUtils::plane_class::Y_VERT_PLANE,
-                                                 room_data,
-                                                 x_vert_planes,
-                                                 y_vert_planes,
-                                                 dupl_x_vert_planes,
-                                                 dupl_y_vert_planes,
-                                                 x_infinite_rooms,
-                                                 y_infinite_rooms,
-                                                 rooms_vec);
+          bool duplicate_planes_y_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
+              covisibility_graph,
+              PlaneUtils::plane_class::Y_VERT_PLANE,
+              room_data,
+              x_vert_planes,
+              y_vert_planes,
+              dupl_x_vert_planes,
+              dupl_y_vert_planes,
+              x_infinite_rooms,
+              y_infinite_rooms,
+              rooms_vec);
+
+          if (duplicate_planes_y_inf_rooms) duplicate_planes_found = true;
         }
       }
 
@@ -1007,13 +1012,17 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     graph_mutex.lock();
-    if (!loop_found) {
+    if (!loop_found && !duplicate_planes_found) {
       graph_utils->copy_windowed_graph(
           optimization_window_size, covisibility_graph, compressed_graph, keyframes);
       global_optimization = false;
-    } else {
+    } else if (loop_found && !duplicate_planes_found) {
       graph_utils->copy_graph(covisibility_graph, compressed_graph);
       loop_found = false;
+      global_optimization = true;
+    } else if (!loop_found && duplicate_planes_found) {
+      graph_utils->copy_graph(covisibility_graph, compressed_graph);
+      duplicate_planes_found = false;
       global_optimization = true;
     }
     graph_mutex.unlock();
@@ -1675,7 +1684,7 @@ class SGraphsNode : public rclcpp::Node {
   std::mutex wall_data_queue_mutex;
 
   int optimization_window_size;
-  bool loop_found;
+  bool loop_found, duplicate_planes_found;
   bool global_optimization;
   int keyframe_window_size;
   bool extract_planar_surfaces;

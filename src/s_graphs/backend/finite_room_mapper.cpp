@@ -57,7 +57,7 @@ FiniteRoomMapper::FiniteRoomMapper(const rclcpp::Node::SharedPtr node) {
 
 FiniteRoomMapper::~FiniteRoomMapper() {}
 
-void FiniteRoomMapper::lookup_rooms(
+bool FiniteRoomMapper::lookup_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const s_graphs::msg::RoomData room_data,
     const std::vector<VerticalPlanes>& x_vert_planes,
@@ -69,6 +69,8 @@ void FiniteRoomMapper::lookup_rooms(
     std::vector<Rooms>& rooms_vec) {
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
+  bool duplicate_found = false;
+
   room_quat.x() = room_data.room_center.orientation.x;
   room_quat.y() = room_data.room_center.orientation.y;
   room_quat.z() = room_data.room_center.orientation.z;
@@ -242,19 +244,21 @@ void FiniteRoomMapper::lookup_rooms(
   x_planes_room.push_back(x_plane2_data);
   y_planes_room.push_back(y_plane1_data);
   y_planes_room.push_back(y_plane2_data);
-  factor_rooms(graph_slam,
-               x_planes_room,
-               y_planes_room,
-               x_vert_planes,
-               y_vert_planes,
-               dupl_x_vert_planes,
-               dupl_y_vert_planes,
-               rooms_vec,
-               room_center,
-               room_data.cluster_array);
+  duplicate_found = factor_rooms(graph_slam,
+                                 x_planes_room,
+                                 y_planes_room,
+                                 x_vert_planes,
+                                 y_vert_planes,
+                                 dupl_x_vert_planes,
+                                 dupl_y_vert_planes,
+                                 rooms_vec,
+                                 room_center,
+                                 room_data.cluster_array);
+
+  return duplicate_found;
 }
 
-void FiniteRoomMapper::factor_rooms(
+bool FiniteRoomMapper::factor_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
     std::vector<plane_data_list> x_room_pair_vec,
     std::vector<plane_data_list> y_room_pair_vec,
@@ -266,6 +270,7 @@ void FiniteRoomMapper::factor_rooms(
     const Eigen::Isometry3d& room_center,
     const visualization_msgs::msg::MarkerArray& cluster_array) {
   g2o::VertexRoom* room_node;
+  bool duplicate_found = false;
   std::pair<int, int> room_data_association;
 
   Eigen::Matrix<double, 1, 1> information_room_plane;
@@ -342,7 +347,7 @@ void FiniteRoomMapper::factor_rooms(
   if (found_x_plane1 == x_vert_planes.end() || found_x_plane2 == x_vert_planes.end() ||
       found_y_plane1 == y_vert_planes.end() || found_y_plane2 == y_vert_planes.end()) {
     std::cout << "did not find a room plane in the plane vector" << std::endl;
-    return;
+    return duplicate_found;
   }
 
   std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
@@ -415,6 +420,7 @@ void FiniteRoomMapper::factor_rooms(
             detected_mapped_plane_pairs[0].second.plane_node,
             information_2planes);
         graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+        duplicate_found = true;
         std::cout << "Adding new x1 plane " << std::endl;
       }
     }
@@ -427,6 +433,7 @@ void FiniteRoomMapper::factor_rooms(
             detected_mapped_plane_pairs[1].second.plane_node,
             information_2planes);
         graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+        duplicate_found = true;
         std::cout << "Adding new x2 plane " << std::endl;
       }
     }
@@ -439,6 +446,7 @@ void FiniteRoomMapper::factor_rooms(
             detected_mapped_plane_pairs[2].second.plane_node,
             information_2planes);
         graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+        duplicate_found = true;
         std::cout << "Adding new y1 plane " << std::endl;
       }
     }
@@ -451,11 +459,13 @@ void FiniteRoomMapper::factor_rooms(
             detected_mapped_plane_pairs[3].second.plane_node,
             information_2planes);
         graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+        duplicate_found = true;
         std::cout << "Adding new y2 plane " << std::endl;
       }
     }
   }
 
+  return duplicate_found;
   // std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
   // std::cout << "found xplane1 coeffs : " <<
   // (*found_x_plane1).plane_node->estimate().coeffs() << std::endl; std::cout << "found

@@ -192,9 +192,9 @@ class InfiniteRoomMapper : public MapperUtils {
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    * @param rooms_vec
-   * @return
+   * @return bool
    */
-  void lookup_infinite_rooms(
+  bool lookup_infinite_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const int& plane_type,
       const s_graphs::msg::RoomData room_data,
@@ -222,7 +222,7 @@ class InfiniteRoomMapper : public MapperUtils {
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    */
-  void factor_infinite_rooms(
+  bool factor_infinite_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const int plane_type,
       const plane_data_list& corr_plane1_pair,
@@ -327,7 +327,7 @@ class FiniteRoomMapper : public MapperUtils {
    * @param y_infinite_rooms
    * @param rooms_vec
    */
-  void lookup_rooms(
+  bool lookup_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const s_graphs::msg::RoomData room_data,
       const std::vector<VerticalPlanes>& x_vert_planes,
@@ -365,7 +365,7 @@ class FiniteRoomMapper : public MapperUtils {
    * @param rooms_vec
    * @param cluster_array
    */
-  void factor_rooms(
+  bool factor_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       std::vector<plane_data_list> x_room_pair_vec,
       std::vector<plane_data_list> y_room_pair_vec,
