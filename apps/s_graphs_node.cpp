@@ -660,16 +660,10 @@ class SGraphsNode : public rclcpp::Node {
     double accum_d = keyframe_updater->get_accum_distance();
     if (use_map2map_transform) {
       Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
-      std::cout << "map2map translation : " << map2map_trans.translation().transpose()
-                << std::endl;
       Eigen::Quaterniond quaternion(map2map_trans.rotation());
-      std::cout << "map2map Rotation" << quaternion.coeffs().transpose() << std::endl;
       Eigen::Isometry3d odom_trans = map2map_trans * odom;
-      std::cout << "Odom_Trans translation : " << odom_trans.translation().transpose()
-                << std::endl;
       Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
-      std::cout << "Odom_Trans Rotation" << odom_quaternion.coeffs().transpose()
-                << std::endl;
+
       KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom_trans, accum_d, cloud));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
