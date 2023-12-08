@@ -421,6 +421,11 @@ bool GraphSLAM::remove_se3_plane_edge(g2o::EdgeSE3Plane* se3_plane_edge) {
   return ack;
 }
 
+void GraphSLAM::update_se3edge_information(g2o::EdgeSE3* edge_se3,
+                                           Eigen::MatrixXd information_matrix) {
+  edge_se3->setInformation(information_matrix);
+}
+
 g2o::EdgeSE3PointToPlane* GraphSLAM::add_se3_point_to_plane_edge(
     g2o::VertexSE3* v_se3,
     g2o::VertexPlane* v_plane,
