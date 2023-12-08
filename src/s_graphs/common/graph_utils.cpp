@@ -184,7 +184,7 @@ void GraphUtils::copy_windowed_graph(
   connect_planes_rooms(covisibility_graph, compressed_graph.get());
 
   // Check from all rooms added to which floor they are connected
-  connect_rooms_floors(covisibility_graph, compressed_graph.get());
+  // connect_rooms_floors(covisibility_graph, compressed_graph.get());
 }
 
 int GraphUtils::copy_keyframes_to_graph(
