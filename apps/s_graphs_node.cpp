@@ -154,6 +154,10 @@ class SGraphsNode : public rclcpp::Node {
                                        .get_parameter_value()
                                        .get<double>();
 
+    optimization_window_size = this->get_parameter("optimization_window_size")
+                                   .get_parameter_value()
+                                   .get<int>();
+
     keyframe_window_size =
         this->get_parameter("keyframe_window_size").get_parameter_value().get<int>();
     extract_planar_surfaces = this->get_parameter("extract_planar_surfaces")
@@ -282,6 +286,7 @@ class SGraphsNode : public rclcpp::Node {
                   std::placeholders::_2));
 
     loop_found = false;
+    global_optimization = false;
     graph_updated = false;
     prev_edge_count = curr_edge_count = 0;
 
@@ -371,6 +376,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("keyframe_window_size", 1);
     this->declare_parameter("fix_first_node_adaptive", true);
 
+    this->declare_parameter("optimization_window_size", 10);
     this->declare_parameter("extract_planar_surfaces", true);
     this->declare_parameter("constant_covariance", true);
     this->declare_parameter("use_parallel_plane_constraint", false);
@@ -1003,16 +1009,22 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.lock();
     if (!loop_found) {
       graph_utils->copy_windowed_graph(
-          10, covisibility_graph, compressed_graph, keyframes);
+          optimization_window_size, covisibility_graph, compressed_graph, keyframes);
+      global_optimization = false;
     } else {
       graph_utils->copy_graph(covisibility_graph, compressed_graph);
       loop_found = false;
+      global_optimization = true;
     }
     graph_mutex.unlock();
 
     // optimize the pose graph
     try {
-      compressed_graph->optimize(num_iterations);
+      if (!global_optimization)
+        compressed_graph->optimize("local", num_iterations);
+      else {
+        compressed_graph->optimize("global", num_iterations);
+      }
     } catch (std::invalid_argument& e) {
       std::cout << e.what() << std::endl;
       throw 1;
@@ -1662,7 +1674,9 @@ class SGraphsNode : public rclcpp::Node {
   // vertical and horizontal planes
   std::mutex wall_data_queue_mutex;
 
+  int optimization_window_size;
   bool loop_found;
+  bool global_optimization;
   int keyframe_window_size;
   bool extract_planar_surfaces;
   bool constant_covariance;

@@ -888,14 +888,14 @@ void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge* edge,
   edge_->setRobustKernel(kernel);
 }
 
-int GraphSLAM::optimize(int num_iterations) {
+int GraphSLAM::optimize(const std::string optimization_type, const int num_iterations) {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
   if (graph->edges().size() < 10) {
     return -1;
   }
 
   std::cout << std::endl;
-  std::cout << "--- pose graph optimization ---" << std::endl;
+  std::cout << "--- " << optimization_type << " graph optimization ---" << std::endl;
   std::cout << "nodes: " << graph->vertices().size()
             << "   edges: " << graph->edges().size() << std::endl;
   std::cout << "optimizing... " << std::flush;

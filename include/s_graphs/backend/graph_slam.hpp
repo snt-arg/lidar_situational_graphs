@@ -783,7 +783,8 @@ class GraphSLAM {
    * @param num_iterations
    * @return
    */
-  int optimize(int num_iterations);
+  int optimize(const std::string optimization_type = " ",
+               const int num_iterations = 512);
 
   /**
    * @brief
