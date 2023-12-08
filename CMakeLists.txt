@@ -42,6 +42,7 @@ find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(graph_manager_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
+find_package(rviz_visual_tools REQUIRED)
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -112,7 +113,8 @@ set(DEPENDENCIES
     message_filters 
     geographic_msgs
     nmea_msgs
-    geodesy)
+    geodesy
+    rviz_visual_tools)
 
 SET(G2O_COMMON_LIBS 
   ${PCL_LIBRARIES}
