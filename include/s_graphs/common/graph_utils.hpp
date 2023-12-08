@@ -149,7 +149,7 @@ class GraphUtils {
    * @param floors_vec
    */
   void update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph,
-                    std::vector<KeyFrame::Ptr> keyframes,
+                    std::map<int, KeyFrame::Ptr> keyframes,
                     std::vector<VerticalPlanes>& x_vert_planes,
                     std::vector<VerticalPlanes>& y_vert_planes,
                     std::vector<Rooms>& rooms_vec,

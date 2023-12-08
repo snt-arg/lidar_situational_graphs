@@ -113,7 +113,7 @@ class GraphSLAM {
    *
    * @return Number of edges in the graph.
    */
-  int retrive_total_nbr_of_edges() const;
+  int retrieve_total_nbr_of_edges() const;
 
   /**
    * @brief Counts the number of vertices in the graph that are local.
@@ -156,7 +156,8 @@ class GraphSLAM {
    * @param pose
    * @return Registered node
    */
-  g2o::VertexSE3* add_se3_node(const Eigen::Isometry3d& pose);
+  g2o::VertexSE3* add_se3_node(const Eigen::Isometry3d& pose,
+                               bool use_vertex_size_id = false);
 
   /**
    * @brief copy an SE3 node from another graph.

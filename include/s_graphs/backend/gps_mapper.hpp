@@ -61,9 +61,9 @@ class GPSMapper {
 
  public:
   bool map_gps_data(
-      std::shared_ptr<GraphSLAM>& graph_slam,
+      std::shared_ptr<GraphSLAM>& covisibility_graph,
       std::deque<geographic_msgs::msg::GeoPointStamped::SharedPtr>& gps_queue,
-      const std::vector<KeyFrame::Ptr>& keyframes);
+      const std::map<int, KeyFrame::Ptr>& keyframes);
 
  private:
   boost::optional<Eigen::Vector3d> zero_utm;

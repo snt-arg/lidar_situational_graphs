@@ -73,24 +73,24 @@ std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
   return planes;
 }
 
-void LocalGraphGenerator::generate_local_graph(
-    std::unique_ptr<KeyframeMapper>& keyframe_mapper,
-    std::shared_ptr<GraphSLAM> covisibility_graph,
-    std::vector<KeyFrame::Ptr> filtered_keyframes,
-    const Eigen::Isometry3d& odom2map,
-    Rooms& current_room) {
-  // check which keyframes already exist in the local graph and add only new ones
-  for (const auto& filtered_keyframe : filtered_keyframes) {
-  }
+// void LocalGraphGenerator::generate_local_graph(
+//     std::unique_ptr<KeyframeMapper>& keyframe_mapper,
+//     std::shared_ptr<GraphSLAM> covisibility_graph,
+//     std::vector<KeyFrame::Ptr> filtered_keyframes,
+//     const Eigen::Isometry3d& odom2map,
+//     Rooms& current_room) {
+//   // check which keyframes already exist in the local graph and add only new ones
+//   for (const auto& filtered_keyframe : filtered_keyframes) {
+//   }
 
-  std::deque<KeyFrame::Ptr> new_room_keyframes;
-  keyframe_mapper->map_keyframes(current_room.local_graph,
-                                 odom2map,
-                                 new_room_keyframes,
-                                 current_room.room_keyframes);
-  // and to the local graph
+//   std::deque<KeyFrame::Ptr> new_room_keyframes;
+//   keyframe_mapper->map_keyframes(current_room.local_graph,
+//                                  odom2map,
+//                                  new_room_keyframes,
+//                                  current_room.room_keyframes);
+//   // and to the local graph
 
-  // get the edges of the keyframe in the cov graph and add them to the local graph
-}
+//   // get the edges of the keyframe in the cov graph and add them to the local graph
+// }
 
 }  // namespace s_graphs

@@ -171,7 +171,7 @@ int GraphSLAM::retrieve_total_nbr_of_vertices() const {
   return graph->vertices().size();
 }
 
-int GraphSLAM::retrive_total_nbr_of_edges() const { return graph->edges().size(); }
+int GraphSLAM::retrieve_total_nbr_of_edges() const { return graph->edges().size(); }
 
 int GraphSLAM::retrieve_local_nbr_of_vertices() const { return nbr_of_vertices; }
 int GraphSLAM::retrieve_local_nbr_of_edges() const { return nbr_of_edges; }
@@ -180,9 +180,13 @@ int GraphSLAM::increment_local_nbr_of_vertices() { return nbr_of_vertices += 1; 
 
 int GraphSLAM::increment_local_nbr_of_edges() { return nbr_of_edges += 1; }
 
-g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
+g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose,
+                                        bool use_vertex_size_id) {
   g2o::VertexSE3* vertex(new g2o::VertexSE3());
-  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  if (!use_vertex_size_id)
+    vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  else
+    vertex->setId(static_cast<int>(retrieve_total_nbr_of_vertices()));
   vertex->setEstimate(pose);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();

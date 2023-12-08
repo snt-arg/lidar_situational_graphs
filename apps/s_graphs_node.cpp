@@ -38,6 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+#include <boost/lockfree/spsc_queue.hpp>
 #include <boost/thread.hpp>
 #include <ctime>
 #include <mutex>
@@ -202,6 +203,12 @@ class SGraphsNode : public rclcpp::Node {
         "odom",
         1,
         std::bind(&SGraphsNode::raw_odom_callback, this, std::placeholders::_1));
+
+    point_cloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
+        "filtered_points",
+        100,
+        std::bind(&SGraphsNode::point_cloud_callback, this, std::placeholders::_1));
+
     imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
         "gpsimu_driver/imu_data",
         1024,
@@ -246,8 +253,6 @@ class SGraphsNode : public rclcpp::Node {
 
     map_points_pub =
         this->create_publisher<sensor_msgs::msg::PointCloud2>("s_graphs/map_points", 1);
-    keyframe_map_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
-        "s_graphs/keyframe_map_points", 1);
     map_planes_pub =
         this->create_publisher<s_graphs::msg::PlanesData>("s_graphs/map_planes", 1);
     all_map_planes_pub =
@@ -256,12 +261,6 @@ class SGraphsNode : public rclcpp::Node {
         this->create_publisher<std_msgs::msg::Header>("s_graphs/read_until", 32);
     graph_pub = this->create_publisher<graph_manager_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32);
-    graph_keyframes_pub =
-        this->create_publisher<graph_manager_msgs::msg::GraphKeyframes>(
-            "s_graphs/graph_keyframes", 32);
-    graph_room_keyframe_pub =
-        this->create_publisher<graph_manager_msgs::msg::RoomKeyframe>(
-            "s_graphs/graph_room_keyframes", 32);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
         "s_graphs/dump",
@@ -306,10 +305,7 @@ class SGraphsNode : public rclcpp::Node {
 
     map_publish_timer = this->create_wall_timer(
         std::chrono::seconds(int(map_cloud_update_interval)),
-        std::bind(&SGraphsNode::map_points_publish_timer_callback, this));
-    graph_publish_timer = this->create_wall_timer(
-        std::chrono::seconds(int(graph_update_interval)),
-        std::bind(&SGraphsNode::graph_publisher_timer_callback, this));
+        std::bind(&SGraphsNode::map_publish_timer_callback, this));
 
     anchor_node = nullptr;
     anchor_edge = nullptr;
@@ -347,6 +343,8 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("fitness_score_max_range",
                             std::numeric_limits<double>::max());
     this->declare_parameter("fitness_score_thresh", 0.5);
+    this->declare_parameter("keyframe_matching_threshold", 0.1);
+
     this->declare_parameter("registration_method", "NDT_OMP");
     this->declare_parameter("reg_num_threads", 0);
     this->declare_parameter("reg_transformation_epsilon", 0.01);
@@ -414,7 +412,6 @@ class SGraphsNode : public rclcpp::Node {
     compressed_graph = std::make_unique<GraphSLAM>(
         this->get_parameter("g2o_solver_type").get_parameter_value().get<std::string>(),
         this->get_parameter("save_timings").get_parameter_value().get<bool>());
-    publish_graph = std::make_unique<GraphSLAM>();
     visualization_graph = std::make_unique<GraphSLAM>();
     keyframe_updater = std::make_unique<KeyframeUpdater>(shared_from_this());
     plane_analyzer = std::make_unique<PlaneAnalyzer>(shared_from_this());
@@ -471,6 +468,17 @@ class SGraphsNode : public rclcpp::Node {
           odom_msg->header.stamp, trans_odom2map, map_frame_id, odom_frame_id);
     }
     odom2map_broadcaster->sendTransform(odom2map_transform);
+  }
+
+  /**
+   * @brief receive the raw pointcloud
+   *
+   * @param cloud_msg
+   */
+  void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
+    cloud_queue_mutex.lock();
+    cloud_queue.push_back(cloud_msg);
+    cloud_queue_mutex.unlock();
   }
 
   /**
@@ -732,28 +740,26 @@ class SGraphsNode : public rclcpp::Node {
     return true;
   }
 
-  void extract_keyframes_from_room(std::deque<KeyFrame::Ptr> new_keyframes) {
-    // check if the current robot pose lies in a room
-    if (rooms_vec.empty()) return;
+  /**
+   *@brief extract all the keyframes from the found room
+   **/
 
-    std::cout << "extracting the current room " << std::endl;
-    Rooms current_room;
-    current_room = local_graph_generator->get_current_room(
-        x_vert_planes, y_vert_planes, keyframes.back(), rooms_vec);
+  // void extract_keyframes_from_room(Rooms& current_room) {
+  //   // check if the current robot pose lies in a room
+  //   if (rooms_vec.empty()) return;
 
-    std::cout << "extracting room keyframes " << std::endl;
-    // if current room is not empty then get the keyframes in the room
-    if (current_room.node != nullptr) {
-      Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
-      std::vector<s_graphs::KeyFrame::Ptr> room_keyframes =
-          local_graph_generator->get_keyframes_inside_room(
-              current_room, x_vert_planes, y_vert_planes, keyframes);
-      // create the local graph for that room
-      // local_graph_generator->generate_local_graph(
-      //     keyframe_mapper, covisibility_graph, room_keyframes, odom2map,
-      //     current_room);
-    }
-  }
+  //   // if current room is not empty then get the keyframes in the room
+  //   if (current_room.node != nullptr) {
+  //     Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
+  //     std::map<int, s_graphs::KeyFrame::Ptr> room_keyframes =
+  //         room_graph_generator->get_keyframes_inside_room(
+  //             current_room, x_vert_planes, y_vert_planes, keyframes);
+  //     // create the local graph for that room
+  //     room_graph_generator->generate_local_graph(
+  //         keyframe_mapper, covisibility_graph, room_keyframes, odom2map,
+  //         current_room);
+  //   }
+  // }
 
   void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
     walls_msg_vector = walls_msg->walls;
@@ -896,9 +902,14 @@ class SGraphsNode : public rclcpp::Node {
       loop_mapper->add_loops(covisibility_graph, loops, graph_mutex);
     }
 
-    std::copy(
-        new_keyframes.begin(), new_keyframes.end(), std::back_inserter(keyframes));
+    graph_mutex.lock();
+    std::transform(new_keyframes.begin(),
+                   new_keyframes.end(),
+                   std::inserter(keyframes, keyframes.end()),
+                   [](const KeyFrame::Ptr& k) { return std::make_pair(k->id(), k); });
+
     new_keyframes.clear();
+    graph_mutex.unlock();
 
     // move the first node anchor position to the current estimate of the first node
     // pose so the first node moves freely while trying to stay around the origin
@@ -911,12 +922,21 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     std::vector<KeyFrameSnapshot::Ptr> snapshot(keyframes.size());
-    std::transform(
-        keyframes.begin(),
-        keyframes.end(),
-        snapshot.begin(),
-        [=](const KeyFrame::Ptr& k) { return std::make_shared<KeyFrameSnapshot>(k); });
+    std::transform(keyframes.begin(),
+                   keyframes.end(),
+                   snapshot.begin(),
+                   [=](const std::pair<int, KeyFrame::Ptr>& k) {
+                     return std::make_shared<KeyFrameSnapshot>(k.second);
+                   });
     keyframes_snapshot.swap(snapshot);
+
+    for (const auto& keyframe_snapshot : keyframes_snapshot) {
+      keyframes_snapshot_queue.push(keyframe_snapshot);
+    }
+
+    for (const auto& keyframe : keyframes) {
+      complete_keyframes_queue.push(keyframe.second);
+    }
 
     std::vector<VerticalPlanes> current_x_planes(x_vert_planes.size());
     std::transform(
@@ -973,32 +993,30 @@ class SGraphsNode : public rclcpp::Node {
   void optimization_timer_callback() {
     if (keyframes.empty()) return;
 
-    const auto& keyframe = keyframes.back();
+    int num_iterations = this->get_parameter("g2o_solver_num_iterations")
+                             .get_parameter_value()
+                             .get<int>();
+
+    curr_edge_count = covisibility_graph->retrieve_total_nbr_of_edges();
+    if (curr_edge_count <= prev_edge_count) {
+      return;
+    }
+
+    graph_mutex.lock();
+    const int keyframe_id = keyframes.rbegin()->first;
+    graph_mutex.unlock();
 
     graph_mutex.lock();
     if (!loop_found) {
-      std::map<int, KeyFrame::Ptr> keyframe_map;
-      for (const auto& curr_k : keyframes) {
-        keyframe_map.insert({curr_k->id(), curr_k});
-      }
       graph_utils->copy_windowed_graph(
-          10, covisibility_graph, compressed_graph, keyframe_map);
+          10, covisibility_graph, compressed_graph, keyframes);
     } else {
       graph_utils->copy_graph(covisibility_graph, compressed_graph);
       loop_found = false;
     }
     graph_mutex.unlock();
 
-    curr_edge_count = covisibility_graph->retrive_total_nbr_of_edges();
-    if (curr_edge_count <= prev_edge_count) {
-      return;
-    }
-
     // optimize the pose graph
-    int num_iterations = this->get_parameter("g2o_solver_num_iterations")
-                             .get_parameter_value()
-                             .get<int>();
-
     try {
       compressed_graph->optimize(num_iterations);
     } catch (std::invalid_argument& e) {
@@ -1015,27 +1033,89 @@ class SGraphsNode : public rclcpp::Node {
                               x_infinite_rooms,
                               y_infinite_rooms,
                               floors_vec);
-    graph_mutex.unlock();
+
+    Eigen::Isometry3d trans = keyframes[keyframe_id]->node->estimate() *
+                              keyframes[keyframe_id]->odom.inverse();
 
     // publish tf
-    Eigen::Isometry3d trans = keyframe->node->estimate() * keyframe->odom.inverse();
+    geometry_msgs::msg::TransformStamped ts =
+        matrix2transform(keyframes[keyframe_id]->stamp,
+                         trans.matrix().cast<float>(),
+                         map_frame_id,
+                         odom_frame_id);
+    odom2map_pub->publish(ts);
+    graph_mutex.unlock();
+
     trans_odom2map_mutex.lock();
     trans_odom2map = trans.matrix().cast<float>();
     trans_odom2map_mutex.unlock();
-
-    geometry_msgs::msg::TransformStamped ts = matrix2transform(
-        keyframe->stamp, trans.matrix().cast<float>(), map_frame_id, odom_frame_id);
-    odom2map_pub->publish(ts);
 
     graph_updated = true;
     prev_edge_count = curr_edge_count;
   }
 
   /**
+   * @brief generate map point cloud and publish it
+   * @param event
+   */
+  void map_publish_timer_callback() {
+    if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
+      return;
+    }
+
+    int current_loop = 0;
+    KeyFrameSnapshot::Ptr current_snapshot;
+    while (keyframes_snapshot_queue.pop(current_snapshot)) {
+      if (current_loop == 0) current_keyframes_snapshot.clear();
+      current_keyframes_snapshot.push_back(current_snapshot);
+      current_loop++;
+    }
+
+    current_loop = 0;
+    KeyFrame::Ptr current_keyframe;
+    while (complete_keyframes_queue.pop(current_keyframe)) {
+      if (current_loop == 0) current_keyframes.clear();
+      current_keyframes.push_back(current_keyframe);
+      current_loop++;
+    }
+
+    auto cloud =
+        map_cloud_generator->generate(current_keyframes_snapshot, map_cloud_resolution);
+    if (!cloud) {
+      return;
+    }
+
+    cloud->header.frame_id = map_frame_id;
+    cloud->header.stamp = current_keyframes_snapshot.back()->cloud->header.stamp;
+
+    sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg(
+        new sensor_msgs::msg::PointCloud2());
+    pcl::toROSMsg(*cloud, *cloud_msg);
+
+    auto markers = graph_visualizer->create_marker_array(
+        this->now(),
+        covisibility_graph->graph.get(),
+        x_planes_snapshot,
+        y_planes_snapshot,
+        hort_planes_snapshot,
+        x_inf_rooms_snapshot,
+        y_inf_rooms_snapshot,
+        rooms_vec_snapshot,
+        loop_detector->get_distance_thresh() * 2.0,
+        current_keyframes,
+        floors_vec);
+    markers_pub->publish(markers);
+
+    publish_all_mapped_planes(x_vert_planes, y_vert_planes);
+    map_points_pub->publish(*cloud_msg);
+    publish_graph();
+  }
+
+  /**
    * @brief generate graph structure and publish it
    * @param event
    */
-  void graph_publisher_timer_callback() {
+  void publish_graph() {
     std::string graph_type;
     if (std::string("/robot1") == this->get_namespace()) {
       graph_type = "Prior";
@@ -1054,82 +1134,7 @@ class SGraphsNode : public rclcpp::Node {
                                        x_inf_rooms_snapshot,
                                        y_inf_rooms_snapshot);
     graph_structure.name = graph_type;
-
-    auto graph_keyframes = graph_publisher->publish_graph_keyframes(
-        publish_graph->graph.get(), this->keyframes);
     graph_pub->publish(graph_structure);
-    graph_keyframes_pub->publish(graph_keyframes);
-  }
-
-  /**
-   * @brief generate map point cloud and publish it
-   * @param event
-   */
-  void map_points_publish_timer_callback() {
-    if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
-      return;
-    }
-
-    std::vector<KeyFrameSnapshot::Ptr> snapshot;
-    snapshot = keyframes_snapshot;
-
-    auto cloud = map_cloud_generator->generate(snapshot, map_cloud_resolution);
-    if (!cloud) {
-      return;
-    }
-
-    cloud->header.frame_id = map_frame_id;
-    cloud->header.stamp = snapshot.back()->cloud->header.stamp;
-
-    sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg(
-        new sensor_msgs::msg::PointCloud2());
-    pcl::toROSMsg(*cloud, *cloud_msg);
-
-    auto markers = graph_visualizer->create_marker_array(
-        this->now(),
-        covisibility_graph->graph.get(),
-        x_planes_snapshot,
-        y_planes_snapshot,
-        hort_planes_snapshot,
-        x_inf_rooms_snapshot,
-        y_inf_rooms_snapshot,
-        rooms_vec_snapshot,
-        loop_detector->get_distance_thresh() * 2.0,
-        keyframes,
-        floors_vec);
-    markers_pub->publish(markers);
-
-    publish_all_mapped_planes(x_vert_planes, y_vert_planes);
-    map_points_pub->publish(*cloud_msg);
-  }
-
-  /**
-   * @brief publish the pointcloud snapshots information from the last n keyframes
-   *
-   */
-  void publish_keyframe_mapped_points() {
-    if (keyframes.empty()) return;
-
-    std::vector<KeyFrame::Ptr> keyframe_window(
-        keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size),
-        keyframes.end());
-
-    std::vector<KeyFrameSnapshot::Ptr> snapshot_vec;
-    for (std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin();
-         it != keyframe_window.rend();
-         ++it) {
-      KeyFrameSnapshot::Ptr snapshot = std::make_shared<KeyFrameSnapshot>(*it);
-      snapshot_vec.push_back(snapshot);
-    }
-
-    pcl::PointCloud<PointT>::Ptr keyframe_cloud =
-        map_cloud_generator->generate(snapshot_vec, 0.0);
-
-    keyframe_cloud->header.frame_id = map_frame_id;
-    keyframe_cloud->header.stamp = snapshot_vec.back()->cloud->header.stamp;
-    sensor_msgs::msg::PointCloud2 keyframe_cloud_msg;
-    pcl::toROSMsg(*keyframe_cloud, keyframe_cloud_msg);
-    keyframe_map_points_pub->publish(keyframe_cloud_msg);
   }
 
   /**
@@ -1140,28 +1145,28 @@ class SGraphsNode : public rclcpp::Node {
                              std::vector<VerticalPlanes> y_vert_planes_snapshot) {
     if (keyframes.empty()) return;
 
-    std::vector<KeyFrame::Ptr> keyframe_window(
-        keyframes.end() - std::min<int>(keyframes.size(), keyframe_window_size),
-        keyframes.end());
+    std::map<int, KeyFrame::Ptr> keyframe_window;
+    auto it = keyframes.rbegin();
+    for (; it != keyframes.rend() && keyframe_window.size() < keyframe_window_size;
+         ++it) {
+      keyframe_window.insert(*it);
+    }
+
     std::map<int, int> unique_x_plane_ids, unique_y_plane_ids;
-    for (std::vector<KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin();
+    for (std::map<int, KeyFrame::Ptr>::reverse_iterator it = keyframe_window.rbegin();
          it != keyframe_window.rend();
          ++it) {
-      for (const auto& x_plane_id : (*it)->x_plane_ids) {
+      for (const auto& x_plane_id : (it)->second->x_plane_ids) {
         auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));
-        // if(result.second == false) std::cout << "x plane already existed with id : "
-        // << x_plane_id << std::endl;
       }
 
-      for (const auto& y_plane_id : (*it)->y_plane_ids) {
+      for (const auto& y_plane_id : (it)->second->y_plane_ids) {
         auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));
-        // if(result.second == false) std::cout << "y plane already existed with id : "
-        // << y_plane_id << std::endl;
       }
     }
 
     s_graphs::msg::PlanesData vert_planes_data;
-    vert_planes_data.header.stamp = keyframes.back()->stamp;
+    vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& unique_x_plane_id : unique_x_plane_ids) {
       auto local_x_vert_plane =
           std::find_if(x_vert_planes_snapshot.begin(),
@@ -1226,7 +1231,7 @@ class SGraphsNode : public rclcpp::Node {
     if (keyframes.empty()) return;
 
     s_graphs::msg::PlanesData vert_planes_data;
-    vert_planes_data.header.stamp = keyframes.back()->stamp;
+    vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& x_vert_plane : x_vert_planes_snapshot) {
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
@@ -1415,7 +1420,7 @@ class SGraphsNode : public rclcpp::Node {
     double accum_distance;
     pcl::PointCloud<PointT>::ConstPtr cloud;
     sst << boost::format("%s") % directory;
-    std::vector<KeyFrame::Ptr> loaded_keyframes;
+    std::map<int, KeyFrame::Ptr> loaded_keyframes;
     g2o::SparseOptimizer* local_graph;
     local_graph = covisibility_graph->graph.get();
     VerticalPlanes load_x_planes;
@@ -1432,15 +1437,11 @@ class SGraphsNode : public rclcpp::Node {
     }
     std::sort(keyframe_directories.begin(), keyframe_directories.end());
 
-    loaded_keyframes.resize(keyframe_directories.size());
-
     for (int i = 0; i < keyframe_directories.size(); i++) {
-      loaded_keyframes[i] =
-          std::make_shared<KeyFrame>(stamp, odom, accum_distance, cloud);
-      loaded_keyframes[i]->node =
-          covisibility_graph->add_se3_node(loaded_keyframes[i]->odom);
-      keyframe_load_success =
-          loaded_keyframes[i]->load(keyframe_directories[i], local_graph);
+      auto keyframe = std::make_shared<KeyFrame>(stamp, odom, accum_distance, cloud);
+      keyframe->node = covisibility_graph->add_se3_node(keyframe->odom);
+      keyframe_load_success = keyframe->load(keyframe_directories[i], local_graph);
+      loaded_keyframes.insert({keyframe->id(), keyframe});
     }
 
     for (int i = 0; i < loaded_keyframes.size() - 1; i++) {
@@ -1587,7 +1588,6 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr optimization_timer;
   rclcpp::TimerBase::SharedPtr keyframe_timer;
   rclcpp::TimerBase::SharedPtr map_publish_timer;
-  rclcpp::TimerBase::SharedPtr graph_publish_timer;
   rclcpp::TimerBase::SharedPtr map_to_odom_broadcast_timer;
 
   message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub;
@@ -1605,6 +1605,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
   rclcpp::Subscription<s_graphs::msg::WallsData>::SharedPtr wall_data_sub;
   rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
       map_2map_transform_sub;
 
@@ -1622,14 +1623,9 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_corrected_pub;
   rclcpp::Publisher<std_msgs::msg::Header>::SharedPtr read_until_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub;
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr keyframe_map_points_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr all_map_planes_pub;
   rclcpp::Publisher<graph_manager_msgs::msg::Graph>::SharedPtr graph_pub;
-  rclcpp::Publisher<graph_manager_msgs::msg::GraphKeyframes>::SharedPtr
-      graph_keyframes_pub;
-  rclcpp::Publisher<graph_manager_msgs::msg::RoomKeyframe>::SharedPtr
-      graph_room_keyframe_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
@@ -1638,6 +1634,14 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Service<s_graphs::srv::DumpGraph>::SharedPtr dump_service_server;
   rclcpp::Service<s_graphs::srv::LoadGraph>::SharedPtr load_service_server;
   rclcpp::Service<s_graphs::srv::SaveMap>::SharedPtr save_map_service_server;
+
+  // odom queue
+  std::mutex odom_queue_mutex;
+  std::deque<nav_msgs::msg::Odometry::SharedPtr> odom_queue;
+
+  // cloud queue
+  std::mutex cloud_queue_mutex;
+  std::deque<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_queue;
 
   // keyframe queue
   std::string base_frame_id;
@@ -1703,18 +1707,22 @@ class SGraphsNode : public rclcpp::Node {
   std::vector<KeyFrameSnapshot::Ptr> keyframes_snapshot;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
 
+  boost::lockfree::spsc_queue<KeyFrameSnapshot::Ptr> keyframes_snapshot_queue{1000};
+  boost::lockfree::spsc_queue<KeyFrame::Ptr> complete_keyframes_queue{1000};
+  std::vector<KeyFrame::Ptr> current_keyframes;
+  std::vector<KeyFrameSnapshot::Ptr> current_keyframes_snapshot;
+
   std::mutex graph_mutex;
   int max_keyframes_per_update;
   std::deque<KeyFrame::Ptr> new_keyframes;
 
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;
-  std::vector<KeyFrame::Ptr> keyframes;
+  std::map<int, KeyFrame::Ptr> keyframes;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
   std::unique_ptr<GraphSLAM> compressed_graph;
-  std::unique_ptr<GraphSLAM> publish_graph;
   std::unique_ptr<GraphSLAM> visualization_graph;
   std::unique_ptr<LoopDetector> loop_detector;
   std::unique_ptr<LoopMapper> loop_mapper;
