@@ -56,49 +56,49 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node) {
 
   keyframe_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       keyframes_layer_id, "/rviz_keyframe_node_visual_tools", node);
-  keyframe_node_visual_tools->loadMarkerPub();
+  keyframe_node_visual_tools->loadMarkerPub(false);
   keyframe_node_visual_tools->deleteAllMarkers();
   keyframe_node_visual_tools->enableBatchPublishing();
   keyframe_node_visual_tools->setAlpha(0.5);
 
   keyframe_edge_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       keyframes_layer_id, "/rviz_keyframe_edge_visual_tools", node);
-  keyframe_edge_visual_tools->loadMarkerPub();
+  keyframe_edge_visual_tools->loadMarkerPub(false);
   keyframe_edge_visual_tools->deleteAllMarkers();
   keyframe_edge_visual_tools->enableBatchPublishing();
   keyframe_edge_visual_tools->setAlpha(1);
 
   plane_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       walls_layer_id, "/rviz_plane_node_visual_tools", node);
-  plane_node_visual_tools->loadMarkerPub();
+  plane_node_visual_tools->loadMarkerPub(false);
   plane_node_visual_tools->deleteAllMarkers();
   plane_node_visual_tools->enableBatchPublishing();
   plane_node_visual_tools->setAlpha(0.5);
 
   plane_edge_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       rooms_layer_id, "/rviz_plane_edge_visual_tools", node);
-  plane_edge_visual_tools->loadMarkerPub();
+  plane_edge_visual_tools->loadMarkerPub(false);
   plane_edge_visual_tools->deleteAllMarkers();
   plane_edge_visual_tools->enableBatchPublishing();
   plane_edge_visual_tools->setAlpha(1);
 
   room_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       rooms_layer_id, "/rviz_room_node_visual_tools", node);
-  room_node_visual_tools->loadMarkerPub();
+  room_node_visual_tools->loadMarkerPub(false);
   room_node_visual_tools->deleteAllMarkers();
   room_node_visual_tools->enableBatchPublishing();
   room_node_visual_tools->setAlpha(0.5);
 
   floor_edge_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       floors_layer_id, "/rviz_floor_edge_visual_tools", node);
-  floor_edge_visual_tools->loadMarkerPub();
+  floor_edge_visual_tools->loadMarkerPub(false);
   floor_edge_visual_tools->deleteAllMarkers();
   floor_edge_visual_tools->enableBatchPublishing();
   floor_edge_visual_tools->setAlpha(1);
 
   floor_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
       floors_layer_id, "/rviz_floor_node_visual_tools", node);
-  floor_node_visual_tools->loadMarkerPub();
+  floor_node_visual_tools->loadMarkerPub(false);
   floor_node_visual_tools->deleteAllMarkers();
   floor_node_visual_tools->enableBatchPublishing();
   floor_node_visual_tools->setAlpha(0.5);
@@ -1801,6 +1801,307 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     }
   }
   return prior_markers;
+}
+void GraphVisualizer::create_compressed_graph(
+    const rclcpp::Time& stamp,
+    bool global_optimization,
+    bool room_optimization,
+    const g2o::SparseOptimizer* compressed_graph,
+    const std::vector<VerticalPlanes>& x_plane_snapshot,
+    const std::vector<VerticalPlanes>& y_plane_snapshot,
+    const std::vector<HorizontalPlanes>& hort_plane_snapshot) {
+  keyframe_node_visual_tools->deleteAllMarkers();
+  rviz_visual_tools::Colors node_color;
+  rviz_visual_tools::Colors keyframe_edge_color, keyframe_plane_edge_color;
+  rviz_visual_tools::Colors keyframe_node_color;
+
+  if (global_optimization) {
+    keyframe_node_color = rviz_visual_tools::ORANGE;
+  } else if (room_optimization) {
+    keyframe_node_color = rviz_visual_tools::RED;
+  } else {
+    keyframe_node_color = rviz_visual_tools::TRANSLUCENT;
+  }
+
+  node_color = rviz_visual_tools::TRANSLUCENT;
+  keyframe_edge_color = keyframe_plane_edge_color = rviz_visual_tools::TRANSLUCENT;
+
+  for (const auto vertex : compressed_graph->vertices()) {
+    const g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(vertex.second);
+    if (vertex_se3) {
+      Eigen::Isometry3d pose;
+      double depth = 0.4, width = 0.4, height = 0.4;
+
+      pose.translation() = Eigen::Vector3d(vertex_se3->estimate().translation()(0),
+                                           vertex_se3->estimate().translation()(1),
+                                           vertex_se3->estimate().translation()(2));
+      pose.linear().setIdentity();
+
+      if (!vertex_se3->fixed())
+        keyframe_node_visual_tools->publishCuboid(
+            pose, depth, width, height, keyframe_node_color);
+      else {
+        keyframe_node_visual_tools->publishCuboid(
+            pose, depth, width, height, rviz_visual_tools::BLUE);
+      }
+    }
+  }
+
+  keyframe_edge_visual_tools->deleteAllMarkers();
+  auto traj_edge_itr = compressed_graph->edges().begin();
+  for (int i = 0; traj_edge_itr != compressed_graph->edges().end();
+       traj_edge_itr++, i++) {
+    g2o::HyperGraph::Edge* edge = *traj_edge_itr;
+    g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
+    if (edge_se3) {
+      g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]);
+      g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]);
+
+      if (v1 && v2 && edge_se3->level() == 0) {
+        Eigen::Isometry3d point1, point2;
+        point1.translation() = Eigen::Vector3d(v1->estimate().translation()(0),
+                                               v1->estimate().translation()(1),
+                                               v1->estimate().translation()(2));
+        point1.linear().setIdentity();
+
+        point2.translation() = Eigen::Vector3d(v2->estimate().translation()(0),
+                                               v2->estimate().translation()(1),
+                                               v2->estimate().translation()(2));
+        point2.linear().setIdentity();
+        keyframe_edge_visual_tools->publishLine(
+            point1, point2, keyframe_edge_color, rviz_visual_tools::SMALL);
+      }
+    }
+
+    g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
+    if (edge_plane) {
+      g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
+      g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_plane->vertices()[1]);
+
+      if (v1 && v2 && edge_plane->level() == 0) {
+        Eigen::Isometry3d point1, point2;
+        point1.translation() = Eigen::Vector3d(v1->estimate().translation()(0),
+                                               v1->estimate().translation()(1),
+                                               v1->estimate().translation()(2));
+        point1.linear().setIdentity();
+
+        if (fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(1)) &&
+            fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(2))) {
+          point2.translation() =
+              compute_vert_plane_centroid(v2->id(), x_plane_snapshot);
+        } else if (fabs(v2->estimate().normal()(1)) >
+                       fabs(v2->estimate().normal()(0)) &&
+                   fabs(v2->estimate().normal()(1)) >
+                       fabs(v2->estimate().normal()(2))) {
+          point2.translation() =
+              compute_vert_plane_centroid(v2->id(), y_plane_snapshot);
+
+        } else if (fabs(v2->estimate().normal()(2)) >
+                       fabs(v2->estimate().normal()(0)) &&
+                   fabs(v2->estimate().normal()(2)) >
+                       fabs(v2->estimate().normal()(1))) {
+          point2.translation() =
+              compute_hort_plane_centroid(v2->id(), hort_plane_snapshot);
+        } else
+          continue;
+        point2.linear().setIdentity();
+
+        geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
+        point2_stamped.header.frame_id = walls_layer_id;
+        point2_stamped.point.x = point2.translation()(0);
+        point2_stamped.point.y = point2.translation()(1);
+        point2_stamped.point.z = point2.translation()(2);
+        tf_buffer->transform(point2_stamped,
+                             point2_stamped_transformed,
+                             keyframes_layer_id,
+                             tf2::TimePointZero,
+                             walls_layer_id);
+
+        point2.translation() = Eigen::Vector3d(point2_stamped_transformed.point.x,
+                                               point2_stamped_transformed.point.y,
+                                               point2_stamped_transformed.point.z);
+
+        keyframe_edge_visual_tools->publishLine(
+            point1, point2, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+      }
+    }
+  }
+
+  plane_node_visual_tools->deleteAllMarkers();
+  plane_edge_visual_tools->deleteAllMarkers();
+  for (const auto& x_plane : x_plane_snapshot) {
+    if (!compressed_graph->vertex(x_plane.plane_node->id())) continue;
+
+    pcl::PointXYZRGBNormal p_min, p_max;
+    Eigen::Isometry3d pose = compute_plane_pose(x_plane, p_min, p_max);
+
+    double depth, width, height;
+    depth = rviz_visual_tools::SMALL_SCALE;
+    width = fabs(p_min.y - p_max.y);
+    height = fabs(p_min.z - p_max.z);
+    if (height > 3.0) height = 3.0;
+    plane_node_visual_tools->publishCuboid(pose, depth, width, height, node_color);
+
+    auto edge_itr = x_plane.plane_node->edges().begin();
+    for (int i = 0; edge_itr != x_plane.plane_node->edges().end(); edge_itr++, i++) {
+      g2o::OptimizableGraph::Edge* edge =
+          dynamic_cast<g2o::OptimizableGraph::Edge*>(*edge_itr);
+      if (edge->level() == 0) {
+        g2o::EdgeRoom4Planes* edge_room_4_planes =
+            dynamic_cast<g2o::EdgeRoom4Planes*>(edge);
+        if (edge_room_4_planes) {
+          auto room_v1 =
+              dynamic_cast<g2o::VertexRoom*>(edge_room_4_planes->vertices()[0]);
+          geometry_msgs::msg::Point room_p1;
+          room_p1.x = room_v1->estimate().translation()(0);
+          room_p1.y = room_v1->estimate().translation()(1);
+          room_p1.z = room_v1->estimate().translation()(2);
+
+          geometry_msgs::msg::Point plane_pl1 =
+              compute_plane_point(room_p1, x_plane.cloud_seg_map);
+
+          plane_edge_visual_tools->publishLine(
+              room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+          continue;
+        }
+
+        g2o::EdgeRoom2Planes* edge_room_2_planes =
+            dynamic_cast<g2o::EdgeRoom2Planes*>(edge);
+        if (edge_room_2_planes) {
+          auto room_v1 =
+              dynamic_cast<g2o::VertexRoom*>(edge_room_2_planes->vertices()[0]);
+          geometry_msgs::msg::Point room_p1;
+          room_p1.x = room_v1->estimate().translation()(0);
+          room_p1.y = room_v1->estimate().translation()(1);
+          room_p1.z = room_v1->estimate().translation()(2);
+          geometry_msgs::msg::Point plane_pl1 =
+              compute_plane_point(room_p1, x_plane.cloud_seg_map);
+
+          plane_edge_visual_tools->publishLine(
+              room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+          continue;
+        }
+      }
+    }
+  }
+
+  for (const auto& y_plane : y_plane_snapshot) {
+    if (!compressed_graph->vertex(y_plane.plane_node->id())) continue;
+
+    pcl::PointXYZRGBNormal p_min, p_max;
+    Eigen::Isometry3d pose = compute_plane_pose(y_plane, p_min, p_max);
+
+    double depth, width, height;
+    depth = rviz_visual_tools::SMALL_SCALE;
+    width = fabs(p_min.x - p_max.x);
+    height = fabs(p_min.z - p_max.z);
+    if (height > 3.0) height = 3.0;
+    plane_node_visual_tools->publishCuboid(pose, depth, width, height, node_color);
+
+    auto edge_itr = y_plane.plane_node->edges().begin();
+    for (int i = 0; edge_itr != y_plane.plane_node->edges().end(); edge_itr++, i++) {
+      g2o::OptimizableGraph::Edge* edge =
+          dynamic_cast<g2o::OptimizableGraph::Edge*>(*edge_itr);
+      if (edge->level() == 0) {
+        g2o::EdgeRoom4Planes* edge_room_4_planes =
+            dynamic_cast<g2o::EdgeRoom4Planes*>(edge);
+
+        if (edge_room_4_planes) {
+          auto room_v1 =
+              dynamic_cast<g2o::VertexRoom*>(edge_room_4_planes->vertices()[0]);
+          geometry_msgs::msg::Point room_p1;
+          room_p1.x = room_v1->estimate().translation()(0);
+          room_p1.y = room_v1->estimate().translation()(1);
+          room_p1.z = room_v1->estimate().translation()(2);
+
+          geometry_msgs::msg::Point plane_pl1 =
+              compute_plane_point(room_p1, y_plane.cloud_seg_map);
+
+          plane_edge_visual_tools->publishLine(
+              room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+          continue;
+        }
+
+        g2o::EdgeRoom2Planes* edge_room_2_planes =
+            dynamic_cast<g2o::EdgeRoom2Planes*>(edge);
+        if (edge_room_2_planes) {
+          auto room_v1 =
+              dynamic_cast<g2o::VertexRoom*>(edge_room_2_planes->vertices()[0]);
+          geometry_msgs::msg::Point room_p1;
+          room_p1.x = room_v1->estimate().translation()(0);
+          room_p1.y = room_v1->estimate().translation()(1);
+          room_p1.z = room_v1->estimate().translation()(2);
+          geometry_msgs::msg::Point plane_pl1 =
+              compute_plane_point(room_p1, y_plane.cloud_seg_map);
+
+          plane_edge_visual_tools->publishLine(
+              room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+          continue;
+        }
+      }
+    }
+  }
+
+  room_node_visual_tools->deleteAllMarkers();
+  floor_node_visual_tools->deleteAllMarkers();
+  floor_edge_visual_tools->deleteAllMarkers();
+  for (const auto vertex : compressed_graph->vertices()) {
+    const g2o::VertexFloor* vertex_floor =
+        dynamic_cast<g2o::VertexFloor*>(vertex.second);
+    double depth = 0.6, width = 0.6, height = 0.6;
+    Eigen::Isometry3d pose;
+    if (vertex_floor) {
+      pose.translation() = Eigen::Vector3d(vertex_floor->estimate().translation()(0),
+                                           vertex_floor->estimate().translation()(1),
+                                           vertex_floor->estimate().translation()(2));
+      pose.linear().setIdentity();
+      floor_node_visual_tools->publishCuboid(pose, depth, width, height, node_color);
+
+      for (g2o::HyperGraph::EdgeSet::iterator e_it = vertex_floor->edges().begin();
+           e_it != vertex_floor->edges().end();
+           ++e_it) {
+        g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*e_it);
+        g2o::EdgeFloorRoom* edge_floor_room = dynamic_cast<g2o::EdgeFloorRoom*>(e);
+        if (edge_floor_room && edge_floor_room->level() == 0) {
+          geometry_msgs::msg::Point floor_p1, room_p1;
+          auto floor_v1 =
+              dynamic_cast<g2o::VertexFloor*>(edge_floor_room->vertices()[0]);
+          auto room_v1 = dynamic_cast<g2o::VertexRoom*>(edge_floor_room->vertices()[1]);
+
+          floor_p1.x = floor_v1->estimate().translation()(0);
+          floor_p1.y = floor_v1->estimate().translation()(1);
+          floor_p1.z = floor_v1->estimate().translation()(2);
+          room_p1.x = room_v1->estimate().translation()(0);
+          room_p1.y = room_v1->estimate().translation()(1);
+          room_p1.z = room_v1->estimate().translation()(2);
+
+          room_p1 = compute_room_point(room_p1);
+          floor_edge_visual_tools->publishLine(
+              floor_p1, room_p1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+        }
+      }
+      continue;
+    }
+    const g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(vertex.second);
+    if (vertex_room && !vertex_room->fixed()) {
+      pose.translation() = Eigen::Vector3d(vertex_room->estimate().translation()(0),
+                                           vertex_room->estimate().translation()(1),
+                                           vertex_room->estimate().translation()(2));
+      pose.linear().setIdentity();
+      room_node_visual_tools->publishCuboid(pose, depth, width, height, node_color);
+      continue;
+    }
+  }
+
+  keyframe_node_visual_tools->trigger();
+  // keyframe_edge_visual_tools->trigger();
+  // plane_node_visual_tools->trigger();
+  // plane_edge_visual_tools->trigger();
+  // room_node_visual_tools->trigger();
+  // floor_node_visual_tools->trigger();
+  // floor_edge_visual_tools->trigger();
+
+  return;
 }
 
 Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,

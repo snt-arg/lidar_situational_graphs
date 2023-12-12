@@ -126,9 +126,8 @@ class GraphVisualizer {
    * @param x_plane_snapshot
    * @param y_plane_snapshot
    * @param hort_plane_snapshot
-   * @return visualization_msgs::msg::MarkerArray
    */
-  visualization_msgs::msg::MarkerArray create_compressed_graph(
+  void create_compressed_graph(
       const rclcpp::Time& stamp,
       bool global_optimization,
       bool room_optimization,
