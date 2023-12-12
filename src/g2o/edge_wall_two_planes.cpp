@@ -79,24 +79,13 @@ void EdgeWall2Planes::computeError() {
   correct_plane_direction(plane2);
 
   Eigen::Vector3d estimated_wall_center;
-  if (fabs(plane1(3)) > fabs(plane2(3))) {
-    estimated_wall_center =
-        (0.5 * (fabs(plane1(3)) * plane1.head(3) - fabs(plane2(3)) * plane2.head(3))) +
-        fabs(plane2(3)) * plane2.head(3);
+  if (_use_factor_nn){
+    estimated_wall_center = compute_factor_nn(plane1, plane2);
   } else {
-    estimated_wall_center =
-        (0.5 * (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3))) +
-        fabs(plane1(3)) * plane1.head(3);
+    estimated_wall_center = compute_factor_legacy(plane1, plane2);
   }
 
-  Eigen::Vector3d estimated_wall_center_normalized =
-      estimated_wall_center.head(2) / estimated_wall_center.norm();
-  Eigen::Vector3d final_wall_center =
-      estimated_wall_center.head(2) +
-      (_wall_point - (_wall_point.dot(estimated_wall_center_normalized)) *
-                         estimated_wall_center_normalized);
-
-  _error = wall_center - final_wall_center;
+  _error = wall_center - estimated_wall_center;
 }
 
 bool EdgeWall2Planes::read(std::istream& is) {
@@ -137,6 +126,51 @@ void EdgeWall2Planes::correct_plane_direction(Eigen::Vector4d& plane) {
   } else {
     plane = plane;
   }
+}
+
+Eigen::Vector3d EdgeWall2Planes::compute_factor_legacy(Eigen::Vector4d plane1, Eigen::Vector4d plane2) {
+  Eigen::Vector3d estimated_wall_center;
+  if (fabs(plane1(3)) > fabs(plane2(3))) {
+    estimated_wall_center =
+        (0.5 * (fabs(plane1(3)) * plane1.head(3) - fabs(plane2(3)) * plane2.head(3))) +
+        fabs(plane2(3)) * plane2.head(3);
+  } else {
+    estimated_wall_center =
+        (0.5 * (fabs(plane2(3)) * plane2.head(3) - fabs(plane1(3)) * plane1.head(3))) +
+        fabs(plane1(3)) * plane1.head(3);
+  }
+
+  Eigen::Vector3d estimated_wall_center_normalized =
+      estimated_wall_center.head(2) / estimated_wall_center.norm();
+  Eigen::Vector3d final_wall_center =
+      estimated_wall_center.head(2) +
+      (_wall_point - (_wall_point.dot(estimated_wall_center_normalized)) *
+                         estimated_wall_center_normalized);
+
+  return final_wall_center;
+}
+
+Eigen::Vector3d EdgeWall2Planes::compute_factor_nn(Eigen::Vector4d plane1, Eigen::Vector4d plane2) {
+  float normalization = 20.0;
+  std::vector<Eigen::Vector4d> vectorList;
+    vectorList.push_back(plane1);
+    vectorList.push_back(plane2);
+
+  std::vector<float> concatenatedVector;
+  for (const Eigen::Vector4d& vector : vectorList) {
+      concatenatedVector.push_back(static_cast<float>(vector(0)));
+      concatenatedVector.push_back(static_cast<float>(vector(1)));
+      concatenatedVector.push_back(static_cast<float>(vector(2)));
+      concatenatedVector.push_back(static_cast<float>(vector(3))/normalization);
+  }
+
+  std::cout << "FLAG concatenatedVector " << concatenatedVector << '\n';
+  Eigen::Vector3d output = factor_nn.infer(concatenatedVector);
+  std::cout << "FLAG output " << output << '\n';
+  output[0] = output[0] * normalization;
+  output[1] = output[1] * normalization;
+  output[2] = 0.0;
+  return output;
 }
 
 }  // namespace g2o

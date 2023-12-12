@@ -50,7 +50,7 @@ class FactorNN{
    * @return
    */
 //   FactorNN(const rclcpp::Node::SharedPtr node);
-  FactorNN();
+  FactorNN(std::string factor_type = "") { _factor_type = factor_type;};
 //   ~FactorNN();
   // void infer();
   Eigen::Vector2d infer(std::vector<float> input_vector);
@@ -60,7 +60,7 @@ class FactorNN{
   std::vector<torch::jit::IValue> inputs;
 //   rclcpp::Node::SharedPtr node_obj;
   std::string path;
-
+  std::string _factor_type;
 };
 
 }

@@ -64,6 +64,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <Eigen/Dense>
 
 #include "g2o/vertex_wall.hpp"
+
+#include "s_graphs/backend/factor_nn.hpp"
+
 namespace g2o {
 
 /*   Define Wall edge with wall surfaces here*/
@@ -71,9 +74,10 @@ namespace g2o {
 class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeWall2Planes(Eigen::Vector3d wall_point) : BaseMultiEdge<3, Eigen::Vector3d>() {
+  EdgeWall2Planes(Eigen::Vector3d wall_point, bool use_factor_nn_arg = false) : BaseMultiEdge<3, Eigen::Vector3d>() {
     resize(3);
     _wall_point = wall_point;
+    _use_factor_nn = use_factor_nn_arg;
   }
 
   void computeError() override;
@@ -82,9 +86,14 @@ class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
 
   virtual bool write(std::ostream& os) const override;
 
+  s_graphs::FactorNN factor_nn;
+
  private:
   void correct_plane_direction(Eigen::Vector4d& plane);
   Eigen::Vector3d _wall_point;
+  Eigen::Vector3d compute_factor_legacy(Eigen::Vector4d plane1, Eigen::Vector4d plane2);
+  Eigen::Vector3d compute_factor_nn(Eigen::Vector4d plane1, Eigen::Vector4d plane2);
+  bool _use_factor_nn;
 };
 
 }  // namespace g2o

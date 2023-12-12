@@ -265,7 +265,7 @@ void EdgeRoom4Planes::computeError() {
 
   Eigen::Vector2d final_vec;
   // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  if (use_factor_nn){
+  if (_use_factor_nn){
     final_vec = compute_factor_nn(x_plane1, x_plane2, y_plane1, y_plane2);
   } else {
     final_vec = compute_factor_legacy(x_plane1, x_plane2, y_plane1, y_plane2);

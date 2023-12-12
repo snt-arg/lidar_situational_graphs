@@ -39,8 +39,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 namespace s_graphs {
 
 // FactorNN::FactorNN(const rclcpp::Node::SharedPtr node) {
-FactorNN::FactorNN() {
-  path = "/home/adminpc/reasoning_ws/src/graph_reasoning/torchscripts/test.pt";
+FactorNN::FactorNN("wall") {
+  if (_factor_type == "room_4"){
+    path = "/home/adminpc/reasoning_ws/src/graph_reasoning/torchscripts/room_4.pt";
+  } else if (_factor_type == "wall") {
+    path = "/home/adminpc/reasoning_ws/src/graph_reasoning/torchscripts/wall.pt";
+  }
+  
   try {
     module = torch::jit::load(path);
   }
