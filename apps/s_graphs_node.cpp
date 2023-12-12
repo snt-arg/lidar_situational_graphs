@@ -1112,8 +1112,9 @@ class SGraphsNode : public rclcpp::Node {
         new sensor_msgs::msg::PointCloud2());
     pcl::toROSMsg(*cloud, *cloud_msg);
 
+    auto current_time = this->now();
     auto markers = graph_visualizer->create_marker_array(
-        this->now(),
+        current_time,
         covisibility_graph->graph.get(),
         x_planes_snapshot,
         y_planes_snapshot,
@@ -1124,8 +1125,16 @@ class SGraphsNode : public rclcpp::Node {
         loop_detector->get_distance_thresh() * 2.0,
         current_keyframes,
         floors_vec);
-    markers_pub->publish(markers);
 
+    graph_visualizer->create_compressed_graph(current_time,
+                                              global_optimization,
+                                              false,
+                                              compressed_graph->graph.get(),
+                                              x_planes_snapshot,
+                                              y_planes_snapshot,
+                                              hort_planes_snapshot);
+
+    markers_pub->publish(markers);
     publish_all_mapped_planes(x_vert_planes, y_vert_planes);
     map_points_pub->publish(*cloud_msg);
     publish_graph();
