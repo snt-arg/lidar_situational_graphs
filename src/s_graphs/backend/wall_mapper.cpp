@@ -42,41 +42,27 @@ void WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
                              Eigen::Vector3d x_wall_pose,
                              std::vector<s_graphs::msg::PlaneData> y_planes_msg,
                              Eigen::Vector3d y_wall_pose,
-                             std::vector<VerticalPlanes>& x_vert_planes,
-                             std::vector<VerticalPlanes>& y_vert_planes) {
+                             std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                             std::unordered_map<int, VerticalPlanes>& y_vert_planes) {
   if (x_planes_msg.size() == 2) {
-    auto matched_x_plane1 = x_vert_planes.begin();
-    auto matched_x_plane2 = x_vert_planes.begin();
+    auto matched_x_plane1 = x_vert_planes.find(x_planes_msg[0].id);
+    auto matched_x_plane2 = x_vert_planes.find(x_planes_msg[1].id);
 
-    matched_x_plane1 =
-        std::find_if(x_vert_planes.begin(),
-                     x_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == x_planes_msg[0].id);
-    matched_x_plane2 =
-        std::find_if(x_vert_planes.begin(),
-                     x_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == x_planes_msg[1].id);
-
-    if (!(*matched_x_plane1).on_wall && !(*matched_x_plane2).on_wall) {
-      add_wall_node_and_edge(
-          covisibility_graph, x_wall_pose, *matched_x_plane1, *matched_x_plane2);
+    if (!(matched_x_plane1->second).on_wall && !(matched_x_plane2->second).on_wall) {
+      add_wall_node_and_edge(covisibility_graph,
+                             x_wall_pose,
+                             matched_x_plane1->second,
+                             matched_x_plane2->second);
     }
   } else if (y_planes_msg.size() == 2) {
-    auto matched_y_plane1 = y_vert_planes.begin();
-    auto matched_y_plane2 = y_vert_planes.begin();
+    auto matched_y_plane1 = y_vert_planes.find(y_planes_msg[0].id);
+    auto matched_y_plane2 = y_vert_planes.find(y_planes_msg[1].id);
 
-    matched_y_plane1 =
-        std::find_if(y_vert_planes.begin(),
-                     y_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == y_planes_msg[0].id);
-    matched_y_plane2 =
-        std::find_if(y_vert_planes.begin(),
-                     y_vert_planes.end(),
-                     boost::bind(&VerticalPlanes::id, _1) == y_planes_msg[1].id);
-
-    if (!(*matched_y_plane1).on_wall && !(*matched_y_plane2).on_wall) {
-      add_wall_node_and_edge(
-          covisibility_graph, y_wall_pose, *matched_y_plane1, *matched_y_plane2);
+    if (!(matched_y_plane1->second).on_wall && !(matched_y_plane2->second).on_wall) {
+      add_wall_node_and_edge(covisibility_graph,
+                             y_wall_pose,
+                             matched_y_plane1->second,
+                             matched_y_plane2->second);
     }
   } else {
     std::cout << "Message size is not 2 !! " << std::endl;

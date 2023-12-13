@@ -92,8 +92,8 @@ class WallMapper {
                    Eigen::Vector3d x_wall_pose,
                    std::vector<s_graphs::msg::PlaneData> y_planes_msg,
                    Eigen::Vector3d y_wall_pose,
-                   std::vector<VerticalPlanes>& x_vert_planes,
-                   std::vector<VerticalPlanes>& y_vert_planes);
+                   std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                   std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 
   /**
    * @brief

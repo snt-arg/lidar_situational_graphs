@@ -745,27 +745,6 @@ class SGraphsNode : public rclcpp::Node {
     return true;
   }
 
-  /**
-   *@brief extract all the keyframes from the found room
-   **/
-
-  // void extract_keyframes_from_room(Rooms& current_room) {
-  //   // check if the current robot pose lies in a room
-  //   if (rooms_vec.empty()) return;
-
-  //   // if current room is not empty then get the keyframes in the room
-  //   if (current_room.node != nullptr) {
-  //     Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
-  //     std::map<int, s_graphs::KeyFrame::Ptr> room_keyframes =
-  //         room_graph_generator->get_keyframes_inside_room(
-  //             current_room, x_vert_planes, y_vert_planes, keyframes);
-  //     // create the local graph for that room
-  //     room_graph_generator->generate_local_graph(
-  //         keyframe_mapper, covisibility_graph, room_keyframes, odom2map,
-  //         current_room);
-  //   }
-  // }
-
   void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
     walls_msg_vector = walls_msg->walls;
     Eigen::Vector3d x_wall_pose = Eigen::Vector3d::Identity();
@@ -944,50 +923,64 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     std::vector<VerticalPlanes> current_x_planes(x_vert_planes.size());
-    std::transform(
-        x_vert_planes.begin(),
-        x_vert_planes.end(),
-        current_x_planes.begin(),
-        [](const VerticalPlanes& x_plane) { return VerticalPlanes(x_plane, true); });
+    std::transform(x_vert_planes.begin(),
+                   x_vert_planes.end(),
+                   current_x_planes.begin(),
+                   [](const std::pair<int, VerticalPlanes>& x_plane) {
+                     return VerticalPlanes(x_plane.second, true);
+                   });
     x_planes_snapshot.swap(current_x_planes);
 
     std::vector<VerticalPlanes> current_y_planes(y_vert_planes.size());
-    std::transform(
-        y_vert_planes.begin(),
-        y_vert_planes.end(),
-        current_y_planes.begin(),
-        [](const VerticalPlanes& y_plane) { return VerticalPlanes(y_plane, true); });
+    std::transform(y_vert_planes.begin(),
+                   y_vert_planes.end(),
+                   current_y_planes.begin(),
+                   [](const std::pair<int, VerticalPlanes>& y_plane) {
+                     return VerticalPlanes(y_plane.second, true);
+                   });
     y_planes_snapshot.swap(current_y_planes);
 
     std::vector<HorizontalPlanes> current_hort_planes(hort_planes.size());
     std::transform(hort_planes.begin(),
                    hort_planes.end(),
                    current_hort_planes.begin(),
-                   [](const HorizontalPlanes& hort_plane) {
-                     return HorizontalPlanes(hort_plane, true);
+                   [](const std::pair<int, HorizontalPlanes>& hort_plane) {
+                     return HorizontalPlanes(hort_plane.second, true);
                    });
     hort_planes_snapshot.swap(current_hort_planes);
-
-    std::vector<Rooms> curent_rooms(rooms_vec.size());
-    std::transform(rooms_vec.begin(),
-                   rooms_vec.end(),
-                   curent_rooms.begin(),
-                   [](const Rooms& room) { return Rooms(room, true); });
-    rooms_vec_snapshot.swap(curent_rooms);
 
     std::vector<InfiniteRooms> curent_x_inf_rooms(x_infinite_rooms.size());
     std::transform(x_infinite_rooms.begin(),
                    x_infinite_rooms.end(),
                    curent_x_inf_rooms.begin(),
-                   [](const InfiniteRooms& room) { return InfiniteRooms(room, true); });
+                   [](const std::pair<int, InfiniteRooms>& x_inf_room) {
+                     return InfiniteRooms(x_inf_room.second, true);
+                   });
     x_inf_rooms_snapshot.swap(curent_x_inf_rooms);
 
     std::vector<InfiniteRooms> curent_y_inf_rooms(y_infinite_rooms.size());
     std::transform(y_infinite_rooms.begin(),
                    y_infinite_rooms.end(),
                    curent_y_inf_rooms.begin(),
-                   [](const InfiniteRooms& room) { return InfiniteRooms(room, true); });
+                   [](const std::pair<int, InfiniteRooms>& y_inf_room) {
+                     return InfiniteRooms(y_inf_room.second, true);
+                   });
     y_inf_rooms_snapshot.swap(curent_y_inf_rooms);
+
+    std::vector<Rooms> curent_rooms(rooms_vec.size());
+    std::transform(
+        rooms_vec.begin(),
+        rooms_vec.end(),
+        curent_rooms.begin(),
+        [](const std::pair<int, Rooms>& room) { return Rooms(room.second, true); });
+    rooms_vec_snapshot.swap(curent_rooms);
+
+    std::vector<Floors> current_floors(floors_vec.size());
+    std::transform(floors_vec.begin(),
+                   floors_vec.end(),
+                   current_floors.begin(),
+                   [](const std::pair<int, Floors>& floor) { return floor.second; });
+    floors_vec_snapshot.swap(current_floors);
   }
 
   /**
@@ -1124,7 +1117,7 @@ class SGraphsNode : public rclcpp::Node {
         rooms_vec_snapshot,
         loop_detector->get_distance_thresh() * 2.0,
         current_keyframes,
-        floors_vec);
+        floors_vec_snapshot);
 
     graph_visualizer->create_compressed_graph(current_time,
                                               global_optimization,
@@ -1135,7 +1128,7 @@ class SGraphsNode : public rclcpp::Node {
                                               hort_planes_snapshot);
 
     markers_pub->publish(markers);
-    publish_all_mapped_planes(x_vert_planes, y_vert_planes);
+    publish_all_mapped_planes(x_planes_snapshot, x_planes_snapshot);
     map_points_pub->publish(*cloud_msg);
     publish_graph();
   }
@@ -1170,8 +1163,9 @@ class SGraphsNode : public rclcpp::Node {
    * @brief publish the mapped plane information from the last n keyframes
    *
    */
-  void publish_mapped_planes(std::vector<VerticalPlanes> x_vert_planes_snapshot,
-                             std::vector<VerticalPlanes> y_vert_planes_snapshot) {
+  void publish_mapped_planes(
+      std::unordered_map<int, VerticalPlanes> x_vert_planes_snapshot,
+      std::unordered_map<int, VerticalPlanes> y_vert_planes_snapshot) {
     if (keyframes.empty()) return;
 
     std::map<int, KeyFrame::Ptr> keyframe_window;
@@ -1197,22 +1191,22 @@ class SGraphsNode : public rclcpp::Node {
     s_graphs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& unique_x_plane_id : unique_x_plane_ids) {
-      auto local_x_vert_plane =
-          std::find_if(x_vert_planes_snapshot.begin(),
-                       x_vert_planes_snapshot.end(),
-                       boost::bind(&VerticalPlanes::id, _1) == unique_x_plane_id.first);
+      auto local_x_vert_plane = x_vert_planes_snapshot.find(unique_x_plane_id.first);
+
       if (local_x_vert_plane == x_vert_planes_snapshot.end()) continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = (*local_x_vert_plane).plane_node->estimate().coeffs();
+      mapped_plane_coeffs =
+          (local_x_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
       // mapped_plane_coeffs);
-      plane_data.id = (*local_x_vert_plane).id;
+      plane_data.id = (local_x_vert_plane->second).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      for (const auto& plane_point_data : (*local_x_vert_plane).cloud_seg_map->points) {
+      for (const auto& plane_point_data :
+           (local_x_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -1223,22 +1217,22 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& unique_y_plane_id : unique_y_plane_ids) {
-      auto local_y_vert_plane =
-          std::find_if(y_vert_planes_snapshot.begin(),
-                       y_vert_planes_snapshot.end(),
-                       boost::bind(&VerticalPlanes::id, _1) == unique_y_plane_id.first);
+      auto local_y_vert_plane = y_vert_planes_snapshot.find(unique_y_plane_id.first);
+
       if (local_y_vert_plane == y_vert_planes_snapshot.end()) continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = (*local_y_vert_plane).plane_node->estimate().coeffs();
+      mapped_plane_coeffs =
+          (local_y_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
       // mapped_plane_coeffs);
-      plane_data.id = (*local_y_vert_plane).id;
+      plane_data.id = (local_y_vert_plane->second).id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      for (const auto& plane_point_data : (*local_y_vert_plane).cloud_seg_map->points) {
+      for (const auto& plane_point_data :
+           (local_y_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -1511,9 +1505,8 @@ class SGraphsNode : public rclcpp::Node {
       g2o::VertexPlane* p_node =
           covisibility_graph->add_plane_node(loaded_plane.coeffs());
       vert_plane.plane_node = p_node;
-      y_vert_planes.push_back(vert_plane);
-      plane_load_success =
-          y_vert_planes.back().load(y_planes_directories[i], local_graph, "y");
+      plane_load_success = vert_plane.load(y_planes_directories[i], local_graph, "y");
+      y_vert_planes.insert({vert_plane.id, vert_plane});
     }
 
     for (int i = 0; i < x_planes_directories.size(); i++) {
@@ -1522,53 +1515,52 @@ class SGraphsNode : public rclcpp::Node {
       g2o::VertexPlane* p_node =
           covisibility_graph->add_plane_node(loaded_plane.coeffs());
       vert_plane.plane_node = p_node;
-      x_vert_planes.push_back(vert_plane);
-      plane_load_success =
-          x_vert_planes.back().load(x_planes_directories[i], local_graph, "x");
+      plane_load_success = vert_plane.load(x_planes_directories[i], local_graph, "x");
+      x_vert_planes.insert({vert_plane.id, vert_plane});
     }
-    for (int i = 0; i < y_vert_planes.size(); i++) {
+    for (auto& y_vert_plane : y_vert_planes) {
       Eigen::Matrix3d plane_information_mat =
           Eigen::Matrix3d::Identity() * plane_information;
       plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
 
-      assert(y_vert_planes[i].cloud_seg_body_vec.size() ==
-             y_vert_planes[i].keyframe_node_vec.size());
+      assert(y_vert_plane.second.cloud_seg_body_vec.size() ==
+             y_vert_plane.second.keyframe_node_vec.size());
 
-      for (int j = 0; j < y_vert_planes[i].keyframe_node_vec.size(); j++) {
+      for (int j = 0; j < y_vert_plane.second.keyframe_node_vec.size(); j++) {
         // std::cout << "Y keyframe node id : "
         //           << y_vert_planes[i].keyframe_node_vec[j]->id() << std::endl;
         // std::cout << "plane : " << i << "  cloud : " << j << std::endl;
-        g2o::Plane3D det_plane_body_frame =
-            Eigen::Vector4d(y_vert_planes[i].cloud_seg_body_vec[j]->back().normal_x,
-                            y_vert_planes[i].cloud_seg_body_vec[j]->back().normal_y,
-                            y_vert_planes[i].cloud_seg_body_vec[j]->back().normal_z,
-                            y_vert_planes[i].cloud_seg_body_vec[j]->back().curvature);
+        g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_z,
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().curvature);
 
         auto edge = covisibility_graph->add_se3_plane_edge(
-            y_vert_planes[i].keyframe_node_vec[j],
-            y_vert_planes[i].plane_node,
+            y_vert_plane.second.keyframe_node_vec[j],
+            y_vert_plane.second.plane_node,
             det_plane_body_frame.coeffs(),
             plane_information_mat);
         covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
       }
     }
-    for (int i = 0; i < x_vert_planes.size(); i++) {
+    for (auto& x_vert_plane : x_vert_planes) {
       Eigen::Matrix3d plane_information_mat =
           Eigen::Matrix3d::Identity() * plane_information;
       plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
 
-      assert(x_vert_planes[i].cloud_seg_body_vec.size() ==
-             x_vert_planes[i].keyframe_node_vec.size());
-      for (int j = 0; j < x_vert_planes[i].keyframe_node_vec.size(); j++) {
-        g2o::Plane3D det_plane_body_frame =
-            Eigen::Vector4d(x_vert_planes[i].cloud_seg_body_vec[j]->back().normal_x,
-                            x_vert_planes[i].cloud_seg_body_vec[j]->back().normal_y,
-                            x_vert_planes[i].cloud_seg_body_vec[j]->back().normal_z,
-                            x_vert_planes[i].cloud_seg_body_vec[j]->back().curvature);
+      assert(x_vert_plane.second.cloud_seg_body_vec.size() ==
+             x_vert_plane.second.keyframe_node_vec.size());
+      for (int j = 0; j < x_vert_plane.second.keyframe_node_vec.size(); j++) {
+        g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
+            x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
+            x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,
+            x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_z,
+            x_vert_plane.second.cloud_seg_body_vec[j]->back().curvature);
 
         auto edge = covisibility_graph->add_se3_plane_edge(
-            x_vert_planes[i].keyframe_node_vec[j],
-            x_vert_planes[i].plane_node,
+            x_vert_plane.second.keyframe_node_vec[j],
+            x_vert_plane.second.plane_node,
             det_plane_body_frame.coeffs(),
             plane_information_mat);
         covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
@@ -1589,9 +1581,9 @@ class SGraphsNode : public rclcpp::Node {
       Eigen::Isometry3d room_center;
       auto r_node = covisibility_graph->add_room_node(room_center);
       loaded_room.node = r_node;
-      rooms_vec.push_back(loaded_room);
       room_load_success =
-          rooms_vec.back().load(room_directories[i], covisibility_graph->graph.get());
+          loaded_room.load(room_directories[i], covisibility_graph->graph.get());
+      rooms_vec.insert({loaded_room.id, loaded_room});
     }
     Eigen::Matrix<double, 2, 2> information_room_planes;
     information_room_planes.setZero();
@@ -1706,22 +1698,24 @@ class SGraphsNode : public rclcpp::Node {
   double min_plane_points;
   double infinite_room_information;
   double room_information, plane_information;
-  std::vector<VerticalPlanes> x_vert_planes,
+  std::unordered_map<int, VerticalPlanes> x_vert_planes,
       y_vert_planes;  // vertically segmented planes
   std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
   std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes,
-      dupl_y_vert_planes;                     // vertically segmented planes
-  std::vector<HorizontalPlanes> hort_planes;  // horizontally segmented planes
-  std::vector<InfiniteRooms> x_infinite_rooms,
-      y_infinite_rooms;          // infinite_rooms segmented from planes
-  std::vector<Rooms> rooms_vec;  // rooms segmented from planes
+      dupl_y_vert_planes;  // vertically segmented planes
+  std::unordered_map<int, HorizontalPlanes>
+      hort_planes;  // horizontally segmented planes
+  std::unordered_map<int, InfiniteRooms> x_infinite_rooms,
+      y_infinite_rooms;                      // infinite_rooms segmented from planes
+  std::unordered_map<int, Rooms> rooms_vec;  // rooms segmented from planes
   std::vector<Rooms> rooms_vec_prior;
-  std::vector<Floors> floors_vec;
+  std::unordered_map<int, Floors> floors_vec;
   int prev_edge_count, curr_edge_count;
 
   std::vector<VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
   std::vector<HorizontalPlanes> hort_planes_snapshot;
   std::vector<Rooms> rooms_vec_snapshot;
+  std::vector<Floors> floors_vec_snapshot;
   std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
   std::vector<s_graphs::msg::WallData> walls_msg_vector;
   std::vector<s_graphs::msg::PlaneData> x_planes_msg;

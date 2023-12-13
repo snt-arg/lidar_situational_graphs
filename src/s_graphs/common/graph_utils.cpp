@@ -631,12 +631,12 @@ void GraphUtils::connect_rooms_floors(
 
 void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph,
                               std::map<int, KeyFrame::Ptr> keyframes,
-                              std::vector<VerticalPlanes>& x_vert_planes,
-                              std::vector<VerticalPlanes>& y_vert_planes,
-                              std::vector<Rooms>& rooms_vec,
-                              std::vector<InfiniteRooms>& x_infinite_rooms,
-                              std::vector<InfiniteRooms>& y_infinite_rooms,
-                              std::vector<Floors>& floors_vec) {
+                              std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                              std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                              std::unordered_map<int, Rooms>& rooms_vec,
+                              std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+                              std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+                              std::unordered_map<int, Floors>& floors_vec) {
   // Loop over all the vertices of the graph
   for (auto it = compressed_graph->graph->vertices().begin();
        it != compressed_graph->graph->vertices().end();
@@ -657,18 +657,16 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph
     g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
     if (vertex_plane) {
       int id = vertex_plane->id();
-      auto x_plane = std::find_if(x_vert_planes.begin(),
-                                  x_vert_planes.end(),
-                                  boost::bind(&VerticalPlanes::id, _1) == id);
+      auto x_plane = x_vert_planes.find(id);
+
       if (x_plane != x_vert_planes.end()) {
-        (*x_plane).plane_node->setEstimate(vertex_plane->estimate());
+        (*x_plane).second.plane_node->setEstimate(vertex_plane->estimate());
         continue;
       } else {
-        auto y_plane = std::find_if(y_vert_planes.begin(),
-                                    y_vert_planes.end(),
-                                    boost::bind(&VerticalPlanes::id, _1) == id);
+        auto y_plane = y_vert_planes.find(id);
+
         if (y_plane != y_vert_planes.end()) {
-          (*y_plane).plane_node->setEstimate(vertex_plane->estimate());
+          (*y_plane).second.plane_node->setEstimate(vertex_plane->estimate());
           continue;
         }
       }
@@ -678,24 +676,21 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph
     if (vertex_room) {
       int id = vertex_room->id();
 
-      auto room = std::find_if(
-          rooms_vec.begin(), rooms_vec.end(), boost::bind(&Rooms::id, _1) == id);
+      auto room = rooms_vec.find(id);
       if (room != rooms_vec.end()) {
-        (*room).node->setEstimate(vertex_room->estimate());
+        (*room).second.node->setEstimate(vertex_room->estimate());
         continue;
       } else {
-        auto x_inf_room = std::find_if(x_infinite_rooms.begin(),
-                                       x_infinite_rooms.end(),
-                                       boost::bind(&InfiniteRooms::id, _1) == id);
+        auto x_inf_room = x_infinite_rooms.find(id);
+
         if (x_inf_room != x_infinite_rooms.end()) {
-          (*x_inf_room).node->setEstimate(vertex_room->estimate());
+          (*x_inf_room).second.node->setEstimate(vertex_room->estimate());
           continue;
         } else {
-          auto y_inf_room = std::find_if(y_infinite_rooms.begin(),
-                                         y_infinite_rooms.end(),
-                                         boost::bind(&InfiniteRooms::id, _1) == id);
+          auto y_inf_room = y_infinite_rooms.find(id);
+
           if (y_inf_room != y_infinite_rooms.end()) {
-            (*y_inf_room).node->setEstimate(vertex_room->estimate());
+            (*y_inf_room).second.node->setEstimate(vertex_room->estimate());
             continue;
           }
         }
@@ -705,11 +700,10 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph
     g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
     if (vertex_floor) {
       int id = vertex_floor->id();
-      auto floor = std::find_if(
-          floors_vec.begin(), floors_vec.end(), boost::bind(&Floors::id, _1) == id);
+      auto floor = floors_vec.find(id);
 
       if (floor != floors_vec.end()) {
-        (*floor).node->setEstimate(vertex_floor->estimate());
+        (*floor).second.node->setEstimate(vertex_floor->estimate());
         continue;
       }
     }
