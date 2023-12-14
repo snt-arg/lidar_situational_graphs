@@ -1128,7 +1128,7 @@ class SGraphsNode : public rclcpp::Node {
                                               hort_planes_snapshot);
 
     markers_pub->publish(markers);
-    publish_all_mapped_planes(x_planes_snapshot, x_planes_snapshot);
+    publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
     map_points_pub->publish(*cloud_msg);
     publish_graph();
   }
