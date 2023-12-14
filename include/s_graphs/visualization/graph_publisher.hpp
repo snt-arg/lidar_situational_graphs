@@ -79,11 +79,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <unordered_map>
 
 #include "geometry_msgs/msg/point.hpp"
-#include "graph_manager_msgs/msg/attribute.hpp"
-#include "graph_manager_msgs/msg/edge.hpp"
-#include "graph_manager_msgs/msg/graph.hpp"
-#include "graph_manager_msgs/msg/graph_keyframes.hpp"
-#include "graph_manager_msgs/msg/node.hpp"
+#include "reasoning_msgs/msg/attribute.hpp"
+#include "reasoning_msgs/msg/edge.hpp"
+#include "reasoning_msgs/msg/graph.hpp"
+#include "reasoning_msgs/msg/graph_keyframes.hpp"
+#include "reasoning_msgs/msg/node.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "s_graphs/common/room_utils.hpp"
@@ -101,7 +101,7 @@ class GraphPublisher {
   ~GraphPublisher();
 
  public:
-  graph_manager_msgs::msg::Graph publish_graph(
+  reasoning_msgs::msg::Graph publish_graph(
       const g2o::SparseOptimizer* local_graph,
       std::string graph_type,
       const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior,
@@ -113,7 +113,7 @@ class GraphPublisher {
       const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
 
-  graph_manager_msgs::msg::GraphKeyframes publish_graph_keyframes(
+  reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
       const g2o::SparseOptimizer* local_graph,
       const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
 

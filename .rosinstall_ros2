@@ -9,5 +9,5 @@ repositories:
     version: master
   s_graphs_utils/ros1_graph_manager_interface:
     type: git
-    url: git@github.com:snt-arg/ros2_graph_manager_msgs.git
+    url: git@github.com:snt-arg/reasoning_msgs.git
     version: main
