@@ -47,9 +47,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/backend/imu_mapper.hpp>
 #include <s_graphs/backend/keyframe_mapper.hpp>
-#include <s_graphs/backend/local_graph_generator.hpp>
 #include <s_graphs/backend/loop_mapper.hpp>
 #include <s_graphs/backend/plane_mapper.hpp>
+#include <s_graphs/backend/room_graph_generator.hpp>
 #include <s_graphs/backend/room_mapper.hpp>
 #include <s_graphs/backend/wall_mapper.hpp>
 #include <s_graphs/common/floors.hpp>
@@ -439,6 +439,8 @@ class SGraphsNode : public rclcpp::Node {
     graph_utils = std::make_unique<GraphUtils>();
     graph_publisher = std::make_unique<GraphPublisher>();
     wall_mapper = std::make_unique<WallMapper>(shared_from_this());
+    room_graph_generator = std::make_unique<RoomGraphGenerator>(shared_from_this());
+
     main_timer->cancel();
   }
 
@@ -584,6 +586,7 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& room_data_msg : room_data_queue) {
       for (const auto& room_data : room_data_msg.rooms) {
         if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
+          int current_room_id;
           bool duplicate_planes_rooms =
               finite_room_mapper->lookup_rooms(covisibility_graph,
                                                room_data,
@@ -593,8 +596,13 @@ class SGraphsNode : public rclcpp::Node {
                                                dupl_y_vert_planes,
                                                x_infinite_rooms,
                                                y_infinite_rooms,
-                                               rooms_vec);
-
+                                               rooms_vec,
+                                               current_room_id);
+          // generate local graph per room
+          extract_keyframes_from_room(rooms_vec[current_room_id]);
+          graph_mutex.lock();
+          room_local_graph_id_queue.push_back(current_room_id);
+          graph_mutex.unlock();
           if (duplicate_planes_rooms) duplicate_planes_found = true;
         }
         // x infinite_room
@@ -634,6 +642,26 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue_mutex.lock();
       room_data_queue.pop_front();
       room_data_queue_mutex.unlock();
+    }
+  }
+
+  /**
+   *@brief extract all the keyframes from the found room
+   **/
+
+  void extract_keyframes_from_room(Rooms& current_room) {
+    // check if the current robot pose lies in a room
+    if (rooms_vec.empty()) return;
+
+    // if current room is not empty then get the keyframes in the room
+    if (current_room.node != nullptr) {
+      Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
+      std::map<int, s_graphs::KeyFrame::Ptr> room_keyframes =
+          room_graph_generator->get_keyframes_inside_room(
+              current_room, x_vert_planes, y_vert_planes, keyframes);
+      // create the local graph for that room
+      room_graph_generator->generate_local_graph(
+          keyframe_mapper, covisibility_graph, room_keyframes, odom2map, current_room);
     }
   }
 
@@ -727,9 +755,6 @@ class SGraphsNode : public rclcpp::Node {
         graph_mutex.unlock();
       }
     }
-
-    // generate local graph per room
-    // extract_keyframes_from_room(new_keyframes);
 
     std_msgs::msg::Header read_until;
     read_until.stamp = keyframe_queue[num_processed]->stamp + rclcpp::Duration(10, 0);
@@ -1063,8 +1088,37 @@ class SGraphsNode : public rclcpp::Node {
     trans_odom2map = trans.matrix().cast<float>();
     trans_odom2map_mutex.unlock();
 
+    int counter = 0;
+    for (const auto& room_local_graph_id : room_local_graph_id_queue) {
+      // optimize_room_local_graph
+      broadcast_room_graph(room_local_graph_id, num_iterations);
+      counter++;
+    }
+
+    if (!room_local_graph_id_queue.empty()) {
+      graph_mutex.lock();
+      room_local_graph_id_queue.erase(room_local_graph_id_queue.begin(),
+                                      room_local_graph_id_queue.begin() + counter);
+      graph_mutex.unlock();
+    }
+
     graph_updated = true;
     prev_edge_count = curr_edge_count;
+  }
+
+  /**
+   * @brief optimize the local room graphs
+   *
+   * @param room_id
+   * @param num_iterations
+   */
+  void broadcast_room_graph(const int room_id, const int num_iterations) {
+    // rooms_vec[room_id].local_graph->optimize("room-local", num_iterations);
+    graph_mutex.lock();
+    graph_utils->set_marginalize_info(rooms_vec[room_id].local_graph,
+                                      covisibility_graph,
+                                      rooms_vec[room_id].room_keyframes);
+    graph_mutex.unlock();
   }
 
   /**
@@ -1689,6 +1743,7 @@ class SGraphsNode : public rclcpp::Node {
   // vertical and horizontal planes
   std::mutex wall_data_queue_mutex;
 
+  std::deque<int> room_local_graph_id_queue;
   int optimization_window_size;
   bool loop_found, duplicate_planes_found;
   bool global_optimization;
@@ -1767,7 +1822,7 @@ class SGraphsNode : public rclcpp::Node {
   std::unique_ptr<IMUMapper> imu_mapper;
   std::unique_ptr<GraphPublisher> graph_publisher;
   std::unique_ptr<GraphUtils> graph_utils;
-  std::unique_ptr<LocalGraphGenerator> local_graph_generator;
+  std::unique_ptr<RoomGraphGenerator> room_graph_generator;
 };
 
 }  // namespace s_graphs

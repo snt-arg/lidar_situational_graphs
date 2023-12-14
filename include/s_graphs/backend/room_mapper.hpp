@@ -336,7 +336,8 @@ class FiniteRoomMapper : public MapperUtils {
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
       std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-      std::unordered_map<int, Rooms>& rooms_vec);
+      std::unordered_map<int, Rooms>& rooms_vec,
+      int& room_id);
 
   /**
    * @brief
@@ -374,6 +375,7 @@ class FiniteRoomMapper : public MapperUtils {
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
       std::unordered_map<int, Rooms>& rooms_vec,
+      int& room_id,
       const Eigen::Isometry3d& room_center,
       const visualization_msgs::msg::MarkerArray& cluster_array);
 

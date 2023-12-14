@@ -86,8 +86,8 @@ struct PlaneGlobalRep {
 
 std::vector<const s_graphs::VerticalPlanes*> obtain_planes_from_room(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes);
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes);
 
 bool is_SE3_inside_a_room(const Eigen::Isometry3d& pose,
                           const std::vector<PlaneGlobalRep>& planes);
@@ -102,8 +102,8 @@ std::optional<Eigen::Isometry3d> obtain_global_centre_of_room(
 
 std::set<g2o::VertexSE3*> publish_room_keyframes_ids(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes);
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes);
 
 std::set<g2o::VertexSE3*> filter_inside_room_keyframes(
     const s_graphs::Rooms& room,
@@ -111,8 +111,8 @@ std::set<g2o::VertexSE3*> filter_inside_room_keyframes(
 
 std::vector<PlaneGlobalRep> obtain_global_planes_from_room(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes);
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes);
 
 template <typename PointT>
 typename pcl::PointCloud<PointT>::Ptr transform_pointcloud(
@@ -189,7 +189,7 @@ pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
   pcl::PointCloud<s_graphs::PointT>::Ptr room_cloud(
       new pcl::PointCloud<s_graphs::PointT>());
   for (auto it = begin; it != end; it++) {
-    s_graphs::KeyFrame::Ptr keyframe = *it;
+    s_graphs::KeyFrame::Ptr keyframe = it->second;
     // std::cout << "Keyframe:" << keyframe->id() << std::endl;
     Eigen::Isometry3d rel_transform = room_centre.inverse() * keyframe->estimate();
     auto cloud = transform_pointcloud<s_graphs::KeyFrame::PointT>(keyframe->cloud,
@@ -203,21 +203,23 @@ pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
 
 std::optional<
     std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
-generate_room_keyframe(const s_graphs::Rooms& room,
-                       const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-                       const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
-                       const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
-
-std::vector<s_graphs::KeyFrame::Ptr> get_room_keyframes(
+generate_room_keyframe(
     const s_graphs::Rooms& room,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
-    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 
-bool is_keyframe_inside_room(const s_graphs::Rooms& room,
-                             const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-                             const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
-                             const s_graphs::KeyFrame::Ptr keyframe);
+std::map<int, s_graphs::KeyFrame::Ptr> get_room_keyframes(
+    const s_graphs::Rooms& room,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
+
+bool is_keyframe_inside_room(
+    const s_graphs::Rooms& room,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
+    const s_graphs::KeyFrame::Ptr keyframe);
 
 struct ExtendedRooms : public s_graphs::Rooms {
   ExtendedRooms() : s_graphs::Rooms() {
@@ -244,9 +246,10 @@ struct ExtendedRooms : public s_graphs::Rooms {
 
 class RoomsKeyframeGenerator : public s_graphs::Rooms {
  public:
-  RoomsKeyframeGenerator(const std::vector<s_graphs::VerticalPlanes>* x_vert_planes,
-                         const std::vector<s_graphs::VerticalPlanes>* y_vert_planes,
-                         const std::vector<s_graphs::KeyFrame::Ptr>* keyframes)
+  RoomsKeyframeGenerator(
+      const std::unordered_map<int, s_graphs::VerticalPlanes>* x_vert_planes,
+      const std::unordered_map<int, s_graphs::VerticalPlanes>* y_vert_planes,
+      const std::map<int, s_graphs::KeyFrame::Ptr>* keyframes)
       : x_vert_planes_(x_vert_planes),
         y_vert_planes_(y_vert_planes),
         keyframes_(keyframes){};
@@ -312,9 +315,9 @@ class RoomsKeyframeGenerator : public s_graphs::Rooms {
 
  private:
   std::unordered_map<int, ExtendedRooms> room_keyframe_dict_;
-  const std::vector<s_graphs::VerticalPlanes>* x_vert_planes_;
-  const std::vector<s_graphs::VerticalPlanes>* y_vert_planes_;
-  const std::vector<s_graphs::KeyFrame::Ptr>* keyframes_;
+  const std::unordered_map<int, s_graphs::VerticalPlanes>* x_vert_planes_;
+  const std::unordered_map<int, s_graphs::VerticalPlanes>* y_vert_planes_;
+  const std::map<int, s_graphs::KeyFrame::Ptr>* keyframes_;
 };
 
 graph_manager_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(

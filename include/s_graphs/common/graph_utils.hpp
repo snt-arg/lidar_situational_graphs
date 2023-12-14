@@ -119,6 +119,20 @@ class GraphUtils {
   /**
    * @brief
    *
+   * @param filtered_k_vec
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @param keyframes
+   * @return * void
+   */
+  void connect_broken_keyframes(std::vector<g2o::VertexSE3*> filtered_k_vec,
+                                const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                const std::unique_ptr<GraphSLAM>& compressed_graph,
+                                const std::map<int, KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief
+   *
    * @param covisibility_graph
    * @param compressed_graph
    * @return * void
@@ -156,6 +170,18 @@ class GraphUtils {
                     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
                     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
                     std::unordered_map<int, Floors>& floors_vec);
+
+  /**
+   * @brief Set the marginalize info object
+   *
+   * @param local_graph
+   * @param covisibility_graph
+   * @param room_keyframes
+   * @return * void
+   */
+  void set_marginalize_info(const std::shared_ptr<GraphSLAM>& local_graph,
+                            const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                            const std::map<int, KeyFrame::Ptr>& room_keyframes);
 };
 
 }  // namespace s_graphs

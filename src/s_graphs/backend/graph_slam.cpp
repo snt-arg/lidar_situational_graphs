@@ -326,9 +326,13 @@ g2o::VertexDeviation* GraphSLAM::add_deviation_node(const Eigen::Isometry3d& pos
 g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1,
                                       g2o::VertexSE3* v2,
                                       const Eigen::Isometry3d& relative_pose,
-                                      const Eigen::MatrixXd& information_matrix) {
+                                      const Eigen::MatrixXd& information_matrix,
+                                      const bool use_edge_size_id) {
   g2o::EdgeSE3* edge(new g2o::EdgeSE3());
-  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  if (use_edge_size_id)
+    edge->setId(static_cast<int>(retrieve_total_nbr_of_edges()));
+  else
+    edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(relative_pose);
   edge->setInformation(information_matrix);
   edge->vertices()[0] = v1;

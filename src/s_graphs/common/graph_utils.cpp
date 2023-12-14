@@ -179,6 +179,10 @@ void GraphUtils::copy_windowed_graph(
   std::unordered_set<g2o::VertexSE3*> fixed_keyframes_set =
       connect_keyframes_planes(covisibility_graph, compressed_graph.get());
 
+  // connect existing keyframes and connect disconnected keyframes
+  connect_broken_keyframes(
+      filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
+
   // check from all the planes added in the compressed graph, which have
   // connections to rooms
   connect_planes_rooms(covisibility_graph, compressed_graph.get());
@@ -276,7 +280,6 @@ std::vector<g2o::VertexSE3*> GraphUtils::connect_keyframes(
     //     auto edge = compressed_graph->copy_loop_closure_edge(
     //         edge_loop_closure, current_vertex1, current_vertex2);
     //     compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
-    //     edge->setLevel(0);
     //   }
 
     //   continue;
@@ -308,7 +311,6 @@ std::vector<g2o::VertexSE3*> GraphUtils::connect_keyframes(
           if (v1 && v2) {
             auto edge = compressed_graph->copy_se3_edge(edge_se3, v1, v2);
             compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
-            edge->setLevel(0);
             continue;
           }
         } else {
@@ -341,7 +343,6 @@ std::vector<g2o::VertexSE3*> GraphUtils::connect_keyframes(
           auto current_edge =
               compressed_graph->copy_se3_edge(edge_se3, anchor_vertex, current_vertex);
           compressed_graph->add_robust_kernel(current_edge, "Huber", 1.0);
-          current_edge->setLevel(0);
           continue;
         } else if (anchor_node2) {
           anchor_node_exists = true;
@@ -353,7 +354,6 @@ std::vector<g2o::VertexSE3*> GraphUtils::connect_keyframes(
           auto current_edge =
               compressed_graph->copy_se3_edge(edge_se3, current_vertex, anchor_vertex);
           compressed_graph->add_robust_kernel(current_edge, "Huber", 1.0);
-          current_edge->setLevel(0);
           continue;
         }
       }
@@ -408,11 +408,6 @@ std::unordered_set<g2o::VertexSE3*> GraphUtils::connect_keyframes_planes(
           keyframe_vert_data->get_marginalized_info(marginalized);
         }
 
-        if (!marginalized)
-          edge->setLevel(0);
-        else
-          edge->setLevel(1);
-
         // get all the keyframes connected with this plane vertex
         for (g2o::HyperGraph::EdgeSet::iterator it_v2 = v2->edges().begin();
              it_v2 != v2->edges().end();
@@ -446,6 +441,92 @@ std::unordered_set<g2o::VertexSE3*> GraphUtils::connect_keyframes_planes(
   return fixed_keyframes_set;
 }
 
+void GraphUtils::connect_broken_keyframes(
+    std::vector<g2o::VertexSE3*> filtered_k_vec,
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const std::unique_ptr<GraphSLAM>& compressed_graph,
+    const std::map<int, KeyFrame::Ptr>& keyframes) {
+  std::sort(filtered_k_vec.begin(),
+            filtered_k_vec.end(),
+            [](const g2o::VertexSE3* obj1, const g2o::VertexSE3* obj2) {
+              return obj1->id() < obj2->id();
+            });
+
+  for (int i = 0; i < filtered_k_vec.size(); i += 2) {
+    if (filtered_k_vec.size() <= 1) {
+      break;
+    }
+
+    std::cout << "keyframes to be connected are: " << filtered_k_vec[i]->id() << " "
+              << filtered_k_vec[i + 1]->id() << std::endl;
+
+    auto keyframe = keyframes.find(filtered_k_vec[i + 1]->id());
+    auto prev_keyframe = keyframes.find(filtered_k_vec[i]->id());
+
+    /* TODO:HB check if its necessary for summing information mats from se3->plane
+     * edges as well */
+    Eigen::MatrixXd information = Eigen::MatrixXd::Identity(6, 6);
+    auto start_keyframe_it = keyframes.lower_bound(prev_keyframe->second->id());
+    auto end_keyframe_it = std::prev(keyframes.upper_bound(keyframe->second->id()));
+
+    for (auto it = start_keyframe_it; it != end_keyframe_it; ++it) {
+      auto edges = it->second->node->edges();
+      g2o::HyperGraph::EdgeSet tmp(it->second->node->edges());
+
+      for (auto edge_itr = tmp.begin(); edge_itr != tmp.end(); edge_itr++) {
+        g2o::HyperGraph::Edge* edge = *edge_itr;
+
+        auto found_edge_itr = std::find_if(
+            covisibility_graph->graph->edges().begin(),
+            covisibility_graph->graph->edges().end(),
+            [edge](const g2o::HyperGraph::Edge* e) { return e->id() == edge->id(); });
+
+        if (found_edge_itr != covisibility_graph->graph->edges().end()) {
+          g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(*found_edge_itr);
+          if (edge_se3) {
+            const g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
+                covisibility_graph->graph->vertex(edge_se3->vertices()[0]->id()));
+
+            const g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(
+                covisibility_graph->graph->vertex(edge_se3->vertices()[1]->id()));
+
+            if (v2->id() == it->second->node->id() &&
+                v1->id() == std::next(it)->second->node->id()) {
+              information = information * edge_se3->information();
+            }
+            continue;
+          }
+        } else
+          continue;
+      }
+    }
+
+    // find the proper vertex pointer in the compressed graph
+    auto vertex1 = dynamic_cast<g2o::VertexSE3*>(
+        compressed_graph->graph->vertex(filtered_k_vec[i + 1]->id()));
+    auto vertex2 = dynamic_cast<g2o::VertexSE3*>(
+        compressed_graph->graph->vertex(filtered_k_vec[i]->id()));
+
+    /* TODO:HB check icp-matching between the keyframes to get proper relative pose
+     * and the information matrix */
+    Eigen::Isometry3d relative_pose =
+        vertex1->estimate().inverse() * vertex2->estimate();
+
+    if (vertex1 && vertex2) {
+      /* TODO: HB setting high value for information makes the graph diverge */
+      // information.setIdentity();
+      information = 0.1 * Eigen::MatrixXd::Identity(6, 6);
+
+      auto edge = compressed_graph->add_se3_edge(
+          vertex1, vertex2, relative_pose, information, true);
+      compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      OptimizationData* data = new OptimizationData();
+      data->set_edge_info(true);
+      edge->setUserData(data);
+    }
+  }
+}
+
 void GraphUtils::connect_planes_rooms(
     const std::shared_ptr<GraphSLAM>& covisibility_graph,
     GraphSLAM* compressed_graph) {
@@ -473,7 +554,6 @@ void GraphUtils::connect_planes_rooms(
     //     auto edge = compressed_graph->copy_2planes_edge(
     //         edge_2planes, current_vertex_v1, current_vertex_v2);
     //     compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
-    //     edge->setLevel(0);
     //   }
     // }
 
@@ -529,7 +609,6 @@ void GraphUtils::connect_planes_rooms(
                                                              current_vertex_v3,
                                                              current_vertex_v4);
         compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
-        edge->setLevel(0);
         continue;
       }
     }
@@ -583,7 +662,6 @@ void GraphUtils::connect_planes_rooms(
                                                              current_vertex_v2,
                                                              current_vertex_rv2);
         compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
-        edge->setLevel(0);
         continue;
       }
     }
@@ -623,7 +701,6 @@ void GraphUtils::connect_rooms_floors(
         auto edge = compressed_graph->copy_floor_room_edge(
             edge_floor_room, current_vertex_v1, current_vertex_v2);
         compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
-        edge->setLevel(0);
       }
     }
   }
@@ -706,6 +783,83 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph
         (*floor).second.node->setEstimate(vertex_floor->estimate());
         continue;
       }
+    }
+  }
+}
+
+void GraphUtils::set_marginalize_info(
+    const std::shared_ptr<GraphSLAM>& local_graph,
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const std::map<int, KeyFrame::Ptr>& room_keyframes) {
+  int k_counter = 0;
+
+  for (const auto& keyframe : room_keyframes) {
+    g2o::OptimizableGraph::Vertex* local_vertex =
+        (g2o::OptimizableGraph::Vertex*)(local_graph->graph->vertex(keyframe.first));
+    g2o::VertexSE3* local_vertex_se3 = dynamic_cast<g2o::VertexSE3*>(local_vertex);
+
+    if (local_vertex_se3) {
+      auto keyframe_vert_data =
+          dynamic_cast<OptimizationData*>(local_vertex_se3->userData());
+
+      if (keyframe_vert_data) {
+        bool anchor_node = false;
+        keyframe_vert_data->get_anchor_node_info(anchor_node);
+        if (anchor_node) continue;
+      }
+
+      g2o::OptimizableGraph::Vertex* covis_vertex =
+          (g2o::OptimizableGraph::Vertex*)(covisibility_graph->graph->vertex(
+              local_vertex_se3->id()));
+      g2o::VertexSE3* covis_vertex_se3 = dynamic_cast<g2o::VertexSE3*>(covis_vertex);
+
+      if (covis_vertex_se3) {
+        covis_vertex_se3->setEstimate((local_vertex_se3)->estimate());
+
+        auto current_data =
+            dynamic_cast<OptimizationData*>(covis_vertex_se3->userData());
+        bool marginalized = false;
+        if (current_data) {
+          current_data->get_marginalized_info(marginalized);
+        }
+
+        if (k_counter == 0) {
+          OptimizationData* data = new OptimizationData();
+          data->set_rep_node_info(true);
+          covis_vertex_se3->setUserData(data);
+        } else if (k_counter != 0 && !marginalized) {
+          if (!current_data) {
+            OptimizationData* data = new OptimizationData();
+            marginalized = true;
+            data->set_marginalized_info(marginalized);
+            covis_vertex_se3->setUserData(data);
+          }
+        }
+      }
+    }
+    k_counter++;
+  }
+
+  for (g2o::HyperGraph::VertexIDMap::iterator it =
+           local_graph->graph->vertices().begin();
+       it != local_graph->graph->vertices().end();
+       ++it) {
+    g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+    g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
+    if (vertex_plane) {
+      // find the equivalent in the covis graph
+      auto covis_v = dynamic_cast<g2o::VertexPlane*>(
+          covisibility_graph->graph->vertex(vertex_plane->id()));
+      if (covis_v) covis_v->setEstimate(vertex_plane->estimate());
+      continue;
+    }
+
+    g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
+    if (vertex_room) {
+      auto covis_v = dynamic_cast<g2o::VertexRoom*>(
+          covisibility_graph->graph->vertex(vertex_room->id()));
+      if (covis_v) covis_v->setEstimate(vertex_room->estimate());
+      continue;
     }
   }
 }

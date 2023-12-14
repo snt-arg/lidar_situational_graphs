@@ -290,7 +290,8 @@ class GraphSLAM {
   g2o::EdgeSE3* add_se3_edge(g2o::VertexSE3* v1,
                              g2o::VertexSE3* v2,
                              const Eigen::Isometry3d& relative_pose,
-                             const Eigen::MatrixXd& information_matrix);
+                             const Eigen::MatrixXd& information_matrix,
+                             const bool use_edge_size_id = false);
 
   /**
    * @brief Add loop closure edge between SE3 nodes
