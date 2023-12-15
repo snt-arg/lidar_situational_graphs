@@ -113,7 +113,6 @@ class WallMapper {
   bool use_point_to_plane;
 
  private:
-  std::unique_ptr<PlaneUtils> plane_utils;
   rclcpp::Node::SharedPtr node_obj;
 };
 

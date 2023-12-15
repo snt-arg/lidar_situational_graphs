@@ -43,7 +43,6 @@ class TestPlane : public ::testing::Test {
  public:
   rclcpp::Node::SharedPtr node;
   std::shared_ptr<s_graphs::PlaneMapper> plane_mapper;
-  std::shared_ptr<s_graphs::PlaneUtils> plane_utils;
   std::shared_ptr<s_graphs::GraphSLAM> graph_slam;
   Eigen::Isometry3d odom;
   s_graphs::KeyFrame::Ptr keyframe;
@@ -64,7 +63,6 @@ class TestPlane : public ::testing::Test {
 
     graph_slam = std::make_shared<s_graphs::GraphSLAM>();
     plane_mapper = std::make_shared<s_graphs::PlaneMapper>(node);
-    plane_utils = std::make_shared<s_graphs::PlaneUtils>();
     cloud = boost::make_shared<pcl::PointCloud<PointT>>();
   }
 

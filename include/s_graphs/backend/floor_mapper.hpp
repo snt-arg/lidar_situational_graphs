@@ -88,9 +88,6 @@ class FloorMapper {
   FloorMapper();
   ~FloorMapper();
 
- private:
-  std::unique_ptr<PlaneUtils> plane_utils;
-
  public:
   /**
    * @brief

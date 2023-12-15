@@ -67,10 +67,7 @@ class MapperUtils {
    * @param
    * @return
    */
-  MapperUtils() { plane_utils.reset(new PlaneUtils()); }
-
- public:
-  std::unique_ptr<PlaneUtils> plane_utils;
+  MapperUtils() {}
 
  public:
   /**
@@ -176,7 +173,6 @@ class InfiniteRoomMapper : public MapperUtils {
 
  private:
   rclcpp::Node::SharedPtr node_obj;
-  std::unique_ptr<PlaneUtils> plane_utils;
 
  public:
   /**
@@ -311,7 +307,6 @@ class FiniteRoomMapper : public MapperUtils {
 
  private:
   rclcpp::Node::SharedPtr node_obj;
-  std::unique_ptr<PlaneUtils> plane_utils;
 
  public:
   /**

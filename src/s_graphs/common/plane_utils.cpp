@@ -31,6 +31,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "s_graphs/common/plane_utils.hpp"
 
+typedef pcl::PointXYZRGBNormal PointNormal;
+
 namespace s_graphs {
 
 PlaneUtils::PlaneUtils() {}

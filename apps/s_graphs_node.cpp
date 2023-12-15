@@ -427,7 +427,6 @@ class SGraphsNode : public rclcpp::Node {
     map_cloud_generator = std::make_unique<MapCloudGenerator>();
     inf_calclator = std::make_unique<InformationMatrixCalculator>(shared_from_this());
     nmea_parser = std::make_unique<NmeaSentenceParser>();
-    plane_utils = std::make_unique<PlaneUtils>();
     plane_mapper = std::make_unique<PlaneMapper>(shared_from_this());
     inf_room_mapper = std::make_unique<InfiniteRoomMapper>(shared_from_this());
     finite_room_mapper = std::make_unique<FiniteRoomMapper>(shared_from_this());
@@ -1809,7 +1808,6 @@ class SGraphsNode : public rclcpp::Node {
   std::unique_ptr<PlaneAnalyzer> plane_analyzer;
   std::unique_ptr<NmeaSentenceParser> nmea_parser;
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
-  std::unique_ptr<PlaneUtils> plane_utils;
   std::unique_ptr<WallMapper> wall_mapper;
   std::unique_ptr<PlaneMapper> plane_mapper;
   std::unique_ptr<InfiniteRoomMapper> inf_room_mapper;

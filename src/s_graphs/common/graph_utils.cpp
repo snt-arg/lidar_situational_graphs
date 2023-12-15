@@ -129,7 +129,6 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
           dynamic_cast<g2o::VertexRoom*>(compressed_graph->graph->vertices().at(
               edge_room_2planes->vertices()[3]->id()));
 
-      v4->setFixed(true);
       auto edge =
           compressed_graph->copy_room_2planes_edge(edge_room_2planes, v1, v2, v3, v4);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);

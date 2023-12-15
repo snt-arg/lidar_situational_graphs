@@ -230,7 +230,6 @@ class PlaneMapper {
   bool use_room_constraint;
 
  private:
-  std::unique_ptr<PlaneUtils> plane_utils;
   rclcpp::Node::SharedPtr node_obj;
 };
 

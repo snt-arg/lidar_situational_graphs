@@ -55,7 +55,6 @@ class TestRoom : public ::testing::Test {
     node->declare_parameter("g2o_solver_type", "lm_var_cholmod");
 
     graph_slam = std::make_shared<s_graphs::GraphSLAM>("lm_var_cholmod");
-    plane_utils = std::make_shared<s_graphs::PlaneUtils>();
     finite_room_mapper = std::make_shared<s_graphs::FiniteRoomMapper>(node);
   }
 
@@ -87,21 +86,21 @@ class TestRoom : public ::testing::Test {
     y2_plane_data.nz = 0;
     y2_plane_data.d = 4;
 
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                         x1_plane_data);
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                         x2_plane_data);
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                         y1_plane_data);
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                         y2_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                        x1_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                        x2_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                        y1_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                        y2_plane_data);
 
     room_data.x_planes.push_back(x1_plane_data);
     room_data.x_planes.push_back(x2_plane_data);
     room_data.y_planes.push_back(y1_plane_data);
     room_data.y_planes.push_back(y2_plane_data);
 
-    room_data.room_center = plane_utils->room_center(
+    room_data.room_center = PlaneUtils::room_center(
         x1_plane_data, x2_plane_data, y1_plane_data, y2_plane_data);
 
     this->add_keyframe_node();
@@ -172,7 +171,6 @@ class TestRoom : public ::testing::Test {
   std::shared_ptr<s_graphs::GraphSLAM> graph_slam;
   s_graphs::KeyFrame::Ptr keyframe;
   std::shared_ptr<s_graphs::FiniteRoomMapper> finite_room_mapper;
-  std::shared_ptr<s_graphs::PlaneUtils> plane_utils;
   std::unordered_map<int, s_graphs::VerticalPlanes> x_vert_planes;
   std::unordered_map<int, s_graphs::VerticalPlanes> y_vert_planes;
   std::deque<std::pair<s_graphs::VerticalPlanes, s_graphs::VerticalPlanes>>
@@ -200,16 +198,16 @@ void testFunction() {
 
 TEST_F(TestRoom, TestRoomCentre) {
   this->testLookupRooms();
-  // auto centre_gt = rooms_vec[0].node->estimate();
-  // auto global_planes = obtain_global_planes_from_room(
-  //     this->rooms_vec[0], this->x_vert_planes, this->y_vert_planes);
-  // auto centre = obtain_global_centre_of_room(global_planes);
-  // if (!centre.has_value()) {
-  //   ASSERT_TRUE(false);
-  // }
-  // auto centre_est = centre.value();
-  // ASSERT_DOUBLE_EQ(centre_gt.translation()(0), centre_est.translation()(0));
-  // ASSERT_DOUBLE_EQ(centre_gt.translation()(1), centre_est.translation()(1));
+  auto centre_gt = rooms_vec[0].node->estimate();
+  auto global_planes = obtain_global_planes_from_room(
+      this->rooms_vec[0], this->x_vert_planes, this->y_vert_planes);
+  auto centre = obtain_global_centre_of_room(global_planes);
+  if (!centre.has_value()) {
+    ASSERT_TRUE(false);
+  }
+  auto centre_est = centre.value();
+  ASSERT_DOUBLE_EQ(centre_gt.translation()(0), centre_est.translation()(0));
+  ASSERT_DOUBLE_EQ(centre_gt.translation()(1), centre_est.translation()(1));
   // testFunction();
 }
 

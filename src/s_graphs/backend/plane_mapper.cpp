@@ -457,7 +457,7 @@ int PlaneMapper::associate_plane(
                 current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
             cloud_seg_detected->points.push_back(dst_pt);
           }
-          bool valid_neighbour = plane_utils->check_point_neighbours(
+          bool valid_neighbour = PlaneUtils::check_point_neighbours(
               x_vert_planes.at(data_association).cloud_seg_map, cloud_seg_detected);
 
           if (!valid_neighbour) {
@@ -505,7 +505,7 @@ int PlaneMapper::associate_plane(
                 current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
             cloud_seg_detected->points.push_back(dst_pt);
           }
-          bool valid_neighbour = plane_utils->check_point_neighbours(
+          bool valid_neighbour = PlaneUtils::check_point_neighbours(
               y_vert_planes.at(data_association).cloud_seg_map, cloud_seg_detected);
 
           if (!valid_neighbour) {

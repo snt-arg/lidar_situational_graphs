@@ -66,9 +66,8 @@ class FloorPlanNode : public rclcpp::Node {
     save_timings =
         this->get_parameter("save_timings").get_parameter_value().get<bool>();
 
-    plane_utils.reset(new PlaneUtils());
-    room_analyzer.reset(new RoomAnalyzer(params, plane_utils));
-    floor_analyzer.reset(new FloorAnalyzer(plane_utils));
+    room_analyzer.reset(new RoomAnalyzer(params));
+    floor_analyzer.reset(new FloorAnalyzer());
 
     if (save_timings) {
       time_recorder.open("/tmp/floor_seg_computation_time.txt");
@@ -221,10 +220,10 @@ class FloorPlanNode : public rclcpp::Node {
 
     geometry_msgs::msg::Pose floor_center;
     if (floor_plane_candidates_vec.size() == 4) {
-      floor_center = plane_utils->room_center(floor_plane_candidates_vec[0],
-                                              floor_plane_candidates_vec[1],
-                                              floor_plane_candidates_vec[2],
-                                              floor_plane_candidates_vec[3]);
+      floor_center = PlaneUtils::room_center(floor_plane_candidates_vec[0],
+                                             floor_plane_candidates_vec[1],
+                                             floor_plane_candidates_vec[2],
+                                             floor_plane_candidates_vec[3]);
 
       s_graphs::msg::RoomData floor_data_msg;
       floor_data_msg.header.stamp = this->now();
@@ -253,7 +252,6 @@ class FloorPlanNode : public rclcpp::Node {
  private:
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
-  std::shared_ptr<PlaneUtils> plane_utils;
 
   std::mutex map_plane_mutex;
   std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue,

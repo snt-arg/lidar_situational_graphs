@@ -71,8 +71,6 @@ struct structure_data_list {
  * @brief
  */
 class PlaneUtils {
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
  public:
   PlaneUtils();
 
@@ -89,7 +87,7 @@ class PlaneUtils {
    * @param
    * @return
    */
-  float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2);
+  static float width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2);
 
   /**
    * @brief
@@ -97,8 +95,8 @@ class PlaneUtils {
    * @param
    * @return
    */
-  float width_between_planes(s_graphs::msg::PlaneData& plane1,
-                             s_graphs::msg::PlaneData& plane2);
+  static float width_between_planes(s_graphs::msg::PlaneData& plane1,
+                                    s_graphs::msg::PlaneData& plane2);
 
   /**
    * @brief
@@ -106,7 +104,7 @@ class PlaneUtils {
    * @param
    * @return
    */
-  void correct_plane_direction(int plane_type, s_graphs::msg::PlaneData& plane);
+  static void correct_plane_direction(int plane_type, s_graphs::msg::PlaneData& plane);
 
   /**
    * @brief
@@ -114,16 +112,16 @@ class PlaneUtils {
    * @param
    * @return
    */
-  void correct_plane_direction(int plane_type, Eigen::Vector4d& plane);
+  static void correct_plane_direction(int plane_type, Eigen::Vector4d& plane);
 
   /* @brief
    *
    * @param
    * @return
    */
-  Eigen::Quaterniond euler_to_quaternion(const double roll,
-                                         const double pitch,
-                                         const double yaw);
+  static Eigen::Quaterniond euler_to_quaternion(const double roll,
+                                                const double pitch,
+                                                const double yaw);
 
   /**
    * @brief
@@ -131,10 +129,10 @@ class PlaneUtils {
    * @param
    * @return
    */
-  Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1,
-                              const Eigen::Vector4d& x_plane2,
-                              const Eigen::Vector4d& y_plane1,
-                              const Eigen::Vector4d& y_plane2);
+  static Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1,
+                                     const Eigen::Vector4d& x_plane2,
+                                     const Eigen::Vector4d& y_plane1,
+                                     const Eigen::Vector4d& y_plane2);
 
   /**
    * @brief
@@ -142,10 +140,10 @@ class PlaneUtils {
    * @param
    * @return
    */
-  geometry_msgs::msg::Pose room_center(const s_graphs::msg::PlaneData& x_plane1,
-                                       const s_graphs::msg::PlaneData& x_plane2,
-                                       const s_graphs::msg::PlaneData& y_plane1,
-                                       const s_graphs::msg::PlaneData& y_plane2);
+  static geometry_msgs::msg::Pose room_center(const s_graphs::msg::PlaneData& x_plane1,
+                                              const s_graphs::msg::PlaneData& x_plane2,
+                                              const s_graphs::msg::PlaneData& y_plane1,
+                                              const s_graphs::msg::PlaneData& y_plane2);
 
   /**
    * @brief
@@ -153,10 +151,10 @@ class PlaneUtils {
    * @param
    * @return
    */
-  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg,
-                     pcl::PointXY& p1,
-                     pcl::PointXY& p2,
-                     g2o::VertexSE3* keyframe_node);
+  static float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg,
+                            pcl::PointXY& p1,
+                            pcl::PointXY& p2,
+                            g2o::VertexSE3* keyframe_node);
 
   /**
    * @brief
@@ -164,9 +162,9 @@ class PlaneUtils {
    * @param
    * @return
    */
-  float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg,
-                     pcl::PointXY& p1,
-                     pcl::PointXY& p2);
+  static float plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg,
+                            pcl::PointXY& p1,
+                            pcl::PointXY& p2);
 
   /**
    * @brief
@@ -174,8 +172,8 @@ class PlaneUtils {
    * @param
    * @return
    */
-  pcl::PointXY convert_point_to_map(pcl::PointXY point_local,
-                                    Eigen::Matrix4d keyframe_pose);
+  static pcl::PointXY convert_point_to_map(pcl::PointXY point_local,
+                                           Eigen::Matrix4d keyframe_pose);
 
   /**
    * @brief
@@ -183,8 +181,8 @@ class PlaneUtils {
    * @param
    * @return
    */
-  float get_min_segment(const pcl::PointCloud<PointNormal>::Ptr& cloud_1,
-                        const pcl::PointCloud<PointNormal>::Ptr& cloud_2);
+  static float get_min_segment(const pcl::PointCloud<PointNormal>::Ptr& cloud_1,
+                               const pcl::PointCloud<PointNormal>::Ptr& cloud_2);
 
   /**
    * @brief
@@ -192,8 +190,8 @@ class PlaneUtils {
    * @param
    * @return
    */
-  bool check_point_neighbours(const pcl::PointCloud<PointNormal>::Ptr& cloud_1,
-                              const pcl::PointCloud<PointNormal>::Ptr& cloud_2);
+  static bool check_point_neighbours(const pcl::PointCloud<PointNormal>::Ptr& cloud_1,
+                                     const pcl::PointCloud<PointNormal>::Ptr& cloud_2);
 
   /**
    * @brief
@@ -201,7 +199,8 @@ class PlaneUtils {
    * @param
    * @return
    */
-  bool compute_point_difference(const double plane1_point, const double plane2_point);
+  static bool compute_point_difference(const double plane1_point,
+                                       const double plane2_point);
 
   /**
    * @brief
@@ -209,24 +208,25 @@ class PlaneUtils {
    * @param
    * @return
    */
-  float plane_dot_product(const s_graphs::msg::PlaneData& plane1,
-                          const s_graphs::msg::PlaneData& plane2);
+  static float plane_dot_product(const s_graphs::msg::PlaneData& plane1,
+                                 const s_graphs::msg::PlaneData& plane2);
 
-  bool plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* plane2);
+  static bool plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* plane2);
 
-  geometry_msgs::msg::Pose extract_infite_room_center(int plane_type,
-                                                      pcl::PointXY p1,
-                                                      pcl::PointXY p2,
-                                                      s_graphs::msg::PlaneData plane1,
-                                                      s_graphs::msg::PlaneData plane2,
-                                                      Eigen::Vector2d& cluster_center);
+  static geometry_msgs::msg::Pose extract_infite_room_center(
+      int plane_type,
+      pcl::PointXY p1,
+      pcl::PointXY p2,
+      s_graphs::msg::PlaneData plane1,
+      s_graphs::msg::PlaneData plane2,
+      Eigen::Vector2d& cluster_center);
   /**
    * @brief
    *
    * @param
    * @return
    */
-  double plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2);
+  static double plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2);
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP

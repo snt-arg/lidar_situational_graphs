@@ -73,9 +73,8 @@ class FloorAnalyzer {
   /**
    * @brief Constructor for FloorAnalyzer.
    *
-   * @param plane_utils_ptr: a pointer containing utils for planes manipulation.
    */
-  FloorAnalyzer(std::shared_ptr<PlaneUtils> plane_utils_ptr);
+  FloorAnalyzer();
   ~FloorAnalyzer();
 
  public:
@@ -90,9 +89,6 @@ class FloorAnalyzer {
       const std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes,
       const std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes,
       std::vector<s_graphs::msg::PlaneData>& floor_plane_candidates_vec);
-
- private:
-  std::shared_ptr<PlaneUtils> plane_utils;
 };
 }  // namespace s_graphs
 
