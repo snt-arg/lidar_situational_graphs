@@ -436,7 +436,6 @@ class SGraphsNode : public rclcpp::Node {
     keyframe_mapper = std::make_unique<KeyframeMapper>(shared_from_this());
     gps_mapper = std::make_unique<GPSMapper>(shared_from_this());
     imu_mapper = std::make_unique<IMUMapper>(shared_from_this());
-    graph_utils = std::make_unique<GraphUtils>();
     graph_publisher = std::make_unique<GraphPublisher>();
     wall_mapper = std::make_unique<WallMapper>(shared_from_this());
     room_graph_generator = std::make_unique<RoomGraphGenerator>(shared_from_this());
@@ -1031,19 +1030,19 @@ class SGraphsNode : public rclcpp::Node {
 
     graph_mutex.lock();
     if (!loop_found && !duplicate_planes_found) {
-      graph_utils->copy_windowed_graph(
+      GraphUtils::copy_windowed_graph(
           optimization_window_size, covisibility_graph, compressed_graph, keyframes);
       global_optimization = false;
     } else if (loop_found && !duplicate_planes_found) {
-      graph_utils->copy_graph(covisibility_graph, compressed_graph);
+      GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
       loop_found = false;
       global_optimization = true;
     } else if (!loop_found && duplicate_planes_found) {
-      graph_utils->copy_graph(covisibility_graph, compressed_graph);
+      GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
       duplicate_planes_found = false;
       global_optimization = true;
     } else if (loop_found && duplicate_planes_found) {
-      graph_utils->copy_graph(covisibility_graph, compressed_graph);
+      GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
       duplicate_planes_found = false;
       loop_found = false;
       global_optimization = true;
@@ -1063,14 +1062,14 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     graph_mutex.lock();
-    graph_utils->update_graph(compressed_graph,
-                              keyframes,
-                              x_vert_planes,
-                              y_vert_planes,
-                              rooms_vec,
-                              x_infinite_rooms,
-                              y_infinite_rooms,
-                              floors_vec);
+    GraphUtils::update_graph(compressed_graph,
+                             keyframes,
+                             x_vert_planes,
+                             y_vert_planes,
+                             rooms_vec,
+                             x_infinite_rooms,
+                             y_infinite_rooms,
+                             floors_vec);
 
     Eigen::Isometry3d trans = keyframes[keyframe_id]->node->estimate() *
                               keyframes[keyframe_id]->odom.inverse();
@@ -1115,9 +1114,9 @@ class SGraphsNode : public rclcpp::Node {
   void broadcast_room_graph(const int room_id, const int num_iterations) {
     // rooms_vec[room_id].local_graph->optimize("room-local", num_iterations);
     graph_mutex.lock();
-    graph_utils->set_marginalize_info(rooms_vec[room_id].local_graph,
-                                      covisibility_graph,
-                                      rooms_vec[room_id].room_keyframes);
+    GraphUtils::set_marginalize_info(rooms_vec[room_id].local_graph,
+                                     covisibility_graph,
+                                     rooms_vec[room_id].room_keyframes);
     graph_mutex.unlock();
   }
 
@@ -1821,7 +1820,6 @@ class SGraphsNode : public rclcpp::Node {
   std::unique_ptr<GPSMapper> gps_mapper;
   std::unique_ptr<IMUMapper> imu_mapper;
   std::unique_ptr<GraphPublisher> graph_publisher;
-  std::unique_ptr<GraphUtils> graph_utils;
   std::unique_ptr<RoomGraphGenerator> room_graph_generator;
 };
 

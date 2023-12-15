@@ -3,7 +3,18 @@
 namespace s_graphs {
 
 void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
-                            std::unique_ptr<GraphSLAM>& compressed_graph) {
+                            std::unique_ptr<GraphSLAM>& compressed_graph,
+                            const std::map<int, KeyFrame::Ptr>& keyframes) {
+  copy_graph_vertices(covisibility_graph, compressed_graph);
+  std::vector<g2o::VertexSE3*> filtered_k_vec =
+      copy_graph_edges(covisibility_graph, compressed_graph);
+  connect_broken_keyframes(
+      filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
+}
+
+void GraphUtils::copy_graph_vertices(
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const std::unique_ptr<GraphSLAM>& compressed_graph) {
   for (g2o::HyperGraph::VertexIDMap::iterator it =
            covisibility_graph->graph->vertices().begin();
        it != covisibility_graph->graph->vertices().end();
@@ -13,23 +24,43 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
     if (vertex_se3) {
+      auto keyframe_vert_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+      bool marginalized = false;
+      if (keyframe_vert_data) {
+        keyframe_vert_data->get_marginalized_info(marginalized);
+      }
+
+      // if (!marginalized) {
+      if (compressed_graph->graph->vertex(v->id())) continue;
       auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
+      //}
       continue;
     }
+
     g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
     if (vertex_plane) {
       auto current_vertex = compressed_graph->copy_plane_node(vertex_plane);
       continue;
     }
+
+    g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
+    if (vertex_floor) {
+      auto current_vertex = compressed_graph->copy_floor_node(vertex_floor);
+      continue;
+    }
+
     g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
     if (vertex_room) {
       auto current_vertex = compressed_graph->copy_room_node(vertex_room);
       continue;
     }
-    g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
-    if (vertex_floor)
-      auto current_vertex = compressed_graph->copy_floor_node(vertex_floor);
   }
+}
+
+std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const std::unique_ptr<GraphSLAM>& compressed_graph) {
+  std::vector<g2o::VertexSE3*> filtered_k_vec;
 
   for (g2o::HyperGraph::EdgeSet::iterator it =
            covisibility_graph->graph->edges().begin();
@@ -45,10 +76,26 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(e);
     if (edge_se3) {
+      if (!compressed_graph->graph->vertex(edge_se3->vertices()[0]->id())) {
+        if (compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
+          filtered_k_vec.push_back(
+              dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]));
+        }
+        continue;
+      }
+      if (!compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
+        if (compressed_graph->graph->vertex(edge_se3->vertices()[0]->id())) {
+          filtered_k_vec.push_back(
+              dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]));
+        }
+        continue;
+      }
+
       g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3->vertices()[0]->id()));
       g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3->vertices()[1]->id()));
+
       auto edge = compressed_graph->copy_se3_edge(edge_se3, v1, v2);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
@@ -56,6 +103,8 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 
     g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(e);
     if (edge_se3_plane) {
+      if (!compressed_graph->graph->vertex(edge_se3_plane->vertices()[0]->id()))
+        continue;
       g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[0]->id()));
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
@@ -80,6 +129,7 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
           dynamic_cast<g2o::VertexRoom*>(compressed_graph->graph->vertices().at(
               edge_room_2planes->vertices()[3]->id()));
 
+      v4->setFixed(true);
       auto edge =
           compressed_graph->copy_room_2planes_edge(edge_room_2planes, v1, v2, v3, v4);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
@@ -131,6 +181,8 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
       continue;
     }
   }
+
+  return filtered_k_vec;
 }
 
 void GraphUtils::copy_windowed_graph(

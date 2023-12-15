@@ -116,9 +116,6 @@ class RoomGraphGenerator {
    */
   void update_room_graph(const Rooms room,
                          const std::shared_ptr<GraphSLAM>& covisibility_graph);
-
- private:
-  std::unique_ptr<GraphUtils> graph_utils;
 };
 }  // namespace s_graphs
 

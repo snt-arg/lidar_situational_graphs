@@ -31,9 +31,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 namespace s_graphs {
 
-RoomGraphGenerator::RoomGraphGenerator(rclcpp::Node::SharedPtr node) {
-  graph_utils = std::make_unique<GraphUtils>();
-}
+RoomGraphGenerator::RoomGraphGenerator(rclcpp::Node::SharedPtr node) {}
 
 RoomGraphGenerator::~RoomGraphGenerator() {}
 
@@ -121,18 +119,18 @@ void RoomGraphGenerator::generate_local_graph(
   // get the edges of the keyframe in the cov graph and add them to the local
   // graph
   std::unordered_set<g2o::VertexSE3*> fixed_keyframes_set =
-      graph_utils->connect_keyframes_planes(covisibility_graph,
-                                            current_room.local_graph.get());
+      GraphUtils::connect_keyframes_planes(covisibility_graph,
+                                           current_room.local_graph.get());
 
   // loop the fixed keyframe set, make it fixed and add copy its edges to the local
   // compressed graph
-  // graph_utils->fix_and_connect_keyframes(current_room.local_graph.get(),
+  // GraphUtils::fix_and_connect_keyframes(current_room.local_graph.get(),
   //                                       fixed_keyframes_set);
 
   // TODO:HB remove the edge2planes when optimizing only room-graph
   // get the vertices of the planes in the local graph and connect their edges from
   // cov graph to local graph
-  graph_utils->connect_planes_rooms(covisibility_graph, current_room.local_graph.get());
+  GraphUtils::connect_planes_rooms(covisibility_graph, current_room.local_graph.get());
 }
 
 void RoomGraphGenerator::update_room_graph(
