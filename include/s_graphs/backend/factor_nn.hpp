@@ -29,6 +29,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 // SPDX-License-Identifier: BSD-2-Clause
 
+#ifndef FactorNN_H
+#define FactorNN_H
+
 #include <torch/script.h>
 #include "rclcpp/rclcpp.hpp"
 #include <Eigen/Dense>
@@ -50,7 +53,7 @@ class FactorNN{
    * @return
    */
 //   FactorNN(const rclcpp::Node::SharedPtr node);
-  FactorNN(std::string factor_type = "") { _factor_type = factor_type;};
+  FactorNN(std::string factor_type = "");
 //   ~FactorNN();
   // void infer();
   Eigen::Vector2d infer(std::vector<float> input_vector);
@@ -64,3 +67,5 @@ class FactorNN{
 };
 
 }
+
+#endif

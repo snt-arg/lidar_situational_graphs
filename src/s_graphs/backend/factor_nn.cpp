@@ -39,7 +39,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 namespace s_graphs {
 
 // FactorNN::FactorNN(const rclcpp::Node::SharedPtr node) {
-FactorNN::FactorNN("wall") {
+FactorNN::FactorNN(std::string _factor_type) {
   if (_factor_type == "room_4"){
     path = "/home/adminpc/reasoning_ws/src/graph_reasoning/torchscripts/room_4.pt";
   } else if (_factor_type == "wall") {
