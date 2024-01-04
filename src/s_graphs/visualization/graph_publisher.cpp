@@ -147,15 +147,15 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     }
 
   } else {
-    graph_msg.name = "ONLINE";
+    graph_msg.name = "Online";
     for (int i = 0; i < x_vert_planes.size(); i++) {
-      g2o::Plane3D v_plane = x_vert_planes[i].plane;
+      auto v_plane = x_vert_planes[i].plane_node->estimate();
       reasoning_msgs::msg::Node graph_node;
       reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = x_vert_planes[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
-      Eigen::Vector4d plane_coeffs = v_plane.coeffs();
+      Eigen::Vector4d plane_coeffs = x_vert_planes[i].plane_node->estimate().toVector();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
       node_attribute.fl_value.push_back(plane_coeffs(2));
@@ -173,7 +173,7 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
       graph_node.id = y_vert_planes[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
-      Eigen::Vector4d plane_coeffs = v_plane.coeffs();
+      Eigen::Vector4d plane_coeffs = y_vert_planes[i].plane_node->estimate().toVector();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
       node_attribute.fl_value.push_back(plane_coeffs(2));
