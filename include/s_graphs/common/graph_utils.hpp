@@ -43,7 +43,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/infinite_rooms.hpp>
-#include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
 #include <s_graphs/common/rooms.hpp>
@@ -205,6 +204,15 @@ class GraphUtils {
   static void set_marginalize_info(const std::shared_ptr<GraphSLAM>& local_graph,
                                    const std::shared_ptr<GraphSLAM>& covisibility_graph,
                                    const std::map<int, KeyFrame::Ptr>& room_keyframes);
+
+  /**
+   * @brief
+   *
+   * @param vertex_se3
+   * @return true
+   * @return false
+   */
+  static bool get_keyframe_marg_data(g2o::VertexSE3* vertex_se3);
 };
 
 }  // namespace s_graphs

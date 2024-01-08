@@ -564,8 +564,13 @@ void PlaneMapper::convert_plane_points_to_map(
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
 
     for (int k = 0; k < x_vert_plane.second.keyframe_node_vec.size(); ++k) {
+      bool marginalized =
+          GraphUtils::get_keyframe_marg_data(x_vert_plane.second.keyframe_node_vec[k]);
+      if (marginalized) continue;
+
       Eigen::Matrix4f pose =
           x_vert_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
+
       for (size_t j = 0; j < x_vert_plane.second.cloud_seg_body_vec[k]->points.size();
            ++j) {
         PointNormal dst_pt;
@@ -582,6 +587,10 @@ void PlaneMapper::convert_plane_points_to_map(
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
 
     for (int k = 0; k < y_vert_plane.second.keyframe_node_vec.size(); ++k) {
+      bool marginalized =
+          GraphUtils::get_keyframe_marg_data(y_vert_plane.second.keyframe_node_vec[k]);
+      if (marginalized) continue;
+
       Eigen::Matrix4f pose =
           y_vert_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
 
@@ -601,6 +610,10 @@ void PlaneMapper::convert_plane_points_to_map(
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
 
     for (int k = 0; k < hort_plane.second.keyframe_node_vec.size(); ++k) {
+      bool marginalized =
+          GraphUtils::get_keyframe_marg_data(hort_plane.second.keyframe_node_vec[k]);
+      if (marginalized) continue;
+
       Eigen::Matrix4f pose =
           hort_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
 

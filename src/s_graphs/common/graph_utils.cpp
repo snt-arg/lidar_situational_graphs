@@ -30,10 +30,10 @@ void GraphUtils::copy_graph_vertices(
         keyframe_vert_data->get_marginalized_info(marginalized);
       }
 
-      // if (!marginalized) {
-      if (compressed_graph->graph->vertex(v->id())) continue;
-      auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
-      //}
+      if (!marginalized) {
+        if (compressed_graph->graph->vertex(v->id())) continue;
+        auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
+      }
       continue;
     }
 
@@ -197,12 +197,8 @@ void GraphUtils::copy_windowed_graph(
   std::map<int, KeyFrame::Ptr> complete_keyframe_window;
   auto it = keyframes.rbegin();
   for (; it != keyframes.rend() && keyframe_window.size() < window_size; ++it) {
-    auto keyframe_vert_data =
-        dynamic_cast<OptimizationData*>(it->second->node->userData());
-    bool marginalized = false;
-    if (keyframe_vert_data) {
-      keyframe_vert_data->get_marginalized_info(marginalized);
-    }
+    bool marginalized =
+        get_keyframe_marg_data(dynamic_cast<g2o::VertexSE3*>(it->second->node));
 
     if (marginalized) {
       complete_keyframe_window.insert(*it);
@@ -451,13 +447,8 @@ std::unordered_set<g2o::VertexSE3*> GraphUtils::connect_keyframes_planes(
             edge_se3_plane, current_vertex_v1, current_vertex_v2);
         compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
 
-        bool marginalized = false;
-        auto keyframe_vert_data = dynamic_cast<OptimizationData*>(
-            dynamic_cast<g2o::VertexSE3*>(current_vertex_v1)->userData());
-
-        if (keyframe_vert_data) {
-          keyframe_vert_data->get_marginalized_info(marginalized);
-        }
+        bool marginalized = get_keyframe_marg_data(dynamic_cast<g2o::VertexSE3*>(
+            dynamic_cast<g2o::VertexSE3*>(current_vertex_v1)));
 
         // get all the keyframes connected with this plane vertex
         for (g2o::HyperGraph::EdgeSet::iterator it_v2 = v2->edges().begin();
@@ -470,13 +461,9 @@ std::unordered_set<g2o::VertexSE3*> GraphUtils::connect_keyframes_planes(
             if (!compressed_graph->graph->vertex(e_v2->vertices()[0]->id())) {
               if (fixed_keyframes_set.find(dynamic_cast<g2o::VertexSE3*>(
                       e_v2->vertices()[0])) == fixed_keyframes_set.end()) {
-                bool marginalized = false;
-                auto keyframe_vert_data = dynamic_cast<OptimizationData*>(
-                    dynamic_cast<g2o::VertexSE3*>(e_v2->vertices()[0])->userData());
+                bool marginalized = get_keyframe_marg_data(
+                    dynamic_cast<g2o::VertexSE3*>(e_v2->vertices()[0]));
 
-                if (keyframe_vert_data) {
-                  keyframe_vert_data->get_marginalized_info(marginalized);
-                }
                 if (!marginalized) {
                   fixed_keyframes_set.insert(
                       dynamic_cast<g2o::VertexSE3*>(e_v2->vertices()[0]));
@@ -865,7 +852,7 @@ void GraphUtils::set_marginalize_info(
       g2o::VertexSE3* covis_vertex_se3 = dynamic_cast<g2o::VertexSE3*>(covis_vertex);
 
       if (covis_vertex_se3) {
-        covis_vertex_se3->setEstimate((local_vertex_se3)->estimate());
+        // covis_vertex_se3->setEstimate((local_vertex_se3)->estimate());
 
         auto current_data =
             dynamic_cast<OptimizationData*>(covis_vertex_se3->userData());
@@ -891,28 +878,38 @@ void GraphUtils::set_marginalize_info(
     k_counter++;
   }
 
-  for (g2o::HyperGraph::VertexIDMap::iterator it =
-           local_graph->graph->vertices().begin();
-       it != local_graph->graph->vertices().end();
-       ++it) {
-    g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
-    g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
-    if (vertex_plane) {
-      // find the equivalent in the covis graph
-      auto covis_v = dynamic_cast<g2o::VertexPlane*>(
-          covisibility_graph->graph->vertex(vertex_plane->id()));
-      if (covis_v) covis_v->setEstimate(vertex_plane->estimate());
-      continue;
-    }
+  // for (g2o::HyperGraph::VertexIDMap::iterator it =
+  //          local_graph->graph->vertices().begin();
+  //      it != local_graph->graph->vertices().end();
+  //      ++it) {
+  //   g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+  //   g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
+  //   if (vertex_plane) {
+  //     // find the equivalent in the covis graph
+  //     auto covis_v = dynamic_cast<g2o::VertexPlane*>(
+  //         covisibility_graph->graph->vertex(vertex_plane->id()));
+  //     if (covis_v) covis_v->setEstimate(vertex_plane->estimate());
+  //     continue;
+  //   }
 
-    g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
-    if (vertex_room) {
-      auto covis_v = dynamic_cast<g2o::VertexRoom*>(
-          covisibility_graph->graph->vertex(vertex_room->id()));
-      if (covis_v) covis_v->setEstimate(vertex_room->estimate());
-      continue;
-    }
+  //   g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
+  //   if (vertex_room) {
+  //     auto covis_v = dynamic_cast<g2o::VertexRoom*>(
+  //         covisibility_graph->graph->vertex(vertex_room->id()));
+  //     if (covis_v) covis_v->setEstimate(vertex_room->estimate());
+  //     continue;
+  //   }
+  // }
+}
+
+bool GraphUtils::get_keyframe_marg_data(g2o::VertexSE3* vertex_se3) {
+  auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+  bool marginalized = false;
+  if (current_data) {
+    current_data->get_marginalized_info(marginalized);
   }
+
+  return marginalized;
 }
 
 }  // namespace s_graphs

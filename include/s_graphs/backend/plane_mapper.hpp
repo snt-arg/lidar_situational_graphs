@@ -43,6 +43,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <cmath>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
+#include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>

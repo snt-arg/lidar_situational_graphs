@@ -938,7 +938,8 @@ class SGraphsNode : public rclcpp::Node {
     keyframes_snapshot.swap(snapshot);
 
     for (const auto& keyframe_snapshot : keyframes_snapshot) {
-      keyframes_snapshot_queue.push(keyframe_snapshot);
+      if (!keyframe_snapshot->k_marginalized)
+        keyframes_snapshot_queue.push(keyframe_snapshot);
     }
 
     for (const auto& keyframe : keyframes) {
