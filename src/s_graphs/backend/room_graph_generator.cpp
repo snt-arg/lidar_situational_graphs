@@ -114,7 +114,7 @@ void RoomGraphGenerator::generate_local_graph(
   Eigen::Isometry3d anchor_target =
       static_cast<g2o::VertexSE3*>(anchor_edge->vertices()[1])->estimate();
   anchor_node->setEstimate(anchor_target);
-  // current_room.room_keyframes.begin()->second->node->setFixed(true);
+  current_room.room_keyframes.begin()->second->node->setFixed(true);
 
   // get the edges of the keyframe in the cov graph and add them to the local
   // graph

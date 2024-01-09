@@ -1089,7 +1089,6 @@ class SGraphsNode : public rclcpp::Node {
 
     int counter = 0;
     for (const auto& room_local_graph_id : room_local_graph_id_queue) {
-      // optimize_room_local_graph
       broadcast_room_graph(room_local_graph_id, num_iterations);
       counter++;
     }
@@ -1112,8 +1111,9 @@ class SGraphsNode : public rclcpp::Node {
    * @param num_iterations
    */
   void broadcast_room_graph(const int room_id, const int num_iterations) {
-    // rooms_vec[room_id].local_graph->optimize("room-local", num_iterations);
     graph_mutex.lock();
+    // optimize_room_local_graph
+    rooms_vec[room_id].local_graph->optimize("room-local", num_iterations);
     GraphUtils::set_marginalize_info(rooms_vec[room_id].local_graph,
                                      covisibility_graph,
                                      rooms_vec[room_id].room_keyframes);

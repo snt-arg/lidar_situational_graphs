@@ -852,8 +852,6 @@ void GraphUtils::set_marginalize_info(
       g2o::VertexSE3* covis_vertex_se3 = dynamic_cast<g2o::VertexSE3*>(covis_vertex);
 
       if (covis_vertex_se3) {
-        // covis_vertex_se3->setEstimate((local_vertex_se3)->estimate());
-
         auto current_data =
             dynamic_cast<OptimizationData*>(covis_vertex_se3->userData());
         bool marginalized = false;
@@ -871,6 +869,7 @@ void GraphUtils::set_marginalize_info(
             marginalized = true;
             data->set_marginalized_info(marginalized);
             covis_vertex_se3->setUserData(data);
+            covis_vertex_se3->setEstimate((local_vertex_se3)->estimate());
           }
         }
       }
