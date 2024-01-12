@@ -5,6 +5,7 @@ namespace s_graphs {
 void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
                             std::unique_ptr<GraphSLAM>& compressed_graph,
                             const std::map<int, KeyFrame::Ptr>& keyframes) {
+  compressed_graph->graph->clear();
   copy_graph_vertices(covisibility_graph, compressed_graph);
   std::vector<g2o::VertexSE3*> filtered_k_vec =
       copy_graph_edges(covisibility_graph, compressed_graph);
@@ -68,11 +69,10 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
        ++it) {
     g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*it);
 
-    auto edge = std::find_if(compressed_graph->graph->edges().begin(),
-                             compressed_graph->graph->edges().end(),
-                             boost::bind(&g2o::HyperGraph::Edge::id, _1) == e->id());
-
-    if (edge != compressed_graph->graph->edges().end()) continue;
+    auto found_edge =
+        std::find_if(compressed_graph->graph->edges().begin(),
+                     compressed_graph->graph->edges().end(),
+                     boost::bind(&g2o::HyperGraph::Edge::id, _1) == e->id());
 
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(e);
     if (edge_se3) {
@@ -96,11 +96,14 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
       g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3->vertices()[1]->id()));
 
+      if (found_edge != compressed_graph->graph->edges().end()) continue;
+
       auto edge = compressed_graph->copy_se3_edge(edge_se3, v1, v2);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
     }
 
+    if (found_edge != compressed_graph->graph->edges().end()) continue;
     g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(e);
     if (edge_se3_plane) {
       if (!compressed_graph->graph->vertex(edge_se3_plane->vertices()[0]->id()))
@@ -212,6 +215,7 @@ void GraphUtils::copy_windowed_graph(
   // copy keyframes in the window to the compressed graph
   int min_keyframe_id =
       copy_keyframes_to_graph(covisibility_graph, compressed_graph, keyframe_window);
+  compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // get all the filtered keyframes added in the compressed graph
   bool anchor_node_exists = false;
@@ -229,6 +233,10 @@ void GraphUtils::copy_windowed_graph(
   // connect existing keyframes and connect disconnected keyframes
   connect_broken_keyframes(
       filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
+
+  // loop the fixed keyframe set, make it fixed and copy its edges to the local
+  // compressed graph
+  fix_and_connect_keyframes(compressed_graph.get(), fixed_keyframes_set);
 
   // check from all the planes added in the compressed graph, which have
   // connections to rooms
@@ -553,14 +561,12 @@ void GraphUtils::connect_broken_keyframes(
     if (vertex1 && vertex2) {
       /* TODO: HB setting high value for information makes the graph diverge */
       // information.setIdentity();
-      information = 0.1 * Eigen::MatrixXd::Identity(6, 6);
+      information = Eigen::MatrixXd::Identity(6, 6);
 
       auto edge = compressed_graph->add_se3_edge(
           vertex1, vertex2, relative_pose, information, true);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
-      OptimizationData* data = new OptimizationData();
-      data->set_edge_info(true);
-      edge->setUserData(data);
+      std::cout << "add edge between disconnected keyframes " << std::endl;
     }
   }
 }
@@ -701,6 +707,103 @@ void GraphUtils::connect_planes_rooms(
                                                              current_vertex_rv2);
         compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
         continue;
+      }
+    }
+  }
+}
+
+void GraphUtils::fix_and_connect_keyframes(
+    GraphSLAM* compressed_graph,
+    const std::unordered_set<g2o::VertexSE3*>& fixed_keyframes_set) {
+  std::set<g2o::VertexSE3*> compressed_graph_keyframes_set;
+  for (auto fixed_keyframe : fixed_keyframes_set) {
+    auto current_fixed_keyframe = compressed_graph->copy_se3_node(fixed_keyframe);
+    current_fixed_keyframe->setFixed(true);
+    compressed_graph_keyframes_set.insert(current_fixed_keyframe);
+  }
+
+  std::unordered_set<int> added_edge_set;
+  std::vector<g2o::VertexSE3*> eliminated_keyframes_vec;
+  for (auto fixed_keyframe : fixed_keyframes_set) {
+    auto current_fixed_keyframe = dynamic_cast<g2o::VertexSE3*>(
+        compressed_graph->graph->vertex(fixed_keyframe->id()));
+    bool has_edge_se3 = false;
+    for (g2o::HyperGraph::EdgeSet::iterator it = fixed_keyframe->edges().begin();
+         it != fixed_keyframe->edges().end();
+         ++it) {
+      g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*it);
+
+      g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(e);
+      if (edge_se3) {
+        if (compressed_graph->graph->vertex(edge_se3->vertices()[0]->id()) &&
+            edge_se3->vertices()[0]->id() != current_fixed_keyframe->id()) {
+          g2o::VertexSE3* current_vertex1 = dynamic_cast<g2o::VertexSE3*>(
+              compressed_graph->graph->vertex(edge_se3->vertices()[0]->id()));
+
+          if (added_edge_set.find(edge_se3->id()) == added_edge_set.end()) {
+            if (!current_vertex1->fixed()) {
+              auto current_edge = compressed_graph->copy_se3_edge(
+                  edge_se3, current_vertex1, current_fixed_keyframe);
+              compressed_graph->add_robust_kernel(current_edge, "Huber", 1.0);
+
+              added_edge_set.insert(edge_se3->id());
+              has_edge_se3 = true;
+              continue;
+            }
+          } else
+            has_edge_se3 = true;
+
+        } else if (compressed_graph->graph->vertex(edge_se3->vertices()[1]->id()) &&
+                   edge_se3->vertices()[1]->id() != current_fixed_keyframe->id()) {
+          g2o::VertexSE3* current_vertex2 = dynamic_cast<g2o::VertexSE3*>(
+              compressed_graph->graph->vertex(edge_se3->vertices()[1]->id()));
+
+          if (added_edge_set.find(edge_se3->id()) == added_edge_set.end()) {
+            if (!current_vertex2->fixed()) {
+              auto current_edge = compressed_graph->copy_se3_edge(
+                  edge_se3, current_fixed_keyframe, current_vertex2);
+              compressed_graph->add_robust_kernel(current_edge, "Huber", 1.0);
+
+              added_edge_set.insert(edge_se3->id());
+              has_edge_se3 = true;
+              continue;
+            }
+          } else
+            has_edge_se3 = true;
+        }
+      }
+    }
+    // remove se3 vertex if it doesnt have any se3->se3 edge
+    // if (!has_edge_se3) {
+    //   eliminated_keyframes_vec.push_back(current_fixed_keyframe);
+    // }
+  }
+
+  // for (auto eliminated_keyframe : eliminated_keyframes_vec) {
+  //   compressed_graph->graph->removeVertex(eliminated_keyframe);
+  // }
+
+  for (auto fixed_keyframe : fixed_keyframes_set) {
+    for (g2o::HyperGraph::EdgeSet::iterator it = fixed_keyframe->edges().begin();
+         it != fixed_keyframe->edges().end();
+         ++it) {
+      g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*it);
+      auto current_fixed_keyframe = dynamic_cast<g2o::VertexSE3*>(
+          compressed_graph->graph->vertex(fixed_keyframe->id()));
+
+      if (current_fixed_keyframe) {
+        g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(e);
+        if (edge_se3_plane) {
+          if (compressed_graph->graph->vertex(edge_se3_plane->vertices()[1]->id())) {
+            g2o::VertexPlane* current_vertex2 = dynamic_cast<g2o::VertexPlane*>(
+                compressed_graph->graph->vertex(edge_se3_plane->vertices()[1]->id()));
+
+            auto current_edge = compressed_graph->copy_se3_plane_edge(
+                edge_se3_plane, current_fixed_keyframe, current_vertex2);
+            compressed_graph->add_robust_kernel(current_edge, "Huber", 1.0);
+            continue;
+          }
+        }
       }
     }
   }
@@ -877,28 +980,28 @@ void GraphUtils::set_marginalize_info(
     k_counter++;
   }
 
-  // for (g2o::HyperGraph::VertexIDMap::iterator it =
-  //          local_graph->graph->vertices().begin();
-  //      it != local_graph->graph->vertices().end();
-  //      ++it) {
-  //   g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
-  //   g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
-  //   if (vertex_plane) {
-  //     // find the equivalent in the covis graph
-  //     auto covis_v = dynamic_cast<g2o::VertexPlane*>(
-  //         covisibility_graph->graph->vertex(vertex_plane->id()));
-  //     if (covis_v) covis_v->setEstimate(vertex_plane->estimate());
-  //     continue;
-  //   }
+  for (g2o::HyperGraph::VertexIDMap::iterator it =
+           local_graph->graph->vertices().begin();
+       it != local_graph->graph->vertices().end();
+       ++it) {
+    g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+    g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
+    if (vertex_plane) {
+      // find the equivalent in the covis graph
+      auto covis_v = dynamic_cast<g2o::VertexPlane*>(
+          covisibility_graph->graph->vertex(vertex_plane->id()));
+      if (covis_v) covis_v->setEstimate(vertex_plane->estimate());
+      continue;
+    }
 
-  //   g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
-  //   if (vertex_room) {
-  //     auto covis_v = dynamic_cast<g2o::VertexRoom*>(
-  //         covisibility_graph->graph->vertex(vertex_room->id()));
-  //     if (covis_v) covis_v->setEstimate(vertex_room->estimate());
-  //     continue;
-  //   }
-  // }
+    g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
+    if (vertex_room) {
+      auto covis_v = dynamic_cast<g2o::VertexRoom*>(
+          covisibility_graph->graph->vertex(vertex_room->id()));
+      if (covis_v) covis_v->setEstimate(vertex_room->estimate());
+      continue;
+    }
+  }
 }
 
 bool GraphUtils::get_keyframe_marg_data(g2o::VertexSE3* vertex_se3) {

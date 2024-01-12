@@ -155,6 +155,16 @@ class GraphUtils {
   /**
    * @brief
    *
+   * @param compressed_graph
+   * @param fixed_keyframes_set
+   */
+  static void fix_and_connect_keyframes(
+      GraphSLAM* compressed_graph,
+      const std::unordered_set<g2o::VertexSE3*>& fixed_keyframes_set);
+
+  /**
+   * @brief
+   *
    * @param covisibility_graph
    * @param compressed_graph
    * @return * void

@@ -113,7 +113,7 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
 
     if (i == 0 && keyframes.empty()) {
       keyframes.insert({keyframe->id(), keyframe});
-      add_anchor_node(local_graph, keyframe, anchor_node, anchor_edge, true);
+      // add_anchor_node(local_graph, keyframe, anchor_node, anchor_edge, true);
       continue;
     }
 
@@ -167,7 +167,7 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
       } else {
         Eigen::Isometry3d relative_pose =
             keyframe->node->estimate().inverse() * prev_keyframe->node->estimate();
-        Eigen::MatrixXd information = 10 * Eigen::MatrixXd::Identity(6, 6);
+        Eigen::MatrixXd information = Eigen::MatrixXd::Identity(6, 6);
 
         auto edge = local_graph->add_se3_edge(
             keyframe->node, prev_keyframe->node, relative_pose, information);

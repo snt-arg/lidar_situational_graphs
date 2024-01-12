@@ -111,10 +111,9 @@ void RoomGraphGenerator::generate_local_graph(
                                  anchor_edge);
 
   // fixing the first non-marginalized keyframe in the room graph with anchor node
-  Eigen::Isometry3d anchor_target =
-      static_cast<g2o::VertexSE3*>(anchor_edge->vertices()[1])->estimate();
-  anchor_node->setEstimate(anchor_target);
-  current_room.room_keyframes.begin()->second->node->setFixed(true);
+  // Eigen::Isometry3d anchor_target =
+  //     static_cast<g2o::VertexSE3*>(anchor_edge->vertices()[1])->estimate();
+  // anchor_node->setEstimate(anchor_target);
 
   // get the edges of the keyframe in the cov graph and add them to the local
   // graph
@@ -124,10 +123,9 @@ void RoomGraphGenerator::generate_local_graph(
 
   // loop the fixed keyframe set, make it fixed and add copy its edges to the local
   // compressed graph
-  // GraphUtils::fix_and_connect_keyframes(current_room.local_graph.get(),
-  //                                       fixed_keyframes_set);
+  GraphUtils::fix_and_connect_keyframes(current_room.local_graph.get(),
+                                        fixed_keyframes_set);
 
-  // TODO:HB remove the edge2planes when optimizing only room-graph
   // get the vertices of the planes in the local graph and connect their edges from
   // cov graph to local graph
   GraphUtils::connect_planes_rooms(covisibility_graph, current_room.local_graph.get());
