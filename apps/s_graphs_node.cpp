@@ -769,32 +769,24 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
-    walls_msg_vector = walls_msg->walls;
-    Eigen::Vector3d x_wall_pose = Eigen::Vector3d::Identity();
-    Eigen::Vector3d y_wall_pose = Eigen::Vector3d::Identity();
-    std::unique_lock<std::mutex> lock(wall_data_queue_mutex);
-    for (int j = 0; j < walls_msg_vector.size(); j++) {
-      x_planes_msg = walls_msg->walls[j].x_planes;
-      if (x_planes_msg.size() == 2) {
-        x_wall_pose << walls_msg->walls[j].wall_center.position.x,
-            walls_msg->walls[j].wall_center.position.y,
-            walls_msg->walls[j].wall_center.position.z;
-      }
-      y_planes_msg = walls_msg->walls[j].y_planes;
-      if (y_planes_msg.size() == 2) {
-        y_wall_pose << walls_msg->walls[j].wall_center.position.x,
-            walls_msg->walls[j].wall_center.position.y,
-            walls_msg->walls[j].wall_center.position.z;
-      }
+    for (int j = 0; j < walls_msg->walls.size(); j++) {
+      std::vector<s_graphs::msg::PlaneData> x_planes_msg = walls_msg->walls[j].x_planes;
+      std::vector<s_graphs::msg::PlaneData> y_planes_msg = walls_msg->walls[j].y_planes;
+
+      if (x_planes_msg.size() != 2 && y_planes_msg.size() != 2) continue;
+
+      Eigen::Vector3d wall_pose;
+      wall_pose << walls_msg->walls[j].wall_center.position.x,
+          walls_msg->walls[j].wall_center.position.y,
+          walls_msg->walls[j].wall_center.position.z;
+
+      wall_mapper->factor_wall(covisibility_graph,
+                               wall_pose,
+                               x_planes_msg,
+                               y_planes_msg,
+                               x_vert_planes,
+                               y_vert_planes);
     }
-    wall_mapper->factor_wall(covisibility_graph,
-                             x_planes_msg,
-                             x_wall_pose,
-                             y_planes_msg,
-                             y_wall_pose,
-                             x_vert_planes,
-                             y_vert_planes);
-    lock.unlock();
   }
 
   void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
@@ -1740,8 +1732,6 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<sensor_msgs::msg::Imu::SharedPtr> imu_queue;
 
   // vertical and horizontal planes
-  std::mutex wall_data_queue_mutex;
-
   std::deque<int> room_local_graph_id_queue;
   int optimization_window_size;
   bool loop_found, duplicate_planes_found;
@@ -1771,9 +1761,6 @@ class SGraphsNode : public rclcpp::Node {
   std::vector<Rooms> rooms_vec_snapshot;
   std::vector<Floors> floors_vec_snapshot;
   std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
-  std::vector<s_graphs::msg::WallData> walls_msg_vector;
-  std::vector<s_graphs::msg::PlaneData> x_planes_msg;
-  std::vector<s_graphs::msg::PlaneData> y_planes_msg;
 
   // room data queue
   std::mutex room_data_queue_mutex, floor_data_mutex;
