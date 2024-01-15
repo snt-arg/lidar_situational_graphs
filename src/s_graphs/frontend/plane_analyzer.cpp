@@ -235,6 +235,7 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(
   for (auto single_cluster : cluster_indices) {
     // std_msgs::msg::ColorRGBA color =
     // rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
+    if (single_cluster.indices.size() < 50) continue;
     std_msgs::msg::ColorRGBA color = random_color();
     double r = color.r;
     double g = color.g;
