@@ -269,6 +269,14 @@ class GraphSLAM {
    * @return registered node
    */
   g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
+
+  /**
+   * @brief copy a Wall node to the graph
+   * @param wall_node
+   * @return registered node
+   */
+  g2o::VertexWallXYZ* copy_wall_node(const g2o::VertexWallXYZ* wall_node);
+
   /**
    * @brief Add a SE3 Deviation node to the graph.
    *
@@ -558,6 +566,19 @@ class GraphSLAM {
   g2o::Edge2Planes* copy_2planes_edge(g2o::Edge2Planes* e,
                                       g2o::VertexPlane* v1,
                                       g2o::VertexPlane* v2);
+
+  /**
+   * @brief
+   *
+   * @param e
+   * @param v2
+   * @param v3
+   * @return g2o::EdgeWall2Planes*
+   */
+  g2o::EdgeWall2Planes* copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
+                                               g2o::VertexWallXYZ* v1,
+                                               g2o::VertexPlane* v2,
+                                               g2o::VertexPlane* v3);
 
   /**
    * @brief Deviation connection edge between two planes

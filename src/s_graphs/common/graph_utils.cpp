@@ -44,6 +44,12 @@ void GraphUtils::copy_graph_vertices(
       continue;
     }
 
+    g2o::VertexWallXYZ* vertex_wall = dynamic_cast<g2o::VertexWallXYZ*>(v);
+    if (vertex_wall) {
+      auto current_vertex = compressed_graph->copy_wall_node(vertex_wall);
+      continue;
+    }
+
     g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
     if (vertex_floor) {
       auto current_vertex = compressed_graph->copy_floor_node(vertex_floor);
@@ -168,6 +174,24 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
           compressed_graph->graph->vertices().at(edge_2planes->vertices()[1]->id()));
       auto edge = compressed_graph->copy_2planes_edge(edge_2planes, v1, v2);
+      compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      continue;
+    }
+
+    g2o::EdgeWall2Planes* edge_wall_2planes = dynamic_cast<g2o::EdgeWall2Planes*>(e);
+    if (edge_wall_2planes) {
+      g2o::VertexWallXYZ* v1 =
+          dynamic_cast<g2o::VertexWallXYZ*>(compressed_graph->graph->vertices().at(
+              edge_wall_2planes->vertices()[0]->id()));
+      g2o::VertexPlane* v2 =
+          dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
+              edge_wall_2planes->vertices()[1]->id()));
+      g2o::VertexPlane* v3 =
+          dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
+              edge_wall_2planes->vertices()[2]->id()));
+
+      auto edge =
+          compressed_graph->copy_wall_2planes_edge(edge_wall_2planes, v1, v2, v3);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
     }

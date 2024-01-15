@@ -82,6 +82,8 @@ class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
 
   virtual bool write(std::ostream& os) const override;
 
+  Eigen::Vector3d get_wall_point() { return _wall_point; }
+
  private:
   void correct_plane_direction(Eigen::Vector4d& plane);
   Eigen::Vector3d _wall_point;

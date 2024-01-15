@@ -76,9 +76,9 @@ void WallMapper::add_wall_node_and_edge(
   g2o::VertexWallXYZ* wall_node = covisibility_graph->add_wall_node(wall_pose);
   Eigen::Matrix<double, 3, 3> information_wall_surfaces;
   information_wall_surfaces.setZero();
-  information_wall_surfaces(0, 0) = 1e10;
-  information_wall_surfaces(1, 1) = 1e10;
-  information_wall_surfaces(2, 2) = 1e10;
+  information_wall_surfaces(0, 0) = 10;
+  information_wall_surfaces(1, 1) = 10;
+  information_wall_surfaces(2, 2) = 10;
   auto wall_edge = covisibility_graph->add_wall_2planes_edge(wall_node,
                                                              (plane1).plane_node,
                                                              (plane2).plane_node,

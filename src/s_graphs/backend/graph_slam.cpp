@@ -314,6 +314,16 @@ g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center)
   return vertex;
 }
 
+g2o::VertexWallXYZ* GraphSLAM::copy_wall_node(const g2o::VertexWallXYZ* wall_node) {
+  g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
+  vertex->setId(wall_node->id());
+  vertex->setEstimate(wall_node->estimate());
+  if (wall_node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
 g2o::VertexDeviation* GraphSLAM::add_deviation_node(const Eigen::Isometry3d& pose) {
   g2o::VertexDeviation* vertex(new g2o::VertexDeviation());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
@@ -648,6 +658,21 @@ g2o::Edge2Planes* GraphSLAM::copy_2planes_edge(g2o::Edge2Planes* e,
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
   edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeWall2Planes* GraphSLAM::copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
+                                                        g2o::VertexWallXYZ* v1,
+                                                        g2o::VertexPlane* v2,
+                                                        g2o::VertexPlane* v3) {
+  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(e->get_wall_point()));
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
   graph->addEdge(edge);
 
   return edge;
