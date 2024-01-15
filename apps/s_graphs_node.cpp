@@ -180,12 +180,18 @@ class SGraphsNode : public rclcpp::Node {
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
     odom2map_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
+    callback_group_subscriber =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    auto sub_opt = rclcpp::SubscriptionOptions();
+    sub_opt.callback_group = callback_group_subscriber;
+
     // subscribers
     init_odom2map_sub = this->create_subscription<geometry_msgs::msg::PointStamped>(
         "odom2map/initial_pose",
         1,
         std::bind(
-            &SGraphsNode::init_map2odom_pose_callback, this, std::placeholders::_1));
+            &SGraphsNode::init_map2odom_pose_callback, this, std::placeholders::_1),
+        sub_opt);
     while (wait_trans_odom2map && !got_trans_odom2map) {
       RCLCPP_INFO(this->get_logger(),
                   "Waiting for the Initial Transform between odom and map frame");
@@ -196,7 +202,9 @@ class SGraphsNode : public rclcpp::Node {
         "map2map/transform",
         1,
         std::bind(
-            &SGraphsNode::map2map_transform_callback, this, std::placeholders::_1));
+            &SGraphsNode::map2map_transform_callback, this, std::placeholders::_1),
+        sub_opt);
+
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
@@ -206,65 +214,80 @@ class SGraphsNode : public rclcpp::Node {
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
         "odom",
         1,
-        std::bind(&SGraphsNode::raw_odom_callback, this, std::placeholders::_1));
+        std::bind(&SGraphsNode::raw_odom_callback, this, std::placeholders::_1),
+        sub_opt);
 
     point_cloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
         "filtered_points",
         100,
-        std::bind(&SGraphsNode::point_cloud_callback, this, std::placeholders::_1));
+        std::bind(&SGraphsNode::point_cloud_callback, this, std::placeholders::_1),
+        sub_opt);
 
     imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
         "gpsimu_driver/imu_data",
         1024,
-        std::bind(&SGraphsNode::imu_callback, this, std::placeholders::_1));
+        std::bind(&SGraphsNode::imu_callback, this, std::placeholders::_1),
+        sub_opt);
 
     room_data_sub = this->create_subscription<s_graphs::msg::RoomsData>(
         "room_segmentation/room_data",
         1,
-        std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1));
+        std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1),
+        sub_opt);
     wall_data_sub = this->create_subscription<s_graphs::msg::WallsData>(
         "wall_segmentation/wall_data",
         1,
-        std::bind(&SGraphsNode::wall_data_callback, this, std::placeholders::_1));
+        std::bind(&SGraphsNode::wall_data_callback, this, std::placeholders::_1),
+        sub_opt);
     floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
         "floor_plan/floor_data",
         1,
-        std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1));
+        std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1),
+        sub_opt);
 
     if (this->get_parameter("enable_gps").get_parameter_value().get<bool>()) {
       gps_sub = this->create_subscription<geographic_msgs::msg::GeoPointStamped>(
           "gps/geopoint",
           1024,
-          std::bind(&SGraphsNode::gps_callback, this, std::placeholders::_1));
+          std::bind(&SGraphsNode::gps_callback, this, std::placeholders::_1),
+          sub_opt);
       nmea_sub = this->create_subscription<nmea_msgs::msg::Sentence>(
           "gpsimu_driver/nmea_sentence",
           1024,
-          std::bind(&SGraphsNode::nmea_callback, this, std::placeholders::_1));
+          std::bind(&SGraphsNode::nmea_callback, this, std::placeholders::_1),
+          sub_opt);
       navsat_sub = this->create_subscription<sensor_msgs::msg::NavSatFix>(
           "gps/navsat",
           1024,
-          std::bind(&SGraphsNode::navsat_callback, this, std::placeholders::_1));
+          std::bind(&SGraphsNode::navsat_callback, this, std::placeholders::_1),
+          sub_opt);
     }
+
+    callback_group_publisher =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    auto pub_opt = rclcpp::PublisherOptions();
+    pub_opt.callback_group = callback_group_publisher;
+
     // publishers
     markers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
-        "s_graphs/markers", 16);
+        "s_graphs/markers", 16, pub_opt);
     odom2map_pub = this->create_publisher<geometry_msgs::msg::TransformStamped>(
-        "s_graphs/odom2map", 16);
+        "s_graphs/odom2map", 16, pub_opt);
     odom_pose_corrected_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>(
-        "s_graphs/odom_pose_corrected", 10);
-    odom_path_corrected_pub =
-        this->create_publisher<nav_msgs::msg::Path>("s_graphs/odom_path_corrected", 10);
+        "s_graphs/odom_pose_corrected", 10, pub_opt);
+    odom_path_corrected_pub = this->create_publisher<nav_msgs::msg::Path>(
+        "s_graphs/odom_path_corrected", 10, pub_opt);
 
-    map_points_pub =
-        this->create_publisher<sensor_msgs::msg::PointCloud2>("s_graphs/map_points", 1);
-    map_planes_pub =
-        this->create_publisher<s_graphs::msg::PlanesData>("s_graphs/map_planes", 1);
-    all_map_planes_pub =
-        this->create_publisher<s_graphs::msg::PlanesData>("s_graphs/all_map_planes", 1);
-    read_until_pub =
-        this->create_publisher<std_msgs::msg::Header>("s_graphs/read_until", 32);
+    map_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+        "s_graphs/map_points", 1, pub_opt);
+    map_planes_pub = this->create_publisher<s_graphs::msg::PlanesData>(
+        "s_graphs/map_planes", 1, pub_opt);
+    all_map_planes_pub = this->create_publisher<s_graphs::msg::PlanesData>(
+        "s_graphs/all_map_planes", 1, pub_opt);
+    read_until_pub = this->create_publisher<std_msgs::msg::Header>(
+        "s_graphs/read_until", 32, pub_opt);
     graph_pub = this->create_publisher<graph_manager_msgs::msg::Graph>(
-        "s_graphs/graph_structure", 32);
+        "s_graphs/graph_structure", 32, pub_opt);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
         "s_graphs/dump",
@@ -302,16 +325,27 @@ class SGraphsNode : public rclcpp::Node {
                                            .get_parameter_value()
                                            .get<double>();
 
+    callback_group_opt_timer =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+    callback_keyframe_timer =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+    callback_map_pub_timer =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
     optimization_timer = this->create_wall_timer(
         std::chrono::seconds(int(graph_update_interval)),
-        std::bind(&SGraphsNode::optimization_timer_callback, this));
+        std::bind(&SGraphsNode::optimization_timer_callback, this),
+        callback_group_opt_timer);
     keyframe_timer = this->create_wall_timer(
         std::chrono::seconds(int(keyframe_timer_update_interval)),
-        std::bind(&SGraphsNode::keyframe_update_timer_callback, this));
-
+        std::bind(&SGraphsNode::keyframe_update_timer_callback, this),
+        callback_keyframe_timer);
     map_publish_timer = this->create_wall_timer(
         std::chrono::seconds(int(map_cloud_update_interval)),
-        std::bind(&SGraphsNode::map_publish_timer_callback, this));
+        std::bind(&SGraphsNode::map_publish_timer_callback, this),
+        callback_map_pub_timer);
 
     anchor_node = nullptr;
     anchor_edge = nullptr;
@@ -1654,7 +1688,13 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr optimization_timer;
   rclcpp::TimerBase::SharedPtr keyframe_timer;
   rclcpp::TimerBase::SharedPtr map_publish_timer;
-  rclcpp::TimerBase::SharedPtr map_to_odom_broadcast_timer;
+
+  rclcpp::CallbackGroup::SharedPtr callback_group_subscriber;
+  rclcpp::CallbackGroup::SharedPtr callback_group_publisher;
+
+  rclcpp::CallbackGroup::SharedPtr callback_group_opt_timer;
+  rclcpp::CallbackGroup::SharedPtr callback_keyframe_timer;
+  rclcpp::CallbackGroup::SharedPtr callback_map_pub_timer;
 
   message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> cloud_sub;
@@ -1813,7 +1853,10 @@ class SGraphsNode : public rclcpp::Node {
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<s_graphs::SGraphsNode>());
+  rclcpp::executors::MultiThreadedExecutor multi_executor;
+  auto node = std::make_shared<s_graphs::SGraphsNode>();
+  multi_executor.add_node(node);
+  multi_executor.spin();
   rclcpp::shutdown();
   return 0;
 }
