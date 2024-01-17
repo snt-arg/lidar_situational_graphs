@@ -51,8 +51,8 @@ float PlaneUtils::width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
   return size;
 }
 
-float PlaneUtils::width_between_planes(s_graphs::msg::PlaneData& plane1,
-                                       s_graphs::msg::PlaneData& plane2) {
+float PlaneUtils::width_between_planes(const s_graphs::msg::PlaneData& plane1,
+                                       const s_graphs::msg::PlaneData& plane2) {
   Eigen::Vector3d vec;
   Eigen::Vector3d plane1_eigen, plane2_eigen;
   plane1_eigen << plane1.nx, plane1.ny, plane1.nz;

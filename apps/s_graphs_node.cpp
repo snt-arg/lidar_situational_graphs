@@ -618,6 +618,13 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& room_data_msg : room_data_queue) {
       for (const auto& room_data : room_data_msg.rooms) {
         if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
+          float x_width = PlaneUtils::width_between_planes(room_data.x_planes[0],
+                                                           room_data.x_planes[1]);
+          float y_width = PlaneUtils::width_between_planes(room_data.y_planes[0],
+                                                           room_data.y_planes[1]);
+
+          if (x_width < 0.5 || y_width < 0.5) continue;
+
           int current_room_id;
           bool duplicate_planes_rooms =
               finite_room_mapper->lookup_rooms(covisibility_graph,
@@ -639,6 +646,10 @@ class SGraphsNode : public rclcpp::Node {
         }
         // x infinite_room
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
+          float x_width = PlaneUtils::width_between_planes(room_data.x_planes[0],
+                                                           room_data.x_planes[1]);
+          if (x_width < 0.5) continue;
+
           bool duplicate_planes_x_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::X_VERT_PLANE,
@@ -655,6 +666,10 @@ class SGraphsNode : public rclcpp::Node {
         }
         // y infinite_room
         else if (room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
+          float y_width = PlaneUtils::width_between_planes(room_data.y_planes[0],
+                                                           room_data.y_planes[1]);
+          if (y_width < 0.5) continue;
+
           bool duplicate_planes_y_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::Y_VERT_PLANE,

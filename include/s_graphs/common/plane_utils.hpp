@@ -95,8 +95,8 @@ class PlaneUtils {
    * @param
    * @return
    */
-  static float width_between_planes(s_graphs::msg::PlaneData& plane1,
-                                    s_graphs::msg::PlaneData& plane2);
+  static float width_between_planes(const s_graphs::msg::PlaneData& plane1,
+                                    const s_graphs::msg::PlaneData& plane2);
 
   /**
    * @brief
