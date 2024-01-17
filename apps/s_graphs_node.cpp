@@ -286,7 +286,7 @@ class SGraphsNode : public rclcpp::Node {
         "s_graphs/all_map_planes", 1, pub_opt);
     read_until_pub = this->create_publisher<std_msgs::msg::Header>(
         "s_graphs/read_until", 32, pub_opt);
-    graph_pub = this->create_publisher<graph_manager_msgs::msg::Graph>(
+    graph_pub = this->create_publisher<reasoning_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32, pub_opt);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
@@ -1736,7 +1736,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr all_map_planes_pub;
-  rclcpp::Publisher<graph_manager_msgs::msg::Graph>::SharedPtr graph_pub;
+  rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
