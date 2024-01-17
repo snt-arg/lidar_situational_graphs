@@ -91,6 +91,7 @@ class Planes {
     start_point = old_plane.start_point;
     length = old_plane.length;
     on_wall = old_plane.on_wall;
+    matched = old_plane.matched;
     return *this;
   }
 

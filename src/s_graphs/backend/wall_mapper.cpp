@@ -37,11 +37,10 @@ WallMapper::WallMapper(const rclcpp::Node::SharedPtr node) { node_obj = node; }
 
 WallMapper::~WallMapper() {}
 
-void WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
-                             std::vector<s_graphs::msg::PlaneData> x_planes_msg,
-                             Eigen::Vector3d x_wall_pose,
-                             std::vector<s_graphs::msg::PlaneData> y_planes_msg,
-                             Eigen::Vector3d y_wall_pose,
+void WallMapper::factor_wall(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                             const Eigen::Vector3d wall_pose,
+                             const std::vector<s_graphs::msg::PlaneData> x_planes_msg,
+                             const std::vector<s_graphs::msg::PlaneData> y_planes_msg,
                              std::vector<VerticalPlanes>& x_vert_planes,
                              std::vector<VerticalPlanes>& y_vert_planes) {
   if (x_planes_msg.size() == 2) {
@@ -59,7 +58,7 @@ void WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
 
     if (!(*matched_x_plane1).on_wall && !(*matched_x_plane2).on_wall) {
       add_wall_node_and_edge(
-          covisibility_graph, x_wall_pose, *matched_x_plane1, *matched_x_plane2);
+          covisibility_graph, wall_pose, *matched_x_plane1, *matched_x_plane2);
     }
   } else if (y_planes_msg.size() == 2) {
     auto matched_y_plane1 = y_vert_planes.begin();
@@ -73,20 +72,19 @@ void WallMapper::factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
         std::find_if(y_vert_planes.begin(),
                      y_vert_planes.end(),
                      boost::bind(&VerticalPlanes::id, _1) == y_planes_msg[1].id);
-
     if (!(*matched_y_plane1).on_wall && !(*matched_y_plane2).on_wall) {
       add_wall_node_and_edge(
-          covisibility_graph, y_wall_pose, *matched_y_plane1, *matched_y_plane2);
+          covisibility_graph, wall_pose, *matched_y_plane1, *matched_y_plane2);
     }
   } else {
     std::cout << "Message size is not 2 !! " << std::endl;
   }
 }
-
-void WallMapper::add_wall_node_and_edge(std::shared_ptr<GraphSLAM>& covisibility_graph,
-                                        Eigen::Vector3d wall_pose,
-                                        VerticalPlanes& plane1,
-                                        VerticalPlanes& plane2) {
+void WallMapper::add_wall_node_and_edge(
+    const std::shared_ptr<GraphSLAM> covisibility_graph,
+    Eigen::Vector3d wall_pose,
+    VerticalPlanes& plane1,
+    VerticalPlanes& plane2) {
   g2o::VertexWallXYZ* wall_node = covisibility_graph->add_wall_node(wall_pose);
   Eigen::Matrix<double, 3, 3> information_wall_surfaces;
   information_wall_surfaces.setZero();

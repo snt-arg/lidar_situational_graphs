@@ -243,8 +243,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
-        std::cout << "X Plane id : " << vert_plane.id << "Coeffs : " << std::endl;
-        std::cout << vert_plane.plane.coeffs() << std::endl;
+        // std::cout << "X Plane id : " << vert_plane.id << "Coeffs : " << std::endl;
+        // std::cout << vert_plane.plane.coeffs() << std::endl;
       } else {
         plane_node = x_vert_planes[data_association.second].plane_node;
         x_vert_planes[data_association.second].cloud_seg_body_vec.push_back(
@@ -300,8 +300,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
                      det_plane_map_frame.coeffs()(1),
                      det_plane_map_frame.coeffs()(2),
                      det_plane_map_frame.coeffs()(3));
-        std::cout << "Y Plane id : " << vert_plane.id << "Coeffs : " << std::endl;
-        std::cout << vert_plane.plane.coeffs() << std::endl;
+        // std::cout << "Y Plane id : " << vert_plane.id << "Coeffs : " << std::endl;
+        // std::cout << vert_plane.plane.coeffs() << std::endl;
 
       } else {
         plane_node = y_vert_planes[data_association.second].plane_node;
@@ -418,6 +418,10 @@ std::pair<int, int> PlaneMapper::associate_plane(
     const std::vector<VerticalPlanes>& x_vert_planes,
     const std::vector<VerticalPlanes>& y_vert_planes,
     const std::vector<HorizontalPlanes>& hort_planes) {
+  // This is the data association function which associates the detected plane to the
+  // x_vert_planes, y_vert_planes and hort_planes The data association is done based on
+  // the mahalanobis distance between the detected plane and the mapped planes
+
   std::pair<int, int> data_association;
   double vert_min_maha_dist = 100;
   double hort_min_maha_dist = 100;
@@ -526,7 +530,8 @@ std::pair<int, int> PlaneMapper::associate_plane(
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * hort_planes[i].covariance.inverse() * error);
-        // std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
+        // std::cout << "cov hor: " << hort_planes[i].covariance.inverse() <<
+        // std::endl;
         RCLCPP_DEBUG(node_obj->get_logger(),
                      "hort plane association",
                      "maha distance hort: %f",

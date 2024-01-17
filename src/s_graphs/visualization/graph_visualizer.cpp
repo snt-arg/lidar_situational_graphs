@@ -1252,7 +1252,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.color.r = 0.7;  // x_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = 0.4;  // x_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = 0.2;  // x_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 0.7;
+    wall_visual_marker.color.a = 1;
     prior_markers.markers.push_back(wall_visual_marker);
   }
 
@@ -1286,7 +1286,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.color.r = 0.7;  // y_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = 0.4;  // y_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = 0.2;  // y_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 0.2;
+    wall_visual_marker.color.a = 1;
     prior_markers.markers.push_back(wall_visual_marker);
   }
 
