@@ -814,8 +814,13 @@ class SGraphsNode : public rclcpp::Node {
           walls_msg->walls[j].wall_center.position.y,
           walls_msg->walls[j].wall_center.position.z;
 
+      Eigen::Vector3d wall_point;
+      wall_point << walls_msg->walls[j].wall_point.x, walls_msg->walls[j].wall_point.y,
+          walls_msg->walls[j].wall_point.z;
+
       wall_mapper->factor_wall(covisibility_graph,
                                wall_pose,
+                               wall_point,
                                x_planes_msg,
                                y_planes_msg,
                                x_vert_planes,

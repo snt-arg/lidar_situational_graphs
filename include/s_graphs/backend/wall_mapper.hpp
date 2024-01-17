@@ -84,7 +84,8 @@ class WallMapper {
    * @param y_vert_planes
    */
   void factor_wall(const std::shared_ptr<GraphSLAM> covisibility_graph,
-                   const Eigen::Vector3d wall_pose,
+                   const Eigen::Vector3d& wall_pose,
+                   const Eigen::Vector3d& wall_point,
                    const std::vector<s_graphs::msg::PlaneData> x_planes_msg,
                    const std::vector<s_graphs::msg::PlaneData> y_planes_msg,
                    std::unordered_map<int, VerticalPlanes>& x_vert_planes,
@@ -100,7 +101,8 @@ class WallMapper {
    * @return
    */
   void add_wall_node_and_edge(const std::shared_ptr<GraphSLAM> covisibility_graph,
-                              Eigen::Vector3d wall_pose,
+                              const Eigen::Vector3d& wall_pose,
+                              const Eigen::Vector3d& wall_point,
                               VerticalPlanes& plane1,
                               VerticalPlanes& plane2);
 
