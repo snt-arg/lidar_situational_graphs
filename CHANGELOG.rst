@@ -2,8 +2,8 @@
 Changelog for package s_graphs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.0 (2024-01-18)
+------------------
 * [Feat] Update walldata msg
 * [Feat] Change graph_manager_msgs->reasoning_msgs
 * Contributors: Hriday Bavle
