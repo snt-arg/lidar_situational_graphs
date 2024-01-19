@@ -39,6 +39,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "reasoning_msgs/msg/graph_keyframes.hpp"
+#include "s_graphs/common/ros_utils.hpp"
 #include "s_graphs/msg/plane_data.hpp"
 #include "s_graphs/msg/planes_data.hpp"
 #include "s_graphs/msg/point_clouds.hpp"
@@ -88,13 +90,24 @@ class FloorPlanNode : public rclcpp::Node {
         100,
         std::bind(&FloorPlanNode::map_planes_callback, this, std::placeholders::_1));
 
+    graph_keyframes_sub =
+        this->create_subscription<reasoning_msgs::msg::GraphKeyframes>(
+            "s_graphs/graph_keyframes",
+            1,
+            std::bind(
+                &FloorPlanNode::graph_keyframes_callback, this, std::placeholders::_1));
+
     all_rooms_data_pub = this->create_publisher<s_graphs::msg::RoomsData>(
         "floor_plan/all_rooms_data", 1);
     floor_data_pub =
         this->create_publisher<s_graphs::msg::RoomData>("floor_plan/floor_data", 1);
 
-    floor_plane_timer = create_wall_timer(
+    floor_plan_timer = create_wall_timer(
         std::chrono::seconds(10), std::bind(&FloorPlanNode::floor_plan_callback, this));
+
+    floor_change_det_timer =
+        create_wall_timer(std::chrono::seconds(1),
+                          std::bind(&FloorPlanNode::floor_change_det_callback, this));
   }
 
   template <typename T>
@@ -125,6 +138,23 @@ class FloorPlanNode : public rclcpp::Node {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     x_vert_plane_queue.push_back(map_planes_msg->x_planes);
     y_vert_plane_queue.push_back(map_planes_msg->y_planes);
+  }
+
+  void graph_keyframes_callback(
+      const reasoning_msgs::msg::GraphKeyframes::SharedPtr graph_keyframes_msg) {
+    for (const auto& graph_keyframe_msg : graph_keyframes_msg->keyframes) {
+      auto current_keyframe = ROS2Keyframe(graph_keyframe_msg);
+
+      auto found_keyframe = keyframes.find(current_keyframe.id());
+      if (found_keyframe == keyframes.end()) {
+        keyframes.insert(
+            {current_keyframe.id(), std::make_shared<KeyFrame>(current_keyframe)});
+      } else {
+        found_keyframe->second->node->setEstimate(current_keyframe.node->estimate());
+      }
+    }
+
+    return;
   }
 
   void flush_map_planes(std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes,
@@ -177,6 +207,8 @@ class FloorPlanNode : public rclcpp::Node {
       time_recorder.close();
     }
   }
+
+  void floor_change_det_callback() {}
 
   void extract_rooms(
       const std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes,
@@ -241,17 +273,22 @@ class FloorPlanNode : public rclcpp::Node {
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr
       skeleton_graph_sub;
   rclcpp::Subscription<s_graphs::msg::PlanesData>::SharedPtr map_planes_sub;
+  rclcpp::Subscription<reasoning_msgs::msg::GraphKeyframes>::SharedPtr
+      graph_keyframes_sub;
+
   rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr all_rooms_data_pub;
   rclcpp::Publisher<s_graphs::msg::RoomData>::SharedPtr floor_data_pub;
 
  private:
-  rclcpp::TimerBase::SharedPtr floor_plane_timer;
+  rclcpp::TimerBase::SharedPtr floor_plan_timer;
+  rclcpp::TimerBase::SharedPtr floor_change_det_timer;
   bool save_timings;
   std::ofstream time_recorder;
 
  private:
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
+  std::map<int, s_graphs::KeyFrame::Ptr> keyframes;
 
   std::mutex map_plane_mutex;
   std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue,

@@ -79,13 +79,13 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <unordered_map>
 
 #include "geometry_msgs/msg/point.hpp"
+#include "pcl_ros/transforms.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "reasoning_msgs/msg/attribute.hpp"
 #include "reasoning_msgs/msg/edge.hpp"
 #include "reasoning_msgs/msg/graph.hpp"
 #include "reasoning_msgs/msg/graph_keyframes.hpp"
 #include "reasoning_msgs/msg/node.hpp"
-#include "pcl_ros/transforms.hpp"
-#include "rclcpp/rclcpp.hpp"
 #include "s_graphs/common/room_utils.hpp"
 #include "s_graphs/common/ros_utils.hpp"
 #include "s_graphs/msg/plane_data.hpp"
@@ -115,7 +115,7 @@ class GraphPublisher {
 
   reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
       const g2o::SparseOptimizer* local_graph,
-      const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+      const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 
   void publish_room_keyframes(const g2o::SparseOptimizer* local_graph,
                               const std::vector<s_graphs::Rooms>& rooms_vec);

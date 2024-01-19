@@ -1,6 +1,10 @@
 <launch>
+    <arg name="base_velodyne_to_velodyne_tf" default="false"/>
     <param name="use_sim_time" value="true" />
 
+    <group if="$(arg base_velodyne_to_velodyne_tf)">
+        <node pkg="tf" type="static_transform_publisher" name="velodyne_to_basefootprint" args="0 0 0 0 0 0 base_footprint velodyne 10" />
+    </group>
     <node pkg="tf" type="static_transform_publisher" name="map_to_keyframes" args="0 0 7 0 0 0 map keyframes_layer 10" />
     <node pkg="tf" type="static_transform_publisher" name="keyframe_to_wall" args="0 0 8 0 0 0 keyframes_layer walls_layer 10" />
     <node pkg="tf" type="static_transform_publisher" name="wall_to_room" args="0 0 7 0 0 0 walls_layer rooms_layer 10" />

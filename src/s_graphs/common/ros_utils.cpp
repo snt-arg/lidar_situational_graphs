@@ -180,7 +180,7 @@ Eigen::Isometry3d odom2isometry(const nav_msgs::msg::Odometry::SharedPtr& odom_m
 KeyFrame ROS2Keyframe(const reasoning_msgs::msg::Keyframe& msg) {
   pcl::PointCloud<KeyFrame::PointT>::Ptr cloud =
       boost::make_shared<pcl::PointCloud<KeyFrame::PointT>>();
-  pcl::fromROSMsg(msg.pointcloud, *cloud);
+  // pcl::fromROSMsg(msg.pointcloud, *cloud);
 
   // TODO: add_accumulated_distance
   auto isometry = pose2isometry(msg.pose);
@@ -197,7 +197,7 @@ reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& keyframe) {
   msg.id = keyframe.id();
   msg.header.stamp = keyframe.stamp;
   msg.pose = isometry2pose(keyframe.estimate());
-  pcl::toROSMsg(*keyframe.cloud, msg.pointcloud);
+  // pcl::toROSMsg(*keyframe.cloud, msg.pointcloud);
   return msg;
 }
 

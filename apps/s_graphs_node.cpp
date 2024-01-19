@@ -288,6 +288,8 @@ class SGraphsNode : public rclcpp::Node {
         "s_graphs/read_until", 32, pub_opt);
     graph_pub = this->create_publisher<reasoning_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32, pub_opt);
+    graph_keyframes_pub = this->create_publisher<reasoning_msgs::msg::GraphKeyframes>(
+        "s_graphs/graph_keyframes", 32, pub_opt);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
         "s_graphs/dump",
@@ -1255,7 +1257,11 @@ class SGraphsNode : public rclcpp::Node {
                                        x_inf_rooms_snapshot,
                                        y_inf_rooms_snapshot);
     graph_structure.name = graph_type;
+    auto graph_keyframes = graph_publisher->publish_graph_keyframes(
+        covisibility_graph->graph.get(), this->keyframes);
+
     graph_pub->publish(graph_structure);
+    graph_keyframes_pub->publish(graph_keyframes);
   }
 
   /**
@@ -1752,6 +1758,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr all_map_planes_pub;
   rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_pub;
+  rclcpp::Publisher<reasoning_msgs::msg::GraphKeyframes>::SharedPtr graph_keyframes_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
