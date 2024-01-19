@@ -61,6 +61,10 @@ class FloorPlanNode : public rclcpp::Node {
   void initialize_params() {
     this->declare_parameter("vertex_neigh_thres", 2);
     this->declare_parameter("save_timings", false);
+    new_k_added = false, on_stairs = false;
+    num_k_added = 0;
+    delta_diff = 0.0;
+    prev_z_diff = 0.0;
 
     room_analyzer_params params{
         this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
@@ -79,35 +83,56 @@ class FloorPlanNode : public rclcpp::Node {
   }
 
   void init_ros() {
+    callback_group_subscriber =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    auto sub_opt = rclcpp::SubscriptionOptions();
+    sub_opt.callback_group = callback_group_subscriber;
+
     skeleton_graph_sub =
         this->create_subscription<visualization_msgs::msg::MarkerArray>(
             "voxblox_skeletonizer/sparse_graph",
             1,
             std::bind(
-                &FloorPlanNode::skeleton_graph_callback, this, std::placeholders::_1));
+                &FloorPlanNode::skeleton_graph_callback, this, std::placeholders::_1),
+            sub_opt);
     map_planes_sub = this->create_subscription<s_graphs::msg::PlanesData>(
         "s_graphs/all_map_planes",
         100,
-        std::bind(&FloorPlanNode::map_planes_callback, this, std::placeholders::_1));
-
+        std::bind(&FloorPlanNode::map_planes_callback, this, std::placeholders::_1),
+        sub_opt);
     graph_keyframes_sub =
         this->create_subscription<reasoning_msgs::msg::GraphKeyframes>(
             "s_graphs/graph_keyframes",
             1,
             std::bind(
-                &FloorPlanNode::graph_keyframes_callback, this, std::placeholders::_1));
+                &FloorPlanNode::graph_keyframes_callback, this, std::placeholders::_1),
+            sub_opt);
+
+    callback_group_publisher =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+    auto pub_opt = rclcpp::PublisherOptions();
+    pub_opt.callback_group = callback_group_publisher;
 
     all_rooms_data_pub = this->create_publisher<s_graphs::msg::RoomsData>(
-        "floor_plan/all_rooms_data", 1);
-    floor_data_pub =
-        this->create_publisher<s_graphs::msg::RoomData>("floor_plan/floor_data", 1);
+        "floor_plan/all_rooms_data", 1, pub_opt);
+    floor_data_pub = this->create_publisher<s_graphs::msg::RoomData>(
+        "floor_plan/floor_data", 1, pub_opt);
 
-    floor_plan_timer = create_wall_timer(
-        std::chrono::seconds(10), std::bind(&FloorPlanNode::floor_plan_callback, this));
+    callback_group_floor_timer =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+    floor_plan_timer =
+        create_wall_timer(std::chrono::seconds(10),
+                          std::bind(&FloorPlanNode::floor_plan_callback, this),
+                          callback_group_floor_timer);
+
+    callback_group_keyframe_timer =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     floor_change_det_timer =
         create_wall_timer(std::chrono::seconds(1),
-                          std::bind(&FloorPlanNode::floor_change_det_callback, this));
+                          std::bind(&FloorPlanNode::floor_change_det_callback, this),
+                          callback_group_keyframe_timer);
   }
 
   template <typename T>
@@ -147,10 +172,15 @@ class FloorPlanNode : public rclcpp::Node {
 
       auto found_keyframe = keyframes.find(current_keyframe.id());
       if (found_keyframe == keyframes.end()) {
+        keyframe_mutex.lock();
         keyframes.insert(
             {current_keyframe.id(), std::make_shared<KeyFrame>(current_keyframe)});
+        new_k_added = true;
+        keyframe_mutex.unlock();
       } else {
+        keyframe_mutex.lock();
         found_keyframe->second->node->setEstimate(current_keyframe.node->estimate());
+        keyframe_mutex.unlock();
       }
     }
 
@@ -207,8 +237,6 @@ class FloorPlanNode : public rclcpp::Node {
       time_recorder.close();
     }
   }
-
-  void floor_change_det_callback() {}
 
   void extract_rooms(
       const std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes,
@@ -269,6 +297,61 @@ class FloorPlanNode : public rclcpp::Node {
     }
   }
 
+  void floor_change_det_callback() {
+    if (!new_k_added) return;
+
+    // get the pose difference between the last and the second last keyframe
+    if (keyframes.size() >= 2 && first_stair_k.empty()) {
+      auto current_k = keyframes.rbegin();
+      auto prev_k = std::next(current_k);
+
+      prev_z_diff = (current_k->second->node->estimate() *
+                     prev_k->second->node->estimate().inverse())(2, 3);
+
+      if (prev_z_diff > 0.5) {
+        first_stair_k.push_back(prev_k->second);
+      }
+    } else if (keyframes.size() >= 2) {
+      auto current_k = keyframes.rbegin();
+      double current_z_diff = (current_k->second->node->estimate() *
+                               first_stair_k[0]->node->estimate().inverse())(2, 3);
+
+      std::cout << "z diff between the keyframe and first_stair_k: " << current_z_diff
+                << std::endl;
+
+      delta_diff = current_z_diff - prev_z_diff;
+      std::cout << "delta_diff: " << delta_diff << std::endl;
+      std::cout << "num_k_added: " << num_k_added << std::endl;
+
+      if (current_z_diff > 1.0 && !on_stairs) {
+        std::cout << "climbing stairs " << std::endl;
+        on_stairs = true;
+        num_k_added = 0;
+      } else if (on_stairs && num_k_added < 1) {
+        std::cout << "still climbing stairs " << std::endl;
+        num_k_added++;
+      } else if (on_stairs && num_k_added >= 1) {
+        if (fabs(delta_diff) < 0.5) {
+          std::cout << "on new floor level" << std::endl;
+          on_stairs = false;
+          // publish the new floor message with all the relevant kfs information
+          publish_floor_keyframe_info();
+        } else
+          num_k_added++;
+      }
+      prev_z_diff = current_z_diff;
+    }
+
+    new_k_added = false;
+  }
+
+  void publish_floor_keyframe_info() {
+    // first get all keyframes that belong to stairs
+
+    num_k_added = 0;
+    first_stair_k.clear();
+  }
+
  private:
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr
       skeleton_graph_sub;
@@ -279,9 +362,16 @@ class FloorPlanNode : public rclcpp::Node {
   rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr all_rooms_data_pub;
   rclcpp::Publisher<s_graphs::msg::RoomData>::SharedPtr floor_data_pub;
 
+  rclcpp::CallbackGroup::SharedPtr callback_group_subscriber;
+  rclcpp::CallbackGroup::SharedPtr callback_group_publisher;
+
+  rclcpp::CallbackGroup::SharedPtr callback_group_floor_timer;
+  rclcpp::CallbackGroup::SharedPtr callback_group_keyframe_timer;
+
  private:
   rclcpp::TimerBase::SharedPtr floor_plan_timer;
   rclcpp::TimerBase::SharedPtr floor_change_det_timer;
+  int accum_keyframes;
   bool save_timings;
   std::ofstream time_recorder;
 
@@ -289,8 +379,14 @@ class FloorPlanNode : public rclcpp::Node {
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
   std::map<int, s_graphs::KeyFrame::Ptr> keyframes;
+  std::vector<KeyFrame::Ptr> first_stair_k;
 
+  bool new_k_added, on_stairs;
+  int num_k_added;
+  double delta_diff;
+  double prev_z_diff;
   std::mutex map_plane_mutex;
+  std::mutex keyframe_mutex;
   std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue,
       y_vert_plane_queue;
 };
@@ -299,7 +395,10 @@ class FloorPlanNode : public rclcpp::Node {
 
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<s_graphs::FloorPlanNode>());
+  rclcpp::executors::MultiThreadedExecutor multi_executor;
+  auto node = std::make_shared<s_graphs::FloorPlanNode>();
+  multi_executor.add_node(node);
+  multi_executor.spin();
   rclcpp::shutdown();
   return 0;
 }
