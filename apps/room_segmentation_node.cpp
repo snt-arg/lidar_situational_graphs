@@ -91,8 +91,7 @@ class RoomSegmentationNode : public rclcpp::Node {
     save_timings =
         this->get_parameter("save_timings").get_parameter_value().get<bool>();
 
-    plane_utils.reset(new PlaneUtils());
-    room_analyzer.reset(new RoomAnalyzer(params, plane_utils));
+    room_analyzer.reset(new RoomAnalyzer(params));
 
     if (save_timings) {
       time_recorder.open("/tmp/room_seg_computation_time.txt");
@@ -342,7 +341,6 @@ class RoomSegmentationNode : public rclcpp::Node {
       y_vert_plane_queue;
 
   std::unique_ptr<RoomAnalyzer> room_analyzer;
-  std::shared_ptr<PlaneUtils> plane_utils;
   std::string map_frame_id = "map";
   bool save_timings;
   std::ofstream time_recorder;

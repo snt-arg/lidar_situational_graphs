@@ -94,6 +94,10 @@ class LoopDetector {
     fitness_score_thresh =
         node->get_parameter("fitness_score_thresh").get_parameter_value().get<double>();
 
+    keyframe_matching_threshold = node->get_parameter("keyframe_matching_threshold")
+                                      .get_parameter_value()
+                                      .get<double>();
+
     s_graphs::registration_params params;
     params = {
         node->get_parameter("registration_method")
@@ -132,17 +136,17 @@ class LoopDetector {
    *          Keyframes
    * @param new_keyframes
    *          Newly registered keyframes
-   * @param graph_slam
+   * @param covisibility_graph
    *          Pose graph
    * @return Loop vector
    */
-  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes,
+  std::vector<Loop::Ptr> detect(const std::map<int, KeyFrame::Ptr>& keyframes,
                                 const std::deque<KeyFrame::Ptr>& new_keyframes,
-                                s_graphs::GraphSLAM& graph_slam) {
+                                s_graphs::GraphSLAM& covisibility_graph) {
     std::vector<Loop::Ptr> detected_loops;
     for (const auto& new_keyframe : new_keyframes) {
       auto candidates = find_candidates(keyframes, new_keyframe);
-      auto loop = matching(candidates, new_keyframe, graph_slam);
+      auto loop = matching(candidates, new_keyframe, covisibility_graph);
       if (loop) {
         detected_loops.push_back(loop);
       }
@@ -151,13 +155,13 @@ class LoopDetector {
     return detected_loops;
   }
 
-  std::vector<Loop::Ptr> detect(const std::vector<KeyFrame::Ptr>& keyframes,
+  std::vector<Loop::Ptr> detect(const std::map<int, KeyFrame::Ptr>& keyframes,
                                 const std::vector<KeyFrame::Ptr>& new_keyframes,
-                                s_graphs::GraphSLAM& graph_slam) {
+                                s_graphs::GraphSLAM& covisibility_graph) {
     std::vector<Loop::Ptr> detected_loops;
     for (const auto& new_keyframe : new_keyframes) {
       auto candidates = find_candidates(keyframes, new_keyframe);
-      auto loop = matching(candidates, new_keyframe, graph_slam);
+      auto loop = matching(candidates, new_keyframe, covisibility_graph);
       if (loop) {
         detected_loops.push_back(loop);
       }
@@ -167,18 +171,50 @@ class LoopDetector {
   }
 
   std::vector<Loop::Ptr> detectWithAllKeyframes(
-      const std::vector<KeyFrame::Ptr>& keyframes,
+      const std::map<int, KeyFrame::Ptr>& keyframes,
       const std::vector<KeyFrame::Ptr>& new_keyframes,
-      s_graphs::GraphSLAM& graph_slam) {
+      s_graphs::GraphSLAM& covisibility_graph) {
     std::vector<Loop::Ptr> detected_loops;
     for (const auto& new_keyframe : new_keyframes) {
-      auto loop = matching(keyframes, new_keyframe, graph_slam, false);
+      auto loop = matching(keyframes, new_keyframe, covisibility_graph, false);
       if (loop) {
         detected_loops.push_back(loop);
       }
     }
 
     return detected_loops;
+  }
+
+  bool matching(const KeyFrame::Ptr& keyframe,
+                const KeyFrame::Ptr& prev_keyframe,
+                Eigen::Matrix4f& relative_pose) {
+    relative_pose.setIdentity();
+    pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
+
+    registration->setInputTarget(prev_keyframe->cloud);
+    registration->setInputSource(keyframe->cloud);
+    Eigen::Isometry3d prev_keyframe_estimate = prev_keyframe->node->estimate();
+    prev_keyframe_estimate.linear() =
+        Eigen::Quaterniond(prev_keyframe_estimate.linear())
+            .normalized()
+            .toRotationMatrix();
+    Eigen::Isometry3d keyframe_estimate = keyframe->node->estimate();
+    keyframe_estimate.linear() =
+        Eigen::Quaterniond(keyframe_estimate.linear()).normalized().toRotationMatrix();
+
+    Eigen::Matrix4f guess =
+        (keyframe_estimate.inverse() * prev_keyframe_estimate).matrix().cast<float>();
+    guess(2, 3) = 0.0;
+    registration->align(*aligned, guess);
+
+    double score = registration->getFitnessScore(fitness_score_max_range);
+
+    if (!registration->hasConverged() || score > keyframe_matching_threshold) {
+      return false;
+    }
+
+    relative_pose = registration->getFinalTransformation();
+    return true;
   }
 
   /**
@@ -199,25 +235,26 @@ class LoopDetector {
    *          Loop end keyframe
    * @return Loop candidates
    */
-  std::vector<KeyFrame::Ptr> find_candidates(
-      const std::vector<KeyFrame::Ptr>& keyframes,
+  std::map<int, KeyFrame::Ptr> find_candidates(
+      const std::map<int, KeyFrame::Ptr>& keyframes,
       const KeyFrame::Ptr& new_keyframe) const {
     // too close to the last registered loop edge
     if (new_keyframe->accum_distance - last_edge_accum_distance <
         distance_from_last_edge_thresh) {
-      return std::vector<KeyFrame::Ptr>();
+      return std::map<int, KeyFrame::Ptr>();
     }
 
-    std::vector<KeyFrame::Ptr> candidates;
-    candidates.reserve(32);
+    std::map<int, KeyFrame::Ptr> candidates;
+    // candidates.reserve(32);
 
     for (const auto& k : keyframes) {
       // traveled distance between keyframes is too small
-      if (new_keyframe->accum_distance - k->accum_distance < accum_distance_thresh) {
+      if (new_keyframe->accum_distance - k.second->accum_distance <
+          accum_distance_thresh) {
         continue;
       }
 
-      const auto& pos1 = k->node->estimate().translation();
+      const auto& pos1 = k.second->node->estimate().translation();
       const auto& pos2 = new_keyframe->node->estimate().translation();
 
       // estimated distance between keyframes is too small
@@ -226,7 +263,7 @@ class LoopDetector {
         continue;
       }
 
-      candidates.push_back(k);
+      candidates.insert({k.first, k.second});
     }
 
     return candidates;
@@ -241,15 +278,15 @@ class LoopDetector {
    *          candidate keyframes of loop start
    * @param new_keyframe
    *          loop end keyframe
-   * @param graph_slam
+   * @param covisibility_graph
    *          graph slam
    * @return Loop pointer
    */
-  Loop::Ptr matching(const std::vector<KeyFrame::Ptr>& candidate_keyframes,
+  Loop::Ptr matching(const std::map<int, KeyFrame::Ptr>& candidate_keyframes,
                      const KeyFrame::Ptr& new_keyframe,
-                     s_graphs::GraphSLAM& graph_slam,
+                     s_graphs::GraphSLAM& covisibility_graph,
                      bool use_prior = true) {
-    if (candidate_keyframes.empty()) {
+    if (candidate_keyframes.empty() || new_keyframe->cloud->points.empty()) {
       return nullptr;
     }
 
@@ -267,13 +304,14 @@ class LoopDetector {
 
     pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
     for (const auto& candidate : candidate_keyframes) {
-      registration->setInputSource(candidate->cloud);
+      if (candidate.second->cloud->points.empty()) continue;
+      registration->setInputSource(candidate.second->cloud);
       Eigen::Isometry3d new_keyframe_estimate = new_keyframe->node->estimate();
       new_keyframe_estimate.linear() =
           Eigen::Quaterniond(new_keyframe_estimate.linear())
               .normalized()
               .toRotationMatrix();
-      Eigen::Isometry3d candidate_estimate = candidate->node->estimate();
+      Eigen::Isometry3d candidate_estimate = candidate.second->node->estimate();
       candidate_estimate.linear() = Eigen::Quaterniond(candidate_estimate.linear())
                                         .normalized()
                                         .toRotationMatrix();
@@ -299,7 +337,7 @@ class LoopDetector {
       }
 
       best_score = score;
-      best_matched = candidate;
+      best_matched = candidate.second;
       relative_pose = registration->getFinalTransformation();
     }
 
@@ -338,6 +376,7 @@ class LoopDetector {
   double fitness_score_max_range;  // maximum allowable distance between corresponding
                                    // points
   double fitness_score_thresh;     // threshold for scan matching
+  double keyframe_matching_threshold;  // threshold for disconnected keyframes
 
   double last_edge_accum_distance;
 

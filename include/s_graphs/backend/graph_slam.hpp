@@ -51,6 +51,7 @@ class VertexPlane;
 class VertexPointXYZ;
 class VertexInfiniteRoom;
 class EdgeSE3;
+class EdgeLoopClosure;
 class EdgeSE3Plane;
 class EdgeSE3PointToPlane;
 class EdgeSE3PointXYZ;
@@ -112,7 +113,7 @@ class GraphSLAM {
    *
    * @return Number of edges in the graph.
    */
-  int retrive_total_nbr_of_edges() const;
+  int retrieve_total_nbr_of_edges() const;
 
   /**
    * @brief Counts the number of vertices in the graph that are local.
@@ -155,7 +156,8 @@ class GraphSLAM {
    * @param pose
    * @return Registered node
    */
-  g2o::VertexSE3* add_se3_node(const Eigen::Isometry3d& pose);
+  g2o::VertexSE3* add_se3_node(const Eigen::Isometry3d& pose,
+                               bool use_vertex_size_id = false);
 
   /**
    * @brief copy an SE3 node from another graph.
@@ -267,6 +269,14 @@ class GraphSLAM {
    * @return registered node
    */
   g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
+
+  /**
+   * @brief copy a Wall node to the graph
+   * @param wall_node
+   * @return registered node
+   */
+  g2o::VertexWallXYZ* copy_wall_node(const g2o::VertexWallXYZ* wall_node);
+
   /**
    * @brief Add a SE3 Deviation node to the graph.
    *
@@ -288,7 +298,23 @@ class GraphSLAM {
   g2o::EdgeSE3* add_se3_edge(g2o::VertexSE3* v1,
                              g2o::VertexSE3* v2,
                              const Eigen::Isometry3d& relative_pose,
-                             const Eigen::MatrixXd& information_matrix);
+                             const Eigen::MatrixXd& information_matrix,
+                             const bool use_edge_size_id = false);
+
+  /**
+   * @brief Add loop closure edge between SE3 nodes
+   *
+   * @param v1: node1
+   * @param v2: node2
+   * @param relative_pose: relative pose between node1 and node2
+   * @param information_matrix: information matrix (it must be 6x6)
+   * @return registered edge
+   */
+  g2o::EdgeLoopClosure* add_loop_closure_edge(
+      g2o::VertexSE3* v1,
+      g2o::VertexSE3* v2,
+      const Eigen::Isometry3d& relative_pose,
+      const Eigen::MatrixXd& information_matrix);
 
   /**
    * @brief copy an edge from another graph
@@ -297,6 +323,16 @@ class GraphSLAM {
    * @return registered edge
    */
   g2o::EdgeSE3* copy_se3_edge(g2o::EdgeSE3* e, g2o::VertexSE3* v1, g2o::VertexSE3* v2);
+
+  /**
+   * @brief copy a loop closure edge from another graph
+   *
+   * @param e: edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3* copy_loop_closure_edge(g2o::EdgeLoopClosure* e,
+                                       g2o::VertexSE3* v1,
+                                       g2o::VertexSE3* v2);
 
   /**
    * @brief Add an edge between an SE3 node and a plane node
@@ -330,6 +366,14 @@ class GraphSLAM {
    * @return Succes or failure
    */
   bool remove_se3_plane_edge(g2o::EdgeSE3Plane* se3_plane_edge);
+
+  /**
+   * @brief Update the information of an se3 edge
+   *
+   * @param edge_se3
+   */
+  void update_se3edge_information(g2o::EdgeSE3* edge_se3,
+                                  Eigen::MatrixXd information_matrix);
 
   /**
    * @brief Add an edge between an SE3 node and to a plane using point to plane
@@ -522,6 +566,19 @@ class GraphSLAM {
   g2o::Edge2Planes* copy_2planes_edge(g2o::Edge2Planes* e,
                                       g2o::VertexPlane* v1,
                                       g2o::VertexPlane* v2);
+
+  /**
+   * @brief
+   *
+   * @param e
+   * @param v2
+   * @param v3
+   * @return g2o::EdgeWall2Planes*
+   */
+  g2o::EdgeWall2Planes* copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
+                                               g2o::VertexWallXYZ* v1,
+                                               g2o::VertexPlane* v2,
+                                               g2o::VertexPlane* v3);
 
   /**
    * @brief Deviation connection edge between two planes
@@ -748,7 +805,8 @@ class GraphSLAM {
    * @param num_iterations
    * @return
    */
-  int optimize(int num_iterations);
+  int optimize(const std::string optimization_type = " ",
+               const int num_iterations = 512);
 
   /**
    * @brief

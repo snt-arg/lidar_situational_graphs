@@ -44,6 +44,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <boost/format.hpp>
 #include <g2o/edge_infinite_room_plane.hpp>
+#include <g2o/edge_loop_closure.hpp>
 #include <g2o/edge_plane.hpp>
 #include <g2o/edge_plane_identity.hpp>
 #include <g2o/edge_plane_prior.hpp>
@@ -68,6 +69,7 @@ G2O_USE_OPTIMIZATION_LIBRARY(
     csparse)  // be aware of that csparse brings LGPL unless it is dynamically linked
 
 namespace g2o {
+G2O_REGISTER_TYPE(EDGE_LOOP_CLOSURE, EdgeLoopClosure)
 G2O_REGISTER_TYPE(EDGE_SE3_PLANE, EdgeSE3Plane)
 G2O_REGISTER_TYPE(EDGE_SE3_POINT_TO_PLANE, EdgeSE3PointToPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_PRIORXY, EdgeSE3PriorXY)
@@ -169,7 +171,7 @@ int GraphSLAM::retrieve_total_nbr_of_vertices() const {
   return graph->vertices().size();
 }
 
-int GraphSLAM::retrive_total_nbr_of_edges() const { return graph->edges().size(); }
+int GraphSLAM::retrieve_total_nbr_of_edges() const { return graph->edges().size(); }
 
 int GraphSLAM::retrieve_local_nbr_of_vertices() const { return nbr_of_vertices; }
 int GraphSLAM::retrieve_local_nbr_of_edges() const { return nbr_of_edges; }
@@ -178,9 +180,13 @@ int GraphSLAM::increment_local_nbr_of_vertices() { return nbr_of_vertices += 1; 
 
 int GraphSLAM::increment_local_nbr_of_edges() { return nbr_of_edges += 1; }
 
-g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose) {
+g2o::VertexSE3* GraphSLAM::add_se3_node(const Eigen::Isometry3d& pose,
+                                        bool use_vertex_size_id) {
   g2o::VertexSE3* vertex(new g2o::VertexSE3());
-  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  if (!use_vertex_size_id)
+    vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  else
+    vertex->setId(static_cast<int>(retrieve_total_nbr_of_vertices()));
   vertex->setEstimate(pose);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
@@ -308,6 +314,16 @@ g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center)
   return vertex;
 }
 
+g2o::VertexWallXYZ* GraphSLAM::copy_wall_node(const g2o::VertexWallXYZ* wall_node) {
+  g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
+  vertex->setId(wall_node->id());
+  vertex->setEstimate(wall_node->estimate());
+  if (wall_node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
 g2o::VertexDeviation* GraphSLAM::add_deviation_node(const Eigen::Isometry3d& pose) {
   g2o::VertexDeviation* vertex(new g2o::VertexDeviation());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
@@ -320,8 +336,29 @@ g2o::VertexDeviation* GraphSLAM::add_deviation_node(const Eigen::Isometry3d& pos
 g2o::EdgeSE3* GraphSLAM::add_se3_edge(g2o::VertexSE3* v1,
                                       g2o::VertexSE3* v2,
                                       const Eigen::Isometry3d& relative_pose,
-                                      const Eigen::MatrixXd& information_matrix) {
+                                      const Eigen::MatrixXd& information_matrix,
+                                      const bool use_edge_size_id) {
   g2o::EdgeSE3* edge(new g2o::EdgeSE3());
+  if (use_edge_size_id)
+    edge->setId(static_cast<int>(retrieve_total_nbr_of_edges()));
+  else
+    edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  edge->setMeasurement(relative_pose);
+  edge->setInformation(information_matrix);
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
+
+  return edge;
+}
+
+g2o::EdgeLoopClosure* GraphSLAM::add_loop_closure_edge(
+    g2o::VertexSE3* v1,
+    g2o::VertexSE3* v2,
+    const Eigen::Isometry3d& relative_pose,
+    const Eigen::MatrixXd& information_matrix) {
+  g2o::EdgeLoopClosure* edge(new g2o::EdgeLoopClosure());
   edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setMeasurement(relative_pose);
   edge->setInformation(information_matrix);
@@ -364,6 +401,20 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(
   return edge;
 }
 
+g2o::EdgeSE3* GraphSLAM::copy_loop_closure_edge(g2o::EdgeLoopClosure* e,
+                                                g2o::VertexSE3* v1,
+                                                g2o::VertexSE3* v2) {
+  g2o::EdgeLoopClosure* edge(new g2o::EdgeLoopClosure());
+  edge->setId(e->id());
+  edge->setMeasurement(e->measurement());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgeSE3Plane* GraphSLAM::copy_se3_plane_edge(g2o::EdgeSE3Plane* e,
                                                   g2o::VertexSE3* v1,
                                                   g2o::VertexPlane* v2) {
@@ -382,6 +433,11 @@ bool GraphSLAM::remove_se3_plane_edge(g2o::EdgeSE3Plane* se3_plane_edge) {
   bool ack = graph->removeEdge(se3_plane_edge);
 
   return ack;
+}
+
+void GraphSLAM::update_se3edge_information(g2o::EdgeSE3* edge_se3,
+                                           Eigen::MatrixXd information_matrix) {
+  edge_se3->setInformation(information_matrix);
 }
 
 g2o::EdgeSE3PointToPlane* GraphSLAM::add_se3_point_to_plane_edge(
@@ -602,6 +658,21 @@ g2o::Edge2Planes* GraphSLAM::copy_2planes_edge(g2o::Edge2Planes* e,
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
   edge->vertices()[1] = v2;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeWall2Planes* GraphSLAM::copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
+                                                        g2o::VertexWallXYZ* v1,
+                                                        g2o::VertexPlane* v2,
+                                                        g2o::VertexPlane* v3) {
+  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(e->get_wall_point()));
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
   graph->addEdge(edge);
 
   return edge;
@@ -846,14 +917,14 @@ void GraphSLAM::add_robust_kernel(g2o::HyperGraph::Edge* edge,
   edge_->setRobustKernel(kernel);
 }
 
-int GraphSLAM::optimize(int num_iterations) {
+int GraphSLAM::optimize(const std::string optimization_type, const int num_iterations) {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
   if (graph->edges().size() < 10) {
     return -1;
   }
 
   std::cout << std::endl;
-  std::cout << "--- pose graph optimization ---" << std::endl;
+  std::cout << "--- " << optimization_type << " graph optimization ---" << std::endl;
   std::cout << "nodes: " << graph->vertices().size()
             << "   edges: " << graph->edges().size() << std::endl;
   std::cout << "optimizing... " << std::flush;

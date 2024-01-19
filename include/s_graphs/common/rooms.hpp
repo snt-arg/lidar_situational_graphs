@@ -76,9 +76,9 @@ class Rooms {
       plane_y2_node = new g2o::VertexPlane();
       plane_y2_node->setEstimate(old_room.plane_y2_node->estimate());
 
-      room_keyframes.reserve(old_room.room_keyframes.size());
+      // room_keyframes.reserve(old_room.room_keyframes.size());
       for (const auto &k : old_room.room_keyframes) {
-        std::make_shared<KeyFrameSnapshot>(k);
+        std::make_shared<KeyFrameSnapshot>(k.second);
       }
     }
   }
@@ -160,10 +160,10 @@ class Rooms {
 
     ofs << "room_keyframes_ids\n";
     std::cout << "room_keyframes.size() : " << room_keyframes.size() << std::endl;
-    for (int i = 0; i < room_keyframes.size(); i++) {
-      ofs << room_keyframes[i]->id() << "\n";
-      std::cout << "keyframe id at :  " << i << "   " << room_keyframes[i]->id()
-                << std::endl;
+    for (const auto &room_keyframe : room_keyframes) {
+      ofs << room_keyframe.first << "\n";
+      std::cout << "keyframe id at :  "
+                << "   " << room_keyframe.first << std::endl;
     }
     return true;
   }
@@ -281,7 +281,7 @@ class Rooms {
   g2o::VertexPlane *plane_y1_node = nullptr;
   g2o::VertexPlane *plane_y2_node = nullptr;
   g2o::VertexRoom *node = nullptr;  // node instance in covisibility graph
-  std::vector<KeyFrame::Ptr> room_keyframes;
+  std::map<int, KeyFrame::Ptr> room_keyframes;
   std::shared_ptr<GraphSLAM> local_graph;
 };
 

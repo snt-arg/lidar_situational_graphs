@@ -35,6 +35,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/types/slam3d/edge_se3.h>
 
 #include <boost/bind.hpp>
+#include <g2o/edge_loop_closure.hpp>
 #include <g2o/edge_plane.hpp>
 #include <g2o/edge_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
@@ -42,9 +43,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/infinite_rooms.hpp>
-#include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
 #include <s_graphs/common/rooms.hpp>
+#include <unordered_set>
 
 namespace s_graphs {
 
@@ -52,17 +54,175 @@ class GraphUtils {
  public:
   GraphUtils() {}
 
-  void copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
-                  std::unique_ptr<GraphSLAM>& global_graph);
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @return * void
+   */
+  static void copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                         std::unique_ptr<GraphSLAM>& compressed_graph,
+                         const std::map<int, KeyFrame::Ptr>& keyframes);
 
-  void update_graph(const std::unique_ptr<GraphSLAM>& global_graph,
-                    std::vector<KeyFrame::Ptr> keyframes,
-                    std::vector<VerticalPlanes>& x_vert_planes,
-                    std::vector<VerticalPlanes>& y_vert_planes,
-                    std::vector<Rooms>& rooms_vec,
-                    std::vector<InfiniteRooms>& x_infinite_rooms,
-                    std::vector<InfiniteRooms>& y_infinite_rooms,
-                    std::vector<Floors>& floors_vec);
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   */
+  static void copy_graph_vertices(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                  const std::unique_ptr<GraphSLAM>& compressed_graph);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @return * std::vector<g2o::VertexSE3*>
+   */
+  static std::vector<g2o::VertexSE3*> copy_graph_edges(
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      const std::unique_ptr<GraphSLAM>& compressed_graph);
+
+  /**
+   * @brief
+   *
+   * @param window_size
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @param keyframes
+   * @return * void
+   */
+  static void copy_windowed_graph(const int window_size,
+                                  const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                  const std::unique_ptr<GraphSLAM>& compressed_graph,
+                                  const std::map<int, KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @param keyframe_window
+   * @return * int min_keyframe_id
+   */
+  static int copy_keyframes_to_graph(
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      const std::unique_ptr<GraphSLAM>& compressed_graph,
+      const std::map<int, KeyFrame::Ptr>& keyframe_window);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @param complete_keyframe_window
+   * @return * std::vector<g2o::VertexSE3*>
+   */
+  static std::vector<g2o::VertexSE3*> connect_keyframes(
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      const std::unique_ptr<GraphSLAM>& compressed_graph,
+      const std::map<int, KeyFrame::Ptr>& complete_keyframe_window,
+      bool& anchor_node_exists);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @return * std::unordered_set<g2o::VertexSE3*>
+   */
+  static std::unordered_set<g2o::VertexSE3*> connect_keyframes_planes(
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      GraphSLAM* compressed_graph);
+
+  /**
+   * @brief
+   *
+   * @param filtered_k_vec
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @param keyframes
+   * @return * void
+   */
+  static void connect_broken_keyframes(
+      std::vector<g2o::VertexSE3*> filtered_k_vec,
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      const std::unique_ptr<GraphSLAM>& compressed_graph,
+      const std::map<int, KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief
+   *
+   * @param compressed_graph
+   * @param fixed_keyframes_set
+   */
+  static void fix_and_connect_keyframes(
+      GraphSLAM* compressed_graph,
+      const std::unordered_set<g2o::VertexSE3*>& fixed_keyframes_set);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @return * void
+   */
+  static void connect_planes_rooms(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                   GraphSLAM* compressed_graph);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @return * void
+   */
+  static void connect_rooms_floors(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                   GraphSLAM* compressed_graph);
+
+  /**
+   * @brief
+   *
+   * @param compressed_graph
+   * @param keyframes
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   * @param floors_vec
+   */
+  static void update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph,
+                           std::map<int, KeyFrame::Ptr> keyframes,
+                           std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                           std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                           std::unordered_map<int, Rooms>& rooms_vec,
+                           std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+                           std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+                           std::unordered_map<int, Floors>& floors_vec);
+
+  /**
+   * @brief Set the marginalize info object
+   *
+   * @param local_graph
+   * @param covisibility_graph
+   * @param room_keyframes
+   * @return * void
+   */
+  static void set_marginalize_info(const std::shared_ptr<GraphSLAM>& local_graph,
+                                   const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                   const std::map<int, KeyFrame::Ptr>& room_keyframes);
+
+  /**
+   * @brief
+   *
+   * @param vertex_se3
+   * @return true
+   * @return false
+   */
+  static bool get_keyframe_marg_data(g2o::VertexSE3* vertex_se3);
 };
 
 }  // namespace s_graphs

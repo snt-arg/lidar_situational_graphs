@@ -43,16 +43,15 @@ class TestPlane : public ::testing::Test {
  public:
   rclcpp::Node::SharedPtr node;
   std::shared_ptr<s_graphs::PlaneMapper> plane_mapper;
-  std::shared_ptr<s_graphs::PlaneUtils> plane_utils;
   std::shared_ptr<s_graphs::GraphSLAM> graph_slam;
   Eigen::Isometry3d odom;
   s_graphs::KeyFrame::Ptr keyframe;
   g2o::Plane3D det_plane_map_frame;
   Eigen::Vector4d map_plane_vec;
   pcl::PointCloud<PointT>::Ptr cloud;
-  std::vector<s_graphs::VerticalPlanes> x_vert_planes;
-  std::vector<s_graphs::VerticalPlanes> y_vert_planes;
-  std::vector<s_graphs::HorizontalPlanes> hort_planes;
+  std::unordered_map<int, s_graphs::VerticalPlanes> x_vert_planes;
+  std::unordered_map<int, s_graphs::VerticalPlanes> y_vert_planes;
+  std::unordered_map<int, s_graphs::HorizontalPlanes> hort_planes;
 
   void SetUp() override {
     node = rclcpp::Node::make_shared("test_node");
@@ -64,7 +63,6 @@ class TestPlane : public ::testing::Test {
 
     graph_slam = std::make_shared<s_graphs::GraphSLAM>();
     plane_mapper = std::make_shared<s_graphs::PlaneMapper>(node);
-    plane_utils = std::make_shared<s_graphs::PlaneUtils>();
     cloud = boost::make_shared<pcl::PointCloud<PointT>>();
   }
 
@@ -98,12 +96,12 @@ class TestPlane : public ::testing::Test {
 
     keyframe->node = graph_slam->add_se3_node(Eigen::Isometry3d::Identity());
     x_vert_plane.keyframe_node_vec.push_back(keyframe->node);
-    x_vert_planes.push_back(x_vert_plane);
+    x_vert_planes.insert({x_vert_plane.id, x_vert_plane});
     plane_mapper->convert_plane_points_to_map(
         x_vert_planes, y_vert_planes, hort_planes);
   }
 
-  std::pair<int, int> testAssociatePlanes() {
+  int testAssociatePlanes() {
     g2o::Plane3D det_plane;
     Eigen::Vector4d det_plane_coeffs;
     det_plane_coeffs << 1, 0, 0, 9.9;
@@ -124,9 +122,9 @@ class TestPlane : public ::testing::Test {
     x_vert_plane.cloud_seg_body = boost::make_shared<pcl::PointCloud<PointNormal>>();
     x_vert_plane.cloud_seg_map = boost::make_shared<pcl::PointCloud<PointNormal>>();
     x_vert_plane.keyframe_node_vec.push_back(keyframe->node);
-    x_vert_planes.push_back(x_vert_plane);
+    x_vert_planes.insert({x_vert_plane.id, x_vert_plane});
 
-    std::pair<int, int> matched_plane =
+    int matched_plane =
         plane_mapper->associate_plane(s_graphs::PlaneUtils::plane_class::X_VERT_PLANE,
                                       keyframe,
                                       det_plane,
@@ -160,9 +158,8 @@ TEST_F(TestPlane, ConvertPlanePointsToMap) {
 }
 
 TEST_F(TestPlane, AssociatePlanes) {
-  std::pair<int, int> matched_plane = this->testAssociatePlanes();
-  EXPECT_EQ(matched_plane.first, 1);
-  EXPECT_EQ(matched_plane.second, 0);
+  int matched_plane = this->testAssociatePlanes();
+  EXPECT_EQ(matched_plane, 1);
 }
 
 int main(int argc, char** argv) {

@@ -43,6 +43,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <cmath>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
+#include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
@@ -90,9 +91,9 @@ class PlaneMapper {
       std::shared_ptr<GraphSLAM>& graph_slam,
       KeyFrame::Ptr keyframe,
       const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec,
-      std::vector<VerticalPlanes>& x_vert_planes,
-      std::vector<VerticalPlanes>& y_vert_planes,
-      std::vector<HorizontalPlanes>& hort_planes);
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -111,9 +112,10 @@ class PlaneMapper {
    * @param y_vert_planes
    * @param hort_planes
    */
-  void convert_plane_points_to_map(std::vector<VerticalPlanes>& x_vert_planes,
-                                   std::vector<VerticalPlanes>& y_vert_planes,
-                                   std::vector<HorizontalPlanes>& hort_planes);
+  void convert_plane_points_to_map(
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -127,14 +129,13 @@ class PlaneMapper {
    * @param hort_planes
    * @return
    */
-  std::pair<int, int> associate_plane(
-      const int& plane_type,
-      const KeyFrame::Ptr& keyframe,
-      const g2o::Plane3D& det_plane,
-      const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
-      const std::vector<HorizontalPlanes>& hort_planes);
+  int associate_plane(const int& plane_type,
+                      const KeyFrame::Ptr& keyframe,
+                      const g2o::Plane3D& det_plane,
+                      const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+                      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                      const std::unordered_map<int, HorizontalPlanes>& hort_planes);
 
  private:
   /**
@@ -151,9 +152,9 @@ class PlaneMapper {
   int add_planes_to_graph(std::shared_ptr<GraphSLAM>& graph_slam,
                           KeyFrame::Ptr& keyframe,
                           const g2o::Plane3D& det_plane_body_frame,
-                          std::vector<VerticalPlanes>& x_vert_planes,
-                          std::vector<VerticalPlanes>& y_vert_planes,
-                          std::vector<HorizontalPlanes>& hort_planes);
+                          std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                          std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                          std::unordered_map<int, HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -173,9 +174,9 @@ class PlaneMapper {
                   KeyFrame::Ptr& keyframe,
                   const g2o::Plane3D& det_plane_map_frame,
                   const g2o::Plane3D& det_plane_body_frame,
-                  std::vector<VerticalPlanes>& x_vert_planes,
-                  std::vector<VerticalPlanes>& y_vert_planes,
-                  std::vector<HorizontalPlanes>& hort_planes);
+                  std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                  std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                  std::unordered_map<int, HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -195,9 +196,9 @@ class PlaneMapper {
                     KeyFrame::Ptr& keyframe,
                     const g2o::Plane3D& det_plane_map_frame,
                     const g2o::Plane3D& det_plane_body_frame,
-                    std::vector<VerticalPlanes>& x_vert_planes,
-                    std::vector<VerticalPlanes>& y_vert_planes,
-                    std::vector<HorizontalPlanes>& hort_planes);
+                    std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                    std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                    std::unordered_map<int, HorizontalPlanes>& hort_planes);
 
   /**
    * @brief
@@ -230,7 +231,6 @@ class PlaneMapper {
   bool use_room_constraint;
 
  private:
-  std::unique_ptr<PlaneUtils> plane_utils;
   rclcpp::Node::SharedPtr node_obj;
 };
 

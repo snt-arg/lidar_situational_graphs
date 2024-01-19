@@ -29,52 +29,46 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 // SPDX-License-Identifier: BSD-2-Clause
 
-#ifndef IMU_MAPPER_HPP
-#define IMU_MAPPER_HPP
-
-#include <s_graphs/backend/graph_slam.hpp>
-#include <s_graphs/common/keyframe.hpp>
-
-#include "g2o/edge_se3_priorquat.hpp"
-#include "g2o/edge_se3_priorvec.hpp"
-#include "geometry_msgs/msg/quaternion_stamped.hpp"
-#include "geometry_msgs/msg/vector3.hpp"
-#include "geometry_msgs/msg/vector3_stamped.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "sensor_msgs/msg/imu.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/buffer_interface.h"
+#include <s_graphs/backend/loop_mapper.hpp>
 
 namespace s_graphs {
 
-/**
- * @brief
- */
-class IMUMapper {
- public:
-  /**
-   * @brief Constructor for class IMUMapper
-   *
-   * @param private_nh
-   */
-  IMUMapper(const rclcpp::Node::SharedPtr node);
-  ~IMUMapper();
+LoopMapper::LoopMapper(const rclcpp::Node::SharedPtr node) {
+  inf_calclator.reset(new InformationMatrixCalculator(node));
+}
 
- public:
-  bool map_imu_data(std::shared_ptr<GraphSLAM>& graph_slam,
-                    const std::unique_ptr<tf2_ros::Buffer>& tf_buffer,
-                    std::deque<sensor_msgs::msg::Imu::SharedPtr>& imu_queue,
-                    const std::map<int, KeyFrame::Ptr>& keyframes,
-                    const std::string base_frame_id);
+LoopMapper::~LoopMapper() {}
 
- private:
-  double imu_time_offset;
-  bool enable_imu_orientation;
-  double imu_orientation_edge_stddev;
-  bool enable_imu_acceleration;
-  double imu_acceleration_edge_stddev;
-};
+void LoopMapper::add_loops(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                           const std::vector<Loop::Ptr>& loops,
+                           std::mutex& graph_mutex) {
+  for (const auto& loop : loops) {
+    Eigen::Isometry3d relpose(loop->relative_pose.cast<double>());
+    Eigen::MatrixXd information_matrix = inf_calclator->calc_information_matrix(
+        loop->key1->cloud, loop->key2->cloud, relpose);
+    graph_mutex.lock();
+    std::cout << "loop found between keyframes " << loop->key1->node->id() << " and "
+              << loop->key2->node->id() << std::endl;
+
+    set_data(loop->key1->node);
+    set_data(loop->key2->node);
+
+    g2o::EdgeLoopClosure* edge = covisibility_graph->add_loop_closure_edge(
+        loop->key1->node, loop->key2->node, relpose, information_matrix);
+    covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    graph_mutex.unlock();
+  }
+}
+
+void LoopMapper::set_data(g2o::VertexSE3* keyframe_node) {
+  auto current_key_data = dynamic_cast<OptimizationData*>(keyframe_node->userData());
+  if (current_key_data) {
+    current_key_data->set_loop_closure_info(true);
+  } else {
+    OptimizationData* data = new OptimizationData();
+    data->set_loop_closure_info(true);
+    keyframe_node->setUserData(data);
+  }
+}
+
 }  // namespace s_graphs
-
-#endif  // IMU_MAPPER_HPP

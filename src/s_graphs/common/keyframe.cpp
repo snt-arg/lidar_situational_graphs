@@ -34,6 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/io/pcd_io.h>
 
 #include <boost/filesystem.hpp>
+#include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/keyframe.hpp>
 
 namespace s_graphs {
@@ -203,11 +204,15 @@ long KeyFrame::id() const { return node->id(); }
 Eigen::Isometry3d KeyFrame::estimate() const { return node->estimate(); }
 
 KeyFrameSnapshot::KeyFrameSnapshot(const Eigen::Isometry3d& pose,
-                                   const pcl::PointCloud<PointT>::ConstPtr& cloud)
-    : pose(pose), cloud(cloud) {}
+                                   const pcl::PointCloud<PointT>::ConstPtr& cloud,
+                                   const bool marginalized)
+    : pose(pose), cloud(cloud), k_marginalized(marginalized) {}
 
-KeyFrameSnapshot::KeyFrameSnapshot(const KeyFrame::Ptr& key)
-    : pose(key->node->estimate()), cloud(key->cloud) {}
+KeyFrameSnapshot::KeyFrameSnapshot(const KeyFrame::Ptr& key) {
+  pose = key->node->estimate();
+  cloud = key->cloud;
+  k_marginalized = GraphUtils::get_keyframe_marg_data(key->node);
+}
 
 KeyFrameSnapshot::~KeyFrameSnapshot() {}
 
