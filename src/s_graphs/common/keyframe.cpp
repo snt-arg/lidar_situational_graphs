@@ -42,11 +42,13 @@ namespace s_graphs {
 KeyFrame::KeyFrame(const rclcpp::Time& stamp,
                    const Eigen::Isometry3d& odom,
                    double accum_distance,
-                   const pcl::PointCloud<PointT>::ConstPtr& cloud)
+                   const pcl::PointCloud<PointT>::ConstPtr& cloud,
+                   const int floor_level)
     : stamp(stamp),
       odom(odom),
       accum_distance(accum_distance),
       cloud(cloud),
+      floor_level(floor_level),
       node(nullptr) {}
 
 KeyFrame::KeyFrame(const std::string& directory, g2o::HyperGraph* graph)
@@ -54,6 +56,7 @@ KeyFrame::KeyFrame(const std::string& directory, g2o::HyperGraph* graph)
       odom(Eigen::Isometry3d::Identity()),
       accum_distance(-1),
       cloud(nullptr),
+      floor_level(0),
       node(nullptr) {
   load(directory, graph);
 }

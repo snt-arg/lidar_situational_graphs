@@ -593,6 +593,9 @@ class SGraphsNode : public rclcpp::Node {
 
       floor_data_queue.pop_front();
     }
+
+    // TODO:HB if floor vec was filled for the first time add floor level to all
+    // previous planes and rooms
   }
 
   /**
@@ -602,7 +605,6 @@ class SGraphsNode : public rclcpp::Node {
   void room_data_callback(const s_graphs::msg::RoomsData::SharedPtr rooms_msg) {
     std::lock_guard<std::mutex> lock(room_data_queue_mutex);
     room_data_queue.push_back(*rooms_msg);
-    // std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
   }
 
   /**
@@ -639,12 +641,15 @@ class SGraphsNode : public rclcpp::Node {
                                                y_infinite_rooms,
                                                rooms_vec,
                                                current_room_id);
-          // generate local graph per room
-          extract_keyframes_from_room(rooms_vec[current_room_id]);
-          graph_mutex.lock();
-          room_local_graph_id_queue.push_back(current_room_id);
-          graph_mutex.unlock();
-          if (duplicate_planes_rooms) duplicate_planes_found = true;
+          if (current_room_id != -1) {
+            // generate local graph per room
+            extract_keyframes_from_room(rooms_vec[current_room_id]);
+            graph_mutex.lock();
+            room_local_graph_id_queue.push_back(current_room_id);
+            graph_mutex.unlock();
+            if (duplicate_planes_rooms) duplicate_planes_found = true;
+          }
+
         }
         // x infinite_room
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
@@ -752,11 +757,13 @@ class SGraphsNode : public rclcpp::Node {
       Eigen::Isometry3d odom_trans = map2map_trans * odom;
       Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
 
-      KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom_trans, accum_d, cloud));
+      KeyFrame::Ptr keyframe(new KeyFrame(
+          stamp, odom_trans, accum_d, cloud, floor_mapper->get_floor_level()));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     } else {
-      KeyFrame::Ptr keyframe(new KeyFrame(stamp, odom, accum_d, cloud));
+      KeyFrame::Ptr keyframe(
+          new KeyFrame(stamp, odom, accum_d, cloud, floor_mapper->get_floor_level()));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     }
@@ -1358,9 +1365,13 @@ class SGraphsNode : public rclcpp::Node {
       const std::vector<VerticalPlanes>& y_vert_planes_snapshot) {
     if (keyframes.empty()) return;
 
+    int current_floor_level = floor_mapper->get_floor_level();
+
     s_graphs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& x_vert_plane : x_vert_planes_snapshot) {
+      if (!x_vert_plane.floor_level != current_floor_level) continue;
+
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (x_vert_plane).plane_node->estimate().coeffs();
@@ -1387,6 +1398,8 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& y_vert_plane : y_vert_planes_snapshot) {
+      if (!y_vert_plane.floor_level != current_floor_level) continue;
+
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (y_vert_plane).plane_node->estimate().coeffs();

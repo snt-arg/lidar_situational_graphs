@@ -68,12 +68,14 @@ struct KeyFrame {
    * @param odom
    * @param accum_distance
    * @param cloud
+   * @param floor_level
    * @return
    */
   KeyFrame(const rclcpp::Time& stamp,
            const Eigen::Isometry3d& odom,
            double accum_distance,
-           const pcl::PointCloud<PointT>::ConstPtr& cloud);
+           const pcl::PointCloud<PointT>::ConstPtr& cloud,
+           const int floor_level = 0);
 
   /**
    * @brief Constructor for class KeyFrame
@@ -125,6 +127,8 @@ struct KeyFrame {
       cloud_seg_body;  // semantically segmented pointcloud
   std::vector<int> x_plane_ids, y_plane_ids,
       hort_plane_ids;  // list of planes associated with the keyframe
+
+  int floor_level;  // floor level that the keyframe belongs
 
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS

@@ -69,6 +69,21 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     const std::unordered_map<int, Rooms>& rooms_vec) {
+  bool same_floor_level;
+  if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+    auto found_plane1 = x_vert_planes.find(room_data.x_planes[0].id);
+    auto found_plane2 = x_vert_planes.find(room_data.x_planes[1].id);
+    same_floor_level =
+        (found_plane1->second.floor_level == found_plane2->second.floor_level);
+  } else if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
+    auto found_plane1 = y_vert_planes.find(room_data.y_planes[0].id);
+    auto found_plane2 = y_vert_planes.find(room_data.y_planes[1].id);
+    same_floor_level =
+        (found_plane1->second.floor_level == found_plane2->second.floor_level);
+  }
+
+  if (!same_floor_level) return false;
+
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
   bool duplicate_found = false;

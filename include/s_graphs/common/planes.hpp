@@ -56,6 +56,7 @@ namespace s_graphs {
  * @param keyframe_node_vec
  * @param plane_node
  * @param color
+ * @param floor_level
  */
 
 using PointNormal = pcl::PointXYZRGBNormal;
@@ -83,6 +84,7 @@ class Planes {
     covariance = old_plane.covariance;
     keyframe_node_vec = old_plane.keyframe_node_vec;
     color = old_plane.color;
+    floor_level = old_plane.floor_level;
     revit_id = old_plane.revit_id;
     keyframe_node = old_plane.keyframe_node;
     plane_node = old_plane.plane_node;
@@ -108,6 +110,7 @@ class Planes {
   Eigen::Matrix3d covariance;  // covariance of the landmark
   std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
   std::vector<double> color;
+  int floor_level;  // current floor level
   int revit_id;
   g2o::VertexSE3* keyframe_node = nullptr;  // keyframe node instance
   g2o::VertexPlane* plane_node = nullptr;   // node instance

@@ -54,6 +54,7 @@ namespace s_graphs {
  * @param plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id
  * @param neighbour_ids
  * @param node
+ * @param floor_level
  * @param sub_room
  * @param cluster_array
  */
@@ -96,6 +97,7 @@ class Rooms {
     plane_x2_id = old_room.plane_x2_id;
     plane_y1_id = old_room.plane_y1_id;
     plane_y2_id = old_room.plane_y2_id;
+    floor_level = old_room.floor_level;
     sub_room = old_room.sub_room;
     cluster_array = old_room.cluster_array;
 
@@ -272,6 +274,7 @@ class Rooms {
   int plane_x2_id;
   int plane_y1_id;
   int plane_y2_id;
+  int floor_level;
   bool sub_room;
   bool matched = false;
   visualization_msgs::msg::MarkerArray cluster_array;

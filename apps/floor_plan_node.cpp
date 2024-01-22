@@ -61,6 +61,7 @@ class FloorPlanNode : public rclcpp::Node {
   void initialize_params() {
     this->declare_parameter("vertex_neigh_thres", 2);
     this->declare_parameter("save_timings", false);
+    floor_level = 0;
     new_k_added = false, on_stairs = false;
     num_k_added = 0;
     delta_diff = 0.0;
@@ -287,7 +288,7 @@ class FloorPlanNode : public rclcpp::Node {
 
       s_graphs::msg::RoomData floor_data_msg;
       floor_data_msg.header.stamp = this->now();
-      floor_data_msg.id = 0;
+      floor_data_msg.id = floor_level;
       floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[0]);
       floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[1]);
       floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[2]);
@@ -380,6 +381,7 @@ class FloorPlanNode : public rclcpp::Node {
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
   std::map<int, s_graphs::KeyFrame::Ptr> keyframes;
   std::vector<KeyFrame::Ptr> first_stair_k;
+  int floor_level;
 
   bool new_k_added, on_stairs;
   int num_k_added;

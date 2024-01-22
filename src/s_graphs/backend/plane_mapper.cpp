@@ -225,6 +225,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.plane_node = plane_node;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
+        vert_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
         color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
         color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
@@ -283,6 +284,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.plane_node = plane_node;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
+        vert_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
         color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
         color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
@@ -340,6 +342,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         hort_plane.plane_node = plane_node;
         hort_plane.cloud_seg_map = nullptr;
         hort_plane.covariance = Eigen::Matrix3d::Identity();
+        hort_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
         color.push_back(255);  // red
         color.push_back(0.0);  // green
@@ -420,10 +423,13 @@ int PlaneMapper::associate_plane(
   double vert_min_maha_dist = 100;
   double hort_min_maha_dist = 100;
   Eigen::Isometry3d m2n = keyframe->estimate().inverse();
+  int current_floor_level = keyframe->floor_level;
 
   switch (plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       for (const auto& x_vert_plane : x_vert_planes) {
+        if (current_floor_level != x_vert_plane.second.floor_level) continue;
+
         g2o::Plane3D local_plane = m2n * x_vert_plane.second.plane;
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
@@ -471,8 +477,8 @@ int PlaneMapper::associate_plane(
     }
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
       for (const auto& y_vert_plane : y_vert_planes) {
-        float dist =
-            fabs(det_plane.coeffs()(3) - y_vert_plane.second.plane.coeffs()(3));
+        if (current_floor_level != y_vert_plane.second.floor_level) continue;
+
         g2o::Plane3D local_plane = m2n * y_vert_plane.second.plane;
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
@@ -519,6 +525,8 @@ int PlaneMapper::associate_plane(
     }
     case PlaneUtils::plane_class::HORT_PLANE: {
       for (const auto& hort_plane : hort_planes) {
+        if (current_floor_level != hort_plane.second.floor_level) continue;
+
         g2o::Plane3D local_plane = m2n * hort_plane.second.plane;
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =

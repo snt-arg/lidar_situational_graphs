@@ -88,6 +88,7 @@ class InfiniteRooms {
     plane2 = old_room.plane2;
     plane1_id = old_room.plane1_id;
     plane2_id = old_room.plane2_id;
+    floor_level = old_room.floor_level;
     sub_infinite_room = old_room.sub_infinite_room;
     cluster_array = old_room.cluster_array;
 
@@ -106,6 +107,7 @@ class InfiniteRooms {
   g2o::Plane3D plane2;
   int plane1_id;
   int plane2_id;
+  int floor_level;
   bool sub_infinite_room;
   visualization_msgs::msg::MarkerArray cluster_array;
 

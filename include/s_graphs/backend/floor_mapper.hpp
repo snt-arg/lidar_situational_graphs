@@ -107,7 +107,21 @@ class FloorMapper {
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
 
+  /**
+   * @brief Get the floor level object
+   *
+   * @return * int
+   */
+  int get_floor_level() { return current_floor_level; }
+
  private:
+  /**
+   * @brief Set the floor level object
+   *
+   * @param floor_id
+   */
+  void set_floor_level(const int& floor_id) { current_floor_level = floor_id; }
+
   /**
    * @brief
    *
@@ -171,6 +185,9 @@ class FloorMapper {
    */
   void remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
                                g2o::VertexFloor* floor_node);
+
+ private:
+  int current_floor_level;
 };
 
 }  // namespace s_graphs

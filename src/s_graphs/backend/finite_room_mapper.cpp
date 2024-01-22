@@ -66,6 +66,21 @@ bool FiniteRoomMapper::lookup_rooms(
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::unordered_map<int, Rooms>& rooms_vec,
     int& room_id) {
+  auto found_x_plane1 = x_vert_planes.find(room_data.x_planes[0].id);
+  auto found_x_plane2 = x_vert_planes.find(room_data.x_planes[1].id);
+  auto found_y_plane1 = y_vert_planes.find(room_data.y_planes[0].id);
+  auto found_y_plane2 = y_vert_planes.find(room_data.y_planes[1].id);
+
+  bool same_floor_level =
+      (found_x_plane1->second.floor_level == found_x_plane2->second.floor_level) &&
+      (found_x_plane1->second.floor_level == found_y_plane1->second.floor_level) &&
+      (found_x_plane1->second.floor_level == found_y_plane2->second.floor_level);
+
+  if (!same_floor_level) {
+    room_id = -1;
+    return false;
+  }
+
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
   bool duplicate_found = false;
@@ -127,11 +142,6 @@ bool FiniteRoomMapper::lookup_rooms(
       matched_y_infinite_room = current_y_infinite_room.second;
     }
   }
-
-  auto found_x_plane1 = x_vert_planes.find(room_data.x_planes[0].id);
-  auto found_x_plane2 = x_vert_planes.find(room_data.x_planes[1].id);
-  auto found_y_plane1 = y_vert_planes.find(room_data.y_planes[0].id);
-  auto found_y_plane2 = y_vert_planes.find(room_data.y_planes[1].id);
 
   if (min_dist_room_y_inf_room < 1.0 && min_dist_room_x_inf_room < 1.0) {
     std::cout << "Adding a room using mapped x and y infinite_room planes "

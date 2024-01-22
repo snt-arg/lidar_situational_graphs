@@ -48,6 +48,11 @@ void WallMapper::factor_wall(const std::shared_ptr<GraphSLAM> covisibility_graph
     auto matched_x_plane1 = x_vert_planes.find(x_planes_msg[0].id);
     auto matched_x_plane2 = x_vert_planes.find(x_planes_msg[1].id);
 
+    bool same_floor_level =
+        (matched_x_plane1->second.floor_level == matched_x_plane2->second.floor_level);
+
+    if (!same_floor_level) return;
+
     if (!(matched_x_plane1->second).on_wall && !(matched_x_plane2->second).on_wall) {
       add_wall_node_and_edge(covisibility_graph,
                              wall_pose,
@@ -58,6 +63,11 @@ void WallMapper::factor_wall(const std::shared_ptr<GraphSLAM> covisibility_graph
   } else if (y_planes_msg.size() == 2) {
     auto matched_y_plane1 = y_vert_planes.find(y_planes_msg[0].id);
     auto matched_y_plane2 = y_vert_planes.find(y_planes_msg[1].id);
+
+    bool same_floor_level =
+        (matched_y_plane1->second.floor_level == matched_y_plane2->second.floor_level);
+
+    if (!same_floor_level) return;
 
     if (!(matched_y_plane1->second).on_wall && !(matched_y_plane2->second).on_wall) {
       add_wall_node_and_edge(covisibility_graph,

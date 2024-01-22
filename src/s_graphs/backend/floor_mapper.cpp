@@ -33,7 +33,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 namespace s_graphs {
 
-FloorMapper::FloorMapper() {}
+FloorMapper::FloorMapper() {
+  // initial floor id will always be set to zero
+  int floor_id = 0;
+  set_floor_level(floor_id);
+}
 
 FloorMapper::~FloorMapper() {}
 
