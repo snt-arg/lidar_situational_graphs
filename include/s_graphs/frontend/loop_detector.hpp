@@ -254,6 +254,8 @@ class LoopDetector {
         continue;
       }
 
+      if (new_keyframe->floor_level != k.second->floor_level) continue;
+
       const auto& pos1 = k.second->node->estimate().translation();
       const auto& pos2 = new_keyframe->node->estimate().translation();
 
