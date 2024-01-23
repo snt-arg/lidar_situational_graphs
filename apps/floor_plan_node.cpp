@@ -62,10 +62,9 @@ class FloorPlanNode : public rclcpp::Node {
     this->declare_parameter("vertex_neigh_thres", 2);
     this->declare_parameter("save_timings", false);
     floor_level = 0;
-    new_k_added = false, on_stairs = false;
-    num_k_added = 0;
-    delta_diff = 0.0;
+    new_k_added = false;
     prev_z_diff = 0.0;
+    CURRENT_STATUS = STATE::ON_FLOOR;
 
     room_analyzer_params params{
         this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
@@ -286,71 +285,106 @@ class FloorPlanNode : public rclcpp::Node {
                                              floor_plane_candidates_vec[2],
                                              floor_plane_candidates_vec[3]);
 
-      s_graphs::msg::RoomData floor_data_msg;
-      floor_data_msg.header.stamp = this->now();
-      floor_data_msg.id = floor_level;
-      floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[0]);
-      floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[1]);
-      floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[2]);
-      floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[3]);
-      floor_data_msg.room_center = floor_center;
-      floor_data_pub->publish(floor_data_msg);
+      if (CURRENT_STATUS == ON_FLOOR) {
+        s_graphs::msg::RoomData floor_data_msg;
+        floor_data_msg.header.stamp = this->now();
+        floor_data_msg.id = floor_level;
+        floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[0]);
+        floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[1]);
+        floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[2]);
+        floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[3]);
+        floor_data_msg.room_center = floor_center;
+        // publish floor height as the last captured k height
+        floor_data_msg.room_center.position.z =
+            keyframes.rbegin()->second->node->estimate()(2, 3);
+        floor_data_pub->publish(floor_data_msg);
+      }
     }
   }
 
   void floor_change_det_callback() {
-    if (!new_k_added) return;
+    if (!new_k_added || keyframes.size() < 2) return;
+    auto current_k = keyframes.rbegin();
 
-    // get the pose difference between the last and the second last keyframe
-    if (keyframes.size() >= 2 && first_stair_k.empty()) {
-      auto current_k = keyframes.rbegin();
-      auto prev_k = std::next(current_k);
+    switch (CURRENT_STATUS) {
+      case STATE::ON_FLOOR: {
+        // get the pose difference between the last and the second last keyframe
+        auto prev_k = std::next(current_k);
+        prev_z_diff = this->compute_height_change(current_k->second, prev_k->second);
 
-      prev_z_diff = (current_k->second->node->estimate() *
-                     prev_k->second->node->estimate().inverse())(2, 3);
+        if (fabs(prev_z_diff) > 0.5) {
+          stair_keyframes.push_back(prev_k->second);
+          CURRENT_STATUS = STATE::FLOOR_CHANGE;
+        }
 
-      if (prev_z_diff > 0.5) {
-        first_stair_k.push_back(prev_k->second);
+        break;
       }
-    } else if (keyframes.size() >= 2) {
-      auto current_k = keyframes.rbegin();
-      double current_z_diff = (current_k->second->node->estimate() *
-                               first_stair_k[0]->node->estimate().inverse())(2, 3);
+      case STATE::FLOOR_CHANGE: {
+        double current_z_diff =
+            this->compute_height_change(current_k->second, stair_keyframes[0]);
 
-      std::cout << "z diff between the keyframe and first_stair_k: " << current_z_diff
-                << std::endl;
+        if (current_z_diff > 1.0) {
+          CURRENT_STATUS = STATE::ASCENDING;
+          stair_keyframes.push_back(current_k->second);
+        } else if (current_z_diff < -1.0) {
+          CURRENT_STATUS = STATE::DESCENDING;
+          stair_keyframes.push_back(current_k->second);
+        } else {
+          CURRENT_STATUS = STATE::ON_FLOOR;
+          stair_keyframes.clear();
+        }
+        prev_z_diff = current_z_diff;
+        break;
+      }
 
-      delta_diff = current_z_diff - prev_z_diff;
-      std::cout << "delta_diff: " << delta_diff << std::endl;
-      std::cout << "num_k_added: " << num_k_added << std::endl;
+      case STATE::ASCENDING: {
+        double current_z_diff =
+            this->compute_height_change(current_k->second, stair_keyframes[0]);
+        double delta_diff = current_z_diff - prev_z_diff;
 
-      if (current_z_diff > 1.0 && !on_stairs) {
-        std::cout << "climbing stairs " << std::endl;
-        on_stairs = true;
-        num_k_added = 0;
-      } else if (on_stairs && num_k_added < 1) {
-        std::cout << "still climbing stairs " << std::endl;
-        num_k_added++;
-      } else if (on_stairs && num_k_added >= 1) {
         if (fabs(delta_diff) < 0.5) {
-          std::cout << "on new floor level" << std::endl;
-          on_stairs = false;
-          // publish the new floor message with all the relevant kfs information
+          CURRENT_STATUS = STATE::ON_FLOOR;
+          stair_keyframes.push_back(current_k->second);
           publish_floor_keyframe_info();
-        } else
-          num_k_added++;
+          break;
+        }
+        prev_z_diff = current_z_diff;
+        break;
       }
-      prev_z_diff = current_z_diff;
-    }
 
+      case STATE::DESCENDING: {
+        double current_z_diff =
+            this->compute_height_change(current_k->second, stair_keyframes[0]);
+        double delta_diff = current_z_diff - prev_z_diff;
+
+        if (fabs(delta_diff) < 0.5) {
+          CURRENT_STATUS = STATE::ON_FLOOR;
+          stair_keyframes.push_back(current_k->second);
+          publish_floor_keyframe_info();
+          break;
+        }
+        prev_z_diff = current_z_diff;
+        break;
+      }
+
+      default:
+        break;
+    }
     new_k_added = false;
   }
 
-  void publish_floor_keyframe_info() {
-    // first get all keyframes that belong to stairs
+  static double compute_height_change(const KeyFrame::Ptr current_k,
+                                      const KeyFrame::Ptr prev_k) {
+    return (current_k->node->estimate() * prev_k->node->estimate().inverse())(2, 3);
+  }
 
-    num_k_added = 0;
-    first_stair_k.clear();
+  void publish_floor_keyframe_info() {
+    // publish all the keyframe ids on stairs
+    std::cout << " keyframes on the stairs are: " << std::endl;
+    for (const auto& keyframe : stair_keyframes) {
+      std::cout << "id " << keyframe->id() << std::endl;
+    }
+    stair_keyframes.clear();
   }
 
  private:
@@ -370,6 +404,13 @@ class FloorPlanNode : public rclcpp::Node {
   rclcpp::CallbackGroup::SharedPtr callback_group_keyframe_timer;
 
  private:
+  enum STATE {
+    ASCENDING = 0,
+    DESCENDING = 1,
+    ON_FLOOR = 2,
+    FLOOR_CHANGE = 3
+  } CURRENT_STATUS;
+
   rclcpp::TimerBase::SharedPtr floor_plan_timer;
   rclcpp::TimerBase::SharedPtr floor_change_det_timer;
   int accum_keyframes;
@@ -380,12 +421,10 @@ class FloorPlanNode : public rclcpp::Node {
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
   std::map<int, s_graphs::KeyFrame::Ptr> keyframes;
-  std::vector<KeyFrame::Ptr> first_stair_k;
+  std::vector<KeyFrame::Ptr> stair_keyframes;
   int floor_level;
 
-  bool new_k_added, on_stairs;
-  int num_k_added;
-  double delta_diff;
+  bool new_k_added;
   double prev_z_diff;
   std::mutex map_plane_mutex;
   std::mutex keyframe_mutex;
