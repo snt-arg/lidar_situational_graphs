@@ -64,6 +64,7 @@ class FloorPlanNode : public rclcpp::Node {
     floor_level = 0;
     new_k_added = false;
     prev_z_diff = 0.0;
+    floor_height = -1;
     CURRENT_STATUS = STATE::ON_FLOOR;
 
     room_analyzer_params params{
@@ -118,11 +119,14 @@ class FloorPlanNode : public rclcpp::Node {
     floor_data_pub = this->create_publisher<s_graphs::msg::RoomData>(
         "floor_plan/floor_data", 1, pub_opt);
 
+    stair_keyframes_pub = this->create_publisher<reasoning_msgs::msg::GraphKeyframes>(
+        "floor_plane/stair_keyframes", 1, pub_opt);
+
     callback_group_floor_timer =
         this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
     floor_plan_timer =
-        create_wall_timer(std::chrono::seconds(10),
+        create_wall_timer(std::chrono::seconds(1),
                           std::bind(&FloorPlanNode::floor_plan_callback, this),
                           callback_group_floor_timer);
 
@@ -175,6 +179,7 @@ class FloorPlanNode : public rclcpp::Node {
         keyframe_mutex.lock();
         keyframes.insert(
             {current_keyframe.id(), std::make_shared<KeyFrame>(current_keyframe)});
+        if (floor_height == -1) floor_height = current_keyframe.node->estimate()(2, 3);
         new_k_added = true;
         keyframe_mutex.unlock();
       } else {
@@ -279,13 +284,14 @@ class FloorPlanNode : public rclcpp::Node {
         current_x_vert_planes, current_y_vert_planes, floor_plane_candidates_vec);
 
     geometry_msgs::msg::Pose floor_center;
+
     if (floor_plane_candidates_vec.size() == 4) {
       floor_center = PlaneUtils::room_center(floor_plane_candidates_vec[0],
                                              floor_plane_candidates_vec[1],
                                              floor_plane_candidates_vec[2],
                                              floor_plane_candidates_vec[3]);
 
-      if (CURRENT_STATUS == ON_FLOOR) {
+      if (CURRENT_STATUS == ON_FLOOR && !keyframes.empty()) {
         s_graphs::msg::RoomData floor_data_msg;
         floor_data_msg.header.stamp = this->now();
         floor_data_msg.id = floor_level;
@@ -294,9 +300,8 @@ class FloorPlanNode : public rclcpp::Node {
         floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[2]);
         floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[3]);
         floor_data_msg.room_center = floor_center;
-        // publish floor height as the last captured k height
-        floor_data_msg.room_center.position.z =
-            keyframes.rbegin()->second->node->estimate()(2, 3);
+        // publish floor height as the first captured k height of that floor
+        floor_data_msg.room_center.position.z = floor_height;
         floor_data_pub->publish(floor_data_msg);
       }
     }
@@ -345,6 +350,7 @@ class FloorPlanNode : public rclcpp::Node {
         if (fabs(delta_diff) < 0.5) {
           CURRENT_STATUS = STATE::ON_FLOOR;
           stair_keyframes.push_back(current_k->second);
+          floor_height = current_k->second->node->estimate()(2, 3);
           publish_floor_keyframe_info();
           break;
         }
@@ -360,6 +366,7 @@ class FloorPlanNode : public rclcpp::Node {
         if (fabs(delta_diff) < 0.5) {
           CURRENT_STATUS = STATE::ON_FLOOR;
           stair_keyframes.push_back(current_k->second);
+          floor_height = current_k->second->node->estimate()(2, 3);
           publish_floor_keyframe_info();
           break;
         }
@@ -380,10 +387,14 @@ class FloorPlanNode : public rclcpp::Node {
 
   void publish_floor_keyframe_info() {
     // publish all the keyframe ids on stairs
-    std::cout << " keyframes on the stairs are: " << std::endl;
+    reasoning_msgs::msg::GraphKeyframes stair_keyframes_msg;
     for (const auto& keyframe : stair_keyframes) {
-      std::cout << "id " << keyframe->id() << std::endl;
+      reasoning_msgs::msg::Keyframe keyframe_msg;
+      keyframe_msg.id = keyframe->id();
+      stair_keyframes_msg.keyframes.push_back(keyframe_msg);
     }
+
+    stair_keyframes_pub->publish(stair_keyframes_msg);
     stair_keyframes.clear();
   }
 
@@ -396,6 +407,7 @@ class FloorPlanNode : public rclcpp::Node {
 
   rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr all_rooms_data_pub;
   rclcpp::Publisher<s_graphs::msg::RoomData>::SharedPtr floor_data_pub;
+  rclcpp::Publisher<reasoning_msgs::msg::GraphKeyframes>::SharedPtr stair_keyframes_pub;
 
   rclcpp::CallbackGroup::SharedPtr callback_group_subscriber;
   rclcpp::CallbackGroup::SharedPtr callback_group_publisher;
@@ -426,6 +438,7 @@ class FloorPlanNode : public rclcpp::Node {
 
   bool new_k_added;
   double prev_z_diff;
+  double floor_height;
   std::mutex map_plane_mutex;
   std::mutex keyframe_mutex;
   std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue,
