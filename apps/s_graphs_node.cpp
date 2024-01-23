@@ -1370,7 +1370,7 @@ class SGraphsNode : public rclcpp::Node {
     s_graphs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& x_vert_plane : x_vert_planes_snapshot) {
-      if (!x_vert_plane.floor_level != current_floor_level) continue;
+      if (x_vert_plane.floor_level != current_floor_level) continue;
 
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
@@ -1398,7 +1398,7 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& y_vert_plane : y_vert_planes_snapshot) {
-      if (!y_vert_plane.floor_level != current_floor_level) continue;
+      if (y_vert_plane.floor_level != current_floor_level) continue;
 
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
