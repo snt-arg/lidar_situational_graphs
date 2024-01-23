@@ -125,14 +125,24 @@ class FloorMapper {
   /**
    * @brief
    *
+   * @param floor_center
+   * @param floors_vec
+   * @return int
+   */
+  int associate_floors(const Eigen::Vector3d& floor_center,
+                       const std::unordered_map<int, Floors>& floors_vec);
+
+  /**
+   * @brief
    * @param graph_slam
    * @param room_data
    * @param floors_vec
    * @param rooms_vec
    * @param x_infinite_rooms
    * @param y_infinite_rooms
+   * @return int
    */
-  void factor_floor_node(
+  int factor_floor_node(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const s_graphs::msg::RoomData room_data,
       std::unordered_map<int, s_graphs::Floors>& floors_vec,
@@ -188,6 +198,7 @@ class FloorMapper {
 
  private:
   int current_floor_level;
+  double floor_vertical_threshold, floor_horizontal_threshold;
 };
 
 }  // namespace s_graphs
