@@ -223,6 +223,14 @@ class GraphUtils {
    * @return false
    */
   static bool get_keyframe_marg_data(g2o::VertexSE3* vertex_se3);
+
+  /**
+   * @brief
+   * @param ids
+   * @param keyframes
+   */
+  static void set_stair_keyframes(const std::vector<int>& ids,
+                                  const std::map<int, KeyFrame::Ptr>& keyframes);
 };
 
 }  // namespace s_graphs

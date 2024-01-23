@@ -1038,4 +1038,19 @@ bool GraphUtils::get_keyframe_marg_data(g2o::VertexSE3* vertex_se3) {
   return marginalized;
 }
 
+void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,
+                                     const std::map<int, KeyFrame::Ptr>& keyframes) {
+  for (int id : ids) {
+    auto keyframe_vert_data =
+        dynamic_cast<OptimizationData*>(keyframes.at(id)->node->userData());
+    if (keyframe_vert_data) {
+      keyframe_vert_data->set_stair_node_info(true);
+    } else {
+      OptimizationData* data = new OptimizationData();
+      data->set_stair_node_info(true);
+      keyframes.at(id)->node->setUserData(data);
+    }
+  }
+}
+
 }  // namespace s_graphs

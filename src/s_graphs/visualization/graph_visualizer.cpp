@@ -179,27 +179,34 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     if (current_key_data) {
       bool marginalized = false;
       current_key_data->get_marginalized_info(marginalized);
+      bool stair_keyframe = false;
+      current_key_data->get_stair_node_info(stair_keyframe);
       if (marginalized) {
         traj_marker.colors[i].r = 1.0;
         traj_marker.colors[i].g = 0.0;
         traj_marker.colors[i].b = 0.0;
-        traj_marker.colors[i].a = 1.0;
-      } else {
+        traj_marker.colors[i].a = 0.8;
+      } else if (stair_keyframe) {
         traj_marker.colors[i].r = 0.0;
         traj_marker.colors[i].g = 0.0;
+        traj_marker.colors[i].b = 1.0;
+        traj_marker.colors[i].a = 0.8;
+      } else {
+        traj_marker.colors[i].r = 0.0;
+        traj_marker.colors[i].g = (1.0 * keyframes[i]->floor_level * 100) / 255;
         traj_marker.colors[i].b = 0.0;
-        traj_marker.colors[i].a = 1.0;
+        traj_marker.colors[i].a = 0.8;
       }
     } else if (keyframes[i]->node->fixed()) {
       traj_marker.colors[i].r = 0.0;
       traj_marker.colors[i].g = 0.0;
       traj_marker.colors[i].b = 1.0;
-      traj_marker.colors[i].a = 1.0;
+      traj_marker.colors[i].a = 0.8;
     } else {
       traj_marker.colors[i].r = 0.0;
-      traj_marker.colors[i].g = 0.0;
+      traj_marker.colors[i].g = (1.0 * keyframes[i]->floor_level * 100) / 255;
       traj_marker.colors[i].b = 0.0;
-      traj_marker.colors[i].a = 1.0;
+      traj_marker.colors[i].a = 0.8;
     }
 
     if (keyframes[i]->acceleration) {

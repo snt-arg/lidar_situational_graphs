@@ -139,10 +139,12 @@ int FloorMapper::factor_floor_node(
   det_floor.graph_id = graph_slam->retrieve_local_nbr_of_vertices();
   floor_node = graph_slam->add_floor_node(floor_pose);
   det_floor.id = det_floor.graph_id;
-  det_floor.plane_x1_id = room_data.x_planes[0].id;
-  det_floor.plane_x2_id = room_data.x_planes[1].id;
-  det_floor.plane_y1_id = room_data.y_planes[0].id;
-  det_floor.plane_y2_id = room_data.y_planes[1].id;
+  if (!room_data.x_planes.empty() && !room_data.y_planes.empty()) {
+    det_floor.plane_x1_id = room_data.x_planes[0].id;
+    det_floor.plane_x2_id = room_data.x_planes[1].id;
+    det_floor.plane_y1_id = room_data.y_planes[0].id;
+    det_floor.plane_y2_id = room_data.y_planes[1].id;
+  }
   det_floor.node = floor_node;
   floors_vec.insert({det_floor.id, det_floor});
 

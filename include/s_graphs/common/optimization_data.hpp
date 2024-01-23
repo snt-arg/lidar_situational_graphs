@@ -34,6 +34,10 @@ class OptimizationData : public g2o::HyperGraph::Data {
     if (rep_node) marginalized = false;
   }
 
+  void get_stair_node_info(bool& value) { value = stair_node; }
+
+  void set_stair_node_info(bool value) { stair_node = value; }
+
   void get_loop_closure_info(bool& value) { value = loop_closure; }
 
   void set_loop_closure_info(bool value) {
@@ -61,6 +65,7 @@ class OptimizationData : public g2o::HyperGraph::Data {
   bool anchor_node = false;
   bool rep_node = false;
   bool artificial_edge = false;
+  bool stair_node = false;
 };
 }  // namespace s_graphs
 #endif  // OPTIMIZATION_DATA_HPP

@@ -245,6 +245,14 @@ class SGraphsNode : public rclcpp::Node {
         std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1),
         sub_opt);
 
+    stair_keyframes_sub =
+        this->create_subscription<reasoning_msgs::msg::GraphKeyframes>(
+            "floor_plan/stair_keyframes",
+            1,
+            std::bind(
+                &SGraphsNode::stairs_keyframes_callback, this, std::placeholders::_1),
+            sub_opt);
+
     if (this->get_parameter("enable_gps").get_parameter_value().get<bool>()) {
       gps_sub = this->create_subscription<geographic_msgs::msg::GeoPointStamped>(
           "gps/geopoint",
@@ -556,7 +564,6 @@ class SGraphsNode : public rclcpp::Node {
    */
   void map2map_transform_callback(
       const geometry_msgs::msg::PoseStamped::SharedPtr pose_msg) {
-    std::cout << "inside callback" << std::endl;
     Eigen::Matrix3f mat3 = Eigen::Quaternionf(pose_msg->pose.orientation.w,
                                               pose_msg->pose.orientation.x,
                                               pose_msg->pose.orientation.y,
@@ -593,9 +600,18 @@ class SGraphsNode : public rclcpp::Node {
 
       floor_data_queue.pop_front();
     }
+  }
 
-    // TODO:HB if floor vec was filled for the first time add floor level to all
-    // previous planes and rooms
+  void stairs_keyframes_callback(
+      const reasoning_msgs::msg::GraphKeyframes::SharedPtr stair_keyframes_msg) {
+    // get the keyframe ids and update their semantic of belonging to new floor
+    std::vector<int> stair_keyframe_ids;
+    for (auto& stair_keyframe_msg : stair_keyframes_msg->keyframes) {
+      stair_keyframe_ids.push_back(stair_keyframe_msg.id);
+    }
+
+    GraphUtils::set_stair_keyframes(stair_keyframe_ids, keyframes);
+    flush_floor_data_queue();
   }
 
   /**
@@ -1753,6 +1769,8 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
       map_2map_transform_sub;
+  rclcpp::Subscription<reasoning_msgs::msg::GraphKeyframes>::SharedPtr
+      stair_keyframes_sub;
 
   std::mutex trans_odom2map_mutex;
   Eigen::Matrix4f trans_odom2map, trans_map2map;
