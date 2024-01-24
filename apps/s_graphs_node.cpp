@@ -488,7 +488,7 @@ class SGraphsNode : public rclcpp::Node {
 
  private:
   /**
-   * @brief receive the raw odom msg to publish the corrected odom after s
+   * @brief receive the raw odom msg to publish the corrected odom after
    *
    */
   void raw_odom_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
@@ -506,7 +506,6 @@ class SGraphsNode : public rclcpp::Node {
         matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id);
     publish_corrected_odom(pose_stamped_corrected);
 
-    // this is dirty but temp solution for no /clock topic in ros2
     if (use_map2map_transform) {
       Eigen::Matrix4f current_map2map_trans = map2map_trans.matrix().cast<float>();
       odom2map_transform =
@@ -559,7 +558,7 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief receive the between loaded and new map frame
+   * @brief receive the transform between loaded and new map frame
    * @param map2odom_pose_msg
    */
   void map2map_transform_callback(
@@ -600,6 +599,20 @@ class SGraphsNode : public rclcpp::Node {
 
       floor_data_queue.pop_front();
     }
+  }
+
+  void add_first_floor_node() {
+    s_graphs::msg::RoomData floor_data_msg;
+    floor_data_msg.room_center.position.x = 0;
+    floor_data_msg.room_center.position.y = 0;
+    floor_data_msg.room_center.position.z = 0;
+
+    floor_mapper->lookup_floors(covisibility_graph,
+                                floor_data_msg,
+                                floors_vec,
+                                rooms_vec,
+                                x_infinite_rooms,
+                                y_infinite_rooms);
   }
 
   void stairs_keyframes_callback(
@@ -766,6 +779,9 @@ class SGraphsNode : public rclcpp::Node {
       return;
     }
 
+    // add the first floor node at height 0 before adding any keyframes
+    if (keyframes.empty() && floors_vec.empty()) add_first_floor_node();
+
     double accum_d = keyframe_updater->get_accum_distance();
     if (use_map2map_transform) {
       Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
@@ -778,6 +794,8 @@ class SGraphsNode : public rclcpp::Node {
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     } else {
+      std::cout << "keyframe floor level: " << floor_mapper->get_floor_level()
+                << std::endl;
       KeyFrame::Ptr keyframe(
           new KeyFrame(stamp, odom, accum_d, cloud, floor_mapper->get_floor_level()));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
@@ -813,7 +831,6 @@ class SGraphsNode : public rclcpp::Node {
 
     // perform planar segmentation
     for (int i = 0; i < new_keyframes.size(); i++) {
-      // perform planar segmentation
       if (extract_planar_surfaces) {
         std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
             plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
@@ -906,10 +923,6 @@ class SGraphsNode : public rclcpp::Node {
     gps_queue.push_back(gps_msg);
   }
 
-  /**
-   * @brief
-   * @return
-   */
   bool flush_gps_queue() {
     std::lock_guard<std::mutex> lock(gps_queue_mutex);
 
@@ -941,8 +954,7 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief this methods adds all the data in the queues to the pose graph, and then
-   * optimizes the pose graph
+   * @brief this methods adds all the data in the queues to the pose graph
    * @param event
    */
   void keyframe_update_timer_callback() {
@@ -1079,8 +1091,7 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief this methods adds all the data in the queues to the pose graph, and then
-   * optimizes the pose graph
+   * @brief this methods optimizes the pose graph
    * @param event
    */
   void optimization_timer_callback() {

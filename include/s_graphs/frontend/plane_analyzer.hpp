@@ -55,6 +55,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "s_graphs/common/plane_utils.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "std_msgs/msg/color_rgba.hpp"
 

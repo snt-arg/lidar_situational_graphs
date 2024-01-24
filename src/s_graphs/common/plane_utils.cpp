@@ -373,4 +373,91 @@ double PlaneUtils::plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2) {
   double maha_dist = sqrt(error.transpose() * information * error);
   return maha_dist;
 }
+
+std_msgs::msg::ColorRGBA PlaneUtils::random_color() {
+  std_msgs::msg::ColorRGBA color;
+  color.r = rand() % 256;
+  color.b = rand() % 256;
+  color.g = rand() % 256;
+
+  return color;
+}
+
+std::vector<double> PlaneUtils::random_color_vec() {
+  std::vector<double> color;
+  color.resize(3);
+  color[0] = rand() % 256;
+  color[1] = rand() % 256;
+  color[2] = rand() % 256;
+
+  return color;
+}
+
+std_msgs::msg::ColorRGBA PlaneUtils::rainbow_color_map(double h) {
+  std_msgs::msg::ColorRGBA color;
+  color.a = 255;
+  // blend over HSV-values (more colors)
+
+  // if (h == 0) {
+  //   color.r = 0;
+  //   color.g = 0;
+  //   color.b = 0;
+  //   return color;
+  // }
+
+  double s = 1.0;
+  double v = 1.0;
+
+  h -= floor(h);
+  h *= 6;
+  int i;
+  double m, n, f;
+
+  i = floor(h);
+  f = h - i;
+  if (!(i & 1)) f = 1 - f;  // if i is even
+  m = v * (1 - s);
+  n = v * (1 - s * f);
+
+  switch (i) {
+    case 6:
+    case 0:
+      color.r = 255 * v;
+      color.g = 255 * n;
+      color.b = 255 * m;
+      break;
+    case 1:
+      color.r = 255 * n;
+      color.g = 255 * v;
+      color.b = 255 * m;
+      break;
+    case 2:
+      color.r = 255 * m;
+      color.g = 255 * v;
+      color.b = 255 * n;
+      break;
+    case 3:
+      color.r = 255 * m;
+      color.g = 255 * n;
+      color.b = 255 * v;
+      break;
+    case 4:
+      color.r = 255 * n;
+      color.g = 255 * m;
+      color.b = 255 * v;
+      break;
+    case 5:
+      color.r = 255 * v;
+      color.g = 255 * m;
+      color.b = 255 * n;
+      break;
+    default:
+      color.r = 255;
+      color.g = 127;
+      color.b = 127;
+      break;
+  }
+  return color;
+}
+
 }  // namespace s_graphs

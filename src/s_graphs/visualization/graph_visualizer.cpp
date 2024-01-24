@@ -176,6 +176,12 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
     auto current_key_data =
         dynamic_cast<OptimizationData*>(keyframes[i]->node->userData());
+
+    auto current_floor = std::find_if(
+        floors_vec.begin(),
+        floors_vec.end(),
+        boost::bind(&s_graphs::Floors::id, _1) == keyframes[i]->floor_level);
+
     if (current_key_data) {
       bool marginalized = false;
       current_key_data->get_marginalized_info(marginalized);
@@ -185,28 +191,28 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         traj_marker.colors[i].r = 1.0;
         traj_marker.colors[i].g = 0.0;
         traj_marker.colors[i].b = 0.0;
-        traj_marker.colors[i].a = 0.8;
+        traj_marker.colors[i].a = 1.0;
       } else if (stair_keyframe) {
         traj_marker.colors[i].r = 0.0;
         traj_marker.colors[i].g = 0.0;
         traj_marker.colors[i].b = 1.0;
-        traj_marker.colors[i].a = 0.8;
+        traj_marker.colors[i].a = 1.0;
       } else {
-        traj_marker.colors[i].r = 0.0;
-        traj_marker.colors[i].g = (1.0 * keyframes[i]->floor_level * 100) / 255;
-        traj_marker.colors[i].b = 0.0;
-        traj_marker.colors[i].a = 0.8;
+        traj_marker.colors[i].r = current_floor->color[0] / 255;
+        traj_marker.colors[i].g = current_floor->color[1] / 255;
+        traj_marker.colors[i].b = current_floor->color[2] / 255;
+        traj_marker.colors[i].a = 1.0;
       }
     } else if (keyframes[i]->node->fixed()) {
       traj_marker.colors[i].r = 0.0;
       traj_marker.colors[i].g = 0.0;
       traj_marker.colors[i].b = 1.0;
-      traj_marker.colors[i].a = 0.8;
+      traj_marker.colors[i].a = 1.0;
     } else {
-      traj_marker.colors[i].r = 0.0;
-      traj_marker.colors[i].g = (1.0 * keyframes[i]->floor_level * 100) / 255;
-      traj_marker.colors[i].b = 0.0;
-      traj_marker.colors[i].a = 0.8;
+      traj_marker.colors[i].r = current_floor->color[0] / 255;
+      traj_marker.colors[i].g = current_floor->color[1] / 255;
+      traj_marker.colors[i].b = current_floor->color[2] / 255;
+      traj_marker.colors[i].a = 1.0;
     }
 
     if (keyframes[i]->acceleration) {

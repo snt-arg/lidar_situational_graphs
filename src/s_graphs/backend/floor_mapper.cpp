@@ -34,9 +34,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 namespace s_graphs {
 
 FloorMapper::FloorMapper() {
-  // initial floor id will always be set to zero
-  int floor_id = 0;
-  set_floor_level(floor_id);
   floor_horizontal_threshold = 0.5;
   floor_vertical_threshold = 1.0;
 }
@@ -50,25 +47,18 @@ void FloorMapper::lookup_floors(
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  if (floors_vec.empty())
-    factor_floor_node(graph_slam,
-                      room_data,
-                      floors_vec,
-                      rooms_vec,
-                      x_infinite_rooms,
-                      y_infinite_rooms);
-
   Eigen::Vector3d floor_center(room_data.room_center.position.x,
                                room_data.room_center.position.y,
                                room_data.room_center.position.z);
   int data_association = associate_floors(floor_center, floors_vec);
   if (floors_vec.empty()) {
-    factor_floor_node(graph_slam,
-                      room_data,
-                      floors_vec,
-                      rooms_vec,
-                      x_infinite_rooms,
-                      y_infinite_rooms);
+    int floor_id = factor_floor_node(graph_slam,
+                                     room_data,
+                                     floors_vec,
+                                     rooms_vec,
+                                     x_infinite_rooms,
+                                     y_infinite_rooms);
+    set_floor_level(floor_id);
   } else if (data_association == -1) {
     int floor_id = factor_floor_node(graph_slam,
                                      room_data,
@@ -146,6 +136,12 @@ int FloorMapper::factor_floor_node(
     det_floor.plane_y2_id = room_data.y_planes[1].id;
   }
   det_floor.node = floor_node;
+  if (floors_vec.empty()) {
+    det_floor.color.push_back(0);
+    det_floor.color.push_back(0);
+    det_floor.color.push_back(0);
+  } else
+    det_floor.color = PlaneUtils::random_color_vec();
   floors_vec.insert({det_floor.id, det_floor});
 
   factor_floor_room_nodes(graph_slam,

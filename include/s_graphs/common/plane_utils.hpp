@@ -44,6 +44,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "s_graphs/msg/planes_data.hpp"
+#include "std_msgs/msg/color_rgba.hpp"
 
 namespace s_graphs {
 
@@ -227,6 +228,27 @@ class PlaneUtils {
    * @return
    */
   static double plane_difference(g2o::Plane3D plane1, g2o::Plane3D plane2);
+
+  /**
+   * @brief
+   *
+   * @return std::vector<double>
+   */
+  static std::vector<double> random_color_vec();
+
+  /**
+   * @brief
+   *
+   * @return std_msgs::msg::ColorRGBA
+   */
+  static std_msgs::msg::ColorRGBA random_color();
+
+  /**
+   * @brief
+   *
+   * @return std_msgs::msg::ColorRGBA
+   */
+  static std_msgs::msg::ColorRGBA rainbow_color_map(double h);
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP
