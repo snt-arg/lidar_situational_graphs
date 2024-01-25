@@ -112,7 +112,13 @@ class FloorMapper {
    *
    * @return * int
    */
-  int get_floor_level() { return current_floor_level; }
+  inline int get_floor_level() { return current_floor_level; }
+
+  inline bool get_floor_level_update_info() {
+    bool floor_updated = floor_level_updated;
+    if (floor_level_updated) floor_level_updated = false;
+    return floor_updated;
+  }
 
  private:
   /**
@@ -120,7 +126,9 @@ class FloorMapper {
    *
    * @param floor_id
    */
-  void set_floor_level(const int& floor_id) { current_floor_level = floor_id; }
+  inline void set_floor_level(const int& floor_id) { current_floor_level = floor_id; }
+
+  inline void update_floor_level(const bool& value) { floor_level_updated = value; }
 
   /**
    * @brief
@@ -198,6 +206,7 @@ class FloorMapper {
 
  private:
   int current_floor_level;
+  bool floor_level_updated;
   double floor_vertical_threshold, floor_horizontal_threshold;
 };
 

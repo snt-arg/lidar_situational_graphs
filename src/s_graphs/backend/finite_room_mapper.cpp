@@ -81,6 +81,7 @@ bool FiniteRoomMapper::lookup_rooms(
     return false;
   }
 
+  int current_floor_level = found_x_plane1->second.floor_level;
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
   bool duplicate_found = false;
@@ -105,6 +106,7 @@ bool FiniteRoomMapper::lookup_rooms(
       matched_x_infinite_room = current_x_infinite_room.second;
       break;
     }
+    if (current_floor_level != current_x_infinite_room.second.floor_level) continue;
     float dist_room_x_inf_room =
         sqrt(pow(room_data.room_center.position.x -
                      current_x_infinite_room.second.node->estimate().translation()(0),
@@ -129,7 +131,7 @@ bool FiniteRoomMapper::lookup_rooms(
       matched_y_infinite_room = current_y_infinite_room.second;
       break;
     }
-
+    if (current_floor_level != current_y_infinite_room.second.floor_level) continue;
     float dist_room_y_inf_room =
         sqrt(pow(room_data.room_center.position.x -
                      current_y_infinite_room.second.node->estimate().translation()(0),
@@ -371,6 +373,7 @@ bool FiniteRoomMapper::factor_rooms(
     det_room.plane_y2_node = (found_y_plane2->second).plane_node;
     det_room.cluster_array = cluster_array;
     det_room.local_graph = std::make_shared<GraphSLAM>();
+    det_room.floor_level = (found_x_plane1->second).floor_level;
     rooms_vec.insert({det_room.id, det_room});
 
     auto edge_room_planes =
@@ -494,6 +497,7 @@ int FiniteRoomMapper::associate_rooms(
     const VerticalPlanes& y_plane2,
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
         detected_mapped_plane_pairs) {
+  int current_floor_level = x_plane1.floor_level;
   float min_dist = 100;
   int data_association;
   data_association = -1;
@@ -501,6 +505,8 @@ int FiniteRoomMapper::associate_rooms(
   bool y_plane1_min_segment = false, y_plane2_min_segment = false;
 
   for (const auto& room : rooms_vec) {
+    if (room.second.floor_level != current_floor_level) continue;
+
     float diff_x =
         room_center.translation()(0) - room.second.node->estimate().translation()(0);
     float diff_y =
@@ -718,6 +724,7 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     for (int i = 0; i < matched_y_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
           matched_y_infinite_room.cluster_array.markers[i]);
+    det_room.floor_level = (matched_x_infinite_room).floor_level;
     rooms_vec.insert({det_room.id, det_room});
     return;
   } else
@@ -785,6 +792,7 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
           matched_x_infinite_room.cluster_array.markers[i]);
     det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
+    det_room.floor_level = (matched_x_infinite_room).floor_level;
     rooms_vec.insert({det_room.id, det_room});
     return;
   } else
@@ -854,6 +862,7 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
           matched_y_infinite_room.cluster_array.markers[i]);
     det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
+    det_room.floor_level = (matched_y_infinite_room).floor_level;
     rooms_vec.insert({det_room.id, det_room});
     return;
   } else

@@ -59,6 +59,7 @@ struct Floors {
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   g2o::VertexFloor* node;  // node instance
   std::vector<double> color;
+  std::vector<int> stair_keyframe_ids;
 };
 
 }  // namespace s_graphs

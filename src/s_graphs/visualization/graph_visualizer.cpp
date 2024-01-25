@@ -792,7 +792,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     if (room_snapshot[i].sub_room) continue;
 
     for (auto& room : room_snapshot) {
-      if (room.id == room_snapshot[i].id) continue;
+      if (room.id == room_snapshot[i].id ||
+          room.floor_level != room_snapshot[i].floor_level)
+        continue;
       float dist_room_room =
           sqrt(pow(room.node->estimate().translation()(0) -
                        room_snapshot[i].node->estimate().translation()(0),
@@ -941,7 +943,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_line_marker.lifetime = duration_floor;
 
       for (const auto& room : room_snapshot) {
-        if (room.sub_room) continue;
+        if (room.sub_room || room.floor_level != floor.id) continue;
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
@@ -956,7 +958,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         floor_line_marker.points.push_back(p2);
       }
       for (const auto& x_infinite_room : x_infinite_room_snapshot) {
-        if (x_infinite_room.id == -1 || x_infinite_room.sub_infinite_room) continue;
+        if (x_infinite_room.id == -1 || x_infinite_room.sub_infinite_room ||
+            x_infinite_room.floor_level != floor.id)
+          continue;
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
@@ -971,7 +975,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         floor_line_marker.points.push_back(p2);
       }
       for (const auto& y_infinite_room : y_infinite_room_snapshot) {
-        if (y_infinite_room.id == -1 || y_infinite_room.sub_infinite_room) continue;
+        if (y_infinite_room.id == -1 || y_infinite_room.sub_infinite_room ||
+            y_infinite_room.floor_level != floor.id)
+          continue;
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;

@@ -70,20 +70,24 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     const std::unordered_map<int, Rooms>& rooms_vec) {
   bool same_floor_level;
+  std::unordered_map<int, s_graphs::VerticalPlanes>::const_iterator found_plane1;
+  std::unordered_map<int, s_graphs::VerticalPlanes>::const_iterator found_plane2;
+
   if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-    auto found_plane1 = x_vert_planes.find(room_data.x_planes[0].id);
-    auto found_plane2 = x_vert_planes.find(room_data.x_planes[1].id);
+    found_plane1 = x_vert_planes.find(room_data.x_planes[0].id);
+    found_plane2 = x_vert_planes.find(room_data.x_planes[1].id);
     same_floor_level =
         (found_plane1->second.floor_level == found_plane2->second.floor_level);
   } else if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
-    auto found_plane1 = y_vert_planes.find(room_data.y_planes[0].id);
-    auto found_plane2 = y_vert_planes.find(room_data.y_planes[1].id);
+    found_plane1 = y_vert_planes.find(room_data.y_planes[0].id);
+    found_plane2 = y_vert_planes.find(room_data.y_planes[1].id);
     same_floor_level =
         (found_plane1->second.floor_level == found_plane2->second.floor_level);
   }
 
   if (!same_floor_level) return false;
 
+  int current_floor_level = found_plane1->second.floor_level;
   Eigen::Isometry3d room_center;
   Eigen::Quaterniond room_quat;
   bool duplicate_found = false;
@@ -121,6 +125,8 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
         matched_room = current_room.second;
         break;
       }
+
+      if (current_room.second.floor_level != current_floor_level) continue;
 
       float dist_x_inf_room_room =
           sqrt(pow(room_data.room_center.position.x -
@@ -186,6 +192,8 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
         matched_room = current_room.second;
         break;
       }
+
+      if (current_room.second.floor_level != current_floor_level) continue;
 
       float dist_y_inf_room_room =
           sqrt(pow(room_data.room_center.position.x -
@@ -335,6 +343,7 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane1_node = (found_plane1->second).plane_node;
       det_infinite_room.plane2_node = (found_plane2->second).plane_node;
       det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
+      det_infinite_room.floor_level = (found_plane1->second).floor_level;
       x_infinite_rooms.insert({det_infinite_room.id, det_infinite_room});
 
       auto edge_room_plane =
@@ -430,6 +439,7 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
       det_infinite_room.plane1_node = (found_plane1->second).plane_node;
       det_infinite_room.plane2_node = (found_plane2->second).plane_node;
       det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
+      det_infinite_room.floor_level = (found_plane1->second).floor_level;
       y_infinite_rooms.insert({det_infinite_room.id, det_infinite_room});
 
       auto edge_room_plane =
@@ -496,6 +506,7 @@ int InfiniteRoomMapper::associate_infinite_rooms(
     const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
         detected_mapped_plane_pairs) {
+  int current_floor_level = plane1.floor_level;
   float min_dist = 100;
   bool plane1_min_segment = false, plane2_min_segment = false;
 
@@ -504,6 +515,7 @@ int InfiniteRoomMapper::associate_infinite_rooms(
 
   if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     for (const auto& x_inf_room : x_infinite_rooms) {
+      if (x_inf_room.second.floor_level != current_floor_level) continue;
       float dist = sqrt(pow(room_center.translation()(0) -
                                 x_inf_room.second.node->estimate().translation()(0),
                             2));
@@ -572,6 +584,7 @@ int InfiniteRoomMapper::associate_infinite_rooms(
 
   if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     for (const auto& y_inf_room : y_infinite_rooms) {
+      if (y_inf_room.second.floor_level != current_floor_level) continue;
       float dist = sqrt(pow(room_center.translation()(1) -
                                 y_inf_room.second.node->estimate().translation()(1),
                             2));

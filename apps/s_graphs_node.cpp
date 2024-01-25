@@ -613,26 +613,20 @@ class SGraphsNode : public rclcpp::Node {
                                 rooms_vec,
                                 x_infinite_rooms,
                                 y_infinite_rooms);
+    current_floor_level = floor_mapper->get_floor_level();
   }
 
   void stairs_keyframes_callback(
       const reasoning_msgs::msg::GraphKeyframes::SharedPtr stair_keyframes_msg) {
     // get the keyframe ids and update their semantic of belonging to new floor
-    std::vector<int> stair_keyframe_ids;
     for (auto& stair_keyframe_msg : stair_keyframes_msg->keyframes) {
-      stair_keyframe_ids.push_back(stair_keyframe_msg.id);
+      floors_vec.at(current_floor_level)
+          .stair_keyframe_ids.push_back(stair_keyframe_msg.id);
     }
 
-    GraphUtils::set_stair_keyframes(stair_keyframe_ids, keyframes);
+    GraphUtils::set_stair_keyframes(
+        floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
     flush_floor_data_queue();
-    GraphUtils::update_node_floor_level(stair_keyframe_ids.back(),
-                                        floor_mapper->get_floor_level(),
-                                        keyframes,
-                                        x_vert_planes,
-                                        y_vert_planes,
-                                        rooms_vec,
-                                        x_infinite_rooms,
-                                        y_infinite_rooms);
   }
 
   /**
@@ -836,6 +830,20 @@ class SGraphsNode : public rclcpp::Node {
                                                        anchor_edge,
                                                        keyframe_hash);
     graph_mutex.unlock();
+
+    // if new floor was added update floor level of the new keyframes here
+    if (floor_mapper->get_floor_level_update_info()) {
+      GraphUtils::update_node_floor_level(
+          floors_vec.at(current_floor_level).stair_keyframe_ids.back(),
+          floor_mapper->get_floor_level(),
+          keyframes,
+          x_vert_planes,
+          y_vert_planes,
+          rooms_vec,
+          x_infinite_rooms,
+          y_infinite_rooms);
+      current_floor_level = floor_mapper->get_floor_level();
+    }
 
     // perform planar segmentation
     for (int i = 0; i < new_keyframes.size(); i++) {
@@ -1903,6 +1911,7 @@ class SGraphsNode : public rclcpp::Node {
   g2o::EdgeSE3* anchor_edge;
   std::map<int, KeyFrame::Ptr> keyframes;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
+  int current_floor_level;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
   std::unique_ptr<GraphSLAM> compressed_graph;

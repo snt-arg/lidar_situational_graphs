@@ -36,6 +36,7 @@ namespace s_graphs {
 FloorMapper::FloorMapper() {
   floor_horizontal_threshold = 0.5;
   floor_vertical_threshold = 1.0;
+  floor_level_updated = false;
 }
 
 FloorMapper::~FloorMapper() {}
@@ -67,6 +68,7 @@ void FloorMapper::lookup_floors(
                                      x_infinite_rooms,
                                      y_infinite_rooms);
     set_floor_level(floor_id);
+    update_floor_level(true);
   } else if (data_association != -1) {
     double floor_dist =
         sqrt(pow(floors_vec[data_association].node->estimate().translation()(0) -
@@ -195,6 +197,8 @@ void FloorMapper::factor_floor_room_nodes(
   remove_floor_room_nodes(graph_slam, floor_node);
 
   for (const auto& room : rooms_vec) {
+    if (room.second.floor_level != floor_node->id()) continue;
+
     Eigen::Vector2d measurement;
     measurement(0) =
         floor_pose.translation()(0) - room.second.node->estimate().translation()(0);
@@ -207,6 +211,8 @@ void FloorMapper::factor_floor_room_nodes(
   }
 
   for (const auto& x_infinite_room : x_infinite_rooms) {
+    if (x_infinite_room.second.floor_level != floor_node->id()) continue;
+
     Eigen::Vector2d measurement;
     measurement(0) = floor_pose.translation()(0) -
                      x_infinite_room.second.node->estimate().translation()(0);
@@ -219,6 +225,8 @@ void FloorMapper::factor_floor_room_nodes(
   }
 
   for (const auto& y_infinite_room : y_infinite_rooms) {
+    if (y_infinite_room.second.floor_level != floor_node->id()) continue;
+
     Eigen::Vector2d measurement;
     measurement(0) = floor_pose.translation()(0) -
                      y_infinite_room.second.node->estimate().translation()(0);
