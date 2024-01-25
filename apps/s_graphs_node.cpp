@@ -625,6 +625,14 @@ class SGraphsNode : public rclcpp::Node {
 
     GraphUtils::set_stair_keyframes(stair_keyframe_ids, keyframes);
     flush_floor_data_queue();
+    GraphUtils::update_node_floor_level(stair_keyframe_ids.back(),
+                                        floor_mapper->get_floor_level(),
+                                        keyframes,
+                                        x_vert_planes,
+                                        y_vert_planes,
+                                        rooms_vec,
+                                        x_infinite_rooms,
+                                        y_infinite_rooms);
   }
 
   /**

@@ -1053,4 +1053,82 @@ void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,
   }
 }
 
+void GraphUtils::update_node_floor_level(
+    const int& last_keyframe_id,
+    const int& current_floor_level,
+    const std::map<int, KeyFrame::Ptr>& keyframes,
+    std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+    std::unordered_map<int, Rooms>& rooms_vec,
+    std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms) {
+  std::vector<g2o::VertexPlane*> connected_planes;
+  auto it = keyframes.find(last_keyframe_id);
+  if (it != keyframes.end()) {
+    ++it;
+    for (; it != keyframes.end(); ++it) {
+      // change the floor level to the new floor level
+      it->second->floor_level = current_floor_level;
+
+      // get the connected planes and update their floor level
+      for (g2o::HyperGraph::EdgeSet::iterator e_it = it->second->node->edges().begin();
+           e_it != it->second->node->edges().end();
+           ++e_it) {
+        g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*e_it);
+        g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(e);
+        if (edge_se3_plane) {
+          auto plane = x_vert_planes.find(edge_se3_plane->vertices()[1]->id());
+          if (plane != x_vert_planes.end()) {
+            plane->second.floor_level = current_floor_level;
+            connected_planes.push_back(plane->second.plane_node);
+            continue;
+          } else {
+            auto plane = y_vert_planes.find(edge_se3_plane->vertices()[1]->id());
+            if (plane != y_vert_planes.end()) {
+              plane->second.floor_level = current_floor_level;
+              connected_planes.push_back(plane->second.plane_node);
+              continue;
+            }
+          }
+        }
+      }
+    }
+
+    // loop through the plane nodes to find connected rooms and change their floor level
+    for (const auto& connected_plane : connected_planes) {
+      for (g2o::HyperGraph::EdgeSet::iterator e_it = connected_plane->edges().begin();
+           e_it != connected_plane->edges().end();
+           ++e_it) {
+        g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*e_it);
+        g2o::EdgeRoom2Planes* edge_room_2planes =
+            dynamic_cast<g2o::EdgeRoom2Planes*>(e);
+        if (edge_room_2planes) {
+          auto inf_room = x_infinite_rooms.find(edge_room_2planes->vertices()[0]->id());
+          if (inf_room != x_infinite_rooms.end()) {
+            inf_room->second.floor_level = current_floor_level;
+            continue;
+          } else {
+            auto inf_room =
+                y_infinite_rooms.find(edge_room_2planes->vertices()[0]->id());
+            if (inf_room != y_infinite_rooms.end()) {
+              inf_room->second.floor_level = current_floor_level;
+              continue;
+            }
+          }
+        }
+
+        g2o::EdgeRoom4Planes* edge_room_4planes =
+            dynamic_cast<g2o::EdgeRoom4Planes*>(e);
+        if (edge_room_4planes) {
+          auto room = rooms_vec.find(edge_room_4planes->vertices()[0]->id());
+          if (room != rooms_vec.end()) {
+            room->second.floor_level = current_floor_level;
+            continue;
+          }
+        }
+      }
+    }
+  }
+}
+
 }  // namespace s_graphs

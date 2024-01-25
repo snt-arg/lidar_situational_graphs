@@ -214,6 +214,27 @@ class GraphUtils {
   static void set_marginalize_info(const std::shared_ptr<GraphSLAM>& local_graph,
                                    const std::shared_ptr<GraphSLAM>& covisibility_graph,
                                    const std::map<int, KeyFrame::Ptr>& room_keyframes);
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param floor_level
+   * @param keyframes
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   */
+  static void update_node_floor_level(
+      const int& last_keyframe_id,
+      const int& current_floor_level,
+      const std::map<int, KeyFrame::Ptr>& keyframes,
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, Rooms>& rooms_vec,
+      std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms);
 
   /**
    * @brief
