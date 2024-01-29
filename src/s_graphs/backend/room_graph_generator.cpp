@@ -42,6 +42,7 @@ Rooms RoomGraphGenerator::get_current_room(
     const std::unordered_map<int, Rooms>& rooms_vec) {
   Rooms current_room;
   for (const auto& room : rooms_vec) {
+    if (room.second.floor_level != keyframe->floor_level) continue;
     if (is_keyframe_inside_room(room.second, x_vert_planes, y_vert_planes, keyframe)) {
       current_room = room.second;
       std::cout << "robot is currently in room with pose "
@@ -57,9 +58,16 @@ std::map<int, KeyFrame::Ptr> RoomGraphGenerator::get_keyframes_inside_room(
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const std::map<int, KeyFrame::Ptr>& keyframes) {
   std::map<int, s_graphs::KeyFrame::Ptr> room_keyframes;
+
+  std::map<int, KeyFrame::Ptr> floor_keyframes;
+  for (const auto& keyframe : keyframes) {
+    if (current_room.floor_level == keyframe.second->floor_level)
+      floor_keyframes.insert({keyframe.first, keyframe.second});
+  }
+
   if (current_room.node != nullptr) {
     room_keyframes =
-        get_room_keyframes(current_room, x_vert_planes, y_vert_planes, keyframes);
+        get_room_keyframes(current_room, x_vert_planes, y_vert_planes, floor_keyframes);
   }
 
   std::map<int, s_graphs::KeyFrame::Ptr> filtered_room_keyframes;
