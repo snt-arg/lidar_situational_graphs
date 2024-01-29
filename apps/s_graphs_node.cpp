@@ -834,7 +834,7 @@ class SGraphsNode : public rclcpp::Node {
     // if new floor was added update floor level of the new keyframes here
     if (floor_mapper->get_floor_level_update_info()) {
       GraphUtils::update_node_floor_level(
-          floors_vec.at(current_floor_level).stair_keyframe_ids.back(),
+          floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
           floor_mapper->get_floor_level(),
           keyframes,
           x_vert_planes,
@@ -1348,7 +1348,9 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& unique_x_plane_id : unique_x_plane_ids) {
       auto local_x_vert_plane = x_vert_planes_snapshot.find(unique_x_plane_id.first);
 
-      if (local_x_vert_plane == x_vert_planes_snapshot.end()) continue;
+      if (local_x_vert_plane == x_vert_planes_snapshot.end() ||
+          local_x_vert_plane->second.floor_level != current_floor_level)
+        continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs =
@@ -1374,7 +1376,9 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& unique_y_plane_id : unique_y_plane_ids) {
       auto local_y_vert_plane = y_vert_planes_snapshot.find(unique_y_plane_id.first);
 
-      if (local_y_vert_plane == y_vert_planes_snapshot.end()) continue;
+      if (local_y_vert_plane == y_vert_planes_snapshot.end() ||
+          local_y_vert_plane->second.floor_level != current_floor_level)
+        continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs =

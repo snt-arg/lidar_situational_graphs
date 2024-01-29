@@ -1054,7 +1054,7 @@ void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,
 }
 
 void GraphUtils::update_node_floor_level(
-    const int& last_keyframe_id,
+    const int& first_keyframe_id,
     const int& current_floor_level,
     const std::map<int, KeyFrame::Ptr>& keyframes,
     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
@@ -1063,9 +1063,8 @@ void GraphUtils::update_node_floor_level(
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms) {
   std::vector<g2o::VertexPlane*> connected_planes;
-  auto it = keyframes.find(last_keyframe_id);
+  auto it = keyframes.find(first_keyframe_id);
   if (it != keyframes.end()) {
-    ++it;
     for (; it != keyframes.end(); ++it) {
       // change the floor level to the new floor level
       it->second->floor_level = current_floor_level;

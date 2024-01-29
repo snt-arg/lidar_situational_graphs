@@ -227,7 +227,7 @@ class GraphUtils {
    * @param y_infinite_rooms
    */
   static void update_node_floor_level(
-      const int& last_keyframe_id,
+      const int& first_keyframe_id,
       const int& current_floor_level,
       const std::map<int, KeyFrame::Ptr>& keyframes,
       std::unordered_map<int, VerticalPlanes>& x_vert_planes,

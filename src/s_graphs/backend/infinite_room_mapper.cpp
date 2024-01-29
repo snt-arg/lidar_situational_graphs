@@ -538,13 +538,17 @@ int InfiniteRoomMapper::associate_infinite_rooms(
                          .plane_node->estimate()
                          .coeffs()
                          .head(3)) > 0) {
-        plane1_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane1->second).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane1->second).cloud_seg_map, plane1.cloud_seg_map) &&
+            found_mapped_plane1->second.floor_level == plane1.floor_level;
         x1_detected_mapped_plane_pair.first = plane1;
         x1_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
       } else {
-        plane1_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane2->second).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane2->second).cloud_seg_map, plane1.cloud_seg_map) &&
+            found_mapped_plane2->second.floor_level == plane1.floor_level;
         x1_detected_mapped_plane_pair.first = plane1;
         x1_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
       }
@@ -560,13 +564,17 @@ int InfiniteRoomMapper::associate_infinite_rooms(
                          .plane_node->estimate()
                          .coeffs()
                          .head(3)) > 0) {
-        plane2_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane1->second).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane1->second).cloud_seg_map, plane2.cloud_seg_map) &&
+            found_mapped_plane1->second.floor_level == plane2.floor_level;
         x2_detected_mapped_plane_pair.first = plane2;
         x2_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
       } else {
-        plane2_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane2->second).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane2->second).cloud_seg_map, plane2.cloud_seg_map) &&
+            found_mapped_plane2->second.floor_level == plane2.floor_level;
         x2_detected_mapped_plane_pair.first = plane2;
         x2_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
       }
@@ -606,13 +614,17 @@ int InfiniteRoomMapper::associate_infinite_rooms(
                          .plane_node->estimate()
                          .coeffs()
                          .head(3)) > 0) {
-        plane1_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane1->second).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane1->second).cloud_seg_map, plane1.cloud_seg_map) &&
+            found_mapped_plane1->second.floor_level == plane1.floor_level;
         y1_detected_mapped_plane_pair.first = plane1;
         y1_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
       } else {
-        plane1_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane2->second).cloud_seg_map, plane1.cloud_seg_map);
+        plane1_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane2->second).cloud_seg_map, plane1.cloud_seg_map) &&
+            found_mapped_plane2->second.floor_level == plane1.floor_level;
         y1_detected_mapped_plane_pair.first = plane1;
         y1_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
       }
@@ -628,13 +640,17 @@ int InfiniteRoomMapper::associate_infinite_rooms(
                          .plane_node->estimate()
                          .coeffs()
                          .head(3)) > 0) {
-        plane2_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane1->second).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane1->second).cloud_seg_map, plane2.cloud_seg_map) &&
+            found_mapped_plane1->second.floor_level == plane2.floor_level;
         y2_detected_mapped_plane_pair.first = plane2;
         y2_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
       } else {
-        plane2_min_segment = PlaneUtils::check_point_neighbours(
-            (found_mapped_plane2->second).cloud_seg_map, plane2.cloud_seg_map);
+        plane2_min_segment =
+            PlaneUtils::check_point_neighbours(
+                (found_mapped_plane2->second).cloud_seg_map, plane2.cloud_seg_map) &&
+            found_mapped_plane2->second.floor_level == plane2.floor_level;
         y2_detected_mapped_plane_pair.first = plane2;
         y2_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
       }

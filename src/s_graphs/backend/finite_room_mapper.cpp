@@ -534,14 +534,18 @@ int FiniteRoomMapper::associate_rooms(
                        .head(3)) > 0) {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_xplane1->second).plane, x_plane1.plane);
-      if (maha_dist < 0.5) x_plane1_min_segment = true;
+      if (maha_dist < 0.5 &&
+          (found_mapped_xplane1->second).floor_level == x_plane1.floor_level)
+        x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = (found_mapped_xplane1->second);
 
     } else {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_xplane2->second).plane, x_plane1.plane);
-      if (maha_dist < 0.5) x_plane1_min_segment = true;
+      if (maha_dist < 0.5 &&
+          (found_mapped_xplane2->second).floor_level == x_plane1.floor_level)
+        x_plane1_min_segment = true;
       x1_detected_mapped_plane_pair.first = x_plane1;
       x1_detected_mapped_plane_pair.second = (found_mapped_xplane2->second);
     }
@@ -559,14 +563,18 @@ int FiniteRoomMapper::associate_rooms(
                        .head(3)) > 0) {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_xplane1->second).plane, x_plane2.plane);
-      if (maha_dist < 0.5) x_plane2_min_segment = true;
+      if (maha_dist < 0.5 &&
+          (found_mapped_xplane1->second).floor_level == x_plane2.floor_level)
+        x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = (found_mapped_xplane1->second);
 
     } else {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_xplane2->second).plane, x_plane2.plane);
-      if (maha_dist < 0.5) x_plane2_min_segment = true;
+      if (maha_dist < 0.5 &&
+          (found_mapped_xplane2->second).floor_level == x_plane2.floor_level)
+        x_plane2_min_segment = true;
       x2_detected_mapped_plane_pair.first = x_plane2;
       x2_detected_mapped_plane_pair.second = (found_mapped_xplane2->second);
     }
@@ -590,14 +598,18 @@ int FiniteRoomMapper::associate_rooms(
                        .head(3)) > 0) {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_yplane1->second).plane, y_plane1.plane);
-      if (maha_dist < 0.5) y_plane1_min_segment = true;
+      if (maha_dist < 0.5 &&
+          (found_mapped_yplane1->second).floor_level == y_plane1.floor_level)
+        y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = (found_mapped_yplane1->second);
 
     } else {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_yplane2->second).plane, y_plane1.plane);
-      if (maha_dist < 0.5) y_plane1_min_segment = true;
+      if (maha_dist < 0.5 &&
+          (found_mapped_yplane2->second).floor_level == y_plane1.floor_level)
+        y_plane1_min_segment = true;
       y1_detected_mapped_plane_pair.first = y_plane1;
       y1_detected_mapped_plane_pair.second = (found_mapped_yplane2->second);
     }
@@ -615,14 +627,18 @@ int FiniteRoomMapper::associate_rooms(
                        .head(3)) > 0) {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_yplane1->second).plane, y_plane2.plane);
-      if (maha_dist < 0.5) y_plane2_min_segment = true;
+      if (maha_dist < 0.5 &&
+          found_mapped_yplane1->second.floor_level == y_plane2.floor_level)
+        y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = (found_mapped_yplane1->second);
 
     } else {
       double maha_dist = PlaneUtils::plane_difference(
           (found_mapped_yplane2->second).plane, y_plane2.plane);
-      if (maha_dist < 0.5) y_plane2_min_segment = true;
+      if (maha_dist < 0.5 &&
+          (found_mapped_yplane2->second).floor_level == y_plane2.floor_level)
+        y_plane2_min_segment = true;
       y2_detected_mapped_plane_pair.first = y_plane2;
       y2_detected_mapped_plane_pair.second = (found_mapped_yplane2->second);
     }
