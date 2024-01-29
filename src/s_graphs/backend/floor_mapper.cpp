@@ -81,6 +81,7 @@ void FloorMapper::lookup_floors(
       update_floor_node(graph_slam,
                         floors_vec[data_association].node,
                         room_data,
+                        floors_vec,
                         rooms_vec,
                         x_infinite_rooms,
                         y_infinite_rooms);
@@ -146,12 +147,8 @@ int FloorMapper::factor_floor_node(
     det_floor.color = PlaneUtils::random_color_vec();
   floors_vec.insert({det_floor.id, det_floor});
 
-  factor_floor_room_nodes(graph_slam,
-                          floor_pose,
-                          floor_node,
-                          rooms_vec,
-                          x_infinite_rooms,
-                          y_infinite_rooms);
+  factor_floor_room_nodes(
+      graph_slam, floors_vec, rooms_vec, x_infinite_rooms, y_infinite_rooms);
 
   return det_floor.id;
 }
@@ -160,6 +157,7 @@ void FloorMapper::update_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
     g2o::VertexFloor* floor_node,
     const s_graphs::msg::RoomData room_data,
+    std::unordered_map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
@@ -175,18 +173,13 @@ void FloorMapper::update_floor_node(
   floor_pose.translation().z() = room_data.room_center.position.z;
 
   graph_slam->update_floor_node(floor_node, floor_pose);
-  factor_floor_room_nodes(graph_slam,
-                          floor_pose,
-                          floor_node,
-                          rooms_vec,
-                          x_infinite_rooms,
-                          y_infinite_rooms);
+  factor_floor_room_nodes(
+      graph_slam, floors_vec, rooms_vec, x_infinite_rooms, y_infinite_rooms);
 }
 
 void FloorMapper::factor_floor_room_nodes(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const Eigen::Isometry3d& floor_pose,
-    g2o::VertexFloor* floor_node,
+    std::unordered_map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
@@ -194,60 +187,72 @@ void FloorMapper::factor_floor_room_nodes(
   information_floor(0, 0) = 0.0001;
   information_floor(1, 1) = 0.0001;
 
-  remove_floor_room_nodes(graph_slam, floor_node);
+  remove_floor_room_nodes(graph_slam, floors_vec);
 
-  for (const auto& room : rooms_vec) {
-    if (room.second.floor_level != floor_node->id()) continue;
+  for (const auto& floor : floors_vec) {
+    for (const auto& room : rooms_vec) {
+      if (room.second.floor_level != floor.first) continue;
 
-    Eigen::Vector2d measurement;
-    measurement(0) =
-        floor_pose.translation()(0) - room.second.node->estimate().translation()(0);
-    measurement(1) =
-        floor_pose.translation()(1) - room.second.node->estimate().translation()(1);
+      Eigen::Vector2d measurement;
+      measurement(0) = floor.second.node->estimate().translation()(0) -
+                       room.second.node->estimate().translation()(0);
+      measurement(1) = floor.second.node->estimate().translation()(1) -
+                       room.second.node->estimate().translation()(1);
 
-    auto edge = graph_slam->add_floor_room_edge(
-        floor_node, room.second.node, measurement, information_floor);
-    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-  }
+      auto edge = graph_slam->add_floor_room_edge(
+          floor.second.node, room.second.node, measurement, information_floor);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    }
 
-  for (const auto& x_infinite_room : x_infinite_rooms) {
-    if (x_infinite_room.second.floor_level != floor_node->id()) continue;
+    for (const auto& x_infinite_room : x_infinite_rooms) {
+      if (x_infinite_room.second.floor_level != floor.first) continue;
 
-    Eigen::Vector2d measurement;
-    measurement(0) = floor_pose.translation()(0) -
-                     x_infinite_room.second.node->estimate().translation()(0);
-    measurement(1) = floor_pose.translation()(1) -
-                     x_infinite_room.second.node->estimate().translation()(1);
+      Eigen::Vector2d measurement;
+      measurement(0) = floor.second.node->estimate().translation()(0) -
+                       x_infinite_room.second.node->estimate().translation()(0);
+      measurement(1) = floor.second.node->estimate().translation()(1) -
+                       x_infinite_room.second.node->estimate().translation()(1);
 
-    auto edge = graph_slam->add_floor_room_edge(
-        floor_node, x_infinite_room.second.node, measurement, information_floor);
-    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
-  }
+      auto edge = graph_slam->add_floor_room_edge(floor.second.node,
+                                                  x_infinite_room.second.node,
+                                                  measurement,
+                                                  information_floor);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    }
 
-  for (const auto& y_infinite_room : y_infinite_rooms) {
-    if (y_infinite_room.second.floor_level != floor_node->id()) continue;
+    for (const auto& y_infinite_room : y_infinite_rooms) {
+      if (y_infinite_room.second.floor_level != floor.first) continue;
 
-    Eigen::Vector2d measurement;
-    measurement(0) = floor_pose.translation()(0) -
-                     y_infinite_room.second.node->estimate().translation()(0);
-    measurement(1) = floor_pose.translation()(1) -
-                     y_infinite_room.second.node->estimate().translation()(1);
+      Eigen::Vector2d measurement;
+      measurement(0) = floor.second.node->estimate().translation()(0) -
+                       y_infinite_room.second.node->estimate().translation()(0);
+      measurement(1) = floor.second.node->estimate().translation()(1) -
+                       y_infinite_room.second.node->estimate().translation()(1);
 
-    auto edge = graph_slam->add_floor_room_edge(
-        floor_node, y_infinite_room.second.node, measurement, information_floor);
-    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      auto edge = graph_slam->add_floor_room_edge(floor.second.node,
+                                                  y_infinite_room.second.node,
+                                                  measurement,
+                                                  information_floor);
+      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    }
   }
 }
 
-void FloorMapper::remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
-                                          g2o::VertexFloor* floor_node) {
-  std::set<g2o::HyperGraph::Edge*> floor_edges = floor_node->edges();
-  for (auto edge_itr = floor_edges.begin(); edge_itr != floor_edges.end(); ++edge_itr) {
-    g2o::EdgeFloorRoom* edge_floor_room = dynamic_cast<g2o::EdgeFloorRoom*>(*edge_itr);
-    if (edge_floor_room) {
-      g2o::VertexFloor* found_room_node =
-          dynamic_cast<g2o::VertexFloor*>(edge_floor_room->vertices()[1]);
-      graph_slam->remove_room_room_edge(edge_floor_room);
+void FloorMapper::remove_floor_room_nodes(
+    std::shared_ptr<GraphSLAM>& graph_slam,
+    const std::unordered_map<int, Floors>& floors_vec) {
+  for (const auto& floor : floors_vec) {
+    g2o::VertexFloor* floor_node = floor.second.node;
+    std::set<g2o::HyperGraph::Edge*> floor_edges = floor_node->edges();
+    for (auto edge_itr = floor_edges.begin(); edge_itr != floor_edges.end();
+         ++edge_itr) {
+      g2o::EdgeFloorRoom* edge_floor_room =
+          dynamic_cast<g2o::EdgeFloorRoom*>(*edge_itr);
+      if (edge_floor_room) {
+        g2o::VertexFloor* found_room_node =
+            dynamic_cast<g2o::VertexFloor*>(edge_floor_room->vertices()[1]);
+        graph_slam->remove_room_room_edge(edge_floor_room);
+      }
     }
   }
 }
