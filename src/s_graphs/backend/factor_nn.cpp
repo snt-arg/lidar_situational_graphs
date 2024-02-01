@@ -55,11 +55,12 @@ FactorNN::FactorNN(std::string _factor_type) {
   }
 }
 
-Eigen::Vector2d FactorNN::infer(std::vector<float> input_vector){
+Eigen::Vector2d FactorNN::infer(std::vector<std::vector<float>> input_vector){
   // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
   torch::Tensor torchTensor = torch::from_blob(input_vector.data(), {1, input_vector.size()}, torch::kFloat);
   std::vector<torch::IValue> ivalueVector;
   ivalueVector.push_back(torchTensor);
+  std::cout << "flag difference = " << ivalueVector << std::endl;
   at::Tensor output = module.forward(ivalueVector).toTensor();
   // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   // std::cout << "NN Time difference = " << std::chrono::duration_cast<std::chrono::microseconds> (end - begin).count() << "[µs]" << std::endl;

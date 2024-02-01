@@ -56,7 +56,7 @@ class FactorNN{
   FactorNN(std::string factor_type = "");
 //   ~FactorNN();
   // void infer();
-  Eigen::Vector2d infer(std::vector<float> input_vector);
+  Eigen::Vector2d infer(std::vector<std::vector<float>> input_vector);
 
  private:
   torch::jit::script::Module module;

@@ -349,16 +349,18 @@ Eigen::Vector2d EdgeRoom4Planes::compute_factor_nn(Eigen::Vector4d x_plane1, Eig
     vectorList.push_back(y_plane1);
     vectorList.push_back(y_plane2);
 
-  std::vector<float> concatenatedVector;
+  std::vector<std::vector<float>> allNeighborsVector;
   for (const Eigen::Vector4d& vector : vectorList) {
-      concatenatedVector.push_back(static_cast<float>(vector(0)));
-      concatenatedVector.push_back(static_cast<float>(vector(1)));
-      concatenatedVector.push_back(static_cast<float>(vector(2)));
-      concatenatedVector.push_back(static_cast<float>(vector(3))/normalization);
+      std::vector<float> neighborParamsVector;
+      neighborParamsVector.push_back(static_cast<float>(vector(0)));
+      neighborParamsVector.push_back(static_cast<float>(vector(1)));
+      neighborParamsVector.push_back(static_cast<float>(vector(2)));
+      neighborParamsVector.push_back(static_cast<float>(vector(3))/normalization);
+      allNeighborsVector.push_back(neighborParamsVector);
   }
 
-  std::cout << "FLAG concatenatedVector " << concatenatedVector << '\n';
-  Eigen::Vector2d output = factor_nn.infer(concatenatedVector);
+  std::cout << "FLAG allNeighborsVector " << allNeighborsVector << '\n';
+  Eigen::Vector2d output = factor_nn.infer(allNeighborsVector);
   std::cout << "FLAG output " << output << '\n';
   output[0] = output[0] * normalization;
   output[1] = output[1] * normalization;

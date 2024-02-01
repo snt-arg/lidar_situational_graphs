@@ -152,7 +152,7 @@ class EdgeRoom2Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
 class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeRoom4Planes(bool use_factor_nn_arg = false) : BaseMultiEdge<2, Eigen::Vector2d>() { resize(5); _use_factor_nn = use_factor_nn_arg;}
+  EdgeRoom4Planes(bool use_factor_nn_arg = true) : BaseMultiEdge<2, Eigen::Vector2d>() { resize(5); _use_factor_nn = use_factor_nn_arg;}
 
   void computeError() override;
 

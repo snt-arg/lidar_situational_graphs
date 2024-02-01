@@ -165,7 +165,8 @@ Eigen::Vector3d EdgeWall2Planes::compute_factor_nn(Eigen::Vector4d plane1, Eigen
   }
 
   std::cout << "FLAG concatenatedVector " << concatenatedVector << '\n';
-  Eigen::Vector2d output = factor_nn.infer(concatenatedVector);
+  std::vector<std::vector<float>> allNeighborsVector; /// TODO change
+  Eigen::Vector2d output = factor_nn.infer(allNeighborsVector);
   Eigen::Vector3d final_output;
   std::cout << "FLAG output " << output << '\n';
   final_output[0] = output[0] * normalization;
