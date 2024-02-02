@@ -114,7 +114,7 @@ class GraphVisualizer {
       std::vector<Rooms> room_snapshot,
       double loop_detector_radius,
       std::vector<KeyFrame::Ptr> keyframes,
-      std::vector<Floors> floors_vec);
+      std::unordered_map<int, Floors> floors_vec);
 
   /**
    * @brief Create a compressed graph object

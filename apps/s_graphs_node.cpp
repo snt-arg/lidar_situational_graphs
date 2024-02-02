@@ -581,23 +581,26 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void flush_floor_data_queue() {
-    std::lock_guard<std::mutex> lock(floor_data_mutex);
-
     if (keyframes.empty()) {
       return;
     } else if (floor_data_queue.empty()) {
       // std::cout << "floor data queue is empty" << std::endl;
       return;
     }
+
     for (const auto& floor_data_msg : floor_data_queue) {
+      graph_mutex.lock();
       floor_mapper->lookup_floors(covisibility_graph,
                                   floor_data_msg,
                                   floors_vec,
                                   rooms_vec,
                                   x_infinite_rooms,
                                   y_infinite_rooms);
+      graph_mutex.unlock();
 
+      floor_data_mutex.lock();
       floor_data_queue.pop_front();
+      floor_data_mutex.unlock();
     }
   }
 
@@ -1098,12 +1101,7 @@ class SGraphsNode : public rclcpp::Node {
         [](const std::pair<int, Rooms>& room) { return Rooms(room.second, true); });
     rooms_vec_snapshot.swap(curent_rooms);
 
-    std::vector<Floors> current_floors(floors_vec.size());
-    std::transform(floors_vec.begin(),
-                   floors_vec.end(),
-                   current_floors.begin(),
-                   [](const std::pair<int, Floors>& floor) { return floor.second; });
-    floors_vec_snapshot.swap(current_floors);
+    floors_vec_snapshot = floors_vec;
   }
 
   /**
@@ -1149,11 +1147,13 @@ class SGraphsNode : public rclcpp::Node {
 
     // optimize the pose graph
     try {
+      graph_mutex.lock();
       if (!global_optimization)
         compressed_graph->optimize("local", num_iterations);
       else {
         compressed_graph->optimize("global", num_iterations);
       }
+      graph_mutex.unlock();
     } catch (std::invalid_argument& e) {
       std::cout << e.what() << std::endl;
       throw 1;
@@ -1888,7 +1888,7 @@ class SGraphsNode : public rclcpp::Node {
   std::vector<VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
   std::vector<HorizontalPlanes> hort_planes_snapshot;
   std::vector<Rooms> rooms_vec_snapshot;
-  std::vector<Floors> floors_vec_snapshot;
+  std::unordered_map<int, Floors> floors_vec_snapshot;
   std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
 
   // room data queue

@@ -125,7 +125,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     std::vector<Rooms> room_snapshot,
     double loop_detector_radius,
     std::vector<KeyFrame::Ptr> keyframes,
-    std::vector<Floors> floors_vec) {
+    std::unordered_map<int, Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
   // markers.markers.resize(11);
 
@@ -177,10 +177,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     auto current_key_data =
         dynamic_cast<OptimizationData*>(keyframes[i]->node->userData());
 
-    auto current_floor = std::find_if(
-        floors_vec.begin(),
-        floors_vec.end(),
-        boost::bind(&s_graphs::Floors::id, _1) == keyframes[i]->floor_level);
+    auto current_floor = floors_vec.find(keyframes[i]->floor_level);
 
     if (current_key_data) {
       bool marginalized = false;
@@ -198,9 +195,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         traj_marker.colors[i].b = 1.0;
         traj_marker.colors[i].a = 1.0;
       } else {
-        traj_marker.colors[i].r = current_floor->color[0] / 255;
-        traj_marker.colors[i].g = current_floor->color[1] / 255;
-        traj_marker.colors[i].b = current_floor->color[2] / 255;
+        traj_marker.colors[i].r = current_floor->second.color[0] / 255;
+        traj_marker.colors[i].g = current_floor->second.color[1] / 255;
+        traj_marker.colors[i].b = current_floor->second.color[2] / 255;
         traj_marker.colors[i].a = 1.0;
       }
     } else if (keyframes[i]->node->fixed()) {
@@ -209,9 +206,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       traj_marker.colors[i].b = 1.0;
       traj_marker.colors[i].a = 1.0;
     } else {
-      traj_marker.colors[i].r = current_floor->color[0] / 255;
-      traj_marker.colors[i].g = current_floor->color[1] / 255;
-      traj_marker.colors[i].b = current_floor->color[2] / 255;
+      traj_marker.colors[i].r = current_floor->second.color[0] / 255;
+      traj_marker.colors[i].g = current_floor->second.color[1] / 255;
+      traj_marker.colors[i].b = current_floor->second.color[2] / 255;
       traj_marker.colors[i].a = 1.0;
     }
 
@@ -594,7 +591,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3;
     p1.x = x_infinite_room_snapshot[i].node->estimate().translation()(0);
     p1.y = x_infinite_room_snapshot[i].node->estimate().translation()(1);
-    p1.z = 0;
+    p1.z = floors_vec.find(x_infinite_room_snapshot[i].floor_level)
+               ->second.node->estimate()
+               .translation()(2);
 
     p2 = compute_plane_point(p1, (*found_plane1).cloud_seg_map);
 
@@ -627,7 +626,10 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.pose.position.y =
           x_infinite_room_snapshot[i].node->estimate().translation()(1);
       infinite_room_pose_marker.pose.position.z =
-          x_infinite_room_snapshot[i].node->estimate().translation()(2);
+          floors_vec.find(x_infinite_room_snapshot[i].floor_level)
+              ->second.node->estimate()
+              .translation()(2);
+
       Eigen::Quaterniond quat(x_infinite_room_snapshot[i].node->estimate().linear());
       infinite_room_pose_marker.pose.orientation.x = quat.x();
       infinite_room_pose_marker.pose.orientation.y = quat.y();
@@ -727,7 +729,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3;
     p1.x = y_infinite_room_snapshot[i].node->estimate().translation()(0);
     p1.y = y_infinite_room_snapshot[i].node->estimate().translation()(1);
-    p1.z = 0;
+    p1.z = floors_vec.find(y_infinite_room_snapshot[i].floor_level)
+               ->second.node->estimate()
+               .translation()(2);
 
     p2 = compute_plane_point(p1, (*found_plane1).cloud_seg_map);
 
@@ -762,7 +766,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.pose.position.y =
           y_infinite_room_snapshot[i].node->estimate().translation()(1);
       infinite_room_pose_marker.pose.position.z =
-          y_infinite_room_snapshot[i].node->estimate().translation()(2);
+          floors_vec.find(y_infinite_room_snapshot[i].floor_level)
+              ->second.node->estimate()
+              .translation()(2);
       Eigen::Quaterniond quat(y_infinite_room_snapshot[i].node->estimate().linear());
       infinite_room_pose_marker.pose.orientation.x = quat.x();
       infinite_room_pose_marker.pose.orientation.y = quat.y();
@@ -825,7 +831,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
     room_marker.pose.position.x = room_snapshot[i].node->estimate().translation()(0);
     room_marker.pose.position.y = room_snapshot[i].node->estimate().translation()(1);
-    room_marker.pose.position.z = room_snapshot[i].node->estimate().translation()(2);
+    room_marker.pose.position.z = floors_vec.find(room_snapshot[i].floor_level)
+                                      ->second.node->estimate()
+                                      .translation()(2);
     Eigen::Quaterniond quat(room_snapshot[i].node->estimate().linear());
     room_marker.pose.orientation.x = quat.x();
     room_marker.pose.orientation.y = quat.y();
@@ -851,7 +859,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
     p1.x = room_snapshot[i].node->estimate().translation()(0);
     p1.y = room_snapshot[i].node->estimate().translation()(1);
-    p1.z = room_snapshot[i].node->estimate().translation()(2);
+    p1.z = floors_vec.find(room_snapshot[i].floor_level)
+               ->second.node->estimate()
+               .translation()(2);
 
     auto found_planex1 = std::find_if(
         x_plane_snapshot.begin(),
@@ -905,7 +915,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
   rclcpp::Duration duration_floor = rclcpp::Duration::from_seconds(5);
   for (const auto& floor : floors_vec) {
-    if (floor.id != -1) {
+    if (floor.first != -1) {
       visualization_msgs::msg::Marker floor_marker;
       floor_marker.pose.orientation.w = 1.0;
       floor_marker.scale.x = 0.5;
@@ -923,9 +933,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_marker.color.a = 1;
       floor_marker.lifetime = duration_floor;
 
-      floor_marker.pose.position.x = floor.node->estimate().translation()(0);
-      floor_marker.pose.position.y = floor.node->estimate().translation()(1);
-      floor_marker.pose.position.z = floor.node->estimate().translation()(2);
+      floor_marker.pose.position.x = floor.second.node->estimate().translation()(0);
+      floor_marker.pose.position.y = floor.second.node->estimate().translation()(1);
+      floor_marker.pose.position.z = floor.second.node->estimate().translation()(2);
 
       // create line markers between floor and rooms/infinite_rooms
       visualization_msgs::msg::Marker floor_line_marker;
@@ -943,15 +953,15 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_line_marker.lifetime = duration_floor;
 
       for (const auto& room : room_snapshot) {
-        if (room.sub_room || room.floor_level != floor.id) continue;
+        if (room.sub_room || room.floor_level != floor.first) continue;
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
         p1.z = floor_marker.pose.position.z;
         p2.x = room.node->estimate().translation()(0);
         p2.y = room.node->estimate().translation()(1);
-        p2.z = room.node->estimate().translation()(2);
-
+        p2.z =
+            floors_vec.find(room.floor_level)->second.node->estimate().translation()(2);
         p2 = compute_room_point(p2);
 
         floor_line_marker.points.push_back(p1);
@@ -959,7 +969,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       }
       for (const auto& x_infinite_room : x_infinite_room_snapshot) {
         if (x_infinite_room.id == -1 || x_infinite_room.sub_infinite_room ||
-            x_infinite_room.floor_level != floor.id)
+            x_infinite_room.floor_level != floor.first)
           continue;
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
@@ -967,8 +977,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p1.z = floor_marker.pose.position.z;
         p2.x = x_infinite_room.node->estimate().translation()(0);
         p2.y = x_infinite_room.node->estimate().translation()(1);
-        p2.z = x_infinite_room.node->estimate().translation()(2);
-
+        p2.z = floors_vec.find(x_infinite_room.floor_level)
+                   ->second.node->estimate()
+                   .translation()(2);
         p2 = compute_room_point(p2);
 
         floor_line_marker.points.push_back(p1);
@@ -976,7 +987,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       }
       for (const auto& y_infinite_room : y_infinite_room_snapshot) {
         if (y_infinite_room.id == -1 || y_infinite_room.sub_infinite_room ||
-            y_infinite_room.floor_level != floor.id)
+            y_infinite_room.floor_level != floor.first)
           continue;
         geometry_msgs::msg::Point p1, p2;
         p1.x = floor_marker.pose.position.x;
@@ -984,7 +995,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         p1.z = floor_marker.pose.position.z;
         p2.x = y_infinite_room.node->estimate().translation()(0);
         p2.y = y_infinite_room.node->estimate().translation()(1);
-        p2.z = y_infinite_room.node->estimate().translation()(2);
+        p2.z = floors_vec.find(y_infinite_room.floor_level)
+                   ->second.node->estimate()
+                   .translation()(2);
 
         geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
         point2_stamped.header.frame_id = rooms_layer_id;
