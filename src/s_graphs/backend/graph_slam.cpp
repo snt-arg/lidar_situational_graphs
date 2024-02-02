@@ -284,13 +284,13 @@ g2o::VertexRoom* GraphSLAM::copy_room_node(const g2o::VertexRoom* node) {
 g2o::VertexFloor* GraphSLAM::add_floor_node(const Eigen::Isometry3d& floor_pose,
                                             const int& id) {
   g2o::VertexFloor* vertex(new g2o::VertexFloor());
-  if (id == -1)
+  if (id == -1) {
     vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
-  else
+    this->increment_local_nbr_of_vertices();
+  } else
     vertex->setId(id);
   vertex->setEstimate(floor_pose);
   graph->addVertex(vertex);
-  this->increment_local_nbr_of_vertices();
 
   return vertex;
 }

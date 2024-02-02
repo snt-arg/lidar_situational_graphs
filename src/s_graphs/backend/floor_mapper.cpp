@@ -120,12 +120,7 @@ int FloorMapper::factor_floor_node(
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
   g2o::VertexFloor* floor_node;
   Eigen::Isometry3d floor_pose;
-  Eigen::Quaterniond floor_quat;
-  floor_quat.x() = 0;
-  floor_quat.y() = 0;
-  floor_quat.z() = 0;
-  floor_quat.w() = 1;
-  floor_pose.linear() = floor_quat.toRotationMatrix();
+  floor_pose.setIdentity();
   floor_pose.translation().x() = room_data.room_center.position.x;
   floor_pose.translation().y() = room_data.room_center.position.y;
   floor_pose.translation().z() = room_data.room_center.position.z;
@@ -164,12 +159,7 @@ void FloorMapper::update_floor_node(
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
   Eigen::Isometry3d floor_pose;
-  Eigen::Quaterniond floor_quat;
-  floor_quat.x() = 0;
-  floor_quat.y() = 0;
-  floor_quat.z() = 0;
-  floor_quat.w() = 1;
-  floor_pose.linear() = floor_quat.toRotationMatrix();
+  floor_pose.setIdentity();
   floor_pose.translation().x() = room_data.room_center.position.x;
   floor_pose.translation().y() = room_data.room_center.position.y;
   floor_pose.translation().z() = room_data.room_center.position.z;
