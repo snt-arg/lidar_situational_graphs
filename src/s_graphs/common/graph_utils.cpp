@@ -239,7 +239,6 @@ void GraphUtils::copy_windowed_graph(
   // copy keyframes in the window to the compressed graph
   int min_keyframe_id =
       copy_keyframes_to_graph(covisibility_graph, compressed_graph, keyframe_window);
-  compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // get all the filtered keyframes added in the compressed graph
   bool anchor_node_exists = false;
@@ -248,6 +247,8 @@ void GraphUtils::copy_windowed_graph(
                         compressed_graph,
                         complete_keyframe_window,
                         anchor_node_exists);
+  if (!anchor_node_exists)
+    compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // check from all the keyframes added in the compressed graph, which have
   // connections to planes
