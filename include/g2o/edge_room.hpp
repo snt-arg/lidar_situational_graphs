@@ -160,7 +160,7 @@ class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
 
   virtual bool write(std::ostream& os) const override;
 
-  s_graphs::FactorNN factor_nn;
+  s_graphs::FactorNN factor_nn = s_graphs::FactorNN("room");
 
  private:
   void correct_plane_direction(Eigen::Vector4d& plane);

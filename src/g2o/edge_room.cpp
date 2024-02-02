@@ -359,7 +359,6 @@ Eigen::Vector2d EdgeRoom4Planes::compute_factor_nn(Eigen::Vector4d x_plane1, Eig
       allNeighborsVector.push_back(neighborParamsVector);
   }
 
-  std::cout << "FLAG allNeighborsVector " << allNeighborsVector << '\n';
   Eigen::Vector2d output = factor_nn.infer(allNeighborsVector);
   std::cout << "FLAG output " << output << '\n';
   output[0] = output[0] * normalization;

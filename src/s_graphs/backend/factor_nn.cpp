@@ -40,28 +40,56 @@ namespace s_graphs {
 
 // FactorNN::FactorNN(const rclcpp::Node::SharedPtr node) {
 FactorNN::FactorNN(std::string _factor_type) {
-  if (_factor_type == "room_4"){
-    path = "/home/adminpc/reasoning_ws/src/graph_reasoning/torchscripts/room_4.pt";
+  std::cerr << "flag _factor_type : " << _factor_type << std::endl;
+  if (_factor_type == "room"){
+    path = "/home/adminpc/reasoning_ws/src/graph_factor_nn/torchscripts/room_4.pt";
   } else if (_factor_type == "wall") {
-    path = "/home/adminpc/reasoning_ws/src/graph_reasoning/torchscripts/wall.pt";
+    path = "/home/adminpc/reasoning_ws/src/graph_factor_nn/torchscripts/wall.pt";
   }
   
   try {
     module = torch::jit::load(path);
   }
   catch (const c10::Error& e) {
-    std::cerr << "error loading the model\n";
+    std::cerr << "Error loading the model: " << e.what() << std::endl;
     // return -1;
   }
 }
 
 Eigen::Vector2d FactorNN::infer(std::vector<std::vector<float>> input_vector){
   // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-  torch::Tensor torchTensor = torch::from_blob(input_vector.data(), {1, input_vector.size()}, torch::kFloat);
-  std::vector<torch::IValue> ivalueVector;
-  ivalueVector.push_back(torchTensor);
-  std::cout << "flag difference = " << ivalueVector << std::endl;
-  at::Tensor output = module.forward(ivalueVector).toTensor();
+  std::vector<float> zeros(input_vector[0].size(), 0.0f);
+  input_vector.push_back(zeros);
+  int rows = input_vector.size();
+  int cols = input_vector.empty() ? 0 : input_vector[0].size();
+  std::vector<float> flatVec;
+  for (const auto& subVec : input_vector) {
+      flatVec.insert(flatVec.end(), subVec.begin(), subVec.end());
+  }
+
+  std::vector<int64_t> edgeIndexVector;
+  for (int i = 0; i <= rows - 2; i += 1) {
+      edgeIndexVector.push_back(i);
+    }
+  for (int i = 0; i <= rows - 2; i += 1) {
+      edgeIndexVector.push_back(rows - 1);
+    }
+  std::vector<int64_t> batchVector(rows, 0.0f);
+
+  torch::Tensor xTensor = torch::from_blob(flatVec.data(), {rows, cols}, torch::kFloat);
+  // x.push_back(xTensor);
+  torch::jit::IValue ivalue_x = xTensor;
+
+  torch::Tensor edgeIndexTensor = torch::from_blob(edgeIndexVector.data(), {2, rows - 1}, torch::kInt64);
+  torch::jit::IValue ivalue_edgeIndex = edgeIndexTensor;
+
+  torch::Tensor batchTensor = torch::from_blob(batchVector.data(), {rows}, torch::kInt64);
+  torch::jit::IValue ivalue_batch = batchTensor;
+
+  std::vector<torch::jit::IValue> inputs = {ivalue_x, ivalue_edgeIndex, ivalue_batch};   
+
+  at::Tensor output = module.forward(inputs ).toTensor();
+  // std::cout << "flag output" << output << std::endl;
   // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   // std::cout << "NN Time difference = " << std::chrono::duration_cast<std::chrono::microseconds> (end - begin).count() << "[µs]" << std::endl;
 
