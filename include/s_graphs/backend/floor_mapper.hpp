@@ -164,33 +164,34 @@ class FloorMapper {
    * @param graph_slam
    * @param floor_node
    * @param room_data
+   * @param floors_vec
    * @param rooms_vec
    * @param x_infinite_rooms
    * @param y_infinite_rooms
+   * @return * y_infinite_rooms
    */
   void update_floor_node(
       std::shared_ptr<GraphSLAM>& graph_slam,
       g2o::VertexFloor* floor_node,
       const s_graphs::msg::RoomData room_data,
+      std::unordered_map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
 
- private:
   /**
    * @brief
    *
    * @param graph_slam
    * @param floor_pose
-   * @param floor_node
+   * @param floors_vec
    * @param rooms_vec
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    */
   void factor_floor_room_nodes(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const Eigen::Isometry3d& floor_pose,
-      g2o::VertexFloor* floor_node,
+      std::unordered_map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
@@ -202,7 +203,7 @@ class FloorMapper {
    * @param floor_node
    */
   void remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
-                               g2o::VertexFloor* floor_node);
+                               std::unordered_map<int, Floors>& floors_vec);
 
  private:
   int current_floor_level;

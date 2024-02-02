@@ -61,6 +61,7 @@ void FloorMapper::lookup_floors(
                                      y_infinite_rooms);
     set_floor_level(floor_id);
   } else if (data_association == -1) {
+    remove_floor_room_nodes(graph_slam, floors_vec);
     int floor_id = factor_floor_node(graph_slam,
                                      room_data,
                                      floors_vec,
@@ -78,6 +79,7 @@ void FloorMapper::lookup_floors(
                      room_data.room_center.position.y,
                  2));
     if (floor_dist > floor_horizontal_threshold) {
+      remove_floor_room_nodes(graph_slam, floors_vec);
       update_floor_node(graph_slam,
                         floors_vec[data_association].node,
                         room_data,
@@ -187,8 +189,6 @@ void FloorMapper::factor_floor_room_nodes(
   information_floor(0, 0) = 0.0001;
   information_floor(1, 1) = 0.0001;
 
-  remove_floor_room_nodes(graph_slam, floors_vec);
-
   for (const auto& floor : floors_vec) {
     for (const auto& room : rooms_vec) {
       if (room.second.floor_level != floor.first) continue;
@@ -238,22 +238,24 @@ void FloorMapper::factor_floor_room_nodes(
   }
 }
 
-void FloorMapper::remove_floor_room_nodes(
-    std::shared_ptr<GraphSLAM>& graph_slam,
-    const std::unordered_map<int, Floors>& floors_vec) {
+void FloorMapper::remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
+                                          std::unordered_map<int, Floors>& floors_vec) {
+  std::vector<g2o::EdgeFloorRoom*> edge_floor_room_vec;
   for (const auto& floor : floors_vec) {
     g2o::VertexFloor* floor_node = floor.second.node;
-    std::set<g2o::HyperGraph::Edge*> floor_edges = floor_node->edges();
-    for (auto edge_itr = floor_edges.begin(); edge_itr != floor_edges.end();
-         ++edge_itr) {
-      g2o::EdgeFloorRoom* edge_floor_room =
-          dynamic_cast<g2o::EdgeFloorRoom*>(*edge_itr);
-      if (edge_floor_room) {
-        g2o::VertexFloor* found_room_node =
-            dynamic_cast<g2o::VertexFloor*>(edge_floor_room->vertices()[1]);
-        graph_slam->remove_room_room_edge(edge_floor_room);
+    for (g2o::HyperGraph::EdgeSet::iterator e_it = floor_node->edges().begin();
+         e_it != floor_node->edges().end();
+         ++e_it) {
+      g2o::OptimizableGraph::Edge* e = (g2o::OptimizableGraph::Edge*)(*e_it);
+      g2o::EdgeFloorRoom* edge_floor_room = dynamic_cast<g2o::EdgeFloorRoom*>(e);
+      if (edge_floor_room != nullptr) {
+        edge_floor_room_vec.push_back(edge_floor_room);
       }
     }
+  }
+
+  for (auto edge_floor_room : edge_floor_room_vec) {
+    bool ack = graph_slam->remove_room_room_edge(edge_floor_room);
   }
 }
 

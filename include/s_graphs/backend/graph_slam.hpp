@@ -207,6 +207,13 @@ class GraphSLAM {
   bool remove_room_node(g2o::VertexRoom* room_vertex);
 
   /**
+   * @brief remove a floor node from the graph
+   * @param floor vertex
+   * @return success or failure
+   */
+  bool remove_floor_node(g2o::VertexFloor* floor_vertex);
+
+  /**
    * @brief add a point_xyz node to the graph
    * @param xyz
    * @return Registered node
@@ -241,9 +248,11 @@ class GraphSLAM {
    * @brief Add a floor node to the graph
    *
    * @param floor_pose
+   * @param id
    * @return Registered node
    */
-  g2o::VertexFloor* add_floor_node(const Eigen::Isometry3d& floor_pose);
+  g2o::VertexFloor* add_floor_node(const Eigen::Isometry3d& floor_pose,
+                                   const int& id = -1);
 
   /**
    * @brief copy a floor node from another

@@ -237,6 +237,10 @@ bool GraphSLAM::remove_room_node(g2o::VertexRoom* room_vertex) {
   return graph->removeVertex(room_vertex);
 }
 
+bool GraphSLAM::remove_floor_node(g2o::VertexFloor* floor_vertex) {
+  return graph->removeVertex(floor_vertex);
+}
+
 g2o::VertexPointXYZ* GraphSLAM::add_point_xyz_node(const Eigen::Vector3d& xyz) {
   g2o::VertexPointXYZ* vertex(new g2o::VertexPointXYZ());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
@@ -277,9 +281,13 @@ g2o::VertexRoom* GraphSLAM::copy_room_node(const g2o::VertexRoom* node) {
   return vertex;
 }
 
-g2o::VertexFloor* GraphSLAM::add_floor_node(const Eigen::Isometry3d& floor_pose) {
+g2o::VertexFloor* GraphSLAM::add_floor_node(const Eigen::Isometry3d& floor_pose,
+                                            const int& id) {
   g2o::VertexFloor* vertex(new g2o::VertexFloor());
-  vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  if (id == -1)
+    vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
+  else
+    vertex->setId(id);
   vertex->setEstimate(floor_pose);
   graph->addVertex(vertex);
   this->increment_local_nbr_of_vertices();
