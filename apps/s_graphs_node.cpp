@@ -589,14 +589,12 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& floor_data_msg : floor_data_queue) {
-      graph_mutex.lock();
       floor_mapper->lookup_floors(covisibility_graph,
                                   floor_data_msg,
                                   floors_vec,
                                   rooms_vec,
                                   x_infinite_rooms,
                                   y_infinite_rooms);
-      graph_mutex.unlock();
 
       floor_data_mutex.lock();
       floor_data_queue.pop_front();
@@ -653,6 +651,10 @@ class SGraphsNode : public rclcpp::Node {
       return;
     }
 
+    std::unordered_map<int, s_graphs::Rooms> new_rooms;
+    std::unordered_map<int, s_graphs::InfiniteRooms> new_x_inf_rooms;
+    std::unordered_map<int, s_graphs::InfiniteRooms> new_y_inf_rooms;
+
     for (const auto& room_data_msg : room_data_queue) {
       for (const auto& room_data : room_data_msg.rooms) {
         if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
@@ -681,9 +683,10 @@ class SGraphsNode : public rclcpp::Node {
             graph_mutex.lock();
             room_local_graph_id_queue.push_back(current_room_id);
             graph_mutex.unlock();
+            new_rooms.insert(
+                {rooms_vec[current_room_id].id, rooms_vec[current_room_id]});
             if (duplicate_planes_rooms) duplicate_planes_found = true;
           }
-
         }
         // x infinite_room
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
@@ -691,6 +694,7 @@ class SGraphsNode : public rclcpp::Node {
                                                            room_data.x_planes[1]);
           if (x_width < 0.5) continue;
 
+          int current_room_id;
           bool duplicate_planes_x_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::X_VERT_PLANE,
@@ -701,9 +705,13 @@ class SGraphsNode : public rclcpp::Node {
               dupl_y_vert_planes,
               x_infinite_rooms,
               y_infinite_rooms,
-              rooms_vec);
+              rooms_vec,
+              current_room_id);
 
           if (duplicate_planes_x_inf_rooms) duplicate_planes_found = true;
+          if (current_room_id != -1)
+            new_x_inf_rooms.insert({x_infinite_rooms[current_room_id].id,
+                                    x_infinite_rooms[current_room_id]});
         }
         // y infinite_room
         else if (room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
@@ -711,6 +719,7 @@ class SGraphsNode : public rclcpp::Node {
                                                            room_data.y_planes[1]);
           if (y_width < 0.5) continue;
 
+          int current_room_id;
           bool duplicate_planes_y_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::Y_VERT_PLANE,
@@ -721,9 +730,13 @@ class SGraphsNode : public rclcpp::Node {
               dupl_y_vert_planes,
               x_infinite_rooms,
               y_infinite_rooms,
-              rooms_vec);
+              rooms_vec,
+              current_room_id);
 
           if (duplicate_planes_y_inf_rooms) duplicate_planes_found = true;
+          if (current_room_id != -1)
+            new_y_inf_rooms.insert({y_infinite_rooms[current_room_id].id,
+                                    y_infinite_rooms[current_room_id]});
         }
       }
 
@@ -731,12 +744,17 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue.pop_front();
       room_data_queue_mutex.unlock();
     }
+
+    floor_mapper->factor_floor_room_nodes(covisibility_graph,
+                                          floors_vec[current_floor_level],
+                                          new_rooms,
+                                          new_x_inf_rooms,
+                                          new_y_inf_rooms);
   }
 
   /**
    *@brief extract all the keyframes from the found room
    **/
-
   void extract_keyframes_from_room(Rooms& current_room) {
     // check if the current robot pose lies in a room
     if (rooms_vec.empty()) return;

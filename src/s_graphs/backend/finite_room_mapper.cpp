@@ -66,6 +66,7 @@ bool FiniteRoomMapper::lookup_rooms(
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::unordered_map<int, Rooms>& rooms_vec,
     int& room_id) {
+  room_id = -1;
   auto found_x_plane1 = x_vert_planes.find(room_data.x_planes[0].id);
   auto found_x_plane2 = x_vert_planes.find(room_data.x_planes[1].id);
   auto found_y_plane1 = y_vert_planes.find(room_data.y_planes[0].id);
@@ -77,7 +78,6 @@ bool FiniteRoomMapper::lookup_rooms(
       (found_x_plane1->second.floor_level == found_y_plane2->second.floor_level);
 
   if (!same_floor_level) {
-    room_id = -1;
     return false;
   }
 
@@ -270,6 +270,7 @@ bool FiniteRoomMapper::factor_rooms(
     int& room_id,
     const Eigen::Isometry3d& room_center,
     const visualization_msgs::msg::MarkerArray& cluster_array) {
+  room_id = -1;
   g2o::VertexRoom* room_node;
   bool duplicate_found = false;
   int room_data_association;
@@ -459,31 +460,6 @@ bool FiniteRoomMapper::factor_rooms(
   }
 
   return duplicate_found;
-  // std::cout << "found xplane1 id : " << (*found_x_plane1).id << std::endl;
-  // std::cout << "found xplane1 coeffs : " <<
-  // (*found_x_plane1).plane_node->estimate().coeffs() << std::endl; std::cout << "found
-  // xplane2 id : " << (*found_x_plane2).id << std::endl; std::cout << "found xplane2
-  // coeffs : " << (*found_x_plane2).plane_node->estimate().coeffs() << std::endl;
-
-  // std::cout << "found yplane1 id : " << (*found_y_plane1).id << std::endl;
-  // std::cout << "found yplane1 coeffs : " <<
-  // (*found_y_plane1).plane_node->estimate().coeffs() << std::endl; std::cout << "found
-  // yplane2 id : " << (*found_y_plane2).id << std::endl; std::cout << "found yplane2
-  // coeffs : " << (*found_y_plane2).plane_node->estimate().coeffs() << std::endl;
-
-  // std::cout << "mapped xplane1 id : " << (*found_mapped_x_plane1).id << std::endl;
-  // std::cout << "mapped xplane1 coeffs : " <<
-  // (*found_mapped_x_plane1).plane_node->estimate().coeffs() << std::endl; std::cout <<
-  // "mapped xplane2 id : " << (*found_mapped_x_plane2).id << std::endl; std::cout <<
-  // "mapped xplane2 coeffs : " <<
-  // (*found_mapped_x_plane2).plane_node->estimate().coeffs() << std::endl;
-
-  // std::cout << "mapped yplane1 id : " << (*found_mapped_y_plane1).id << std::endl;
-  // std::cout << "mapped yplane1 coeffs : " <<
-  // (*found_mapped_y_plane1).plane_node->estimate().coeffs() << std::endl; std::cout <<
-  // "mapped yplane2 id : " << (*found_mapped_y_plane2).id << std::endl; std::cout <<
-  // "mapped yplane2 coeffs : " <<
-  // (*found_mapped_y_plane2).plane_node->estimate().coeffs() << std::endl;
 }
 
 int FiniteRoomMapper::associate_rooms(

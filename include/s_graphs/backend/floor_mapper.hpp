@@ -120,6 +120,22 @@ class FloorMapper {
     return floor_updated;
   }
 
+  /**
+   * @brief
+   *
+   * @param graph_slam
+   * @param floor
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   */
+  void factor_floor_room_nodes(
+      std::shared_ptr<GraphSLAM>& graph_slam,
+      s_graphs::Floors floor,
+      const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
+
  private:
   /**
    * @brief Set the floor level object
@@ -192,6 +208,22 @@ class FloorMapper {
   void factor_floor_room_nodes(
       std::shared_ptr<GraphSLAM>& graph_slam,
       std::unordered_map<int, s_graphs::Floors>& floors_vec,
+      const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
+
+  /**
+   * @brief
+   *
+   * @param graph_slam
+   * @param floor
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   */
+  void add_floor_room_edges(
+      std::shared_ptr<GraphSLAM>& graph_slam,
+      s_graphs::Floors floor,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);

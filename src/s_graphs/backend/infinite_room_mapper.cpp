@@ -68,7 +68,9 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-    const std::unordered_map<int, Rooms>& rooms_vec) {
+    const std::unordered_map<int, Rooms>& rooms_vec,
+    int& room_id) {
+  room_id = -1;
   bool same_floor_level;
   std::unordered_map<int, s_graphs::VerticalPlanes>::const_iterator found_plane1;
   std::unordered_map<int, s_graphs::VerticalPlanes>::const_iterator found_plane2;
@@ -85,7 +87,9 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
         (found_plane1->second.floor_level == found_plane2->second.floor_level);
   }
 
-  if (!same_floor_level) return false;
+  if (!same_floor_level) {
+    return false;
+  };
 
   int current_floor_level = found_plane1->second.floor_level;
   Eigen::Isometry3d room_center;
@@ -177,7 +181,8 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
                                             y_infinite_rooms,
                                             room_center,
                                             cluster_center,
-                                            room_data.cluster_array);
+                                            room_data.cluster_array,
+                                            room_id);
   }
 
   else if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
@@ -242,7 +247,8 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
                                             y_infinite_rooms,
                                             room_center,
                                             cluster_center,
-                                            room_data.cluster_array);
+                                            room_data.cluster_array,
+                                            room_id);
   }
 
   return duplicate_found;
@@ -261,7 +267,9 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     const Eigen::Isometry3d& room_center,
     const Eigen::Isometry3d& cluster_center,
-    const visualization_msgs::msg::MarkerArray& cluster_array) {
+    const visualization_msgs::msg::MarkerArray& cluster_array,
+    int& room_id) {
+  room_id = -1;
   g2o::VertexRoom* room_node;
   g2o::VertexRoom* cluster_center_node;
   int room_data_association;
@@ -332,6 +340,7 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
 
       InfiniteRooms det_infinite_room;
       det_infinite_room.id = room_data_association;
+      room_id = det_infinite_room.id;
       det_infinite_room.plane1 = room_plane1_pair.plane_unflipped;
       det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
       det_infinite_room.plane1_id = room_plane1_pair.plane_id;
@@ -357,6 +366,7 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
     } else {
       /* add the edge between detected planes and the infinite_room */
       room_node = x_infinite_rooms[room_data_association].node;
+      room_id = room_data_association;
       std::cout << "Matched det infinite_room X with pre pose "
                 << room_center.translation() << " to mapped infinite_room with id "
                 << room_data_association << " and pose "
@@ -401,8 +411,9 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
     auto found_plane1 = y_vert_planes.find(room_plane1_pair.plane_id);
     auto found_plane2 = y_vert_planes.find(room_plane2_pair.plane_id);
 
-    if (found_plane1 == y_vert_planes.end() || found_plane2 == y_vert_planes.end())
+    if (found_plane1 == y_vert_planes.end() || found_plane2 == y_vert_planes.end()) {
       return duplicate_found;
+    }
 
     std::vector<std::pair<VerticalPlanes, VerticalPlanes>> detected_mapped_plane_pairs;
     room_data_association = associate_infinite_rooms(plane_type,
@@ -428,6 +439,7 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
 
       InfiniteRooms det_infinite_room;
       det_infinite_room.id = room_data_association;
+      room_id = det_infinite_room.id;
       det_infinite_room.plane1 = room_plane1_pair.plane_unflipped;
       det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
       det_infinite_room.plane1_id = room_plane1_pair.plane_id;
@@ -452,6 +464,7 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
     } else {
       /* add the edge between detected planes and the infinite_room */
       room_node = y_infinite_rooms[room_data_association].node;
+      room_id = room_data_association;
       std::cout << "Matched det infinite_room Y with pre pose "
                 << room_center.translation() << " to mapped infinite_room with id "
                 << room_data_association << " and pose "
