@@ -44,8 +44,8 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior,
     const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior,
     const std::vector<s_graphs::Rooms>& rooms_vec_prior,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
     const std::vector<s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
@@ -148,11 +148,11 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
   } else {
     graph_msg.name = "ONLINE";
-    for (int i = 0; i < x_vert_planes.size(); i++) {
-      g2o::Plane3D v_plane = x_vert_planes[i].plane;
+    for (const auto& x_vert_plane : x_vert_planes) {
+      g2o::Plane3D v_plane = x_vert_plane.second.plane;
       reasoning_msgs::msg::Node graph_node;
       reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = x_vert_planes[i].id;
+      graph_node.id = x_vert_plane.second.id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();
@@ -166,11 +166,11 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
       node_attribute.fl_value.clear();
       node_att_vec.clear();
     }
-    for (int i = 0; i < y_vert_planes.size(); i++) {
-      g2o::Plane3D v_plane = y_vert_planes[i].plane;
+    for (const auto& y_vert_plane : y_vert_planes) {
+      g2o::Plane3D v_plane = y_vert_plane.second.plane;
       reasoning_msgs::msg::Node graph_node;
       reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = y_vert_planes[i].id;
+      graph_node.id = y_vert_plane.second.id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();

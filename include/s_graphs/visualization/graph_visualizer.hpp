@@ -106,9 +106,9 @@ class GraphVisualizer {
   visualization_msgs::msg::MarkerArray create_marker_array(
       const rclcpp::Time& stamp,
       const g2o::SparseOptimizer* local_graph,
-      const std::vector<VerticalPlanes>& x_plane_snapshot,
-      const std::vector<VerticalPlanes>& y_plane_snapshot,
-      const std::vector<HorizontalPlanes>& hort_plane_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
+      const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
       std::vector<InfiniteRooms> x_infinite_room_snapshot,
       std::vector<InfiniteRooms> y_infinite_room_snapshot,
       std::vector<Rooms> room_snapshot,
@@ -132,9 +132,9 @@ class GraphVisualizer {
       bool global_optimization,
       bool room_optimization,
       const g2o::SparseOptimizer* compressed_graph,
-      const std::vector<VerticalPlanes>& x_plane_snapshot,
-      const std::vector<VerticalPlanes>& y_plane_snapshot,
-      const std::vector<HorizontalPlanes>& hort_plane_snapshot);
+      const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
+      const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot);
 
  private:
   /**
@@ -146,7 +146,7 @@ class GraphVisualizer {
    */
   Eigen::Vector3d compute_vert_plane_centroid(
       const int current_plane_id,
-      const std::vector<VerticalPlanes>& plane_snapshot);
+      const std::unordered_map<int, VerticalPlanes>& plane_snapshot);
 
   /**
    * @brief
@@ -157,7 +157,7 @@ class GraphVisualizer {
    */
   Eigen::Vector3d compute_hort_plane_centroid(
       const int current_plane_id,
-      const std::vector<HorizontalPlanes>& plane_snapshot);
+      const std::unordered_map<int, HorizontalPlanes>& plane_snapshot);
 
   /**
    * @brief Create a prior marker array object

@@ -1066,32 +1066,9 @@ class SGraphsNode : public rclcpp::Node {
       complete_keyframes_queue.push(keyframe.second);
     }
 
-    std::vector<VerticalPlanes> current_x_planes(x_vert_planes.size());
-    std::transform(x_vert_planes.begin(),
-                   x_vert_planes.end(),
-                   current_x_planes.begin(),
-                   [](const std::pair<int, VerticalPlanes>& x_plane) {
-                     return VerticalPlanes(x_plane.second, true);
-                   });
-    x_planes_snapshot.swap(current_x_planes);
-
-    std::vector<VerticalPlanes> current_y_planes(y_vert_planes.size());
-    std::transform(y_vert_planes.begin(),
-                   y_vert_planes.end(),
-                   current_y_planes.begin(),
-                   [](const std::pair<int, VerticalPlanes>& y_plane) {
-                     return VerticalPlanes(y_plane.second, true);
-                   });
-    y_planes_snapshot.swap(current_y_planes);
-
-    std::vector<HorizontalPlanes> current_hort_planes(hort_planes.size());
-    std::transform(hort_planes.begin(),
-                   hort_planes.end(),
-                   current_hort_planes.begin(),
-                   [](const std::pair<int, HorizontalPlanes>& hort_plane) {
-                     return HorizontalPlanes(hort_plane.second, true);
-                   });
-    hort_planes_snapshot.swap(current_hort_planes);
+    x_planes_snapshot = x_vert_planes;
+    y_planes_snapshot = y_vert_planes;
+    hort_planes_snapshot = hort_planes;
 
     std::vector<InfiniteRooms> curent_x_inf_rooms(x_infinite_rooms.size());
     std::transform(x_infinite_rooms.begin(),
@@ -1426,8 +1403,8 @@ class SGraphsNode : public rclcpp::Node {
    *
    */
   void publish_all_mapped_planes(
-      const std::vector<VerticalPlanes>& x_vert_planes_snapshot,
-      const std::vector<VerticalPlanes>& y_vert_planes_snapshot) {
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes_snapshot) {
     if (keyframes.empty()) return;
 
     int current_floor_level = floor_mapper->get_floor_level();
@@ -1435,24 +1412,24 @@ class SGraphsNode : public rclcpp::Node {
     s_graphs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& x_vert_plane : x_vert_planes_snapshot) {
-      if (x_vert_plane.floor_level != current_floor_level) continue;
+      if (x_vert_plane.second.floor_level != current_floor_level) continue;
 
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = (x_vert_plane).plane_node->estimate().coeffs();
+      mapped_plane_coeffs = (x_vert_plane).second.plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
       // mapped_plane_coeffs);
-      plane_data.id = (x_vert_plane).id;
+      plane_data.id = (x_vert_plane).second.id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      if (x_vert_plane.type == "Prior") {
+      if (x_vert_plane.second.type == "Prior") {
         plane_data.data_source = "PRIOR";
       } else {
         plane_data.data_source = "Online";
       }
-      for (const auto& plane_point_data : (x_vert_plane).cloud_seg_map->points) {
+      for (const auto& plane_point_data : (x_vert_plane).second.cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -1463,24 +1440,24 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& y_vert_plane : y_vert_planes_snapshot) {
-      if (y_vert_plane.floor_level != current_floor_level) continue;
+      if (y_vert_plane.second.floor_level != current_floor_level) continue;
 
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
-      mapped_plane_coeffs = (y_vert_plane).plane_node->estimate().coeffs();
+      mapped_plane_coeffs = (y_vert_plane).second.plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
       // mapped_plane_coeffs);
-      plane_data.id = (y_vert_plane).id;
+      plane_data.id = (y_vert_plane).second.id;
       plane_data.nx = mapped_plane_coeffs(0);
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      if (y_vert_plane.type == "Prior") {
+      if (y_vert_plane.second.type == "Prior") {
         plane_data.data_source = "PRIOR";
       } else {
         plane_data.data_source = "Online";
       }
-      for (const auto& plane_point_data : (y_vert_plane).cloud_seg_map->points) {
+      for (const auto& plane_point_data : (y_vert_plane).second.cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
         plane_point.y = plane_point_data.y;
@@ -1903,8 +1880,8 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<int, Floors> floors_vec;
   int prev_edge_count, curr_edge_count;
 
-  std::vector<VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
-  std::vector<HorizontalPlanes> hort_planes_snapshot;
+  std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
+  std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
   std::vector<Rooms> rooms_vec_snapshot;
   std::unordered_map<int, Floors> floors_vec_snapshot;
   std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;

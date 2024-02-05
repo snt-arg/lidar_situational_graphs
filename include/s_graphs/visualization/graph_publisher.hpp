@@ -107,8 +107,8 @@ class GraphPublisher {
       const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior,
       const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior,
       const std::vector<s_graphs::Rooms>& rooms_vec_prior,
-      const std::vector<s_graphs::VerticalPlanes>& x_vert_planes,
-      const std::vector<s_graphs::VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
       const std::vector<s_graphs::Rooms>& rooms_vec,
       const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
