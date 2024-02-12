@@ -36,6 +36,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_types.h>
 
 #include <boost/optional.hpp>
+#include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
 #include <vector>
 
@@ -157,13 +158,15 @@ struct KeyFrameSnapshot {
    * @param key
    */
   KeyFrameSnapshot(const Eigen::Isometry3d& pose,
-                   const pcl::PointCloud<PointT>::ConstPtr& cloud);
+                   const pcl::PointCloud<PointT>::ConstPtr& cloud,
+                   const bool marginalized = false);
 
   ~KeyFrameSnapshot();
 
  public:
   Eigen::Isometry3d pose;                   // pose estimated by graph optimization
   pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
+  bool k_marginalized = false;              // whether keyframe is marginalized
 };
 
 }  // namespace s_graphs

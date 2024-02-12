@@ -41,7 +41,9 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
+find_package(reasoning_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
+find_package(rviz_visual_tools REQUIRED)
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -112,12 +114,13 @@ set(DEPENDENCIES
     tf2 
     tf2_ros
     pcl_ros 
+    reasoning_msgs 
     visualization_msgs 
     message_filters 
     geographic_msgs
     nmea_msgs
     geodesy
-    reasoning_msgs)
+    rviz_visual_tools)
 
 SET(G2O_COMMON_LIBS 
   ${PCL_LIBRARIES}

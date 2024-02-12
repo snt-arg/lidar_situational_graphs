@@ -53,50 +53,21 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 // SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef EDGE_WALL_2_PLANES_HPP
-#define EDGE_WALL_2_PLANES_HPP
+#ifndef EDGE_LOOP_CLOSURE_HPP
+#define EDGE_LOOP_CLOSURE_HPP
 
-#include <g2o/core/base_binary_edge.h>
-#include <g2o/core/base_multi_edge.h>
-#include <g2o/types/slam3d/vertex_se3.h>
-#include <g2o/types/slam3d_addons/vertex_plane.h>
+#include <g2o/types/slam3d/edge_se3.h>
 
 #include <Eigen/Dense>
 
-#include "g2o/vertex_wall.hpp"
-
-#include "s_graphs/backend/factor_nn.hpp"
-
 namespace g2o {
 
-/*   Define Wall edge with wall surfaces here*/
-
-class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
+class EdgeLoopClosure : public EdgeSE3 {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeWall2Planes(Eigen::Vector3d wall_point, bool use_factor_nn_arg = true) : BaseMultiEdge<3, Eigen::Vector3d>() {
-    resize(3);
-    _wall_point = wall_point;
-    _use_factor_nn = use_factor_nn_arg;
-  }
-
-  void computeError() override;
-
-  virtual bool read(std::istream& is) override;
-
-  virtual bool write(std::ostream& os) const override;
-
-  Eigen::Vector3d get_wall_point() { return _wall_point; }
-
-  s_graphs::FactorNN factor_nn = s_graphs::FactorNN("wall");
-
- private:
-  void correct_plane_direction(Eigen::Vector4d& plane);
-  Eigen::Vector3d _wall_point;
-  Eigen::Vector3d compute_factor_legacy(Eigen::Vector4d plane1, Eigen::Vector4d plane2);
-  Eigen::Vector3d compute_factor_nn(Eigen::Vector4d plane1, Eigen::Vector4d plane2);
-  bool _use_factor_nn;
+  EdgeLoopClosure() : EdgeSE3() {}
 };
 
 }  // namespace g2o
-#endif  // EDGE_WALL_2_PLANES_HPP
+
+#endif  // EDGE_PLANE_PARALLEL_HPP

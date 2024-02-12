@@ -50,29 +50,31 @@ IMUMapper::IMUMapper(const rclcpp::Node::SharedPtr node) {
 
 IMUMapper::~IMUMapper() {}
 
-bool IMUMapper::map_imu_data(std::shared_ptr<GraphSLAM>& graph_slam,
+bool IMUMapper::map_imu_data(std::shared_ptr<GraphSLAM>& covisibility_graph,
                              const std::unique_ptr<tf2_ros::Buffer>& tf_buffer,
                              std::deque<sensor_msgs::msg::Imu::SharedPtr>& imu_queue,
-                             const std::vector<KeyFrame::Ptr>& keyframes,
+                             const std::map<int, KeyFrame::Ptr>& keyframes,
                              const std::string base_frame_id) {
   bool updated = false;
   auto imu_cursor = imu_queue.begin();
 
   for (auto& keyframe : keyframes) {
-    if (keyframe->stamp > imu_queue.back()->header.stamp) {
+    if (keyframe.second->stamp > imu_queue.back()->header.stamp) {
       break;
     }
 
-    if (keyframe->stamp < (*imu_cursor)->header.stamp || keyframe->acceleration) {
+    if (keyframe.second->stamp < (*imu_cursor)->header.stamp ||
+        keyframe.second->acceleration) {
       continue;
     }
 
     // find imu data which is closest to the keyframe
     auto closest_imu = imu_cursor;
     for (auto imu = imu_cursor; imu != imu_queue.end(); imu++) {
-      auto dt =
-          (rclcpp::Time((*closest_imu)->header.stamp) - keyframe->stamp).seconds();
-      auto dt2 = (rclcpp::Time((*imu)->header.stamp) - keyframe->stamp).seconds();
+      auto dt = (rclcpp::Time((*closest_imu)->header.stamp) - keyframe.second->stamp)
+                    .seconds();
+      auto dt2 =
+          (rclcpp::Time((*imu)->header.stamp) - keyframe.second->stamp).seconds();
       if (std::abs(dt) < std::abs(dt2)) {
         break;
       }
@@ -82,8 +84,8 @@ bool IMUMapper::map_imu_data(std::shared_ptr<GraphSLAM>& graph_slam,
 
     imu_cursor = closest_imu;
     if (0.2 <
-        std::abs(
-            (rclcpp::Time((*closest_imu)->header.stamp) - keyframe->stamp).seconds())) {
+        std::abs((rclcpp::Time((*closest_imu)->header.stamp) - keyframe.second->stamp)
+                     .seconds())) {
       continue;
     }
 
@@ -109,31 +111,34 @@ bool IMUMapper::map_imu_data(std::shared_ptr<GraphSLAM>& graph_slam,
       return false;
     }
 
-    keyframe->acceleration =
+    keyframe.second->acceleration =
         Eigen::Vector3d(acc_base.vector.x, acc_base.vector.y, acc_base.vector.z);
-    keyframe->orientation = Eigen::Quaterniond(quat_base.quaternion.w,
-                                               quat_base.quaternion.x,
-                                               quat_base.quaternion.y,
-                                               quat_base.quaternion.z);
-    keyframe->orientation = keyframe->orientation;
-    if (keyframe->orientation->w() < 0.0) {
-      keyframe->orientation->coeffs() = -keyframe->orientation->coeffs();
+    keyframe.second->orientation = Eigen::Quaterniond(quat_base.quaternion.w,
+                                                      quat_base.quaternion.x,
+                                                      quat_base.quaternion.y,
+                                                      quat_base.quaternion.z);
+    keyframe.second->orientation = keyframe.second->orientation;
+    if (keyframe.second->orientation->w() < 0.0) {
+      keyframe.second->orientation->coeffs() = -keyframe.second->orientation->coeffs();
     }
 
     if (enable_imu_orientation) {
       Eigen::MatrixXd info =
           Eigen::MatrixXd::Identity(3, 3) / imu_orientation_edge_stddev;
-      auto edge = graph_slam->add_se3_prior_quat_edge(
-          keyframe->node, *keyframe->orientation, info);
-      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      auto edge = covisibility_graph->add_se3_prior_quat_edge(
+          keyframe.second->node, *keyframe.second->orientation, info);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
     }
 
     if (enable_imu_acceleration) {
       Eigen::MatrixXd info =
           Eigen::MatrixXd::Identity(3, 3) / imu_acceleration_edge_stddev;
-      g2o::OptimizableGraph::Edge* edge = graph_slam->add_se3_prior_vec_edge(
-          keyframe->node, -Eigen::Vector3d::UnitZ(), *keyframe->acceleration, info);
-      graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+      g2o::OptimizableGraph::Edge* edge =
+          covisibility_graph->add_se3_prior_vec_edge(keyframe.second->node,
+                                                     -Eigen::Vector3d::UnitZ(),
+                                                     *keyframe.second->acceleration,
+                                                     info);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
     }
     updated = true;
   }
@@ -141,7 +146,7 @@ bool IMUMapper::map_imu_data(std::shared_ptr<GraphSLAM>& graph_slam,
   auto remove_loc = std::upper_bound(
       imu_queue.begin(),
       imu_queue.end(),
-      keyframes.back()->stamp,
+      keyframes.rbegin()->second->stamp,
       [=](const rclcpp::Time& stamp, const sensor_msgs::msg::Imu::SharedPtr imu) {
         return stamp < imu->header.stamp;
       });

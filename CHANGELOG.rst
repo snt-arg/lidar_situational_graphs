@@ -2,6 +2,12 @@
 Changelog for package s_graphs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+3.0.0 (2024-01-18)
+------------------
+* [Feat] Update walldata msg
+* [Feat] Change graph_manager_msgs->reasoning_msgs
+* Contributors: Hriday Bavle
+
 2.0.0 (2022-10-19)
 ------------------
 * Switch to random color in plane visualization

@@ -80,8 +80,8 @@ struct RoomPlanes {
 };
 
 /**
- * @brief Class that provides tools for different analysis over open space clusters to
- * generate rooms
+ * @brief Class that provides tools for different analysis over open space
+ * clusters to generate rooms
  */
 class RoomAnalyzer {
  public:
@@ -91,8 +91,7 @@ class RoomAnalyzer {
    * @param private_nh
    * @param plane_utils_ptr
    */
-  RoomAnalyzer(room_analyzer_params params,
-               std::shared_ptr<PlaneUtils> plane_utils_ptr);
+  RoomAnalyzer(room_analyzer_params params);
   ~RoomAnalyzer();
 
   /**
@@ -101,7 +100,8 @@ class RoomAnalyzer {
    * @param skeleton_graph_msg
    */
   void analyze_skeleton_graph(
-      const visualization_msgs::msg::MarkerArray::SharedPtr& skeleton_graph_msg);
+      const visualization_msgs::msg::MarkerArray::SharedPtr&
+          skeleton_graph_msg);
 
   /**
    * @brief
@@ -139,10 +139,9 @@ class RoomAnalyzer {
    * @param found_y2_plane
    * @return
    */
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_room_planes(RoomInfo& room_info,
-                                                             RoomPlanes& room_planes,
-                                                             pcl::PointXY p_min,
-                                                             pcl::PointXY p_max);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_room_planes(
+      RoomInfo& room_info, RoomPlanes& room_planes, pcl::PointXY p_min,
+      pcl::PointXY p_max);
 
   /**
    * @brief
@@ -151,9 +150,9 @@ class RoomAnalyzer {
    * @param cloud_hull
    * @param area
    */
-  void extract_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud,
-                           pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull,
-                           float& area);
+  void extract_convex_hull(
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud,
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, float& area);
 
   /**
    * @brief
@@ -164,8 +163,7 @@ class RoomAnalyzer {
    */
   void extract_cluster_endpoints(
       const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud,
-      pcl::PointXY& p1,
-      pcl::PointXY& p2);
+      pcl::PointXY& p1, pcl::PointXY& p2);
 
   /**
    * @brief
@@ -177,8 +175,7 @@ class RoomAnalyzer {
    */
   bool extract_centroid_location(
       const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud,
-      const pcl::PointXY& p1,
-      const pcl::PointXY& p2);
+      const pcl::PointXY& p1, const pcl::PointXY& p2);
 
   /**
    * @brief
@@ -213,11 +210,8 @@ class RoomAnalyzer {
    * @return The center point of the room.
    */
   geometry_msgs::msg::Point extract_infinite_room_center(
-      int plane_type,
-      pcl::PointXY p1,
-      pcl::PointXY p2,
-      s_graphs::msg::PlaneData plane1,
-      s_graphs::msg::PlaneData plane2,
+      int plane_type, pcl::PointXY p1, pcl::PointXY p2,
+      s_graphs::msg::PlaneData plane1, s_graphs::msg::PlaneData plane2,
       Eigen::Vector2d& cluster_center);
 
   /**
@@ -232,8 +226,7 @@ class RoomAnalyzer {
    * @return Success or Failure.
    */
   bool perform_room_segmentation(
-      RoomInfo& room_info,
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
+      RoomInfo& room_info, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
       std::vector<s_graphs::msg::RoomData>& room_candidates_vec,
       const visualization_msgs::msg::MarkerArray& cloud_marker_array);
 
@@ -242,7 +235,8 @@ class RoomAnalyzer {
    *
    * @param cloud_hull
    */
-  void downsample_cloud_data(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull);
+  void downsample_cloud_data(
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull);
 
  private:
   /**
@@ -290,7 +284,6 @@ class RoomAnalyzer {
       const std::vector<geometry_msgs::msg::Vector3> x_plane_points);
 
  private:
-  std::shared_ptr<PlaneUtils> plane_utils;
   int vertex_neigh_thres;
 
   std::mutex skeleton_graph_mutex;
@@ -319,9 +312,10 @@ class RoomAnalyzer {
    * @param sub_cloud_cluster
    * @return
    */
-  int find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull,
-                        const s_graphs::msg::PlaneData& plane,
-                        pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster);
+  int find_plane_points(
+      const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull,
+      const s_graphs::msg::PlaneData& plane,
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster);
 
   /**
    * @brief

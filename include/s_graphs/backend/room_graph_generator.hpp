@@ -36,39 +36,86 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/backend/keyframe_mapper.hpp>
+#include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/room_utils.hpp>
 #include <s_graphs/common/rooms.hpp>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace s_graphs {
 
-class LocalGraphGenerator {
+class RoomGraphGenerator {
  public:
-  LocalGraphGenerator();
-  ~LocalGraphGenerator();
+  RoomGraphGenerator(rclcpp::Node::SharedPtr node);
+  ~RoomGraphGenerator();
 
  public:
-  Rooms get_current_room(const std::vector<VerticalPlanes>& x_vert_planes,
-                         const std::vector<VerticalPlanes>& y_vert_planes,
+  /**
+   * @brief Get the current room object
+   *
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param keyframe
+   * @param rooms_vec
+   * @return * Rooms
+   */
+  Rooms get_current_room(const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                         const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                          const KeyFrame::Ptr keyframe,
-                         const std::vector<Rooms>& rooms_vec);
+                         const std::unordered_map<int, Rooms>& rooms_vec);
 
-  std::vector<KeyFrame::Ptr> get_keyframes_inside_room(
+  /**
+   * @brief Get the keyframes inside room object
+   *
+   * @param current_room
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param keyframes
+   * @return * std::map<int, KeyFrame::Ptr>
+   */
+  std::map<int, KeyFrame::Ptr> get_keyframes_inside_room(
       const Rooms& current_room,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
-      const std::vector<KeyFrame::Ptr>& keyframes);
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      const std::map<int, KeyFrame::Ptr>& keyframes);
 
+  /**
+   * @brief Get the room planes object
+   *
+   * @param current_room
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @return * std::vector<const s_graphs::VerticalPlanes*>
+   */
   std::vector<const s_graphs::VerticalPlanes*> get_room_planes(
       const Rooms& current_room,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes);
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 
+  /**
+   * @brief
+   *
+   * @param keyframe_mapper
+   * @param covisibility_graph
+   * @param filtered_keyframes
+   * @param odom2map
+   * @param current_room
+   * @return * void
+   */
   void generate_local_graph(std::unique_ptr<KeyframeMapper>& keyframe_mapper,
                             std::shared_ptr<GraphSLAM> covisibility_graph,
-                            std::vector<s_graphs::KeyFrame::Ptr> filtered_keyframes,
+                            std::map<int, s_graphs::KeyFrame::Ptr> filtered_keyframes,
                             const Eigen::Isometry3d& odom2map,
                             Rooms& current_room);
+
+  /**
+   * @brief update the room graph keyframes after global optimization
+   *
+   * @param room
+   * @param covisibility_graph
+   */
+  void update_room_graph(const Rooms room,
+                         const std::shared_ptr<GraphSLAM>& covisibility_graph);
 };
 }  // namespace s_graphs
 

@@ -64,7 +64,7 @@ Eigen::MatrixXd InformationMatrixCalculator::calc_information_matrix(
     const pcl::PointCloud<PointT>::ConstPtr& cloud1,
     const pcl::PointCloud<PointT>::ConstPtr& cloud2,
     const Eigen::Isometry3d& relpose) const {
-  if (use_const_inf_matrix) {
+  if (use_const_inf_matrix || cloud1->points.empty() || cloud2->points.empty()) {
     Eigen::MatrixXd inf = Eigen::MatrixXd::Identity(6, 6);
     inf.topLeftCorner(3, 3).array() /= const_stddev_x;
     inf.bottomRightCorner(3, 3).array() /= const_stddev_q;

@@ -67,10 +67,7 @@ class MapperUtils {
    * @param
    * @return
    */
-  MapperUtils() { plane_utils.reset(new PlaneUtils()); }
-
- public:
-  std::unique_ptr<PlaneUtils> plane_utils;
+  MapperUtils() {}
 
  public:
   /**
@@ -176,7 +173,6 @@ class InfiniteRoomMapper : public MapperUtils {
 
  private:
   rclcpp::Node::SharedPtr node_obj;
-  std::unique_ptr<PlaneUtils> plane_utils;
 
  public:
   /**
@@ -192,19 +188,19 @@ class InfiniteRoomMapper : public MapperUtils {
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    * @param rooms_vec
-   * @return
+   * @return bool
    */
-  void lookup_infinite_rooms(
+  bool lookup_infinite_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const int& plane_type,
       const s_graphs::msg::RoomData room_data,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-      std::vector<InfiniteRooms>& x_infinite_rooms,
-      std::vector<InfiniteRooms>& y_infinite_rooms,
-      const std::vector<Rooms>& rooms_vec);
+      std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      const std::unordered_map<int, Rooms>& rooms_vec);
 
  private:
   /**
@@ -222,17 +218,17 @@ class InfiniteRoomMapper : public MapperUtils {
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    */
-  void factor_infinite_rooms(
+  bool factor_infinite_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const int plane_type,
       const plane_data_list& corr_plane1_pair,
       const plane_data_list& corr_plane2_pair,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-      std::vector<InfiniteRooms>& x_infinite_rooms,
-      std::vector<InfiniteRooms>& y_infinite_rooms,
+      std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
       const Eigen::Isometry3d& room_center,
       const Eigen::Isometry3d& cluster_center,
       const visualization_msgs::msg::MarkerArray& cluster_array);
@@ -251,15 +247,15 @@ class InfiniteRoomMapper : public MapperUtils {
    * @param detected_mapped_plane_pairs
    * @return
    */
-  std::pair<int, int> associate_infinite_rooms(
+  int associate_infinite_rooms(
       const int& plane_type,
       const Eigen::Isometry3d& room_center,
       const VerticalPlanes& plane1,
       const VerticalPlanes& plane2,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
-      const std::vector<InfiniteRooms>& x_infinite_rooms,
-      const std::vector<InfiniteRooms>& y_infinite_rooms,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
           detected_mapped_plane_pairs);
 
@@ -311,7 +307,6 @@ class FiniteRoomMapper : public MapperUtils {
 
  private:
   rclcpp::Node::SharedPtr node_obj;
-  std::unique_ptr<PlaneUtils> plane_utils;
 
  public:
   /**
@@ -327,16 +322,17 @@ class FiniteRoomMapper : public MapperUtils {
    * @param y_infinite_rooms
    * @param rooms_vec
    */
-  void lookup_rooms(
+  bool lookup_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const s_graphs::msg::RoomData room_data,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-      std::vector<InfiniteRooms>& x_infinite_rooms,
-      std::vector<InfiniteRooms>& y_infinite_rooms,
-      std::vector<Rooms>& rooms_vec);
+      std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      std::unordered_map<int, Rooms>& rooms_vec,
+      int& room_id);
 
   /**
    * @brief
@@ -365,15 +361,16 @@ class FiniteRoomMapper : public MapperUtils {
    * @param rooms_vec
    * @param cluster_array
    */
-  void factor_rooms(
+  bool factor_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       std::vector<plane_data_list> x_room_pair_vec,
       std::vector<plane_data_list> y_room_pair_vec,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_y_vert_planes,
-      std::vector<Rooms>& rooms_vec,
+      std::unordered_map<int, Rooms>& rooms_vec,
+      int& room_id,
       const Eigen::Isometry3d& room_center,
       const visualization_msgs::msg::MarkerArray& cluster_array);
 
@@ -391,17 +388,16 @@ class FiniteRoomMapper : public MapperUtils {
    * @param detected_mapped_plane_pairs
    * @return
    */
-  std::pair<int, int> associate_rooms(
-      const Eigen::Isometry3d& room_center,
-      const std::vector<Rooms>& rooms_vec,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
-      const VerticalPlanes& x_plane1,
-      const VerticalPlanes& x_plane2,
-      const VerticalPlanes& y_plane1,
-      const VerticalPlanes& y_plane2,
-      std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
-          detected_mapped_plane_pairs);
+  int associate_rooms(const Eigen::Isometry3d& room_center,
+                      const std::unordered_map<int, Rooms>& rooms_vec,
+                      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                      const VerticalPlanes& x_plane1,
+                      const VerticalPlanes& x_plane2,
+                      const VerticalPlanes& y_plane1,
+                      const VerticalPlanes& y_plane2,
+                      std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
+                          detected_mapped_plane_pairs);
 
   /**
    * @brief
@@ -437,9 +433,9 @@ class FiniteRoomMapper : public MapperUtils {
       const s_graphs::InfiniteRooms& matched_x_infinite_room,
       const s_graphs::InfiniteRooms& matched_y_infinite_room,
       const Eigen::Isometry3d& room_center,
-      std::vector<Rooms>& rooms_vec,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, Rooms>& rooms_vec,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       const VerticalPlanes& x_plane1,
       const VerticalPlanes& x_plane2,
       const VerticalPlanes& y_plane1,
@@ -464,9 +460,9 @@ class FiniteRoomMapper : public MapperUtils {
       const s_graphs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_x_infinite_room,
       const Eigen::Isometry3d& room_center,
-      std::vector<Rooms>& rooms_vec,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, Rooms>& rooms_vec,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       const VerticalPlanes& x_plane1,
       const VerticalPlanes& x_plane2,
       const VerticalPlanes& y_plane1,
@@ -491,9 +487,9 @@ class FiniteRoomMapper : public MapperUtils {
       const s_graphs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_y_infinite_room,
       const Eigen::Isometry3d& room_center,
-      std::vector<Rooms>& rooms_vec,
-      const std::vector<VerticalPlanes>& x_vert_planes,
-      const std::vector<VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, Rooms>& rooms_vec,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       const VerticalPlanes& x_plane1,
       const VerticalPlanes& x_plane2,
       const VerticalPlanes& y_plane1,
@@ -503,11 +499,12 @@ class FiniteRoomMapper : public MapperUtils {
    * @brief remove the infinite_room overlapped by a room
    *
    */
-  void remove_mapped_infinite_room(const int plane_type,
-                                   std::shared_ptr<GraphSLAM>& graph_slam,
-                                   s_graphs::InfiniteRooms matched_infinite_room,
-                                   std::vector<InfiniteRooms>& x_infinite_rooms,
-                                   std::vector<InfiniteRooms>& y_infinite_rooms);
+  void remove_mapped_infinite_room(
+      const int plane_type,
+      std::shared_ptr<GraphSLAM>& graph_slam,
+      s_graphs::InfiniteRooms matched_infinite_room,
+      std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms);
 
  private:
   double room_information;

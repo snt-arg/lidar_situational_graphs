@@ -97,3 +97,4 @@
     constant_covariance:        true
     min_plane_points:           100
     dupl_plane_matching_information: 0.1
+    optimization_window_size: 5

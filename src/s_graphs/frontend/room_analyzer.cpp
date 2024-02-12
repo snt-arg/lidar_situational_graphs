@@ -33,9 +33,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 namespace s_graphs {
 
-RoomAnalyzer::RoomAnalyzer(room_analyzer_params params,
-                           std::shared_ptr<PlaneUtils> plane_utils_ptr) {
-  plane_utils = plane_utils_ptr;
+RoomAnalyzer::RoomAnalyzer(room_analyzer_params params) {
   cloud_clusters.clear();
   subgraphs.clear();
   vertex_neigh_thres = params.vertex_neigh_thres;
@@ -268,20 +266,20 @@ bool RoomAnalyzer::perform_room_segmentation(
     // if found all four planes its a room
     if (room_planes.found_x1_plane && room_planes.found_x2_plane &&
         room_planes.found_y1_plane && room_planes.found_y2_plane) {
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                           room_planes.x_plane1);
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                           room_planes.x_plane2);
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                           room_planes.y_plane1);
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                           room_planes.y_plane2);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                          room_planes.x_plane1);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                          room_planes.x_plane2);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                          room_planes.y_plane1);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                          room_planes.y_plane2);
 
       // first check the width of the rooms
       float x_plane_width =
-          plane_utils->width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
+          PlaneUtils::width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
       float y_plane_width =
-          plane_utils->width_between_planes(room_planes.y_plane1, room_planes.y_plane2);
+          PlaneUtils::width_between_planes(room_planes.y_plane1, room_planes.y_plane2);
 
       if (x_plane_width < room_width_threshold ||
           y_plane_width < room_width_threshold) {
@@ -307,7 +305,7 @@ bool RoomAnalyzer::perform_room_segmentation(
         return false;
       }
       geometry_msgs::msg::Pose room_center =
-          plane_utils->room_center(x_plane1, x_plane2, y_plane1, y_plane2);
+          PlaneUtils::room_center(x_plane1, x_plane2, y_plane1, y_plane2);
       bool centroid_inside =
           extract_centroid_location(cloud_cluster, room_center.position);
       if (!centroid_inside) {
@@ -343,13 +341,13 @@ bool RoomAnalyzer::perform_room_segmentation(
       if (sub_cloud_cluster->points.size() > 0)
         extract_cluster_endpoints(sub_cloud_cluster, p1, p2);
 
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                           room_planes.x_plane1);
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                           room_planes.x_plane2);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                          room_planes.x_plane1);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                          room_planes.x_plane2);
 
       float x_plane_width =
-          plane_utils->width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
+          PlaneUtils::width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
       if (x_plane_width < room_width_threshold) {
         // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
@@ -357,12 +355,12 @@ bool RoomAnalyzer::perform_room_segmentation(
 
       Eigen::Vector2d cluster_center;
       geometry_msgs::msg::Pose room_center =
-          plane_utils->extract_infite_room_center(PlaneUtils::plane_class::X_VERT_PLANE,
-                                                  p1,
-                                                  p2,
-                                                  room_planes.x_plane1,
-                                                  room_planes.x_plane2,
-                                                  cluster_center);
+          PlaneUtils::extract_infite_room_center(PlaneUtils::plane_class::X_VERT_PLANE,
+                                                 p1,
+                                                 p2,
+                                                 room_planes.x_plane1,
+                                                 room_planes.x_plane2,
+                                                 cluster_center);
       bool centroid_inside =
           extract_centroid_location(cloud_cluster, room_center.position);
       if (!centroid_inside) {
@@ -398,13 +396,13 @@ bool RoomAnalyzer::perform_room_segmentation(
       if (sub_cloud_cluster->points.size() > 0)
         extract_cluster_endpoints(sub_cloud_cluster, p1, p2);
 
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                           room_planes.y_plane1);
-      plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                           room_planes.y_plane2);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                          room_planes.y_plane1);
+      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                          room_planes.y_plane2);
 
       float y_plane_width =
-          plane_utils->width_between_planes(room_planes.y_plane1, room_planes.y_plane2);
+          PlaneUtils::width_between_planes(room_planes.y_plane1, room_planes.y_plane2);
       if (y_plane_width < room_width_threshold) {
         // std::cout << "returning as the room is not sufficiently wide" << std::endl;
         return false;
@@ -412,12 +410,12 @@ bool RoomAnalyzer::perform_room_segmentation(
 
       Eigen::Vector2d cluster_center;
       geometry_msgs::msg::Pose room_center =
-          plane_utils->extract_infite_room_center(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                                  p1,
-                                                  p2,
-                                                  room_planes.y_plane1,
-                                                  room_planes.y_plane2,
-                                                  cluster_center);
+          PlaneUtils::extract_infite_room_center(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                                 p1,
+                                                 p2,
+                                                 room_planes.y_plane1,
+                                                 room_planes.y_plane2,
+                                                 cluster_center);
       bool centroid_inside =
           extract_centroid_location(cloud_cluster, room_center.position);
       if (!centroid_inside) {
@@ -528,7 +526,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::extract_room_planes(
     bool planes_placed_correctly = false;
     if (!room_planes.x_plane1.plane_points.empty() &&
         !room_planes.x_plane2.plane_points.empty()) {
-      planes_placed_correctly = plane_utils->compute_point_difference(
+      planes_placed_correctly = PlaneUtils::compute_point_difference(
           room_planes.x_plane1.plane_points.back().x,
           room_planes.x_plane2.plane_points.back().x);
     }
@@ -611,7 +609,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr RoomAnalyzer::extract_room_planes(
     bool planes_placed_correctly = false;
     if (!room_planes.y_plane1.plane_points.empty() &&
         !room_planes.y_plane2.plane_points.empty()) {
-      planes_placed_correctly = plane_utils->compute_point_difference(
+      planes_placed_correctly = PlaneUtils::compute_point_difference(
           room_planes.y_plane1.plane_points.back().y,
           room_planes.y_plane2.plane_points.back().y);
     }

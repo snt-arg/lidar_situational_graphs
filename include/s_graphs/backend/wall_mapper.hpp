@@ -74,26 +74,22 @@ class WallMapper {
 
  public:
   /**
-   * @brief
+   * @brief Eigen::Vector3d wall_pose,
    *
    * @param covisibility_graph
+   * @param wall_pose
    * @param x_planes_msg
-   * @param x_wall_pose
    * @param y_planes_msg
-   * @param y_wall_pose
    * @param x_vert_planes
    * @param y_vert_planes
-   * @return
    */
-
- public:
-  void factor_wall(std::shared_ptr<GraphSLAM>& covisibility_graph,
-                   std::vector<s_graphs::msg::PlaneData> x_planes_msg,
-                   Eigen::Vector3d x_wall_pose,
-                   std::vector<s_graphs::msg::PlaneData> y_planes_msg,
-                   Eigen::Vector3d y_wall_pose,
-                   std::vector<VerticalPlanes>& x_vert_planes,
-                   std::vector<VerticalPlanes>& y_vert_planes);
+  void factor_wall(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                   const Eigen::Vector3d& wall_pose,
+                   const Eigen::Vector3d& wall_point,
+                   const std::vector<s_graphs::msg::PlaneData> x_planes_msg,
+                   const std::vector<s_graphs::msg::PlaneData> y_planes_msg,
+                   std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                   std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 
   /**
    * @brief
@@ -104,8 +100,9 @@ class WallMapper {
    * @param plane2
    * @return
    */
-  void add_wall_node_and_edge(std::shared_ptr<GraphSLAM>& covisibility_graph,
-                              Eigen::Vector3d wall_pose,
+  void add_wall_node_and_edge(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                              const Eigen::Vector3d& wall_pose,
+                              const Eigen::Vector3d& wall_point,
                               VerticalPlanes& plane1,
                               VerticalPlanes& plane2);
 
@@ -113,7 +110,6 @@ class WallMapper {
   bool use_point_to_plane;
 
  private:
-  std::unique_ptr<PlaneUtils> plane_utils;
   rclcpp::Node::SharedPtr node_obj;
 };
 

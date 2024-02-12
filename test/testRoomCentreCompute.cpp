@@ -55,7 +55,6 @@ class TestRoom : public ::testing::Test {
     node->declare_parameter("g2o_solver_type", "lm_var_cholmod");
 
     graph_slam = std::make_shared<s_graphs::GraphSLAM>("lm_var_cholmod");
-    plane_utils = std::make_shared<s_graphs::PlaneUtils>();
     finite_room_mapper = std::make_shared<s_graphs::FiniteRoomMapper>(node);
   }
 
@@ -87,26 +86,26 @@ class TestRoom : public ::testing::Test {
     y2_plane_data.nz = 0;
     y2_plane_data.d = 4;
 
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                         x1_plane_data);
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                         x2_plane_data);
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                         y1_plane_data);
-    plane_utils->correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                         y2_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                        x1_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
+                                        x2_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                        y1_plane_data);
+    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
+                                        y2_plane_data);
 
     room_data.x_planes.push_back(x1_plane_data);
     room_data.x_planes.push_back(x2_plane_data);
     room_data.y_planes.push_back(y1_plane_data);
     room_data.y_planes.push_back(y2_plane_data);
 
-    room_data.room_center = plane_utils->room_center(
+    room_data.room_center = PlaneUtils::room_center(
         x1_plane_data, x2_plane_data, y1_plane_data, y2_plane_data);
 
     this->add_keyframe_node();
     this->add_plane_nodes();
-
+    int current_room_id;
     finite_room_mapper->lookup_rooms(graph_slam,
                                      room_data,
                                      x_vert_planes,
@@ -115,7 +114,8 @@ class TestRoom : public ::testing::Test {
                                      dupl_y_vert_planes,
                                      x_infinite_rooms,
                                      y_infinite_rooms,
-                                     rooms_vec);
+                                     rooms_vec,
+                                     current_room_id);
   }
 
   void add_keyframe_node() {
@@ -147,8 +147,8 @@ class TestRoom : public ::testing::Test {
     x2_vert_plane.plane = plane_coeffs;
     x2_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
-    x_vert_planes.push_back(x1_vert_plane);
-    x_vert_planes.push_back(x2_vert_plane);
+    x_vert_planes.insert({x1_vert_plane.id, x1_vert_plane});
+    x_vert_planes.insert({x2_vert_plane.id, x2_vert_plane});
 
     y1_vert_plane.id = 3;
     y1_vert_plane.keyframe_node = keyframe->node;
@@ -162,8 +162,8 @@ class TestRoom : public ::testing::Test {
     y2_vert_plane.plane = plane_coeffs;
     y2_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
-    y_vert_planes.push_back(y1_vert_plane);
-    y_vert_planes.push_back(y2_vert_plane);
+    y_vert_planes.insert({y1_vert_plane.id, y1_vert_plane});
+    y_vert_planes.insert({y2_vert_plane.id, y2_vert_plane});
   }
 
  public:
@@ -171,13 +171,12 @@ class TestRoom : public ::testing::Test {
   std::shared_ptr<s_graphs::GraphSLAM> graph_slam;
   s_graphs::KeyFrame::Ptr keyframe;
   std::shared_ptr<s_graphs::FiniteRoomMapper> finite_room_mapper;
-  std::shared_ptr<s_graphs::PlaneUtils> plane_utils;
-  std::vector<s_graphs::VerticalPlanes> x_vert_planes;
-  std::vector<s_graphs::VerticalPlanes> y_vert_planes;
+  std::unordered_map<int, s_graphs::VerticalPlanes> x_vert_planes;
+  std::unordered_map<int, s_graphs::VerticalPlanes> y_vert_planes;
   std::deque<std::pair<s_graphs::VerticalPlanes, s_graphs::VerticalPlanes>>
       dupl_x_vert_planes, dupl_y_vert_planes;
-  std::vector<s_graphs::InfiniteRooms> x_infinite_rooms, y_infinite_rooms;
-  std::vector<s_graphs::Rooms> rooms_vec;
+  std::unordered_map<int, s_graphs::InfiniteRooms> x_infinite_rooms, y_infinite_rooms;
+  std::unordered_map<int, s_graphs::Rooms> rooms_vec;
   // s_graphs::KeyFrame::Ptr keyframe;
 };
 
