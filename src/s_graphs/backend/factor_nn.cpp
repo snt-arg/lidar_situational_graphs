@@ -40,9 +40,8 @@ namespace s_graphs {
 
 // FactorNN::FactorNN(const rclcpp::Node::SharedPtr node) {
 FactorNN::FactorNN(std::string _factor_type) {
-  std::cerr << "flag _factor_type : " << _factor_type << std::endl;
   if (_factor_type == "room"){
-    path = "/home/adminpc/reasoning_ws/src/graph_factor_nn/torchscripts/room_4.pt";
+    path = "/home/adminpc/reasoning_ws/src/graph_factor_nn/torchscripts/room.pt";
   } else if (_factor_type == "wall") {
     path = "/home/adminpc/reasoning_ws/src/graph_factor_nn/torchscripts/wall.pt";
   }
@@ -57,7 +56,7 @@ FactorNN::FactorNN(std::string _factor_type) {
 }
 
 Eigen::Vector2d FactorNN::infer(std::vector<std::vector<float>> input_vector){
-  // std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
   std::vector<float> zeros(input_vector[0].size(), 0.0f);
   input_vector.push_back(zeros);
   int rows = input_vector.size();
@@ -89,8 +88,7 @@ Eigen::Vector2d FactorNN::infer(std::vector<std::vector<float>> input_vector){
   std::vector<torch::jit::IValue> inputs = {ivalue_x, ivalue_edgeIndex, ivalue_batch};   
 
   at::Tensor output = module.forward(inputs ).toTensor();
-  // std::cout << "flag output" << output << std::endl;
-  // std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
   // std::cout << "NN Time difference = " << std::chrono::duration_cast<std::chrono::microseconds> (end - begin).count() << "[µs]" << std::endl;
 
   Eigen::Vector2d eigenVector;

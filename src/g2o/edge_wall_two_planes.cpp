@@ -79,6 +79,7 @@ void EdgeWall2Planes::computeError() {
   correct_plane_direction(plane2);
 
   Eigen::Vector3d estimated_wall_center;
+
   if (_use_factor_nn){
     estimated_wall_center = compute_factor_nn(plane1, plane2);
   } else {
@@ -156,22 +157,22 @@ Eigen::Vector3d EdgeWall2Planes::compute_factor_nn(Eigen::Vector4d plane1, Eigen
     vectorList.push_back(plane1);
     vectorList.push_back(plane2);
 
-  std::vector<float> concatenatedVector;
+  std::vector<std::vector<float>> allNeighborsVector;
   for (const Eigen::Vector4d& vector : vectorList) {
-      concatenatedVector.push_back(static_cast<float>(vector(0)));
-      concatenatedVector.push_back(static_cast<float>(vector(1)));
-      concatenatedVector.push_back(static_cast<float>(vector(2)));
-      concatenatedVector.push_back(static_cast<float>(vector(3))/normalization);
+      std::vector<float> neighborParamsVector;
+      neighborParamsVector.push_back(static_cast<float>(vector(0)));
+      neighborParamsVector.push_back(static_cast<float>(vector(1)));
+      neighborParamsVector.push_back(static_cast<float>(vector(2)));
+      neighborParamsVector.push_back(static_cast<float>(vector(3))/normalization);
+      allNeighborsVector.push_back(neighborParamsVector);
   }
 
-  std::cout << "FLAG concatenatedVector " << concatenatedVector << '\n';
-  std::vector<std::vector<float>> allNeighborsVector; /// TODO change
   Eigen::Vector2d output = factor_nn.infer(allNeighborsVector);
   Eigen::Vector3d final_output;
-  std::cout << "FLAG output " << output << '\n';
   final_output[0] = output[0] * normalization;
   final_output[1] = output[1] * normalization;
   final_output[2] = 0.0;
+
   return final_output;
 }
 

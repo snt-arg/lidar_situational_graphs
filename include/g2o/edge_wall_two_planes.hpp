@@ -74,7 +74,7 @@ namespace g2o {
 class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeWall2Planes(Eigen::Vector3d wall_point, bool use_factor_nn_arg = false) : BaseMultiEdge<3, Eigen::Vector3d>() {
+  EdgeWall2Planes(Eigen::Vector3d wall_point, bool use_factor_nn_arg = true) : BaseMultiEdge<3, Eigen::Vector3d>() {
     resize(3);
     _wall_point = wall_point;
     _use_factor_nn = use_factor_nn_arg;
@@ -86,7 +86,7 @@ class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
 
   virtual bool write(std::ostream& os) const override;
 
-  s_graphs::FactorNN factor_nn;
+  s_graphs::FactorNN factor_nn = s_graphs::FactorNN("wall");
 
  private:
   void correct_plane_direction(Eigen::Vector4d& plane);
