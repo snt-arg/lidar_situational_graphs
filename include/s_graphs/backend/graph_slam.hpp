@@ -744,7 +744,7 @@ class GraphSLAM {
   g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall,
                                               g2o::VertexPlane* v_plane1,
                                               g2o::VertexPlane* v_plane2,
-                                              Eigen::Vector3d wall_point,
+                                              std::vector<Eigen::Vector3d> wall_points,
                                               const Eigen::MatrixXd& information);
 
   /**

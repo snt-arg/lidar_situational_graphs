@@ -667,7 +667,7 @@ g2o::EdgeWall2Planes* GraphSLAM::copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
                                                         g2o::VertexWallXYZ* v1,
                                                         g2o::VertexPlane* v2,
                                                         g2o::VertexPlane* v3) {
-  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(e->get_wall_point()));
+  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(e->get_wall_points()));
   edge->setId(e->id());
   edge->setInformation(e->information());
   edge->vertices()[0] = v1;
@@ -737,9 +737,9 @@ g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(
     g2o::VertexWallXYZ* v_wall,
     g2o::VertexPlane* v_plane1,
     g2o::VertexPlane* v_plane2,
-    Eigen::Vector3d wall_point,
+    std::vector<Eigen::Vector3d> wall_points,
     const Eigen::MatrixXd& information) {
-  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(wall_point));
+  g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(wall_points));
   edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setInformation(information);
   edge->vertices()[0] = v_wall;

@@ -71,6 +71,7 @@ void EdgeWall2Planes::computeError() {
   const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
   const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
 
+  Eigen::Vector3d estimated_wall_center;
   Eigen::Vector3d wall_center = v1->estimate();
   Eigen::Vector4d plane1 = v2->estimate().coeffs();
   Eigen::Vector4d plane2 = v3->estimate().coeffs();
@@ -78,10 +79,8 @@ void EdgeWall2Planes::computeError() {
   correct_plane_direction(plane1);
   correct_plane_direction(plane2);
 
-  Eigen::Vector3d estimated_wall_center;
-
   if (_use_factor_nn){
-    estimated_wall_center = compute_factor_nn(plane1, plane2);
+    estimated_wall_center = compute_factor_nn(plane1, plane2, _wall_points);
   } else {
     estimated_wall_center = compute_factor_legacy(plane1, plane2);
   }
@@ -145,27 +144,47 @@ Eigen::Vector3d EdgeWall2Planes::compute_factor_legacy(Eigen::Vector4d plane1, E
       estimated_wall_center.head(2) / estimated_wall_center.norm();
   Eigen::Vector3d final_wall_center =
       estimated_wall_center.head(2) +
-      (_wall_point - (_wall_point.dot(estimated_wall_center_normalized)) *
+      (_wall_points[0] - (_wall_points[0].dot(estimated_wall_center_normalized)) *
                          estimated_wall_center_normalized);
 
   return final_wall_center;
 }
 
-Eigen::Vector3d EdgeWall2Planes::compute_factor_nn(Eigen::Vector4d plane1, Eigen::Vector4d plane2) {
+Eigen::Vector3d EdgeWall2Planes::compute_factor_nn(Eigen::Vector4d plane1, Eigen::Vector4d plane2,
+                                                    std::vector<Eigen::Vector3d> points) {
   float normalization = 20.0;
-  std::vector<Eigen::Vector4d> vectorList;
-    vectorList.push_back(plane1);
-    vectorList.push_back(plane2);
+  // std::vector<Eigen::Vector4d> vectorList;
+  //   vectorList.push_back(plane1);
+  //   vectorList.push_back(plane2);
+
+  // std::vector<std::vector<float>> allNeighborsVector;
+  // for (const Eigen::Vector4d& vector : vectorList) {
+  //     std::vector<float> neighborParamsVector;
+  //     neighborParamsVector.push_back(static_cast<float>(vector(0)));
+  //     neighborParamsVector.push_back(static_cast<float>(vector(1)));
+  //     neighborParamsVector.push_back(static_cast<float>(vector(2)));
+  //     neighborParamsVector.push_back(static_cast<float>(vector(3))/normalization);
+  //     allNeighborsVector.push_back(neighborParamsVector);
+  // }
+  std::vector<float> neighborParamsVector1;
+  neighborParamsVector1.push_back(static_cast<float>(points[0](0))/normalization);
+  neighborParamsVector1.push_back(static_cast<float>(points[0](1))/normalization);
+  neighborParamsVector1.push_back(static_cast<float>(points[0](2))/normalization);
+  neighborParamsVector1.push_back(static_cast<float>(plane1(0)));
+  neighborParamsVector1.push_back(static_cast<float>(plane1(1)));
+  neighborParamsVector1.push_back(static_cast<float>(plane1(2)));
+
+  std::vector<float> neighborParamsVector2;
+  neighborParamsVector2.push_back(static_cast<float>(points[1](0))/normalization);
+  neighborParamsVector2.push_back(static_cast<float>(points[1](1))/normalization);
+  neighborParamsVector2.push_back(static_cast<float>(points[1](2))/normalization);
+  neighborParamsVector2.push_back(static_cast<float>(plane2(0)));
+  neighborParamsVector2.push_back(static_cast<float>(plane2(1)));
+  neighborParamsVector2.push_back(static_cast<float>(plane2(2)));
 
   std::vector<std::vector<float>> allNeighborsVector;
-  for (const Eigen::Vector4d& vector : vectorList) {
-      std::vector<float> neighborParamsVector;
-      neighborParamsVector.push_back(static_cast<float>(vector(0)));
-      neighborParamsVector.push_back(static_cast<float>(vector(1)));
-      neighborParamsVector.push_back(static_cast<float>(vector(2)));
-      neighborParamsVector.push_back(static_cast<float>(vector(3))/normalization);
-      allNeighborsVector.push_back(neighborParamsVector);
-  }
+  allNeighborsVector.push_back(neighborParamsVector1);
+  allNeighborsVector.push_back(neighborParamsVector2);
 
   Eigen::Vector2d output = factor_nn.infer(allNeighborsVector);
   Eigen::Vector3d final_output;

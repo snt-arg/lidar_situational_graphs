@@ -74,9 +74,9 @@ namespace g2o {
 class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  EdgeWall2Planes(Eigen::Vector3d wall_point, bool use_factor_nn_arg = true) : BaseMultiEdge<3, Eigen::Vector3d>() {
+  EdgeWall2Planes(std::vector<Eigen::Vector3d> wall_points, bool use_factor_nn_arg = true) : BaseMultiEdge<3, Eigen::Vector3d>() {
     resize(3);
-    _wall_point = wall_point;
+    _wall_points = wall_points;
     _use_factor_nn = use_factor_nn_arg;
   }
 
@@ -86,15 +86,15 @@ class EdgeWall2Planes : public BaseMultiEdge<3, Eigen::Vector3d> {
 
   virtual bool write(std::ostream& os) const override;
 
-  Eigen::Vector3d get_wall_point() { return _wall_point; }
-
+//   Eigen::Vector3d get_wall_point() { return _wall_point_1; }
+  std::vector<Eigen::Vector3d> get_wall_points() { return _wall_points; }
   s_graphs::FactorNN factor_nn = s_graphs::FactorNN("wall");
 
  private:
   void correct_plane_direction(Eigen::Vector4d& plane);
-  Eigen::Vector3d _wall_point;
+  std::vector<Eigen::Vector3d> _wall_points;
   Eigen::Vector3d compute_factor_legacy(Eigen::Vector4d plane1, Eigen::Vector4d plane2);
-  Eigen::Vector3d compute_factor_nn(Eigen::Vector4d plane1, Eigen::Vector4d plane2);
+  Eigen::Vector3d compute_factor_nn(Eigen::Vector4d plane1, Eigen::Vector4d plane2, std::vector<Eigen::Vector3d> points);
   bool _use_factor_nn;
 };
 
