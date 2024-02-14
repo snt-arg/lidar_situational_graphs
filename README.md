@@ -176,72 +176,22 @@ catkin build
 
 ## Example on Datasets
 
-**Note:** For each command below, please execute them in separate terminal windows! and commands are assuming ROS1 Noetic and ROS2 Foxy distribution
+> **Note:** For execution of the experiments we use [mprocs](https://github.com/pvolok/mprocs) command below. Download it using this [link](https://github.com/pvolok/mprocs)
 
 ### Real Dataset
 
-```bash
-cd $HOME/s_graphs_ros2_ws && source $HOME/s_graphs_ros2_ws/install/setup.bash && cd src/s_graphs/rviz && rviz2 -d rviz/s_graphs_ros2.rviz
-```
+> **Important:** Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal&ga=1) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
 
 ```bash
-ros2 launch s_graphs s_graphs_launch.py compute_odom:=false
-```
-
-```bash
-source $HOME/s_graphs_ros1_ws/devel/setup.bash && roslaunch voxblox_skeleton skeletonize_map_realtime.launch 2>/dev/null
-```
-
-```bash
-ros2 run ros1_bridge dynamic_bridge
-```
-
-```bash
-rosbag play PATH_TO_ROSBAG_DATASET --clock
+cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
 ```
 
 ### Virtual Dataset
 
-```bash
-cd $HOME/s_graphs_ros2_ws && source $HOME/s_graphs_ros2_ws/install/setup.bash && cd src/s_graphs/rviz && rviz2 -d rviz/s_graphs_ros2.rviz
-```
+> **Important:** Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation&ga=1) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
 
 ```bash
-ros2 launch s_graphs s_graphs_ros2_launch.py compute_odom:=true
-```
-
-```bash
-source $HOME/s_graphs_ros1_ws/devel/setup.bash && roslaunch voxblox_skeleton skeletonize_map_realtime.launch 2>/dev/null
-```
-
-```bash
-ros2 run ros1_bridge dynamic_bridge
-```
-
-```bash
-rosbag play PATH_TO_ROSBAG_DATASET --clock
-```
-
-<!-- ### Dataset only using a Velodyne
-
-```bash
-roscd s_graphs && rviz -d rviz/s_graphs.rviz
-```
-
-```bash
-roslaunch s_graphs s_graphs.launch use_free_space_graph:=true compute_odom:=true 2>/dev/null
-```
-
-```bash
-rosbag play PATH_TO_ROSBAG_DATASET --clock
-``` -->
-
-## Unit Tests for S-Graphs
-
-Unit tests for some of the S-Graphs functions are in the folder tests. They can be executed using the following command
-
-```bash
-colcon test --packages-select s_graphs --event-handler=console_direct+
+cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
 ```
 
 ## Docker (NOTE: Docker still uses the ROS1 (older) version of S-Graphs)
@@ -280,6 +230,14 @@ source devel/setup.bash
 
 In order to run datasets using docker, one just needs to use the command `roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null` inside docker.
 The other 2 commands should be executed outside docker. Additionally, the `env` parameter should be changed accordingly to the type of dataset.
+
+## Unit Tests for S-Graphs
+
+Unit tests for some of the S-Graphs functions are in the folder tests. They can be executed using the following command
+
+```bash
+colcon test --packages-select s_graphs --event-handler=console_direct+
+```
 
 ## ROS2 Related
 
