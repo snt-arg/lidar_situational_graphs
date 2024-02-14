@@ -103,7 +103,7 @@ cd s_graphs && ./setup.sh
 1. Create a ROS2 workspace for S-Graphs
 
 ```bash
-mkdir -p $HOME/s_graphs_ros2_ws/src && cd $HOME/s_graphs_ros2_ws/src
+mkdir -p $HOME/s_graphs_ros2_ws/src && cd $HOME/s_graphs_ros2_ws/src && source /opt/ros/foxy/setup.bash
 ```
 
 2. Clone the S-Graphs repository into the created workspace
@@ -140,6 +140,12 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
 ```bash
 source install/setup.bash
+```
+
+#### Download ROS1 Bridge
+
+```bash
+source /opt/ros/foxy/setup.bash && sudo apt install ros-foxy-ros1-bridge
 ```
 
 #### Setup ROS1 workspace for ROS1 related dependencies
@@ -191,7 +197,7 @@ cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
 > **Important:** Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation&ga=1) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
 
 ```bash
-cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
+cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mprocs.yaml
 ```
 
 ## Docker (NOTE: Docker still uses the ROS1 (older) version of S-Graphs)
