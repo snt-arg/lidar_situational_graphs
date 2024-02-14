@@ -321,7 +321,7 @@ All the configurable parameters are listed in config folder as ros params.
 
 - `map2odom`: The transform published between the map frame and the odom frame after the corrections have been applied.
 
-- The entire `tf_tree` for the real experiment can be seen in the figure below.
+- The entire `tf_tree` for the virtual experiment can be seen in the figure below.
 
 <p align="center">
   <a href="">
