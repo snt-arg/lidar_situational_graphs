@@ -10,10 +10,6 @@
 
 ## 📜 Table of contents
 
-1️⃣ Installation on ROS2
-2️⃣ Installing ROS bridge
-3️⃣ Installation on ROS1
-
 - [📖 Published Papers](#published-papers)
 - [⚙️ Installation](#installation)
   - [📦 Installation From Source](#installation-from-source)
@@ -45,7 +41,7 @@
 ## 📖 Published Papers <a id="published-papers"></a>
 
 <details >
-    <summary><a href"https://arxiv.org/abs/2212.11770">S-Graphs+: Real-time Localization and Mapping leveraging Hierarchical Representations </a>
+    <summary><a href="https://arxiv.org/abs/2212.11770">S-Graphs+: Real-time Localization and Mapping leveraging Hierarchical Representations </a>
     </summary>
 
     @ARTICLE{10168233,
