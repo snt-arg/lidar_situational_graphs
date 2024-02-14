@@ -109,9 +109,9 @@ class GraphVisualizer {
       const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
       const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
       const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
-      std::vector<InfiniteRooms> x_infinite_room_snapshot,
-      std::vector<InfiniteRooms> y_infinite_room_snapshot,
-      std::vector<Rooms> room_snapshot,
+      std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
+      std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
+      std::unordered_map<int, Rooms> room_snapshot,
       double loop_detector_radius,
       std::vector<KeyFrame::Ptr> keyframes,
       std::unordered_map<int, Floors> floors_vec);

@@ -46,9 +46,9 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     const std::vector<s_graphs::Rooms>& rooms_vec_prior,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
-    const std::vector<s_graphs::Rooms>& rooms_vec,
-    const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
-    const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
+    const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
+    const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
+    const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
   std::vector<reasoning_msgs::msg::Edge> edges_vec;
   std::vector<reasoning_msgs::msg::Node> nodes_vec;
   reasoning_msgs::msg::Graph graph_msg;
@@ -184,13 +184,13 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
       node_attribute.fl_value.clear();
       node_att_vec.clear();
     }
-    for (int i = 0; i < rooms_vec.size(); i++) {
-      g2o::VertexRoom* v_room = rooms_vec[i].node;
+    for (const auto& room : rooms_vec) {
+      g2o::VertexRoom* v_room = room.second.node;
       reasoning_msgs::msg::Edge graph_edge;
       reasoning_msgs::msg::Node graph_node;
       reasoning_msgs::msg::Attribute edge_attribute;
       reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = rooms_vec[i].id;
+      graph_node.id = room.second.id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
       Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
@@ -205,7 +205,7 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // first edge
       graph_edge.origin_node = v_room->id();
-      graph_edge.target_node = rooms_vec[i].plane_x1_id;
+      graph_edge.target_node = room.second.plane_x1_id;
       edge_attribute.name = "EdgeRoom4Planes";
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
@@ -214,7 +214,7 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 2nd edge
 
-      graph_edge.target_node = rooms_vec[i].plane_x2_id;
+      graph_edge.target_node = room.second.plane_x2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
@@ -222,14 +222,14 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 3rd edge
 
-      graph_edge.target_node = rooms_vec[i].plane_y1_id;
+      graph_edge.target_node = room.second.plane_y1_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
 
       // 4th edge
-      graph_edge.target_node = rooms_vec[i].plane_y2_id;
+      graph_edge.target_node = room.second.plane_y2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);

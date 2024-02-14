@@ -109,9 +109,9 @@ class GraphPublisher {
       const std::vector<s_graphs::Rooms>& rooms_vec_prior,
       const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
       const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
-      const std::vector<s_graphs::Rooms>& rooms_vec,
-      const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
-      const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms);
+      const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
 
   reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
       const g2o::SparseOptimizer* local_graph,

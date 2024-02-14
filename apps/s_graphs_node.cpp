@@ -1069,33 +1069,9 @@ class SGraphsNode : public rclcpp::Node {
     x_planes_snapshot = x_vert_planes;
     y_planes_snapshot = y_vert_planes;
     hort_planes_snapshot = hort_planes;
-
-    std::vector<InfiniteRooms> curent_x_inf_rooms(x_infinite_rooms.size());
-    std::transform(x_infinite_rooms.begin(),
-                   x_infinite_rooms.end(),
-                   curent_x_inf_rooms.begin(),
-                   [](const std::pair<int, InfiniteRooms>& x_inf_room) {
-                     return InfiniteRooms(x_inf_room.second, true);
-                   });
-    x_inf_rooms_snapshot.swap(curent_x_inf_rooms);
-
-    std::vector<InfiniteRooms> curent_y_inf_rooms(y_infinite_rooms.size());
-    std::transform(y_infinite_rooms.begin(),
-                   y_infinite_rooms.end(),
-                   curent_y_inf_rooms.begin(),
-                   [](const std::pair<int, InfiniteRooms>& y_inf_room) {
-                     return InfiniteRooms(y_inf_room.second, true);
-                   });
-    y_inf_rooms_snapshot.swap(curent_y_inf_rooms);
-
-    std::vector<Rooms> curent_rooms(rooms_vec.size());
-    std::transform(
-        rooms_vec.begin(),
-        rooms_vec.end(),
-        curent_rooms.begin(),
-        [](const std::pair<int, Rooms>& room) { return Rooms(room.second, true); });
-    rooms_vec_snapshot.swap(curent_rooms);
-
+    x_inf_rooms_snapshot = x_infinite_rooms;
+    y_inf_rooms_snapshot = y_infinite_rooms;
+    rooms_vec_snapshot = rooms_vec;
     floors_vec_snapshot = floors_vec;
   }
 
@@ -1882,9 +1858,9 @@ class SGraphsNode : public rclcpp::Node {
 
   std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
   std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
-  std::vector<Rooms> rooms_vec_snapshot;
+  std::unordered_map<int, Rooms> rooms_vec_snapshot;
   std::unordered_map<int, Floors> floors_vec_snapshot;
-  std::vector<InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
+  std::unordered_map<int, InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
 
   // room data queue
   std::mutex room_data_queue_mutex, floor_data_mutex;
