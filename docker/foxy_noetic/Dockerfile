@@ -39,6 +39,7 @@ WORKDIR /root/workspaces/s_graphs_ros2_ws/src/s_graphs
 RUN --mount=type=ssh \
     vcs import --recursive ../ < .rosinstall_ros2
 WORKDIR /root/workspaces/s_graphs_ros2_ws/
+RUN sudo apt install python3-rosdep
 RUN rosdep install --from-paths src -y --ignore-src -r
 SHELL ["/bin/bash", "-c"]
 RUN source /opt/ros/foxy/setup.bash && \
@@ -56,7 +57,7 @@ RUN apt install --no-install-recommends -y \
     python3-rosinstall-generator \
     python3-wstool \
     build-essential
-RUN rosdep update
+RUN rosdep update --include-eol-distros
 
 # Setup ROS1 workspace for ROS1 related dependencies of s_graphs
 RUN mkdir -p /root/workspaces/s_graphs_ros1_ws/src
