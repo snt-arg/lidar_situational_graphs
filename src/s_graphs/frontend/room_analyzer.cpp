@@ -266,15 +266,6 @@ bool RoomAnalyzer::perform_room_segmentation(
     // if found all four planes its a room
     if (room_planes.found_x1_plane && room_planes.found_x2_plane &&
         room_planes.found_y1_plane && room_planes.found_y2_plane) {
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                          room_planes.x_plane1);
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                          room_planes.x_plane2);
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                          room_planes.y_plane1);
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                          room_planes.y_plane2);
-
       // first check the width of the rooms
       float x_plane_width =
           PlaneUtils::width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
@@ -341,11 +332,6 @@ bool RoomAnalyzer::perform_room_segmentation(
       if (sub_cloud_cluster->points.size() > 0)
         extract_cluster_endpoints(sub_cloud_cluster, p1, p2);
 
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                          room_planes.x_plane1);
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                          room_planes.x_plane2);
-
       float x_plane_width =
           PlaneUtils::width_between_planes(room_planes.x_plane1, room_planes.x_plane2);
       if (x_plane_width < room_width_threshold) {
@@ -395,11 +381,6 @@ bool RoomAnalyzer::perform_room_segmentation(
              (!room_planes.found_x1_plane || !room_planes.found_x2_plane)) {
       if (sub_cloud_cluster->points.size() > 0)
         extract_cluster_endpoints(sub_cloud_cluster, p1, p2);
-
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                          room_planes.y_plane1);
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                          room_planes.y_plane2);
 
       float y_plane_width =
           PlaneUtils::width_between_planes(room_planes.y_plane1, room_planes.y_plane2);

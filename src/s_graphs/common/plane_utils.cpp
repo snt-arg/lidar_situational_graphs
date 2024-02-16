@@ -41,6 +41,11 @@ float PlaneUtils::width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
   Eigen::Vector3d vec;
   float size = 0;
 
+  if (v1.head(3).dot(v2.head(3)) > 0) return 0;
+
+  correct_plane_direction(v1);
+  correct_plane_direction(v2);
+
   if (fabs(v1(3)) > fabs(v2(3)))
     vec = fabs(v1(3)) * v1.head(3) - fabs(v2(3)) * v2.head(3);
   else if (fabs(v2(3)) > fabs(v1(3)))
@@ -54,23 +59,29 @@ float PlaneUtils::width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
 float PlaneUtils::width_between_planes(const s_graphs::msg::PlaneData& plane1,
                                        const s_graphs::msg::PlaneData& plane2) {
   Eigen::Vector3d vec;
-  Eigen::Vector3d plane1_eigen, plane2_eigen;
-  plane1_eigen << plane1.nx, plane1.ny, plane1.nz;
-  plane2_eigen << plane2.nx, plane2.ny, plane2.nz;
+  Eigen::Vector4d plane1_eigen, plane2_eigen;
+  plane1_eigen << plane1.nx, plane1.ny, plane1.nz, plane1.d;
+  plane2_eigen << plane2.nx, plane2.ny, plane2.nz, plane2.d;
   float size = 0;
 
-  if (fabs(plane1.d) > fabs(plane2.d))
-    vec = fabs(plane1.d) * plane1_eigen - fabs(plane2.d) * plane2_eigen;
-  else if (fabs(plane2.d) > fabs(plane1.d))
-    vec = fabs(plane2.d) * plane2_eigen - fabs(plane1.d) * plane1_eigen;
+  if (plane1_eigen.head(3).dot(plane2_eigen.head(3)) > 0) return 0;
+
+  correct_plane_direction(plane1_eigen);
+  correct_plane_direction(plane2_eigen);
+
+  if (fabs(plane1_eigen(3)) > fabs(plane2_eigen(3)))
+    vec = fabs(plane1_eigen(3)) * plane1_eigen.head(3) -
+          fabs(plane2_eigen(3)) * plane2_eigen.head(3);
+  else if (fabs(plane2_eigen(3)) > fabs(plane1_eigen(3)))
+    vec = fabs(plane2_eigen(3)) * plane2_eigen.head(3) -
+          fabs(plane1_eigen(3)) * plane1_eigen.head(3);
 
   size = fabs(vec(0) + vec(1));
 
   return size;
 }
 
-void PlaneUtils::correct_plane_direction(int plane_type,
-                                         s_graphs::msg::PlaneData& plane) {
+void PlaneUtils::correct_plane_direction(s_graphs::msg::PlaneData& plane) {
   if (plane.d > 0) {
     plane.nx = -1 * plane.nx;
     plane.ny = -1 * plane.ny;
@@ -80,7 +91,7 @@ void PlaneUtils::correct_plane_direction(int plane_type,
   return;
 }
 
-void PlaneUtils::correct_plane_direction(int plane_type, Eigen::Vector4d& plane) {
+void PlaneUtils::correct_plane_direction(Eigen::Vector4d& plane) {
   if (plane(3) > 0) {
     plane(0) = -1 * plane(0);
     plane(1) = -1 * plane(1);
@@ -101,40 +112,6 @@ Eigen::Quaterniond PlaneUtils::euler_to_quaternion(const double roll,
   return q;
 }
 
-Eigen::Vector2d PlaneUtils::room_center(const Eigen::Vector4d& x_plane1,
-                                        const Eigen::Vector4d& x_plane2,
-                                        const Eigen::Vector4d& y_plane1,
-                                        const Eigen::Vector4d& y_plane2) {
-  Eigen::Vector2d center;
-  Eigen::Vector3d vec_x, vec_y;
-
-  if (fabs(x_plane1(3)) > fabs(x_plane2(3))) {
-    vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) -
-                    fabs(x_plane2(3)) * x_plane2.head(3))) +
-            fabs(x_plane2(3)) * x_plane2.head(3);
-  } else {
-    vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) -
-                    fabs(x_plane1(3)) * x_plane1.head(3))) +
-            fabs(x_plane1(3)) * x_plane1.head(3);
-  }
-
-  if (fabs(y_plane1(3)) > fabs(y_plane2(3))) {
-    vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) -
-                    fabs(y_plane2(3)) * y_plane2.head(3))) +
-            fabs(y_plane2(3)) * y_plane2.head(3);
-  } else {
-    vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) -
-                    fabs(y_plane1(3)) * y_plane1.head(3))) +
-            fabs(y_plane1(3)) * y_plane1.head(3);
-  }
-
-  Eigen::Vector3d final_vec = vec_x + vec_y;
-  center(0) = final_vec(0);
-  center(1) = final_vec(1);
-
-  return center;
-}
-
 geometry_msgs::msg::Pose PlaneUtils::room_center(
     const s_graphs::msg::PlaneData& x_plane1,
     const s_graphs::msg::PlaneData& x_plane2,
@@ -142,33 +119,39 @@ geometry_msgs::msg::Pose PlaneUtils::room_center(
     const s_graphs::msg::PlaneData& y_plane2) {
   geometry_msgs::msg::Pose center;
   Eigen::Vector3d vec_x, vec_y;
-  Eigen::Vector3d x_plane1_eigen, x_plane2_eigen;
-  Eigen::Vector3d y_plane1_eigen, y_plane2_eigen;
+  Eigen::Vector4d x_plane1_eigen, x_plane2_eigen;
+  Eigen::Vector4d y_plane1_eigen, y_plane2_eigen;
 
-  x_plane1_eigen << x_plane1.nx, x_plane1.ny, x_plane1.nz;
-  x_plane2_eigen << x_plane2.nx, x_plane2.ny, x_plane2.nz;
+  x_plane1_eigen << x_plane1.nx, x_plane1.ny, x_plane1.nz, x_plane1.d;
+  x_plane2_eigen << x_plane2.nx, x_plane2.ny, x_plane2.nz, x_plane2.d;
 
-  y_plane1_eigen << y_plane1.nx, y_plane1.ny, y_plane1.nz;
-  y_plane2_eigen << y_plane2.nx, y_plane2.ny, y_plane2.nz;
+  y_plane1_eigen << y_plane1.nx, y_plane1.ny, y_plane1.nz, y_plane1.d;
+  y_plane2_eigen << y_plane2.nx, y_plane2.ny, y_plane2.nz, y_plane2.d;
 
-  if (fabs(x_plane1.d) > fabs(x_plane2.d)) {
-    vec_x = (0.5 *
-             (fabs(x_plane1.d) * x_plane1_eigen - fabs(x_plane2.d) * x_plane2_eigen)) +
-            fabs(x_plane2.d) * x_plane2_eigen;
+  correct_plane_direction(x_plane1_eigen);
+  correct_plane_direction(x_plane2_eigen);
+
+  correct_plane_direction(y_plane1_eigen);
+  correct_plane_direction(y_plane2_eigen);
+
+  if (fabs(x_plane1_eigen(3)) > fabs(x_plane2_eigen(3))) {
+    vec_x = (0.5 * (fabs(x_plane1_eigen(3)) * x_plane1_eigen.head(3) -
+                    fabs(x_plane2_eigen(3)) * x_plane2_eigen.head(3))) +
+            fabs(x_plane2_eigen(3)) * x_plane2_eigen.head(3);
   } else {
-    vec_x = (0.5 *
-             (fabs(x_plane2.d) * x_plane2_eigen - fabs(x_plane1.d) * x_plane1_eigen)) +
-            fabs(x_plane1.d) * x_plane1_eigen;
+    vec_x = (0.5 * (fabs(x_plane2_eigen(3)) * x_plane2_eigen.head(3) -
+                    fabs(x_plane1_eigen(3)) * x_plane1_eigen.head(3))) +
+            fabs(x_plane1_eigen(3)) * x_plane1_eigen.head(3);
   }
 
-  if (fabs(y_plane1.d) > fabs(y_plane2.d)) {
-    vec_y = (0.5 *
-             (fabs(y_plane1.d) * y_plane1_eigen - fabs(y_plane2.d) * y_plane2_eigen)) +
-            fabs(y_plane2.d) * y_plane2_eigen;
+  if (fabs(y_plane1_eigen(3)) > fabs(y_plane2_eigen(3))) {
+    vec_y = (0.5 * (fabs(y_plane1_eigen(3)) * y_plane1_eigen.head(3) -
+                    fabs(y_plane2_eigen(3)) * y_plane2_eigen.head(3))) +
+            fabs(y_plane2_eigen(3)) * y_plane2_eigen.head(3);
   } else {
-    vec_y = (0.5 *
-             (fabs(y_plane2.d) * y_plane2_eigen - fabs(y_plane1.d) * y_plane1_eigen)) +
-            fabs(y_plane1.d) * y_plane1_eigen;
+    vec_y = (0.5 * (fabs(y_plane2_eigen(3)) * y_plane2_eigen.head(3) -
+                    fabs(y_plane1_eigen(3)) * y_plane1_eigen.head(3))) +
+            fabs(y_plane1_eigen(3)) * y_plane1_eigen.head(3);
   }
 
   Eigen::Vector3d final_vec = vec_x + vec_y;
@@ -328,6 +311,9 @@ geometry_msgs::msg::Pose PlaneUtils::extract_infite_room_center(
   Eigen::Vector4d plane1_eigen, plane2_eigen;
   plane1_eigen << plane1.nx, plane1.ny, plane1.nz, plane1.d;
   plane2_eigen << plane2.nx, plane2.ny, plane2.nz, plane2.d;
+
+  correct_plane_direction(plane1_eigen);
+  correct_plane_direction(plane2_eigen);
 
   if (fabs(p1.x) > fabs(p2.x)) {
     float size = p1.x - p2.x;

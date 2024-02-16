@@ -54,15 +54,10 @@ void FloorAnalyzer::perform_floor_segmentation(
     if (x_plane1.nx < 0) {
       continue;
     }
-    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                        x_plane1);
-
     for (auto x_plane2 : current_x_vert_planes) {
       if (x_plane2.nx > 0) {
         continue;
       }
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                          x_plane2);
 
       float x_plane_width = PlaneUtils::width_between_planes(x_plane1, x_plane2);
       bool planes_placed_correctly = false;
@@ -88,15 +83,10 @@ void FloorAnalyzer::perform_floor_segmentation(
     if (y_plane1.ny < 0) {
       continue;
     }
-    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                        y_plane1);
-
     for (auto y_plane2 : current_y_vert_planes) {
       if (y_plane2.ny > 0) {
         continue;
       }
-      PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                          y_plane2);
 
       float y_plane_width = PlaneUtils::width_between_planes(y_plane1, y_plane2);
       bool planes_placed_correctly = false;

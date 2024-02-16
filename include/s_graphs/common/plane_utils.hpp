@@ -105,7 +105,7 @@ class PlaneUtils {
    * @param
    * @return
    */
-  static void correct_plane_direction(int plane_type, s_graphs::msg::PlaneData& plane);
+  static void correct_plane_direction(s_graphs::msg::PlaneData& plane);
 
   /**
    * @brief
@@ -113,7 +113,7 @@ class PlaneUtils {
    * @param
    * @return
    */
-  static void correct_plane_direction(int plane_type, Eigen::Vector4d& plane);
+  static void correct_plane_direction(Eigen::Vector4d& plane);
 
   /* @brief
    *
@@ -123,17 +123,6 @@ class PlaneUtils {
   static Eigen::Quaterniond euler_to_quaternion(const double roll,
                                                 const double pitch,
                                                 const double yaw);
-
-  /**
-   * @brief
-   *
-   * @param
-   * @return
-   */
-  static Eigen::Vector2d room_center(const Eigen::Vector4d& x_plane1,
-                                     const Eigen::Vector4d& x_plane2,
-                                     const Eigen::Vector4d& y_plane1,
-                                     const Eigen::Vector4d& y_plane2);
 
   /**
    * @brief

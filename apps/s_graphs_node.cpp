@@ -663,7 +663,7 @@ class SGraphsNode : public rclcpp::Node {
           float y_width = PlaneUtils::width_between_planes(room_data.y_planes[0],
                                                            room_data.y_planes[1]);
 
-          if (x_width < 0.5 || y_width < 0.5) continue;
+          if (fabs(x_width) < 0.5 || fabs(y_width) < 0.5) continue;
 
           int current_room_id;
           bool duplicate_planes_rooms =
@@ -692,7 +692,7 @@ class SGraphsNode : public rclcpp::Node {
         else if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 0) {
           float x_width = PlaneUtils::width_between_planes(room_data.x_planes[0],
                                                            room_data.x_planes[1]);
-          if (x_width < 0.5) continue;
+          if (fabs(x_width) < 0.5) continue;
 
           int current_room_id;
           bool duplicate_planes_x_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
@@ -717,7 +717,7 @@ class SGraphsNode : public rclcpp::Node {
         else if (room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
           float y_width = PlaneUtils::width_between_planes(room_data.y_planes[0],
                                                            room_data.y_planes[1]);
-          if (y_width < 0.5) continue;
+          if (fabs(y_width) < 0.5) continue;
 
           int current_room_id;
           bool duplicate_planes_y_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
@@ -745,11 +745,11 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue_mutex.unlock();
     }
 
-    floor_mapper->factor_floor_room_nodes(covisibility_graph,
-                                          floors_vec[current_floor_level],
-                                          new_rooms,
-                                          new_x_inf_rooms,
-                                          new_y_inf_rooms);
+    // floor_mapper->factor_floor_room_nodes(covisibility_graph,
+    //                                       floors_vec[current_floor_level],
+    //                                       new_rooms,
+    //                                       new_x_inf_rooms,
+    //                                       new_y_inf_rooms);
   }
 
   /**

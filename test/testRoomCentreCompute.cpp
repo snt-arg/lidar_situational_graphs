@@ -86,15 +86,6 @@ class TestRoom : public ::testing::Test {
     y2_plane_data.nz = 0;
     y2_plane_data.d = 4;
 
-    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                        x1_plane_data);
-    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
-                                        x2_plane_data);
-    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                        y1_plane_data);
-    PlaneUtils::correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
-                                        y2_plane_data);
-
     room_data.x_planes.push_back(x1_plane_data);
     room_data.x_planes.push_back(x2_plane_data);
     room_data.y_planes.push_back(y1_plane_data);

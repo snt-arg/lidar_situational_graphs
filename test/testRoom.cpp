@@ -101,15 +101,6 @@ class TestRoom : public ::testing::Test {
     room_data.y_planes.push_back(y1_plane_data);
     room_data.y_planes.push_back(y2_plane_data);
 
-    s_graphs::PlaneUtils::correct_plane_direction(
-        s_graphs::PlaneUtils::plane_class::X_VERT_PLANE, x1_plane_data);
-    s_graphs::PlaneUtils::correct_plane_direction(
-        s_graphs::PlaneUtils::plane_class::X_VERT_PLANE, x2_plane_data);
-    s_graphs::PlaneUtils::correct_plane_direction(
-        s_graphs::PlaneUtils::plane_class::Y_VERT_PLANE, y1_plane_data);
-    s_graphs::PlaneUtils::correct_plane_direction(
-        s_graphs::PlaneUtils::plane_class::Y_VERT_PLANE, y2_plane_data);
-
     room_data.room_center = s_graphs::PlaneUtils::room_center(
         x1_plane_data, x2_plane_data, y1_plane_data, y2_plane_data);
 
