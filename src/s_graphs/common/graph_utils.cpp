@@ -991,6 +991,7 @@ void GraphUtils::set_marginalize_info(
           OptimizationData* data = new OptimizationData();
           data->set_rep_node_info(true);
           covis_vertex_se3->setUserData(data);
+          covis_vertex_se3->setEstimate((local_vertex_se3)->estimate());
         } else if (k_counter != 0 && !marginalized) {
           if (!current_data) {
             OptimizationData* data = new OptimizationData();
