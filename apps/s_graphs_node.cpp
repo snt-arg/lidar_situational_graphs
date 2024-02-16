@@ -745,11 +745,11 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue_mutex.unlock();
     }
 
-    // floor_mapper->factor_floor_room_nodes(covisibility_graph,
-    //                                       floors_vec[current_floor_level],
-    //                                       new_rooms,
-    //                                       new_x_inf_rooms,
-    //                                       new_y_inf_rooms);
+    floor_mapper->factor_floor_room_nodes(covisibility_graph,
+                                          floors_vec[current_floor_level],
+                                          rooms_vec,
+                                          x_infinite_rooms,
+                                          y_infinite_rooms);
   }
 
   /**

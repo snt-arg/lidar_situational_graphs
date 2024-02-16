@@ -237,6 +237,16 @@ class FloorMapper {
   void remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
                                std::unordered_map<int, Floors>& floors_vec);
 
+  /**
+   * @brief
+   *
+   * @param graph_slam
+   * @param floor
+   * @return * std::vector<g2o::EdgeFloorRoom*>
+   */
+  std::vector<g2o::EdgeFloorRoom*> remove_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
+                                                Floors floor);
+
  private:
   int current_floor_level;
   bool floor_level_updated;
