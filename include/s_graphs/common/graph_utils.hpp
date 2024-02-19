@@ -68,11 +68,64 @@ class GraphUtils {
   /**
    * @brief
    *
+   * @param current_floor_level
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @param keyframes
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   * @param floors_vec
+   */
+  static void copy_floor_graph(
+      const int& current_floor_level,
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      std::unique_ptr<GraphSLAM>& compressed_graph,
+      const std::map<int, KeyFrame::Ptr>& keyframes,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, Rooms>& rooms_vec,
+      const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      const std::unordered_map<int, Floors>& floors_vec);
+
+  /**
+   * @brief
+   *
    * @param covisibility_graph
    * @param compressed_graph
    */
   static void copy_graph_vertices(const std::shared_ptr<GraphSLAM>& covisibility_graph,
                                   const std::unique_ptr<GraphSLAM>& compressed_graph);
+
+  /**
+   * @brief
+   *
+   * @param current_floor_level
+   * @param covisibility_graph
+   * @param compressed_graph
+   * @param keyframes
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   * @param floors_vec
+   * @return * void
+   */
+  static void copy_graph_vertices(
+      const int& current_floor_level,
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      const std::unique_ptr<GraphSLAM>& compressed_graph,
+      const std::map<int, KeyFrame::Ptr>& keyframes,
+      const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      const std::unordered_map<int, Rooms>& rooms_vec,
+      const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      const std::unordered_map<int, Floors>& floors_vec);
 
   /**
    * @brief

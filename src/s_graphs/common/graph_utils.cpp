@@ -64,6 +64,64 @@ void GraphUtils::copy_graph_vertices(
   }
 }
 
+void GraphUtils::copy_floor_graph(
+    const int& current_floor_level,
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    std::unique_ptr<GraphSLAM>& compressed_graph,
+    const std::map<int, KeyFrame::Ptr>& keyframes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, Rooms>& rooms_vec,
+    const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+    const std::unordered_map<int, Floors>& floors_vec) {
+  compressed_graph->graph->clear();
+  copy_graph_vertices(current_floor_level,
+                      covisibility_graph,
+                      compressed_graph,
+                      keyframes,
+                      x_vert_planes,
+                      y_vert_planes,
+                      rooms_vec,
+                      x_infinite_rooms,
+                      y_infinite_rooms,
+                      floors_vec);
+  std::vector<g2o::VertexSE3*> filtered_k_vec =
+      copy_graph_edges(covisibility_graph, compressed_graph);
+  connect_broken_keyframes(
+      filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
+}
+
+void GraphUtils::copy_graph_vertices(
+    const int& current_floor_level,
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const std::unique_ptr<GraphSLAM>& compressed_graph,
+    const std::map<int, KeyFrame::Ptr>& keyframes,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+    const std::unordered_map<int, Rooms>& rooms_vec,
+    const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+    const std::unordered_map<int, Floors>& floors_vec) {
+  for (g2o::HyperGraph::VertexIDMap::iterator it =
+           covisibility_graph->graph->vertices().begin();
+       it != covisibility_graph->graph->vertices().end();
+       ++it) {
+    g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+    if (compressed_graph->graph->vertex(v->id())) continue;
+
+    g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
+    if (vertex_se3) {
+      // find the keyframe of the vertex
+      auto keyframe = keyframes.find(vertex_se3->id());
+      if (keyframe != keyframes.end()) {
+        if (keyframe->second->floor_level == current_floor_level) {
+        }
+      }
+    }
+  }
+}
+
 std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
     const std::shared_ptr<GraphSLAM>& covisibility_graph,
     const std::unique_ptr<GraphSLAM>& compressed_graph) {
