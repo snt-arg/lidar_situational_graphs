@@ -18,10 +18,8 @@
     - [3️⃣ Installation on ROS1](#installation-on-ros2)
 - [🧪 Unit Tests](#unit-tests)
 - [🐳 Docker](#docker)
-- [🚀 Usage](#usage)
-  - [Run S_Graphs On Your Data](#run-s_graphs-on-your-data)
-  - [Example on Datasets](#example-on-datasets)
-  - [Running S_Graphs with Docker](#running-s_graphs-with-docker)
+- [🚀 Examples on Datasets](#examples)
+- [🛠️ Run S_Graphs On Your Data](#custom-data)
 - [🤖 ROS Related](#ros-related)
   - [📥 Subscribed Topics](#subscribed-topics)
   - [📤 Published Topics](#published-topics)
@@ -297,7 +295,7 @@ mprocs_virtual # To run on a simulation or virtual dataset
 source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs.rviz
 ```
 
-## 🚀 Run S_Graphs On Your Data <a id="custom-data"></a>
+## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`
 
