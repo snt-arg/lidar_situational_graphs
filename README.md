@@ -18,6 +18,10 @@
     - [3️⃣ Installation on ROS1](#installation-on-ros2)
 - [🧪 Unit Tests](#unit-tests)
 - [🐳 Docker](#docker)
+- [🚀 Usage](#usage)
+  - [Run S_Graphs On Your Data](#run-s_graphs-on-your-data)
+  - [Example on Datasets](#example-on-datasets)
+  - [Running S_Graphs with Docker](#running-s_graphs-with-docker)
 - [🤖 ROS Related](#ros-related)
   - [📥 Subscribed Topics](#subscribed-topics)
   - [📤 Published Topics](#published-topics)
@@ -85,7 +89,7 @@ rosdep init && rosdep update --include-eol-distros
 2. Create a ROS2 workspace for S-Graphs
 
 ```bash
-mkdir -p $HOME/s_graphs_ros2_ws/src && cd $HOME/s_graphs_ros2_ws/src && source /opt/ros/foxy/setup.bash
+mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && source /opt/ros/foxy/setup.bash
 ```
 
 3. Clone the S-Graphs repository into the created workspace
@@ -140,7 +144,7 @@ source /opt/ros/foxy/setup.bash && sudo apt install ros-foxy-ros1-bridge
 1. Create a ROS1 workspace for S-Graphs
 
 ```bash
-mkdir -p $HOME/s_graphs_ros1_ws/src && cd $HOME/s_graphs_ros1_ws/src && source /opt/ros/noetic/setup.bash
+mkdir -p $HOME/workspaces/s_graphs_ros1_ws/src && cd $HOME/workspaces/s_graphs_ros1_ws/src && source /opt/ros/noetic/setup.bash
 ```
 
 2. Clone the S-Graphs repository into the created workspace
@@ -213,6 +217,94 @@ docker exec -ti s_graphs_container bash
 mprocs_real # To run on a real robot or a real dataset
 # OR
 mprocs_virtual # To run on a simulation or virtual dataset
+```
+
+## 🚀 Usage <a id="usage"></a>
+
+### Run S_Graphs On Your Data
+
+1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`
+
+2. Remap the point cloud topic in s_graphs_launch.py of **s_graphs_prefiltering_node** and **s_graphs_node**. Like:
+
+```python
+    remappings=[
+            ("velodyne_points", "/rs_lidar/points"),
+            ("imu/data", "/platform/imu/data"),
+        ],
+  ...
+```
+
+3. If you have an odometry source convert it to base ENU frame, then set the arg `compute_odom` to `false` in `s_graphs_ros2_launch.py` and then remap odom topic in **s_graphs_node** like
+
+```python
+     remappings=[
+            ("velodyne_points", "/platform/velodyne_points"),
+            ("/odom", "/husky/odometry"),
+        ],
+  ...
+```
+
+> [!NOTE]
+> If you want to visualize the tfs correctly from your odom source, you MUST provide a tf from the `odom` to `base_link` frame.
+
+### Example on Datasets
+
+> [!WARNING]
+> For execution of the experiments we use [mprocs](https://github.com/pvolok/mprocs), which makes the process of launching different processes easier.
+
+#### Real Dataset
+
+> [!IMPORTANT]
+> Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal&ga=1) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
+
+```bash
+cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
+```
+
+#### Virtual Dataset
+
+> [!IMPORTANT]
+> Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation&ga=1) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
+
+```bash
+cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mprocs.yaml
+```
+
+### Running S_Graphs with Docker
+
+> [!NOTE]
+> This tutorial assumes that you have followed the instructions to setup docker
+> in section [🐳 Docker](#docker)
+
+1. Download the dataset you desire from above to your **local machine**.
+
+2. Move the rosbag inside docker container
+
+```sh
+docker cp ~/Downloads/real s_graphs_container:/root/Downloads/real # For real dataset
+# OR
+docker cp ~/Downloads/virtual s_graphs_container:/root/Downloads/virtual # For virtual dataset
+```
+
+3. Run the container
+
+```sh
+docker exec -ti s_graphs_container bash
+```
+
+3. Run mprocs
+
+```sh
+mprocs_real # To run on a real robot or a real dataset
+# OR
+mprocs_virtual # To run on a simulation or virtual dataset
+```
+
+4. Visualization using Rviz (open another terminal to run this command)
+
+```sh
+source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs.rviz
 ```
 
 ## 🤖 ROS Related <a id="ros-related"></a>
@@ -291,59 +383,8 @@ All the configurable parameters are listed in config folder as ros params.
   </a>
 </p>
 
-<!--
-## Instructions To Use S-Graphs on Custom Dataset
-
-1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`
-
-2. Remap the point cloud topic in s_graphs_launch.py of **s_graphs_prefiltering_node** and **s_graphs_node**. Like:
-
-```python
-    remappings=[
-            ("velodyne_points", "/rs_lidar/points"),
-            ("imu/data", "/platform/imu/data"),
-        ],
-  ...
-```
-
-3. If you have an odometry source convert it to base ENU frame, then set the arg `compute_odom` to `false` in `s_graphs_ros2_launch.py` and then remap odom topic in **s_graphs_node** like
-
-```python
-     remappings=[
-            ("velodyne_points", "/platform/velodyne_points"),
-            ("/odom", "/husky/odometry"),
-        ],
-  ...
-```
-
-> Note: If you want to visualize the tfs correctly from your odom source, you MUST provide a tf from the `odom` to `base_link` frame.
-
-## License
+## 🔑 License
 
 This package is released under the **BSD-2-Clause** License.
 
 Note that the cholmod solver in g2o is licensed under GPL. You may need to build g2o without cholmod dependency to avoid the GPL.
-
-
-## Example on Datasets
-
-> **Note:** For execution of the experiments we use [mprocs](https://github.com/pvolok/mprocs) command below. Download it using this [link](https://github.com/pvolok/mprocs)
-
-### Real Dataset
-
-> **Important:** Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal&ga=1) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
-
-```bash
-cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
-```
-
-### Virtual Dataset
-
-> **Important:** Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation&ga=1) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
-
-```bash
-cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mprocs.yaml
-```
-
-
--->
