@@ -17,26 +17,13 @@
     - [2️⃣ Download ROS bridge](#download-ros-bridge)
     - [3️⃣ Installation on ROS1](#installation-on-ros2)
 - [🧪 Unit Tests](#unit-tests)
+- [🐳 Docker](#docker)
 - [🤖 ROS Related](#ros-related)
   - [📥 Subscribed Topics](#subscribed-topics)
   - [📤 Published Topics](#published-topics)
   - [🔄 ROS Services](#ros-services)
   - [⚙️ ROS Parameters](#ros-parameters)
-
-<!-- - [Example on Datasets](#example-on-datasets)
-  - [Real Dataset](#real-dataset)
-  - [Virtual Dataset](#virtual-dataset)
-- [Unit Tests](#unit-tests-for-s-graphs)
-- [Docker](#docker-note-docker-still-uses-the-ros1-older-version-of-s-graphs)
-  - [Running Datasets Using Docker](#running-datasets-using-docker)
-- [ROS2 Related](#ros2-related)
-  - [Nodes](#nodes)
-  - [Published TFs](#published-tfs)
-  - [Services](#services)
-  - [Parameters](#parameters)
-- [Instructions To Use S-Graphs](#instructions-to-use-s-graphs)
-- [License](#license)
-- [Maintainers](#maintainers) -->
+  - [🌐 Published TFs](#published-tfs)
 
 ## 📖 Published Papers <a id="published-papers"></a>
 
@@ -194,6 +181,40 @@ Some unit tests are available. In case you want to test, run the following comma
 colcon test --packages-select s_graphs --event-handler=console_direct+
 ```
 
+## 🐳 Docker <a id="docker"></a>
+
+A docker image is provided with `s_graphs`. This image is all set and is just pull and play. Follow the instructions below in order to use `s_graphs` via docker.
+
+1. Pull the docker image from DockerHub
+
+```bash
+docker pull sntarg/s_graphs:latest
+```
+
+2. Create a container for the s_graphs image.
+
+> [!WARNING]
+> The argument --net host needs to be passed to the `docker run` command in order
+> to have network access.
+
+```bash
+docker run -dit --net host --name s_graphs_container sntarg/s_graphs
+```
+
+3. Execute the container
+
+```bash
+docker exec -ti s_graphs_container bash
+```
+
+4. Use MProcs to spawn the desired processes
+
+```bash
+mprocs_real # To run on a real robot or a real dataset
+# OR
+mprocs_virtual # To run on a simulation or virtual dataset
+```
+
 ## 🤖 ROS Related <a id="ros-related"></a>
 
 ### 📥 Subscribed Topics <a id="subscribed-topics"></a>
@@ -258,8 +279,7 @@ colcon test --packages-select s_graphs --event-handler=console_direct+
 
 All the configurable parameters are listed in config folder as ros params.
 
-<!--
-### Published TFs
+### 🌐 Published TFs <a id="published-tfs"></a>
 
 - `map2odom`: The transform published between the map frame and the odom frame after the corrections have been applied.
 
@@ -271,6 +291,7 @@ All the configurable parameters are listed in config folder as ros params.
   </a>
 </p>
 
+<!--
 ## Instructions To Use S-Graphs on Custom Dataset
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`
@@ -303,25 +324,6 @@ This package is released under the **BSD-2-Clause** License.
 
 Note that the cholmod solver in g2o is licensed under GPL. You may need to build g2o without cholmod dependency to avoid the GPL.
 
-## Maintainers
-
-- <ins>**Hriday Bavle**</ins>
-  - **Email:** hriday.bavle@uni.lu
-  - **Website:** <https://www.hriday.bavle.com/>
-- <ins>**Muhammad Shaheer**</ins>
-  - **Email:** muhamad.shaheer@uni.lu
-- <ins>**Pedro Soares**</ins>
-  - **Email:** pedro.soares@uni.lu
-
-## About S-Graphs
-
-### Architecture
-
-<p align="center">
-  <a href="">
-    <img src="./imgs/system_architecture.png" alt="Architecture" width="80%">
-  </a>
-</p>
 
 ## Example on Datasets
 
@@ -343,41 +345,5 @@ cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
 cd $HOME/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mprocs.yaml
 ```
 
-## Docker (NOTE: Docker still uses the ROS1 (older) version of S-Graphs)
-
-A docker image is provided with s_graphs. This image is all set and is just pull and play. Follow the instructions below in order to use s_graphs via docker.
-
-1. Pull the docker image from DockerHub
-
-```bash
-docker pull sntarg/s_graphs:latest
-```
-
-2. Create a container for the s_graphs image.
-
-```bash
-docker run -dit --net host --name s_graphs_container sntarg/s_graphs
-```
-
-This command also incorporates the flags `d`, which makes the container run in the detached mode and `net`, which gives the container the access of the host interfaces.
-
-3. Execute the container
-
-```bash
-docker exec -ti s_graphs_container bash
-```
-
-4. Source the s_graphs worspace
-
-```bash
-source devel/setup.bash
-```
-
-**Note:** Once the worspace is sourced once, it will no longer be required to resourced it again.
-
-### Running Datasets using docker
-
-In order to run datasets using docker, one just needs to use the command `roslaunch s_graphs s_graphs.launch use_free_space_graph:=true env:=virtual 2>/dev/null` inside docker.
-The other 2 commands should be executed outside docker. Additionally, the `env` parameter should be changed accordingly to the type of dataset.
 
 -->
