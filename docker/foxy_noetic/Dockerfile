@@ -84,5 +84,9 @@ RUN tar -xf mprocs* && \
     rm mprocs*.tar.gz && \
     mv mprocs /usr/local/bin
 
+# alias for mprocs
+RUN echo "alias mprocs_real='mprocs -c /root/workspaces/s_graphs_ros2_ws/src/s_graphs/.real_mprocs.yaml'" >> /root/.bashrc
+RUN echo "alias mprocs_virtual='mprocs -c /root/workspaces/s_graphs_ros2_ws/src/s_graphs/.virtual_mprocs.yaml'" >> /root/.bashrc
+
 # Removing SSH Host authorization (GitHub)
 RUN rm -rf /root/.ssh/
