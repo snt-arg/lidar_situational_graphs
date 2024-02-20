@@ -69,12 +69,13 @@ RUN --mount=type=ssh \
     vcs import --recursive ../ < .rosinstall_ros1
 WORKDIR /root/workspaces/s_graphs_ros1_ws
 RUN rosdep install --from-paths src --ignore-src -y -r
-RUN source /opt/ros/noetic/setup.bash && \
-    catkin build
 RUN apt install --no-install-recommends -y \
     libtool \
     ros-noetic-pcl-ros \
     ros-foxy-ros1-bridge
+RUN source /opt/ros/noetic/setup.bash && \
+    catkin build
+
 
 # Install mprocs
 WORKDIR /root
