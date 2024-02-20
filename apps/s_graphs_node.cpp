@@ -342,7 +342,7 @@ class SGraphsNode : public rclcpp::Node {
     if (optimization_type == "GLOBAL") {
       ongoing_optimization_class = optimization_class::GLOBAL;
     } else {
-      ongoing_optimization_class = optimization_class::GLOBAL_LOCAL;
+      ongoing_optimization_class = optimization_class::LOCAL_GLOBAL;
     }
 
     callback_group_opt_timer =
@@ -1115,7 +1115,24 @@ class SGraphsNode : public rclcpp::Node {
         break;
       }
 
-      case optimization_class::GLOBAL_LOCAL: {
+      case optimization_class::FLOOR_GLOBAL: {
+        graph_mutex.lock();
+        if (!loop_found && !duplicate_planes_found) {
+          GraphUtils::copy_windowed_graph(optimization_window_size,
+                                          covisibility_graph,
+                                          compressed_graph,
+                                          keyframes);
+          global_optimization = false;
+        } else if (!loop_found && duplicate_planes_found) {
+          GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
+          duplicate_planes_found = false;
+          global_optimization = true;
+        }
+        graph_mutex.unlock();
+        break;
+      }
+
+      case optimization_class::LOCAL_GLOBAL: {
         graph_mutex.lock();
         if (!loop_found && !duplicate_planes_found) {
           GraphUtils::copy_windowed_graph(optimization_window_size,
@@ -1140,6 +1157,7 @@ class SGraphsNode : public rclcpp::Node {
         graph_mutex.unlock();
         break;
       }
+
       default:
         break;
     }
@@ -1184,7 +1202,7 @@ class SGraphsNode : public rclcpp::Node {
     trans_odom2map = trans.matrix().cast<float>();
     trans_odom2map_mutex.unlock();
 
-    if (ongoing_optimization_class == optimization_class::GLOBAL_LOCAL) {
+    if (ongoing_optimization_class == optimization_class::LOCAL_GLOBAL) {
       int counter = 0;
       for (const auto& room_local_graph_id : room_local_graph_id_queue) {
         broadcast_room_graph(room_local_graph_id, num_iterations);
@@ -1878,7 +1896,8 @@ class SGraphsNode : public rclcpp::Node {
 
   enum optimization_class : uint8_t {
     GLOBAL = 1,
-    GLOBAL_LOCAL = 2,
+    FLOOR_GLOBAL = 2,
+    LOCAL_GLOBAL = 3,
   } ongoing_optimization_class;
 
   // vertical and horizontal planes
