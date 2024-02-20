@@ -325,6 +325,16 @@ class SGraphsNode : public rclcpp::Node {
                                            .get_parameter_value()
                                            .get<double>();
 
+    std::string optimization_type = this->get_parameter("optimization_type")
+                                        .get_parameter_value()
+                                        .get<std::string>();
+
+    if (optimization_type == "GLOBAL") {
+      ongoing_optimization_class = optimization_class::GLOBAL;
+    } else {
+      ongoing_optimization_class = optimization_class::GLOBAL_LOCAL;
+    }
+
     callback_group_opt_timer =
         this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
@@ -444,6 +454,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("graph_update_interval", 3.0);
     this->declare_parameter("keyframe_timer_update_interval", 3.0);
     this->declare_parameter("map_cloud_update_interval", 3.0);
+    this->declare_parameter("optimization_type", "GLOBAL");
   }
 
   void init_subclass() {
@@ -1079,26 +1090,43 @@ class SGraphsNode : public rclcpp::Node {
     const int keyframe_id = keyframes.rbegin()->first;
     graph_mutex.unlock();
 
-    graph_mutex.lock();
-    if (!loop_found && !duplicate_planes_found) {
-      GraphUtils::copy_windowed_graph(
-          optimization_window_size, covisibility_graph, compressed_graph, keyframes);
-      global_optimization = false;
-    } else if (loop_found && !duplicate_planes_found) {
-      GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
-      loop_found = false;
-      global_optimization = true;
-    } else if (!loop_found && duplicate_planes_found) {
-      GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
-      duplicate_planes_found = false;
-      global_optimization = true;
-    } else if (loop_found && duplicate_planes_found) {
-      GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
-      duplicate_planes_found = false;
-      loop_found = false;
-      global_optimization = true;
+    switch (ongoing_optimization_class) {
+      case optimization_class::GLOBAL: {
+        graph_mutex.lock();
+        GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
+        global_optimization = true;
+        graph_mutex.unlock();
+        break;
+      }
+
+      case optimization_class::GLOBAL_LOCAL: {
+        graph_mutex.lock();
+        if (!loop_found && !duplicate_planes_found) {
+          GraphUtils::copy_windowed_graph(optimization_window_size,
+                                          covisibility_graph,
+                                          compressed_graph,
+                                          keyframes);
+          global_optimization = false;
+        } else if (loop_found && !duplicate_planes_found) {
+          GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
+          loop_found = false;
+          global_optimization = true;
+        } else if (!loop_found && duplicate_planes_found) {
+          GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
+          duplicate_planes_found = false;
+          global_optimization = true;
+        } else if (loop_found && duplicate_planes_found) {
+          GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
+          duplicate_planes_found = false;
+          loop_found = false;
+          global_optimization = true;
+        }
+        graph_mutex.unlock();
+        break;
+      }
+      default:
+        break;
     }
-    graph_mutex.unlock();
 
     // optimize the pose graph
     try {
@@ -1138,16 +1166,22 @@ class SGraphsNode : public rclcpp::Node {
     trans_odom2map = trans.matrix().cast<float>();
     trans_odom2map_mutex.unlock();
 
-    int counter = 0;
-    for (const auto& room_local_graph_id : room_local_graph_id_queue) {
-      broadcast_room_graph(room_local_graph_id, num_iterations);
-      counter++;
-    }
+    if (ongoing_optimization_class == optimization_class::GLOBAL_LOCAL) {
+      int counter = 0;
+      for (const auto& room_local_graph_id : room_local_graph_id_queue) {
+        broadcast_room_graph(room_local_graph_id, num_iterations);
+        counter++;
+      }
 
-    if (!room_local_graph_id_queue.empty()) {
+      if (!room_local_graph_id_queue.empty()) {
+        graph_mutex.lock();
+        room_local_graph_id_queue.erase(room_local_graph_id_queue.begin(),
+                                        room_local_graph_id_queue.begin() + counter);
+        graph_mutex.unlock();
+      }
+    } else {
       graph_mutex.lock();
-      room_local_graph_id_queue.erase(room_local_graph_id_queue.begin(),
-                                      room_local_graph_id_queue.begin() + counter);
+      room_local_graph_id_queue.clear();
       graph_mutex.unlock();
     }
 
@@ -1796,7 +1830,6 @@ class SGraphsNode : public rclcpp::Node {
   std::mutex imu_queue_mutex;
   std::deque<sensor_msgs::msg::Imu::SharedPtr> imu_queue;
 
-  // vertical and horizontal planes
   std::deque<int> room_local_graph_id_queue;
   int optimization_window_size;
   bool loop_found, duplicate_planes_found;
@@ -1807,6 +1840,13 @@ class SGraphsNode : public rclcpp::Node {
   double min_plane_points;
   double infinite_room_information;
   double room_information, plane_information;
+
+  enum optimization_class : uint8_t {
+    GLOBAL = 1,
+    GLOBAL_LOCAL = 2,
+  } ongoing_optimization_class;
+
+  // vertical and horizontal planes
   std::unordered_map<int, VerticalPlanes> x_vert_planes,
       y_vert_planes;  // vertically segmented planes
   std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
