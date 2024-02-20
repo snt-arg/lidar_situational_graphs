@@ -187,9 +187,30 @@ colcon test --packages-select s_graphs --event-handler=console_direct+
 
 ## 🐳 Docker <a id="docker"></a>
 
+### Build Docker Image
+
+1. Change directory to where Dockerfile is located in `s_graphs`
+
+```sh
+cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
+```
+
+2. Build image
+
+> [!NOTE]
+> In case you have a different ssh key name for your GitHub account, change `id_ed25519` oto yours.
+
+```sh
+docker build --ssh default=$HOME/.ssh/id_ed25519 .
+```
+
+3. Follow the steps from below, after step 1.
+
+### Create a Docker Container
+
 A docker image is provided with `s_graphs`. This image is all set and is just pull and play. Follow the instructions below in order to use `s_graphs` via docker.
 
-1. Pull the docker image from DockerHub
+1. Pull the docker image from DockerHub (only if you have not build the image yourself!)
 
 ```bash
 docker pull sntarg/s_graphs:latest
