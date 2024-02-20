@@ -79,14 +79,13 @@
 
 ### 📦 Installation From Source <a id="installation-from-source"></a>
 
-> [!NOTE]
-> Installation can take ~10min or more depending on your hardware!
-
 The installation consists of 2 parts. One for ROS1 and another for ROS2. You can
 use just the ROS2 version, however it will not be working to it's full potential.
 
 > [!IMPORTANT]
 > Before proceeding, make sure you have `rosdep` installed. You can install it using `sudo apt-get install python3-rosdep`
+> In addition, ssh keys are needed to be configured on you GitHub account. If you haven't
+> yet configured ssh keys, follow this [tutorial](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 
 #### 1️⃣ Installation on ROS2 <a id="installation-on-ros2"></a>
 
@@ -199,15 +198,29 @@ colcon test --packages-select s_graphs --event-handler=console_direct+
 
 ### 📥 Subscribed Topics <a id="subscribed-topics"></a>
 
+#### `s_graphs` node
+
+| Topic name         | Message Type                                                                                        | Description                              |
+| ------------------ | --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `/odom`            | [nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html)              | The odometry from the robot.             |
+| `/filtered_points` | [sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html) | The filtered data from the LiDAR sensor. |
+
+#### `room_segmentation` node
+
 | Topic name                           | Message Type                                                                                                     | Description                                                                             |
 | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
-| `/odom`                              | [nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html)                           | The odometry from the robot.                                                            |
-| `/filtered_points`                   | [sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html)              | The filtered data from the LiDAR sensor.                                                |
 | `/voxblox_skeletonizer/sparse_graph` | [visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html) | Represents the free space where the robot can go to. Also known as free-space clusters. |
-| `/s_graphs/map_planes`               | s_graphs/PlanesData                                                                                              | Planes seen by the current robot keyframe.                                              |
-| `/s_graphs/all_map_planes`           | [visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html) | All the planes that have been seen by the robot.                                        |
+| `/s_graphs/map_planes`               | [s_graphs/PlanesData](https://github.com/snt-arg/s_graphs/blob/feature/ros2/msg/PlaneData.msg)                   | Planes seen by the current robot keyframe.                                              |
+
+#### `floor_plan` node
+
+| Topic name                 | Message Type                                                                                                     | Description                                      |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `/s_graphs/all_map_planes` | [visualization_msgs/MarkerArray](http://docs.ros.org/en/noetic/api/visualization_msgs/html/msg/MarkerArray.html) | All the planes that have been seen by the robot. |
 
 ### 📤 Published Topics <a id="published-topics"></a>
+
+#### `s_graphs` node
 
 | Topic name                      | Message Type                                                                                                     | Description                                                                   |
 | ------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -216,20 +229,30 @@ colcon test --packages-select s_graphs --event-handler=console_direct+
 | `/s_graphs/odom_pose_corrected` | [geometry_msgs/PoseStamped](http://docs.ros.org/en/noetic/api/geometry_msgs/html/msg/PoseStamped.html)           | The optimized/drift-free pose of the robot once odom2map is applied.          |
 | `/s_graphs/odom_path_corrected` | [nav_msgs/Path](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Path.html)                                   | The optimized/drift-free pose path of the robot once the odom2map is applied. |
 | `/s_graphs/map_points`          | [sensor_msgs/PointCloud2](http://docs.ros.org/en/melodic/api/sensor_msgs/html/msg/PointCloud2.html)              | The projected 3D points using the optimized robot pose.                       |
-| `/s_graphs/map_planes`          | s_graphs/PlanesData                                                                                              | Planes seen by the current robot keyframe.                                    |
-| `/s_graphs/all_map_planes`      | s_graphs/PlanesData                                                                                              | All the planes that have been seen by the robot.                              |
-| `/room_segmentation/room_data`  | s_graphs/RoomsData                                                                                               | Contains all the necessary information about the rooms on a given floor.      |
-| `/floor_plan/floor_data`        | s_graphs/RoomData                                                                                                | Contains all the necessary information about each floor.                      |
+| `/s_graphs/map_planes`          | [s_graphs/PlanesData](https://github.com/snt-arg/s_graphs/blob/feature/ros2/msg/PlanesData.msg)                  | Planes seen by the current robot keyframe.                                    |
+| `/s_graphs/all_map_planes`      | [s_graphs/PlanesData](https://github.com/snt-arg/s_graphs/blob/feature/ros2/msg/PlanesData.msg)                  | All the planes that have been seen by the robot.                              |
+
+#### `room_segmentation` node
+
+| Topic name                     | Message Type                                                                                  | Description                                                              |
+| ------------------------------ | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `/room_segmentation/room_data` | [s_graphs/RoomsData](https://github.com/snt-arg/s_graphs/blob/feature/ros2/msg/RoomsData.msg) | Contains all the necessary information about the rooms on a given floor. |
+
+#### `floor_plan` node
+
+| Topic name               | Message Type                                                                                 | Description                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| `/floor_plan/floor_data` | [s_graphs/RoomData](https://github.com/snt-arg/s_graphs/blob/feature/ros2/msg/RoomsData.msg) | Contains all the necessary information about each floor. |
 
 ### 🔄 ROS Services <a id="ros-services"></a>
 
-| Topic name       | Message Type       | Description                                                                                    |
-| ---------------- | ------------------ | ---------------------------------------------------------------------------------------------- |
-| `/s_graphs/dump` | s_graphs/DumpGraph | Save all the internal data (point clouds, floor coeffs, odoms, and pose graph) to a directory. |
+| Topic name       | Message Type                                                                                  | Description                                                                                    |
+| ---------------- | --------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `/s_graphs/dump` | [s_graphs/DumpGraph](https://github.com/snt-arg/s_graphs/blob/feature/ros2/srv/DumpGraph.srv) | Save all the internal data (point clouds, floor coeffs, odoms, and pose graph) to a directory. |
 
-| Topic name           | Message Type     | Description                              |
-| -------------------- | ---------------- | ---------------------------------------- |
-| `/s_graphs/save_map` | s_graphs/SaveMap | Save the generated 3D map as a PCD file. |
+| Topic name           | Message Type                                                                              | Description                              |
+| -------------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `/s_graphs/save_map` | [s_graphs/SaveMap](https://github.com/snt-arg/s_graphs/blob/feature/ros2/srv/SaveMap.srv) | Save the generated 3D map as a PCD file. |
 
 ### ⚙️ ROS Parameters <a id="ros-parameters"></a>
 
