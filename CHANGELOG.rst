@@ -2,8 +2,8 @@
 Changelog for package s_graphs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+3.0.1 (2024-02-20)
+------------------
 * Merge pull request `#54 <https://github.com/snt-arg/s_graphs/issues/54>`_ from snt-arg/docs/improve_for_release
   Docs/improve for release
 * [Misc] Update Readme
