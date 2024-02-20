@@ -4,8 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
+        - /TF1
         - /TF1/Frames1
-        - /PointCloud22
         - /MarkerArray1/Namespaces1
         - /MarkerArray2/Namespaces1
       Splitter Ratio: 0.5
@@ -49,13 +49,42 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
+        base_footprint:
+          Value: false
+        floors_layer:
+          Value: false
+        keyframe:
+          Value: false
+        keyframes_layer:
+          Value: false
+        map:
+          Value: true
+        odom:
+          Value: true
+        rooms_layer:
+          Value: false
+        velodyne:
+          Value: true
+        walls_layer:
+          Value: false
       Marker Scale: 5
       Name: TF
       Show Arrows: true
       Show Axes: true
       Show Names: false
       Tree:
-        {}
+        map:
+          keyframes_layer:
+            walls_layer:
+              rooms_layer:
+                floors_layer:
+                  {}
+          odom:
+            base_footprint:
+              velodyne:
+                {}
+            keyframe:
+              {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -128,7 +157,21 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        floor_lines: true
+        floors: true
+        hort_planes: true
+        imu: true
+        infinite_room_y_lines: true
+        keyframe_keyframe_edges: true
+        keyframe_plane_edges: true
+        loop_close_radius: false
+        nodes: true
+        rooms: true
+        rooms_line: true
+        wall_center_marker: true
+        x_vert_planes: true
+        y_infinite_room: true
+        y_vert_planes: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -191,25 +234,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 31.379924774169922
+      Distance: 84.61210632324219
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.502182126045227
-        Y: -0.052396319806575775
-        Z: -1.0097227096557617
+        X: 2.886566162109375
+        Y: 5.342537879943848
+        Z: 1.460296869277954
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.3097970485687256
+      Pitch: 0.6847970485687256
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.799938201904297
+      Yaw: 3.199937105178833
     Saved: ~
 Window Geometry:
   Displays:
