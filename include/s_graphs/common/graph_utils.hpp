@@ -299,6 +299,15 @@ class GraphUtils {
   static bool get_keyframe_marg_data(g2o::VertexSE3* vertex_se3);
 
   /**
+   * @brief Get the keyframe anchor data object
+   *
+   * @param vertex_se3
+   * @return true
+   * @return false
+   */
+  static bool get_keyframe_anchor_data(g2o::VertexSE3* vertex_se3);
+
+  /**
    * @brief
    * @param ids
    * @param keyframes

@@ -25,12 +25,7 @@ void GraphUtils::copy_graph_vertices(
 
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
     if (vertex_se3) {
-      auto keyframe_vert_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
-      bool marginalized = false;
-      if (keyframe_vert_data) {
-        keyframe_vert_data->get_marginalized_info(marginalized);
-      }
-
+      bool marginalized = get_keyframe_marg_data(vertex_se3);
       if (!marginalized) {
         if (compressed_graph->graph->vertex(v->id())) continue;
         auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
@@ -112,12 +107,24 @@ void GraphUtils::copy_graph_vertices(
 
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
     if (vertex_se3) {
+      bool anchor_node = get_keyframe_anchor_data(vertex_se3);
+      if (anchor_node) {
+        auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
+        continue;
+      }
       // find the keyframe of the vertex
       auto keyframe = keyframes.find(vertex_se3->id());
       if (keyframe != keyframes.end()) {
+        // add kf to the graph
         if (keyframe->second->floor_level == current_floor_level) {
+          bool marginalized = get_keyframe_marg_data(keyframe->second->node);
+          if (!marginalized) {
+            if (compressed_graph->graph->vertex(v->id())) continue;
+            auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
+          }
         }
       }
+      continue;
     }
   }
 }
@@ -463,12 +470,10 @@ std::vector<g2o::VertexSE3*> GraphUtils::connect_keyframes(
         auto current_vertex2_data = dynamic_cast<OptimizationData*>(
             dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1])->userData());
 
-        bool anchor_node1 = false;
-        bool anchor_node2 = false;
-        if (current_vertex1_data)
-          current_vertex1_data->get_anchor_node_info(anchor_node1);
-        if (current_vertex2_data)
-          current_vertex2_data->get_anchor_node_info(anchor_node2);
+        bool anchor_node1 = get_keyframe_anchor_data(
+            dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]));
+        bool anchor_node2 = get_keyframe_anchor_data(
+            dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]));
 
         // this is anchor node and its edge
         if (anchor_node1) {
@@ -1023,14 +1028,8 @@ void GraphUtils::set_marginalize_info(
     g2o::VertexSE3* local_vertex_se3 = dynamic_cast<g2o::VertexSE3*>(local_vertex);
 
     if (local_vertex_se3) {
-      auto keyframe_vert_data =
-          dynamic_cast<OptimizationData*>(local_vertex_se3->userData());
-
-      if (keyframe_vert_data) {
-        bool anchor_node = false;
-        keyframe_vert_data->get_anchor_node_info(anchor_node);
-        if (anchor_node) continue;
-      }
+      bool anchor_node = get_keyframe_anchor_data(local_vertex_se3);
+      if (anchor_node) continue;
 
       g2o::OptimizableGraph::Vertex* covis_vertex =
           (g2o::OptimizableGraph::Vertex*)(covisibility_graph->graph->vertex(
@@ -1096,6 +1095,16 @@ bool GraphUtils::get_keyframe_marg_data(g2o::VertexSE3* vertex_se3) {
   }
 
   return marginalized;
+}
+
+bool GraphUtils::get_keyframe_anchor_data(g2o::VertexSE3* vertex_se3) {
+  auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+  bool anchor_node = false;
+  if (current_data) {
+    current_data->get_anchor_node_info(anchor_node);
+  }
+
+  return anchor_node;
 }
 
 void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,
