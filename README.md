@@ -204,19 +204,17 @@ cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
 docker build --ssh default=$HOME/.ssh/id_ed25519 .
 ```
 
-3. Follow the steps from below, after step 1.
+<!-- ### Pull the docker image from DockerHub (only if you have not build the image yourself!)
+
+```bash
+docker pull sntarg/s_graphs:latest
+``` -->
 
 ### Create a Docker Container
 
 A docker image is provided with `s_graphs`. This image is all set and is just pull and play. Follow the instructions below in order to use `s_graphs` via docker.
 
-1. Pull the docker image from DockerHub (only if you have not build the image yourself!)
-
-```bash
-docker pull sntarg/s_graphs:latest
-```
-
-2. Create a container for the s_graphs image.
+1. Create a container for the s_graphs image.
 
 > [!WARNING]
 > The argument --net host needs to be passed to the `docker run` command in order
@@ -226,13 +224,13 @@ docker pull sntarg/s_graphs:latest
 docker run -dit --net host --name s_graphs_container sntarg/s_graphs
 ```
 
-3. Execute the container
+2. Execute the container
 
 ```bash
 docker exec -ti s_graphs_container bash
 ```
 
-4. Use MProcs to spawn the desired processes
+3. Use MProcs to spawn the desired processes
 
 ```bash
 mprocs_real # To run on a real robot or a real dataset
@@ -241,33 +239,6 @@ mprocs_virtual # To run on a simulation or virtual dataset
 ```
 
 ## 🚀 Usage <a id="usage"></a>
-
-### Run S_Graphs On Your Data
-
-1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`
-
-2. Remap the point cloud topic in s_graphs_launch.py of **s_graphs_prefiltering_node** and **s_graphs_node**. Like:
-
-```python
-    remappings=[
-            ("velodyne_points", "/rs_lidar/points"),
-            ("imu/data", "/platform/imu/data"),
-        ],
-  ...
-```
-
-3. If you have an odometry source convert it to base ENU frame, then set the arg `compute_odom` to `false` in `s_graphs_ros2_launch.py` and then remap odom topic in **s_graphs_node** like
-
-```python
-     remappings=[
-            ("velodyne_points", "/platform/velodyne_points"),
-            ("/odom", "/husky/odometry"),
-        ],
-  ...
-```
-
-> [!NOTE]
-> If you want to visualize the tfs correctly from your odom source, you MUST provide a tf from the `odom` to `base_link` frame.
 
 ### Example on Datasets
 
@@ -327,6 +298,33 @@ mprocs_virtual # To run on a simulation or virtual dataset
 ```sh
 source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs.rviz
 ```
+
+## 🚀 Run S_Graphs On Your Data
+
+1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`
+
+2. Remap the point cloud topic in s_graphs_launch.py of **s_graphs_prefiltering_node** and **s_graphs_node**. Like:
+
+```python
+    remappings=[
+            ("velodyne_points", "/rs_lidar/points"),
+            ("imu/data", "/platform/imu/data"),
+        ],
+  ...
+```
+
+3. If you have an odometry source convert it to base ENU frame, then set the arg `compute_odom` to `false` in `s_graphs_ros2_launch.py` and then remap odom topic in **s_graphs_node** like
+
+```python
+     remappings=[
+            ("velodyne_points", "/platform/velodyne_points"),
+            ("/odom", "/husky/odometry"),
+        ],
+  ...
+```
+
+> [!NOTE]
+> If you want to visualize the tfs correctly from your odom source, you MUST provide a tf from the `odom` to `base_link` frame.
 
 ## 🤖 ROS Related <a id="ros-related"></a>
 
@@ -403,9 +401,3 @@ All the configurable parameters are listed in config folder as ros params.
     <img src="./imgs/Tf-tree.png" alt="tf_tree" width="80%">
   </a>
 </p>
-
-## 🔑 License
-
-This package is released under the **BSD-2-Clause** License.
-
-Note that the cholmod solver in g2o is licensed under GPL. You may need to build g2o without cholmod dependency to avoid the GPL.
