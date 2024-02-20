@@ -2,6 +2,74 @@
 Changelog for package s_graphs
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge pull request `#54 <https://github.com/snt-arg/s_graphs/issues/54>`_ from snt-arg/docs/improve_for_release
+  Docs/improve for release
+* [Misc] Update Readme
+* [Misc] Update Readme
+* [Misc] Update Readme
+* Merge pull request `#51 <https://github.com/snt-arg/s_graphs/issues/51>`_ from snt-arg/feature/ros2_docker
+  Feature/ros2 docker
+* Merge pull request `#53 <https://github.com/snt-arg/s_graphs/issues/53>`_ from snt-arg/fix/mprocs_config
+  fix: path to s_graphs ws were not up to date with docker and docs
+* fix: path to s_graphs ws were not up to date with docker and docs
+* docs: add steps to build docker image
+* docs: add section on usage
+* added alias
+* docs: add section on docker usage
+* docs: categorize sub/pub topics per node
+* fixed bug
+* Merge branch 'feature/ros2' into docs/improve_for_release
+* [Misc] Update Rviz
+* [Feat] Add flag global-local optimization
+* Update LICENSE to GPLv3
+* fix(docs): first citation hyperlink
+* refactor(docs): improve readme for release (`#47 <https://github.com/snt-arg/s_graphs/issues/47>`_)
+  - Add missing commands to installation
+  - Use emojis for headers
+  - Clean section on papers
+  - converted sub/pubs topics to a table
+* Minor changes to Dockerfile
+* Added Foxy-Noetic combined Dockerfile
+* [Misc] update readme
+* [Misc] Update tf tree image
+* [Misc] update readme
+* [Misc] update readme and add mprocs files
+* [Misc] Update README
+* Merge pull request `#45 <https://github.com/snt-arg/s_graphs/issues/45>`_ from snt-arg/feature/improved_optimization
+  Feature/improved optimization
+* Merge branch 'feature/ros2' of github.com:snt-arg/s_graphs into feature/improved_optimization
+* [Feat] Width check for incoming room data
+* Merge branch 'feature/ros2' of github.com:snt-arg/s_graphs into feature/improved_optimization
+* [Feat] Add wall point to wall mapper
+* [Feat] S-graphs multi-threaded
+* [Feat] Add wall node to global optimization
+* [Feat] Add cluster size check in plane analyzer
+* [Fix] wall node bug fix
+* [Feat] V1 of Improved optimization stragety
+* [Feat] Add room optimization step
+* [Feat] Viz pc from non-marg keyframes
+* [Feat] Change functions in plane utils to static
+* [Feat] Global opti with kfs marg, and graph_utils made static
+* [Feat] Incoporate room marginalization
+* [Fix] Bug fix for the previous commit
+* [Feat] Convert planes, rooms and floors to unordered_map
+* [Feat]  Viz only keyframes of the compressed graph, continuation of prev commit
+* [Feat] Viz only the keyframes of the compressed graph
+* [Fix] Bug fix duplicate planes check, V1 of local-global opti, ignore prev commit
+* [Feat] Keyframe window set to 5, working version of local-global opti
+* [Feat] Global optimizing on every duplicate plane
+* [Feat] This commit completes the prev commit
+* [Feat] Update graph visualizer with black keyframes
+* [Feat] do not optimize floor-room in local optimization
+* [Feat] Removing couts and adding cloud check in information matrix calc
+* [Feat] Missing code from previous commit
+* [Feat] Convert keyframes from vector->map
+* [Feat] Local-Global opti working correctly
+* [Feat] Slow dump of feature/hierarchical->feature/ros2
+* Contributors: Hriday Bavle, Pedro Soares, manishsaini0901
+
 3.0.0 (2024-01-18)
 ------------------
 * [Feat] Update walldata msg
