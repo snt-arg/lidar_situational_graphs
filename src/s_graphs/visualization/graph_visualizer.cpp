@@ -520,6 +520,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     bool overlapped_infinite_room = false;
     float dist_room_x_corr = 100;
     for (const auto& room : room_snapshot) {
+      if (room.second.floor_level != x_infinite_room.second.floor_level) continue;
       if ((room.second.plane_x1_id == x_infinite_room.second.plane1_id ||
            room.second.plane_x1_id == x_infinite_room.second.plane2_id) &&
           (room.second.plane_x2_id == x_infinite_room.second.plane1_id ||
@@ -542,8 +543,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
     float dist_x_corr = 100;
     for (auto& current_x_infinite_room : x_infinite_room_snapshot) {
-      if (current_x_infinite_room.second.id == x_infinite_room.second.id) continue;
-
+      if (current_x_infinite_room.second.id == x_infinite_room.second.id)
+        continue;
+      else if (current_x_infinite_room.second.floor_level !=
+               x_infinite_room.second.floor_level)
+        continue;
       dist_x_corr =
           sqrt(pow(current_x_infinite_room.second.node->estimate().translation()(0) -
                        x_infinite_room.second.node->estimate().translation()(0),
@@ -643,6 +647,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     bool overlapped_infinite_room = false;
     float dist_room_y_corr = 100;
     for (const auto& room : room_snapshot) {
+      if (room.second.floor_level != y_infinite_room.second.floor_level) continue;
       if ((room.second.plane_y1_id == y_infinite_room.second.plane1_id ||
            room.second.plane_y1_id == y_infinite_room.second.plane2_id) ||
           (room.second.plane_y2_id == y_infinite_room.second.plane1_id ||
@@ -665,7 +670,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
     float dist_y_corr = 100;
     for (auto& current_y_infinite_room : y_infinite_room_snapshot) {
-      if (current_y_infinite_room.second.id == y_infinite_room.second.id) continue;
+      if (current_y_infinite_room.second.id == y_infinite_room.second.id)
+        continue;
+      else if (current_y_infinite_room.second.floor_level !=
+               y_infinite_room.second.floor_level)
+        continue;
       dist_y_corr =
           sqrt(pow(current_y_infinite_room.second.node->estimate().translation()(0) -
                        y_infinite_room.second.node->estimate().translation()(0),
