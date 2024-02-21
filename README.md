@@ -187,13 +187,20 @@ colcon test --packages-select s_graphs --event-handler=console_direct+
 
 ### Build Docker Image
 
-1. Change directory to where Dockerfile is located in `s_graphs`
+1. Create a ROS2 workspace for S-Graphs
 
 ```sh
+mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src
+```
+
+2. Change directory to where Dockerfile is located in `s_graphs`
+
+```sh
+git clone https://github.com/snt-arg/s_graphs.git -b feature/ros2 &&
 cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
 ```
 
-2. Build image
+3. Build image
 
 > [!NOTE]
 > In case you have a different ssh key name for your GitHub account, change `id_ed25519` oto yours.
@@ -210,7 +217,7 @@ docker pull sntarg/s_graphs:latest
 
 ### Create a Docker Container
 
-A docker image is provided with `s_graphs`. This image is all set and is just pull and play. Follow the instructions below in order to use `s_graphs` via docker.
+<!-- A docker image is provided with `s_graphs`. This image is all set and is just pull and play. Follow the instructions below in order to use `s_graphs` via docker. -->
 
 1. Create a container for the s_graphs image.
 
@@ -291,8 +298,11 @@ mprocs_virtual # To run on a simulation or virtual dataset
 
 4. Visualization using Rviz (open another terminal to run this command)
 
+> [!NOTE]
+> The command below assumes you has ros2 foxy on your local machine
+
 ```sh
-source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs.rviz
+source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs_ros2.rviz
 ```
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
