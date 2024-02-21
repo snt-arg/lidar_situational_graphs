@@ -126,6 +126,63 @@ void GraphUtils::copy_graph_vertices(
       }
       continue;
     }
+
+    g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
+    if (vertex_plane) {
+      auto x_vert_plane = x_vert_planes.find(vertex_plane->id());
+      auto y_vert_plane = y_vert_planes.find(vertex_plane->id());
+
+      if (x_vert_plane != x_vert_planes.end()) {
+        if (x_vert_plane->second.floor_level == current_floor_level) {
+          auto current_vertex = compressed_graph->copy_plane_node(vertex_plane);
+          continue;
+        } else
+          continue;
+      } else if (y_vert_plane != y_vert_planes.end()) {
+        if (y_vert_plane->second.floor_level == current_floor_level) {
+          auto current_vertex = compressed_graph->copy_plane_node(vertex_plane);
+          continue;
+        } else
+          continue;
+      }
+    }
+
+    /* TODO:HB Add walls_vec and then add wall vertex to floor graph */
+
+    g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
+    if (vertex_floor) {
+      if (vertex_floor->id() == current_floor_level) {
+        auto current_vertex = compressed_graph->copy_floor_node(vertex_floor);
+        continue;
+      }
+    }
+
+    g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
+    if (vertex_room) {
+      auto room = rooms_vec.find(vertex_room->id());
+      auto x_inf_room = x_infinite_rooms.find(vertex_room->id());
+      auto y_inf_room = y_infinite_rooms.find(vertex_room->id());
+
+      if (room != rooms_vec.end()) {
+        if (room->second.floor_level == current_floor_level) {
+          auto current_vertex = compressed_graph->copy_room_node(vertex_room);
+          continue;
+        } else
+          continue;
+      } else if (x_inf_room != x_infinite_rooms.end()) {
+        if (x_inf_room->second.floor_level == current_floor_level) {
+          auto current_vertex = compressed_graph->copy_room_node(vertex_room);
+          continue;
+        } else
+          continue;
+      } else if (y_inf_room != y_infinite_rooms.end()) {
+        if (y_inf_room->second.floor_level == current_floor_level) {
+          auto current_vertex = compressed_graph->copy_room_node(vertex_room);
+          continue;
+        } else
+          continue;
+      }
+    }
   }
 }
 
@@ -147,14 +204,25 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(e);
     if (edge_se3) {
-      if (!compressed_graph->graph->vertex(edge_se3->vertices()[0]->id())) {
+      // first check if they are stair keyframes
+      bool stair_v1 = get_keyframe_stair_data(
+          dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]));
+      bool stair_v2 = get_keyframe_stair_data(
+          dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]));
+
+      if (stair_v1 || stair_v2) {
+        if (!compressed_graph->graph->vertex(edge_se3->vertices()[0]->id()) ||
+            !compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
+          continue;
+        }
+      }  // if not stair keyframes there might be marginalized keyframes
+      else if (!compressed_graph->graph->vertex(edge_se3->vertices()[0]->id())) {
         if (compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
           filtered_k_vec.push_back(
               dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[1]));
         }
         continue;
-      }
-      if (!compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
+      } else if (!compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
         if (compressed_graph->graph->vertex(edge_se3->vertices()[0]->id())) {
           filtered_k_vec.push_back(
               dynamic_cast<g2o::VertexSE3*>(edge_se3->vertices()[0]));
@@ -179,6 +247,9 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
     if (edge_se3_plane) {
       if (!compressed_graph->graph->vertex(edge_se3_plane->vertices()[0]->id()))
         continue;
+      if (!compressed_graph->graph->vertex(edge_se3_plane->vertices()[1]->id()))
+        continue;
+
       g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[0]->id()));
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
@@ -190,6 +261,15 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
     g2o::EdgeRoom2Planes* edge_room_2planes = dynamic_cast<g2o::EdgeRoom2Planes*>(e);
     if (edge_room_2planes) {
+      if (!compressed_graph->graph->vertex(edge_room_2planes->vertices()[0]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_room_2planes->vertices()[1]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_room_2planes->vertices()[2]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_room_2planes->vertices()[3]->id()))
+        continue;
+
       g2o::VertexRoom* v1 =
           dynamic_cast<g2o::VertexRoom*>(compressed_graph->graph->vertices().at(
               edge_room_2planes->vertices()[0]->id()));
@@ -211,6 +291,17 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
     g2o::EdgeRoom4Planes* edge_room_4planes = dynamic_cast<g2o::EdgeRoom4Planes*>(e);
     if (edge_room_4planes) {
+      if (!compressed_graph->graph->vertex(edge_room_4planes->vertices()[0]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_room_4planes->vertices()[1]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_room_4planes->vertices()[2]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_room_4planes->vertices()[3]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_room_4planes->vertices()[4]->id()))
+        continue;
+
       g2o::VertexRoom* v1 =
           dynamic_cast<g2o::VertexRoom*>(compressed_graph->graph->vertices().at(
               edge_room_4planes->vertices()[0]->id()));
@@ -234,6 +325,9 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
     g2o::Edge2Planes* edge_2planes = dynamic_cast<g2o::Edge2Planes*>(e);
     if (edge_2planes) {
+      if (!compressed_graph->graph->vertex(edge_2planes->vertices()[0]->id())) continue;
+      if (!compressed_graph->graph->vertex(edge_2planes->vertices()[1]->id())) continue;
+
       g2o::VertexPlane* v1 = dynamic_cast<g2o::VertexPlane*>(
           compressed_graph->graph->vertices().at(edge_2planes->vertices()[0]->id()));
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
@@ -245,6 +339,13 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
     g2o::EdgeWall2Planes* edge_wall_2planes = dynamic_cast<g2o::EdgeWall2Planes*>(e);
     if (edge_wall_2planes) {
+      if (!compressed_graph->graph->vertex(edge_wall_2planes->vertices()[0]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_wall_2planes->vertices()[1]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_wall_2planes->vertices()[2]->id()))
+        continue;
+
       g2o::VertexWallXYZ* v1 =
           dynamic_cast<g2o::VertexWallXYZ*>(compressed_graph->graph->vertices().at(
               edge_wall_2planes->vertices()[0]->id()));
@@ -263,6 +364,11 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
     g2o::EdgeFloorRoom* edge_floor_room = dynamic_cast<g2o::EdgeFloorRoom*>(e);
     if (edge_floor_room) {
+      if (!compressed_graph->graph->vertex(edge_floor_room->vertices()[0]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_floor_room->vertices()[1]->id()))
+        continue;
+
       g2o::VertexFloor* v1 = dynamic_cast<g2o::VertexFloor*>(
           compressed_graph->graph->vertices().at(edge_floor_room->vertices()[0]->id()));
       g2o::VertexRoom* v2 = dynamic_cast<g2o::VertexRoom*>(
@@ -1105,6 +1211,16 @@ bool GraphUtils::get_keyframe_anchor_data(g2o::VertexSE3* vertex_se3) {
   }
 
   return anchor_node;
+}
+
+bool GraphUtils::get_keyframe_stair_data(g2o::VertexSE3* vertex_se3) {
+  auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+  bool stair_node = false;
+  if (current_data) {
+    current_data->get_stair_node_info(stair_node);
+  }
+
+  return stair_node;
 }
 
 void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,
