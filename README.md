@@ -225,7 +225,7 @@ docker pull sntarg/s_graphs:latest
 > to have network access.
 
 ```bash
-docker run -dit --net host --name s_graphs_container sntarg/s_graphs
+docker run -dit --volume=/tmp/.X11-unix:/tmp/.X11-unix:rw --network=host -e DISPLAY=$DISPLAY --name s_graphs_container sntarg/s_graphs
 ```
 
 2. Execute the container
@@ -234,6 +234,7 @@ docker run -dit --net host --name s_graphs_container sntarg/s_graphs
 docker exec -ti s_graphs_container bash
 ```
 
+<!--
 3. Use MProcs to spawn the desired processes
 
 ```bash
@@ -241,6 +242,7 @@ mprocs_real # To run on a real robot or a real dataset
 # OR
 mprocs_virtual # To run on a simulation or virtual dataset
 ```
+-->
 
 ## 🚀 Example on Datasets <a id="examples"></a>
 
@@ -295,6 +297,7 @@ mprocs_real # To run on a real robot or a real dataset
 mprocs_virtual # To run on a simulation or virtual dataset
 ```
 
+<!--
 4. Visualization using Rviz (open another terminal to run this command)
 
 > [!NOTE]
@@ -303,6 +306,7 @@ mprocs_virtual # To run on a simulation or virtual dataset
 ```sh
 source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs_ros2.rviz
 ```
+-->
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 
