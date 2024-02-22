@@ -196,8 +196,7 @@ mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_r
 2. Change directory to where Dockerfile is located in `s_graphs`
 
 ```sh
-git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs &&
-cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
 ```
 
 3. Build image
@@ -206,7 +205,7 @@ cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
 > In case you have a different ssh key name for your GitHub account, change `id_ed25519` oto yours.
 
 ```sh
-docker build --ssh default=$HOME/.ssh/id_ed25519 .
+docker build -t sntarg/s_graphs --ssh default=$HOME/.ssh/id_ed25519 .
 ```
 
 <!-- ### Pull the docker image from DockerHub (only if you have not build the image yourself!)
