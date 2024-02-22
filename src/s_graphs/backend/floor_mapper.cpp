@@ -43,18 +43,18 @@ FloorMapper::~FloorMapper() {}
 
 void FloorMapper::lookup_floors(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs::msg::RoomData room_data,
+    const s_graphs::msg::FloorData floor_data,
     std::unordered_map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  Eigen::Vector3d floor_center(room_data.room_center.position.x,
-                               room_data.room_center.position.y,
-                               room_data.room_center.position.z);
+  Eigen::Vector3d floor_center(floor_data.floor_center.position.x,
+                               floor_data.floor_center.position.y,
+                               floor_data.floor_center.position.z);
   int data_association = associate_floors(floor_center, floors_vec);
   if (floors_vec.empty()) {
     int floor_id = factor_floor_node(graph_slam,
-                                     room_data,
+                                     floor_data,
                                      floors_vec,
                                      rooms_vec,
                                      x_infinite_rooms,
@@ -62,7 +62,7 @@ void FloorMapper::lookup_floors(
     set_floor_level(floor_id);
   } else if (data_association == -1) {
     int floor_id = factor_floor_node(graph_slam,
-                                     room_data,
+                                     floor_data,
                                      floors_vec,
                                      rooms_vec,
                                      x_infinite_rooms,
@@ -72,15 +72,15 @@ void FloorMapper::lookup_floors(
   } else if (data_association != -1) {
     double floor_dist =
         sqrt(pow(floors_vec[data_association].node->estimate().translation()(0) -
-                     room_data.room_center.position.x,
+                     floor_data.floor_center.position.x,
                  2) +
              pow(floors_vec[data_association].node->estimate().translation()(1) -
-                     room_data.room_center.position.y,
+                     floor_data.floor_center.position.y,
                  2));
     if (floor_dist > floor_horizontal_threshold) {
       update_floor_node(graph_slam,
                         floors_vec[data_association].node,
-                        room_data,
+                        floor_data,
                         floors_vec,
                         rooms_vec,
                         x_infinite_rooms,
@@ -111,7 +111,7 @@ int FloorMapper::associate_floors(const Eigen::Vector3d& floor_center,
 
 int FloorMapper::factor_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs::msg::RoomData room_data,
+    const s_graphs::msg::FloorData floor_data,
     std::unordered_map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -119,20 +119,14 @@ int FloorMapper::factor_floor_node(
   g2o::VertexFloor* floor_node;
   Eigen::Isometry3d floor_pose;
   floor_pose.setIdentity();
-  floor_pose.translation().x() = room_data.room_center.position.x;
-  floor_pose.translation().y() = room_data.room_center.position.y;
-  floor_pose.translation().z() = room_data.room_center.position.z;
+  floor_pose.translation().x() = floor_data.floor_center.position.x;
+  floor_pose.translation().y() = floor_data.floor_center.position.y;
+  floor_pose.translation().z() = floor_data.floor_center.position.z;
 
   Floors det_floor;
   det_floor.graph_id = graph_slam->retrieve_local_nbr_of_vertices();
   floor_node = graph_slam->add_floor_node(floor_pose);
   det_floor.id = det_floor.graph_id;
-  if (!room_data.x_planes.empty() && !room_data.y_planes.empty()) {
-    det_floor.plane_x1_id = room_data.x_planes[0].id;
-    det_floor.plane_x2_id = room_data.x_planes[1].id;
-    det_floor.plane_y1_id = room_data.y_planes[0].id;
-    det_floor.plane_y2_id = room_data.y_planes[1].id;
-  }
   det_floor.node = floor_node;
   if (floors_vec.empty()) {
     det_floor.color.push_back(0);
@@ -151,16 +145,16 @@ int FloorMapper::factor_floor_node(
 void FloorMapper::update_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
     g2o::VertexFloor* floor_node,
-    const s_graphs::msg::RoomData room_data,
+    const s_graphs::msg::FloorData floor_data,
     std::unordered_map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
   Eigen::Isometry3d floor_pose;
   floor_pose.setIdentity();
-  floor_pose.translation().x() = room_data.room_center.position.x;
-  floor_pose.translation().y() = room_data.room_center.position.y;
-  floor_pose.translation().z() = room_data.room_center.position.z;
+  floor_pose.translation().x() = floor_data.floor_center.position.x;
+  floor_pose.translation().y() = floor_data.floor_center.position.y;
+  floor_pose.translation().z() = floor_data.floor_center.position.z;
 
   graph_slam->update_floor_node(floor_node, floor_pose);
   factor_floor_room_nodes(

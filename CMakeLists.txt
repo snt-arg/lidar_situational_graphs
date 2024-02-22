@@ -80,6 +80,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/PlanesData.msg"
   "msg/RoomData.msg"
   "msg/RoomsData.msg"
+  "msg/FloorData.msg"
   "msg/FloorCoeffs.msg"
   "msg/ScanMatchingStatus.msg"
   "msg/WallData.msg"

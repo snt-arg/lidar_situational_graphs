@@ -68,8 +68,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "geometry_msgs/msg/point.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs/msg/room_data.hpp"
-#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs/msg/floor_data.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace s_graphs {
@@ -93,7 +92,7 @@ class FloorMapper {
    * @brief
    *
    * @param graph_slam
-   * @param room_data
+   * @param floor_data
    * @param floors_vec
    * @param rooms_vec
    * @param x_infinite_rooms
@@ -101,7 +100,7 @@ class FloorMapper {
    */
   void lookup_floors(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs::msg::RoomData room_data,
+      const s_graphs::msg::FloorData floor_data,
       std::unordered_map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -159,7 +158,7 @@ class FloorMapper {
   /**
    * @brief
    * @param graph_slam
-   * @param room_data
+   * @param floor_data
    * @param floors_vec
    * @param rooms_vec
    * @param x_infinite_rooms
@@ -168,7 +167,7 @@ class FloorMapper {
    */
   int factor_floor_node(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs::msg::RoomData room_data,
+      const s_graphs::msg::FloorData floor_data,
       std::unordered_map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -179,7 +178,7 @@ class FloorMapper {
    *
    * @param graph_slam
    * @param floor_node
-   * @param room_data
+   * @param floor_data
    * @param floors_vec
    * @param rooms_vec
    * @param x_infinite_rooms
@@ -189,7 +188,7 @@ class FloorMapper {
   void update_floor_node(
       std::shared_ptr<GraphSLAM>& graph_slam,
       g2o::VertexFloor* floor_node,
-      const s_graphs::msg::RoomData room_data,
+      const s_graphs::msg::FloorData floor_data,
       std::unordered_map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,

@@ -82,6 +82,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "s_graphs/msg/floor_coeffs.hpp"
+#include "s_graphs/msg/floor_data.hpp"
 #include "s_graphs/msg/plane_data.hpp"
 #include "s_graphs/msg/planes_data.hpp"
 #include "s_graphs/msg/point_clouds.hpp"
@@ -239,19 +240,11 @@ class SGraphsNode : public rclcpp::Node {
         1,
         std::bind(&SGraphsNode::wall_data_callback, this, std::placeholders::_1),
         sub_opt);
-    floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
+    floor_data_sub = this->create_subscription<s_graphs::msg::FloorData>(
         "floor_plan/floor_data",
         1,
         std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1),
         sub_opt);
-
-    stair_keyframes_sub =
-        this->create_subscription<reasoning_msgs::msg::GraphKeyframes>(
-            "floor_plan/stair_keyframes",
-            1,
-            std::bind(
-                &SGraphsNode::stairs_keyframes_callback, this, std::placeholders::_1),
-            sub_opt);
 
     if (this->get_parameter("enable_gps").get_parameter_value().get<bool>()) {
       gps_sub = this->create_subscription<geographic_msgs::msg::GeoPointStamped>(
@@ -588,7 +581,7 @@ class SGraphsNode : public rclcpp::Node {
     trans_map2map(2, 3) = pose_msg->pose.position.z;
   }
 
-  void floor_data_callback(const s_graphs::msg::RoomData::SharedPtr floor_data_msg) {
+  void floor_data_callback(const s_graphs::msg::FloorData::SharedPtr floor_data_msg) {
     std::lock_guard<std::mutex> lock(floor_data_mutex);
     floor_data_queue.push_back(*floor_data_msg);
   }
@@ -616,10 +609,10 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void add_first_floor_node() {
-    s_graphs::msg::RoomData floor_data_msg;
-    floor_data_msg.room_center.position.x = 0;
-    floor_data_msg.room_center.position.y = 0;
-    floor_data_msg.room_center.position.z = 0;
+    s_graphs::msg::FloorData floor_data_msg;
+    floor_data_msg.floor_center.position.x = 0;
+    floor_data_msg.floor_center.position.y = 0;
+    floor_data_msg.floor_center.position.z = 0;
 
     floor_mapper->lookup_floors(covisibility_graph,
                                 floor_data_msg,
@@ -830,8 +823,6 @@ class SGraphsNode : public rclcpp::Node {
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     } else {
-      std::cout << "keyframe floor level: " << floor_mapper->get_floor_level()
-                << std::endl;
       KeyFrame::Ptr keyframe(
           new KeyFrame(stamp, odom, accum_d, cloud, floor_mapper->get_floor_level()));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
@@ -1843,12 +1834,10 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
   rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
   rclcpp::Subscription<s_graphs::msg::WallsData>::SharedPtr wall_data_sub;
-  rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
+  rclcpp::Subscription<s_graphs::msg::FloorData>::SharedPtr floor_data_sub;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
       map_2map_transform_sub;
-  rclcpp::Subscription<reasoning_msgs::msg::GraphKeyframes>::SharedPtr
-      stair_keyframes_sub;
 
   std::mutex trans_odom2map_mutex;
   Eigen::Matrix4f trans_odom2map, trans_map2map;
@@ -1948,7 +1937,7 @@ class SGraphsNode : public rclcpp::Node {
   // room data queue
   std::mutex room_data_queue_mutex, floor_data_mutex;
   std::deque<s_graphs::msg::RoomsData> room_data_queue;
-  std::deque<s_graphs::msg::RoomData> floor_data_queue;
+  std::deque<s_graphs::msg::FloorData> floor_data_queue;
 
   // for map cloud generation
   std::atomic_bool graph_updated;

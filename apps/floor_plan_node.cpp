@@ -41,6 +41,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "rclcpp/rclcpp.hpp"
 #include "reasoning_msgs/msg/graph_keyframes.hpp"
 #include "s_graphs/common/ros_utils.hpp"
+#include "s_graphs/msg/floor_data.hpp"
 #include "s_graphs/msg/plane_data.hpp"
 #include "s_graphs/msg/planes_data.hpp"
 #include "s_graphs/msg/point_clouds.hpp"
@@ -116,11 +117,8 @@ class FloorPlanNode : public rclcpp::Node {
 
     all_rooms_data_pub = this->create_publisher<s_graphs::msg::RoomsData>(
         "floor_plan/all_rooms_data", 1, pub_opt);
-    floor_data_pub = this->create_publisher<s_graphs::msg::RoomData>(
+    floor_data_pub = this->create_publisher<s_graphs::msg::FloorData>(
         "floor_plan/floor_data", 1, pub_opt);
-
-    stair_keyframes_pub = this->create_publisher<reasoning_msgs::msg::GraphKeyframes>(
-        "floor_plan/stair_keyframes", 1, pub_opt);
 
     callback_group_floor_timer =
         this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -292,16 +290,12 @@ class FloorPlanNode : public rclcpp::Node {
                                              floor_plane_candidates_vec[3]);
 
       if (CURRENT_STATUS == ON_FLOOR && !keyframes.empty()) {
-        s_graphs::msg::RoomData floor_data_msg;
+        s_graphs::msg::FloorData floor_data_msg;
         floor_data_msg.header.stamp = this->now();
         // floor_data_msg.id = floor_level;
-        floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[0]);
-        floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[1]);
-        floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[2]);
-        floor_data_msg.y_planes.push_back(floor_plane_candidates_vec[3]);
-        floor_data_msg.room_center = floor_center;
+        floor_data_msg.floor_center = floor_center;
         // publish floor height as the first captured k height of that floor
-        floor_data_msg.room_center.position.z = floor_height;
+        floor_data_msg.floor_center.position.z = floor_height;
         floor_data_pub->publish(floor_data_msg);
       }
     }
@@ -386,27 +380,25 @@ class FloorPlanNode : public rclcpp::Node {
 
   void publish_floor_keyframe_info() {
     // publish all the keyframe ids on stairs
-    reasoning_msgs::msg::GraphKeyframes stair_keyframes_msg;
+    std::vector<int> stair_kd_ids;
     for (const auto& keyframe : stair_keyframes) {
       reasoning_msgs::msg::Keyframe keyframe_msg;
-      keyframe_msg.id = keyframe->id();
-      stair_keyframes_msg.keyframes.push_back(keyframe_msg);
+      stair_kd_ids.push_back(keyframe->id());
     }
 
-    stair_keyframes_pub->publish(stair_keyframes_msg);
-    publish_floor_center();
+    publish_floor_center(stair_kd_ids);
     stair_keyframes.clear();
     CURRENT_STATUS = STATE::ON_FLOOR;
   }
 
-  void publish_floor_center() {
-    s_graphs::msg::RoomData floor_data_msg;
+  void publish_floor_center(const std::vector<int>& kf_ids) {
+    s_graphs::msg::FloorData floor_data_msg;
     floor_data_msg.header.stamp = this->now();
-    // floor_data_msg.id = floor_level;
-    floor_data_msg.room_center.position.x = 0;
-    floor_data_msg.room_center.position.y = 0;
+    floor_data_msg.floor_center.position.x = 0;
+    floor_data_msg.floor_center.position.y = 0;
     // publish floor height as the first captured k height of that floor
-    floor_data_msg.room_center.position.z = floor_height;
+    floor_data_msg.floor_center.position.z = floor_height;
+    floor_data_msg.keyframe_ids = kf_ids;
     floor_data_pub->publish(floor_data_msg);
   }
 
@@ -418,8 +410,7 @@ class FloorPlanNode : public rclcpp::Node {
       graph_keyframes_sub;
 
   rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr all_rooms_data_pub;
-  rclcpp::Publisher<s_graphs::msg::RoomData>::SharedPtr floor_data_pub;
-  rclcpp::Publisher<reasoning_msgs::msg::GraphKeyframes>::SharedPtr stair_keyframes_pub;
+  rclcpp::Publisher<s_graphs::msg::FloorData>::SharedPtr floor_data_pub;
 
   rclcpp::CallbackGroup::SharedPtr callback_group_subscriber;
   rclcpp::CallbackGroup::SharedPtr callback_group_publisher;
