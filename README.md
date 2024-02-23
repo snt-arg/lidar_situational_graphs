@@ -214,35 +214,6 @@ docker build -t sntarg/s_graphs --ssh default=$HOME/.ssh/id_ed25519 .
 docker pull sntarg/s_graphs:latest
 ``` -->
 
-### Create a Docker Container
-
-<!-- A docker image is provided with `s_graphs`. This image is all set and is just pull and play. Follow the instructions below in order to use `s_graphs` via docker. -->
-
-1. Create a container for the s_graphs image.
-
-> [!WARNING]
-> The argument --net host needs to be passed to the `docker run` command in order
-> to have network access.
-
-```bash
-docker run -dit --volume=/tmp/.X11-unix:/tmp/.X11-unix:rw --network=host -e DISPLAY=$DISPLAY --name s_graphs_container sntarg/s_graphs
-```
-
-2. Execute the container
-
-```bash
-docker exec -ti s_graphs_container bash
-```
-
-<!--
-3. Use MProcs to spawn the desired processes
-
-```bash
-mprocs_real # To run on a real robot or a real dataset
-# OR
-mprocs_virtual # To run on a simulation or virtual dataset
-```
--->
 
 ## 🚀 Example on Datasets <a id="examples"></a>
 
@@ -273,9 +244,15 @@ cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mp
 > This tutorial assumes that you have followed the instructions to setup docker
 > in section [🐳 Docker](#docker)
 
-1. Download the dataset you desire from above to your **local machine**.
+1. Create a container for the s_graphs image.
 
-2. Move the rosbag inside docker container
+```bash
+docker run -dit --volume=/tmp/.X11-unix:/tmp/.X11-unix:rw --network=host -e DISPLAY=$DISPLAY --name s_graphs_container sntarg/s_graphs
+```
+
+2. Download the dataset you desire from above to your **local machine**.
+
+3. Move the rosbag inside docker container
 
 ```sh
 docker cp ~/Downloads/real s_graphs_container:/root/Downloads/real # For real dataset
@@ -283,7 +260,7 @@ docker cp ~/Downloads/real s_graphs_container:/root/Downloads/real # For real da
 docker cp ~/Downloads/virtual s_graphs_container:/root/Downloads/virtual # For virtual dataset
 ```
 
-3. Run the container
+4. Execute the container
 
 ```sh
 docker exec -ti s_graphs_container bash
@@ -307,6 +284,9 @@ mprocs_virtual # To run on a simulation or virtual dataset
 source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs_ros2.rviz
 ```
 -->
+
+> [!NOTE]
+> Press reset on rviz2 once in a while running S-Graphs to avoid freezing effect caused by rviz2 on foxy. 
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 
