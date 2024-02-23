@@ -1,4 +1,4 @@
-# S-Graphs
+# LiDAR S-Graphs
 
 **Situational graphs (S-Graphs)** is a ROS2 package for generating in real-time four-layered hierarchical factor graphs representing a scene graph including **_Keyframes_** registring the robot poses, **_Walls_** which map wall planes, **_Rooms Layer_** constraining the wall planes using 4 wall-room or 2 wall-room factors, **_Floors_** constraining the rooms within a given floor level. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package mostly with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam) which as previously in ROS1.
 
@@ -93,7 +93,7 @@ mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_r
 3. Clone the S-Graphs repository into the created workspace
 
 ```bash
-git clone https://github.com/snt-arg/s_graphs.git -b feature/ros2
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
 ```
 
 4. Install required dependencies using `vcstool`
@@ -148,7 +148,7 @@ mkdir -p $HOME/workspaces/s_graphs_ros1_ws/src && cd $HOME/workspaces/s_graphs_r
 2. Clone the S-Graphs repository into the created workspace
 
 ```bash
-git clone https://github.com/snt-arg/s_graphs.git -b feature/ros2
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
 ```
 
 3. Install required dependencies using `vcstool`
@@ -171,8 +171,11 @@ sudo apt install ros-noetic-pcl-ros
 
 6. Build workspace
 
+> [!IMPORTANT]
+> Make sure s_graphs_ros1_ws is built in Release otherwise the room extraction won't work properly.
+
 ```bash
-catkin build
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
 ```
 
 ## 🧪 Unit Tests <a id="unit-tests"></a>
@@ -196,8 +199,7 @@ mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_r
 2. Change directory to where Dockerfile is located in `s_graphs`
 
 ```sh
-git clone https://github.com/snt-arg/s_graphs.git -b feature/ros2 &&
-cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
 ```
 
 3. Build image
@@ -206,7 +208,7 @@ cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
 > In case you have a different ssh key name for your GitHub account, change `id_ed25519` oto yours.
 
 ```sh
-docker build --ssh default=$HOME/.ssh/id_ed25519 .
+docker build -t sntarg/s_graphs --ssh default=$HOME/.ssh/id_ed25519 .
 ```
 
 <!-- ### Pull the docker image from DockerHub (only if you have not build the image yourself!)
@@ -215,33 +217,6 @@ docker build --ssh default=$HOME/.ssh/id_ed25519 .
 docker pull sntarg/s_graphs:latest
 ``` -->
 
-### Create a Docker Container
-
-<!-- A docker image is provided with `s_graphs`. This image is all set and is just pull and play. Follow the instructions below in order to use `s_graphs` via docker. -->
-
-1. Create a container for the s_graphs image.
-
-> [!WARNING]
-> The argument --net host needs to be passed to the `docker run` command in order
-> to have network access.
-
-```bash
-docker run -dit --net host --name s_graphs_container sntarg/s_graphs
-```
-
-2. Execute the container
-
-```bash
-docker exec -ti s_graphs_container bash
-```
-
-3. Use MProcs to spawn the desired processes
-
-```bash
-mprocs_real # To run on a real robot or a real dataset
-# OR
-mprocs_virtual # To run on a simulation or virtual dataset
-```
 
 ## 🚀 Example on Datasets <a id="examples"></a>
 
@@ -251,7 +226,7 @@ mprocs_virtual # To run on a simulation or virtual dataset
 ### Real Dataset
 
 > [!IMPORTANT]
-> Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FReal&ga=1) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
+> Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/EQN2qUn1P1dKuzcZqan8o3UBrBMa8b5Pcspupm_CBFHTgA?e=JxYnAJ) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
 
 ```bash
 cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
@@ -260,7 +235,7 @@ cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mproc
 ### Virtual Dataset
 
 > [!IMPORTANT]
-> Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/personal/hriday_bavle_uni_lu/_layouts/15/onedrive.aspx?id=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation%2Fstugalux%5Foetrange%5Ff2%5F3r%2Ebag&parent=%2Fpersonal%2Fhriday%5Fbavle%5Funi%5Flu%2FDocuments%2FARG%2FExperimentation%2FProjects%2FSTUGALUX%2Frosbags%2FStugalux%5FOetrange%2FSimulation&ga=1) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
+> Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/EWy7dyDnGzFLh3LMR0VXYQABne9B_NZ0YCM-o_PF8PPY5g?e=xoThE1) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
 
 ```bash
 cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mprocs.yaml
@@ -272,9 +247,15 @@ cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mp
 > This tutorial assumes that you have followed the instructions to setup docker
 > in section [🐳 Docker](#docker)
 
-1. Download the dataset you desire from above to your **local machine**.
+1. Create a container for the s_graphs image.
 
-2. Move the rosbag inside docker container
+```bash
+docker run -dit --volume=/tmp/.X11-unix:/tmp/.X11-unix:rw --network=host -e DISPLAY=$DISPLAY --name s_graphs_container sntarg/s_graphs
+```
+
+2. Download the dataset you desire from above to your **local machine**.
+
+3. Move the rosbag inside docker container
 
 ```sh
 docker cp ~/Downloads/real s_graphs_container:/root/Downloads/real # For real dataset
@@ -282,7 +263,7 @@ docker cp ~/Downloads/real s_graphs_container:/root/Downloads/real # For real da
 docker cp ~/Downloads/virtual s_graphs_container:/root/Downloads/virtual # For virtual dataset
 ```
 
-3. Run the container
+4. Execute the container
 
 ```sh
 docker exec -ti s_graphs_container bash
@@ -296,6 +277,7 @@ mprocs_real # To run on a real robot or a real dataset
 mprocs_virtual # To run on a simulation or virtual dataset
 ```
 
+<!--
 4. Visualization using Rviz (open another terminal to run this command)
 
 > [!NOTE]
@@ -304,6 +286,10 @@ mprocs_virtual # To run on a simulation or virtual dataset
 ```sh
 source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs_ros2.rviz
 ```
+-->
+
+> [!NOTE]
+> Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy. 
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 

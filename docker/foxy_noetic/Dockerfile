@@ -32,7 +32,7 @@ RUN mkdir -p -m 0700 /root/.ssh && \
 RUN mkdir -p /root/workspaces/s_graphs_ros2_ws/src
 WORKDIR /root/workspaces/s_graphs_ros2_ws/src
 RUN --mount=type=ssh \
-    git clone git@github.com:snt-arg/s_graphs.git -b feature/ros2
+    git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
 
 # Fetching all packages specified in the .rosinstall file and running build everything with colcon build.
 WORKDIR /root/workspaces/s_graphs_ros2_ws/src/s_graphs
@@ -63,7 +63,7 @@ RUN rosdep update --include-eol-distros
 RUN mkdir -p /root/workspaces/s_graphs_ros1_ws/src
 WORKDIR /root/workspaces/s_graphs_ros1_ws/src
 RUN --mount=type=ssh \
-    git clone git@github.com:snt-arg/s_graphs.git -b feature/ros2
+    git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
 WORKDIR /root/workspaces/s_graphs_ros1_ws/src/s_graphs
 RUN --mount=type=ssh \
     vcs import --recursive ../ < .rosinstall_ros1
@@ -74,6 +74,7 @@ RUN apt install --no-install-recommends -y \
     ros-noetic-pcl-ros \
     ros-foxy-ros1-bridge
 RUN source /opt/ros/noetic/setup.bash && \
+    catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && \ 
     catkin build
 
 
