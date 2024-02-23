@@ -289,7 +289,7 @@ source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/sr
 -->
 
 > [!NOTE]
-> Press reset on rviz2 once in a while running S-Graphs to avoid freezing effect caused by rviz2 on foxy. 
+> Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy. 
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 
