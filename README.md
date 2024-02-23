@@ -171,8 +171,11 @@ sudo apt install ros-noetic-pcl-ros
 
 6. Build workspace
 
+> [!IMPORTANT]
+> Make sure s_graphs_ros1_ws is built in Release otherwise the room extraction won't work properly.
+
 ```bash
-catkin build
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
 ```
 
 ## 🧪 Unit Tests <a id="unit-tests"></a>
