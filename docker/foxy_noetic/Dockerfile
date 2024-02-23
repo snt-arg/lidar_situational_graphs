@@ -74,6 +74,7 @@ RUN apt install --no-install-recommends -y \
     ros-noetic-pcl-ros \
     ros-foxy-ros1-bridge
 RUN source /opt/ros/noetic/setup.bash && \
+    catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && \ 
     catkin build
 
 
