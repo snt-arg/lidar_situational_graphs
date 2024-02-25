@@ -368,14 +368,14 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       wall_center_marker.header.frame_id = map_frame_id;
       wall_center_marker.header.stamp = stamp;
       wall_center_marker.id = markers.markers.size() + 1;
-      wall_center_marker.type = visualization_msgs::msg::Marker::SPHERE;
-      wall_center_marker.color.r = color_r;
-      wall_center_marker.color.g = color_g;
-      wall_center_marker.color.b = color_b;
+      wall_center_marker.type = visualization_msgs::msg::Marker::CUBE;
+      wall_center_marker.color.r = 0.0;
+      wall_center_marker.color.g = 1.0;
+      wall_center_marker.color.b = 1.0;
       wall_center_marker.color.a = 1.0;
-      wall_center_marker.scale.x = 0.3;
-      wall_center_marker.scale.y = 0.3;
-      wall_center_marker.scale.z = 0.3;
+      wall_center_marker.scale.x = 0.5;
+      wall_center_marker.scale.y = 0.5;
+      wall_center_marker.scale.z = 0.5;
       wall_center_marker.pose.position.x = wall_center.x();
       wall_center_marker.pose.position.y = wall_center.y();
       wall_center_marker.pose.position.z = wall_vertex_h;
@@ -384,6 +384,76 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       wall_center_marker.pose.orientation.z = 0.0;
       wall_center_marker.pose.orientation.w = 1.0;
       markers.markers.push_back(wall_center_marker);
+      
+      // wall surface plane edge markers
+      float plane_h = 15.0;
+      visualization_msgs::msg::Marker wall_edge_plane_marker;
+      wall_edge_plane_marker.header.frame_id = "map";
+      wall_edge_plane_marker.header.stamp = stamp;
+      wall_edge_plane_marker.ns = "wall_to_plane_edges";
+      wall_edge_plane_marker.id = markers.markers.size();
+      wall_edge_plane_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+      wall_edge_plane_marker.pose.orientation.w = 1.0;
+      wall_edge_plane_marker.scale.x = 0.03;
+      geometry_msgs::msg::Point point1, point2, point3;
+      point1.x = wall_center.x();
+      point1.y = wall_center.y();
+      point1.z = wall_vertex_h;
+      for (int j = 0; j < x_plane_snapshot.size(); j++) {
+        if (v2->id() == x_plane_snapshot[j].id) {
+          point2.x = x_plane_snapshot[j].start_point.x();
+          point2.y = x_plane_snapshot[j].start_point.y();
+          point2.z = 1.0 + plane_h;
+          break;
+        }
+      }
+      for (int j = 0; j < y_plane_snapshot.size(); j++) {
+        if (v2->id() == y_plane_snapshot[j].id) {
+          point2.x = y_plane_snapshot[j].start_point.x();
+          point2.y = y_plane_snapshot[j].start_point.y();
+          point2.z = 1.0 + plane_h;
+          break;
+        }
+      }
+      wall_edge_plane_marker.points.push_back(point1);
+      wall_edge_plane_marker.points.push_back(point2);
+      wall_edge_plane_marker.color.r = 0.0;
+      wall_edge_plane_marker.color.g = 0.0;
+      wall_edge_plane_marker.color.b = 0.0;
+      wall_edge_plane_marker.color.a = 1.0;
+      markers.markers.push_back(wall_edge_plane_marker);
+
+      visualization_msgs::msg::Marker wall_edge_plane_marker_2;
+      wall_edge_plane_marker_2.header.frame_id = map_frame_id;
+      wall_edge_plane_marker_2.header.stamp = stamp;
+      wall_edge_plane_marker_2.ns = "wall_to_plane_edges";
+      wall_edge_plane_marker_2.id = markers.markers.size();
+      wall_edge_plane_marker_2.type = visualization_msgs::msg::Marker::LINE_LIST;
+      wall_edge_plane_marker_2.pose.orientation.w = 1.0;
+      for (int j = 0; j < x_plane_snapshot.size(); j++) {
+        if (v3->id() == x_plane_snapshot[j].id) {
+          point3.x = x_plane_snapshot[j].start_point.x();
+          point3.y = x_plane_snapshot[j].start_point.y();
+          point3.z = 1.0 + plane_h;
+          break;
+        }
+      }
+      for (int j = 0; j < y_plane_snapshot.size(); j++) {
+        if (v3->id() == y_plane_snapshot[j].id) {
+          point3.x = y_plane_snapshot[j].start_point.x();
+          point3.y = y_plane_snapshot[j].start_point.y();
+          point3.z = 1.0 + plane_h;
+          break;
+        }
+      }
+      wall_edge_plane_marker_2.scale.x = 0.02;
+      wall_edge_plane_marker_2.color.r = 0.0;
+      wall_edge_plane_marker_2.color.g = 0.0;
+      wall_edge_plane_marker_2.color.b = 0.0;
+      wall_edge_plane_marker_2.color.a = 1.0;
+      wall_edge_plane_marker_2.points.push_back(point1);
+      wall_edge_plane_marker_2.points.push_back(point3);
+      markers.markers.push_back(wall_edge_plane_marker_2);
     }
   }
 
@@ -607,7 +677,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.id = markers.markers.size();
       infinite_room_pose_marker.type = visualization_msgs::msg::Marker::CUBE;
       infinite_room_pose_marker.color.r = 1;
-      infinite_room_pose_marker.color.g = 0.64;
+      infinite_room_pose_marker.color.g = 165.0/255.0;
       infinite_room_pose_marker.color.a = 1;
       infinite_room_pose_marker.pose.position.x =
           x_infinite_room_snapshot[i].node->estimate().translation()(0);
@@ -740,9 +810,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       infinite_room_pose_marker.ns = "y_infinite_room";
       infinite_room_pose_marker.id = markers.markers.size();
       infinite_room_pose_marker.type = visualization_msgs::msg::Marker::CUBE;
-      infinite_room_pose_marker.color.r = 0.13;
-      infinite_room_pose_marker.color.g = 0.54;
-      infinite_room_pose_marker.color.b = 0.13;
+      infinite_room_pose_marker.color.r = 1;
+      infinite_room_pose_marker.color.g = 165.0/255.0;
       infinite_room_pose_marker.color.a = 1;
       infinite_room_pose_marker.pose.position.x =
           y_infinite_room_snapshot[i].node->estimate().translation()(0);
@@ -804,8 +873,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_marker.id = markers.markers.size();
     room_marker.type = visualization_msgs::msg::Marker::CUBE;
     room_marker.color.r = 1;
-    room_marker.color.g = 0.07;
-    room_marker.color.b = 0.57;
+    room_marker.color.g = 0.0;
+    room_marker.color.b = 0.0;
     room_marker.color.a = 1;
 
     room_marker.pose.position.x = room_snapshot[i].node->estimate().translation()(0);
@@ -902,14 +971,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       floor_marker.ns = "floors";
       floor_marker.id = markers.markers.size();
       floor_marker.type = visualization_msgs::msg::Marker::CUBE;
-      floor_marker.color.r = 0.49;
-      floor_marker.color.g = 0;
-      floor_marker.color.b = 1;
+      floor_marker.color.r = 0;
+      floor_marker.color.g = 1;
+      floor_marker.color.b = 0;
       floor_marker.color.a = 1;
       floor_marker.lifetime = duration_floor;
 
-      floor_marker.pose.position.x = floor.node->estimate().translation()(0);
-      floor_marker.pose.position.y = floor.node->estimate().translation()(1);
+      // floor_marker.pose.position.x = floor.node->estimate().translation()(0);
+      // floor_marker.pose.position.y = floor.node->estimate().translation()(1);
+      floor_marker.pose.position.x = 2.5;
+      floor_marker.pose.position.y = -10.0;
       floor_marker.pose.position.z = floor.node->estimate().translation()(2);
 
       // create line markers between floor and rooms/infinite_rooms

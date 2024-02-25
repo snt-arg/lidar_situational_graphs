@@ -122,7 +122,7 @@ def launch_sgraphs(context, *args, **kwargs):
         arguments=[
             "0.0",
             "0.0",
-            "8.0",
+            "6.0",
             "0.0",
             "0.0",
             "0.0",
@@ -139,7 +139,7 @@ def launch_sgraphs(context, *args, **kwargs):
         arguments=[
             "0.0",
             "0.0",
-            "7.0",
+            "8.0",
             "0.0",
             "0.0",
             "0.0",
@@ -156,7 +156,7 @@ def launch_sgraphs(context, *args, **kwargs):
         arguments=[
             "0.0",
             "0.0",
-            "5.0",
+            "1.5",
             "0.0",
             "0.0",
             "0.0",
