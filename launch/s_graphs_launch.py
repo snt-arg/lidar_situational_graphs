@@ -132,6 +132,23 @@ def launch_sgraphs(context, *args, **kwargs):
         output="screen",
     )
 
+    wall_wall_semantic_static_transform = Node(
+        package="tf2_ros",
+        executable="static_transform_publisher",
+        name="wall_wall_semantic_static_transform",
+        arguments=[
+            "0.0",
+            "0.0",
+            "5.0",
+            "0.0",
+            "0.0",
+            "0.0",
+            ns_prefix + "walls_layer",
+            ns_prefix + "wall_semantic_layer",
+        ],
+        output="screen",
+    )
+
     wall_room_static_transform = Node(
         package="tf2_ros",
         executable="static_transform_publisher",
@@ -174,6 +191,7 @@ def launch_sgraphs(context, *args, **kwargs):
         s_graphs_cmd,
         map_keyframe_static_transform,
         keyframe_wall_static_transform,
+        wall_wall_semantic_static_transform,
         wall_room_static_transform,
         room_floor_static_transform,
     ]

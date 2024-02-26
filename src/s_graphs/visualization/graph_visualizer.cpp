@@ -134,6 +134,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   rclcpp::Duration duration_planes = rclcpp::Duration::from_seconds(5);
 
   std::string keyframes_layer_id = "keyframes_layer";
+  std::string wall_semantic_layer_id = "wall_semantic_layer";
   std::string walls_layer_id = "walls_layer";
   std::string rooms_layer_id = "rooms_layer";
   std::string floors_layer_id = "floors_layer";
@@ -142,6 +143,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   if (ns.length() > 1) {
     std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
     keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
+    wall_semantic_layer_id = ns_prefix + "/" + wall_semantic_layer_id;
     walls_layer_id = ns_prefix + "/" + walls_layer_id;
     rooms_layer_id = ns_prefix + "/" + rooms_layer_id;
     floors_layer_id = ns_prefix + "/" + floors_layer_id;
@@ -364,8 +366,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[2]);
       Eigen::Vector3d wall_center = v1->estimate();
 
+      float plane_h = 15.0;
       wall_center_marker.ns = "wall_center_marker";
-      wall_center_marker.header.frame_id = map_frame_id;
+      wall_center_marker.header.frame_id = wall_semantic_layer_id;
       wall_center_marker.header.stamp = stamp;
       wall_center_marker.id = markers.markers.size() + 1;
       wall_center_marker.type = visualization_msgs::msg::Marker::CUBE;
@@ -378,17 +381,16 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       wall_center_marker.scale.z = 0.5;
       wall_center_marker.pose.position.x = wall_center.x();
       wall_center_marker.pose.position.y = wall_center.y();
-      wall_center_marker.pose.position.z = wall_vertex_h;
+      wall_center_marker.pose.position.z = wall_center.z();
       wall_center_marker.pose.orientation.x = 0.0;
       wall_center_marker.pose.orientation.y = 0.0;
       wall_center_marker.pose.orientation.z = 0.0;
       wall_center_marker.pose.orientation.w = 1.0;
       markers.markers.push_back(wall_center_marker);
       
-      // wall surface plane edge markers
-      float plane_h = 15.0;
+      // wall to wall surface plane edge markers
       visualization_msgs::msg::Marker wall_edge_plane_marker;
-      wall_edge_plane_marker.header.frame_id = "map";
+      wall_edge_plane_marker.header.frame_id = wall_semantic_layer_id;
       wall_edge_plane_marker.header.stamp = stamp;
       wall_edge_plane_marker.ns = "wall_to_plane_edges";
       wall_edge_plane_marker.id = markers.markers.size();
@@ -398,25 +400,29 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       geometry_msgs::msg::Point point1, point2, point3;
       point1.x = wall_center.x();
       point1.y = wall_center.y();
-      point1.z = wall_vertex_h;
-      for (int j = 0; j < x_plane_snapshot.size(); j++) {
-        if (v2->id() == x_plane_snapshot[j].id) {
-          point2.x = x_plane_snapshot[j].start_point.x();
-          point2.y = x_plane_snapshot[j].start_point.y();
-          point2.z = 1.0 + plane_h;
-          break;
+      point1.z = wall_center.z();
+      
+      if (abs(v2->estimate().normal()(0)) > 0.9) {
+        auto found_planex =
+            std::find_if(x_plane_snapshot.begin(),
+                         x_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v2->id());
+        if (found_planex != x_plane_snapshot.end()) {
+          point2 = compute_plane_point(point1, (*found_planex).cloud_seg_map, wall_semantic_layer_id, walls_layer_id);
         }
-      }
-      for (int j = 0; j < y_plane_snapshot.size(); j++) {
-        if (v2->id() == y_plane_snapshot[j].id) {
-          point2.x = y_plane_snapshot[j].start_point.x();
-          point2.y = y_plane_snapshot[j].start_point.y();
-          point2.z = 1.0 + plane_h;
-          break;
+ 
+      } else if (abs(v2->estimate().normal()(1)) > 0.5) {
+        auto found_planey =
+            std::find_if(y_plane_snapshot.begin(),
+                         y_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v2->id());
+        if (found_planey != y_plane_snapshot.end()) {
+          point2 = compute_plane_point(point1, (*found_planey).cloud_seg_map,wall_semantic_layer_id, walls_layer_id);
         }
       }
       wall_edge_plane_marker.points.push_back(point1);
       wall_edge_plane_marker.points.push_back(point2);
+      
       wall_edge_plane_marker.color.r = 0.0;
       wall_edge_plane_marker.color.g = 0.0;
       wall_edge_plane_marker.color.b = 0.0;
@@ -424,33 +430,36 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       markers.markers.push_back(wall_edge_plane_marker);
 
       visualization_msgs::msg::Marker wall_edge_plane_marker_2;
-      wall_edge_plane_marker_2.header.frame_id = map_frame_id;
+      wall_edge_plane_marker_2.header.frame_id = wall_semantic_layer_id;
       wall_edge_plane_marker_2.header.stamp = stamp;
       wall_edge_plane_marker_2.ns = "wall_to_plane_edges";
       wall_edge_plane_marker_2.id = markers.markers.size();
       wall_edge_plane_marker_2.type = visualization_msgs::msg::Marker::LINE_LIST;
       wall_edge_plane_marker_2.pose.orientation.w = 1.0;
-      for (int j = 0; j < x_plane_snapshot.size(); j++) {
-        if (v3->id() == x_plane_snapshot[j].id) {
-          point3.x = x_plane_snapshot[j].start_point.x();
-          point3.y = x_plane_snapshot[j].start_point.y();
-          point3.z = 1.0 + plane_h;
-          break;
-        }
-      }
-      for (int j = 0; j < y_plane_snapshot.size(); j++) {
-        if (v3->id() == y_plane_snapshot[j].id) {
-          point3.x = y_plane_snapshot[j].start_point.x();
-          point3.y = y_plane_snapshot[j].start_point.y();
-          point3.z = 1.0 + plane_h;
-          break;
-        }
-      }
       wall_edge_plane_marker_2.scale.x = 0.02;
       wall_edge_plane_marker_2.color.r = 0.0;
       wall_edge_plane_marker_2.color.g = 0.0;
       wall_edge_plane_marker_2.color.b = 0.0;
       wall_edge_plane_marker_2.color.a = 1.0;
+
+      if (abs(v3->estimate().normal()(0)) > 0.9) {
+        auto found_planex =
+            std::find_if(x_plane_snapshot.begin(),
+                         x_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v3->id());
+        if (found_planex != x_plane_snapshot.end()) {
+          point3 = compute_plane_point(point1, (*found_planex).cloud_seg_map,wall_semantic_layer_id, walls_layer_id);
+        }
+ 
+      } else if (abs(v3->estimate().normal()(1)) > 0.5) {
+        auto found_planey =
+            std::find_if(y_plane_snapshot.begin(),
+                         y_plane_snapshot.end(),
+                         boost::bind(&VerticalPlanes::id, _1) == v3->id());
+        if (found_planey != y_plane_snapshot.end()) {
+          point3 = compute_plane_point(point1, (*found_planey).cloud_seg_map,wall_semantic_layer_id, walls_layer_id);
+        }
+      }
       wall_edge_plane_marker_2.points.push_back(point1);
       wall_edge_plane_marker_2.points.push_back(point3);
       markers.markers.push_back(wall_edge_plane_marker_2);
@@ -653,12 +662,12 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     p1.y = x_infinite_room_snapshot[i].node->estimate().translation()(1);
     p1.z = 0;
 
-    p2 = compute_plane_point(p1, (*found_plane1).cloud_seg_map);
+    p2 = compute_plane_point(p1, (*found_plane1).cloud_seg_map,rooms_layer_id, walls_layer_id );
 
     x_infinite_room_line_marker.points.push_back(p1);
     x_infinite_room_line_marker.points.push_back(p2);
 
-    p3 = compute_plane_point(p1, (*found_plane2).cloud_seg_map);
+    p3 = compute_plane_point(p1, (*found_plane2).cloud_seg_map,rooms_layer_id, walls_layer_id);
 
     x_infinite_room_line_marker.points.push_back(p1);
     x_infinite_room_line_marker.points.push_back(p3);
@@ -786,12 +795,12 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     p1.y = y_infinite_room_snapshot[i].node->estimate().translation()(1);
     p1.z = 0;
 
-    p2 = compute_plane_point(p1, (*found_plane1).cloud_seg_map);
+    p2 = compute_plane_point(p1, (*found_plane1).cloud_seg_map,rooms_layer_id, walls_layer_id);
 
     y_infinite_room_line_marker.points.push_back(p1);
     y_infinite_room_line_marker.points.push_back(p2);
 
-    p3 = compute_plane_point(p1, (*found_plane2).cloud_seg_map);
+    p3 = compute_plane_point(p1, (*found_plane2).cloud_seg_map,rooms_layer_id, walls_layer_id);
 
     y_infinite_room_line_marker.points.push_back(p1);
     y_infinite_room_line_marker.points.push_back(p3);
@@ -924,22 +933,22 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         y_plane_snapshot.end(),
         boost::bind(&VerticalPlanes::id, _1) == room_snapshot[i].plane_y2_id);
 
-    p2 = compute_plane_point(p1, (*found_planex1).cloud_seg_map);
+    p2 = compute_plane_point(p1, (*found_planex1).cloud_seg_map,rooms_layer_id, walls_layer_id);
 
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p2);
 
-    p3 = compute_plane_point(p1, (*found_planex2).cloud_seg_map);
+    p3 = compute_plane_point(p1, (*found_planex2).cloud_seg_map,rooms_layer_id, walls_layer_id);
 
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p3);
 
-    p4 = compute_plane_point(p1, (*found_planey1).cloud_seg_map);
+    p4 = compute_plane_point(p1, (*found_planey1).cloud_seg_map,rooms_layer_id, walls_layer_id);
 
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p4);
 
-    p5 = compute_plane_point(p1, (*found_planey2).cloud_seg_map);
+    p5 = compute_plane_point(p1, (*found_planey2).cloud_seg_map,rooms_layer_id, walls_layer_id);
 
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p5);
@@ -2029,7 +2038,7 @@ void GraphVisualizer::create_compressed_graph(
           room_p1.z = room_v1->estimate().translation()(2);
 
           geometry_msgs::msg::Point plane_pl1 =
-              compute_plane_point(room_p1, x_plane.cloud_seg_map);
+              compute_plane_point(room_p1, x_plane.cloud_seg_map,rooms_layer_id, walls_layer_id);
 
           plane_edge_visual_tools->publishLine(
               room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
@@ -2046,7 +2055,7 @@ void GraphVisualizer::create_compressed_graph(
           room_p1.y = room_v1->estimate().translation()(1);
           room_p1.z = room_v1->estimate().translation()(2);
           geometry_msgs::msg::Point plane_pl1 =
-              compute_plane_point(room_p1, x_plane.cloud_seg_map);
+              compute_plane_point(room_p1, x_plane.cloud_seg_map,rooms_layer_id, walls_layer_id);
 
           plane_edge_visual_tools->publishLine(
               room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
@@ -2086,7 +2095,7 @@ void GraphVisualizer::create_compressed_graph(
           room_p1.z = room_v1->estimate().translation()(2);
 
           geometry_msgs::msg::Point plane_pl1 =
-              compute_plane_point(room_p1, y_plane.cloud_seg_map);
+              compute_plane_point(room_p1, y_plane.cloud_seg_map,rooms_layer_id, walls_layer_id);
 
           plane_edge_visual_tools->publishLine(
               room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
@@ -2103,7 +2112,7 @@ void GraphVisualizer::create_compressed_graph(
           room_p1.y = room_v1->estimate().translation()(1);
           room_p1.z = room_v1->estimate().translation()(2);
           geometry_msgs::msg::Point plane_pl1 =
-              compute_plane_point(room_p1, y_plane.cloud_seg_map);
+              compute_plane_point(room_p1, y_plane.cloud_seg_map,rooms_layer_id, walls_layer_id);
 
           plane_edge_visual_tools->publishLine(
               room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
@@ -2245,7 +2254,7 @@ Eigen::Vector3d GraphVisualizer::compute_hort_plane_centroid(
 
 geometry_msgs::msg::Point GraphVisualizer::compute_plane_point(
     geometry_msgs::msg::Point room_p1,
-    const pcl::PointCloud<PointNormal>::Ptr cloud_seg_map) {
+    const pcl::PointCloud<PointNormal>::Ptr cloud_seg_map, std::string parent_frame_id, std::string child_frame_id ) {
   float min_dist_plane1 = 100;
   geometry_msgs::msg::Point plane_p2;
   for (int p = 0; p < cloud_seg_map->points.size(); ++p) {
@@ -2273,9 +2282,9 @@ geometry_msgs::msg::Point GraphVisualizer::compute_plane_point(
   // convert point p2 to rooms_layer_id currently it is map_frame_id
   tf_buffer->transform(point2_stamped,
                        point2_stamped_transformed,
-                       rooms_layer_id,
+                       parent_frame_id,
                        tf2::TimePointZero,
-                       walls_layer_id);
+                       child_frame_id);
 
   return point2_stamped_transformed.point;
 }

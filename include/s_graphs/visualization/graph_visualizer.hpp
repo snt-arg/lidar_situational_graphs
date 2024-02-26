@@ -207,7 +207,7 @@ class GraphVisualizer {
    */
   geometry_msgs::msg::Point compute_plane_point(
       geometry_msgs::msg::Point room_p1,
-      const pcl::PointCloud<PointNormal>::Ptr cloud_seg_map);
+      const pcl::PointCloud<PointNormal>::Ptr cloud_seg_map, std::string parent_frame_id, std::string child_frame_id);
 
   /**
    * @brief
@@ -224,6 +224,7 @@ class GraphVisualizer {
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   rclcpp::Node* node_ptr_;
   std::string keyframes_layer_id;
+  std::string wall_semantic_layer_id;
   std::string walls_layer_id;
   std::string rooms_layer_id;
   std::string floors_layer_id;
