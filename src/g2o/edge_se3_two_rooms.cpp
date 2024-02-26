@@ -64,8 +64,9 @@ void EdgeSE3RoomRoom::computeError() {
   const g2o::VertexRoom *v2 = static_cast<const g2o::VertexRoom *>(_vertices[1]);
   const g2o::VertexRoom *v3 = static_cast<const g2o::VertexRoom *>(_vertices[2]);
 
-  Eigen::Isometry3d error_matrix =
-      v1->estimate() * v2->estimate().inverse() * v3->estimate();
+  // compute the error as the difference between the two room poses
+
+  Eigen::Isometry3d error_matrix = v2->estimate().inverse() * v3->estimate();
 
   // Set the error vector to the translation and rotation parts of the error matrix
   _error.head(3) = error_matrix.translation();

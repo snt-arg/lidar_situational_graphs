@@ -71,10 +71,13 @@ void EdgeSE3PlanePlane::computeError() {
   g2o::Plane3D a_graph_plane = v2->estimate();
   g2o::Plane3D s_graph_plane = v3->estimate();
 
-  Eigen::Isometry3d deviation = v1->estimate();
-  Eigen::Isometry3d dev_inverse = v1->estimate().inverse();
-  g2o::Plane3D modified_s_graph_plane = dev_inverse * v3->estimate();
-  _error = modified_s_graph_plane.ominus(v2->estimate());
+  // Eigen::Isometry3d deviation = v1->estimate();
+  // Eigen::Isometry3d dev_inverse = v1->estimate().inverse();
+  // g2o::Plane3D modified_s_graph_plane = dev_inverse * v3->estimate();
+  // _error = modified_s_graph_plane.ominus(v2->estimate());
+
+  _error = a_graph_plane.ominus(s_graph_plane);
+
   // if (v2->id() == 18 || v2->id() == 12) {
   //   std::cout << "a_graph plane fixed : " << v2->fixed() << std::endl;
   //   std::cout << "s_graph plane fixed : " << v3->fixed() << std::endl;
