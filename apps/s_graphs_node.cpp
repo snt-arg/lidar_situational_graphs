@@ -602,6 +602,22 @@ class SGraphsNode : public rclcpp::Node {
                                   x_infinite_rooms,
                                   y_infinite_rooms);
 
+      // if new floor was added update floor level and add to it the stair keyframes
+      if (floor_mapper->get_floor_level_update_info() &&
+          !floor_data_msg.keyframe_ids.empty()) {
+        current_floor_level = floor_mapper->get_floor_level();
+        add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
+        GraphUtils::update_node_floor_level(
+            floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
+            current_floor_level,
+            keyframes,
+            x_vert_planes,
+            y_vert_planes,
+            rooms_vec,
+            x_infinite_rooms,
+            y_infinite_rooms);
+      }
+
       floor_data_mutex.lock();
       floor_data_queue.pop_front();
       floor_data_mutex.unlock();
@@ -623,17 +639,14 @@ class SGraphsNode : public rclcpp::Node {
     current_floor_level = floor_mapper->get_floor_level();
   }
 
-  void stairs_keyframes_callback(
-      const reasoning_msgs::msg::GraphKeyframes::SharedPtr stair_keyframes_msg) {
+  void add_stair_keyframes_to_floor(const std::vector<int>& stair_keyframe_ids) {
     // get the keyframe ids and update their semantic of belonging to new floor
-    for (auto& stair_keyframe_msg : stair_keyframes_msg->keyframes) {
-      floors_vec.at(current_floor_level)
-          .stair_keyframe_ids.push_back(stair_keyframe_msg.id);
+    for (auto& stair_keyframe_msg : stair_keyframe_ids) {
+      floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
     }
 
     GraphUtils::set_stair_keyframes(
         floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
-    flush_floor_data_queue();
   }
 
   /**
@@ -823,6 +836,8 @@ class SGraphsNode : public rclcpp::Node {
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     } else {
+      std::cout << "adding keyframe with floor level "
+                << floor_mapper->get_floor_level() << std::endl;
       KeyFrame::Ptr keyframe(
           new KeyFrame(stamp, odom, accum_d, cloud, floor_mapper->get_floor_level()));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
@@ -855,20 +870,6 @@ class SGraphsNode : public rclcpp::Node {
                                                        anchor_edge,
                                                        keyframe_hash);
     graph_mutex.unlock();
-
-    // if new floor was added update floor level of the new keyframes here
-    if (floor_mapper->get_floor_level_update_info()) {
-      GraphUtils::update_node_floor_level(
-          floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
-          floor_mapper->get_floor_level(),
-          keyframes,
-          x_vert_planes,
-          y_vert_planes,
-          rooms_vec,
-          x_infinite_rooms,
-          y_infinite_rooms);
-      current_floor_level = floor_mapper->get_floor_level();
-    }
 
     // perform planar segmentation
     for (int i = 0; i < new_keyframes.size(); i++) {
@@ -1018,13 +1019,6 @@ class SGraphsNode : public rclcpp::Node {
     // publish mapped planes
     publish_mapped_planes(x_vert_planes, y_vert_planes);
 
-    // flush the room poses from room detector and no need to return if no rooms found
-    flush_room_data_queue();
-
-    // flush the floor poses from the floor planner and no need to return if no floors
-    // found
-    flush_floor_data_queue();
-
     // loop detection
     std::vector<Loop::Ptr> loops =
         loop_detector->detect(keyframes, new_keyframes, *covisibility_graph);
@@ -1041,6 +1035,13 @@ class SGraphsNode : public rclcpp::Node {
 
     new_keyframes.clear();
     graph_mutex.unlock();
+
+    // flush the room poses from room detector and no need to return if no rooms found
+    flush_room_data_queue();
+
+    // flush the floor poses from the floor planner and no need to return if no floors
+    // found
+    flush_floor_data_queue();
 
     // move the first node anchor position to the current estimate of the first node
     // pose so the first node moves freely while trying to stay around the origin

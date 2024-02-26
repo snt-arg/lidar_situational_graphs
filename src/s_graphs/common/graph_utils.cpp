@@ -107,10 +107,12 @@ void GraphUtils::copy_graph_vertices(
 
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
     if (vertex_se3) {
-      bool anchor_node = get_keyframe_anchor_data(vertex_se3);
-      if (anchor_node) {
-        auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
-        continue;
+      if (current_floor_level == 0) {
+        bool anchor_node = get_keyframe_anchor_data(vertex_se3);
+        if (anchor_node) {
+          auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
+          continue;
+        }
       }
       // find the keyframe of the vertex
       auto keyframe = keyframes.find(vertex_se3->id());
@@ -183,6 +185,12 @@ void GraphUtils::copy_graph_vertices(
           continue;
       }
     }
+  }
+
+  if (current_floor_level != 0) {
+    auto first_keyframe_id =
+        floors_vec.at(current_floor_level).stair_keyframe_ids.front();
+    compressed_graph->graph->vertex(first_keyframe_id)->setFixed(true);
   }
 }
 
@@ -1248,6 +1256,7 @@ void GraphUtils::update_node_floor_level(
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms) {
   std::vector<g2o::VertexPlane*> connected_planes;
+
   auto it = keyframes.find(first_keyframe_id);
   if (it != keyframes.end()) {
     for (; it != keyframes.end(); ++it) {
