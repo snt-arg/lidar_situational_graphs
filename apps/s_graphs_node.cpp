@@ -836,8 +836,6 @@ class SGraphsNode : public rclcpp::Node {
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     } else {
-      std::cout << "adding keyframe with floor level "
-                << floor_mapper->get_floor_level() << std::endl;
       KeyFrame::Ptr keyframe(
           new KeyFrame(stamp, odom, accum_d, cloud, floor_mapper->get_floor_level()));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);

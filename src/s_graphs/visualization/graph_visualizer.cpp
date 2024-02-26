@@ -521,13 +521,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     float dist_room_x_corr = 100;
     for (const auto& room : room_snapshot) {
       if (room.second.floor_level != x_infinite_room.second.floor_level) continue;
-      if ((room.second.plane_x1_id == x_infinite_room.second.plane1_id ||
-           room.second.plane_x1_id == x_infinite_room.second.plane2_id) &&
-          (room.second.plane_x2_id == x_infinite_room.second.plane1_id ||
-           room.second.plane_x2_id == x_infinite_room.second.plane2_id)) {
-        overlapped_infinite_room = true;
-        break;
-      }
       dist_room_x_corr =
           sqrt(pow(room.second.node->estimate().translation()(0) -
                        x_infinite_room.second.node->estimate().translation()(0),
@@ -648,13 +641,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     float dist_room_y_corr = 100;
     for (const auto& room : room_snapshot) {
       if (room.second.floor_level != y_infinite_room.second.floor_level) continue;
-      if ((room.second.plane_y1_id == y_infinite_room.second.plane1_id ||
-           room.second.plane_y1_id == y_infinite_room.second.plane2_id) ||
-          (room.second.plane_y2_id == y_infinite_room.second.plane1_id ||
-           room.second.plane_y2_id == y_infinite_room.second.plane2_id)) {
-        overlapped_infinite_room = true;
-        break;
-      }
       dist_room_y_corr =
           sqrt(pow(room.second.node->estimate().translation()(0) -
                        y_infinite_room.second.node->estimate().translation()(0),
