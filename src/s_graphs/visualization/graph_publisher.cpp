@@ -380,11 +380,11 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
 reasoning_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
     const g2o::SparseOptimizer* local_graph,
-    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes) {
   reasoning_msgs::msg::GraphKeyframes msg;
   msg.keyframes.reserve(keyframes.size());
   for (auto& keyframe : keyframes) {
-    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));
+    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe.second));
   }
   return msg;
 }
