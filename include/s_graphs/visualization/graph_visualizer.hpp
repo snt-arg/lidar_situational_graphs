@@ -127,9 +127,25 @@ class GraphVisualizer {
       std::vector<VerticalPlanes>& x_vert_planes,
       std::vector<VerticalPlanes>& y_vert_planes);
 
+  /**
+   * @brief Creates a marker array
+   */
   Eigen::Isometry3d compute_plane_pose(const VerticalPlanes& plane,
                                        pcl::PointXYZRGBNormal& p_min,
                                        pcl::PointXYZRGBNormal& p_max);
+
+  Eigen::Vector2d calculate_end_point(const Eigen::Vector2d& start_point,
+                                      const Eigen::Vector2d& normal,
+                                      double length);
+  std::vector<Eigen::Vector2d> divide_plane_into_segments(Eigen::Vector2d start_point,
+                                                          double length,
+                                                          Eigen::Vector2d& direction,
+                                                          int segments);
+  double calculate_distance(const Eigen::Vector2d& point1,
+                            const Eigen::Vector2d& point2);
+
+  Eigen::Vector2d find_closest_point(const Eigen::Vector2d& given_point,
+                                     const std::vector<Eigen::Vector2d>& points);
 
  private:
   std::string map_frame_id;
