@@ -1483,8 +1483,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
                                          a_graph_direction,
                                          100);
           Eigen::Vector2d s_graph_point;
-          s_graph_point[0] = p1.x;
-          s_graph_point[1] = p1.y;
+          s_graph_point[0] = p2.x;
+          s_graph_point[1] = p2.y;
           Eigen::Vector2d closest_point =
               find_closest_point(s_graph_point, a_graph_plane_segments);
           a_graph_wall_pose.translation() = (*found_a_graph_plane).wall_point;
@@ -1618,8 +1618,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
                                          a_graph_direction,
                                          100);
           Eigen::Vector2d s_graph_point;
-          s_graph_point[0] = p1.x;
-          s_graph_point[1] = p1.y;
+          s_graph_point[0] = p2.x;
+          s_graph_point[1] = p2.y;
           Eigen::Vector2d closest_point =
               find_closest_point(s_graph_point, a_graph_plane_segments);
           a_graph_wall_pose.translation() = (*found_a_graph_plane).wall_point;
