@@ -1439,13 +1439,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           wall_deviation_marker.color.g = 0.0;
           wall_deviation_marker.color.b = 0.0;
           wall_deviation_marker.color.a = 1.0;
-          // deviation_marker.text = "d";
-          // std::cout << " A-graph plane : " << std::endl;
-          // std::cout << v2->estimate().toVector() << std::endl;
-          // std::cout << " S-graph plane : " << std::endl;
-          // std::cout << v3->estimate().toVector() << std::endl;
-          // std::cout << " dev pose  : " << std::endl;
-          // std::cout << v1->estimate().matrix() << std::endl;
 
           Eigen::Vector3d translation = dev_pose.block<3, 1>(0, 3);
           Eigen::Matrix3d rotation_matrix = dev_pose.block<3, 3>(0, 0);
@@ -1456,7 +1449,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           wall_deviation_marker.pose.position.y = translation.y();
           p2.y = wall_deviation_marker.pose.position.y;
           p2.z = plane_h;
-          std::cout << "p2 x: " << p2.x << " p2 y: " << p2.y << std::endl;
           wall_deviation_marker.pose.position.z = wall_vertex_h;
           wall_deviation_marker.pose.orientation.x = quaternion.x();
           wall_deviation_marker.pose.orientation.y = quaternion.y();
@@ -1507,8 +1499,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           p1.z = wall_vertex_h;
           p3.x = closest_point.x();
           p3.y = closest_point.y();
-          std::cout << "seg len " << a_graph_plane_segments.size() << std::endl;
-          std::cout << "p3 x: " << p3.x << " p3 y: " << p3.y << std::endl;
           p3.z = plane_h;
 
           visualization_msgs::msg::Marker deviation_wall_edge_marker;
@@ -1576,29 +1566,22 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           wall_deviation_marker.color.g = 0.0;
           wall_deviation_marker.color.b = 0.0;
           wall_deviation_marker.color.a = 0.7;
-          // deviation_marker.text = "d";
-          // std::cout << " A-graph plane : " << std::endl;
-          // std::cout << v2->estimate().toVector() << std::endl;
-          // std::cout << " S-graph plane : " << std::endl;
-          // std::cout << v3->estimate().toVector() << std::endl;
-          // std::cout << " dev pose  : " << std::endl;
-          // std::cout << v1->estimate().matrix() << std::endl;
+
           Eigen::Vector3d translation = dev_pose.block<3, 1>(0, 3);
           Eigen::Matrix3d rotation_matrix = dev_pose.block<3, 3>(0, 0);
           Eigen::Quaterniond quaternion(rotation_matrix);
           quaternion.normalize();
-          deviation_marker.pose.position.x = translation.x();
-          p2.x = deviation_marker.pose.position.x;
-          deviation_marker.pose.position.y = translation.y();
-          p2.y = deviation_marker.pose.position.y;
-          deviation_marker.pose.position.z = wall_vertex_h;
+          wall_deviation_marker.pose.position.x = translation.x();
+          p2.x = wall_deviation_marker.pose.position.x;
+          wall_deviation_marker.pose.position.y = translation.y();
+          p2.y = wall_deviation_marker.pose.position.y;
+          wall_deviation_marker.pose.position.z = wall_vertex_h;
           p2.z = plane_h;
-          std::cout << "p2 x: " << p2.x << " p2 y: " << p2.y << std::endl;
-          deviation_marker.pose.orientation.x = quaternion.x();
-          deviation_marker.pose.orientation.y = quaternion.y();
-          deviation_marker.pose.orientation.z = quaternion.z();
-          deviation_marker.pose.orientation.w = quaternion.w();
-          prior_markers.markers.push_back(deviation_marker);
+          wall_deviation_marker.pose.orientation.x = quaternion.x();
+          wall_deviation_marker.pose.orientation.y = quaternion.y();
+          wall_deviation_marker.pose.orientation.z = quaternion.z();
+          wall_deviation_marker.pose.orientation.w = quaternion.w();
+          prior_markers.markers.push_back(wall_deviation_marker);
 
           Eigen::Isometry3d a_graph_wall_pose = Eigen::Isometry3d::Identity();
           auto found_a_graph_plane = y_vert_planes_prior.begin();
@@ -1644,7 +1627,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           p3.x = closest_point.x();
           p3.y = closest_point.y();
           p3.z = plane_h;
-          std::cout << "p3 x: " << p3.x << " p3 y: " << p3.y << std::endl;
           visualization_msgs::msg::Marker deviation_wall_edge_marker;
           deviation_wall_edge_marker.header.frame_id = map_frame_id;
           deviation_wall_edge_marker.header.stamp = stamp;
@@ -1668,36 +1650,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           text_marker_pose.y() = (p_min.y - p_max.y) / 2.0 + p_max.y;
           text_marker_pose.z() = (p_min.z - p_max.z) / 2.0 + p_max.z;
 
-          // visualization_msgs::msg::Marker text_marker;
-          // text_marker.header.frame_id = "prior_map";  // Set the appropriate frame ID
-          // text_marker.header.stamp = stamp;
-          // text_marker.ns = "deviation_display";
-          // text_marker.id = prior_markers.markers.size();
-          // text_marker.type = visualization_msgs::msg::Marker::TEXT_VIEW_FACING;
-
-          // text_marker.pose.position.x = text_marker_pose.x();
-          // text_marker.pose.position.y = text_marker_pose.y();
-          // text_marker.pose.position.z = wall_vertex_h - 1;
-          // text_marker.pose.orientation.x = 0.0;
-          // text_marker.pose.orientation.y = 0.0;
-          // text_marker.pose.orientation.z = 0.0;
-          // text_marker.pose.orientation.w = 1.0;
-
-          // text_marker.scale.z = 0.1;
-
-          // text_marker.color.r = 255.0;
-          // text_marker.color.g = 255.0;
-          // text_marker.color.b = 255.0;
-          // text_marker.color.a = 1.0;
-
-          // Eigen::Vector3d dev_value = v1->estimate().matrix().block<3, 1>(0, 3);
-          // Eigen::Vector3d truncated_values;
-          // truncated_values[0] = std::floor(dev_value[0] * 100);
-          // truncated_values[1] = std::floor(dev_value[1] * 100);
-          // text_marker.text = std::to_string(truncated_values[0]) + "," +
-          //                    std::to_string(truncated_values[1]);
-          // prior_markers.markers.push_back(text_marker);
-
           visualization_msgs::msg::Marker deviation_wall_edge_marker2;
           deviation_wall_edge_marker2.header.frame_id = map_frame_id;
           deviation_wall_edge_marker2.header.stamp = stamp;
@@ -1719,6 +1671,58 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       }
     }
   }
+  auto room_dev_edge_iterator = local_graph->edges().begin();
+  for (int i = 0; room_dev_edge_iterator != local_graph->edges().end();
+       room_dev_edge_iterator++, i++) {
+    g2o::HyperGraph::Edge* edge = *room_dev_edge_iterator;
+    g2o::EdgeSE3RoomRoom* edge_room_dev = dynamic_cast<g2o::EdgeSE3RoomRoom*>(edge);
+    if (edge_room_dev) {
+      g2o::VertexDeviation* v1 =
+          dynamic_cast<g2o::VertexDeviation*>(edge_room_dev->vertices()[0]);
+      g2o::VertexRoom* v2 =
+          dynamic_cast<g2o::VertexRoom*>(edge_room_dev->vertices()[1]);
+      g2o::VertexRoom* v3 =
+          dynamic_cast<g2o::VertexRoom*>(edge_room_dev->vertices()[2]);
+
+      visualization_msgs::msg::Marker room_deviation_marker;
+      room_deviation_marker.header.frame_id = map_frame_id;
+      room_deviation_marker.header.stamp = stamp;
+      room_deviation_marker.ns = "room_deviation";
+      room_deviation_marker.id = prior_markers.markers.size() + i;
+      room_deviation_marker.type = visualization_msgs::msg::Marker::SPHERE;
+      room_deviation_marker.action = visualization_msgs::msg::Marker::ADD;
+      room_deviation_marker.scale.x = 0.3;
+      room_deviation_marker.scale.y = 0.3;
+      room_deviation_marker.scale.z = 0.3;
+      room_deviation_marker.color.r = 0.0;
+      room_deviation_marker.color.g = 0.0;
+      room_deviation_marker.color.b = 0.0;
+      room_deviation_marker.color.a = 0.7;
+
+      auto found_a_graph_room = rooms_vec_prior.begin();
+      found_a_graph_room =
+          std::find_if(rooms_vec_prior.begin(),
+                       rooms_vec_prior.end(),
+                       boost::bind(&s_graphs::Rooms::id, _1) == v2->id());
+      Eigen::Matrix4d a_graph_room_pose = Eigen::Matrix4d::Identity();
+      Eigen::Vector3d translation =
+          (*found_a_graph_room).node->estimate().matrix().block<3, 1>(0, 3);
+      Eigen::Matrix3d rotation_matrix =
+          (*found_a_graph_room).node->estimate().matrix().block<3, 3>(0, 0);
+      Eigen::Quaterniond quaternion(rotation_matrix);
+
+      room_deviation_marker.pose.position.x = translation.x();
+      room_deviation_marker.pose.position.y = translation.y();
+      room_deviation_marker.pose.position.z = prior_room_h + 1;
+      room_deviation_marker.pose.orientation.x = quaternion.x();
+      room_deviation_marker.pose.orientation.y = quaternion.y();
+      room_deviation_marker.pose.orientation.z = quaternion.z();
+      room_deviation_marker.pose.orientation.w = quaternion.w();
+
+      prior_markers.markers.push_back(room_deviation_marker);
+    }
+  }
+
   if (!got_trans_prior2map_) {
     for (int i = 0; i < rooms_vec_prior.size(); i++) {  // walls_x_coord.size()
       double r, g, b;
@@ -2227,8 +2231,6 @@ std::vector<Eigen::Vector2d> GraphVisualizer::divide_plane_into_segments(
     Eigen::Vector2d currentPoint =
         calculate_end_point(start_point, direction, currentLength);
     segment_points.push_back(currentPoint);
-    std::cout << "Segment point: " << currentPoint.x() << " " << currentPoint.y()
-              << std::endl;
   }
 
   return segment_points;
@@ -2252,13 +2254,9 @@ Eigen::Vector2d GraphVisualizer::find_closest_point(
 
   for (const auto& point : points) {
     double current_distance = calculate_distance(given_point, point);
-    std::cout << "closest distance before: " << current_distance << std::endl;
-    std::cout << "Min distance before: " << min_distance << std::endl;
     if (current_distance < min_distance) {
       closest_point = point;
       min_distance = current_distance;
-      std::cout << "closest distance after: " << current_distance << std::endl;
-      std::cout << "Min distance after: " << min_distance << std::endl;
     }
   }
 
