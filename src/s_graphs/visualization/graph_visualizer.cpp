@@ -1425,20 +1425,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           pose = compute_plane_pose(*found_s_graph_plane, p_min, p_max);
 
           Eigen::Matrix4d dev_pose = pose.matrix() * v1->estimate().matrix();
-          visualization_msgs::msg::Marker deviation_marker;
-          deviation_marker.header.frame_id = "map";
-          deviation_marker.header.stamp = stamp;
-          deviation_marker.ns = "deviations";
-          deviation_marker.id = prior_markers.markers.size() + i;
-          deviation_marker.type = visualization_msgs::msg::Marker::SPHERE;
-          deviation_marker.action = visualization_msgs::msg::Marker::ADD;
-          deviation_marker.scale.x = 0.3;
-          deviation_marker.scale.y = 0.3;
-          deviation_marker.scale.z = 0.3;
-          deviation_marker.color.r = 0.0;
-          deviation_marker.color.g = 0.0;
-          deviation_marker.color.b = 0.0;
-          deviation_marker.color.a = 1.0;
+          visualization_msgs::msg::Marker wall_deviation_marker;
+          wall_deviation_marker.header.frame_id = map_frame_id;
+          wall_deviation_marker.header.stamp = stamp;
+          wall_deviation_marker.ns = "deviations";
+          wall_deviation_marker.id = prior_markers.markers.size() + i;
+          wall_deviation_marker.type = visualization_msgs::msg::Marker::SPHERE;
+          wall_deviation_marker.action = visualization_msgs::msg::Marker::ADD;
+          wall_deviation_marker.scale.x = 0.3;
+          wall_deviation_marker.scale.y = 0.3;
+          wall_deviation_marker.scale.z = 0.3;
+          wall_deviation_marker.color.r = 0.0;
+          wall_deviation_marker.color.g = 0.0;
+          wall_deviation_marker.color.b = 0.0;
+          wall_deviation_marker.color.a = 1.0;
           // deviation_marker.text = "d";
           // std::cout << " A-graph plane : " << std::endl;
           // std::cout << v2->estimate().toVector() << std::endl;
@@ -1451,17 +1451,17 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           Eigen::Matrix3d rotation_matrix = dev_pose.block<3, 3>(0, 0);
           Eigen::Quaterniond quaternion(rotation_matrix);
           quaternion.normalize();
-          deviation_marker.pose.position.x = translation.x();
-          p2.x = deviation_marker.pose.position.x;
-          deviation_marker.pose.position.y = translation.y();
-          p2.y = deviation_marker.pose.position.y;
+          wall_deviation_marker.pose.position.x = translation.x();
+          p2.x = wall_deviation_marker.pose.position.x;
+          wall_deviation_marker.pose.position.y = translation.y();
+          p2.y = wall_deviation_marker.pose.position.y;
           p2.z = plane_h;
           std::cout << "p2 x: " << p2.x << " p2 y: " << p2.y << std::endl;
-          deviation_marker.pose.position.z = wall_vertex_h;
-          deviation_marker.pose.orientation.x = quaternion.x();
-          deviation_marker.pose.orientation.y = quaternion.y();
-          deviation_marker.pose.orientation.z = quaternion.z();
-          prior_markers.markers.push_back(deviation_marker);
+          wall_deviation_marker.pose.position.z = wall_vertex_h;
+          wall_deviation_marker.pose.orientation.x = quaternion.x();
+          wall_deviation_marker.pose.orientation.y = quaternion.y();
+          wall_deviation_marker.pose.orientation.z = quaternion.z();
+          prior_markers.markers.push_back(wall_deviation_marker);
           Eigen::Isometry3d a_graph_wall_pose;
           auto found_a_graph_plane = x_vert_planes_prior.begin();
           found_a_graph_plane =
@@ -1512,7 +1512,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           p3.z = plane_h;
 
           visualization_msgs::msg::Marker deviation_wall_edge_marker;
-          deviation_wall_edge_marker.header.frame_id = "map";
+          deviation_wall_edge_marker.header.frame_id = map_frame_id;
           deviation_wall_edge_marker.header.stamp = stamp;
           deviation_wall_edge_marker.ns = "deviation_to_plane_edges";
           deviation_wall_edge_marker.id = prior_markers.markers.size();
@@ -1530,7 +1530,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           prior_markers.markers.push_back(deviation_wall_edge_marker);
 
           visualization_msgs::msg::Marker deviation_wall_edge_marker2;
-          deviation_wall_edge_marker2.header.frame_id = "map";
+          deviation_wall_edge_marker2.header.frame_id = map_frame_id;
           deviation_wall_edge_marker2.header.stamp = stamp;
           deviation_wall_edge_marker2.ns = "deviation_to_plane_edges";
           deviation_wall_edge_marker2.id = prior_markers.markers.size();
@@ -1562,20 +1562,20 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           pose = compute_plane_pose(*found_s_graph_plane, p_min, p_max);
 
           Eigen::Matrix4d dev_pose = pose.matrix() * v1->estimate().matrix();
-          visualization_msgs::msg::Marker deviation_marker;
-          deviation_marker.header.frame_id = "map";
-          deviation_marker.header.stamp = stamp;
-          deviation_marker.ns = "deviations";
-          deviation_marker.id = prior_markers.markers.size() + i;
-          deviation_marker.type = visualization_msgs::msg::Marker::SPHERE;
-          deviation_marker.action = visualization_msgs::msg::Marker::ADD;
-          deviation_marker.scale.x = 0.3;
-          deviation_marker.scale.y = 0.3;
-          deviation_marker.scale.z = 0.3;
-          deviation_marker.color.r = 0.0;
-          deviation_marker.color.g = 0.0;
-          deviation_marker.color.b = 0.0;
-          deviation_marker.color.a = 0.7;
+          visualization_msgs::msg::Marker wall_deviation_marker;
+          wall_deviation_marker.header.frame_id = map_frame_id;
+          wall_deviation_marker.header.stamp = stamp;
+          wall_deviation_marker.ns = "deviations";
+          wall_deviation_marker.id = prior_markers.markers.size() + i;
+          wall_deviation_marker.type = visualization_msgs::msg::Marker::SPHERE;
+          wall_deviation_marker.action = visualization_msgs::msg::Marker::ADD;
+          wall_deviation_marker.scale.x = 0.3;
+          wall_deviation_marker.scale.y = 0.3;
+          wall_deviation_marker.scale.z = 0.3;
+          wall_deviation_marker.color.r = 0.0;
+          wall_deviation_marker.color.g = 0.0;
+          wall_deviation_marker.color.b = 0.0;
+          wall_deviation_marker.color.a = 0.7;
           // deviation_marker.text = "d";
           // std::cout << " A-graph plane : " << std::endl;
           // std::cout << v2->estimate().toVector() << std::endl;
@@ -1646,7 +1646,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           p3.z = plane_h;
           std::cout << "p3 x: " << p3.x << " p3 y: " << p3.y << std::endl;
           visualization_msgs::msg::Marker deviation_wall_edge_marker;
-          deviation_wall_edge_marker.header.frame_id = "map";
+          deviation_wall_edge_marker.header.frame_id = map_frame_id;
           deviation_wall_edge_marker.header.stamp = stamp;
           deviation_wall_edge_marker.ns = "deviation_to_plane_edges";
           deviation_wall_edge_marker.id = prior_markers.markers.size();
@@ -1699,7 +1699,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           // prior_markers.markers.push_back(text_marker);
 
           visualization_msgs::msg::Marker deviation_wall_edge_marker2;
-          deviation_wall_edge_marker2.header.frame_id = "map";
+          deviation_wall_edge_marker2.header.frame_id = map_frame_id;
           deviation_wall_edge_marker2.header.stamp = stamp;
           deviation_wall_edge_marker2.ns = "deviation_to_plane_edges";
           deviation_wall_edge_marker2.id = prior_markers.markers.size();
@@ -1885,7 +1885,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     for (int i = 0; i < rooms_vec_prior.size(); i++) {  // walls_x_coord.size()
       double r, g, b;
       visualization_msgs::msg::Marker prior_room_marker;
-      prior_room_marker.header.frame_id = "map";
+      prior_room_marker.header.frame_id = map_frame_id;
       prior_room_marker.header.stamp = stamp;
       prior_room_marker.ns = "prior_rooms";
       prior_room_marker.id = prior_markers.markers.size() + i;
@@ -1914,7 +1914,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       point1.y = room_pose(1, 3);
       point1.z = prior_room_h;
       visualization_msgs::msg::Marker room_edge_plane_marker1;
-      room_edge_plane_marker1.header.frame_id = "map";
+      room_edge_plane_marker1.header.frame_id = map_frame_id;
       room_edge_plane_marker1.header.stamp = stamp;
       room_edge_plane_marker1.ns = "prior_room_to_plane_markers";
       room_edge_plane_marker1.id = prior_markers.markers.size();
@@ -1946,7 +1946,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       prior_markers.markers.push_back(room_edge_plane_marker1);
 
       visualization_msgs::msg::Marker room_edge_plane_marker2;
-      room_edge_plane_marker2.header.frame_id = "map";
+      room_edge_plane_marker2.header.frame_id = map_frame_id;
       room_edge_plane_marker2.header.stamp = stamp;
       room_edge_plane_marker2.ns = "prior_room_to_plane_markers";
       room_edge_plane_marker2.id = prior_markers.markers.size();
@@ -1978,7 +1978,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       prior_markers.markers.push_back(room_edge_plane_marker2);
 
       visualization_msgs::msg::Marker room_edge_plane_marker3;
-      room_edge_plane_marker3.header.frame_id = "map";
+      room_edge_plane_marker3.header.frame_id = map_frame_id;
       room_edge_plane_marker3.header.stamp = stamp;
       room_edge_plane_marker3.ns = "prior_room_to_plane_markers";
       room_edge_plane_marker3.id = prior_markers.markers.size();
@@ -2010,7 +2010,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       prior_markers.markers.push_back(room_edge_plane_marker3);
 
       visualization_msgs::msg::Marker room_edge_plane_marker4;
-      room_edge_plane_marker4.header.frame_id = "map";
+      room_edge_plane_marker4.header.frame_id = map_frame_id;
       room_edge_plane_marker4.header.stamp = stamp;
       room_edge_plane_marker4.ns = "prior_room_to_plane_markers";
       room_edge_plane_marker4.id = prior_markers.markers.size();
@@ -2131,7 +2131,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       point1.y = door_pose.y();
       point1.z = prior_room_h;
       visualization_msgs::msg::Marker door_edge_plane_marker1;
-      door_edge_plane_marker1.header.frame_id = "map";
+      door_edge_plane_marker1.header.frame_id = map_frame_id;
       door_edge_plane_marker1.header.stamp = stamp;
       door_edge_plane_marker1.ns = "prior_door_edges";
       door_edge_plane_marker1.id = prior_markers.markers.size();
@@ -2156,7 +2156,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       prior_markers.markers.push_back(door_edge_plane_marker1);
 
       visualization_msgs::msg::Marker door_edge_plane_marker2;
-      door_edge_plane_marker2.header.frame_id = "map";
+      door_edge_plane_marker2.header.frame_id = map_frame_id;
       door_edge_plane_marker2.header.stamp = stamp;
       door_edge_plane_marker2.ns = "prior_door_edges";
       door_edge_plane_marker2.id = prior_markers.markers.size();
