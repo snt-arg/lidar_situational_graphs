@@ -362,7 +362,7 @@ void FiniteRoomMapper::factor_rooms(
     // room_node->setFixed(true);
     Rooms det_room;
     det_room.id = room_data_association.first;
-    std::cout << "Adding a new room with id " << det_room.id << std::endl;
+
     det_room.plane_x1 = x_room_pair_vec[0].plane_unflipped;
     det_room.plane_x2 = x_room_pair_vec[1].plane_unflipped;
     det_room.plane_y1 = y_room_pair_vec[0].plane_unflipped;
@@ -371,6 +371,10 @@ void FiniteRoomMapper::factor_rooms(
     det_room.plane_x2_id = x_room_pair_vec[1].plane_id;
     det_room.plane_y1_id = y_room_pair_vec[0].plane_id;
     det_room.plane_y2_id = y_room_pair_vec[1].plane_id;
+    std::cout << "Adding a new room with id " << det_room.id
+              << "  and plane ids : " << det_room.plane_x1_id << "  "
+              << det_room.plane_x2_id << " " << det_room.plane_y1_id << "  "
+              << det_room.plane_y2_id << std::endl;
     det_room.node = room_node;
     det_room.plane_x1_node = (*found_x_plane1).plane_node;
     det_room.plane_x2_node = (*found_x_plane2).plane_node;

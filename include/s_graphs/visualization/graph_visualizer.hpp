@@ -102,7 +102,7 @@ class GraphVisualizer {
    * @param floors_vec
    * @return A MarkerArray message.
    */
-  visualization_msgs::msg::MarkerArray create_marker_array(
+  std::vector<visualization_msgs::msg::MarkerArray> create_marker_array(
       const rclcpp::Time& stamp,
       const g2o::SparseOptimizer* local_graph,
       const std::vector<VerticalPlanes>& x_plane_snapshot,
@@ -115,7 +115,7 @@ class GraphVisualizer {
       std::vector<KeyFrame::Ptr> keyframes,
       std::vector<Floors> floors_vec);
 
-  visualization_msgs::msg::MarkerArray create_prior_marker_array(
+  std::vector<visualization_msgs::msg::MarkerArray> create_prior_marker_array(
       const rclcpp::Time& stamp,
       const g2o::SparseOptimizer* local_graph,
       std::vector<VerticalPlanes>& x_vert_planes_prior,

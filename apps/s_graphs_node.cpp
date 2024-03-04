@@ -234,8 +234,12 @@ class SGraphsNode : public rclcpp::Node {
           std::bind(&SGraphsNode::navsat_callback, this, std::placeholders::_1));
     }
     // publishers
-    markers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
-        "s_graphs/markers", 16);
+    // publishers
+    markers_pub.resize(max_topics);
+    for (int i = 0; i < max_topics; i++) {
+      markers_pub[i] = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+          "s_graphs/markers" + std::to_string(i), 16);
+    }
     odom2map_pub = this->create_publisher<geometry_msgs::msg::TransformStamped>(
         "s_graphs/odom2map", 16);
     odom_pose_corrected_pub = this->create_publisher<geometry_msgs::msg::PoseStamped>(
@@ -1078,7 +1082,10 @@ class SGraphsNode : public rclcpp::Node {
         loop_detector->get_distance_thresh() * 2.0,
         keyframes,
         floors_vec);
-    markers_pub->publish(markers);
+
+    for (int i = 0; i < markers.size(); i++) {
+      markers_pub[i]->publish(markers[i]);
+    }
 
     publish_all_mapped_planes(x_vert_planes, y_vert_planes);
     map_points_pub->publish(*cloud_msg);
@@ -1597,7 +1604,9 @@ class SGraphsNode : public rclcpp::Node {
   std::string odom_frame_id;
   std::string points_topic;
 
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr markers_pub;
+  int max_topics = 20;
+  std::vector<rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr>
+      markers_pub;
   rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr odom2map_pub;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr odom_pose_corrected_pub;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_corrected_pub;

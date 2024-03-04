@@ -60,7 +60,7 @@ GraphVisualizer::~GraphVisualizer() {}
  * @param stamp
  * @return
  */
-visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
+std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker_array(
     const rclcpp::Time& stamp,
     const g2o::SparseOptimizer* local_graph,
     const std::vector<VerticalPlanes>& x_plane_snapshot,
@@ -72,6 +72,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     double loop_detector_radius,
     std::vector<KeyFrame::Ptr> keyframes,
     std::vector<Floors> floors_vec) {
+  std::vector<visualization_msgs::msg::MarkerArray> markers_vec;
   visualization_msgs::msg::MarkerArray markers;
   // markers.markers.resize(11);
 
@@ -93,71 +94,46 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     floors_layer_id = ns_prefix + "/" + floors_layer_id;
   }
 
-  visualization_msgs::msg::Marker traj_marker;
-  traj_marker.header.frame_id = keyframes_layer_id;
-  traj_marker.header.stamp = stamp;
-  traj_marker.ns = "nodes";
-  traj_marker.id = markers.markers.size();
-  traj_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-
-  traj_marker.pose.orientation.w = 1.0;
-  traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.5;
-
-  visualization_msgs::msg::Marker imu_marker;
-  imu_marker.header = traj_marker.header;
-  imu_marker.ns = "imu";
-  imu_marker.id = markers.markers.size() + 1;
-  imu_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-
-  imu_marker.pose.orientation.w = 1.0;
-  imu_marker.scale.x = imu_marker.scale.y = imu_marker.scale.z = 0.75;
-
-  traj_marker.points.resize(keyframes.size());
-  traj_marker.colors.resize(keyframes.size());
   for (int i = 0; i < keyframes.size(); i++) {
+    visualization_msgs::msg::Marker traj_marker;
+    traj_marker.header.frame_id = keyframes_layer_id;
+    traj_marker.header.stamp = stamp;
+    traj_marker.ns = "kf " + std::to_string(keyframes[i]->node->id());
+    traj_marker.id = markers.markers.size();
+    traj_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+
+    traj_marker.pose.orientation.w = 1.0;
+    traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.5;
+
     Eigen::Vector3d pos = keyframes[i]->node->estimate().translation();
-    traj_marker.points[i].x = pos.x();
-    traj_marker.points[i].y = pos.y();
-    traj_marker.points[i].z = pos.z();
+    geometry_msgs::msg::Point point1;
+    point1.x = pos.x();
+    point1.y = pos.y();
+    point1.z = pos.z();
+    traj_marker.points.push_back(point1);
 
     double p = static_cast<double>(i) / keyframes.size();
-    traj_marker.colors[i].r = 1.0 - p;
-    traj_marker.colors[i].g = p;
-    traj_marker.colors[i].b = 0.0;
-    traj_marker.colors[i].a = 1.0;
-
-    if (keyframes[i]->acceleration) {
-      Eigen::Vector3d pos = keyframes[i]->node->estimate().translation();
-      geometry_msgs::msg::Point point;
-      point.x = pos.x();
-      point.y = pos.y();
-      point.z = pos.z();
-
-      std_msgs::msg::ColorRGBA color;
-      color.r = 0.0;
-      color.g = 0.0;
-      color.b = 1.0;
-      color.a = 0.1;
-
-      imu_marker.points.push_back(point);
-      imu_marker.colors.push_back(color);
-    }
+    std_msgs::msg::ColorRGBA color;
+    color.r = 1.0 - p;
+    color.g = p;
+    color.b = 0.0;
+    color.a = 1.0;
+    traj_marker.colors.push_back(color);
+    markers.markers.push_back(traj_marker);
   }
-  markers.markers.push_back(traj_marker);
-  markers.markers.push_back(imu_marker);
-
-  // keyframe edge markers
-  visualization_msgs::msg::Marker traj_edge_marker;
-  traj_edge_marker.header.frame_id = keyframes_layer_id;
-  traj_edge_marker.header.stamp = stamp;
-  traj_edge_marker.ns = "keyframe_keyframe_edges";
-  traj_edge_marker.id = markers.markers.size();
-  traj_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-  traj_edge_marker.pose.orientation.w = 1.0;
-  traj_edge_marker.scale.x = 0.05;
 
   auto traj_edge_itr = local_graph->edges().begin();
   for (int i = 0; traj_edge_itr != local_graph->edges().end(); traj_edge_itr++, i++) {
+    // keyframe edge markers
+    visualization_msgs::msg::Marker traj_edge_marker;
+    traj_edge_marker.header.frame_id = keyframes_layer_id;
+    traj_edge_marker.header.stamp = stamp;
+    traj_edge_marker.ns = "keyframe_keyframe_edges" + std::to_string(i);
+    traj_edge_marker.id = markers.markers.size();
+    traj_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    traj_edge_marker.pose.orientation.w = 1.0;
+    traj_edge_marker.scale.x = 0.05;
+
     g2o::HyperGraph::Edge* edge = *traj_edge_itr;
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
     if (edge_se3) {
@@ -191,30 +167,27 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       traj_edge_marker.colors.push_back(color1);
       traj_edge_marker.colors.push_back(color2);
 
-      // if(std::abs(v1->id() - v2->id()) > 2) {
-      //   traj_edge_marker.points[i * 2].z += 0.5 + keyframe_h;
-      //   traj_edge_marker.points[i * 2 + 1].z += 0.5 + keyframe_h;
-      // }
+      markers.markers.push_back(traj_edge_marker);
     }
   }
-  markers.markers.push_back(traj_edge_marker);
-
-  // keyframe plane edge markers
-  visualization_msgs::msg::Marker traj_plane_edge_marker;
-  traj_plane_edge_marker.header.frame_id = keyframes_layer_id;
-  traj_plane_edge_marker.header.stamp = stamp;
-  traj_plane_edge_marker.ns = "keyframe_plane_edges";
-  traj_plane_edge_marker.id = markers.markers.size();
-  traj_plane_edge_marker.lifetime = duration_planes;
-  traj_plane_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-  traj_plane_edge_marker.pose.orientation.w = 1.0;
-  traj_plane_edge_marker.scale.x = 0.005;
+  markers_vec.push_back(markers);
 
   auto traj_plane_edge_itr = local_graph->edges().begin();
   for (int i = 0; traj_plane_edge_itr != local_graph->edges().end();
        traj_plane_edge_itr++, i++) {
     g2o::HyperGraph::Edge* edge = *traj_plane_edge_itr;
     g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
+
+    // keyframe plane edge markers
+    visualization_msgs::msg::Marker traj_plane_edge_marker;
+    traj_plane_edge_marker.header.frame_id = keyframes_layer_id;
+    traj_plane_edge_marker.header.stamp = stamp;
+    traj_plane_edge_marker.ns = "keyframe_plane_edges" + std::to_string(i);
+    traj_plane_edge_marker.id = markers.markers.size();
+    traj_plane_edge_marker.lifetime = duration_planes;
+    traj_plane_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    traj_plane_edge_marker.pose.orientation.w = 1.0;
+    traj_plane_edge_marker.scale.x = 0.005;
 
     if (edge_plane) {
       g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(edge_plane->vertices()[0]);
@@ -314,9 +287,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       color2.a = 1.0;
       traj_plane_edge_marker.colors.push_back(color1);
       traj_plane_edge_marker.colors.push_back(color2);
+
+      markers.markers.push_back(traj_plane_edge_marker);
     }
   }
-  markers.markers.push_back(traj_plane_edge_marker);
+  markers_vec.push_back(markers);
 
   // Wall edge markers
   // visualization_msgs::msg::Marker wall_center_marker;
@@ -469,6 +444,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     hort_plane_marker.color.a = 0.5;
   }
   markers.markers.push_back(hort_plane_marker);
+  markers_vec.push_back(markers);
 
   rclcpp::Duration duration_room = rclcpp::Duration::from_seconds(5);
   for (auto& single_x_infinite_room : x_infinite_room_snapshot) {
@@ -1071,6 +1047,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     room_line_marker.points.push_back(p5);
 
     markers.markers.push_back(room_line_marker);
+    markers_vec.push_back(markers);
 
     /* room clusters */
     int cluster_id = 0;
@@ -1204,10 +1181,12 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       markers.markers.push_back(floor_line_marker);
     }
   }
+  markers_vec.push_back(markers);
 
-  return markers;
+  return markers_vec;
 }
-visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
+std::vector<visualization_msgs::msg::MarkerArray>
+GraphVisualizer::create_prior_marker_array(
     const rclcpp::Time& stamp,
     const g2o::SparseOptimizer* local_graph,
     std::vector<VerticalPlanes>& x_vert_planes_prior,
@@ -1218,6 +1197,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     const std::vector<DoorWays> doorways_vec_prior,
     std::vector<VerticalPlanes>& x_vert_planes,
     std::vector<VerticalPlanes>& y_vert_planes) {
+  std::vector<visualization_msgs::msg::MarkerArray> markers_vec;
   visualization_msgs::msg::MarkerArray prior_markers;
   double plane_h = 15;
   double wall_vertex_h = 18;
@@ -1299,6 +1279,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.color.a = 0.3;
     prior_markers.markers.push_back(wall_visual_marker);
   }
+  markers_vec.push_back(prior_markers);
 
   // Wall Center markers
   visualization_msgs::msg::Marker wall_center_marker;
@@ -1686,6 +1667,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       }
     }
   }
+  markers_vec.push_back(prior_markers);
+
   auto room_dev_edge_iterator = local_graph->edges().begin();
   for (int i = 0; room_dev_edge_iterator != local_graph->edges().end();
        room_dev_edge_iterator++, i++) {
@@ -1976,6 +1959,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     room_edge_plane_marker4.points.push_back(point5);
     prior_markers.markers.push_back(room_edge_plane_marker4);
   }
+  markers_vec.push_back(prior_markers);
 
   for (int i = 0; i < doorways_vec_prior.size(); i++) {  // walls_x_coord.size()
 
@@ -2072,7 +2056,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     door_edge_plane_marker2.points.push_back(point3);
     prior_markers.markers.push_back(door_edge_plane_marker2);
   }
-  return prior_markers;
+  markers_vec.push_back(prior_markers);
+
+  return markers_vec;
 }
 
 Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,
