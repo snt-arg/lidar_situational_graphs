@@ -1124,7 +1124,7 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
       visualization_msgs::msg::Marker floor_line_marker;
       floor_line_marker.scale.x = 0.02;
       floor_line_marker.pose.orientation.w = 1.0;
-      floor_line_marker.ns = "floor_lines " + std::to_string(floor.node->id());
+
       floor_line_marker.header.frame_id = floors_layer_id;
       floor_line_marker.header.stamp = stamp;
       floor_line_marker.id = floor_edge_markers.markers.size() + 1;
@@ -1138,6 +1138,7 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
       for (const auto& room : room_snapshot) {
         if (room.sub_room) continue;
         geometry_msgs::msg::Point p1, p2;
+        floor_line_marker.ns = "floor_line " + std::to_string(room.node->id());
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
         p1.z = floor_marker.pose.position.z;
@@ -1164,6 +1165,8 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
       for (const auto& x_infinite_room : x_infinite_room_snapshot) {
         if (x_infinite_room.id == -1 || x_infinite_room.sub_infinite_room) continue;
         geometry_msgs::msg::Point p1, p2;
+        floor_line_marker.ns =
+            "floor_line " + std::to_string(x_infinite_room.node->id());
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
         p1.z = floor_marker.pose.position.z;
@@ -1190,6 +1193,8 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
       for (const auto& y_infinite_room : y_infinite_room_snapshot) {
         if (y_infinite_room.id == -1 || y_infinite_room.sub_infinite_room) continue;
         geometry_msgs::msg::Point p1, p2;
+        floor_line_marker.ns =
+            "floor_line " + std::to_string(y_infinite_room.node->id());
         p1.x = floor_marker.pose.position.x;
         p1.y = floor_marker.pose.position.y;
         p1.z = floor_marker.pose.position.z;
