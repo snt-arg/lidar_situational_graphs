@@ -123,7 +123,7 @@ class GraphVisualizer {
       std::vector<Rooms> rooms_vec_prior,
       std::vector<Rooms> rooms_vec,
       bool got_trans_prior2map_,
-      const std::vector<DoorWays> doorways_vec_prio,
+      const std::vector<DoorWays> doorways_vec_prior,
       std::vector<VerticalPlanes>& x_vert_planes,
       std::vector<VerticalPlanes>& y_vert_planes);
 
