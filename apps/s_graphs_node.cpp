@@ -1336,8 +1336,11 @@ class SGraphsNode : public rclcpp::Node {
       if (local_x_vert_plane == x_vert_planes_snapshot.end()) continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
+      Eigen::Vector4d body_plane_coeffs;
       mapped_plane_coeffs =
           (local_x_vert_plane->second).plane_node->estimate().coeffs();
+      body_plane_coeffs = 
+      (local_x_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
       // mapped_plane_coeffs);
       plane_data.id = (local_x_vert_plane->second).id;
@@ -1346,6 +1349,10 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
       plane_data.keyframe_id = (local_x_vert_plane->second).keyframe_node->id();
+      plane_data.body_nx = body_plane_coeffs(0);
+      plane_data.body_ny = body_plane_coeffs(1);
+      plane_data.body_nz = body_plane_coeffs(2);
+      plane_data.body_d = body_plane_coeffs(3);
       for (const auto& plane_point_data :
            (local_x_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
@@ -1363,8 +1370,12 @@ class SGraphsNode : public rclcpp::Node {
       if (local_y_vert_plane == y_vert_planes_snapshot.end()) continue;
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
+      Eigen::Vector4d body_plane_coeffs;
+      
       mapped_plane_coeffs =
           (local_y_vert_plane->second).plane_node->estimate().coeffs();
+      body_plane_coeffs = 
+      (local_y_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
       // mapped_plane_coeffs);
       plane_data.id = (local_y_vert_plane->second).id;
@@ -1373,6 +1384,11 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
       plane_data.keyframe_id = (local_y_vert_plane->second).keyframe_node->id();
+      plane_data.body_nx = body_plane_coeffs(0);
+      plane_data.body_ny = body_plane_coeffs(1);
+      plane_data.body_nz = body_plane_coeffs(2);
+      plane_data.body_d = body_plane_coeffs(3);
+
       for (const auto& plane_point_data :
            (local_y_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;

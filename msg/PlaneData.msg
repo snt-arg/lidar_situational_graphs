@@ -5,6 +5,10 @@ float32 nx
 float32 ny
 float32 nz
 float32 d
+float32 body_nx
+float32 body_ny
+float32 body_nz
+float32 body_d
 int32 keyframe_id
 geometry_msgs/Vector3 plane_orientation
 geometry_msgs/Vector3[] plane_points
