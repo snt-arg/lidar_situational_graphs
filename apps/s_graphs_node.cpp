@@ -1345,6 +1345,7 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
+      plane_data.keyframe_id = (local_x_vert_plane->second).keyframe_node->id();
       for (const auto& plane_point_data :
            (local_x_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
@@ -1371,6 +1372,7 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
+      plane_data.keyframe_id = (local_y_vert_plane->second).keyframe_node->id();
       for (const auto& plane_point_data :
            (local_y_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
