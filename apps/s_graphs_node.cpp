@@ -1075,7 +1075,7 @@ class SGraphsNode : public rclcpp::Node {
     x_inf_rooms_snapshot = x_infinite_rooms;
     y_inf_rooms_snapshot = y_infinite_rooms;
     rooms_vec_snapshot = rooms_vec;
-    floors_vec_snapshot = floors_vec;
+    floors_vec_snapshot.insert(floors_vec.begin(), floors_vec.end());
   }
 
   /**
@@ -1216,7 +1216,8 @@ class SGraphsNode : public rclcpp::Node {
     trans_odom2map = trans.matrix().cast<float>();
     trans_odom2map_mutex.unlock();
 
-    if (ongoing_optimization_class == optimization_class::LOCAL_GLOBAL) {
+    if (ongoing_optimization_class == optimization_class::LOCAL_GLOBAL ||
+        ongoing_optimization_class == optimization_class::FLOOR_GLOBAL) {
       int counter = 0;
       for (const auto& room_local_graph_id : room_local_graph_id_queue) {
         broadcast_room_graph(room_local_graph_id, num_iterations);
@@ -1924,7 +1925,7 @@ class SGraphsNode : public rclcpp::Node {
       y_infinite_rooms;                      // infinite_rooms segmented from planes
   std::unordered_map<int, Rooms> rooms_vec;  // rooms segmented from planes
   std::vector<Rooms> rooms_vec_prior;
-  std::unordered_map<int, Floors> floors_vec;
+  std::map<int, Floors> floors_vec;
   int prev_edge_count, curr_edge_count;
 
   std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;

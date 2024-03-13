@@ -101,7 +101,7 @@ class FloorMapper {
   void lookup_floors(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const s_graphs::msg::FloorData floor_data,
-      std::unordered_map<int, s_graphs::Floors>& floors_vec,
+      std::map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
@@ -153,7 +153,7 @@ class FloorMapper {
    * @return int
    */
   int associate_floors(const Eigen::Vector3d& floor_center,
-                       const std::unordered_map<int, Floors>& floors_vec);
+                       const std::map<int, Floors>& floors_vec);
 
   /**
    * @brief
@@ -168,7 +168,7 @@ class FloorMapper {
   int factor_floor_node(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const s_graphs::msg::FloorData floor_data,
-      std::unordered_map<int, s_graphs::Floors>& floors_vec,
+      std::map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
@@ -189,7 +189,7 @@ class FloorMapper {
       std::shared_ptr<GraphSLAM>& graph_slam,
       g2o::VertexFloor* floor_node,
       const s_graphs::msg::FloorData floor_data,
-      std::unordered_map<int, s_graphs::Floors>& floors_vec,
+      std::map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
@@ -206,7 +206,7 @@ class FloorMapper {
    */
   void factor_floor_room_nodes(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      std::unordered_map<int, s_graphs::Floors>& floors_vec,
+      std::map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
@@ -234,7 +234,7 @@ class FloorMapper {
    * @param floor_node
    */
   void remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam,
-                               std::unordered_map<int, Floors>& floors_vec);
+                               std::map<int, Floors>& floors_vec);
 
   /**
    * @brief

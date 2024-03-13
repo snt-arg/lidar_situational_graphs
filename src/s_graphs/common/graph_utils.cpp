@@ -69,8 +69,10 @@ void GraphUtils::copy_floor_graph(
     const std::unordered_map<int, Rooms>& rooms_vec,
     const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-    const std::unordered_map<int, Floors>& floors_vec) {
+    const std::map<int, Floors>& floors_vec) {
   compressed_graph->graph->clear();
+
+  /* Add all the graph vertices of the given floor-level */
   copy_graph_vertices(current_floor_level,
                       covisibility_graph,
                       compressed_graph,
@@ -80,7 +82,25 @@ void GraphUtils::copy_floor_graph(
                       rooms_vec,
                       x_infinite_rooms,
                       y_infinite_rooms,
-                      floors_vec);
+                      floors_vec,
+                      true);
+
+  /* get all the floor levels (if any) which were seen after the current floor */
+  auto it = floors_vec.find(current_floor_level);
+  for (; it != floors_vec.end(); ++it) {
+    copy_graph_vertices(it->first,
+                        covisibility_graph,
+                        compressed_graph,
+                        keyframes,
+                        x_vert_planes,
+                        y_vert_planes,
+                        rooms_vec,
+                        x_infinite_rooms,
+                        y_infinite_rooms,
+                        floors_vec,
+                        false);
+  }
+
   std::vector<g2o::VertexSE3*> filtered_k_vec =
       copy_graph_edges(covisibility_graph, compressed_graph);
   connect_broken_keyframes(
@@ -97,7 +117,8 @@ void GraphUtils::copy_graph_vertices(
     const std::unordered_map<int, Rooms>& rooms_vec,
     const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-    const std::unordered_map<int, Floors>& floors_vec) {
+    const std::map<int, Floors>& floors_vec,
+    const bool& fix_kf) {
   for (g2o::HyperGraph::VertexIDMap::iterator it =
            covisibility_graph->graph->vertices().begin();
        it != covisibility_graph->graph->vertices().end();
@@ -187,7 +208,7 @@ void GraphUtils::copy_graph_vertices(
     }
   }
 
-  if (current_floor_level != 0) {
+  if (current_floor_level != 0 && fix_kf) {
     auto first_keyframe_id =
         floors_vec.at(current_floor_level).stair_keyframe_ids.front();
     compressed_graph->graph->vertex(first_keyframe_id)->setFixed(true);
@@ -223,7 +244,7 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
             !compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
           continue;
         }
-      }  // if not stair keyframes there might be marginalized keyframes
+      }  // if not stair keyframes they might be marginalized keyframes
       else if (!compressed_graph->graph->vertex(edge_se3->vertices()[0]->id())) {
         if (compressed_graph->graph->vertex(edge_se3->vertices()[1]->id())) {
           filtered_k_vec.push_back(
@@ -1056,7 +1077,7 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph
                               std::unordered_map<int, Rooms>& rooms_vec,
                               std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
                               std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-                              std::unordered_map<int, Floors>& floors_vec) {
+                              std::map<int, Floors>& floors_vec) {
   // Loop over all the vertices of the graph
   for (auto it = compressed_graph->graph->vertices().begin();
        it != compressed_graph->graph->vertices().end();

@@ -89,7 +89,7 @@ class GraphUtils {
       const std::unordered_map<int, Rooms>& rooms_vec,
       const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-      const std::unordered_map<int, Floors>& floors_vec);
+      const std::map<int, Floors>& floors_vec);
 
   /**
    * @brief
@@ -113,6 +113,7 @@ class GraphUtils {
    * @param x_infinite_rooms
    * @param y_infinite_rooms
    * @param floors_vec
+   * @param fix_kf
    * @return * void
    */
   static void copy_graph_vertices(
@@ -125,7 +126,8 @@ class GraphUtils {
       const std::unordered_map<int, Rooms>& rooms_vec,
       const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-      const std::unordered_map<int, Floors>& floors_vec);
+      const std::map<int, Floors>& floors_vec,
+      const bool& fix_kf = false);
 
   /**
    * @brief
@@ -254,7 +256,7 @@ class GraphUtils {
                            std::unordered_map<int, Rooms>& rooms_vec,
                            std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
                            std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-                           std::unordered_map<int, Floors>& floors_vec);
+                           std::map<int, Floors>& floors_vec);
 
   /**
    * @brief Set the marginalize info object
