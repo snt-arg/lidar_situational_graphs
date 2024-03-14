@@ -1,0 +1,12 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" title=" " alt="" coords="5,208,133,235"/>
+<area shape="rect" id="node2" href="$classg2o_1_1Edge2Rooms.html" title=" " alt="" coords="247,5,386,32"/>
+<area shape="rect" id="node3" href="$classg2o_1_1EdgeFloorRoom.html" title=" " alt="" coords="238,56,395,83"/>
+<area shape="rect" id="node4" href="$classg2o_1_1EdgeInfiniteRoomYPlane.html" title=" " alt="" coords="209,107,424,133"/>
+<area shape="rect" id="node5" href="$classg2o_1_1EdgePlaneIdentity.html" title="A modified version of g2o::EdgePlane. This class takes care of flipped plane normals." alt="" coords="231,157,403,184"/>
+<area shape="rect" id="node6" href="$classg2o_1_1EdgePlaneParallel.html" title=" " alt="" coords="231,208,402,235"/>
+<area shape="rect" id="node7" href="$classg2o_1_1EdgeRoomRoom.html" title=" " alt="" coords="235,259,398,285"/>
+<area shape="rect" id="node8" href="$classg2o_1_1EdgeSE3Plane.html" title=" " alt="" coords="243,309,390,336"/>
+<area shape="rect" id="node9" href="$classg2o_1_1EdgeSE3PointToPlane.html" title=" " alt="" coords="220,360,413,387"/>
+<area shape="rect" id="node10" href="$classg2o_1_1EdgeYInfiniteRoomYInfiniteRoom.html" title=" " alt="" coords="181,411,452,437"/>
+</map>

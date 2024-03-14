@@ -38,12 +38,14 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <Eigen/Dense>
 
+#include "g2o/edge_se3_plane.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "reasoning_msgs/msg/keyframe.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "reasoning_msgs/msg/edge.hpp"
+#include "reasoning_msgs/msg/keyframe.hpp"
 #include "s_graphs/common/keyframe.hpp"
 
 namespace s_graphs {
@@ -119,6 +121,14 @@ KeyFrame ROS2Keyframe(const reasoning_msgs::msg::Keyframe& msg);
  * @return
  */
 reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& keyframe);
+
+/**
+ * @brief
+ *
+ * @param
+ * @return
+ */
+reasoning_msgs::msg::Edge Edge2ROS(const g2o::EdgeSE3 edge);
 
 }  // namespace s_graphs
 #endif  // ROS_UTILS_HPP

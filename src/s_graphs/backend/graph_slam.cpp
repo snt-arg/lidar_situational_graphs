@@ -397,7 +397,6 @@ g2o::EdgeSE3Plane* GraphSLAM::add_se3_plane_edge(
   edge->vertices()[1] = v_plane;
   graph->addEdge(edge);
   this->increment_local_nbr_of_edges();
-
   return edge;
 }
 

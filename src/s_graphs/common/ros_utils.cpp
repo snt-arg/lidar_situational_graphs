@@ -31,7 +31,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "s_graphs/common/ros_utils.hpp"
 
+#include "g2o/edge_se3_plane.hpp"
 #include "rclcpp/logger.hpp"
+#include "reasoning_msgs/msg/edge.hpp"
 
 namespace s_graphs {
 
@@ -198,6 +200,20 @@ reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& keyframe) {
   msg.header.stamp = keyframe.stamp;
   msg.pose = isometry2pose(keyframe.estimate());
   pcl::toROSMsg(*keyframe.cloud, msg.pointcloud);
+  return msg;
+}
+
+reasoning_msgs::msg::Edge Edge2ROS(const g2o::EdgeSE3 edge) {
+  reasoning_msgs::msg::Edge msg;
+  reasoning_msgs::msg::Attribute edge_attribute;
+  std::vector<reasoning_msgs::msg::Attribute> edge_att_vec;
+  msg.edge_id = edge.id();
+  msg.origin_node = edge.vertices()[0]->id();
+  msg.target_node = edge.vertices()[1]->id();
+  edge_attribute.name = "EdgeSE3";
+  edge_att_vec.push_back(edge_attribute);
+  msg.attributes = edge_att_vec;
+
   return msg;
 }
 

@@ -117,6 +117,11 @@ class GraphPublisher {
       const g2o::SparseOptimizer* local_graph,
       const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 
+  reasoning_msgs::msg::Graph publish_graph_edges(
+  const g2o::SparseOptimizer* local_graph);
+
+    //   const std::map<int, s_graphs::KeyFrame::Ptr>& );   //need_to_check
+
   void publish_room_keyframes(const g2o::SparseOptimizer* local_graph,
                               const std::vector<s_graphs::Rooms>& rooms_vec);
 

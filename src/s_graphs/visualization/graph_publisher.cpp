@@ -389,6 +389,39 @@ reasoning_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
   return msg;
 }
 
+
+reasoning_msgs::msg::Graph GraphPublisher::publish_graph_edges(
+  const g2o::SparseOptimizer* local_graph) {
+    
+    reasoning_msgs::msg::Edge graph_edge;
+    reasoning_msgs::msg::Attribute edge_attribute;
+    reasoning_msgs::msg::Graph graph_msg;
+    std::vector<reasoning_msgs::msg::Attribute> edge_att_vec;
+    std::vector<reasoning_msgs::msg::Edge> edges_vec;
+
+    auto& edges = local_graph->edges();
+
+    for (const auto& edge : edges) {
+    
+      g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
+
+      if(edge_se3) {
+        graph_edge.edge_id = edge_se3->id();
+        graph_edge.origin_node = edge_se3->vertices()[0]->id();
+        graph_edge.target_node = edge_se3->vertices()[1]->id();
+        edge_attribute.name = "EdgeSE3";
+        edge_att_vec.push_back(edge_attribute);
+        graph_edge.attributes = edge_att_vec;
+        edges_vec.push_back(graph_edge);
+        graph_msg.edges = edges_vec;
+        return graph_msg;
+}
+
+  }
+  }
+
+
+
 // std::vector<g2o::HyperGraph::Edge*> get_planes_from_room(
 //     g2o::VertexRoom* _room_ptr,
 //     const std::vector<s_graphs::Rooms>& rooms_vec) {

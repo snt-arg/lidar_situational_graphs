@@ -96,7 +96,6 @@ double InformationMatrixCalculator::calc_fitness_score(
     double max_range) {
   pcl::search::KdTree<PointT>::Ptr tree_(new pcl::search::KdTree<PointT>());
   tree_->setInputCloud(cloud1);
-
   double fitness_score = 0.0;
 
   // Transform the input dataset using the final transformation

@@ -81,6 +81,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "nmea_msgs/msg/sentence.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "reasoning_msgs/msg/edge.hpp"
+#include "reasoning_msgs/msg/graph.hpp"
 #include "s_graphs/msg/floor_coeffs.hpp"
 #include "s_graphs/msg/plane_data.hpp"
 #include "s_graphs/msg/planes_data.hpp"
@@ -290,6 +292,7 @@ class SGraphsNode : public rclcpp::Node {
         "s_graphs/graph_structure", 32, pub_opt);
     graph_keyframes_pub = this->create_publisher<reasoning_msgs::msg::GraphKeyframes>(
         "s_graphs/graph_keyframes", 32);
+    graph_edge_pub = this->create_publisher<reasoning_msgs::msg::Graph>("s_graphs/graph_edges_nodes", 32);
     graph_room_keyframe_pub = this->create_publisher<reasoning_msgs::msg::RoomKeyframe>(
         "s_graphs/graph_room_keyframes", 32);
 
@@ -1297,6 +1300,10 @@ class SGraphsNode : public rclcpp::Node {
     auto graph_keyframes = graph_publisher->publish_graph_keyframes(
         covisibility_graph->graph.get(), this->keyframes);
     graph_keyframes_pub->publish(graph_keyframes);
+    auto graph = graph_publisher->publish_graph_edges(
+        covisibility_graph->graph.get());
+    graph_edge_pub->publish(graph);
+    
   }
 
   /**
@@ -1339,8 +1346,7 @@ class SGraphsNode : public rclcpp::Node {
       Eigen::Vector4d body_plane_coeffs;
       mapped_plane_coeffs =
           (local_x_vert_plane->second).plane_node->estimate().coeffs();
-      body_plane_coeffs = 
-      (local_x_vert_plane->second).plane_node->estimate().coeffs();
+      body_plane_coeffs = (local_x_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
       // mapped_plane_coeffs);
       plane_data.id = (local_x_vert_plane->second).id;
@@ -1371,11 +1377,10 @@ class SGraphsNode : public rclcpp::Node {
       s_graphs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       Eigen::Vector4d body_plane_coeffs;
-      
+
       mapped_plane_coeffs =
           (local_y_vert_plane->second).plane_node->estimate().coeffs();
-      body_plane_coeffs = 
-      (local_y_vert_plane->second).plane_node->estimate().coeffs();
+      body_plane_coeffs = (local_y_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
       // mapped_plane_coeffs);
       plane_data.id = (local_y_vert_plane->second).id;
@@ -1602,6 +1607,7 @@ class SGraphsNode : public rclcpp::Node {
     pcl::PointCloud<PointT>::ConstPtr cloud;
     sst << boost::format("%s") % directory;
     std::map<int, KeyFrame::Ptr> loaded_keyframes;
+    // std::map<int, g2o::EdgeSE3> loaded_edges;
     g2o::SparseOptimizer* local_graph;
     local_graph = covisibility_graph->graph.get();
     VerticalPlanes load_x_planes;
@@ -1636,8 +1642,12 @@ class SGraphsNode : public rclcpp::Node {
       auto edge = covisibility_graph->add_se3_edge(
           next_keyframe->node, prev_keyframe->node, relative_pose, information);
       covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      // loaded_edges.insert({edge->id(), edge});
+      auto edge_ros = Edge2ROS(*edge);
+      // graph_edge_pub->publish(edge_ros);
     }
     keyframes = loaded_keyframes;
+    // edges = loaded_edges;
     std::cout << " loaded keyframes size : " << keyframes.size() << std::endl;
 
     for (const auto& directoryPath : keyframe_directories) {
@@ -1814,6 +1824,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<reasoning_msgs::msg::GraphKeyframes>::SharedPtr graph_keyframes_pub;
   rclcpp::Publisher<reasoning_msgs::msg::RoomKeyframe>::SharedPtr
       graph_room_keyframe_pub;
+  rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_edge_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
@@ -1913,6 +1924,7 @@ class SGraphsNode : public rclcpp::Node {
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;
   std::map<int, KeyFrame::Ptr> keyframes;
+  // std::map<int, g2o::EdgeSE3> edges;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
