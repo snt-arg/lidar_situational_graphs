@@ -125,7 +125,8 @@ class GraphVisualizer {
       bool got_trans_prior2map_,
       const std::vector<DoorWays> doorways_vec_prior,
       std::vector<VerticalPlanes>& x_vert_planes,
-      std::vector<VerticalPlanes>& y_vert_planes);
+      std::vector<VerticalPlanes>& y_vert_planes,
+      std::vector<Floors> floors_vec);
 
   /**
    * @brief Creates a marker array

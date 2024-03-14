@@ -913,7 +913,7 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
 
     // fill in the line marker
     visualization_msgs::msg::Marker room_line_marker;
-    room_line_marker.scale.x = 0.02;
+    room_line_marker.scale.x = 0.01;
     room_line_marker.pose.orientation.w = 1.0;
     room_line_marker.ns =
         "room_lines " + std::to_string(room_snapshot[i].node->id() + i);
@@ -1265,7 +1265,8 @@ GraphVisualizer::create_prior_marker_array(
     bool got_trans_prior2map_,
     const std::vector<DoorWays> doorways_vec_prior,
     std::vector<VerticalPlanes>& x_vert_planes,
-    std::vector<VerticalPlanes>& y_vert_planes) {
+    std::vector<VerticalPlanes>& y_vert_planes,
+    std::vector<Floors> floors_vec) {
   std::vector<visualization_msgs::msg::MarkerArray> prior_markers_vec;
   visualization_msgs::msg::MarkerArray prior_x_plane_markers;
   visualization_msgs::msg::MarkerArray prior_y_plane_markers;
@@ -1279,9 +1280,12 @@ GraphVisualizer::create_prior_marker_array(
   visualization_msgs::msg::MarkerArray wall_edge_deviation_markers;
   visualization_msgs::msg::MarkerArray room_deviation_markers;
   visualization_msgs::msg::MarkerArray room_edge_deviation_markers;
-  double plane_h = 15;
+  visualization_msgs::msg::MarkerArray floor_markers;
+  visualization_msgs::msg::MarkerArray floor_edge_markers;
+  double plane_h = 16;
   double wall_vertex_h = 18;
-  double prior_room_h = 22;
+  double prior_room_h = 21.9;
+  double floor_h = 26.9;
   double deviation_h = 16;
   prior_x_plane_markers.markers.clear();
 
@@ -1319,7 +1323,7 @@ GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.color.r = x_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = x_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = x_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 0.3;
+    wall_visual_marker.color.a = 0.5;
     prior_x_plane_markers.markers.push_back(wall_visual_marker);
   }
   prior_markers_vec.push_back(prior_x_plane_markers);
@@ -1358,7 +1362,7 @@ GraphVisualizer::create_prior_marker_array(
     wall_visual_marker.color.r = y_vert_planes_prior[i].color[0] / 255;
     wall_visual_marker.color.g = y_vert_planes_prior[i].color[1] / 255;
     wall_visual_marker.color.b = y_vert_planes_prior[i].color[2] / 255;
-    wall_visual_marker.color.a = 0.3;
+    wall_visual_marker.color.a = 0.5;
     prior_y_plane_markers.markers.push_back(wall_visual_marker);
   }
   prior_markers_vec.push_back(prior_y_plane_markers);
@@ -1541,7 +1545,7 @@ GraphVisualizer::create_prior_marker_array(
         break;
       }
     }
-    room_edge_plane_marker1.scale.x = 0.02;
+    room_edge_plane_marker1.scale.x = 0.01;
     room_edge_plane_marker1.color.r = 0.0;
     room_edge_plane_marker1.color.g = 0.0;
     room_edge_plane_marker1.color.b = 0.0;
@@ -1578,7 +1582,7 @@ GraphVisualizer::create_prior_marker_array(
         break;
       }
     }
-    room_edge_plane_marker2.scale.x = 0.02;
+    room_edge_plane_marker2.scale.x = 0.01;
     room_edge_plane_marker2.color.r = 0.0;
     room_edge_plane_marker2.color.g = 0.0;
     room_edge_plane_marker2.color.b = 0.0;
@@ -1615,7 +1619,7 @@ GraphVisualizer::create_prior_marker_array(
         break;
       }
     }
-    room_edge_plane_marker3.scale.x = 0.02;
+    room_edge_plane_marker3.scale.x = 0.01;
     room_edge_plane_marker3.color.r = 0.0;
     room_edge_plane_marker3.color.g = 0.0;
     room_edge_plane_marker3.color.b = 0.0;
@@ -1652,7 +1656,7 @@ GraphVisualizer::create_prior_marker_array(
         break;
       }
     }
-    room_edge_plane_marker4.scale.x = 0.02;
+    room_edge_plane_marker4.scale.x = 0.01;
     room_edge_plane_marker4.color.r = 0.0;
     room_edge_plane_marker4.color.g = 0.0;
     room_edge_plane_marker4.color.b = 0.0;
@@ -2159,6 +2163,66 @@ GraphVisualizer::create_prior_marker_array(
   }
   prior_markers_vec.push_back(room_deviation_markers);
   prior_markers_vec.push_back(room_edge_deviation_markers);
+  if (got_trans_prior2map_) {
+    for (const auto& floor : floors_vec) {
+      if (floor.id != -1) {
+        std::cout << "floor id: " << floor.id << std::endl;
+        visualization_msgs::msg::Marker floor_marker;
+        floor_marker.pose.orientation.w = 1.0;
+        floor_marker.scale.x = 0.5;
+        floor_marker.scale.y = 0.5;
+        floor_marker.scale.z = 0.5;
+        // plane_marker.points.resize(vert_planes.size());
+        floor_marker.header.frame_id = "map";
+        floor_marker.header.stamp = stamp;
+        floor_marker.ns = "floor " + std::to_string(floor.node->id());
+        floor_marker.id = floor_markers.markers.size();
+        floor_marker.type = visualization_msgs::msg::Marker::CUBE;
+        floor_marker.color.r = 0.49;
+        floor_marker.color.g = 0;
+        floor_marker.color.b = 1;
+        floor_marker.color.a = 1;
+
+        floor_marker.pose.position.x = floor.node->estimate().translation()(0);
+        floor_marker.pose.position.y = floor.node->estimate().translation()(1);
+        floor_marker.pose.position.z = floor_h;
+        floor_markers.markers.push_back(floor_marker);
+        // create line markers between floor and rooms/infinite_rooms
+
+        for (const auto& room : rooms_vec_prior) {
+          std::cout << "room id: " << room.id << std::endl;
+          visualization_msgs::msg::Marker floor_line_marker;
+          floor_line_marker.scale.x = 0.02;
+          floor_line_marker.pose.orientation.w = 1.0;
+
+          floor_line_marker.header.frame_id = "map";
+          floor_line_marker.header.stamp = stamp;
+          floor_line_marker.id = floor_edge_markers.markers.size() + 1;
+          floor_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+          floor_line_marker.color.r = color_r;
+          floor_line_marker.color.g = color_g;
+          floor_line_marker.color.b = color_b;
+          floor_line_marker.color.a = 1.0;
+
+          geometry_msgs::msg::Point p1, p2;
+          floor_line_marker.ns = "floor_line " + std::to_string(room.node->id());
+          p1.x = floor_marker.pose.position.x;
+          p1.y = floor_marker.pose.position.y;
+          p1.z = floor_h;
+          p2.x = room.node->estimate().translation()(0);
+          p2.y = room.node->estimate().translation()(1);
+          p2.z = prior_room_h;
+
+          floor_line_marker.points.push_back(p1);
+          floor_line_marker.points.push_back(p2);
+          floor_edge_markers.markers.push_back(floor_line_marker);
+        }
+      }
+    }
+    prior_markers_vec.push_back(floor_markers);
+    prior_markers_vec.push_back(floor_edge_markers);
+  }
+
   return prior_markers_vec;
 }
 
