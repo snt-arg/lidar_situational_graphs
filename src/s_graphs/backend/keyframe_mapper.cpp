@@ -86,8 +86,10 @@ int KeyframeMapper::map_keyframes(
         i == 0 ? keyframes.rbegin()->second : keyframe_queue[i - 1];
 
     Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
+    std::cout << relative_pose.matrix() << std::endl;
     Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
         keyframe->cloud, prev_keyframe->cloud, relative_pose);
+    std::cout<< information.matrix() << std::endl;
     auto edge = covisibility_graph->add_se3_edge(
         keyframe->node, prev_keyframe->node, relative_pose, information);
     covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);

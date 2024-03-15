@@ -398,6 +398,10 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph_edges(
     reasoning_msgs::msg::Graph graph_msg;
     std::vector<reasoning_msgs::msg::Attribute> edge_att_vec;
     std::vector<reasoning_msgs::msg::Edge> edges_vec;
+    // Eigen::Matrix<double, 3, 3> eigen_matrix;
+    // double meas[16];
+    // Eigen::Transform<double, 3, Eigen::Affine> eigen_transform;
+
 
     auto& edges = local_graph->edges();
 
@@ -409,9 +413,30 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph_edges(
         graph_edge.edge_id = edge_se3->id();
         graph_edge.origin_node = edge_se3->vertices()[0]->id();
         graph_edge.target_node = edge_se3->vertices()[1]->id();
+        auto eigen_transform = edge_se3->measurement();
+        auto eigen_matrix = edge_se3->information();
+        std::cout << eigen_transform.matrix() << std::endl;
+        std::cout << eigen_matrix.matrix() << std::endl;
+        graph_edge.measurement_transform.translation.x = eigen_transform.translation().x();
+        graph_edge.measurement_transform.translation.y = eigen_transform.translation().y();
+        graph_edge.measurement_transform.translation.z = eigen_transform.translation().z();
+        Eigen::Quaterniond quaternion(eigen_transform.rotation());
+        graph_edge.measurement_transform.rotation.x = quaternion.x();
+        graph_edge.measurement_transform.rotation.y = quaternion.y();
+        graph_edge.measurement_transform.rotation.z = quaternion.z();
+        graph_edge.measurement_transform.rotation.w = quaternion.w();
+
+        for (int i = 0; i < eigen_matrix.rows(); ++i) {
+        for (int j = 0; j < eigen_matrix.cols(); ++j) {
+        graph_edge.information_matrix.data.push_back(eigen_matrix(i, j));
+    }
+}
+
         edge_attribute.name = "EdgeSE3";
         edge_att_vec.push_back(edge_attribute);
         graph_edge.attributes = edge_att_vec;
+
+
         edges_vec.push_back(graph_edge);
         graph_msg.edges = edges_vec;
         return graph_msg;
