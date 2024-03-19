@@ -118,7 +118,7 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
     traj_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
 
     traj_marker.pose.orientation.w = 1.0;
-    traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.5;
+    traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.2;
 
     Eigen::Vector3d pos = keyframes[i]->node->estimate().translation();
     geometry_msgs::msg::Point point1;
@@ -129,8 +129,8 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
 
     double p = static_cast<double>(i) / keyframes.size();
     std_msgs::msg::ColorRGBA color;
-    color.r = 1.0 - p;
-    color.g = p;
+    color.r = 0.0;
+    color.g = 0.0;
     color.b = 0.0;
     color.a = 1.0;
     traj_marker.colors.push_back(color);
@@ -148,7 +148,7 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
     traj_edge_marker.id = trj_edge_markers.markers.size();
     traj_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
     traj_edge_marker.pose.orientation.w = 1.0;
-    traj_edge_marker.scale.x = 0.05;
+    traj_edge_marker.scale.x = 0.01;
 
     g2o::HyperGraph::Edge* edge = *traj_edge_itr;
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
@@ -173,12 +173,12 @@ std::vector<visualization_msgs::msg::MarkerArray> GraphVisualizer::create_marker
       double p2 = static_cast<double>(v2->id()) / local_graph->vertices().size();
 
       std_msgs::msg::ColorRGBA color1, color2;
-      color1.r = 1.0 - p1;
-      color1.g = p1;
+      color1.r = 0.0;
+      color1.g = 0.0;
       color1.a = 1.0;
 
-      color2.r = 1.0 - p2;
-      color2.g = p2;
+      color2.r = 0.0;
+      color2.g = 0.0;
       color2.a = 1.0;
       traj_edge_marker.colors.push_back(color1);
       traj_edge_marker.colors.push_back(color2);
@@ -1282,11 +1282,11 @@ GraphVisualizer::create_prior_marker_array(
   visualization_msgs::msg::MarkerArray room_edge_deviation_markers;
   visualization_msgs::msg::MarkerArray floor_markers;
   visualization_msgs::msg::MarkerArray floor_edge_markers;
-  double plane_h = 16;
-  double wall_vertex_h = 18;
-  double prior_room_h = 21.9;
-  double floor_h = 26.9;
-  double deviation_h = 16;
+  double plane_h = 8;
+  double wall_vertex_h = 12.5;
+  double prior_room_h = 13.9;
+  double floor_h = 18.7;
+  double deviation_h = 7;
   prior_x_plane_markers.markers.clear();
 
   for (int i = 0; i < x_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
@@ -1389,9 +1389,9 @@ GraphVisualizer::create_prior_marker_array(
       wall_center_marker.color.g = 170 / 255.0;
       wall_center_marker.color.b = 112 / 255.0;
       wall_center_marker.color.a = 1.0;
-      wall_center_marker.scale.x = 0.2;
-      wall_center_marker.scale.y = 0.2;
-      wall_center_marker.scale.z = 0.2;
+      wall_center_marker.scale.x = 0.3;
+      wall_center_marker.scale.y = 0.3;
+      wall_center_marker.scale.z = 0.3;
       wall_center_marker.pose.position.x = wall_center.x();
       wall_center_marker.pose.position.y = wall_center.y();
       wall_center_marker.pose.position.z = wall_vertex_h;
@@ -1413,7 +1413,7 @@ GraphVisualizer::create_prior_marker_array(
       wall_edge_plane_marker.id = prior_wall_edge_markers.markers.size();
       wall_edge_plane_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
       wall_edge_plane_marker.pose.orientation.w = 1.0;
-      wall_edge_plane_marker.scale.x = 0.03;
+      wall_edge_plane_marker.scale.x = 0.01;
       geometry_msgs::msg::Point point1, point2, point3;
       point1.x = wall_center.x();
       point1.y = wall_center.y();
@@ -1468,7 +1468,7 @@ GraphVisualizer::create_prior_marker_array(
           break;
         }
       }
-      wall_edge_plane_marker_2.scale.x = 0.02;
+      wall_edge_plane_marker_2.scale.x = 0.01;
       wall_edge_plane_marker_2.color.r = 0.0;
       wall_edge_plane_marker_2.color.g = 0.0;
       wall_edge_plane_marker_2.color.b = 0.0;
