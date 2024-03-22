@@ -291,10 +291,12 @@ class SGraphsNode : public rclcpp::Node {
     graph_pub = this->create_publisher<reasoning_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32, pub_opt);
     graph_keyframes_pub = this->create_publisher<reasoning_msgs::msg::GraphKeyframes>(
-        "s_graphs/graph_keyframes", 32);
+        "s_graphs/graph_keyframes", 32, pub_opt);
     graph_edge_pub = this->create_publisher<reasoning_msgs::msg::Graph>("s_graphs/graph_edges_nodes", 32);
+    graph_plane_edge_pub = this->create_publisher<reasoning_msgs::msg::Graph>(
+        "s_graphs/graph_planes_edge", 32, pub_opt);
     graph_room_keyframe_pub = this->create_publisher<reasoning_msgs::msg::RoomKeyframe>(
-        "s_graphs/graph_room_keyframes", 32);
+        "s_graphs/graph_room_keyframes", 32, pub_opt);
 
     dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
         "s_graphs/dump",
@@ -1303,6 +1305,10 @@ class SGraphsNode : public rclcpp::Node {
     auto graph = graph_publisher->publish_graph_edges(
         covisibility_graph->graph.get());
     graph_edge_pub->publish(graph);
+
+    auto graph_plane_edges = graph_publisher->publish_graph_plane_edges(
+        covisibility_graph->graph.get());
+    graph_plane_edge_pub->publish(graph_plane_edges);
     
   }
 
@@ -1647,8 +1653,6 @@ class SGraphsNode : public rclcpp::Node {
       // graph_edge_pub->publish(edge_ros);
     }
     keyframes = loaded_keyframes;
-    // edges = loaded_edges;
-    std::cout << " loaded keyframes size : " << keyframes.size() << std::endl;
 
     for (const auto& directoryPath : keyframe_directories) {
       for (const auto& entry : boost::filesystem::directory_iterator(directoryPath)) {
@@ -1825,6 +1829,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<reasoning_msgs::msg::RoomKeyframe>::SharedPtr
       graph_room_keyframe_pub;
   rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_edge_pub;
+  rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_plane_edge_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;

@@ -389,7 +389,6 @@ reasoning_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
   return msg;
 }
 
-
 reasoning_msgs::msg::Graph GraphPublisher::publish_graph_edges(
   const g2o::SparseOptimizer* local_graph) {
     
@@ -398,25 +397,23 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph_edges(
     reasoning_msgs::msg::Graph graph_msg;
     std::vector<reasoning_msgs::msg::Attribute> edge_att_vec;
     std::vector<reasoning_msgs::msg::Edge> edges_vec;
+    std::unordered_set<int> edge_ids;
     // Eigen::Matrix<double, 3, 3> eigen_matrix;
     // double meas[16];
     // Eigen::Transform<double, 3, Eigen::Affine> eigen_transform;
 
-
-    auto& edges = local_graph->edges();
-
-    for (const auto& edge : edges) {
-    
-      g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
-
-      if(edge_se3) {
+    for (g2o::HyperGraph::EdgeSet::iterator it =
+             local_graph->edges().begin();
+         it != local_graph->edges().end();
+         ++it){
+      g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(*it);
+      if(edge_se3 != nullptr) {
         graph_edge.edge_id = edge_se3->id();
+        edge_ids.insert(edge_se3->id());  
         graph_edge.origin_node = edge_se3->vertices()[0]->id();
         graph_edge.target_node = edge_se3->vertices()[1]->id();
         auto eigen_transform = edge_se3->measurement();
         auto eigen_matrix = edge_se3->information();
-        std::cout << eigen_transform.matrix() << std::endl;
-        std::cout << eigen_matrix.matrix() << std::endl;
         graph_edge.measurement_transform.translation.x = eigen_transform.translation().x();
         graph_edge.measurement_transform.translation.y = eigen_transform.translation().y();
         graph_edge.measurement_transform.translation.z = eigen_transform.translation().z();
@@ -439,12 +436,61 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph_edges(
 
         edges_vec.push_back(graph_edge);
         graph_msg.edges = edges_vec;
-        return graph_msg;
+        
 }
 
   }
+  return graph_msg;
   }
 
+reasoning_msgs::msg::Graph GraphPublisher::publish_graph_plane_edges(
+  const g2o::SparseOptimizer* local_graph) {
+    
+    reasoning_msgs::msg::Edge graph_edge;
+    reasoning_msgs::msg::Attribute edge_attribute;
+    reasoning_msgs::msg::Graph graph_msg;
+    std::vector<reasoning_msgs::msg::Attribute> edge_att_vec;
+    std::vector<reasoning_msgs::msg::Edge> edges_vec;
+    std::unordered_set<int> edge_ids;
+    // Eigen::Matrix<double, 3, 3> eigen_matrix;
+    // double meas[16];
+    // Eigen::Transform<double, 3, Eigen::Affine> eigen_transform;
+
+    for (g2o::HyperGraph::EdgeSet::iterator it =
+             local_graph->edges().begin();
+         it != local_graph->edges().end();
+         ++it){
+      g2o::EdgeSE3Plane* edge_se3 = dynamic_cast<g2o::EdgeSE3Plane*>(*it);
+      if(edge_se3 != nullptr) {
+        graph_edge.edge_id = edge_se3->id();
+        edge_ids.insert(edge_se3->id());  
+        graph_edge.origin_node = edge_se3->vertices()[0]->id();
+        graph_edge.target_node = edge_se3->vertices()[1]->id();
+        auto g2o_plane_coeffs = edge_se3->measurement();
+        auto eigen_matrix = edge_se3->information();
+        graph_edge.plane_coefficients = {g2o_plane_coeffs._coeffs[0], g2o_plane_coeffs._coeffs[1], g2o_plane_coeffs._coeffs[2], g2o_plane_coeffs._coeffs[3]};
+        int index = 0;
+
+        for (int i = 0; i < eigen_matrix.rows(); ++i) {
+            for (int j = 0; j < eigen_matrix.cols(); ++j) {
+                graph_edge.plane_information_matrix[index++] = eigen_matrix(i, j);
+          }
+      }
+        edge_attribute.name = "EdgeSE3";
+        edge_att_vec.push_back(edge_attribute);
+        graph_edge.attributes = edge_att_vec;
+
+
+        edges_vec.push_back(graph_edge);
+        graph_msg.edges = edges_vec;
+
+    }
+
+}
+
+return graph_msg;
+        
+}
 
 
 // std::vector<g2o::HyperGraph::Edge*> get_planes_from_room(
