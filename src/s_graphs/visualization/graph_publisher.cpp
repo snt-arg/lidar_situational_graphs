@@ -148,6 +148,8 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
   } else {
     graph_msg.name = "Online";
+    std::vector<s_graphs::Rooms> publishable_rooms_vec;
+    publishable_rooms_vec = rooms_vec;
     for (int i = 0; i < x_vert_planes.size(); i++) {
       g2o::Plane3D v_plane = x_vert_planes[i].plane;
       reasoning_msgs::msg::Node graph_node;
@@ -184,13 +186,32 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
       node_attribute.fl_value.clear();
       node_att_vec.clear();
     }
-    for (int i = 0; i < rooms_vec.size(); i++) {
-      g2o::VertexRoom* v_room = rooms_vec[i].node;
+    for (int j = 0; j < publishable_rooms_vec.size(); ++j) {
+      publishable_rooms_vec[j].sub_room = false;
+    }
+    for (int i = 0; i < publishable_rooms_vec.size(); i++) {
+      if (publishable_rooms_vec[i].sub_room) continue;
+
+      for (auto& room : publishable_rooms_vec) {
+        if (room.id == publishable_rooms_vec[i].id) continue;
+        float dist_room_room =
+            sqrt(pow(room.node->estimate().translation()(0) -
+                         publishable_rooms_vec[i].node->estimate().translation()(0),
+                     2) +
+                 pow(room.node->estimate().translation()(1) -
+                         publishable_rooms_vec[i].node->estimate().translation()(1),
+                     2));
+        if (dist_room_room < 2.0 && room.sub_room == false) {
+          room.sub_room = true;
+        }
+      }
+
+      g2o::VertexRoom* v_room = publishable_rooms_vec[i].node;
       reasoning_msgs::msg::Edge graph_edge;
       reasoning_msgs::msg::Node graph_node;
       reasoning_msgs::msg::Attribute edge_attribute;
       reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = rooms_vec[i].id;
+      graph_node.id = publishable_rooms_vec[i].id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
       Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
@@ -205,7 +226,7 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // first edge
       graph_edge.origin_node = v_room->id();
-      graph_edge.target_node = rooms_vec[i].plane_x1_id;
+      graph_edge.target_node = publishable_rooms_vec[i].plane_x1_id;
       edge_attribute.name = "EdgeRoom4Planes";
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
@@ -214,7 +235,7 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 2nd edge
 
-      graph_edge.target_node = rooms_vec[i].plane_x2_id;
+      graph_edge.target_node = publishable_rooms_vec[i].plane_x2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
@@ -222,14 +243,14 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 3rd edge
 
-      graph_edge.target_node = rooms_vec[i].plane_y1_id;
+      graph_edge.target_node = publishable_rooms_vec[i].plane_y1_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
 
       // 4th edge
-      graph_edge.target_node = rooms_vec[i].plane_y2_id;
+      graph_edge.target_node = publishable_rooms_vec[i].plane_y2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);

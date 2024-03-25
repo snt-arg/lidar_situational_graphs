@@ -1283,10 +1283,10 @@ GraphVisualizer::create_prior_marker_array(
   visualization_msgs::msg::MarkerArray floor_markers;
   visualization_msgs::msg::MarkerArray floor_edge_markers;
   double plane_h = 8;
-  double wall_vertex_h = 12.5;
-  double prior_room_h = 13.9;
-  double floor_h = 18.7;
-  double deviation_h = 7;
+  double wall_vertex_h = 11;
+  double prior_room_h = 15.9;
+  double floor_h = 20.7;
+  double deviation_h = 10;
   prior_x_plane_markers.markers.clear();
 
   for (int i = 0; i < x_vert_planes_prior.size(); i++) {  // walls_x_coord.size()
@@ -1820,7 +1820,7 @@ GraphVisualizer::create_prior_marker_array(
           wall_deviation_marker.pose.position.y = translation.y();
           p2.y = wall_deviation_marker.pose.position.y;
           p2.z = plane_h;
-          wall_deviation_marker.pose.position.z = wall_vertex_h;
+          wall_deviation_marker.pose.position.z = deviation_h;
           wall_deviation_marker.pose.orientation.x = quaternion.x();
           wall_deviation_marker.pose.orientation.y = quaternion.y();
           wall_deviation_marker.pose.orientation.z = quaternion.z();
@@ -1867,7 +1867,7 @@ GraphVisualizer::create_prior_marker_array(
 
           p1.x = translation.x();
           p1.y = translation.y();
-          p1.z = wall_vertex_h;
+          p1.z = deviation_h;
           p3.x = closest_point.x();
           p3.y = closest_point.y();
           p3.z = plane_h;
@@ -1948,7 +1948,7 @@ GraphVisualizer::create_prior_marker_array(
           p2.x = wall_deviation_marker.pose.position.x;
           wall_deviation_marker.pose.position.y = translation.y();
           p2.y = wall_deviation_marker.pose.position.y;
-          wall_deviation_marker.pose.position.z = wall_vertex_h;
+          wall_deviation_marker.pose.position.z = deviation_h;
           p2.z = plane_h;
           wall_deviation_marker.pose.orientation.x = quaternion.x();
           wall_deviation_marker.pose.orientation.y = quaternion.y();
@@ -1996,7 +1996,7 @@ GraphVisualizer::create_prior_marker_array(
 
           p1.x = translation.x();
           p1.y = translation.y();
-          p1.z = wall_vertex_h;
+          p1.z = deviation_h;
           p3.x = closest_point.x();
           p3.y = closest_point.y();
           p3.z = plane_h;
@@ -2166,7 +2166,6 @@ GraphVisualizer::create_prior_marker_array(
   if (got_trans_prior2map_) {
     for (const auto& floor : floors_vec) {
       if (floor.id != -1) {
-        std::cout << "floor id: " << floor.id << std::endl;
         visualization_msgs::msg::Marker floor_marker;
         floor_marker.pose.orientation.w = 1.0;
         floor_marker.scale.x = 0.5;
@@ -2190,7 +2189,6 @@ GraphVisualizer::create_prior_marker_array(
         // create line markers between floor and rooms/infinite_rooms
 
         for (const auto& room : rooms_vec_prior) {
-          std::cout << "room id: " << room.id << std::endl;
           visualization_msgs::msg::Marker floor_line_marker;
           floor_line_marker.scale.x = 0.02;
           floor_line_marker.pose.orientation.w = 1.0;
