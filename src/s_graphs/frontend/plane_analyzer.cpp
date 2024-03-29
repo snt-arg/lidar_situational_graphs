@@ -87,6 +87,17 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
     transformed_cloud->points.push_back(cloud->points[i]);
   }
 
+  pcl::PointCloud<PointT>::Ptr tmp_cloud(new pcl::PointCloud<PointT>);
+  for(auto& point : transformed_cloud->points) {
+    for(float a=0; a<0.5; a+=0.01) {
+      PointT tmp;
+      tmp = point;
+      tmp.z = point.z + a;
+      tmp_cloud->points.push_back(tmp);
+    }
+  }
+  transformed_cloud = tmp_cloud;
+
   int i = 0;
   auto t1 = rclcpp::Clock{}.now();
   while (transformed_cloud->points.size() > min_seg_points_) {

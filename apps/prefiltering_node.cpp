@@ -213,6 +213,7 @@ class PrefilteringNode : public rclcpp::Node {
     pcl::PointCloud<PointT>::ConstPtr filtered = distance_filter(src_cloud);
     filtered = downsample(filtered);
     filtered = outlier_removal(filtered);
+    filtered = z_component_removal(filtered);
 
     sensor_msgs::msg::PointCloud2 filtered_msg;
     pcl::toROSMsg(*filtered, filtered_msg);
@@ -246,6 +247,24 @@ class PrefilteringNode : public rclcpp::Node {
 
     return filtered;
   }
+
+  pcl::PointCloud<PointT>::ConstPtr z_component_removal(
+      const pcl::PointCloud<PointT>::ConstPtr& cloud) const {
+
+    pcl::PointCloud<PointT>::Ptr filtered(new pcl::PointCloud<PointT>());
+
+    // Create the filtering object
+    pcl::PassThrough<PointT> pass;
+    pass.setInputCloud (cloud);
+    pass.setFilterFieldName ("z");
+    pass.setFilterLimits (0.0, 0.1);
+    //pass.setNegative (true);
+    pass.filter (*filtered);
+
+    return filtered;
+  }
+
+
 
   pcl::PointCloud<PointT>::ConstPtr distance_filter(
       const pcl::PointCloud<PointT>::ConstPtr& cloud) const {
@@ -362,6 +381,7 @@ class PrefilteringNode : public rclcpp::Node {
 
   pcl::Filter<PointT>::Ptr downsample_filter;
   pcl::Filter<PointT>::Ptr outlier_removal_filter;
+  pcl::Filter<PointT>::Ptr z_component_removal_filter;
 };
 
 }  // namespace s_graphs
