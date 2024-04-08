@@ -394,7 +394,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
   } else {
     Eigen::Matrix3d plane_information_mat =
         Eigen::Matrix3d::Identity() * plane_information;
-    plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
 
     auto edge = graph_slam->add_se3_plane_edge(keyframe->node,
                                                plane_node,
