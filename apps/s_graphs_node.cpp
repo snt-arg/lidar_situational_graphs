@@ -641,9 +641,7 @@ class SGraphsNode : public rclcpp::Node {
 
   void add_stair_keyframes_to_floor(const std::vector<int>& stair_keyframe_ids) {
     // get the keyframe ids and update their semantic of belonging to new floor
-    for (auto& stair_keyframe_msg : stair_keyframe_ids) {
-      floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
-    }
+    floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
 
     GraphUtils::set_stair_keyframes(
         floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
@@ -831,13 +829,13 @@ class SGraphsNode : public rclcpp::Node {
       Eigen::Isometry3d odom_trans = map2map_trans * odom;
       Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
 
-      KeyFrame::Ptr keyframe(new KeyFrame(
-          stamp, odom_trans, accum_d, cloud, floor_mapper->get_floor_level()));
+      KeyFrame::Ptr keyframe(
+          new KeyFrame(stamp, odom_trans, accum_d, cloud, current_floor_level));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     } else {
       KeyFrame::Ptr keyframe(
-          new KeyFrame(stamp, odom, accum_d, cloud, floor_mapper->get_floor_level()));
+          new KeyFrame(stamp, odom, accum_d, cloud, current_floor_level));
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     }
@@ -1450,7 +1448,7 @@ class SGraphsNode : public rclcpp::Node {
       const std::unordered_map<int, VerticalPlanes>& y_vert_planes_snapshot) {
     if (keyframes.empty()) return;
 
-    int current_floor_level = floor_mapper->get_floor_level();
+    // int current_floor_level = floor_mapper->get_floor_level();
 
     s_graphs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
