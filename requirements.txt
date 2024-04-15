@@ -1,0 +1,8 @@
+cuda-python==12.2.0
+networkx==2.8.7
+numpy==1.23.4
+matplotlib==3.3.1
+tensorboard==2.13.0
+colorama==0.4.6
+shapely==2.0.1
+markupsafe==2.0.1
