@@ -304,12 +304,14 @@ class FloorPlanNode : public rclcpp::Node {
   void floor_change_det_callback() {
     if (!new_k_added || keyframes.size() < 2) return;
     auto current_k = keyframes.rbegin();
+    std::cout << "current_k id: " << current_k->first << std::endl;
 
     switch (CURRENT_STATUS) {
       case STATE::ON_FLOOR: {
         // get the pose difference between the last and the second last keyframe
         auto prev_k = std::next(current_k);
         prev_z_diff = this->compute_height_change(current_k->second, prev_k->second);
+        std::cout << "prev_z_diff : " << prev_z_diff << std::endl;
 
         if (fabs(prev_z_diff) > 0.5) {
           stair_keyframes.push_back(prev_k->second);
@@ -344,9 +346,10 @@ class FloorPlanNode : public rclcpp::Node {
 
         if (fabs(delta_diff) < 0.5) {
           stair_keyframes.push_back(current_k->second);
-          floor_height = current_k->second->node->estimate()(2, 3);
-          publish_floor_keyframe_info();
+          publish_floor_keyframe_info(current_k->second->node->estimate()(2, 3));
           break;
+        } else {
+          stair_keyframes.push_back(current_k->second);
         }
         prev_z_diff = current_z_diff;
         break;
@@ -359,9 +362,10 @@ class FloorPlanNode : public rclcpp::Node {
 
         if (fabs(delta_diff) < 0.5) {
           stair_keyframes.push_back(current_k->second);
-          floor_height = current_k->second->node->estimate()(2, 3);
-          publish_floor_keyframe_info();
+          publish_floor_keyframe_info(current_k->second->node->estimate()(2, 3));
           break;
+        } else {
+          stair_keyframes.push_back(current_k->second);
         }
         prev_z_diff = current_z_diff;
         break;
@@ -378,7 +382,7 @@ class FloorPlanNode : public rclcpp::Node {
     return (current_k->node->estimate() * prev_k->node->estimate().inverse())(2, 3);
   }
 
-  void publish_floor_keyframe_info() {
+  void publish_floor_keyframe_info(double current_keyframe_height) {
     // publish all the keyframe ids on stairs
     std::vector<int> stair_kd_ids;
     for (const auto& keyframe : stair_keyframes) {
@@ -386,20 +390,22 @@ class FloorPlanNode : public rclcpp::Node {
       stair_kd_ids.push_back(keyframe->id());
     }
 
-    publish_floor_center(stair_kd_ids);
+    publish_floor_center(stair_kd_ids, current_keyframe_height);
     stair_keyframes.clear();
     CURRENT_STATUS = STATE::ON_FLOOR;
   }
 
-  void publish_floor_center(const std::vector<int>& kf_ids) {
+  void publish_floor_center(const std::vector<int>& kf_ids,
+                            double current_keyframe_height) {
     s_graphs::msg::FloorData floor_data_msg;
     floor_data_msg.header.stamp = this->now();
     floor_data_msg.floor_center.position.x = 0;
     floor_data_msg.floor_center.position.y = 0;
     // publish floor height as the first captured k height of that floor
-    floor_data_msg.floor_center.position.z = floor_height;
+    floor_data_msg.floor_center.position.z = current_keyframe_height;
     floor_data_msg.keyframe_ids = kf_ids;
     floor_data_pub->publish(floor_data_msg);
+    floor_height = current_keyframe_height;
   }
 
  private:
