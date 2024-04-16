@@ -89,6 +89,10 @@ mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_r
 git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
 ```
 
+> [!IMPORTANT]
+> If you have Nvidia GPU please install CUDA from this [link](https://developer.nvidia.com/cuda-11-8-0-download-archive). This code has only been tested with CUDA 11.8.
+> If you dont have CUDA S-Graphs will use CPU only.
+
 4. Install required dependencies
 
 ```bash
