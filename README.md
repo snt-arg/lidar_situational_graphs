@@ -64,19 +64,16 @@
 <!-- TODO: When s-graphs is available in rosdistro add here the command to install -->
 
 > [!NOTE]
-> S-Graphs+ was only tested on Ubuntu 20.04, with ROS1 Noetic and ROS2 Foxy distro.
+> S-Graphs+ was only tested on Ubuntu 20.04, ROS2 Foxy distro.
 
 ### 📦 Installation From Source <a id="installation-from-source"></a>
-
-The installation consists of 2 parts. One for ROS1 and another for ROS2. You can
-use just the ROS2 version, however it will not be working to it's full potential.
 
 > [!IMPORTANT]
 > Before proceeding, make sure you have `rosdep` installed. You can install it using `sudo apt-get install python3-rosdep`
 > In addition, ssh keys are needed to be configured on you GitHub account. If you haven't
 > yet configured ssh keys, follow this [tutorial](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 
-#### 1️⃣ Installation on ROS2 <a id="installation-on-ros2"></a>
+#### Installation on ROS2 <a id="installation-on-ros2"></a>
 
 1. Update Rosdep:
 
@@ -96,22 +93,10 @@ mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_r
 git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
 ```
 
-4. Install required dependencies using `vcstool`
+4. Install required dependencies
 
 ```bash
-cd s_graphs && vcs import --recursive ../ < .rosinstall_ros2
-```
-
-5. Install required ROS2 packages
-
-```bash
-cd ../../ && rosdep install --from-paths src -y --ignore-src -r
-```
-
-6. Build workspace
-
-```bash
-colcon build --symlink-install
+cd s_graphs && ./setup.sh
 ```
 
 > [!NOTE]
@@ -121,66 +106,9 @@ colcon build --symlink-install
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 ```
 
-6. Source workspace
-
-```bash
-source install/setup.bash
-```
-
-#### 2️⃣ Download ROS Bridge <a id="download-ros-bridge"></a>
-
-```bash
-source /opt/ros/foxy/setup.bash && sudo apt install ros-foxy-ros1-bridge
-```
-
-#### 3️⃣ Installation on ROS1 <a id="installation-for-ros1-dependencies"></a>
-
-> [!IMPORTANT]
-> Before following the instructions from below, ensure that you are in a fresh
-> terminal, **without ROS2 sourced**.
-
-1. Create a ROS1 workspace for S-Graphs
-
-```bash
-mkdir -p $HOME/workspaces/s_graphs_ros1_ws/src && cd $HOME/workspaces/s_graphs_ros1_ws/src && source /opt/ros/noetic/setup.bash
-```
-
-2. Clone the S-Graphs repository into the created workspace
-
-```bash
-git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
-```
-
-3. Install required dependencies using `vcstool`
-
-```bash
-cd s_graphs && vcs import --recursive ../ < .rosinstall_ros1
-```
-
-4. Install required ROS packages
-
-```bash
-cd ../../ && rosdep install --from-paths src --ignore-src -y -r
-```
-
-5. Install `pcl_ros`
-
-```sh
-sudo apt install ros-noetic-pcl-ros
-```
-
-6. Build workspace
-
-> [!IMPORTANT]
-> Make sure s_graphs_ros1_ws is built in Release otherwise the room extraction won't work properly.
-
-```bash
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
-```
-
 ## 🧪 Unit Tests <a id="unit-tests"></a>
 
-Some unit tests are available. In case you want to test, run the following command:
+Some unit tests are available. In case you want to add additional tests, run the following command:
 
 ```bash
 colcon test --packages-select s_graphs --event-handler=console_direct+
@@ -210,13 +138,6 @@ git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && 
 ```sh
 docker build -t sntarg/s_graphs --ssh default=$HOME/.ssh/id_ed25519 .
 ```
-
-<!-- ### Pull the docker image from DockerHub (only if you have not build the image yourself!)
-
-```bash
-docker pull sntarg/s_graphs:latest
-``` -->
-
 
 ## 🚀 Example on Datasets <a id="examples"></a>
 
@@ -289,7 +210,67 @@ source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/sr
 -->
 
 > [!NOTE]
-> Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy. 
+> Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy.
+
+## Optional ROS1 Install (Old Version of Room Segmentation)
+
+<details>
+
+> [!NOTE]
+> This is an older version of room segmentation algorithm which requires ROS1 noetic. This step is not necessary in case you are using DOCKER as it already includes ros1 and the related libraries.
+
+#### Download ROS Bridge <a id="download-ros-bridge"></a>
+
+```bash
+source /opt/ros/foxy/setup.bash && sudo apt install ros-foxy-ros1-bridge
+```
+
+#### Installation on ROS1 <a id="installation-for-ros1-dependencies"></a>
+
+> [!IMPORTANT]
+> Before following the instructions from below, ensure that you are in a fresh
+> terminal, **without ROS2 sourced**.
+
+1. Create a ROS1 workspace for S-Graphs
+
+```bash
+mkdir -p $HOME/workspaces/s_graphs_ros1_ws/src && cd $HOME/workspaces/s_graphs_ros1_ws/src && source /opt/ros/noetic/setup.bash
+```
+
+2. Clone the S-Graphs repository into the created workspace
+
+```bash
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
+```
+
+3. Install required dependencies using `vcstool`
+
+```bash
+cd s_graphs && vcs import --recursive ../ < .rosinstall_ros1
+```
+
+4. Install required ROS packages
+
+```bash
+cd ../../ && rosdep install --from-paths src --ignore-src -y -r
+```
+
+5. Install `pcl_ros`
+
+```sh
+sudo apt install ros-noetic-pcl-ros
+```
+
+6. Build workspace
+
+> [!IMPORTANT]
+> Make sure s_graphs_ros1_ws is built in Release otherwise the room extraction won't work properly.
+
+```bash
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
+```
+
+</details>
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 

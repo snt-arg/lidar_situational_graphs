@@ -24,7 +24,7 @@ pip3 install -r requirements.txt
 cd ../../ && rosdep install --from-paths src -y --ignore-src -r
 
 # - Importing all dependencies
-colcon build
+colcon build --symlink-install 
 
 # - Sourcing the workspace
 source install/setup.bash

@@ -6,3 +6,4 @@ tensorboard==2.13.0
 colorama==0.4.6
 shapely==2.0.1
 markupsafe==2.0.1
+seaborn==0.13.2

@@ -1,17 +1,6 @@
 procs:
-  roscore:
-    shell: 'bash -c "source /opt/ros/noetic/setup.bash && roscore"'
-    autostart: true
   rosbag:
-    shell: 'bash -c "source /opt/ros/noetic/setup.bash && rosbag play ~/Downloads/virtual/stugalux_oetrange_f2_3r.bag --clock"'
-    autostart: true
-    stop: SIGINT
-  voxblox_skeleton:
-    shell: 'bash -c "source ~/workspaces/s_graphs_ros1_ws/devel/setup.bash && roslaunch voxblox_skeleton skeletonize_map_realtime.launch 2>/dev/null"'
-    autostart: true
-    stop: SIGINT
-  ros_bridge:
-    shell: 'bash -c "source /opt/ros/foxy/setup.bash && source /opt/ros/noetic/setup.bash && ros2 run ros1_bridge dynamic_bridge"'
+    shell: 'bash -c "source /opt/ros/foxy/setup.bash && ros2 bag play ~/Downloads/virtual/stugalux_oetrange_f2_3r"'
     autostart: true
     stop: SIGINT
   s_graphs:

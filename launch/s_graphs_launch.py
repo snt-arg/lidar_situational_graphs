@@ -1,12 +1,13 @@
 import os
 from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from ament_index_python import get_package_share_directory
 from launch.actions import OpaqueFunction
 from launch.conditions import IfCondition, LaunchConfigurationEquals
-
 
 def generate_launch_description():
     return LaunchDescription(
@@ -26,9 +27,22 @@ def generate_launch_description():
                 default_value="",
                 description="Namespace for the robot",
             ),
+            DeclareLaunchArgument(
+                "room_segmentation",
+                default_value="new",
+                description="Algorithm used for room segmentation",
+            ),
             OpaqueFunction(function=launch_sgraphs),
         ]
     )
+
+def launch_reasoning():
+    reasoning_dir = get_package_share_directory('graph_reasoning')
+    reasoning_launch_file = os.path.join(reasoning_dir, "launch", "graph_reasoning.launch.py")
+    reasoning_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(reasoning_launch_file))    
+    
+    return reasoning_launch
 
 
 def launch_sgraphs(context, *args, **kwargs):
@@ -40,6 +54,8 @@ def launch_sgraphs(context, *args, **kwargs):
     env_arg = LaunchConfiguration("env").perform(context)
     compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
     namespace_arg = LaunchConfiguration("namespace").perform(context)
+    room_segmentation_arg =  LaunchConfiguration("room_segmentation").perform(context)
+
     ns_prefix = str(namespace_arg) + "/" if namespace_arg else ""
     if str(ns_prefix).startswith("/"):
         ns_prefix = ns_prefix[1:]
@@ -70,13 +86,16 @@ def launch_sgraphs(context, *args, **kwargs):
         condition=IfCondition(compute_odom_arg),
     )
 
-    room_segmentation_cmd = Node(
-        package="s_graphs",
-        executable="s_graphs_room_segmentation_node",
-        namespace=namespace_arg,
-        parameters=[{"vertex_neigh_thres": 2}],
-        output="screen",
-    )
+    if room_segmentation_arg == "old":   
+        room_segmentation_cmd = Node(
+            package="s_graphs",
+            executable="s_graphs_room_segmentation_node",
+            namespace=namespace_arg,
+            parameters=[{"vertex_neigh_thres": 2}],
+            output="screen",
+        )
+    else:
+      reasoning_launch = launch_reasoning()                
 
     floor_plan_cmd = Node(
         package="s_graphs",
@@ -169,7 +188,7 @@ def launch_sgraphs(context, *args, **kwargs):
     return [
         prefiltering_cmd,
         scan_matching_cmd,
-        room_segmentation_cmd,
+        room_segmentation_cmd if room_segmentation_arg == "old" else reasoning_launch,
         floor_plan_cmd,
         s_graphs_cmd,
         map_keyframe_static_transform,
