@@ -4,10 +4,8 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /TF1
         - /TF1/Frames1
         - /MarkerArray1/Namespaces1
-        - /MarkerArray2/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 1654
   - Class: rviz_common/Selection
@@ -26,24 +24,6 @@ Panels:
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.5
-      Cell Size: 1
-      Class: rviz_default_plugins/Grid
-      Color: 160; 160; 164
-      Enabled: false
-      Line Style:
-        Line Width: 0.029999999329447746
-        Value: Lines
-      Name: Grid
-      Normal Cell Count: 0
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Plane: XY
-      Plane Cell Count: 10
-      Reference Frame: <Fixed Frame>
-      Value: false
     - Class: rviz_default_plugins/TF
       Enabled: true
       Frame Timeout: 15
@@ -51,7 +31,41 @@ Visualization Manager:
         All Enabled: false
         base_footprint:
           Value: false
+        base_link:
+          Value: false
+        body:
+          Value: true
+        camera_depth_frame:
+          Value: false
+        camera_depth_optical_frame:
+          Value: false
+        camera_link:
+          Value: false
+        camera_rgb_frame:
+          Value: false
+        camera_rgb_optical_frame:
+          Value: false
         floors_layer:
+          Value: false
+        front_left_ee:
+          Value: false
+        front_left_hip:
+          Value: false
+        front_left_lower_leg:
+          Value: false
+        front_left_upper_leg:
+          Value: false
+        front_rail:
+          Value: false
+        front_right_ee:
+          Value: false
+        front_right_hip:
+          Value: false
+        front_right_lower_leg:
+          Value: false
+        front_right_upper_leg:
+          Value: false
+        imu_link:
           Value: false
         keyframe:
           Value: false
@@ -61,10 +75,30 @@ Visualization Manager:
           Value: true
         odom:
           Value: true
+        rear_left_ee:
+          Value: false
+        rear_left_hip:
+          Value: false
+        rear_left_lower_leg:
+          Value: false
+        rear_left_upper_leg:
+          Value: false
+        rear_rail:
+          Value: false
+        rear_right_ee:
+          Value: false
+        rear_right_hip:
+          Value: false
+        rear_right_lower_leg:
+          Value: false
+        rear_right_upper_leg:
+          Value: false
         rooms_layer:
           Value: false
         velodyne:
-          Value: true
+          Value: false
+        velodyne_base_link:
+          Value: false
         walls_layer:
           Value: false
       Marker Scale: 5
@@ -81,8 +115,44 @@ Visualization Manager:
                   {}
           odom:
             base_footprint:
-              velodyne:
-                {}
+              body:
+                base_link:
+                  camera_link:
+                    camera_depth_frame:
+                      camera_depth_optical_frame:
+                        {}
+                    camera_rgb_frame:
+                      camera_rgb_optical_frame:
+                        {}
+                  imu_link:
+                    {}
+                  velodyne_base_link:
+                    velodyne:
+                      {}
+                front_left_hip:
+                  front_left_upper_leg:
+                    front_left_lower_leg:
+                      front_left_ee:
+                        {}
+                front_rail:
+                  {}
+                front_right_hip:
+                  front_right_upper_leg:
+                    front_right_lower_leg:
+                      front_right_ee:
+                        {}
+                rear_left_hip:
+                  rear_left_upper_leg:
+                    rear_left_lower_leg:
+                      rear_left_ee:
+                        {}
+                rear_rail:
+                  {}
+                rear_right_hip:
+                  rear_right_upper_leg:
+                    rear_right_lower_leg:
+                      rear_right_ee:
+                        {}
             keyframe:
               {}
       Update Interval: 0
@@ -160,17 +230,17 @@ Visualization Manager:
         floor_lines: true
         floors: true
         hort_planes: true
-        imu: true
-        infinite_room_y_lines: true
+        imu: false
+        infinite_room_x_lines: true
         keyframe_keyframe_edges: true
         keyframe_plane_edges: true
         loop_close_radius: false
         nodes: true
         rooms: true
         rooms_line: true
-        wall_center_marker: true
+        wall_center_marker: false
+        x_infinite_room: true
         x_vert_planes: true
-        y_infinite_room: true
         y_vert_planes: true
       Topic:
         Depth: 5
@@ -180,17 +250,17 @@ Visualization Manager:
         Value: /s_graphs/markers
       Value: true
     - Class: rviz_default_plugins/MarkerArray
-      Enabled: false
+      Enabled: true
       Name: MarkerArray
       Namespaces:
-        {}
+        Cuboid: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /voxblox_skeletonizer/sparse_graph
-      Value: false
+        Value: /rviz_keyframe_node_visual_tools
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 255; 255; 255
@@ -234,25 +304,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 84.61210632324219
+      Distance: 63.588130950927734
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 2.886566162109375
-        Y: 5.342537879943848
-        Z: 1.460296869277954
+        X: -3.4667422771453857
+        Y: -3.368988037109375
+        Z: 11.062368392944336
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6847970485687256
+      Pitch: 0.7397969961166382
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 3.199937105178833
+      Yaw: 6.223122596740723
     Saved: ~
 Window Geometry:
   Displays:
