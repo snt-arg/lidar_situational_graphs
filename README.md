@@ -13,11 +13,8 @@
 - [📖 Published Papers](#published-papers)
 - [⚙️ Installation](#installation)
   - [📦 Installation From Source](#installation-from-source)
-    - [1️⃣ Installation on ROS2](#installation-on-ros2)
-    - [2️⃣ Download ROS bridge](#download-ros-bridge)
-    - [3️⃣ Installation on ROS1](#installation-on-ros2)
-- [🧪 Unit Tests](#unit-tests)
-- [🐳 Docker](#docker)
+    - [ROS1 Optional](#installation-for-ros1)
+  - [🐳 Docker](#docker)
 - [🚀 Examples on Datasets](#examples)
 - [🛠️ Run S_Graphs On Your Data](#custom-data)
 - [🤖 ROS Related](#ros-related)
@@ -26,6 +23,7 @@
   - [🔄 ROS Services](#ros-services)
   - [⚙️ ROS Parameters](#ros-parameters)
   - [🌐 Published TFs](#published-tfs)
+- [🧪 Unit Tests](#unit-tests)
 
 ## 📖 Published Papers <a id="published-papers"></a>
 
@@ -73,8 +71,6 @@
 > In addition, ssh keys are needed to be configured on you GitHub account. If you haven't
 > yet configured ssh keys, follow this [tutorial](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
 
-#### Installation on ROS2 <a id="installation-on-ros2"></a>
-
 1. Update Rosdep:
 
 ```sh
@@ -100,23 +96,75 @@ cd s_graphs && ./setup.sh
 ```
 
 > [!NOTE]
-> If you want to compile with debug traces (from backward_cpp ) run:
+> If you want to compile with debug traces (from backward_cpp) run:
 
 ```bash
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 ```
 
-## 🧪 Unit Tests <a id="unit-tests"></a>
+#### Optional ROS1 Install (Old Version of Room Segmentation) <a id="installation-for-ros1"></a>
 
-Some unit tests are available. In case you want to add additional tests, run the following command:
+<details>
+
+> [!NOTE]
+> This is an optional older version of room segmentation algorithm which requires ROS1 noetic. There is no hard dependecy on this package so you can easily ignore this step.
+
+##### Download ROS Bridge <a id="download-ros-bridge"></a>
 
 ```bash
-colcon test --packages-select s_graphs --event-handler=console_direct+
+source /opt/ros/foxy/setup.bash && sudo apt install ros-foxy-ros1-bridge
 ```
 
-## 🐳 Docker <a id="docker"></a>
+##### Installation on ROS1
 
-### Build Docker Image
+> [!IMPORTANT]
+> Before following the instructions from below, ensure that you are in a fresh
+> terminal, **without ROS2 sourced**.
+
+1. Create a ROS1 workspace for S-Graphs
+
+```bash
+mkdir -p $HOME/workspaces/s_graphs_ros1_ws/src && cd $HOME/workspaces/s_graphs_ros1_ws/src && source /opt/ros/noetic/setup.bash
+```
+
+2. Clone the S-Graphs repository into the created workspace
+
+```bash
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
+```
+
+3. Install required dependencies using `vcstool`
+
+```bash
+cd s_graphs && vcs import --recursive ../ < .rosinstall_ros1
+```
+
+4. Install required ROS packages
+
+```bash
+cd ../../ && rosdep install --from-paths src --ignore-src -y -r
+```
+
+5. Install `pcl_ros`
+
+```sh
+sudo apt install ros-noetic-pcl-ros
+```
+
+6. Build workspace
+
+> [!IMPORTANT]
+> Make sure s_graphs_ros1_ws is built in Release otherwise the room extraction won't work properly.
+
+```bash
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
+```
+
+</details>
+
+### 🐳 Docker <a id="docker"></a>
+
+#### Build Docker Image
 
 1. Create a ROS2 workspace for S-Graphs
 
@@ -211,66 +259,6 @@ source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/sr
 
 > [!NOTE]
 > Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy.
-
-## Optional ROS1 Install (Old Version of Room Segmentation)
-
-<details>
-
-> [!NOTE]
-> This is an older version of room segmentation algorithm which requires ROS1 noetic. This step is not necessary in case you are using DOCKER as it already includes ros1 and the related libraries.
-
-#### Download ROS Bridge <a id="download-ros-bridge"></a>
-
-```bash
-source /opt/ros/foxy/setup.bash && sudo apt install ros-foxy-ros1-bridge
-```
-
-#### Installation on ROS1 <a id="installation-for-ros1-dependencies"></a>
-
-> [!IMPORTANT]
-> Before following the instructions from below, ensure that you are in a fresh
-> terminal, **without ROS2 sourced**.
-
-1. Create a ROS1 workspace for S-Graphs
-
-```bash
-mkdir -p $HOME/workspaces/s_graphs_ros1_ws/src && cd $HOME/workspaces/s_graphs_ros1_ws/src && source /opt/ros/noetic/setup.bash
-```
-
-2. Clone the S-Graphs repository into the created workspace
-
-```bash
-git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
-```
-
-3. Install required dependencies using `vcstool`
-
-```bash
-cd s_graphs && vcs import --recursive ../ < .rosinstall_ros1
-```
-
-4. Install required ROS packages
-
-```bash
-cd ../../ && rosdep install --from-paths src --ignore-src -y -r
-```
-
-5. Install `pcl_ros`
-
-```sh
-sudo apt install ros-noetic-pcl-ros
-```
-
-6. Build workspace
-
-> [!IMPORTANT]
-> Make sure s_graphs_ros1_ws is built in Release otherwise the room extraction won't work properly.
-
-```bash
-catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
-```
-
-</details>
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 
@@ -374,3 +362,11 @@ All the configurable parameters are listed in config folder as ros params.
     <img src="./imgs/Tf-tree.png" alt="tf_tree" width="80%">
   </a>
 </p>
+
+## 🧪 Unit Tests <a id="unit-tests"></a>
+
+Some unit tests are available. In case you want to add additional tests, run the following command:
+
+```bash
+colcon test --packages-select s_graphs --event-handler=console_direct+
+```
