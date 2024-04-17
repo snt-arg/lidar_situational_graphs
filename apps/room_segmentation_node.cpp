@@ -60,7 +60,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "pcl_conversions/pcl_conversions.h"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs_msgs/msg/rooms_data.hpp"
 #include "std_msgs/msg/color_rgba.hpp"
 #include "tf2_ros/transform_listener.h"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -108,7 +108,7 @@ class RoomSegmentationNode : public rclcpp::Node {
             std::bind(&RoomSegmentationNode::skeleton_graph_callback,
                       this,
                       std::placeholders::_1));
-    map_planes_sub = this->create_subscription<s_graphs::msg::PlanesData>(
+    map_planes_sub = this->create_subscription<s_graphs_msgs::msg::PlanesData>(
         "s_graphs/map_planes",
         100,
         std::bind(
@@ -118,7 +118,7 @@ class RoomSegmentationNode : public rclcpp::Node {
         "room_segmentation/cluster_cloud", 1);
     cluster_clouds_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         "room_segmentation/cluster_clouds", 1);
-    room_data_pub = this->create_publisher<s_graphs::msg::RoomsData>(
+    room_data_pub = this->create_publisher<s_graphs_msgs::msg::RoomsData>(
         "room_segmentation/room_data", 1);
     room_centers_pub = this->create_publisher<visualization_msgs::msg::MarkerArray>(
         "room_segmentation/room_centers", 1);
@@ -138,7 +138,8 @@ class RoomSegmentationNode : public rclcpp::Node {
   }
 
   void room_detection_callback() {
-    std::vector<s_graphs::msg::PlaneData> current_x_vert_planes, current_y_vert_planes;
+    std::vector<s_graphs_msgs::msg::PlaneData> current_x_vert_planes,
+        current_y_vert_planes;
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
     if (current_x_vert_planes.empty() && current_y_vert_planes.empty()) {
@@ -163,14 +164,16 @@ class RoomSegmentationNode : public rclcpp::Node {
    * @brief get the vertical planes in map frame
    * @param map_planes_msg
    */
-  void map_planes_callback(const s_graphs::msg::PlanesData::SharedPtr map_planes_msg) {
+  void map_planes_callback(
+      const s_graphs_msgs::msg::PlanesData::SharedPtr map_planes_msg) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     x_vert_plane_queue.push_back(map_planes_msg->x_planes);
     y_vert_plane_queue.push_back(map_planes_msg->y_planes);
   }
 
-  void flush_map_planes(std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes,
-                        std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes) {
+  void flush_map_planes(
+      std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
+      std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     for (const auto& x_map_planes_msg : x_vert_plane_queue) {
       for (const auto& x_map_plane : x_map_planes_msg) {
@@ -212,11 +215,11 @@ class RoomSegmentationNode : public rclcpp::Node {
    * @brief extract clusters with its centers from the skeletal cloud
    *
    */
-  void extract_rooms(std::vector<s_graphs::msg::PlaneData> current_x_vert_planes,
-                     std::vector<s_graphs::msg::PlaneData> current_y_vert_planes) {
+  void extract_rooms(std::vector<s_graphs_msgs::msg::PlaneData> current_x_vert_planes,
+                     std::vector<s_graphs_msgs::msg::PlaneData> current_y_vert_planes) {
     int room_cluster_counter = 0;
     visualization_msgs::msg::MarkerArray refined_skeleton_marker_array;
-    std::vector<s_graphs::msg::RoomData> room_candidates_vec;
+    std::vector<s_graphs_msgs::msg::RoomData> room_candidates_vec;
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_visualizer(
         new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_hull_visualizer(
@@ -268,7 +271,7 @@ class RoomSegmentationNode : public rclcpp::Node {
       cluster_id++;
     }
 
-    s_graphs::msg::RoomsData room_candidates_msg;
+    s_graphs_msgs::msg::RoomsData room_candidates_msg;
     room_candidates_msg.header.stamp = this->now();
     room_candidates_msg.rooms = room_candidates_vec;
     room_data_pub->publish(room_candidates_msg);
@@ -281,7 +284,7 @@ class RoomSegmentationNode : public rclcpp::Node {
     cluster_cloud_pub->publish(cloud_cluster_msg);
   }
 
-  void viz_room_centers(s_graphs::msg::RoomsData room_vec) {
+  void viz_room_centers(s_graphs_msgs::msg::RoomsData room_vec) {
     visualization_msgs::msg::Marker room_marker;
     room_marker.pose.orientation.w = 1.0;
     room_marker.scale.x = 0.5;
@@ -324,11 +327,11 @@ class RoomSegmentationNode : public rclcpp::Node {
  private:
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr
       skeleton_graph_sub;
-  rclcpp::Subscription<s_graphs::msg::PlanesData>::SharedPtr map_planes_sub;
+  rclcpp::Subscription<s_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_sub;
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_cloud_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_clouds_pub;
-  rclcpp::Publisher<s_graphs::msg::RoomsData>::SharedPtr room_data_pub;
+  rclcpp::Publisher<s_graphs_msgs::msg::RoomsData>::SharedPtr room_data_pub;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr room_centers_pub;
 
   /* private variables */
@@ -336,8 +339,8 @@ class RoomSegmentationNode : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr room_detection_timer;
   std::mutex map_plane_mutex;
 
-  std::vector<s_graphs::msg::PlaneData> x_vert_plane_vec, y_vert_plane_vec;
-  std::deque<std::vector<s_graphs::msg::PlaneData>> x_vert_plane_queue,
+  std::vector<s_graphs_msgs::msg::PlaneData> x_vert_plane_vec, y_vert_plane_vec;
+  std::deque<std::vector<s_graphs_msgs::msg::PlaneData>> x_vert_plane_queue,
       y_vert_plane_queue;
 
   std::unique_ptr<RoomAnalyzer> room_analyzer;

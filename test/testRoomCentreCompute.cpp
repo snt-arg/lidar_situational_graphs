@@ -38,8 +38,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/rooms.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
-#include "s_graphs/msg/plane_data.hpp"
-#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs_msgs/msg/plane_data.hpp"
+#include "s_graphs_msgs/msg/rooms_data.hpp"
 using namespace s_graphs;
 typedef pcl::PointXYZI PointT;
 typedef pcl::PointXYZRGBNormal PointNormal;
@@ -60,8 +60,9 @@ class TestRoom : public ::testing::Test {
 
  public:
   void testLookupRooms() {
-    s_graphs::msg::RoomData room_data;
-    s_graphs::msg::PlaneData x1_plane_data, x2_plane_data, y1_plane_data, y2_plane_data;
+    s_graphs_msgs::msg::RoomData room_data;
+    s_graphs_msgs::msg::PlaneData x1_plane_data, x2_plane_data, y1_plane_data,
+        y2_plane_data;
     x1_plane_data.id = 1;
     x1_plane_data.nx = 1;
     x1_plane_data.ny = 0;

@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-// SPDX-License-Identifier: BSD-2-Clause
-
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/voxel_grid.h>
@@ -36,7 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <iostream>
 #include <memory>
 #include <s_graphs/common/ros_utils.hpp>
-#include <s_graphs/msg/scan_matching_status.hpp>
+#include <s_graphs_msgs/msg/scan_matching_status.hpp>
 
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -92,7 +90,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
     odom_pub = this->create_publisher<nav_msgs::msg::Odometry>("odom", 32);
     trans_pub = this->create_publisher<geometry_msgs::msg::TransformStamped>(
         "scan_matching_odometry/transform", 32);
-    status_pub = this->create_publisher<s_graphs::msg::ScanMatchingStatus>(
+    status_pub = this->create_publisher<s_graphs_msgs::msg::ScanMatchingStatus>(
         "scan_matching_odometry/status", 8);
     aligned_points_pub =
         this->create_publisher<sensor_msgs::msg::PointCloud2>("aligned_points", 32);
@@ -465,7 +463,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
       return;
     }
 
-    s_graphs::msg::ScanMatchingStatus status;
+    s_graphs_msgs::msg::ScanMatchingStatus status;
     status.header.frame_id = frame_id;
     status.header.stamp = stamp;
     status.has_converged = registration->hasConverged();
@@ -513,7 +511,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub;
   rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr trans_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr aligned_points_pub;
-  rclcpp::Publisher<s_graphs::msg::ScanMatchingStatus>::SharedPtr status_pub;
+  rclcpp::Publisher<s_graphs_msgs::msg::ScanMatchingStatus>::SharedPtr status_pub;
   rclcpp::Publisher<std_msgs::msg::Header>::SharedPtr read_until_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};

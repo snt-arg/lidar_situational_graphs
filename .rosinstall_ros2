@@ -23,7 +23,11 @@ repositories:
     type: git
     url: git@github.com:snt-arg/graph_datasets.git
     version: graph_reasoning
-  s_graphs_utils/reasoning/reasoning_msgs:
+  s_graphs_utils/msgs/reasoning_msgs:
     type: git
     url: git@github.com:snt-arg/reasoning_msgs.git
     version: main
+  s_graphs_utils/msgs/s_graphs_msgs:
+    type: git
+    url: git@github.com:snt-arg/s_graphs_msgs.git
+    version: main  

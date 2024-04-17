@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-// SPDX-License-Identifier: BSD-2-Clause
-
 #ifndef ROOM_ANALYZER_HPP
 #define ROOM_ANALYZER_HPP
 
@@ -49,9 +47,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "geometry_msgs/msg/point.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs/msg/plane_data.hpp"
-#include "s_graphs/msg/planes_data.hpp"
-#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs_msgs/msg/plane_data.hpp"
+#include "s_graphs_msgs/msg/planes_data.hpp"
+#include "s_graphs_msgs/msg/rooms_data.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace s_graphs {
@@ -62,17 +60,17 @@ struct room_analyzer_params {
 
 struct RoomInfo {
  public:
-  const std::vector<s_graphs::msg::PlaneData>& current_x_vert_planes;
-  const std::vector<s_graphs::msg::PlaneData>& current_y_vert_planes;
+  const std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes;
+  const std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster;
 };
 
 struct RoomPlanes {
  public:
-  s_graphs::msg::PlaneData& x_plane1;
-  s_graphs::msg::PlaneData& x_plane2;
-  s_graphs::msg::PlaneData& y_plane1;
-  s_graphs::msg::PlaneData& y_plane2;
+  s_graphs_msgs::msg::PlaneData& x_plane1;
+  s_graphs_msgs::msg::PlaneData& x_plane2;
+  s_graphs_msgs::msg::PlaneData& y_plane1;
+  s_graphs_msgs::msg::PlaneData& y_plane2;
   bool found_x1_plane;
   bool found_x2_plane;
   bool found_y1_plane;
@@ -100,8 +98,7 @@ class RoomAnalyzer {
    * @param skeleton_graph_msg
    */
   void analyze_skeleton_graph(
-      const visualization_msgs::msg::MarkerArray::SharedPtr&
-          skeleton_graph_msg);
+      const visualization_msgs::msg::MarkerArray::SharedPtr& skeleton_graph_msg);
 
   /**
    * @brief
@@ -139,9 +136,10 @@ class RoomAnalyzer {
    * @param found_y2_plane
    * @return
    */
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_room_planes(
-      RoomInfo& room_info, RoomPlanes& room_planes, pcl::PointXY p_min,
-      pcl::PointXY p_max);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr extract_room_planes(RoomInfo& room_info,
+                                                             RoomPlanes& room_planes,
+                                                             pcl::PointXY p_min,
+                                                             pcl::PointXY p_max);
 
   /**
    * @brief
@@ -150,9 +148,9 @@ class RoomAnalyzer {
    * @param cloud_hull
    * @param area
    */
-  void extract_convex_hull(
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud,
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull, float& area);
+  void extract_convex_hull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr skeleton_cloud,
+                           pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull,
+                           float& area);
 
   /**
    * @brief
@@ -163,7 +161,8 @@ class RoomAnalyzer {
    */
   void extract_cluster_endpoints(
       const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud,
-      pcl::PointXY& p1, pcl::PointXY& p2);
+      pcl::PointXY& p1,
+      pcl::PointXY& p2);
 
   /**
    * @brief
@@ -175,7 +174,8 @@ class RoomAnalyzer {
    */
   bool extract_centroid_location(
       const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& skeleton_cloud,
-      const pcl::PointXY& p1, const pcl::PointXY& p2);
+      const pcl::PointXY& p1,
+      const pcl::PointXY& p2);
 
   /**
    * @brief
@@ -210,8 +210,11 @@ class RoomAnalyzer {
    * @return The center point of the room.
    */
   geometry_msgs::msg::Point extract_infinite_room_center(
-      int plane_type, pcl::PointXY p1, pcl::PointXY p2,
-      s_graphs::msg::PlaneData plane1, s_graphs::msg::PlaneData plane2,
+      int plane_type,
+      pcl::PointXY p1,
+      pcl::PointXY p2,
+      s_graphs_msgs::msg::PlaneData plane1,
+      s_graphs_msgs::msg::PlaneData plane2,
       Eigen::Vector2d& cluster_center);
 
   /**
@@ -226,8 +229,9 @@ class RoomAnalyzer {
    * @return Success or Failure.
    */
   bool perform_room_segmentation(
-      RoomInfo& room_info, pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
-      std::vector<s_graphs::msg::RoomData>& room_candidates_vec,
+      RoomInfo& room_info,
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
+      std::vector<s_graphs_msgs::msg::RoomData>& room_candidates_vec,
       const visualization_msgs::msg::MarkerArray& cloud_marker_array);
 
   /**
@@ -235,8 +239,7 @@ class RoomAnalyzer {
    *
    * @param cloud_hull
    */
-  void downsample_cloud_data(
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull);
+  void downsample_cloud_data(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull);
 
  private:
   /**
@@ -302,7 +305,7 @@ class RoomAnalyzer {
    */
   std::vector<float> find_plane_points(const pcl::PointXY& start_point,
                                        const pcl::PointXY& end_point,
-                                       const s_graphs::msg::PlaneData& plane);
+                                       const s_graphs_msgs::msg::PlaneData& plane);
 
   /**
    * @brief
@@ -312,10 +315,9 @@ class RoomAnalyzer {
    * @param sub_cloud_cluster
    * @return
    */
-  int find_plane_points(
-      const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull,
-      const s_graphs::msg::PlaneData& plane,
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster);
+  int find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull,
+                        const s_graphs_msgs::msg::PlaneData& plane,
+                        pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster);
 
   /**
    * @brief

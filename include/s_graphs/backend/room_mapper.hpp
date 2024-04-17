@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-// SPDX-License-Identifier: BSD-2-Clause
-
 #ifndef ROOM_MAPPER_HPP
 #define ROOM_MAPPER_HPP
 
@@ -51,7 +49,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "geometry_msgs/msg/point.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs_msgs/msg/rooms_data.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace s_graphs {
@@ -193,7 +191,7 @@ class InfiniteRoomMapper : public MapperUtils {
   bool lookup_infinite_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
       const int& plane_type,
-      const s_graphs::msg::RoomData room_data,
+      const s_graphs_msgs::msg::RoomData room_data,
       const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
       const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
@@ -324,7 +322,7 @@ class FiniteRoomMapper : public MapperUtils {
    */
   bool lookup_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs::msg::RoomData room_data,
+      const s_graphs_msgs::msg::RoomData room_data,
       const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
       const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
@@ -429,7 +427,7 @@ class FiniteRoomMapper : public MapperUtils {
    */
   void map_room_from_existing_infinite_rooms(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs::msg::RoomData& det_room_data,
+      const s_graphs_msgs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_x_infinite_room,
       const s_graphs::InfiniteRooms& matched_y_infinite_room,
       const Eigen::Isometry3d& room_center,
@@ -457,7 +455,7 @@ class FiniteRoomMapper : public MapperUtils {
    */
   void map_room_from_existing_x_infinite_room(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs::msg::RoomData& det_room_data,
+      const s_graphs_msgs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_x_infinite_room,
       const Eigen::Isometry3d& room_center,
       std::unordered_map<int, Rooms>& rooms_vec,
@@ -484,7 +482,7 @@ class FiniteRoomMapper : public MapperUtils {
    */
   void map_room_from_existing_y_infinite_room(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs::msg::RoomData& det_room_data,
+      const s_graphs_msgs::msg::RoomData& det_room_data,
       const s_graphs::InfiniteRooms& matched_y_infinite_room,
       const Eigen::Isometry3d& room_center,
       std::unordered_map<int, Rooms>& rooms_vec,

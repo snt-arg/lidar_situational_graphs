@@ -1,6 +1,6 @@
 procs:
   rosbag:
-    shell: 'bash -c "source /opt/ros/foxy/setup.bash && rosbag play ~/Downloads/real/stugalux_oetrange_f2_3r"'
+    shell: 'bash -c "source /opt/ros/foxy/setup.bash && rosbag play ~/Downloads/real/stugalux_oetrange_f2_3r.db3"'
     autostart: true
     stop: SIGINT
   s_graphs:

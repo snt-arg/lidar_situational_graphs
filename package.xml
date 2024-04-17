@@ -6,11 +6,10 @@
 
   <maintainer email="hriday.bavle@gmail.com">hriday</maintainer>
 
-  <license>BSD</license>
+  <license>GPLv3</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <build_depend>ndt_omp</build_depend>
   <build_depend>fast_gicp</build_depend>
@@ -29,10 +28,9 @@
   <build_depend>geographic_msgs</build_depend>
   <build_depend>message_filters</build_depend>
   <build_depend>reasoning_msgs</build_depend>
-  <build_depend>rosidl_default_generators</build_depend>
   <build_depend>backward_ros</build_depend>
   <build_depend>rviz_visual_tools</build_depend>
-
+  <build_depend>s_graphs_msgs</build_depend>
 
   <exec_depend>ndt_omp</exec_depend>
   <exec_depend>fast_gicp</exec_depend>
@@ -50,11 +48,9 @@
   <exec_depend>geographic_msgs</exec_depend>
   <exec_depend>message_filters</exec_depend>
   <exec_depend>reasoning_msgs</exec_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
   <exec_depend>backward_ros</exec_depend>
   <exec_depend>rviz_visual_tools</exec_depend>
-
-  <member_of_group>rosidl_interface_packages</member_of_group>
+  <exec_depend>s_graphs_msgs</exec_depend>
 
   <build_depend>ament_cmake_gtest</build_depend>
   <test_depend>ament_cmake_gtest</test_depend>

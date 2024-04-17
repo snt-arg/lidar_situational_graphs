@@ -43,6 +43,8 @@ find_package(geographic_msgs REQUIRED)
 find_package(reasoning_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(rviz_visual_tools REQUIRED)
+find_package(s_graphs_msgs REQUIRED)
+
 
 find_package(PCL REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
@@ -70,26 +72,6 @@ if(VGICP_CUDA_FOUND)
   add_definitions(-DUSE_VGICP_CUDA)
 endif()
 
-########################
-## message generation ##
-########################
-
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/PointClouds.msg"
-  "msg/PlaneData.msg"
-  "msg/PlanesData.msg"
-  "msg/RoomData.msg"
-  "msg/RoomsData.msg"
-  "msg/FloorCoeffs.msg"
-  "msg/ScanMatchingStatus.msg"
-  "msg/WallData.msg"
-  "msg/WallsData.msg"
-  "srv/DumpGraph.srv"
-  "srv/SaveMap.srv"
-  "srv/LoadGraph.srv"
-  DEPENDENCIES builtin_interfaces std_msgs geometry_msgs sensor_msgs visualization_msgs
-)
-
 ###########
 ## Build ##
 ###########
@@ -114,7 +96,8 @@ set(DEPENDENCIES
     geographic_msgs
     nmea_msgs
     geodesy
-    rviz_visual_tools)
+    rviz_visual_tools
+    s_graphs_msgs)
 
 SET(G2O_COMMON_LIBS 
   ${PCL_LIBRARIES}
@@ -156,7 +139,6 @@ target_include_directories(s_graphs_core_lib
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(s_graphs_core_lib ${DEPENDENCIES})                   
-rosidl_target_interfaces(s_graphs_core_lib ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 ament_export_targets(export_s_graph_lib HAS_LIBRARY_TARGET)
 ament_export_dependencies(${DEPENDENCIES})
@@ -171,7 +153,6 @@ ament_target_dependencies(s_graphs_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_node
   s_graphs_core_lib
 )
-rosidl_target_interfaces(s_graphs_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 # nodes
 add_executable(s_graphs_prefiltering_node apps/prefiltering_node.cpp)
@@ -188,7 +169,6 @@ target_link_libraries(s_graphs_room_segmentation_node
   s_graphs_core_lib
   ${PCL_LIBRARIES}
 )
-rosidl_target_interfaces(s_graphs_room_segmentation_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(s_graphs_floor_plan_node
   apps/floor_plan_node.cpp
@@ -198,7 +178,6 @@ target_link_libraries(s_graphs_floor_plan_node
   s_graphs_core_lib  
   ${PCL_LIBRARIES}
 )
-rosidl_target_interfaces(s_graphs_floor_plan_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
 
 add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_node.cpp)
 ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES}) 
@@ -206,8 +185,6 @@ target_link_libraries(s_graphs_scan_matching_odometry_node
   ${PCL_LIBRARIES}
   s_graphs_core_lib
 )
-rosidl_target_interfaces(s_graphs_scan_matching_odometry_node ${PROJECT_NAME} "rosidl_typesupport_cpp")
-
 
 #############
 ## Install ##

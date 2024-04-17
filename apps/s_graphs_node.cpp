@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-// SPDX-License-Identifier: BSD-2-Clause
-
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/time_synchronizer.h>
@@ -81,17 +79,17 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "nmea_msgs/msg/sentence.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs/msg/floor_coeffs.hpp"
-#include "s_graphs/msg/plane_data.hpp"
-#include "s_graphs/msg/planes_data.hpp"
-#include "s_graphs/msg/point_clouds.hpp"
-#include "s_graphs/msg/room_data.hpp"
-#include "s_graphs/msg/rooms_data.hpp"
-#include "s_graphs/msg/wall_data.hpp"
-#include "s_graphs/msg/walls_data.hpp"
-#include "s_graphs/srv/dump_graph.hpp"
-#include "s_graphs/srv/load_graph.hpp"
-#include "s_graphs/srv/save_map.hpp"
+#include "s_graphs_msgs/msg/floor_coeffs.hpp"
+#include "s_graphs_msgs/msg/plane_data.hpp"
+#include "s_graphs_msgs/msg/planes_data.hpp"
+#include "s_graphs_msgs/msg/point_clouds.hpp"
+#include "s_graphs_msgs/msg/room_data.hpp"
+#include "s_graphs_msgs/msg/rooms_data.hpp"
+#include "s_graphs_msgs/msg/wall_data.hpp"
+#include "s_graphs_msgs/msg/walls_data.hpp"
+#include "s_graphs_msgs/srv/dump_graph.hpp"
+#include "s_graphs_msgs/srv/load_graph.hpp"
+#include "s_graphs_msgs/srv/save_map.hpp"
 #include "sensor_msgs/msg/imu.h"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
@@ -229,17 +227,17 @@ class SGraphsNode : public rclcpp::Node {
         std::bind(&SGraphsNode::imu_callback, this, std::placeholders::_1),
         sub_opt);
 
-    room_data_sub = this->create_subscription<s_graphs::msg::RoomsData>(
+    room_data_sub = this->create_subscription<s_graphs_msgs::msg::RoomsData>(
         "room_segmentation/room_data",
         1,
         std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1),
         sub_opt);
-    wall_data_sub = this->create_subscription<s_graphs::msg::WallsData>(
+    wall_data_sub = this->create_subscription<s_graphs_msgs::msg::WallsData>(
         "wall_segmentation/wall_data",
         1,
         std::bind(&SGraphsNode::wall_data_callback, this, std::placeholders::_1),
         sub_opt);
-    floor_data_sub = this->create_subscription<s_graphs::msg::RoomData>(
+    floor_data_sub = this->create_subscription<s_graphs_msgs::msg::RoomData>(
         "floor_plan/floor_data",
         1,
         std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1),
@@ -280,28 +278,28 @@ class SGraphsNode : public rclcpp::Node {
 
     map_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         "s_graphs/map_points", 1, pub_opt);
-    map_planes_pub = this->create_publisher<s_graphs::msg::PlanesData>(
+    map_planes_pub = this->create_publisher<s_graphs_msgs::msg::PlanesData>(
         "s_graphs/map_planes", 1, pub_opt);
-    all_map_planes_pub = this->create_publisher<s_graphs::msg::PlanesData>(
+    all_map_planes_pub = this->create_publisher<s_graphs_msgs::msg::PlanesData>(
         "s_graphs/all_map_planes", 1, pub_opt);
     read_until_pub = this->create_publisher<std_msgs::msg::Header>(
         "s_graphs/read_until", 32, pub_opt);
     graph_pub = this->create_publisher<reasoning_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32, pub_opt);
 
-    dump_service_server = this->create_service<s_graphs::srv::DumpGraph>(
+    dump_service_server = this->create_service<s_graphs_msgs::srv::DumpGraph>(
         "s_graphs/dump",
         std::bind(&SGraphsNode::dump_service,
                   this,
                   std::placeholders::_1,
                   std::placeholders::_2));
-    save_map_service_server = this->create_service<s_graphs::srv::SaveMap>(
+    save_map_service_server = this->create_service<s_graphs_msgs::srv::SaveMap>(
         "s_graphs/save_map",
         std::bind(&SGraphsNode::save_map_service,
                   this,
                   std::placeholders::_1,
                   std::placeholders::_2));
-    load_service_server = this->create_service<s_graphs::srv::LoadGraph>(
+    load_service_server = this->create_service<s_graphs_msgs::srv::LoadGraph>(
         "s_graphs/load",
         std::bind(&SGraphsNode::load_service,
                   this,
@@ -578,7 +576,8 @@ class SGraphsNode : public rclcpp::Node {
     trans_map2map(2, 3) = pose_msg->pose.position.z;
   }
 
-  void floor_data_callback(const s_graphs::msg::RoomData::SharedPtr floor_data_msg) {
+  void floor_data_callback(
+      const s_graphs_msgs::msg::RoomData::SharedPtr floor_data_msg) {
     std::lock_guard<std::mutex> lock(floor_data_mutex);
     floor_data_queue.push_back(*floor_data_msg);
   }
@@ -608,7 +607,7 @@ class SGraphsNode : public rclcpp::Node {
    * @brief get the room data from room segmentation module
    *
    */
-  void room_data_callback(const s_graphs::msg::RoomsData::SharedPtr rooms_msg) {
+  void room_data_callback(const s_graphs_msgs::msg::RoomsData::SharedPtr rooms_msg) {
     std::lock_guard<std::mutex> lock(room_data_queue_mutex);
     room_data_queue.push_back(*rooms_msg);
     // std::cout << "pre_room_data_vec size :" << pre_room_data_vec.size() << std::endl;
@@ -828,10 +827,12 @@ class SGraphsNode : public rclcpp::Node {
     return true;
   }
 
-  void wall_data_callback(const s_graphs::msg::WallsData::SharedPtr walls_msg) {
+  void wall_data_callback(const s_graphs_msgs::msg::WallsData::SharedPtr walls_msg) {
     for (int j = 0; j < walls_msg->walls.size(); j++) {
-      std::vector<s_graphs::msg::PlaneData> x_planes_msg = walls_msg->walls[j].x_planes;
-      std::vector<s_graphs::msg::PlaneData> y_planes_msg = walls_msg->walls[j].y_planes;
+      std::vector<s_graphs_msgs::msg::PlaneData> x_planes_msg =
+          walls_msg->walls[j].x_planes;
+      std::vector<s_graphs_msgs::msg::PlaneData> y_planes_msg =
+          walls_msg->walls[j].y_planes;
 
       if (x_planes_msg.size() != 2 && y_planes_msg.size() != 2) continue;
 
@@ -1321,13 +1322,13 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
-    s_graphs::msg::PlanesData vert_planes_data;
+    s_graphs_msgs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& unique_x_plane_id : unique_x_plane_ids) {
       auto local_x_vert_plane = x_vert_planes_snapshot.find(unique_x_plane_id.first);
 
       if (local_x_vert_plane == x_vert_planes_snapshot.end()) continue;
-      s_graphs::msg::PlaneData plane_data;
+      s_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs =
           (local_x_vert_plane->second).plane_node->estimate().coeffs();
@@ -1353,7 +1354,7 @@ class SGraphsNode : public rclcpp::Node {
       auto local_y_vert_plane = y_vert_planes_snapshot.find(unique_y_plane_id.first);
 
       if (local_y_vert_plane == y_vert_planes_snapshot.end()) continue;
-      s_graphs::msg::PlaneData plane_data;
+      s_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs =
           (local_y_vert_plane->second).plane_node->estimate().coeffs();
@@ -1386,10 +1387,10 @@ class SGraphsNode : public rclcpp::Node {
       const std::vector<VerticalPlanes>& y_vert_planes_snapshot) {
     if (keyframes.empty()) return;
 
-    s_graphs::msg::PlanesData vert_planes_data;
+    s_graphs_msgs::msg::PlanesData vert_planes_data;
     vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
     for (const auto& x_vert_plane : x_vert_planes_snapshot) {
-      s_graphs::msg::PlaneData plane_data;
+      s_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (x_vert_plane).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
@@ -1415,7 +1416,7 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& y_vert_plane : y_vert_planes_snapshot) {
-      s_graphs::msg::PlaneData plane_data;
+      s_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
       mapped_plane_coeffs = (y_vert_plane).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
@@ -1461,8 +1462,8 @@ class SGraphsNode : public rclcpp::Node {
    * @param res
    * @return
    */
-  bool dump_service(const std::shared_ptr<s_graphs::srv::DumpGraph::Request> req,
-                    std::shared_ptr<s_graphs::srv::DumpGraph::Response> res) {
+  bool dump_service(const std::shared_ptr<s_graphs_msgs::srv::DumpGraph::Request> req,
+                    std::shared_ptr<s_graphs_msgs::srv::DumpGraph::Response> res) {
     std::lock_guard<std::mutex> lock(graph_mutex);
 
     std::string directory = req->destination;
@@ -1527,8 +1528,8 @@ class SGraphsNode : public rclcpp::Node {
    * @param res
    * @return
    */
-  bool save_map_service(const std::shared_ptr<s_graphs::srv::SaveMap::Request> req,
-                        std::shared_ptr<s_graphs::srv::SaveMap::Response> res) {
+  bool save_map_service(const std::shared_ptr<s_graphs_msgs::srv::SaveMap::Request> req,
+                        std::shared_ptr<s_graphs_msgs::srv::SaveMap::Response> res) {
     std::vector<KeyFrameSnapshot::Ptr> snapshot;
 
     snapshot = keyframes_snapshot;
@@ -1561,8 +1562,8 @@ class SGraphsNode : public rclcpp::Node {
     return true;
   }
 
-  bool load_service(const std::shared_ptr<s_graphs::srv::LoadGraph::Request> req,
-                    std::shared_ptr<s_graphs::srv::LoadGraph::Response> res) {
+  bool load_service(const std::shared_ptr<s_graphs_msgs::srv::LoadGraph::Request> req,
+                    std::shared_ptr<s_graphs_msgs::srv::LoadGraph::Response> res) {
     std::string directory = req->destination;
     std::vector<std::string> keyframe_directories, y_planes_directories,
         x_planes_directories, room_directories;
@@ -1762,9 +1763,9 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr navsat_sub;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr raw_odom_sub;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub;
-  rclcpp::Subscription<s_graphs::msg::RoomsData>::SharedPtr room_data_sub;
-  rclcpp::Subscription<s_graphs::msg::WallsData>::SharedPtr wall_data_sub;
-  rclcpp::Subscription<s_graphs::msg::RoomData>::SharedPtr floor_data_sub;
+  rclcpp::Subscription<s_graphs_msgs::msg::RoomsData>::SharedPtr room_data_sub;
+  rclcpp::Subscription<s_graphs_msgs::msg::WallsData>::SharedPtr wall_data_sub;
+  rclcpp::Subscription<s_graphs_msgs::msg::RoomData>::SharedPtr floor_data_sub;
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
       map_2map_transform_sub;
@@ -1783,17 +1784,17 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_corrected_pub;
   rclcpp::Publisher<std_msgs::msg::Header>::SharedPtr read_until_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub;
-  rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr map_planes_pub;
-  rclcpp::Publisher<s_graphs::msg::PlanesData>::SharedPtr all_map_planes_pub;
+  rclcpp::Publisher<s_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_pub;
+  rclcpp::Publisher<s_graphs_msgs::msg::PlanesData>::SharedPtr all_map_planes_pub;
   rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom2map_broadcaster;
 
-  rclcpp::Service<s_graphs::srv::DumpGraph>::SharedPtr dump_service_server;
-  rclcpp::Service<s_graphs::srv::LoadGraph>::SharedPtr load_service_server;
-  rclcpp::Service<s_graphs::srv::SaveMap>::SharedPtr save_map_service_server;
+  rclcpp::Service<s_graphs_msgs::srv::DumpGraph>::SharedPtr dump_service_server;
+  rclcpp::Service<s_graphs_msgs::srv::LoadGraph>::SharedPtr load_service_server;
+  rclcpp::Service<s_graphs_msgs::srv::SaveMap>::SharedPtr save_map_service_server;
 
   // odom queue
   std::mutex odom_queue_mutex;
@@ -1864,8 +1865,8 @@ class SGraphsNode : public rclcpp::Node {
 
   // room data queue
   std::mutex room_data_queue_mutex, floor_data_mutex;
-  std::deque<s_graphs::msg::RoomsData> room_data_queue;
-  std::deque<s_graphs::msg::RoomData> floor_data_queue;
+  std::deque<s_graphs_msgs::msg::RoomsData> room_data_queue;
+  std::deque<s_graphs_msgs::msg::RoomData> floor_data_queue;
 
   // for map cloud generation
   std::atomic_bool graph_updated;

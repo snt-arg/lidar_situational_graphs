@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-// SPDX-License-Identifier: BSD-2-Clause
-
 #ifndef WALL_MAPPER_HPP
 #define WALL_MAPPER_HPP
 
@@ -51,10 +49,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/point.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs/msg/plane_data.hpp"
-#include "s_graphs/msg/planes_data.hpp"
-#include "s_graphs/msg/room_data.hpp"
-#include "s_graphs/msg/rooms_data.hpp"
+#include "s_graphs_msgs/msg/plane_data.hpp"
+#include "s_graphs_msgs/msg/planes_data.hpp"
+#include "s_graphs_msgs/msg/room_data.hpp"
+#include "s_graphs_msgs/msg/rooms_data.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
@@ -86,8 +84,8 @@ class WallMapper {
   void factor_wall(const std::shared_ptr<GraphSLAM> covisibility_graph,
                    const Eigen::Vector3d& wall_pose,
                    const Eigen::Vector3d& wall_point,
-                   const std::vector<s_graphs::msg::PlaneData> x_planes_msg,
-                   const std::vector<s_graphs::msg::PlaneData> y_planes_msg,
+                   const std::vector<s_graphs_msgs::msg::PlaneData> x_planes_msg,
+                   const std::vector<s_graphs_msgs::msg::PlaneData> y_planes_msg,
                    std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                    std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 

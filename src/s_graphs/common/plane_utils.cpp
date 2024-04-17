@@ -1,34 +1,3 @@
-/*
-Copyright (c) 2023, University of Luxembourg
-All rights reserved.
-
-Redistributions and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-*/
-
-// SPDX-License-Identifier: BSD-2-Clause
-
 #include "s_graphs/common/plane_utils.hpp"
 
 typedef pcl::PointXYZRGBNormal PointNormal;
@@ -51,8 +20,8 @@ float PlaneUtils::width_between_planes(Eigen::Vector4d v1, Eigen::Vector4d v2) {
   return size;
 }
 
-float PlaneUtils::width_between_planes(const s_graphs::msg::PlaneData& plane1,
-                                       const s_graphs::msg::PlaneData& plane2) {
+float PlaneUtils::width_between_planes(const s_graphs_msgs::msg::PlaneData& plane1,
+                                       const s_graphs_msgs::msg::PlaneData& plane2) {
   Eigen::Vector3d vec;
   Eigen::Vector3d plane1_eigen, plane2_eigen;
   plane1_eigen << plane1.nx, plane1.ny, plane1.nz;
@@ -70,7 +39,7 @@ float PlaneUtils::width_between_planes(const s_graphs::msg::PlaneData& plane1,
 }
 
 void PlaneUtils::correct_plane_direction(int plane_type,
-                                         s_graphs::msg::PlaneData& plane) {
+                                         s_graphs_msgs::msg::PlaneData& plane) {
   if (plane.d > 0) {
     plane.nx = -1 * plane.nx;
     plane.ny = -1 * plane.ny;
@@ -136,10 +105,10 @@ Eigen::Vector2d PlaneUtils::room_center(const Eigen::Vector4d& x_plane1,
 }
 
 geometry_msgs::msg::Pose PlaneUtils::room_center(
-    const s_graphs::msg::PlaneData& x_plane1,
-    const s_graphs::msg::PlaneData& x_plane2,
-    const s_graphs::msg::PlaneData& y_plane1,
-    const s_graphs::msg::PlaneData& y_plane2) {
+    const s_graphs_msgs::msg::PlaneData& x_plane1,
+    const s_graphs_msgs::msg::PlaneData& x_plane2,
+    const s_graphs_msgs::msg::PlaneData& y_plane1,
+    const s_graphs_msgs::msg::PlaneData& y_plane2) {
   geometry_msgs::msg::Pose center;
   Eigen::Vector3d vec_x, vec_y;
   Eigen::Vector3d x_plane1_eigen, x_plane2_eigen;
@@ -300,8 +269,8 @@ bool PlaneUtils::compute_point_difference(const double plane1_point,
   return true;
 }
 
-float PlaneUtils::plane_dot_product(const s_graphs::msg::PlaneData& plane1,
-                                    const s_graphs::msg::PlaneData& plane2) {
+float PlaneUtils::plane_dot_product(const s_graphs_msgs::msg::PlaneData& plane1,
+                                    const s_graphs_msgs::msg::PlaneData& plane2) {
   float dot_product =
       plane1.nx * plane2.nx + plane1.ny * plane2.ny + plane1.nz * plane2.nz;
   return dot_product;
@@ -321,8 +290,8 @@ geometry_msgs::msg::Pose PlaneUtils::extract_infite_room_center(
     int plane_type,
     pcl::PointXY p1,
     pcl::PointXY p2,
-    s_graphs::msg::PlaneData plane1,
-    s_graphs::msg::PlaneData plane2,
+    s_graphs_msgs::msg::PlaneData plane1,
+    s_graphs_msgs::msg::PlaneData plane2,
     Eigen::Vector2d& cluster_center) {
   geometry_msgs::msg::Pose center_point;
   Eigen::Vector4d plane1_eigen, plane2_eigen;
