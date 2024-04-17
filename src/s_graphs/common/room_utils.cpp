@@ -107,7 +107,7 @@ std::optional<Eigen::Isometry3d> obtain_global_centre_of_room(
   Eigen::Vector3d mid_point_y_vec_respect_p3 =
       p3 + p3_normal * (planes[2].normal.dot(vec_p4_p3) * 0.5);
 
-  auto rot = room_centre.rotation();
+  Eigen::Matrix3d rot = room_centre.rotation();
   rot.col(0) = p1_normal;
   rot.col(1) = p3_normal;
   rot.col(2) << p1_normal.cross(p3_normal);
