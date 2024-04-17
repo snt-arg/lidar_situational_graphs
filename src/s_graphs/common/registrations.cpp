@@ -15,15 +15,15 @@
 
 namespace s_graphs {
 
-boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>>
-select_registration_method(registration_params params) {
+pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr select_registration_method(
+    registration_params params) {
   using PointT = pcl::PointXYZI;
 
   // select a registration method (ICP, GICP, NDT)
   std::string registration_method = params.registration_method;
   if (registration_method == "FAST_GICP") {
     std::cout << "registration: FAST_GICP" << std::endl;
-    boost::shared_ptr<fast_gicp::FastGICP<PointT, PointT>> gicp(
+    fast_gicp::FastGICP<PointT, PointT>::Ptr gicp(
         new fast_gicp::FastGICP<PointT, PointT>());
     gicp->setNumThreads(params.reg_num_threads);
     gicp->setTransformationEpsilon(params.reg_transformation_epsilon);
@@ -35,7 +35,7 @@ select_registration_method(registration_params params) {
 #ifdef USE_VGICP_CUDA
   else if (registration_method == "FAST_VGICP_CUDA") {
     std::cout << "registration: FAST_VGICP_CUDA" << std::endl;
-    boost::shared_ptr<fast_gicp::FastVGICPCuda<PointT, PointT>> vgicp(
+    fast_gicp::FastVGICPCuda<PointT, PointT>::Ptr vgicp(
         new fast_gicp::FastVGICPCuda<PointT, PointT>());
     vgicp->setResolution(pnh.param<double>("reg_resolution", 1.0));
     vgicp->setTransformationEpsilon(
@@ -48,7 +48,7 @@ select_registration_method(registration_params params) {
 #endif
   else if (registration_method == "FAST_VGICP") {
     std::cout << "registration: FAST_VGICP" << std::endl;
-    boost::shared_ptr<fast_gicp::FastVGICP<PointT, PointT>> vgicp(
+    fast_gicp::FastVGICP<PointT, PointT>::Ptr vgicp(
         new fast_gicp::FastVGICP<PointT, PointT>());
     vgicp->setNumThreads(params.reg_num_threads);
     vgicp->setResolution(params.reg_resolution);
@@ -58,7 +58,7 @@ select_registration_method(registration_params params) {
     return vgicp;
   } else if (registration_method == "ICP") {
     std::cout << "registration: ICP" << std::endl;
-    boost::shared_ptr<pcl::IterativeClosestPoint<PointT, PointT>> icp(
+    pcl::IterativeClosestPoint<PointT, PointT>::Ptr icp(
         new pcl::IterativeClosestPoint<PointT, PointT>());
     icp->setTransformationEpsilon(params.reg_transformation_epsilon);
     icp->setMaximumIterations(params.reg_maximum_iterations);
@@ -68,7 +68,7 @@ select_registration_method(registration_params params) {
   } else if (registration_method.find("GICP") != std::string::npos) {
     if (registration_method.find("OMP") == std::string::npos) {
       std::cout << "registration: GICP" << std::endl;
-      boost::shared_ptr<pcl::GeneralizedIterativeClosestPoint<PointT, PointT>> gicp(
+      pcl::GeneralizedIterativeClosestPoint<PointT, PointT>::Ptr gicp(
           new pcl::GeneralizedIterativeClosestPoint<PointT, PointT>());
       gicp->setTransformationEpsilon(params.reg_transformation_epsilon);
       gicp->setMaximumIterations(params.reg_maximum_iterations);
@@ -79,7 +79,7 @@ select_registration_method(registration_params params) {
       return gicp;
     } else {
       std::cout << "registration: GICP_OMP" << std::endl;
-      boost::shared_ptr<pclomp::GeneralizedIterativeClosestPoint<PointT, PointT>> gicp(
+      pclomp::GeneralizedIterativeClosestPoint<PointT, PointT>::Ptr gicp(
           new pclomp::GeneralizedIterativeClosestPoint<PointT, PointT>());
       gicp->setTransformationEpsilon(params.reg_transformation_epsilon);
       gicp->setMaximumIterations(params.reg_maximum_iterations);
@@ -99,7 +99,7 @@ select_registration_method(registration_params params) {
     double ndt_resolution = params.reg_resolution;
     if (registration_method.find("OMP") == std::string::npos) {
       std::cout << "registration: NDT " << ndt_resolution << std::endl;
-      boost::shared_ptr<pcl::NormalDistributionsTransform<PointT, PointT>> ndt(
+      pcl::NormalDistributionsTransform<PointT, PointT>::Ptr ndt(
           new pcl::NormalDistributionsTransform<PointT, PointT>());
       ndt->setTransformationEpsilon(params.reg_transformation_epsilon);
       ndt->setMaximumIterations(params.reg_maximum_iterations);
@@ -110,7 +110,7 @@ select_registration_method(registration_params params) {
       std::string nn_search_method = params.reg_nn_search_method;
       std::cout << "registration: NDT_OMP " << nn_search_method << " " << ndt_resolution
                 << " (" << num_threads << " threads)" << std::endl;
-      boost::shared_ptr<pclomp::NormalDistributionsTransform<PointT, PointT>> ndt(
+      pclomp::NormalDistributionsTransform<PointT, PointT>::Ptr ndt(
           new pclomp::NormalDistributionsTransform<PointT, PointT>());
       if (num_threads > 0) {
         ndt->setNumThreads(num_threads);

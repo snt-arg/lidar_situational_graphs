@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #include <pcl/filters/approximate_voxel_grid.h>
 #include <pcl/filters/passthrough.h>
 #include <pcl/filters/radius_outlier_removal.h>
@@ -103,14 +101,14 @@ class PrefilteringNode : public rclcpp::Node {
 
     if (downsample_method == "VOXELGRID") {
       std::cout << "downsample: VOXELGRID " << downsample_resolution << std::endl;
-      boost::shared_ptr<pcl::VoxelGrid<PointT>> voxelgrid(new pcl::VoxelGrid<PointT>());
+      pcl::VoxelGrid<PointT>::Ptr voxelgrid(new pcl::VoxelGrid<PointT>());
       voxelgrid->setLeafSize(
           downsample_resolution, downsample_resolution, downsample_resolution);
       downsample_filter = voxelgrid;
     } else if (downsample_method == "APPROX_VOXELGRID") {
       std::cout << "downsample: APPROX_VOXELGRID " << downsample_resolution
                 << std::endl;
-      boost::shared_ptr<pcl::ApproximateVoxelGrid<PointT>> approx_voxelgrid(
+      pcl::ApproximateVoxelGrid<PointT>::Ptr approx_voxelgrid(
           new pcl::ApproximateVoxelGrid<PointT>());
       approx_voxelgrid->setLeafSize(
           downsample_resolution, downsample_resolution, downsample_resolution);

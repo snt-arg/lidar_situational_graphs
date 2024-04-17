@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef HDL_GRAPH_SLAM_REGISTRATIONS_HPP
 #define HDL_GRAPH_SLAM_REGISTRATIONS_HPP
 
@@ -56,8 +54,8 @@ struct registration_params {
  * @param registration_params
  * @return selected scan matching
  */
-boost::shared_ptr<pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>>
-select_registration_method(registration_params params);
+pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr select_registration_method(
+    registration_params params);
 
 }  // namespace s_graphs
 

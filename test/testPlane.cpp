@@ -63,7 +63,7 @@ class TestPlane : public ::testing::Test {
 
     graph_slam = std::make_shared<s_graphs::GraphSLAM>();
     plane_mapper = std::make_shared<s_graphs::PlaneMapper>(node);
-    cloud = boost::make_shared<pcl::PointCloud<PointT>>();
+    cloud = pcl::PointCloud<PointT>::Ptr();
   }
 
   void testConvertPlaneToMap() {
@@ -119,8 +119,8 @@ class TestPlane : public ::testing::Test {
     g2o::Plane3D mapped_plane(local_plane);
     x_vert_plane.plane = mapped_plane;
     x_vert_plane.keyframe_node = keyframe->node;
-    x_vert_plane.cloud_seg_body = boost::make_shared<pcl::PointCloud<PointNormal>>();
-    x_vert_plane.cloud_seg_map = boost::make_shared<pcl::PointCloud<PointNormal>>();
+    x_vert_plane.cloud_seg_body = pcl::PointCloud<PointNormal>::Ptr();
+    x_vert_plane.cloud_seg_map = pcl::PointCloud<PointNormal>::Ptr();
     x_vert_plane.keyframe_node_vec.push_back(keyframe->node);
     x_vert_planes.insert({x_vert_plane.id, x_vert_plane});
 

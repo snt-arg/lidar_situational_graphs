@@ -148,7 +148,7 @@ Eigen::Isometry3d odom2isometry(const nav_msgs::msg::Odometry::SharedPtr& odom_m
 
 KeyFrame ROS2Keyframe(const reasoning_msgs::msg::Keyframe& msg) {
   pcl::PointCloud<KeyFrame::PointT>::Ptr cloud =
-      boost::make_shared<pcl::PointCloud<KeyFrame::PointT>>();
+      pcl::PointCloud<KeyFrame::PointT>::Ptr();
   pcl::fromROSMsg(msg.pointcloud, *cloud);
 
   // TODO: add_accumulated_distance

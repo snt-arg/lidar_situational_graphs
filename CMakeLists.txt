@@ -38,6 +38,7 @@ find_package(ndt_omp REQUIRED)
 find_package(fast_gicp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_eigen REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(reasoning_msgs REQUIRED)
@@ -89,6 +90,7 @@ set(DEPENDENCIES
     fast_gicp 
     tf2 
     tf2_ros
+    tf2_eigen
     pcl_ros 
     reasoning_msgs 
     visualization_msgs 
