@@ -22,6 +22,4 @@ jobs:
           workspace-script: './setup.sh'
 
       - name: Build and Test
-        run: |
-          cd iron_ws
-          colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+        run: cd iron_ws && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
