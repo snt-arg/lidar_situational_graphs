@@ -3,8 +3,6 @@
 namespace s_graphs {
 
 IMUMapper::IMUMapper(const rclcpp::Node::SharedPtr node) {
-  imu_time_offset =
-      node->get_parameter("imu_time_offset").get_parameter_value().get<double>();
   enable_imu_orientation =
       node->get_parameter("enable_imu_orientation").get_parameter_value().get<bool>();
   enable_imu_acceleration =

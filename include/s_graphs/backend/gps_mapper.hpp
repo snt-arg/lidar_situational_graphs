@@ -65,7 +65,6 @@ class GPSMapper {
 
  private:
   boost::optional<Eigen::Vector3d> zero_utm;
-  double gps_time_offset;
   double gps_edge_stddev_xy;
   double gps_edge_stddev_z;
 };

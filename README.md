@@ -62,7 +62,8 @@
 <!-- TODO: When s-graphs is available in rosdistro add here the command to install -->
 
 > [!NOTE]
-> S-Graphs+ was only tested on Ubuntu 20.04, ROS2 Foxy distro.
+> S-Graphs+ was only tested on Ubuntu 20.04, ROS2 Foxy, Humble Distros.
+> We strongly recommend using [cyclone_dds](https://docs.ros.org/en/humble/Installation/DDS-Implementations/Working-with-Eclipse-CycloneDDS.html) instead of the default fastdds.  
 
 ### 📦 Installation From Source <a id="installation-from-source"></a>
 

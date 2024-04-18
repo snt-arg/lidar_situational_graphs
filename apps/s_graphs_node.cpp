@@ -138,8 +138,10 @@ class SGraphsNode : public rclcpp::Node {
                                    .get_parameter_value()
                                    .get<int>();
 
+    gps_time_offset =
+        this->get_parameter("gps_time_offset").get_parameter_value().get<int>();
     imu_time_offset =
-        this->get_parameter("imu_time_offset").get_parameter_value().get<double>();
+        this->get_parameter("imu_time_offset").get_parameter_value().get<int>();
     enable_imu_orientation =
         this->get_parameter("enable_imu_orientation").get_parameter_value().get<bool>();
     enable_imu_acceleration = this->get_parameter("enable_imu_acceleration")
@@ -184,7 +186,7 @@ class SGraphsNode : public rclcpp::Node {
     sub_opt.callback_group = callback_group_subscriber;
 
     // subscribers
-    init_odom2map_sub = this->create_subscription<geometry_msgs::msg::PointStamped>(
+    init_odom2map_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
         "odom2map/initial_pose",
         1,
         std::bind(
@@ -375,11 +377,11 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("save_timings", false);
 
     this->declare_parameter("max_keyframes_per_update", 10);
-    this->declare_parameter("gps_time_offset", 10);
+    this->declare_parameter("gps_time_offset", 0);
     this->declare_parameter("gps_edge_stddev_xy", 10000.0);
     this->declare_parameter("gps_edge_stddev_z", 10.0);
 
-    this->declare_parameter("imu_time_offset", 0.0);
+    this->declare_parameter("imu_time_offset", 0);
     this->declare_parameter("enable_imu_orientation", false);
     this->declare_parameter("enable_imu_acceleration", false);
     this->declare_parameter("imu_orientation_edge_stddev", 0.1);
@@ -536,7 +538,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param map2odom_pose_msg
    */
   void init_map2odom_pose_callback(
-      const geometry_msgs::msg::PoseStamped::SharedPtr pose_msg) {
+      geometry_msgs::msg::PoseStamped::ConstSharedPtr pose_msg) {
     if (got_trans_odom2map) return;
 
     Eigen::Matrix3f mat3 = Eigen::Quaternionf(pose_msg->pose.orientation.w,
@@ -563,7 +565,6 @@ class SGraphsNode : public rclcpp::Node {
    */
   void map2map_transform_callback(
       const geometry_msgs::msg::PoseStamped::SharedPtr pose_msg) {
-    std::cout << "inside callback" << std::endl;
     Eigen::Matrix3f mat3 = Eigen::Quaternionf(pose_msg->pose.orientation.w,
                                               pose_msg->pose.orientation.x,
                                               pose_msg->pose.orientation.y,
@@ -889,7 +890,7 @@ class SGraphsNode : public rclcpp::Node {
    */
   void gps_callback(const geographic_msgs::msg::GeoPointStamped::SharedPtr gps_msg) {
     std::lock_guard<std::mutex> lock(gps_queue_mutex);
-    rclcpp::Time(gps_msg->header.stamp) += rclcpp::Duration(gps_time_offset);
+    rclcpp::Time(gps_msg->header.stamp) += rclcpp::Duration(gps_time_offset, 0);
     gps_queue.push_back(gps_msg);
   }
 
@@ -913,7 +914,7 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     std::lock_guard<std::mutex> lock(imu_queue_mutex);
-    rclcpp::Time(imu_msg->header.stamp) += rclcpp::Duration(imu_time_offset);
+    rclcpp::Time(imu_msg->header.stamp) += rclcpp::Duration(imu_time_offset, 0);
     imu_queue.push_back(imu_msg);
   }
 
@@ -1810,7 +1811,7 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<KeyFrame::Ptr> keyframe_queue;
 
   // gps queue
-  double gps_time_offset;
+  int gps_time_offset;
   double gps_edge_stddev_xy;
   double gps_edge_stddev_z;
   boost::optional<Eigen::Vector3d> zero_utm;
@@ -1818,7 +1819,7 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<geographic_msgs::msg::GeoPointStamped::SharedPtr> gps_queue;
 
   // imu queue
-  double imu_time_offset;
+  int imu_time_offset;
   bool enable_imu_orientation;
   double imu_orientation_edge_stddev;
   bool enable_imu_acceleration;

@@ -67,7 +67,6 @@ class IMUMapper {
                     const std::string base_frame_id);
 
  private:
-  double imu_time_offset;
   bool enable_imu_orientation;
   double imu_orientation_edge_stddev;
   bool enable_imu_acceleration;

@@ -3,8 +3,6 @@
 namespace s_graphs {
 
 GPSMapper::GPSMapper(const rclcpp::Node::SharedPtr node) {
-  gps_time_offset =
-      node->get_parameter("gps_time_offset").get_parameter_value().get<int>();
   gps_edge_stddev_xy =
       node->get_parameter("gps_edge_stddev_xy").get_parameter_value().get<double>();
   gps_edge_stddev_z =
