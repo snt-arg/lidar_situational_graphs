@@ -243,6 +243,9 @@ docker cp ~/Downloads/virtual s_graphs_container:/root/Downloads/virtual # For v
 docker exec -ti s_graphs_container bash
 ```
 
+> [!IMPORTANT]
+> If rviz2 doesnt open inside the docker, do `xhost +` in a terminal of your pc and then relaunch the mprocs command inside docker.
+
 3. Run mprocs
 
 ```sh
