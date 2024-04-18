@@ -1,25 +1,18 @@
-name: ROS 2 Iron Passing Checks
+name: ROS 2 Iron
 
 on:
   push:
     branches:
-      - main
-      - iron
+     - feature/ros2
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    container:
+      image: sntarg/unitree_ros:iron
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Setup ROS 2 Iron
-        uses: ros/tooling@main
-        with:
-          rosdistro: iron
-          workspace: iron_ws
-          workspace-script: './setup.sh'
+        uses: actions/checkout@v3
 
       - name: Build and Test
-        run: cd iron_ws && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+        run: ./setup.sh && colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
