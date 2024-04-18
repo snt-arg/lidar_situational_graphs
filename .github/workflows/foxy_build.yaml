@@ -1,0 +1,27 @@
+name: ROS 2 Foxy Passing Checks
+
+on:
+  push:
+    branches:
+      - main
+      - foxy
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup ROS 2 Foxy
+        uses: ros/tooling@main
+        with:
+          rosdistro: foxy
+          workspace: foxy_ws
+          workspace-script: '/setup.sh'
+
+      - name: Build and Test
+        run: |
+          cd foxy_ws
+          colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release

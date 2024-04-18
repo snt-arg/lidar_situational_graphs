@@ -1,0 +1,27 @@
+name: ROS 2 Humble Passing Checks
+
+on:
+  push:
+    branches:
+      - main
+      - humble
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup ROS 2 Humble
+        uses: ros/tooling@main
+        with:
+          rosdistro: humble
+          workspace: humble_ws
+          workspace-script: './setup.sh'
+
+      - name: Build and Test
+        run: |
+          cd humble_ws
+          colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
