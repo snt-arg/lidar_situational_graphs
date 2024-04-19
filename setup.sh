@@ -18,13 +18,13 @@ pip install protobuf==3.20.*
 rosdep update --include-eol-distros
 
 #import all repos
-vcs import --recursive ../ < .rosinstall_ros2
+git submodule update --init --recursive
 
 #install python requirements
 pip3 install -r requirements.txt
 
 #rosdep install
-cd ../../ && rosdep install --from-paths src -y --ignore-src -r
+rosdep install --from-paths . -y --ignore-src -r
 
 # - Importing all dependencies
 colcon build --symlink-install 
