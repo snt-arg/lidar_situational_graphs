@@ -88,13 +88,13 @@ rosdep init && rosdep update --include-eol-distros
 2. Create a ROS2 workspace for S-Graphs
 
 ```bash
-mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && source /opt/ros/foxy/setup.bash
+mkdir -p $HOME/workspaces && cd $HOME/workspaces
 ```
 
 3. Clone the S-Graphs repository into the created workspace
 
 ```bash
-git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs 
 ```
 
 > [!IMPORTANT]
@@ -181,13 +181,13 @@ catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
 1. Create a ROS2 workspace for S-Graphs
 
 ```sh
-mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src
+mkdir -p $HOME/workspaces && cd $HOME/workspaces
 ```
 
 2. Change directory to where Dockerfile is located in `s_graphs`
 
 ```sh
-git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && cd $HOME/workspaces/s_graphs/docker/foxy_noetic
 ```
 
 3. Build image
@@ -210,7 +210,7 @@ docker build -t sntarg/s_graphs --ssh default=$HOME/.ssh/id_ed25519 .
 > Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/ET2kNySZrzVBlveGgvSByeUBAvQk5wl05GMF0NwqbkL6ZA?e=hoaaOo) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
 
 ```bash
-cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
+cd $HOME/workspaces/s_graphs && mprocs --config .real_mprocs.yaml
 ```
 
 ### Virtual Dataset
@@ -219,7 +219,7 @@ cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mproc
 > Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/ETEfrz2n8qhKrXSJ712gNYgBtl5ra_9lUxZmsmyUa804ew?e=3XJOhG) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
 
 ```bash
-cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mprocs.yaml
+cd $HOME/workspaces/s_graphs && mprocs --config .virtual_mprocs.yaml
 ```
 
 ### Running S_Graphs with Docker
