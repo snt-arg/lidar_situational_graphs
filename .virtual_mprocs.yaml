@@ -1,11 +1,11 @@
 procs:
   rosbag:
-    shell: 'bash -c "source /opt/ros/foxy/setup.bash && ros2 bag play ~/Downloads/virtual/stugalux_oetrange_f2_3r.db3"'
+    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 bag play ~/Downloads/virtual/stugalux_oetrange_f2_3r.db3"'
     autostart: true
     stop: SIGINT
   s_graphs:
-    shell: 'bash -c "source ~/workspaces/s_graphs_ros2_ws/install/setup.bash && ros2 launch s_graphs s_graphs_launch.py compute_odom:=true env:=sim"'
+    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 launch s_graphs s_graphs_launch.py compute_odom:=true env:=sim"'
     autostart: true
   rviz:
-    shell: 'bash -c "source ~/workspaces/s_graphs_ros2_ws/install/setup.bash && rviz2 -d ~/workspaces/s_graphs_ros2_ws/src/s_graphs/rviz/s_graphs_ros2.rviz"'
+    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && rviz2 -d ~/workspaces/s_graphs/s_graphs/rviz/s_graphs_ros2.rviz"'
     autostart: true

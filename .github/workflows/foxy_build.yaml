@@ -2,8 +2,8 @@ name: ROS 2 Foxy
 
 on:
   push:
-    branches: 
-      - "feature/ros2"
+    branches:
+      - feature/ros2
 
 jobs:
   build:
@@ -11,11 +11,10 @@ jobs:
     container:
       image: ros:foxy
     steps:
-      - name: Create Workspace
-        run: mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src     
-     
-      - name: Checkout code
-        run: cd $HOME/workspaces/s_graphs_ros2_ws/src && . /opt/ros/foxy/setup.sh  && git clone https://github.com/snt-arg/s_graphs.git
-      
+      - name: Create Workspace and checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
       - name: Build
-        run: . /opt/ros/foxy/setup.sh && ./setup.sh
+        run: . /opt/ros/foxy/setup.sh && ./.github/workflows/setup.sh && colcon build

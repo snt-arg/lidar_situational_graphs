@@ -3,7 +3,7 @@ name: ROS 2 Iron
 on:
   push:
     branches:
-     - feature/ros2
+      - feature/ros2
 
 jobs:
   build:
@@ -11,11 +11,10 @@ jobs:
     container:
       image: ros:iron
     steps:
-      - name: Create Workspace
-        run: mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && . /opt/ros/iron/setup.sh
-
-      - name: Checkout code
-        run: cd $HOME/workspaces/s_graphs_ros2_ws/src && . /opt/ros/iron/setup.sh  && git clone https://github.com/snt-arg/s_graphs.git
+      - name: Create Workspace and checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
 
       - name: Build
-        run: . /opt/ros/iron/setup.sh && ./setup.sh
+        run: . /opt/ros/iron/setup.sh && ./.github/workflows/setup.sh && colcon build
