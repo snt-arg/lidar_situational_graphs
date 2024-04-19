@@ -11,11 +11,15 @@ jobs:
     container:
       image: ros:humble
     steps:
-      - name: Create Workspace
-        run: mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && . /opt/ros/humble/setup.sh
-
-      - name: Checkout code
+      - name: Create Workspace and checkout code
         uses: actions/checkout@v3
 
       - name: Build
-        run: . /opt/ros/humble/setup.sh && ./setup.sh
+        run: |
+          . /opt/ros/humble/setup.sh && \
+          mkdir -p $HOME/workspace/s_graphs_ws/src && \
+          cd .. && \
+          cp -r s_graphs $HOME/workspace/s_graphs_ws/src && \
+          cd $HOME/workspace/s_graphs_ws/src/s_graphs && \
+          ./.github/workflows/setup.sh && \
+          cd ../../ && colcon build --symlink-install
