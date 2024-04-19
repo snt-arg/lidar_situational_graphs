@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # - Installing cpp dependencies
-sudo apt install python3-vcstool
-sudo apt install libceres-dev
-sudo apt install python3-pip
+sudo apt update
+sudo apt install -y python3-vcstool
+sudo apt install -y libceres-dev
+sudo apt install -y python3-pip
 
 #install python dependencies
 pip3 install torch==2.0.1+cu118 -f https://download.pytorch.org/whl/torch_stable.html

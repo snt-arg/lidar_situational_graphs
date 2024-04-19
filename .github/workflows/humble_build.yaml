@@ -9,7 +9,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: sntarg/unitree_ros:humble
+      image: ros:humble
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

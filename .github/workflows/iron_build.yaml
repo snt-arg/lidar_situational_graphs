@@ -9,10 +9,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: sntarg/unitree_ros:iron
+      image: ros:iron
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Build and Test
+      - name: Build
         run: . /opt/ros/iron/setup.sh && ./setup.sh

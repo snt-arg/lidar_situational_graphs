@@ -1,33 +1,33 @@
 repositories:
   s_graphs_utils/fast_gicp:
     type: git
-    url: git@github.com:SMRT-AIST/fast_gicp.git
+    url: https://github.com/SMRT-AIST/fast_gicp.git
     version: master
   s_graphs_utils/ndt_omp:
     type: git
-    url: git@github.com:koide3/ndt_omp.git
+    url: https://github.com/koide3/ndt_omp.git
     version: master
-  s_graphs_utils/reasoning/graph_matching:
-    type: git
-    url: git@github.com:snt-arg/graph_matching.git
-    version: develop
   s_graphs_utils/reasoning/graph_reasoning:
     type: git
-    url: git@github.com:snt-arg/graph_reasoning.git
+    url: https://github.com/snt-arg/graph_reasoning.git
     version: complete_gnn_architecture
   s_graphs_utils/reasoning/graph_wrapper:
     type: git
-    url: git@github.com:snt-arg/graph_wrapper.git
+    url: https://github.com/snt-arg/graph_wrapper.git
     version: develop
   s_graphs_utils/reasoning/graph_datasets:
     type: git
-    url: git@github.com:snt-arg/graph_datasets.git
+    url: https://github.com/snt-arg/graph_datasets.git
     version: graph_reasoning
+  s_graphs_utils/reasoning/graph_matching:
+    type: git
+    url: https://github.com/snt-arg/graph_matching.git
+    version: develop  
   s_graphs_utils/msgs/reasoning_msgs:
     type: git
-    url: git@github.com:snt-arg/reasoning_msgs.git
+    url: https://github.com/snt-arg/reasoning_msgs.git
     version: main
   s_graphs_utils/msgs/s_graphs_msgs:
     type: git
-    url: git@github.com:snt-arg/s_graphs_msgs.git
+    url: https://github.com/snt-arg/s_graphs_msgs.git
     version: main  
