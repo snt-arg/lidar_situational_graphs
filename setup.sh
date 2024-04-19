@@ -15,7 +15,7 @@ pip3 install pyg-lib -f https://data.pyg.org/whl/torch-2.0.1+cu118.html
 pip install protobuf==3.20.*
 
 #rosdep init
-rosdep init && rosdep update --include-eol-distros
+rosdep update --include-eol-distros
 
 #import all repos
 vcs import --recursive ../ < .rosinstall_ros2

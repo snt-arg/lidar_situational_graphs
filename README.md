@@ -101,10 +101,10 @@ git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
 > If you have Nvidia GPU please install CUDA from this [link](https://developer.nvidia.com/cuda-11-8-0-download-archive). This code has only been tested with CUDA 11.8.
 > If you dont have CUDA S-Graphs will use CPU only.
 
-4. Install required dependencies
+4. Install required dependencies. Change $ROS_DISTRO to your ros2 version.
 
 ```bash
-cd s_graphs && ./setup.sh
+cd s_graphs && source /opt/ros/$ROS_DISTRO/setup.sh && ./setup.sh
 ```
 
 > [!NOTE]
