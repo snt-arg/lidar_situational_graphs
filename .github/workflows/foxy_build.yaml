@@ -11,8 +11,11 @@ jobs:
     container:
       image: ros:foxy
     steps:
+      - name: Create Workspace
+        run: mkdir -p /root/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && source /opt/ros/foxy/setup.bash      
+     
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Build
-        run: . /opt/ros/foxy/setup.sh && ./setup.sh
+        run: ./setup.sh
