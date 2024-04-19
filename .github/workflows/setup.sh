@@ -1,7 +1,7 @@
 #!/bin/bash
 
 sudo apt update
-sudo apt install -y libceres-dev
+DEBIAN_FRONTEND=noninteractive sudo apt install -y libceres-dev
 
 #rosdep init
 rosdep update --include-eol-distros
@@ -13,7 +13,7 @@ git submodule update --init --recursive
 pip3 install -r requirements.txt
 
 #rosdep install
-rosdep install --from-paths . -y --ignore-src -r
+DEBIAN_FRONTEND=noninteractive rosdep install --from-paths . -y --ignore-src -r
 
 # - Importing all dependencies
 colcon build --symlink-install

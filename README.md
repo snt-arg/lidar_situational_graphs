@@ -192,12 +192,12 @@ git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && 
 
 3. Build image
 
-> [!NOTE]
-> In case you have a different ssh key name for your GitHub account, change `id_ed25519` oto yours.
-
 ```sh
-docker build -t sntarg/s_graphs --ssh default=$HOME/.ssh/id_ed25519 .
+docker build -t sntarg/s_graphs .
 ```
+
+> [!NOTE]
+There are two docker files, one for foxy and another for humble. The above commands build the foxy image, you use the same commands to build the humble image if needed.
 
 ## 🚀 Example on Datasets <a id="examples"></a>
 
