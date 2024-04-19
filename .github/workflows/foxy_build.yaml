@@ -12,7 +12,7 @@ jobs:
       image: ros:foxy
     steps:
       - name: Create Workspace
-        run: mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && source /opt/ros/foxy/setup.bash      
+        run: mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && . /opt/ros/foxy/setup.sh      
      
       - name: Checkout code
         uses: actions/checkout@v3
