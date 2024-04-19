@@ -503,7 +503,7 @@ int PlaneMapper::associate_plane(
           maha_dist = sqrt(error.transpose() * cov * error);
         }
         if (maha_dist < hort_min_maha_dist) {
-          vert_min_maha_dist = maha_dist;
+          hort_min_maha_dist = maha_dist;
           data_association = hort_plane.second.id;
         }
       }

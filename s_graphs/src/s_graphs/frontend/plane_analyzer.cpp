@@ -143,7 +143,8 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
         // segmented_cloud->back().b = 177;
       }
 
-      extracted_cloud_vec.push_back(extracted_cloud_filtered);
+      if (extracted_cloud_filtered->points.size() > min_seg_points_)
+        extracted_cloud_vec.push_back(extracted_cloud_filtered);
 
       // sensor_msgs::PointCloud2 extracted_cloud_msg;
       // pcl::toROSMsg(*extracted_cloud_filtered, extracted_cloud_msg);
