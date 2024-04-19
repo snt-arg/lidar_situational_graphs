@@ -12,7 +12,7 @@ jobs:
       image: ros:humble
     steps:
       - name: Create Workspace
-        run: mkdir -p /root/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && source /opt/ros/humble/setup.bash
+        run: mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && source /opt/ros/humble/setup.bash
 
       - name: Checkout code
         uses: actions/checkout@v3
