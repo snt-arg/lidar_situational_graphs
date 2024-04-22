@@ -81,27 +81,27 @@ include_directories(
   ${PCL_INCLUDE_DIRS}
 )
 
-set(DEPENDENCIES 
+set(DEPENDENCIES
     rclcpp
-    sensor_msgs 
-    geometry_msgs 
-    nav_msgs 
-    ndt_omp 
-    fast_gicp 
-    tf2 
+    sensor_msgs
+    geometry_msgs
+    nav_msgs
+    ndt_omp
+    fast_gicp
+    tf2
     tf2_ros
     tf2_eigen
-    pcl_ros 
-    reasoning_msgs 
-    visualization_msgs 
-    message_filters 
+    pcl_ros
+    reasoning_msgs
+    visualization_msgs
+    message_filters
     geographic_msgs
     nmea_msgs
     geodesy
     rviz_visual_tools
     s_graphs_msgs)
 
-SET(G2O_COMMON_LIBS 
+SET(G2O_COMMON_LIBS
   ${PCL_LIBRARIES}
   ${G2O_TYPES_DATA}
   ${G2O_CORE_LIBRARY}
@@ -112,15 +112,15 @@ SET(G2O_COMMON_LIBS
   ${G2O_TYPES_SLAM3D}
   ${G2O_TYPES_SLAM3D_ADDONS})
 
-FILE(GLOB_RECURSE G2O_S_GRAPHS_SOURCE_FILES 
+FILE(GLOB_RECURSE G2O_S_GRAPHS_SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/g2o/*.cpp
 )
 
-FILE(GLOB_RECURSE S_GRAPHS_SOURCE_FILES 
+FILE(GLOB_RECURSE S_GRAPHS_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/s_graphs/*.cpp
 )
 
-add_library(g2o_sgraphs 
+add_library(g2o_sgraphs
   ${G2O_S_GRAPHS_SOURCE_FILES}
   )
 target_link_libraries(g2o_sgraphs
@@ -128,10 +128,10 @@ target_link_libraries(g2o_sgraphs
                     ${PCL_LIBRARIES}
                     )
 
-add_library(s_graphs_core_lib   
+add_library(s_graphs_core_lib
     ${S_GRAPHS_SOURCE_FILES}
 )
-target_link_libraries(s_graphs_core_lib 
+target_link_libraries(s_graphs_core_lib
                       g2o_sgraphs
                       ${G2O_COMMON_LIBS}
                       ${PCL_LIBRARIES}
@@ -140,7 +140,7 @@ target_include_directories(s_graphs_core_lib
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(s_graphs_core_lib ${DEPENDENCIES})                   
+ament_target_dependencies(s_graphs_core_lib ${DEPENDENCIES})
 
 ament_export_targets(export_s_graph_lib HAS_LIBRARY_TARGET)
 ament_export_dependencies(${DEPENDENCIES})
@@ -163,8 +163,8 @@ target_link_libraries(s_graphs_prefiltering_node
   ${PCL_LIBRARIES}
 )
 
-add_executable(s_graphs_room_segmentation_node 
-  apps/room_segmentation_node.cpp 
+add_executable(s_graphs_room_segmentation_node
+  apps/room_segmentation_node.cpp
 )
 ament_target_dependencies(s_graphs_room_segmentation_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_room_segmentation_node
@@ -177,12 +177,12 @@ add_executable(s_graphs_floor_plan_node
 )
 ament_target_dependencies(s_graphs_floor_plan_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_floor_plan_node
-  s_graphs_core_lib  
+  s_graphs_core_lib
   ${PCL_LIBRARIES}
 )
 
 add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_node.cpp)
-ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES}) 
+ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_scan_matching_odometry_node
   ${PCL_LIBRARIES}
   s_graphs_core_lib
@@ -206,7 +206,7 @@ install(
   INCLUDES DESTINATION include
 )
 
-install(TARGETS  
+install(TARGETS
   s_graphs_prefiltering_node s_graphs_scan_matching_odometry_node s_graphs_room_segmentation_node s_graphs_floor_plan_node s_graphs_node
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -254,5 +254,5 @@ if(BUILD_TESTING)
 endif()
 
 ament_export_dependencies(rosidl_default_runtime)
-ament_export_include_directories(include) 
+ament_export_include_directories(include)
 ament_package()
