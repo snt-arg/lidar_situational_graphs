@@ -12,7 +12,7 @@
 [submodule "utils/reasoning/graph_reasoning"]
 	path = utils/reasoning/graph_reasoning
 	url = https://github.com/snt-arg/graph_reasoning.git
-	branch = complete_gnn_architecture
+	branch = develop
 [submodule "utils/reasoning/graph_wrapper"]
 	path = utils/reasoning/graph_wrapper
 	url = https://github.com/snt-arg/graph_wrapper.git
@@ -20,7 +20,7 @@
 [submodule "utils/reasoning/graph_datasets"]
 	path = utils/reasoning/graph_datasets
 	url = https://github.com/snt-arg/graph_datasets.git
-	branch = graph_reasoning
+	branch = develop
 [submodule "utils/reasoning/graph_matching"]
 	path = utils/reasoning/graph_matching
 	url = https://github.com/snt-arg/graph_matching.git
