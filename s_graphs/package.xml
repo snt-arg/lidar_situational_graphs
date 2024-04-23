@@ -28,7 +28,6 @@
   <depend>tf2_eigen</depend>
   <depend>geographic_msgs</depend>
   <depend>message_filters</depend>
-  <depend>reasoning_msgs</depend>
   <depend>backward_ros</depend>
   <depend>rviz_visual_tools</depend>
   <depend>libceres-dev</depend>
