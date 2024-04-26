@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="">
-    <img src="./imgs/s_graphs+.gif" alt="Logo" width="80%">
+    <img src="./imgs/s_graphs_rotating_new_final.gif" alt="Logo" width="100%">
   </a>
 </p>
 
