@@ -1,10 +1,17 @@
-# LiDAR S-Graphs
+<div align="center">
+ <h1>LiDAR S-Graphs</h1>
 
-**Situational graphs (S-Graphs)** is a ROS2 package for generating in real-time four-layered hierarchical factor graphs representing a scene graph including **_Keyframes_** registring the robot poses, **_Walls_** which map wall planes, **_Rooms Layer_** constraining the wall planes using 4 wall-room or 2 wall-room factors, **_Floors_** constraining the rooms within a given floor level. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package mostly with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam) which as previously in ROS1.
+<a href="https://github.com/snt-arg/lidar_s_graphs/actions/workflows/foxy_build.yaml"><img src="https://github.com/snt-arg/lidar_s_graphs/actions/workflows/foxy_build.yaml/badge.svg" /></a>
+<a href="https://github.com/snt-arg/lidar_s_graphs/actions/workflows/humble_build.yaml"><img src="https://github.com/snt-arg/lidar_s_graphs/actions/workflows/humble_build.yaml/badge.svg" /></a>
+<a href="https://github.com/snt-arg/lidar_s_graphs/actions/workflows/iron_build.yaml"><img src="https://github.com/snt-arg/lidar_s_graphs/actions/workflows/iron_build.yaml/badge.svg" /></a>
+
+</div>
+
+**LiDAR Situational Graphs (S-Graphs)** is a ROS2 package for generating in real-time four-layered hierarchical factor graphs representing a scene graph using 3D LiDAR which includes **_Keyframes_** registring the robot poses, **_Walls_** which map wall planes, **_Rooms Layer_** constraining the wall planes using 4 wall-room or 2 wall-room factors, **_Floors_** constraining the rooms within a given floor level. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package mostly with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam) which as previously in ROS1.
 
 <p align="center">
   <a href="">
-    <img src="./imgs/s_graphs+.gif" alt="Logo" width="80%">
+    <img src="./imgs/s_graphs_rotating.gif" alt="Logo" width="80%">
   </a>
 </p>
 
@@ -13,11 +20,8 @@
 - [📖 Published Papers](#published-papers)
 - [⚙️ Installation](#installation)
   - [📦 Installation From Source](#installation-from-source)
-    - [1️⃣ Installation on ROS2](#installation-on-ros2)
-    - [2️⃣ Download ROS bridge](#download-ros-bridge)
-    - [3️⃣ Installation on ROS1](#installation-on-ros2)
-- [🧪 Unit Tests](#unit-tests)
-- [🐳 Docker](#docker)
+    - [ROS1 Optional](#installation-for-ros1)
+  - [🐳 Docker](#docker)
 - [🚀 Examples on Datasets](#examples)
 - [🛠️ Run S_Graphs On Your Data](#custom-data)
 - [🤖 ROS Related](#ros-related)
@@ -26,6 +30,7 @@
   - [🔄 ROS Services](#ros-services)
   - [⚙️ ROS Parameters](#ros-parameters)
   - [🌐 Published TFs](#published-tfs)
+- [🧪 Unit Tests](#unit-tests)
 
 ## 📖 Published Papers <a id="published-papers"></a>
 
@@ -64,19 +69,15 @@
 <!-- TODO: When s-graphs is available in rosdistro add here the command to install -->
 
 > [!NOTE]
-> S-Graphs+ was only tested on Ubuntu 20.04, with ROS1 Noetic and ROS2 Foxy distro.
+> S-Graphs+ was only tested on Ubuntu 20.04, ROS2 Foxy, Humble Distros.
+> We strongly recommend using [cyclone_dds](https://docs.ros.org/en/humble/Installation/DDS-Implementations/Working-with-Eclipse-CycloneDDS.html) instead of the default fastdds.  
 
 ### 📦 Installation From Source <a id="installation-from-source"></a>
-
-The installation consists of 2 parts. One for ROS1 and another for ROS2. You can
-use just the ROS2 version, however it will not be working to it's full potential.
 
 > [!IMPORTANT]
 > Before proceeding, make sure you have `rosdep` installed. You can install it using `sudo apt-get install python3-rosdep`
 > In addition, ssh keys are needed to be configured on you GitHub account. If you haven't
 > yet configured ssh keys, follow this [tutorial](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent)
-
-#### 1️⃣ Installation on ROS2 <a id="installation-on-ros2"></a>
 
 1. Update Rosdep:
 
@@ -87,53 +88,46 @@ rosdep init && rosdep update --include-eol-distros
 2. Create a ROS2 workspace for S-Graphs
 
 ```bash
-mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src && source /opt/ros/foxy/setup.bash
+mkdir -p $HOME/workspaces && cd $HOME/workspaces
 ```
 
 3. Clone the S-Graphs repository into the created workspace
 
 ```bash
-git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs 
 ```
 
-4. Install required dependencies using `vcstool`
+> [!IMPORTANT]
+> If you have Nvidia GPU please install CUDA from this [link](https://developer.nvidia.com/cuda-11-8-0-download-archive). This code has only been tested with CUDA 11.8.
+> If you dont have CUDA S-Graphs will use CPU only.
+
+4. Install required dependencies. Change $ROS_DISTRO to your ros2 version.
 
 ```bash
-cd s_graphs && vcs import --recursive ../ < .rosinstall_ros2
-```
-
-5. Install required ROS2 packages
-
-```bash
-cd ../../ && rosdep install --from-paths src -y --ignore-src -r
-```
-
-6. Build workspace
-
-```bash
-colcon build --symlink-install
+cd s_graphs && source /opt/ros/$ROS_DISTRO/setup.sh && ./setup.sh
 ```
 
 > [!NOTE]
-> If you want to compile with debug traces (from backward_cpp ) run:
+> If you want to compile with debug traces (from backward_cpp) run:
 
 ```bash
 colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
 ```
 
-6. Source workspace
+#### Optional ROS1 Install (Old Version of Room Segmentation) <a id="installation-for-ros1"></a>
 
-```bash
-source install/setup.bash
-```
+<details>
 
-#### 2️⃣ Download ROS Bridge <a id="download-ros-bridge"></a>
+> [!NOTE]
+> This is an optional older version of room segmentation algorithm which requires ROS1 noetic. There is no hard dependecy on this package so you can easily ignore this step.
+
+##### Download ROS Bridge <a id="download-ros-bridge"></a>
 
 ```bash
 source /opt/ros/foxy/setup.bash && sudo apt install ros-foxy-ros1-bridge
 ```
 
-#### 3️⃣ Installation on ROS1 <a id="installation-for-ros1-dependencies"></a>
+##### Installation on ROS1
 
 > [!IMPORTANT]
 > Before following the instructions from below, ensure that you are in a fresh
@@ -178,45 +172,32 @@ sudo apt install ros-noetic-pcl-ros
 catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
 ```
 
-## 🧪 Unit Tests <a id="unit-tests"></a>
+</details>
 
-Some unit tests are available. In case you want to test, run the following command:
+### 🐳 Docker <a id="docker"></a>
 
-```bash
-colcon test --packages-select s_graphs --event-handler=console_direct+
-```
-
-## 🐳 Docker <a id="docker"></a>
-
-### Build Docker Image
+#### Build Docker Image
 
 1. Create a ROS2 workspace for S-Graphs
 
 ```sh
-mkdir -p $HOME/workspaces/s_graphs_ros2_ws/src && cd $HOME/workspaces/s_graphs_ros2_ws/src
+mkdir -p $HOME/workspaces && cd $HOME/workspaces
 ```
 
 2. Change directory to where Dockerfile is located in `s_graphs`
 
 ```sh
-git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs/docker/foxy_noetic
+git clone git@github.com:snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs && cd $HOME/workspaces/s_graphs/docker/foxy_noetic
 ```
 
 3. Build image
 
-> [!NOTE]
-> In case you have a different ssh key name for your GitHub account, change `id_ed25519` oto yours.
-
 ```sh
-docker build -t sntarg/s_graphs --ssh default=$HOME/.ssh/id_ed25519 .
+docker build -t sntarg/s_graphs .
 ```
 
-<!-- ### Pull the docker image from DockerHub (only if you have not build the image yourself!)
-
-```bash
-docker pull sntarg/s_graphs:latest
-``` -->
-
+> [!NOTE]
+There are two docker files, one for foxy and another for humble. The above commands build the foxy image, you use the same commands to build the humble image if needed.
 
 ## 🚀 Example on Datasets <a id="examples"></a>
 
@@ -226,19 +207,19 @@ docker pull sntarg/s_graphs:latest
 ### Real Dataset
 
 > [!IMPORTANT]
-> Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/EQN2qUn1P1dKuzcZqan8o3UBrBMa8b5Pcspupm_CBFHTgA?e=JxYnAJ) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
+> Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/ET2kNySZrzVBlveGgvSByeUBAvQk5wl05GMF0NwqbkL6ZA?e=hoaaOo) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
 
 ```bash
-cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .real_mprocs.yaml
+cd $HOME/workspaces/s_graphs && mprocs --config .real_mprocs.yaml
 ```
 
 ### Virtual Dataset
 
 > [!IMPORTANT]
-> Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/EWy7dyDnGzFLh3LMR0VXYQABne9B_NZ0YCM-o_PF8PPY5g?e=xoThE1) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
+> Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/ETEfrz2n8qhKrXSJ712gNYgBtl5ra_9lUxZmsmyUa804ew?e=3XJOhG) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
 
 ```bash
-cd $HOME/workspaces/s_graphs_ros2_ws/src/s_graphs && mprocs --config .virtual_mprocs.yaml
+cd $HOME/workspaces/s_graphs && mprocs --config .virtual_mprocs.yaml
 ```
 
 ### Running S_Graphs with Docker
@@ -269,6 +250,9 @@ docker cp ~/Downloads/virtual s_graphs_container:/root/Downloads/virtual # For v
 docker exec -ti s_graphs_container bash
 ```
 
+> [!IMPORTANT]
+> If rviz2 doesnt open inside the docker, do `xhost +` in a terminal of your pc and then relaunch the mprocs command inside docker.
+
 3. Run mprocs
 
 ```sh
@@ -289,7 +273,7 @@ source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/sr
 -->
 
 > [!NOTE]
-> Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy. 
+> Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy.
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 
@@ -393,3 +377,11 @@ All the configurable parameters are listed in config folder as ros params.
     <img src="./imgs/Tf-tree.png" alt="tf_tree" width="80%">
   </a>
 </p>
+
+## 🧪 Unit Tests <a id="unit-tests"></a>
+
+Some unit tests are available. In case you want to add additional tests, run the following command:
+
+```bash
+colcon test --packages-select s_graphs --event-handler=console_direct+
+```

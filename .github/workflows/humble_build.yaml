@@ -1,0 +1,20 @@
+name: ROS 2 Humble
+
+on:
+  push:
+    branches:
+      - feature/ros2
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ros:humble
+    steps:
+      - name: Create Workspace and checkout code
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: . /opt/ros/humble/setup.sh && ./.github/workflows/setup.sh && colcon build

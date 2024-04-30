@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+    use_sim_time: True
+    base_link_frame: "body"
+    use_distance_filter: true
+    distance_near_thresh: 0.5
+    distance_far_thresh: 100.0
+    downsample_method: "VOXELGRID" # NONE, VOXELGRID, or APPROX_VOXELGRID
+    downsample_resolution: 0.1
+    outlier_removal_method: "RADIUS" # NONE, RADIUS, or STATISTICAL
+    statistical_mean_k: 30
+    statistical_stddev: 1.2
+    radius_min_neighbors: 0.5
+    radius_radius: 2.0

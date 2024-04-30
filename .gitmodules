@@ -1,3 +1,35 @@
 [submodule "docs/doxygen_docs/doxygen-awesome-css"]
 	path = docs/doxygen_docs/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
+[submodule "utils/fast_gicp"]
+	path = utils/fast_gicp
+	url = https://github.com/SMRT-AIST/fast_gicp.git
+	branch = master
+[submodule "utils/ndt_omp"]
+	path = utils/ndt_omp
+	url = https://github.com/koide3/ndt_omp.git
+	branch = master
+[submodule "utils/reasoning/graph_reasoning"]
+	path = utils/reasoning/graph_reasoning
+	url = https://github.com/snt-arg/graph_reasoning.git
+	branch = develop
+[submodule "utils/reasoning/graph_wrapper"]
+	path = utils/reasoning/graph_wrapper
+	url = https://github.com/snt-arg/graph_wrapper.git
+	branch = develop
+[submodule "utils/reasoning/graph_datasets"]
+	path = utils/reasoning/graph_datasets
+	url = https://github.com/snt-arg/graph_datasets.git
+	branch = develop
+[submodule "utils/reasoning/graph_matching"]
+	path = utils/reasoning/graph_matching
+	url = https://github.com/snt-arg/graph_matching.git
+	branch = develop
+[submodule "utils/msgs/reasoning_msgs"]
+	path = utils/msgs/reasoning_msgs
+	url = https://github.com/snt-arg/reasoning_msgs.git
+	branch = main
+[submodule "utils/msgs/s_graphs_msgs"]
+	path = utils/msgs/s_graphs_msgs
+	url = https://github.com/snt-arg/s_graphs_msgs.git
+	branch = main
