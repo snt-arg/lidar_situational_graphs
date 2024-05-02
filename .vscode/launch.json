@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "C++ Debugger",
+            "request": "launch",
+            "type": "cppdbg",
+            "miDebuggerServerAddress": "localhost:3000",
+            "cwd": "/",
+            "program": "${workspaceFolder}/install/s_graphs/lib/s_graphs/s_graphs_node"
+        }
+    ]
+}

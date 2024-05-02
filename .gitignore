@@ -1,7 +1,6 @@
 imgui.ini
 
 # - IDEs Folder
-.vscode
 build/
 install/
 log
