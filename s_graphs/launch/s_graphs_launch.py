@@ -32,6 +32,11 @@ def generate_launch_description():
                 default_value="new",
                 description="Algorithm used for room segmentation",
             ),
+            DeclareLaunchArgument(
+                "debug_mode",
+                default_value="false",
+                description="Run s_graphs node in debugging mode",
+            ),
             OpaqueFunction(function=launch_sgraphs),
         ]
     )
@@ -40,8 +45,8 @@ def launch_reasoning():
     reasoning_dir = get_package_share_directory('graph_reasoning')
     reasoning_launch_file = os.path.join(reasoning_dir, "launch", "graph_reasoning.launch.py")
     reasoning_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(reasoning_launch_file))    
-    
+        PythonLaunchDescriptionSource(reasoning_launch_file))
+
     return reasoning_launch
 
 
@@ -55,6 +60,8 @@ def launch_sgraphs(context, *args, **kwargs):
     compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
     namespace_arg = LaunchConfiguration("namespace").perform(context)
     room_segmentation_arg =  LaunchConfiguration("room_segmentation").perform(context)
+    debug_mode_arg =  LaunchConfiguration("debug_mode").perform(context)
+
 
     ns_prefix = str(namespace_arg) + "/" if namespace_arg else ""
     if str(ns_prefix).startswith("/"):
@@ -86,7 +93,7 @@ def launch_sgraphs(context, *args, **kwargs):
         condition=IfCondition(compute_odom_arg),
     )
 
-    if room_segmentation_arg == "old":   
+    if room_segmentation_arg == "old":
         room_segmentation_cmd = Node(
             package="s_graphs",
             executable="s_graphs_room_segmentation_node",
@@ -95,7 +102,7 @@ def launch_sgraphs(context, *args, **kwargs):
             output="screen",
         )
     else:
-      reasoning_launch = launch_reasoning()                
+      reasoning_launch = launch_reasoning()
 
     floor_plan_cmd = Node(
         package="s_graphs",
@@ -111,6 +118,7 @@ def launch_sgraphs(context, *args, **kwargs):
         namespace=namespace_arg,
         parameters=[s_graphs_param_file],
         output="screen",
+        prefix=["gdbserver localhost:3000"] if debug_mode_arg == "true" else None,
         remappings=[
             ("velodyne_points", "platform/velodyne_points"),
             ("odom", "platform/odometry"),
