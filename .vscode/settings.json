@@ -89,7 +89,7 @@
         "*.inc": "cpp",
         "nonlinearoptimization": "cpp"
     },
-    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.errorSquiggles": "disabled",
     "python.formatting.provider": "black",
     "python.analysis.extraPaths": [
         "${workspaceFolder}/install/s_graphs/lib/python3.8/site-packages",
