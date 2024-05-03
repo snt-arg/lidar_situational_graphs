@@ -3,7 +3,7 @@
     {
       "name": "Linux",
       "includePath": [
-        "${workspaceFolder}/**",
+        "${workspaceFolder}/install/**",
         "/opt/ros/foxy/include/**",
         "/usr/include/**",
         "/usr/local/include/**"
