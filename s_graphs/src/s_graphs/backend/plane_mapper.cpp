@@ -538,7 +538,7 @@ void PlaneMapper::convert_plane_points_to_map(
     std::unordered_map<int, HorizontalPlanes>& hort_planes) {
   for (auto& x_vert_plane : x_vert_planes) {
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
-
+    cloud_seg_map->points.clear();
     for (int k = 0; k < x_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(x_vert_plane.second.keyframe_node_vec[k]);
@@ -561,7 +561,7 @@ void PlaneMapper::convert_plane_points_to_map(
 
   for (auto& y_vert_plane : y_vert_planes) {
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
-
+    cloud_seg_map->points.clear();
     for (int k = 0; k < y_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(y_vert_plane.second.keyframe_node_vec[k]);
@@ -584,7 +584,7 @@ void PlaneMapper::convert_plane_points_to_map(
 
   for (auto& hort_plane : hort_planes) {
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
-
+    cloud_seg_map->points.clear();
     for (int k = 0; k < hort_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(hort_plane.second.keyframe_node_vec[k]);

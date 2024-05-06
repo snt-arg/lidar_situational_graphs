@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef GRAPH_VISUALIZER_HPP
 #define GRAPH_VISUALIZER_HPP
 
@@ -144,9 +142,10 @@ class GraphVisualizer {
    * @param plane_snapshot
    * @return Eigen::Vector3d
    */
-  Eigen::Vector3d compute_vert_plane_centroid(
+  template <typename T>
+  Eigen::Vector3d compute_plane_centroid(
       const int current_plane_id,
-      const std::unordered_map<int, VerticalPlanes>& plane_snapshot);
+      const std::unordered_map<int, T>& plane_snapshot);
 
   /**
    * @brief

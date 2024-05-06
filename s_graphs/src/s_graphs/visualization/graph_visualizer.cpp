@@ -280,11 +280,11 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
       pcl::CentroidPoint<PointNormal> centroid;
       if (fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(1)) &&
           fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(2))) {
-        pt2 = compute_vert_plane_centroid(v2->id(), x_plane_snapshot);
+        pt2 = compute_plane_centroid<VerticalPlanes>(v2->id(), x_plane_snapshot);
         r = 0.0;
       } else if (fabs(v2->estimate().normal()(1)) > fabs(v2->estimate().normal()(0)) &&
                  fabs(v2->estimate().normal()(1)) > fabs(v2->estimate().normal()(2))) {
-        pt2 = compute_vert_plane_centroid(v2->id(), y_plane_snapshot);
+        pt2 = compute_plane_centroid<VerticalPlanes>(v2->id(), y_plane_snapshot);
         b = 0.0;
       } else if (fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(0)) &&
                  fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(1))) {
@@ -403,6 +403,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   x_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
 
   for (const auto& x_plane : x_plane_snapshot) {
+    if (x_plane.second.cloud_seg_map->points.empty()) continue;
     std_msgs::msg::ColorRGBA color;
     color.r = x_plane.second.color[0] / 255;
     color.g = x_plane.second.color[1] / 255;
@@ -434,6 +435,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   y_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
 
   for (const auto& y_plane : y_plane_snapshot) {
+    if (y_plane.second.cloud_seg_map->points.empty()) continue;
     std_msgs::msg::ColorRGBA color;
     color.r = y_plane.second.color[0] / 255;
     color.g = y_plane.second.color[1] / 255;
@@ -466,6 +468,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
   for (const auto& hort_plane : hort_plane_snapshot) {
     for (size_t j = 0; j < hort_plane.second.cloud_seg_map->size(); ++j) {
+      if (hort_plane.second.cloud_seg_map->points.empty()) continue;
       geometry_msgs::msg::Point point;
       point.x = hort_plane.second.cloud_seg_map->points[j].x;
       point.y = hort_plane.second.cloud_seg_map->points[j].y;
@@ -1831,13 +1834,13 @@ void GraphVisualizer::create_compressed_graph(
         if (fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(1)) &&
             fabs(v2->estimate().normal()(0)) > fabs(v2->estimate().normal()(2))) {
           point2.translation() =
-              compute_vert_plane_centroid(v2->id(), x_plane_snapshot);
+              compute_plane_centroid<VerticalPlanes>(v2->id(), x_plane_snapshot);
         } else if (fabs(v2->estimate().normal()(1)) >
                        fabs(v2->estimate().normal()(0)) &&
                    fabs(v2->estimate().normal()(1)) >
                        fabs(v2->estimate().normal()(2))) {
           point2.translation() =
-              compute_vert_plane_centroid(v2->id(), y_plane_snapshot);
+              compute_plane_centroid<VerticalPlanes>(v2->id(), y_plane_snapshot);
 
         } else if (fabs(v2->estimate().normal()(2)) >
                        fabs(v2->estimate().normal()(0)) &&
@@ -2075,23 +2078,27 @@ Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plan
   return pose;
 }
 
-Eigen::Vector3d GraphVisualizer::compute_vert_plane_centroid(
+template <typename T>
+Eigen::Vector3d GraphVisualizer::compute_plane_centroid(
     const int current_plane_id,
-    const std::unordered_map<int, VerticalPlanes>& plane_snapshot) {
-  Eigen::Vector3d pt;
-  for (auto plane : plane_snapshot) {
-    if (plane.second.id == current_plane_id) {
-      double x = 0, y = 0, z = 0;
-      for (int p = 0; p < plane.second.cloud_seg_map->points.size(); ++p) {
-        x += plane.second.cloud_seg_map->points[p].x;
-        y += plane.second.cloud_seg_map->points[p].y;
-        z += plane.second.cloud_seg_map->points[p].z;
-      }
-      x = x / plane.second.cloud_seg_map->points.size();
-      y = y / plane.second.cloud_seg_map->points.size();
-      z = z / plane.second.cloud_seg_map->points.size();
-      pt = Eigen::Vector3d(x, y, z);
+    const std::unordered_map<int, T>& plane_snapshot) {
+  Eigen::Vector3d pt(0, 0, 0);
+  auto plane = plane_snapshot.find(current_plane_id);
+
+  if (plane != plane_snapshot.end()) {
+    if (plane->second.cloud_seg_map->points.empty()) {
+      return pt;
     }
+    double x = 0, y = 0, z = 0;
+    for (int p = 0; p < plane->second.cloud_seg_map->points.size(); ++p) {
+      x += plane->second.cloud_seg_map->points[p].x;
+      y += plane->second.cloud_seg_map->points[p].y;
+      z += plane->second.cloud_seg_map->points[p].z;
+    }
+    x = x / plane->second.cloud_seg_map->points.size();
+    y = y / plane->second.cloud_seg_map->points.size();
+    z = z / plane->second.cloud_seg_map->points.size();
+    pt = Eigen::Vector3d(x, y, z);
   }
   return pt;
 }
@@ -2099,20 +2106,22 @@ Eigen::Vector3d GraphVisualizer::compute_vert_plane_centroid(
 Eigen::Vector3d GraphVisualizer::compute_hort_plane_centroid(
     const int current_plane_id,
     const std::unordered_map<int, HorizontalPlanes>& plane_snapshot) {
-  Eigen::Vector3d pt;
-  for (auto plane : plane_snapshot) {
-    if (plane.second.id == current_plane_id) {
-      double x = 0, y = 0, z = 0;
-      for (int p = 0; p < plane.second.cloud_seg_map->points.size(); ++p) {
-        x += plane.second.cloud_seg_map->points[p].x;
-        y += plane.second.cloud_seg_map->points[p].y;
-        z += plane.second.cloud_seg_map->points[p].z;
-      }
-      x = x / plane.second.cloud_seg_map->points.size();
-      y = y / plane.second.cloud_seg_map->points.size();
-      z = z / plane.second.cloud_seg_map->points.size();
-      pt = Eigen::Vector3d(x, y, z);
+  Eigen::Vector3d pt(0, 0, 0);
+  auto plane = plane_snapshot.find(current_plane_id);
+  if (plane != plane_snapshot.end()) {
+    if (plane->second.cloud_seg_map->points.empty()) {
+      return pt;
     }
+    double x = 0, y = 0, z = 0;
+    for (int p = 0; p < plane->second.cloud_seg_map->points.size(); ++p) {
+      x += plane->second.cloud_seg_map->points[p].x;
+      y += plane->second.cloud_seg_map->points[p].y;
+      z += plane->second.cloud_seg_map->points[p].z;
+    }
+    x = x / plane->second.cloud_seg_map->points.size();
+    y = y / plane->second.cloud_seg_map->points.size();
+    z = z / plane->second.cloud_seg_map->points.size();
+    pt = Eigen::Vector3d(x, y, z);
   }
   return pt;
 }
