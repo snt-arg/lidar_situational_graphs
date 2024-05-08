@@ -41,7 +41,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
-find_package(reasoning_msgs REQUIRED)
+find_package(situational_graphs_reasoning_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(rviz_visual_tools REQUIRED)
 find_package(s_graphs_msgs REQUIRED)
@@ -92,7 +92,7 @@ set(DEPENDENCIES
     tf2_ros
     tf2_eigen
     pcl_ros
-    reasoning_msgs
+    situational_graphs_reasoning_msgs
     visualization_msgs
     message_filters
     geographic_msgs

@@ -9,25 +9,21 @@
 	path = utils/ndt_omp
 	url = https://github.com/koide3/ndt_omp.git
 	branch = master
-[submodule "utils/reasoning/graph_reasoning"]
-	path = utils/reasoning/graph_reasoning
-	url = https://github.com/snt-arg/graph_reasoning.git
+[submodule "utils/reasoning/situational_graphs_reasoning"]
+	path = utils/reasoning/situational_graphs_reasoning
+	url = https://github.com/snt-arg/situational_graphs_reasoning.git
 	branch = develop
-[submodule "utils/reasoning/graph_wrapper"]
-	path = utils/reasoning/graph_wrapper
-	url = https://github.com/snt-arg/graph_wrapper.git
+[submodule "utils/reasoning/situational_graphs_wrapper"]
+	path = utils/reasoning/situational_graphs_wrapper
+	url = https://github.com/snt-arg/situational_graphs_wrapper.git
 	branch = develop
-[submodule "utils/reasoning/graph_datasets"]
-	path = utils/reasoning/graph_datasets
-	url = https://github.com/snt-arg/graph_datasets.git
+[submodule "utils/reasoning/situational_graphs_datasets"]
+	path = utils/reasoning/situational_graphs_datasets
+	url = https://github.com/snt-argsituational_graphs_datasets.git
 	branch = develop
-[submodule "utils/reasoning/graph_matching"]
-	path = utils/reasoning/graph_matching
-	url = https://github.com/snt-arg/graph_matching.git
-	branch = develop
-[submodule "utils/msgs/reasoning_msgs"]
+[submodule "utils/msgs/situational_graphs_reasoning_msgs"]
 	path = utils/msgs/reasoning_msgs
-	url = https://github.com/snt-arg/reasoning_msgs.git
+	url = https://github.com/snt-arg/situational_graphs_reasoning_msgs.git
 	branch = main
 [submodule "utils/msgs/s_graphs_msgs"]
 	path = utils/msgs/s_graphs_msgs
