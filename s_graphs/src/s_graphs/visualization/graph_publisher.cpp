@@ -9,7 +9,7 @@
 GraphPublisher::GraphPublisher() {}
 
 GraphPublisher::~GraphPublisher() {}
-reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
+situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     const g2o::SparseOptimizer* local_graph,
     std::string graph_type,
     const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior,
@@ -20,19 +20,19 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     const std::vector<s_graphs::Rooms>& rooms_vec,
     const std::vector<s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::vector<s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  std::vector<reasoning_msgs::msg::Edge> edges_vec;
-  std::vector<reasoning_msgs::msg::Node> nodes_vec;
-  reasoning_msgs::msg::Graph graph_msg;
-  std::vector<reasoning_msgs::msg::Attribute> edge_att_vec;
-  std::vector<reasoning_msgs::msg::Attribute> node_att_vec;
+  std::vector<situational_graphs_reasoning_msgs::msg::Edge> edges_vec;
+  std::vector<situational_graphs_reasoning_msgs::msg::Node> nodes_vec;
+  situational_graphs_reasoning_msgs::msg::Graph graph_msg;
+  std::vector<situational_graphs_reasoning_msgs::msg::Attribute> edge_att_vec;
+  std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec;
 
   // Graph Type
   if (graph_type == "Prior") {
     graph_msg.name = "Prior";
     for (int i = 0; i < x_vert_planes_prior.size(); i++) {
       g2o::Plane3D v_plane = x_vert_planes_prior[i].plane;
-      reasoning_msgs::msg::Node graph_node;
-      reasoning_msgs::msg::Attribute node_attribute;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = x_vert_planes_prior[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -49,8 +49,8 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     }
     for (int i = 0; i < y_vert_planes_prior.size(); i++) {
       g2o::Plane3D v_plane = y_vert_planes_prior[i].plane;
-      reasoning_msgs::msg::Node graph_node;
-      reasoning_msgs::msg::Attribute node_attribute;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = y_vert_planes_prior[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -67,10 +67,10 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     }
     for (int i = 0; i < rooms_vec_prior.size(); i++) {
       g2o::VertexRoom* v_room = rooms_vec_prior[i].node;
-      reasoning_msgs::msg::Edge graph_edge;
-      reasoning_msgs::msg::Node graph_node;
-      reasoning_msgs::msg::Attribute edge_attribute;
-      reasoning_msgs::msg::Attribute node_attribute;
+      situational_graphs_reasoning_msgs::msg::Edge graph_edge;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = rooms_vec_prior[i].id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
@@ -121,8 +121,8 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     graph_msg.name = "ONLINE";
     for (int i = 0; i < x_vert_planes.size(); i++) {
       g2o::Plane3D v_plane = x_vert_planes[i].plane;
-      reasoning_msgs::msg::Node graph_node;
-      reasoning_msgs::msg::Attribute node_attribute;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = x_vert_planes[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -139,8 +139,8 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     }
     for (int i = 0; i < y_vert_planes.size(); i++) {
       g2o::Plane3D v_plane = y_vert_planes[i].plane;
-      reasoning_msgs::msg::Node graph_node;
-      reasoning_msgs::msg::Attribute node_attribute;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = y_vert_planes[i].id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
@@ -157,10 +157,10 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     }
     for (int i = 0; i < rooms_vec.size(); i++) {
       g2o::VertexRoom* v_room = rooms_vec[i].node;
-      reasoning_msgs::msg::Edge graph_edge;
-      reasoning_msgs::msg::Node graph_node;
-      reasoning_msgs::msg::Attribute edge_attribute;
-      reasoning_msgs::msg::Attribute node_attribute;
+      situational_graphs_reasoning_msgs::msg::Edge graph_edge;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = rooms_vec[i].id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
@@ -209,10 +209,10 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
     // for(int i = 0; i < x_infinite_rooms.size(); i++) {
     //   g2o::VertexRoom* v_room = x_infinite_rooms[i].node;
-    //   reasoning_msgs::msg::Edge graph_edge;
-    //   reasoning_msgs::msg::Node graph_node;
-    //   reasoning_msgs::msg::Attribute edge_attribute;
-    //   reasoning_msgs::msg::Attribute node_attribute;
+    //   situational_graphs_reasoning_msgs::msg::Edge graph_edge;
+    //   situational_graphs_reasoning_msgs::msg::Node graph_node;
+    //   situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
+    //   situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
 
     //   // X Infinte Room Node
     //   graph_node.id = x_infinite_rooms[i].id;
@@ -248,10 +248,10 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
     // for(int i = 0; i < y_infinite_rooms.size(); i++) {
     //   g2o::VertexRoom* v_room = y_infinite_rooms[i].node;
-    //   reasoning_msgs::msg::Edge graph_edge;
-    //   reasoning_msgs::msg::Node graph_node;
-    //   reasoning_msgs::msg::Attribute edge_attribute;
-    //   reasoning_msgs::msg::Attribute node_attribute;
+    //   situational_graphs_reasoning_msgs::msg::Edge graph_edge;
+    //   situational_graphs_reasoning_msgs::msg::Node graph_node;
+    //   situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
+    //   situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
 
     //   // Y Infinte Room Node
     //   graph_node.id = y_infinite_rooms[i].id;
@@ -294,8 +294,8 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
       g2o::EdgeSE3Plane* edge_plane = dynamic_cast<g2o::EdgeSE3Plane*>(edge);
 
       if (edge_2p) {
-        reasoning_msgs::msg::Node graph_node;
-        reasoning_msgs::msg::Attribute node_attribute;
+        situational_graphs_reasoning_msgs::msg::Node graph_node;
+        situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
         g2o::VertexPlane* v_plane1 =
             dynamic_cast<g2o::VertexPlane*>(edge_2p->vertices()[0]);
         g2o::VertexPlane* v_plane2 =
@@ -304,7 +304,7 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
         auto found_vertex1 = std::find_if(
             nodes_vec.begin(),
             nodes_vec.end(),
-            boost::bind(&reasoning_msgs::msg::Node::id, _1) == v_plane1->id());
+            boost::bind(&situational_graphs_reasoning_msgs::msg::Node::id, _1) == v_plane1->id());
         if (found_vertex1 == nodes_vec.end()) {
           graph_node.id = v_plane1->id();
           graph_node.type = "Plane";
@@ -323,7 +323,7 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
         auto found_vertex2 = std::find_if(
             nodes_vec.begin(),
             nodes_vec.end(),
-            boost::bind(&reasoning_msgs::msg::Node::id, _1) == v_plane2->id());
+            boost::bind(&situational_graphs_reasoning_msgs::msg::Node::id, _1) == v_plane2->id());
         if (found_vertex2 == nodes_vec.end()) {
           graph_node.id = v_plane2->id();
           graph_node.type = "Plane";
@@ -349,10 +349,10 @@ reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
   return graph_msg;
 }
 
-reasoning_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
+situational_graphs_reasoning_msgs::msg::GraphKeyframes GraphPublisher::publish_graph_keyframes(
     const g2o::SparseOptimizer* local_graph,
     const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
-  reasoning_msgs::msg::GraphKeyframes msg;
+  situational_graphs_reasoning_msgs::msg::GraphKeyframes msg;
   msg.keyframes.reserve(keyframes.size());
   for (auto& keyframe : keyframes) {
     msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));

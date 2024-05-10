@@ -7,25 +7,17 @@ repositories:
     type: git
     url: https://github.com/koide3/ndt_omp.git
     version: master
-  s_graphs_utils/reasoning/graph_reasoning:
+  s_graphs_utils/reasoning/situational_graphs_reasoning:
     type: git
-    url: https://github.com/snt-arg/graph_reasoning.git
+    url: https://github.com/snt-arg/situational_graphs_reasoning.git
     version: complete_gnn_architecture
-  s_graphs_utils/reasoning/graph_wrapper:
+  s_graphs_utils/reasoning/situational_graphs_datasets:
     type: git
-    url: https://github.com/snt-arg/graph_wrapper.git
-    version: develop
-  s_graphs_utils/reasoning/graph_datasets:
-    type: git
-    url: https://github.com/snt-arg/graph_datasets.git
+    url: https://github.com/snt-arg/situational_graphs_datasets.git
     version: graph_reasoning
-  s_graphs_utils/reasoning/graph_matching:
+  s_graphs_utils/msgs/situational_graphs_reasoning_msgs:
     type: git
-    url: https://github.com/snt-arg/graph_matching.git
-    version: develop  
-  s_graphs_utils/msgs/reasoning_msgs:
-    type: git
-    url: https://github.com/snt-arg/reasoning_msgs.git
+    url: https://github.com/snt-arg/situational_graphs_reasoning_msgs.git
     version: main
   s_graphs_utils/msgs/s_graphs_msgs:
     type: git

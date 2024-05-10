@@ -37,8 +37,8 @@ def generate_launch_description():
     )
 
 def launch_reasoning():
-    reasoning_dir = get_package_share_directory('graph_reasoning')
-    reasoning_launch_file = os.path.join(reasoning_dir, "launch", "graph_reasoning.launch.py")
+    reasoning_dir = get_package_share_directory('situational_graphs_reasoning')
+    reasoning_launch_file = os.path.join(reasoning_dir, "launch", "situational_graphs_reasoning.launch.py")
     reasoning_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(reasoning_launch_file))    
     
