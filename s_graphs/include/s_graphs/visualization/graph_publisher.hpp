@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef GRAPH_PUBLISHER_HPP
 #define GRAPH_PUBLISHER_HPP
 
@@ -81,11 +79,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/point.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "reasoning_msgs/msg/attribute.hpp"
-#include "reasoning_msgs/msg/edge.hpp"
-#include "reasoning_msgs/msg/graph.hpp"
-#include "reasoning_msgs/msg/graph_keyframes.hpp"
-#include "reasoning_msgs/msg/node.hpp"
 #include "s_graphs/common/room_utils.hpp"
 #include "s_graphs/common/ros_utils.hpp"
 #include "s_graphs_msgs/msg/plane_data.hpp"
@@ -93,6 +86,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "s_graphs_msgs/msg/room_data.hpp"
 #include "s_graphs_msgs/msg/rooms_data.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
+#include "situational_graphs_reasoning_msgs/msg/attribute.hpp"
+#include "situational_graphs_reasoning_msgs/msg/edge.hpp"
+#include "situational_graphs_reasoning_msgs/msg/graph.hpp"
+#include "situational_graphs_reasoning_msgs/msg/graph_keyframes.hpp"
+#include "situational_graphs_reasoning_msgs/msg/node.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 class GraphPublisher {
@@ -101,7 +99,7 @@ class GraphPublisher {
   ~GraphPublisher();
 
  public:
-  reasoning_msgs::msg::Graph publish_graph(
+  situational_graphs_reasoning_msgs::msg::Graph publish_graph(
       const g2o::SparseOptimizer* local_graph,
       std::string graph_type,
       const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior,
@@ -113,7 +111,7 @@ class GraphPublisher {
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
 
-  reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
+  situational_graphs_reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
       const g2o::SparseOptimizer* local_graph,
       const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 

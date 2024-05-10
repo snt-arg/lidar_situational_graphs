@@ -1,6 +1,6 @@
 procs:
   rosbag:
-    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 bag play ~/Downloads/virtual/stugalux_oetrange_f2_3r.db3"'
+    shell: 'bash -c "sleep 1 && source ~/workspaces/s_graphs/install/setup.bash && ros2 bag play ~/Downloads/virtual/stugalux_oetrange_f2_3r.db3"'
     autostart: true
     stop: SIGINT
   s_graphs:

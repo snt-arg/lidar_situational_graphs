@@ -31,9 +31,9 @@
   <depend>backward_ros</depend>
   <depend>rviz_visual_tools</depend>
   <depend>libceres-dev</depend>
-  <depend>graph_reasoning</depend>
   <depend>s_graphs_msgs</depend>
-  <depend>reasoning_msgs</depend>
+  <depend>situational_graphs_reasoning</depend>
+  <depend>situational_graphs_reasoning_msgs</depend>
 
   <depend>ament_cmake_gtest</depend>
 

@@ -287,10 +287,11 @@ class SGraphsNode : public rclcpp::Node {
         "s_graphs/all_map_planes", 1, pub_opt);
     read_until_pub = this->create_publisher<std_msgs::msg::Header>(
         "s_graphs/read_until", 32, pub_opt);
-    graph_pub = this->create_publisher<reasoning_msgs::msg::Graph>(
+    graph_pub = this->create_publisher<situational_graphs_reasoning_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32, pub_opt);
-    graph_keyframes_pub = this->create_publisher<reasoning_msgs::msg::GraphKeyframes>(
-        "s_graphs/graph_keyframes", 32, pub_opt);
+    graph_keyframes_pub =
+        this->create_publisher<situational_graphs_reasoning_msgs::msg::GraphKeyframes>(
+            "s_graphs/graph_keyframes", 32, pub_opt);
 
     dump_service_server = this->create_service<s_graphs_msgs::srv::DumpGraph>(
         "s_graphs/dump",
@@ -581,7 +582,8 @@ class SGraphsNode : public rclcpp::Node {
     trans_map2map(2, 3) = pose_msg->pose.position.z;
   }
 
-  void floor_data_callback(const s_graphs_msgs::msg::FloorData::SharedPtr floor_data_msg) {
+  void floor_data_callback(
+      const s_graphs_msgs::msg::FloorData::SharedPtr floor_data_msg) {
     std::lock_guard<std::mutex> lock(floor_data_mutex);
     floor_data_queue.push_back(*floor_data_msg);
   }
@@ -1855,8 +1857,9 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub;
   rclcpp::Publisher<s_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<s_graphs_msgs::msg::PlanesData>::SharedPtr all_map_planes_pub;
-  rclcpp::Publisher<reasoning_msgs::msg::Graph>::SharedPtr graph_pub;
-  rclcpp::Publisher<reasoning_msgs::msg::GraphKeyframes>::SharedPtr graph_keyframes_pub;
+  rclcpp::Publisher<situational_graphs_reasoning_msgs::msg::Graph>::SharedPtr graph_pub;
+  rclcpp::Publisher<situational_graphs_reasoning_msgs::msg::GraphKeyframes>::SharedPtr
+      graph_keyframes_pub;
 
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;

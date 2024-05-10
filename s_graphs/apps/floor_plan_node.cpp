@@ -39,7 +39,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "reasoning_msgs/msg/graph_keyframes.hpp"
 #include "s_graphs/common/ros_utils.hpp"
 #include "s_graphs_msgs/msg/floor_data.hpp"
 #include "s_graphs_msgs/msg/plane_data.hpp"
@@ -47,6 +46,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "s_graphs_msgs/msg/point_clouds.hpp"
 #include "s_graphs_msgs/msg/room_data.hpp"
 #include "s_graphs_msgs/msg/rooms_data.hpp"
+#include "situational_graphs_reasoning_msgs/msg/graph_keyframes.hpp"
 #include "visualization_msgs/msg/marker_array.h"
 
 namespace s_graphs {
@@ -102,13 +102,13 @@ class FloorPlanNode : public rclcpp::Node {
         100,
         std::bind(&FloorPlanNode::map_planes_callback, this, std::placeholders::_1),
         sub_opt);
-    graph_keyframes_sub =
-        this->create_subscription<reasoning_msgs::msg::GraphKeyframes>(
-            "s_graphs/graph_keyframes",
-            1,
-            std::bind(
-                &FloorPlanNode::graph_keyframes_callback, this, std::placeholders::_1),
-            sub_opt);
+    graph_keyframes_sub = this->create_subscription<
+        situational_graphs_reasoning_msgs::msg::GraphKeyframes>(
+        "s_graphs/graph_keyframes",
+        1,
+        std::bind(
+            &FloorPlanNode::graph_keyframes_callback, this, std::placeholders::_1),
+        sub_opt);
 
     callback_group_publisher =
         this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -169,7 +169,8 @@ class FloorPlanNode : public rclcpp::Node {
   }
 
   void graph_keyframes_callback(
-      const reasoning_msgs::msg::GraphKeyframes::SharedPtr graph_keyframes_msg) {
+      const situational_graphs_reasoning_msgs::msg::GraphKeyframes::SharedPtr
+          graph_keyframes_msg) {
     for (const auto& graph_keyframe_msg : graph_keyframes_msg->keyframes) {
       auto current_keyframe = ROS2Keyframe(graph_keyframe_msg);
 
@@ -191,8 +192,9 @@ class FloorPlanNode : public rclcpp::Node {
     return;
   }
 
-  void flush_map_planes(std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
-                        std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes) {
+  void flush_map_planes(
+      std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
+      std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     for (const auto& x_map_planes_msg : x_vert_plane_queue) {
       for (const auto& x_map_plane : x_map_planes_msg) {
@@ -388,7 +390,7 @@ class FloorPlanNode : public rclcpp::Node {
     // publish all the keyframe ids on stairs
     std::vector<int> stair_kd_ids;
     for (const auto& keyframe : stair_keyframes) {
-      reasoning_msgs::msg::Keyframe keyframe_msg;
+      situational_graphs_reasoning_msgs::msg::Keyframe keyframe_msg;
       stair_kd_ids.push_back(keyframe->id());
     }
 
@@ -414,8 +416,8 @@ class FloorPlanNode : public rclcpp::Node {
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr
       skeleton_graph_sub;
   rclcpp::Subscription<s_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_sub;
-  rclcpp::Subscription<reasoning_msgs::msg::GraphKeyframes>::SharedPtr
-      graph_keyframes_sub;
+  rclcpp::Subscription<situational_graphs_reasoning_msgs::msg::GraphKeyframes>::
+      SharedPtr graph_keyframes_sub;
 
   rclcpp::Publisher<s_graphs_msgs::msg::RoomsData>::SharedPtr all_rooms_data_pub;
   rclcpp::Publisher<s_graphs_msgs::msg::FloorData>::SharedPtr floor_data_pub;
