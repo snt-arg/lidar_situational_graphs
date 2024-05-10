@@ -11,10 +11,6 @@ repositories:
     type: git
     url: https://github.com/snt-arg/situational_graphs_reasoning.git
     version: complete_gnn_architecture
-  s_graphs_utils/reasoning/situational_graphs_wrapper:
-    type: git
-    url: https://github.com/snt-arg/situational_graphs_wrapper.git
-    version: develop
   s_graphs_utils/reasoning/situational_graphs_datasets:
     type: git
     url: https://github.com/snt-arg/situational_graphs_datasets.git
