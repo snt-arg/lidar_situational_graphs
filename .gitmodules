@@ -19,7 +19,7 @@
 	branch = develop
 [submodule "utils/reasoning/situational_graphs_datasets"]
 	path = utils/reasoning/situational_graphs_datasets
-	url = https://github.com/snt-argsituational_graphs_datasets.git
+	url = https://github.com/snt-arg/situational_graphs_datasets.git
 	branch = develop
 [submodule "utils/msgs/situational_graphs_reasoning_msgs"]
 	path = utils/msgs/reasoning_msgs
