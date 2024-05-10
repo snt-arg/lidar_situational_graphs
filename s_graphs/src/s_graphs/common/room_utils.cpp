@@ -283,9 +283,9 @@ bool is_keyframe_inside_room(
   return false;
 }
 
-reasoning_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
+situational_graphs_reasoning_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
     const ExtendedRooms& room) {
-  reasoning_msgs::msg::RoomKeyframe msg;
+  situational_graphs_reasoning_msgs::msg::RoomKeyframe msg;
   msg.header.frame_id = "room";
   msg.id = room.id;
   pcl::toROSMsg(*room.cloud, msg.pointcloud);
@@ -302,7 +302,7 @@ reasoning_msgs::msg::RoomKeyframe convertExtendedRoomToRosMsg(
 }
 
 ExtendedRooms obtainExtendedRoomFromRosMsg(
-    const reasoning_msgs::msg::RoomKeyframe& msg) {
+    const situational_graphs_reasoning_msgs::msg::RoomKeyframe& msg) {
   ExtendedRooms room;
   room.id = msg.id;
   pcl::fromROSMsg(msg.pointcloud, *room.cloud);
