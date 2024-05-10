@@ -13,3 +13,19 @@
 	path = utils/msgs/s_graphs_msgs
 	url = https://github.com/snt-arg/s_graphs_msgs.git
 	branch = main
+[submodule "utils/reasoning/situational_graphs_reasoning"]
+	path = utils/reasoning/situational_graphs_reasoning
+	url = https://github.com/snt-arg/situational_graphs_reasoning.git
+	branch = develop
+[submodule "utils/reasoning/situational_graphs_wrapper"]
+	path = utils/reasoning/situational_graphs_wrapper
+	url = https://github.com/snt-arg/situational_graphs_wrapper.git
+	branch = develop
+[submodule "utils/reasoning/situational_graphs_datasets"]
+	path = utils/reasoning/situational_graphs_datasets
+	url = https://github.com/snt-arg/situational_graphs_datasets.git
+	branch = develop
+[submodule "utils/msgs/situational_graphs_reasoning_msgs"]
+	path = utils/msgs/reasoning_msgs
+	url = https://github.com/snt-arg/situational_graphs_reasoning_msgs.git
+	branch = main
