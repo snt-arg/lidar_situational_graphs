@@ -26,6 +26,6 @@
 	url = https://github.com/snt-arg/situational_graphs_datasets.git
 	branch = develop
 [submodule "utils/msgs/situational_graphs_reasoning_msgs"]
-	path = utils/msgs/reasoning_msgs
+	path = utils/msgs/situational_graphs_reasoning_msgs
 	url = https://github.com/snt-arg/situational_graphs_reasoning_msgs.git
 	branch = main
