@@ -66,8 +66,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "geometry_msgs/msg/point.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs_msgs/msg/room_data.hpp"
-#include "s_graphs_msgs/msg/rooms_data.hpp"
+#include "situational_graphs_msgs/msg/room_data.hpp"
+#include "situational_graphs_msgs/msg/rooms_data.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace s_graphs {
@@ -99,7 +99,7 @@ class FloorMapper {
    */
   void lookup_floors(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs_msgs::msg::RoomData room_data,
+      const situational_graphs_msgs::msg::RoomData room_data,
       std::unordered_map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -118,7 +118,7 @@ class FloorMapper {
    */
   void factor_floor_node(
       std::shared_ptr<GraphSLAM>& graph_slam,
-      const s_graphs_msgs::msg::RoomData room_data,
+      const situational_graphs_msgs::msg::RoomData room_data,
       std::unordered_map<int, s_graphs::Floors>& floors_vec,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -137,7 +137,7 @@ class FloorMapper {
   void update_floor_node(
       std::shared_ptr<GraphSLAM>& graph_slam,
       g2o::VertexFloor* floor_node,
-      const s_graphs_msgs::msg::RoomData room_data,
+      const situational_graphs_msgs::msg::RoomData room_data,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);

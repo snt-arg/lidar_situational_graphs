@@ -30,7 +30,7 @@ InfiniteRoomMapper::~InfiniteRoomMapper() {}
 bool InfiniteRoomMapper::lookup_infinite_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
     const int& plane_type,
-    const s_graphs_msgs::msg::RoomData room_data,
+    const situational_graphs_msgs::msg::RoomData room_data,
     const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,

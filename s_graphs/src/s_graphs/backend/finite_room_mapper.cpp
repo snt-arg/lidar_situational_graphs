@@ -26,7 +26,7 @@ FiniteRoomMapper::~FiniteRoomMapper() {}
 
 bool FiniteRoomMapper::lookup_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs_msgs::msg::RoomData room_data,
+    const situational_graphs_msgs::msg::RoomData room_data,
     const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::deque<std::pair<VerticalPlanes, VerticalPlanes>>& dupl_x_vert_planes,
@@ -626,7 +626,7 @@ bool FiniteRoomMapper::check_room_ids(
 
 void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs_msgs::msg::RoomData& det_room_data,
+    const situational_graphs_msgs::msg::RoomData& det_room_data,
     const s_graphs::InfiniteRooms& matched_x_infinite_room,
     const s_graphs::InfiniteRooms& matched_y_infinite_room,
     const Eigen::Isometry3d& room_center,
@@ -685,7 +685,7 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
 
 void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs_msgs::msg::RoomData& det_room_data,
+    const situational_graphs_msgs::msg::RoomData& det_room_data,
     const s_graphs::InfiniteRooms& matched_x_infinite_room,
     const Eigen::Isometry3d& room_center,
     std::unordered_map<int, Rooms>& rooms_vec,
@@ -752,7 +752,7 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
 
 void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs_msgs::msg::RoomData& det_room_data,
+    const situational_graphs_msgs::msg::RoomData& det_room_data,
     const s_graphs::InfiniteRooms& matched_y_infinite_room,
     const Eigen::Isometry3d& room_center,
     std::unordered_map<int, Rooms>& rooms_vec,

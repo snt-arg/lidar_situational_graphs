@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef GRAPH_PUBLISHER_HPP
 #define GRAPH_PUBLISHER_HPP
 
@@ -79,20 +77,20 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <unordered_map>
 
 #include "geometry_msgs/msg/point.hpp"
+#include "pcl_ros/transforms.hpp"
+#include "rclcpp/rclcpp.hpp"
+#include "s_graphs/common/room_utils.hpp"
+#include "s_graphs/common/ros_utils.hpp"
+#include "sensor_msgs/msg/point_cloud2.hpp"
+#include "situational_graphs_msgs/msg/plane_data.hpp"
+#include "situational_graphs_msgs/msg/planes_data.hpp"
+#include "situational_graphs_msgs/msg/room_data.hpp"
+#include "situational_graphs_msgs/msg/rooms_data.hpp"
 #include "situational_graphs_reasoning_msgs/msg/attribute.hpp"
 #include "situational_graphs_reasoning_msgs/msg/edge.hpp"
 #include "situational_graphs_reasoning_msgs/msg/graph.hpp"
 #include "situational_graphs_reasoning_msgs/msg/graph_keyframes.hpp"
 #include "situational_graphs_reasoning_msgs/msg/node.hpp"
-#include "pcl_ros/transforms.hpp"
-#include "rclcpp/rclcpp.hpp"
-#include "s_graphs/common/room_utils.hpp"
-#include "s_graphs/common/ros_utils.hpp"
-#include "s_graphs_msgs/msg/plane_data.hpp"
-#include "s_graphs_msgs/msg/planes_data.hpp"
-#include "s_graphs_msgs/msg/room_data.hpp"
-#include "s_graphs_msgs/msg/rooms_data.hpp"
-#include "sensor_msgs/msg/point_cloud2.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 class GraphPublisher {

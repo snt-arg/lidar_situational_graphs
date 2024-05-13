@@ -44,7 +44,7 @@ find_package(geographic_msgs REQUIRED)
 find_package(situational_graphs_reasoning_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(rviz_visual_tools REQUIRED)
-find_package(s_graphs_msgs REQUIRED)
+find_package(situational_graphs_msgs REQUIRED)
 
 
 find_package(PCL REQUIRED)
@@ -99,7 +99,7 @@ set(DEPENDENCIES
     nmea_msgs
     geodesy
     rviz_visual_tools
-    s_graphs_msgs)
+    situational_graphs_msgs)
 
 SET(G2O_COMMON_LIBS
   ${PCL_LIBRARIES}

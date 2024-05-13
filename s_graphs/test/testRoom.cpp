@@ -37,8 +37,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/rooms.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
-#include "s_graphs_msgs/msg/plane_data.hpp"
-#include "s_graphs_msgs/msg/rooms_data.hpp"
+#include "situational_graphs_msgs/msg/plane_data.hpp"
+#include "situational_graphs_msgs/msg/rooms_data.hpp"
 
 typedef pcl::PointXYZI PointT;
 typedef pcl::PointXYZRGBNormal PointNormal;
@@ -58,8 +58,8 @@ class TestRoom : public ::testing::Test {
 
  public:
   void testLookupRooms() {
-    s_graphs_msgs::msg::RoomData room_data;
-    s_graphs_msgs::msg::PlaneData x1_plane_data, x2_plane_data, y1_plane_data,
+    situational_graphs_msgs::msg::RoomData room_data;
+    situational_graphs_msgs::msg::PlaneData x1_plane_data, x2_plane_data, y1_plane_data,
         y2_plane_data;
     x1_plane_data.id = 1;
     x1_plane_data.nx = 1;
@@ -183,7 +183,7 @@ class TestRoom : public ::testing::Test {
       dupl_x_vert_planes, dupl_y_vert_planes;
   std::unordered_map<int, s_graphs::InfiniteRooms> x_infinite_rooms, y_infinite_rooms;
   std::unordered_map<int, s_graphs::Rooms> rooms_vec;
-  s_graphs_msgs::msg::RoomData pub_room_data;
+  situational_graphs_msgs::msg::RoomData pub_room_data;
 };
 
 TEST_F(TestRoom, TestRoomCreation) {

@@ -39,11 +39,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs_msgs/msg/plane_data.hpp"
-#include "s_graphs_msgs/msg/planes_data.hpp"
-#include "s_graphs_msgs/msg/point_clouds.hpp"
-#include "s_graphs_msgs/msg/room_data.hpp"
-#include "s_graphs_msgs/msg/rooms_data.hpp"
+#include "situational_graphs_msgs/msg/plane_data.hpp"
+#include "situational_graphs_msgs/msg/planes_data.hpp"
+#include "situational_graphs_msgs/msg/point_clouds.hpp"
+#include "situational_graphs_msgs/msg/room_data.hpp"
+#include "situational_graphs_msgs/msg/rooms_data.hpp"
 #include "visualization_msgs/msg/marker_array.h"
 
 namespace s_graphs {
@@ -83,14 +83,17 @@ class FloorPlanNode : public rclcpp::Node {
             1,
             std::bind(
                 &FloorPlanNode::skeleton_graph_callback, this, std::placeholders::_1));
-    map_planes_sub = this->create_subscription<s_graphs_msgs::msg::PlanesData>(
-        "s_graphs/all_map_planes",
-        100,
-        std::bind(&FloorPlanNode::map_planes_callback, this, std::placeholders::_1));
+    map_planes_sub =
+        this->create_subscription<situational_graphs_msgs::msg::PlanesData>(
+            "s_graphs/all_map_planes",
+            100,
+            std::bind(
+                &FloorPlanNode::map_planes_callback, this, std::placeholders::_1));
 
-    all_rooms_data_pub = this->create_publisher<s_graphs_msgs::msg::RoomsData>(
-        "floor_plan/all_rooms_data", 1);
-    floor_data_pub = this->create_publisher<s_graphs_msgs::msg::RoomData>(
+    all_rooms_data_pub =
+        this->create_publisher<situational_graphs_msgs::msg::RoomsData>(
+            "floor_plan/all_rooms_data", 1);
+    floor_data_pub = this->create_publisher<situational_graphs_msgs::msg::RoomData>(
         "floor_plan/floor_data", 1);
 
     floor_plane_timer = create_wall_timer(
@@ -122,15 +125,15 @@ class FloorPlanNode : public rclcpp::Node {
    *
    */
   void map_planes_callback(
-      const s_graphs_msgs::msg::PlanesData::SharedPtr map_planes_msg) {
+      const situational_graphs_msgs::msg::PlanesData::SharedPtr map_planes_msg) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     x_vert_plane_queue.push_back(map_planes_msg->x_planes);
     y_vert_plane_queue.push_back(map_planes_msg->y_planes);
   }
 
   void flush_map_planes(
-      std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
-      std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes) {
+      std::vector<situational_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
+      std::vector<situational_graphs_msgs::msg::PlaneData>& current_y_vert_planes) {
     std::lock_guard<std::mutex> lock(map_plane_mutex);
     for (const auto& x_map_planes_msg : x_vert_plane_queue) {
       for (const auto& x_map_plane : x_map_planes_msg) {
@@ -158,7 +161,7 @@ class FloorPlanNode : public rclcpp::Node {
   }
 
   void floor_plan_callback() {
-    std::vector<s_graphs_msgs::msg::PlaneData> current_x_vert_planes,
+    std::vector<situational_graphs_msgs::msg::PlaneData> current_x_vert_planes,
         current_y_vert_planes;
     flush_map_planes(current_x_vert_planes, current_y_vert_planes);
 
@@ -182,9 +185,10 @@ class FloorPlanNode : public rclcpp::Node {
   }
 
   void extract_rooms(
-      const std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
-      const std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes) {
-    std::vector<s_graphs_msgs::msg::RoomData> room_candidates_vec;
+      const std::vector<situational_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
+      const std::vector<situational_graphs_msgs::msg::PlaneData>&
+          current_y_vert_planes) {
+    std::vector<situational_graphs_msgs::msg::RoomData> room_candidates_vec;
     std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> curr_cloud_clusters =
         room_analyzer->extract_cloud_clusters();
 
@@ -207,7 +211,7 @@ class FloorPlanNode : public rclcpp::Node {
       room_analyzer->perform_room_segmentation(
           room_info, cloud_cluster, room_candidates_vec, current_cloud_marker);
 
-      s_graphs_msgs::msg::RoomsData room_candidates_msg;
+      situational_graphs_msgs::msg::RoomsData room_candidates_msg;
       room_candidates_msg.header.stamp = this->now();
       room_candidates_msg.rooms = room_candidates_vec;
       all_rooms_data_pub->publish(room_candidates_msg);
@@ -215,9 +219,10 @@ class FloorPlanNode : public rclcpp::Node {
   }
 
   void extract_floors(
-      const std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
-      const std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes) {
-    std::vector<s_graphs_msgs::msg::PlaneData> floor_plane_candidates_vec;
+      const std::vector<situational_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
+      const std::vector<situational_graphs_msgs::msg::PlaneData>&
+          current_y_vert_planes) {
+    std::vector<situational_graphs_msgs::msg::PlaneData> floor_plane_candidates_vec;
     floor_analyzer->perform_floor_segmentation(
         current_x_vert_planes, current_y_vert_planes, floor_plane_candidates_vec);
 
@@ -228,7 +233,7 @@ class FloorPlanNode : public rclcpp::Node {
                                              floor_plane_candidates_vec[2],
                                              floor_plane_candidates_vec[3]);
 
-      s_graphs_msgs::msg::RoomData floor_data_msg;
+      situational_graphs_msgs::msg::RoomData floor_data_msg;
       floor_data_msg.header.stamp = this->now();
       floor_data_msg.id = 0;
       floor_data_msg.x_planes.push_back(floor_plane_candidates_vec[0]);
@@ -243,9 +248,11 @@ class FloorPlanNode : public rclcpp::Node {
  private:
   rclcpp::Subscription<visualization_msgs::msg::MarkerArray>::SharedPtr
       skeleton_graph_sub;
-  rclcpp::Subscription<s_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_sub;
-  rclcpp::Publisher<s_graphs_msgs::msg::RoomsData>::SharedPtr all_rooms_data_pub;
-  rclcpp::Publisher<s_graphs_msgs::msg::RoomData>::SharedPtr floor_data_pub;
+  rclcpp::Subscription<situational_graphs_msgs::msg::PlanesData>::SharedPtr
+      map_planes_sub;
+  rclcpp::Publisher<situational_graphs_msgs::msg::RoomsData>::SharedPtr
+      all_rooms_data_pub;
+  rclcpp::Publisher<situational_graphs_msgs::msg::RoomData>::SharedPtr floor_data_pub;
 
  private:
   rclcpp::TimerBase::SharedPtr floor_plane_timer;
@@ -257,7 +264,7 @@ class FloorPlanNode : public rclcpp::Node {
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
 
   std::mutex map_plane_mutex;
-  std::deque<std::vector<s_graphs_msgs::msg::PlaneData>> x_vert_plane_queue,
+  std::deque<std::vector<situational_graphs_msgs::msg::PlaneData>> x_vert_plane_queue,
       y_vert_plane_queue;
 };
 
