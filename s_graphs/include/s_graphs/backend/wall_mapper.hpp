@@ -49,11 +49,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/point.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs_msgs/msg/plane_data.hpp"
-#include "s_graphs_msgs/msg/planes_data.hpp"
-#include "s_graphs_msgs/msg/room_data.hpp"
-#include "s_graphs_msgs/msg/rooms_data.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
+#include "situational_graphs_msgs/msg/plane_data.hpp"
+#include "situational_graphs_msgs/msg/planes_data.hpp"
+#include "situational_graphs_msgs/msg/room_data.hpp"
+#include "situational_graphs_msgs/msg/rooms_data.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace s_graphs {
@@ -81,13 +81,14 @@ class WallMapper {
    * @param x_vert_planes
    * @param y_vert_planes
    */
-  void factor_wall(const std::shared_ptr<GraphSLAM> covisibility_graph,
-                   const Eigen::Vector3d& wall_pose,
-                   const Eigen::Vector3d& wall_point,
-                   const std::vector<s_graphs_msgs::msg::PlaneData> x_planes_msg,
-                   const std::vector<s_graphs_msgs::msg::PlaneData> y_planes_msg,
-                   std::unordered_map<int, VerticalPlanes>& x_vert_planes,
-                   std::unordered_map<int, VerticalPlanes>& y_vert_planes);
+  void factor_wall(
+      const std::shared_ptr<GraphSLAM> covisibility_graph,
+      const Eigen::Vector3d& wall_pose,
+      const Eigen::Vector3d& wall_point,
+      const std::vector<situational_graphs_msgs::msg::PlaneData> x_planes_msg,
+      const std::vector<situational_graphs_msgs::msg::PlaneData> y_planes_msg,
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 
   /**
    * @brief

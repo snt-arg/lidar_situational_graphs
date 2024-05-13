@@ -10,8 +10,8 @@ void WallMapper::factor_wall(
     const std::shared_ptr<GraphSLAM> covisibility_graph,
     const Eigen::Vector3d& wall_pose,
     const Eigen::Vector3d& wall_point,
-    const std::vector<s_graphs_msgs::msg::PlaneData> x_planes_msg,
-    const std::vector<s_graphs_msgs::msg::PlaneData> y_planes_msg,
+    const std::vector<situational_graphs_msgs::msg::PlaneData> x_planes_msg,
+    const std::vector<situational_graphs_msgs::msg::PlaneData> y_planes_msg,
     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     std::unordered_map<int, VerticalPlanes>& y_vert_planes) {
   if (x_planes_msg.size() == 2) {

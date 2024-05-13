@@ -12,7 +12,7 @@ FloorMapper::~FloorMapper() {}
 
 void FloorMapper::lookup_floors(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs_msgs::msg::FloorData floor_data,
+    const situational_graphs_msgs::msg::FloorData floor_data,
     std::map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -80,7 +80,7 @@ int FloorMapper::associate_floors(const Eigen::Vector3d& floor_center,
 
 int FloorMapper::factor_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
-    const s_graphs_msgs::msg::FloorData floor_data,
+    const situational_graphs_msgs::msg::FloorData floor_data,
     std::map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
@@ -114,7 +114,7 @@ int FloorMapper::factor_floor_node(
 void FloorMapper::update_floor_node(
     std::shared_ptr<GraphSLAM>& graph_slam,
     g2o::VertexFloor* floor_node,
-    const s_graphs_msgs::msg::FloorData floor_data,
+    const situational_graphs_msgs::msg::FloorData floor_data,
     std::map<int, s_graphs::Floors>& floors_vec,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,

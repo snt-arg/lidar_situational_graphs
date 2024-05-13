@@ -19,7 +19,7 @@ repositories:
     type: git
     url: https://github.com/snt-arg/situational_graphs_reasoning_msgs.git
     version: main
-  s_graphs_utils/msgs/s_graphs_msgs:
+  s_graphs_utils/msgs/situational_graphs_msgs:
     type: git
-    url: https://github.com/snt-arg/s_graphs_msgs.git
+    url: https://github.com/snt-arg/situational_graphs_msgs.git
     version: main  

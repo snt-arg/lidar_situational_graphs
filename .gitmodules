@@ -9,10 +9,6 @@
 	path = utils/ndt_omp
 	url = https://github.com/koide3/ndt_omp.git
 	branch = master
-[submodule "utils/msgs/s_graphs_msgs"]
-	path = utils/msgs/s_graphs_msgs
-	url = https://github.com/snt-arg/s_graphs_msgs.git
-	branch = main
 [submodule "utils/reasoning/situational_graphs_reasoning"]
 	path = utils/reasoning/situational_graphs_reasoning
 	url = https://github.com/snt-arg/situational_graphs_reasoning.git
@@ -28,4 +24,8 @@
 [submodule "utils/msgs/situational_graphs_reasoning_msgs"]
 	path = utils/msgs/situational_graphs_reasoning_msgs
 	url = https://github.com/snt-arg/situational_graphs_reasoning_msgs.git
+	branch = main
+[submodule "utils/msgs/situational_graphs_msgs"]
+	path = utils/msgs/situational_graphs_msgs
+	url = https://github.com/snt-arg/situational_graphs_msgs
 	branch = main
