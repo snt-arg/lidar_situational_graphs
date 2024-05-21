@@ -1147,6 +1147,20 @@ class SGraphsNode : public rclcpp::Node {
                                        floors_vec);
           loop_found = false;
           global_optimization = true;
+        } else if (loop_found && duplicate_planes_found) {
+          GraphUtils::copy_floor_graph(current_floor_level,
+                                       covisibility_graph,
+                                       compressed_graph,
+                                       keyframes,
+                                       x_vert_planes,
+                                       y_vert_planes,
+                                       rooms_vec,
+                                       x_infinite_rooms,
+                                       y_infinite_rooms,
+                                       floors_vec);
+          duplicate_planes_found = false;
+          loop_found = false;
+          global_optimization = true;
         }
         graph_mutex.unlock();
         break;
