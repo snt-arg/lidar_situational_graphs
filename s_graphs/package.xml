@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>s_graphs</name>
+  <name>lidar_s_graphs</name>
   <version>3.0.1</version>
   <description>The s_graphs package</description>
 
