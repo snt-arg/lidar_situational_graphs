@@ -190,7 +190,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
         vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
-        vert_plane.keyframe_node = keyframe->node;
         vert_plane.plane_node = plane_node;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
@@ -249,7 +248,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
         vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
-        vert_plane.keyframe_node = keyframe->node;
         vert_plane.plane_node = plane_node;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
@@ -307,7 +305,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         hort_plane.cloud_seg_body = keyframe->cloud_seg_body;
         hort_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         hort_plane.keyframe_node_vec.push_back(keyframe->node);
-        hort_plane.keyframe_node = keyframe->node;
         hort_plane.plane_node = plane_node;
         hort_plane.cloud_seg_map = nullptr;
         hort_plane.covariance = Eigen::Matrix3d::Identity();

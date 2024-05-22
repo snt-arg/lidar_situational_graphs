@@ -98,11 +98,6 @@ std::optional<Eigen::Vector3d> find_intersection(const Eigen::Vector3d& point1,
 std::optional<Eigen::Isometry3d> obtain_global_centre_of_room(
     const std::vector<PlaneGlobalRep>& planes);
 
-std::set<g2o::VertexSE3*> publish_room_keyframes_ids(
-    const s_graphs::Rooms& room,
-    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes);
-
 std::set<g2o::VertexSE3*> filter_inside_room_keyframes(
     const s_graphs::Rooms& room,
     const std::set<g2o::VertexSE3*>& keyframes_candidates);

@@ -170,39 +170,6 @@ std::set<int> filter_keyframes_ids(
   return keyframes_inside;
 }
 
-std::set<g2o::VertexSE3*> publish_room_keyframes_ids(
-    const s_graphs::Rooms& room,
-    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
-    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes) {
-  std::set<g2o::VertexSE3*> keyframe_candidates;
-  std::vector<PlaneGlobalRep> plane_reps;
-  auto planes = obtain_planes_from_room(room, x_vert_planes, y_vert_planes);
-  if (planes.size() != 4) return {};
-  // TODO:  DEBUG CAREFULLY
-  for (auto& plane : planes) {
-    PlaneGlobalRep plane_rep;
-    plane_rep.normal =
-        plane->keyframe_node->estimate().linear() * plane->plane.normal();
-    const auto glob_point = plane->keyframe_node->estimate() *
-                            (-plane->plane.normal() * plane->plane.distance());
-    plane_rep.point = glob_point;
-    plane_reps.emplace_back(plane_rep);
-
-    keyframe_candidates.insert(plane->keyframe_node_vec.begin(),
-                               plane->keyframe_node_vec.end());
-  }
-  std::set<g2o::VertexSE3*> keyframes_inside;
-
-  for (auto& keyframe_candidate : keyframe_candidates) {
-    if (!is_SE3_inside_a_room(keyframe_candidate->estimate(), plane_reps)) {
-      continue;
-    }
-    keyframes_inside.insert(keyframe_candidate);
-  }
-
-  return keyframes_inside;
-}
-
 std::set<g2o::VertexSE3*> filter_inside_room_keyframes(
     const s_graphs::Rooms& room,
     const std::set<g2o::VertexSE3*>& keyframes_candidates) {

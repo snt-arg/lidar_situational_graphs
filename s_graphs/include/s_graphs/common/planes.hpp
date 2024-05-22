@@ -67,8 +67,6 @@ class Planes {
   Planes(const Planes& old_plane, const bool deep_copy) {
     *this = old_plane;
     if (deep_copy) {
-      keyframe_node = new g2o::VertexSE3();
-      keyframe_node->setEstimate(old_plane.keyframe_node->estimate());
       plane_node = new g2o::VertexPlane();
       plane_node->setEstimate(old_plane.plane_node->estimate());
     }
@@ -86,7 +84,6 @@ class Planes {
     color = old_plane.color;
     floor_level = old_plane.floor_level;
     revit_id = old_plane.revit_id;
-    keyframe_node = old_plane.keyframe_node;
     plane_node = old_plane.plane_node;
     type = old_plane.type;
     wall_point = old_plane.wall_point;
@@ -112,11 +109,10 @@ class Planes {
   std::vector<double> color;
   int floor_level;  // current floor level
   int revit_id;
-  g2o::VertexSE3* keyframe_node = nullptr;  // keyframe node instance
-  g2o::VertexPlane* plane_node = nullptr;   // node instance
-  std::string type;                         // Type online or prior
-  double length;                            // Length of plane
-  bool matched = false;                     // Flag if matched with prior/online or not
+  g2o::VertexPlane* plane_node = nullptr;  // node instance
+  std::string type;                        // Type online or prior
+  double length;                           // Length of plane
+  bool matched = false;                    // Flag if matched with prior/online or not
   Eigen::Vector2d start_point =
       Eigen::Vector2d::Ones();  // start point of the PRIOR wall in revit
   Eigen::Vector3d wall_point;   // point used to calculate prior wall center
@@ -162,12 +158,6 @@ class VerticalPlanes : public Planes {
       ofs << "Covariance\n";
       ofs << covariance << "\n";
 
-      ofs << "keyframe_node_id\n";
-      ofs << keyframe_node->id() << "\n";
-
-      ofs << "keyframe_node_pose\n";
-      ofs << keyframe_node->estimate().matrix() << "\n";
-
       ofs << "plane_node_id\n";
       ofs << plane_node->id() << "\n";
 
@@ -211,12 +201,6 @@ class VerticalPlanes : public Planes {
 
       ofs << "Covariance\n";
       ofs << covariance << "\n";
-
-      ofs << "keyframe_node_id\n";
-      ofs << keyframe_node->id() << "\n";
-
-      ofs << "keyframe_node_pose\n";
-      ofs << keyframe_node->estimate().matrix() << "\n";
 
       ofs << "plane_node_id\n";
       ofs << plane_node->id() << "\n";
@@ -306,22 +290,6 @@ class VerticalPlanes : public Planes {
       } else if (token == "keyframe_node_id") {
         int node_id;
         ifs >> node_id;
-
-        for (const auto& vertex_pair : local_graph->vertices()) {
-          g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(vertex_pair.second);
-          if (vertex && vertex->id() == node_id) {
-            // Found the vertex with the given keyframe_id
-            keyframe_node = vertex;
-
-            break;
-          }
-        }
-        if (keyframe_node) {
-        } else {
-          // The vertex with the given keyframe_id was not found in the graph
-          std::cout << "Vertex with keyframe_id " << node_id
-                    << " not found in the graph." << std::endl;
-        }
       } else if (token == "plane_node_pose") {
         Eigen::Vector4d plane_coeffs;
         for (int i = 0; i < 4; i++) {
