@@ -128,13 +128,11 @@ class TestRoom : public ::testing::Test {
     Eigen::Vector4d plane_coeffs;
 
     x1_vert_plane.id = 1;
-    x1_vert_plane.keyframe_node = keyframe->node;
     plane_coeffs << 1, 0, 0, 10;
     x1_vert_plane.plane = plane_coeffs;
     x1_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
     x2_vert_plane.id = 2;
-    x2_vert_plane.keyframe_node = keyframe->node;
     plane_coeffs << -1, 0, 0, 4;
     x2_vert_plane.plane = plane_coeffs;
     x2_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
@@ -143,13 +141,11 @@ class TestRoom : public ::testing::Test {
     x_vert_planes.insert({x2_vert_plane.id, x2_vert_plane});
 
     y1_vert_plane.id = 3;
-    y1_vert_plane.keyframe_node = keyframe->node;
     plane_coeffs << 0, 1, 0, 6;
     y1_vert_plane.plane = plane_coeffs;
     y1_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
     y2_vert_plane.id = 4;
-    y2_vert_plane.keyframe_node = keyframe->node;
     plane_coeffs << 0, -1, 0, 4;
     y2_vert_plane.plane = plane_coeffs;
     y2_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
