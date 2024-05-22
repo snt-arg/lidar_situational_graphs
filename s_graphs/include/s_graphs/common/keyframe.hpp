@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef KEYFRAME_HPP
 #define KEYFRAME_HPP
 
@@ -124,7 +122,7 @@ struct KeyFrame {
                            // scan_matching_odometry)
   pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
   pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_body;  // semantically segmented pointcloud
+      cloud_seg_body;  // temporary semantically segmented pointcloud
   std::vector<int> x_plane_ids, y_plane_ids,
       hort_plane_ids;  // list of planes associated with the keyframe
 

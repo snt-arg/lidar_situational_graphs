@@ -118,7 +118,6 @@ class TestPlane : public ::testing::Test {
     local_plane << 1, 0, 0, 10;
     g2o::Plane3D mapped_plane(local_plane);
     x_vert_plane.plane = mapped_plane;
-    x_vert_plane.cloud_seg_body = pcl::PointCloud<PointNormal>::Ptr();
     x_vert_plane.cloud_seg_map = pcl::PointCloud<PointNormal>::Ptr();
     x_vert_plane.keyframe_node_vec.push_back(keyframe->node);
     x_vert_planes.insert({x_vert_plane.id, x_vert_plane});

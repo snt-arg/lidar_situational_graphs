@@ -46,6 +46,8 @@ void PlaneMapper::map_extracted_planes(
                                          y_vert_planes,
                                          hort_planes);
   }
+  // clear the segmented cloud from keyframe
+  keyframe->cloud_seg_body->clear();
 }
 
 /**
@@ -187,7 +189,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         VerticalPlanes vert_plane;
         vert_plane.id = data_association;
         vert_plane.plane = det_plane_map_frame.coeffs();
-        vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
         vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
@@ -198,43 +199,16 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
         color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
         color.push_back(keyframe->cloud_seg_body->points.back().b);  // blue
-        // color.push_back(255);  // red
-        // color.push_back(0.0);  // green
-        // color.push_back(0.0);  // blue
         vert_plane.color = color;
 
         x_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->x_plane_ids.push_back(vert_plane.id);
-
-        RCLCPP_DEBUG(node_obj->get_logger(),
-                     "xplane association",
-                     "Added new x vertical plane node with coeffs %f %f %f %f",
-                     det_plane_map_frame.coeffs()(0),
-                     det_plane_map_frame.coeffs()(1),
-                     det_plane_map_frame.coeffs()(2),
-                     det_plane_map_frame.coeffs()(3));
-        // std::cout << "X Plane id : " << vert_plane.id << "Coeffs : " << std::endl;
-        // std::cout << vert_plane.plane.coeffs() << std::endl;
       } else {
         plane_node = x_vert_planes[data_association].plane_node;
         x_vert_planes[data_association].cloud_seg_body_vec.push_back(
             keyframe->cloud_seg_body);
         x_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->x_plane_ids.push_back(x_vert_planes[data_association].id);
-
-        RCLCPP_DEBUG(
-            node_obj->get_logger(),
-            "xplane association",
-            "matched x vert plane with coeffs %f %f %f %f to mapped x vert plane of "
-            "coeffs %f %f %f %f",
-            det_plane_map_frame.coeffs()(0),
-            det_plane_map_frame.coeffs()(1),
-            det_plane_map_frame.coeffs()(2),
-            det_plane_map_frame.coeffs()(3),
-            x_vert_planes[data_association].plane_node->estimate().coeffs()(0),
-            x_vert_planes[data_association].plane_node->estimate().coeffs()(1),
-            x_vert_planes[data_association].plane_node->estimate().coeffs()(2),
-            x_vert_planes[data_association].plane_node->estimate().coeffs()(3));
       }
       break;
     }
@@ -245,7 +219,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         VerticalPlanes vert_plane;
         vert_plane.id = data_association;
         vert_plane.plane = det_plane_map_frame.coeffs();
-        vert_plane.cloud_seg_body = keyframe->cloud_seg_body;
         vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
@@ -256,42 +229,15 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
         color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
         color.push_back(keyframe->cloud_seg_body->points.back().b);  // blue
-        // color.push_back(0.0);  // red
-        // color.push_back(0.0);  // green
-        // color.push_back(255);  // blue
         vert_plane.color = color;
         y_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->y_plane_ids.push_back(vert_plane.id);
-        RCLCPP_DEBUG(node_obj->get_logger(),
-                     "yplane association",
-                     "Added new y vertical plane node with coeffs %f %f %f %f",
-                     det_plane_map_frame.coeffs()(0),
-                     det_plane_map_frame.coeffs()(1),
-                     det_plane_map_frame.coeffs()(2),
-                     det_plane_map_frame.coeffs()(3));
-        // std::cout << "Y Plane id : " << vert_plane.id << "Coeffs : " << std::endl;
-        // std::cout << vert_plane.plane.coeffs() << std::endl;
-
       } else {
         plane_node = y_vert_planes[data_association].plane_node;
         y_vert_planes[data_association].cloud_seg_body_vec.push_back(
             keyframe->cloud_seg_body);
         y_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->y_plane_ids.push_back(y_vert_planes[data_association].id);
-
-        RCLCPP_DEBUG(
-            node_obj->get_logger(),
-            "yplane association",
-            "matched y vert plane with coeffs %f %f %f %f to mapped y vert plane of "
-            "coeffs %f %f %f %f",
-            det_plane_map_frame.coeffs()(0),
-            det_plane_map_frame.coeffs()(1),
-            det_plane_map_frame.coeffs()(2),
-            det_plane_map_frame.coeffs()(3),
-            y_vert_planes[data_association].plane_node->estimate().coeffs()(0),
-            y_vert_planes[data_association].plane_node->estimate().coeffs()(1),
-            y_vert_planes[data_association].plane_node->estimate().coeffs()(2),
-            y_vert_planes[data_association].plane_node->estimate().coeffs()(3));
       }
       break;
     }
@@ -302,7 +248,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         HorizontalPlanes hort_plane;
         hort_plane.id = data_association;
         hort_plane.plane = det_plane_map_frame.coeffs();
-        hort_plane.cloud_seg_body = keyframe->cloud_seg_body;
         hort_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         hort_plane.keyframe_node_vec.push_back(keyframe->node);
         hort_plane.plane_node = plane_node;
@@ -316,34 +261,12 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         hort_plane.color = color;
         hort_planes.insert({hort_plane.id, hort_plane});
         keyframe->hort_plane_ids.push_back(hort_plane.id);
-
-        RCLCPP_DEBUG(node_obj->get_logger(),
-                     "hort plane association",
-                     "Added new horizontal plane node with coeffs %f %f %f %f",
-                     det_plane_map_frame.coeffs()(0),
-                     det_plane_map_frame.coeffs()(1),
-                     det_plane_map_frame.coeffs()(2),
-                     det_plane_map_frame.coeffs()(3));
       } else {
         plane_node = hort_planes[data_association].plane_node;
         hort_planes[data_association].cloud_seg_body_vec.push_back(
             keyframe->cloud_seg_body);
         hort_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->hort_plane_ids.push_back(hort_planes[data_association].id);
-
-        RCLCPP_DEBUG(
-            node_obj->get_logger(),
-            "hort plane association",
-            "matched hort plane with coeffs %f %f %f %f to mapped hort plane of coeffs "
-            "%f %f %f %f",
-            det_plane_map_frame.coeffs()(0),
-            det_plane_map_frame.coeffs()(1),
-            det_plane_map_frame.coeffs()(2),
-            det_plane_map_frame.coeffs()(3),
-            hort_planes[data_association].plane_node->estimate().coeffs()(0),
-            hort_planes[data_association].plane_node->estimate().coeffs()(1),
-            hort_planes[data_association].plane_node->estimate().coeffs()(2),
-            hort_planes[data_association].plane_node->estimate().coeffs()(3));
       }
       break;
     }
@@ -399,12 +322,6 @@ int PlaneMapper::associate_plane(
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * x_vert_plane.second.covariance.inverse() * error);
-        RCLCPP_DEBUG(node_obj->get_logger(),
-                     "xplane plane association",
-                     "maha distance xplane: %f",
-                     maha_dist);
-
-        // printf("\n maha distance x: %f", maha_dist);
 
         if (std::isnan(maha_dist) || maha_dist < 1e-3) {
           Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
@@ -448,11 +365,6 @@ int PlaneMapper::associate_plane(
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * y_vert_plane.second.covariance.inverse() * error);
-        RCLCPP_DEBUG(node_obj->get_logger(),
-                     "yplane plane association",
-                     "maha distance yplane: %f",
-                     maha_dist);
-        // printf("\n maha distance y: %f", maha_dist);
 
         if (std::isnan(maha_dist) || maha_dist < 1e-3) {
           Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
@@ -496,11 +408,6 @@ int PlaneMapper::associate_plane(
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * hort_plane.second.covariance.inverse() * error);
-        // std::cout << "cov hor: " << hort_planes[i].covariance.inverse() << std::endl;
-        RCLCPP_DEBUG(node_obj->get_logger(),
-                     "hort plane association",
-                     "maha distance hort: %f",
-                     maha_dist);
 
         if (std::isnan(maha_dist) || maha_dist < 1e-3) {
           Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();

@@ -48,11 +48,9 @@ namespace s_graphs {
  *
  * @param id
  * @param plane
- * @param cloud_seg_body
  * @param cloud_seg_body_vec
  * @param cloud_seg_map
  * @param covariance
- * @param keyframe_node
  * @param keyframe_node_vec
  * @param plane_node
  * @param color
@@ -76,7 +74,6 @@ class Planes {
   Planes& operator=(const Planes& old_plane) {
     id = old_plane.id;
     plane = old_plane.plane;
-    cloud_seg_body = old_plane.cloud_seg_body;
     cloud_seg_body_vec = old_plane.cloud_seg_body_vec;
     cloud_seg_map = old_plane.cloud_seg_map;
     covariance = old_plane.covariance;
@@ -97,15 +94,13 @@ class Planes {
   int id;
   g2o::Plane3D plane;
   g2o::Plane3D plane_body;
-  pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_body;  // segmented points of the plane in local body frame
   std::vector<pcl::PointCloud<PointNormal>::Ptr>
       cloud_seg_body_vec;  // vector of segmented points of the plane in local
                            // body frame
+  std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
   pcl::PointCloud<PointNormal>::Ptr
       cloud_seg_map;           // segmented points of the plane in global map frame
   Eigen::Matrix3d covariance;  // covariance of the landmark
-  std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
   std::vector<double> color;
   int floor_level;  // current floor level
   int revit_id;
@@ -181,8 +176,6 @@ class VerticalPlanes : public Planes {
       }
       pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_map.pcd",
                                  *cloud_seg_map);
-      pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_body.pcd",
-                                 *cloud_seg_body);
       for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
         std::string filename =
             x_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
@@ -226,8 +219,6 @@ class VerticalPlanes : public Planes {
       }
       pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_map.pcd",
                                  *cloud_seg_map);
-      pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_body.pcd",
-                                 *cloud_seg_body);
       for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
         std::string filename =
             y_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
@@ -332,8 +323,6 @@ class VerticalPlanes : public Planes {
     pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
     cloud_seg_map = map_cloud;
     pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
-    pcl::io::loadPCDFile(directory + "/cloud_seg_body.pcd", *body_cloud);
-    cloud_seg_body = body_cloud;
     return true;
   }
 };
