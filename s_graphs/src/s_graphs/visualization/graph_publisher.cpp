@@ -30,7 +30,7 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
   if (graph_type == "Prior") {
     graph_msg.name = "Prior";
     for (int i = 0; i < x_vert_planes_prior.size(); i++) {
-      g2o::Plane3D v_plane = x_vert_planes_prior[i].plane;
+      g2o::Plane3D v_plane = x_vert_planes_prior[i].plane_node->estimate();
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = x_vert_planes_prior[i].id;
@@ -48,7 +48,7 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
       node_att_vec.clear();
     }
     for (int i = 0; i < y_vert_planes_prior.size(); i++) {
-      g2o::Plane3D v_plane = y_vert_planes_prior[i].plane;
+      g2o::Plane3D v_plane = y_vert_planes_prior[i].plane_node->estimate();
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = y_vert_planes_prior[i].id;
@@ -120,7 +120,7 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
   } else {
     graph_msg.name = "ONLINE";
     for (const auto& x_vert_plane : x_vert_planes) {
-      g2o::Plane3D v_plane = x_vert_plane.second.plane;
+      g2o::Plane3D v_plane = x_vert_plane.second.plane_node->estimate();
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = x_vert_plane.second.id;
@@ -138,7 +138,7 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
       node_att_vec.clear();
     }
     for (const auto& y_vert_plane : y_vert_planes) {
-      g2o::Plane3D v_plane = y_vert_plane.second.plane;
+      g2o::Plane3D v_plane = y_vert_plane.second.plane_node->estimate();
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
       graph_node.id = y_vert_plane.second.id;

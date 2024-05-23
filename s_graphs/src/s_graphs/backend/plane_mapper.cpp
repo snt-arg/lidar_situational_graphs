@@ -47,7 +47,7 @@ void PlaneMapper::map_extracted_planes(
                                          hort_planes);
   }
   // clear the segmented cloud from keyframe
-  keyframe->cloud_seg_body->clear();
+  keyframe->cloud_seg_body->points.clear();
 }
 
 /**
@@ -188,7 +188,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association;
-        vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
@@ -218,7 +217,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association;
-        vert_plane.plane = det_plane_map_frame.coeffs();
         vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
@@ -247,7 +245,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
         HorizontalPlanes hort_plane;
         hort_plane.id = data_association;
-        hort_plane.plane = det_plane_map_frame.coeffs();
         hort_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
         hort_plane.keyframe_node_vec.push_back(keyframe->node);
         hort_plane.plane_node = plane_node;
@@ -318,7 +315,7 @@ int PlaneMapper::associate_plane(
       for (const auto& x_vert_plane : x_vert_planes) {
         if (current_floor_level != x_vert_plane.second.floor_level) continue;
 
-        g2o::Plane3D local_plane = m2n * x_vert_plane.second.plane;
+        g2o::Plane3D local_plane = m2n * x_vert_plane.second.plane_node->estimate();
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * x_vert_plane.second.covariance.inverse() * error);
@@ -361,7 +358,7 @@ int PlaneMapper::associate_plane(
       for (const auto& y_vert_plane : y_vert_planes) {
         if (current_floor_level != y_vert_plane.second.floor_level) continue;
 
-        g2o::Plane3D local_plane = m2n * y_vert_plane.second.plane;
+        g2o::Plane3D local_plane = m2n * y_vert_plane.second.plane_node->estimate();
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * y_vert_plane.second.covariance.inverse() * error);
@@ -404,7 +401,7 @@ int PlaneMapper::associate_plane(
       for (const auto& hort_plane : hort_planes) {
         if (current_floor_level != hort_plane.second.floor_level) continue;
 
-        g2o::Plane3D local_plane = m2n * hort_plane.second.plane;
+        g2o::Plane3D local_plane = m2n * hort_plane.second.plane_node->estimate();
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * hort_plane.second.covariance.inverse() * error);

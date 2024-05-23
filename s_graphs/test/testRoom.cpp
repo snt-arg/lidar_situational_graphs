@@ -138,12 +138,10 @@ class TestRoom : public ::testing::Test {
 
     x1_vert_plane.id = 1;
     plane_coeffs << 1, 0, 0, 4;
-    x1_vert_plane.plane = plane_coeffs;
     x1_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
     x2_vert_plane.id = 2;
     plane_coeffs << -1, 0, 0, 4;
-    x2_vert_plane.plane = plane_coeffs;
     x2_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
     x_vert_planes.insert({x1_vert_plane.id, x1_vert_plane});
@@ -151,12 +149,10 @@ class TestRoom : public ::testing::Test {
 
     y1_vert_plane.id = 3;
     plane_coeffs << 0, 1, 0, 4;
-    y1_vert_plane.plane = plane_coeffs;
     y1_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
     y2_vert_plane.id = 4;
     plane_coeffs << 0, -1, 0, 4;
-    y2_vert_plane.plane = plane_coeffs;
     y2_vert_plane.plane_node = graph_slam->add_plane_node(plane_coeffs);
 
     y_vert_planes.insert({y1_vert_plane.id, y1_vert_plane});

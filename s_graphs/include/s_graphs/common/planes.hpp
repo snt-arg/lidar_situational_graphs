@@ -73,7 +73,6 @@ class Planes {
 
   Planes& operator=(const Planes& old_plane) {
     id = old_plane.id;
-    plane = old_plane.plane;
     cloud_seg_body_vec = old_plane.cloud_seg_body_vec;
     cloud_seg_map = old_plane.cloud_seg_map;
     covariance = old_plane.covariance;
@@ -92,8 +91,6 @@ class Planes {
 
  public:
   int id;
-  g2o::Plane3D plane;
-  g2o::Plane3D plane_body;
   std::vector<pcl::PointCloud<PointNormal>::Ptr>
       cloud_seg_body_vec;  // vector of segmented points of the plane in local
                            // body frame
@@ -144,12 +141,6 @@ class VerticalPlanes : public Planes {
       ofs << "id\n";
       ofs << id << "\n";
 
-      ofs << "Plane \n";
-      ofs << plane.coeffs() << "\n";
-
-      ofs << "plane_body\n";
-      ofs << plane_node->estimate().coeffs() << "\n";
-
       ofs << "Covariance\n";
       ofs << covariance << "\n";
 
@@ -188,9 +179,6 @@ class VerticalPlanes : public Planes {
       std::ofstream ofs(y_planes_directory + "/y_plane_data");
       ofs << "id\n";
       ofs << id << "\n";
-
-      ofs << "Plane\n";
-      ofs << plane.coeffs() << "\n";
 
       ofs << "Covariance\n";
       ofs << covariance << "\n";
@@ -248,12 +236,6 @@ class VerticalPlanes : public Planes {
       if (token == "id") {
         ifs >> id;
         plane_node->setId(id);
-      } else if (token == "Plane") {
-        Eigen::Vector4d plane_coeffs;
-        for (int i = 0; i < 4; i++) {
-          ifs >> plane_coeffs[i];
-        }
-        plane.fromVector(plane_coeffs);
       } else if (token == "Covariance") {
         Eigen::Matrix3d mat;
         for (int i = 0; i < 3; i++) {
@@ -322,7 +304,6 @@ class VerticalPlanes : public Planes {
     pcl::PointCloud<PointNormal>::Ptr map_cloud(new pcl::PointCloud<PointNormal>());
     pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
     cloud_seg_map = map_cloud;
-    pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
     return true;
   }
 };

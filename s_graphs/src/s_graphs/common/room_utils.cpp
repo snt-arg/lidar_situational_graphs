@@ -132,8 +132,9 @@ std::vector<PlaneGlobalRep> obtain_global_planes_from_room(
   // TODO:  DEBUG CAREFULLY
   for (auto& plane : planes) {
     PlaneGlobalRep plane_rep;
-    plane_rep.normal = plane->plane.normal();
-    Eigen::Vector3d glob_point = plane->plane.normal() * plane->plane.distance();
+    plane_rep.normal = plane->plane_node->estimate().normal();
+    Eigen::Vector3d glob_point = plane->plane_node->estimate().normal() *
+                                 plane->plane_node->estimate().distance();
     plane_rep.point = glob_point;
     plane_reps.emplace_back(plane_rep);
   }
