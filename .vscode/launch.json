@@ -7,7 +7,7 @@
             "type": "cppdbg",
             "miDebuggerServerAddress": "localhost:3000",
             "cwd": "/",
-            "program": "${workspaceFolder}/install/s_graphs/lib/s_graphs/s_graphs_node"
+            "program": "${workspaceFolder}/install/lidar_s_graphs/lib/lidar_s_graphs/s_graphs_node"
         }
     ]
 }
