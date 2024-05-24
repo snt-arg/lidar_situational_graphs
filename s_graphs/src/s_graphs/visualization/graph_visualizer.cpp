@@ -1721,12 +1721,6 @@ void GraphVisualizer::create_compressed_graph(
   }
 
   keyframe_node_visual_tools->trigger();
-  // keyframe_edge_visual_tools->trigger();
-  // plane_node_visual_tools->trigger();
-  // plane_edge_visual_tools->trigger();
-  // room_node_visual_tools->trigger();
-  // floor_node_visual_tools->trigger();
-  // floor_edge_visual_tools->trigger();
 
   return;
 }
