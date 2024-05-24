@@ -121,8 +121,6 @@ struct KeyFrame {
   double accum_distance;   // accumulated distance from the first node (by
                            // scan_matching_odometry)
   pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
-  pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_body;  // temporary semantically segmented pointcloud
   std::vector<int> x_plane_ids, y_plane_ids,
       hort_plane_ids;  // list of planes associated with the keyframe
 

@@ -73,6 +73,9 @@ if(VGICP_CUDA_FOUND)
   add_definitions(-DUSE_VGICP_CUDA)
 endif()
 
+FIND_PACKAGE(Cholmod)
+include_directories(${CHOLMOD_INCLUDE_DIR})
+
 ###########
 ## Build ##
 ###########

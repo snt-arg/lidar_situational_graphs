@@ -1283,6 +1283,8 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void map_publish_timer_callback() {
+    if (keyframes.empty()) return;
+
     int current_loop = 0;
     KeyFrameSnapshot::Ptr current_snapshot;
     while (keyframes_snapshot_queue.pop(current_snapshot)) {
@@ -1326,13 +1328,20 @@ class SGraphsNode : public rclcpp::Node {
         current_keyframes,
         floors_vec_snapshot);
 
-    // graph_visualizer->create_compressed_graph(current_time,
-    //                                           global_optimization,
-    //                                           false,
-    //                                           compressed_graph->graph.get(),
-    //                                           x_planes_snapshot,
-    //                                           y_planes_snapshot,
-    //                                           hort_planes_snapshot);
+    std::unique_ptr<GraphSLAM> local_compressed_graph;
+    local_compressed_graph = std::make_unique<GraphSLAM>("", false, false);
+
+    graph_mutex.lock();
+    GraphUtils::copy_graph_vertices(covisibility_graph, local_compressed_graph);
+    graph_mutex.unlock();
+
+    graph_visualizer->create_compressed_graph(current_time,
+                                              global_optimization,
+                                              false,
+                                              local_compressed_graph->graph.get(),
+                                              x_planes_snapshot,
+                                              y_planes_snapshot,
+                                              hort_planes_snapshot);
 
     markers_pub->publish(markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);

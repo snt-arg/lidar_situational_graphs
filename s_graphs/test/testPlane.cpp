@@ -52,6 +52,9 @@ class TestPlane : public ::testing::Test {
   std::unordered_map<int, s_graphs::VerticalPlanes> x_vert_planes;
   std::unordered_map<int, s_graphs::VerticalPlanes> y_vert_planes;
   std::unordered_map<int, s_graphs::HorizontalPlanes> hort_planes;
+  pcl::PointCloud<PointNormal>::Ptr cloud_seg_body;
+
+  TestPlane() : cloud_seg_body(new pcl::PointCloud<PointNormal>) {}
 
   void SetUp() override {
     node = rclcpp::Node::make_shared("test_node");
@@ -81,8 +84,6 @@ class TestPlane : public ::testing::Test {
 
   void testConvertPlanePointsToMap() {
     s_graphs::VerticalPlanes x_vert_plane;
-    pcl::PointCloud<PointNormal>::Ptr cloud_seg_body(
-        new pcl::PointCloud<PointNormal>());
     PointNormal point;
     point.x = 1;
     point.y = 2;
@@ -125,7 +126,7 @@ class TestPlane : public ::testing::Test {
         plane_mapper->associate_plane(s_graphs::PlaneUtils::plane_class::X_VERT_PLANE,
                                       keyframe,
                                       det_plane,
-                                      keyframe->cloud_seg_body,
+                                      cloud_seg_body,
                                       x_vert_planes,
                                       y_vert_planes,
                                       hort_planes);

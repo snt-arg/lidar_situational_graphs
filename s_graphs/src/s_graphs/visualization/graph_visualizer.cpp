@@ -2059,8 +2059,7 @@ Eigen::Vector3d GraphVisualizer::compute_plane_centroid(
 
   if (plane != plane_snapshot.end()) {
     shared_graph_mutex.lock();
-    if (plane->second.cloud_seg_map == nullptr ||
-        plane->second.cloud_seg_map->points.empty()) {
+    if (plane->second.cloud_seg_map->points.empty()) {
       shared_graph_mutex.unlock();
       return pt;
     }

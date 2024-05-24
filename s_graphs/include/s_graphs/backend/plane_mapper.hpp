@@ -78,7 +78,7 @@ class PlaneMapper {
   /**
    * @brief
    *
-   * @param graph_slam
+   * @param covisibility_graph
    * @param keyframe
    * @param extracted_cloud_vec
    * @param x_vert_planes
@@ -86,7 +86,7 @@ class PlaneMapper {
    * @param hort_planes
    */
   void map_extracted_planes(
-      std::shared_ptr<GraphSLAM>& graph_slam,
+      std::shared_ptr<GraphSLAM>& covisibility_graph,
       KeyFrame::Ptr keyframe,
       const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec,
       std::unordered_map<int, VerticalPlanes>& x_vert_planes,
@@ -139,7 +139,7 @@ class PlaneMapper {
   /**
    * @brief
    *
-   * @param graph_slam
+   * @param covisibility_graph
    * @param keyframe
    * @param det_plane_body_frame
    * @param x_vert_planes
@@ -147,8 +147,9 @@ class PlaneMapper {
    * @param hort_planes
    * @return
    */
-  int add_planes_to_graph(std::shared_ptr<GraphSLAM>& graph_slam,
-                          KeyFrame::Ptr& keyframe,
+  int add_planes_to_graph(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                          const KeyFrame::Ptr& keyframe,
+                          const pcl::PointCloud<PointNormal>::Ptr cloud_seg_body,
                           const g2o::Plane3D& det_plane_body_frame,
                           std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                           std::unordered_map<int, VerticalPlanes>& y_vert_planes,
@@ -157,7 +158,7 @@ class PlaneMapper {
   /**
    * @brief
    *
-   * @param graph_slam
+   * @param covisibility_graph
    * @param plane_type
    * @param keyframe
    * @param det_plane_map_frame
@@ -167,9 +168,10 @@ class PlaneMapper {
    * @param hort_planes
    * @return
    */
-  int sort_planes(std::shared_ptr<GraphSLAM>& graph_slam,
+  int sort_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
                   const int& plane_type,
-                  KeyFrame::Ptr& keyframe,
+                  const KeyFrame::Ptr& keyframe,
+                  const pcl::PointCloud<PointNormal>::Ptr cloud_seg_body,
                   const g2o::Plane3D& det_plane_map_frame,
                   const g2o::Plane3D& det_plane_body_frame,
                   std::unordered_map<int, VerticalPlanes>& x_vert_planes,
@@ -179,7 +181,7 @@ class PlaneMapper {
   /**
    * @brief
    *
-   * @param graph_slam
+   * @param covisibility_graph
    * @param plane_type
    * @param keyframe
    * @param det_plane_map_frame
@@ -189,9 +191,10 @@ class PlaneMapper {
    * @param hort_planes
    * @return
    */
-  int factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
+  int factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
                     const int& plane_type,
-                    KeyFrame::Ptr& keyframe,
+                    const KeyFrame::Ptr& keyframe,
+                    const pcl::PointCloud<PointNormal>::Ptr cloud_seg_body,
                     const g2o::Plane3D& det_plane_map_frame,
                     const g2o::Plane3D& det_plane_body_frame,
                     std::unordered_map<int, VerticalPlanes>& x_vert_planes,

@@ -3,8 +3,10 @@
 #include <g2o/core/linear_solver.h>
 #include <g2o/core/optimization_algorithm.h>
 #include <g2o/core/optimization_algorithm_factory.h>
+#include <g2o/core/optimization_algorithm_levenberg.h>
 #include <g2o/core/robust_kernel_factory.h>
 #include <g2o/core/sparse_optimizer.h>
+#include <g2o/solvers/cholmod/linear_solver_cholmod.h>
 #include <g2o/solvers/pcg/linear_solver_pcg.h>
 #include <g2o/stuff/macros.h>
 #include <g2o/types/slam3d/edge_se3_pointxyz.h>
@@ -74,27 +76,35 @@ namespace s_graphs {
 /**
  * @brief constructor
  */
-GraphSLAM::GraphSLAM(const std::string& solver_type, bool save_time) {
+GraphSLAM::GraphSLAM(const std::string& solver_type, bool save_time, bool verbose) {
   graph.reset(new g2o::SparseOptimizer());
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
 
-  std::cout << "construct solver: " << solver_type << std::endl;
-  g2o::OptimizationAlgorithmFactory* solver_factory =
-      g2o::OptimizationAlgorithmFactory::instance();
-  g2o::OptimizationAlgorithmProperty solver_property;
-  g2o::OptimizationAlgorithm* solver =
-      solver_factory->construct(solver_type, solver_property);
-  graph->setAlgorithm(solver);
+  if (verbose) {
+    std::cout << "construct solver: " << solver_type << std::endl;
+    g2o::OptimizationAlgorithmFactory* solver_factory =
+        g2o::OptimizationAlgorithmFactory::instance();
+    g2o::OptimizationAlgorithmProperty solver_property;
+    g2o::OptimizationAlgorithm* solver =
+        solver_factory->construct(solver_type, solver_property);
+    graph->setAlgorithm(solver);
 
-  if (!graph->solver()) {
-    std::cerr << std::endl;
-    std::cerr << "error : failed to allocate solver!!" << std::endl;
-    solver_factory->listSolvers(std::cerr);
-    std::cerr << "-------------" << std::endl;
-    std::cin.ignore(1);
-    return;
+    if (!graph->solver()) {
+      std::cerr << std::endl;
+      std::cerr << "error : failed to allocate solver!!" << std::endl;
+      solver_factory->listSolvers(std::cerr);
+      std::cerr << "-------------" << std::endl;
+      std::cin.ignore(1);
+      return;
+    }
+    std::cout << "done" << std::endl;
+  } else {
+    typedef g2o::BlockSolver<g2o::BlockSolverX> BlockSolverType;
+    typedef g2o::LinearSolverCholmod<BlockSolverType::PoseMatrixType> LinearSolverType;
+    auto solver = new g2o::OptimizationAlgorithmLevenberg(
+        std::make_unique<BlockSolverType>(std::make_unique<LinearSolverType>()));
+    graph->setAlgorithm(solver);
   }
-  std::cout << "done" << std::endl;
 
   robust_kernel_factory = g2o::RobustKernelFactory::instance();
   nbr_of_vertices = nbr_of_edges = 0;

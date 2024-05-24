@@ -20,7 +20,7 @@ PlaneMapper::PlaneMapper(const rclcpp::Node::SharedPtr node) {
 PlaneMapper::~PlaneMapper() {}
 
 void PlaneMapper::map_extracted_planes(
-    std::shared_ptr<GraphSLAM>& graph_slam,
+    std::shared_ptr<GraphSLAM>& covisibility_graph,
     KeyFrame::Ptr keyframe,
     const std::vector<pcl::PointCloud<PointNormal>::Ptr>& extracted_cloud_vec,
     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
@@ -32,22 +32,20 @@ void PlaneMapper::map_extracted_planes(
 
   for (const auto& cloud_seg_body : extracted_cloud_vec) {
     if (cloud_seg_body->points.size() < min_plane_points) continue;
-    keyframe->cloud_seg_body = cloud_seg_body;
 
     g2o::Plane3D det_plane_body_frame =
         Eigen::Vector4d(cloud_seg_body->back().normal_x,
                         cloud_seg_body->back().normal_y,
                         cloud_seg_body->back().normal_z,
                         cloud_seg_body->back().curvature);
-    int plane_type = add_planes_to_graph(graph_slam,
+    int plane_type = add_planes_to_graph(covisibility_graph,
                                          keyframe,
+                                         cloud_seg_body,
                                          det_plane_body_frame,
                                          x_vert_planes,
                                          y_vert_planes,
                                          hort_planes);
   }
-  // clear the segmented cloud from keyframe
-  keyframe->cloud_seg_body->points.clear();
 }
 
 /**
@@ -55,8 +53,9 @@ void PlaneMapper::map_extracted_planes(
  *
  */
 int PlaneMapper::add_planes_to_graph(
-    std::shared_ptr<GraphSLAM>& graph_slam,
-    KeyFrame::Ptr& keyframe,
+    std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const KeyFrame::Ptr& keyframe,
+    const pcl::PointCloud<PointNormal>::Ptr cloud_seg_body,
     const g2o::Plane3D& det_plane_body_frame,
     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     std::unordered_map<int, VerticalPlanes>& y_vert_planes,
@@ -83,9 +82,10 @@ int PlaneMapper::add_planes_to_graph(
                fabs(det_plane_map_frame.coeffs()(1)))
     plane_type = PlaneUtils::plane_class::HORT_PLANE;
 
-  plane_id = sort_planes(graph_slam,
+  plane_id = sort_planes(covisibility_graph,
                          plane_type,
                          keyframe,
+                         cloud_seg_body,
                          det_plane_map_frame,
                          det_plane_body_frame,
                          x_vert_planes,
@@ -117,17 +117,19 @@ g2o::Plane3D PlaneMapper::convert_plane_to_map_frame(
  * @brief sort and factor the detected planes
  *
  */
-int PlaneMapper::sort_planes(std::shared_ptr<GraphSLAM>& graph_slam,
+int PlaneMapper::sort_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
                              const int& plane_type,
-                             KeyFrame::Ptr& keyframe,
+                             const KeyFrame::Ptr& keyframe,
+                             const pcl::PointCloud<PointNormal>::Ptr cloud_seg_body,
                              const g2o::Plane3D& det_plane_map_frame,
                              const g2o::Plane3D& det_plane_body_frame,
                              std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                              std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                              std::unordered_map<int, HorizontalPlanes>& hort_planes) {
-  int plane_id = factor_planes(graph_slam,
+  int plane_id = factor_planes(covisibility_graph,
                                plane_type,
                                keyframe,
+                               cloud_seg_body,
                                det_plane_map_frame,
                                det_plane_body_frame,
                                x_vert_planes,
@@ -140,9 +142,10 @@ int PlaneMapper::sort_planes(std::shared_ptr<GraphSLAM>& graph_slam,
 /**
  * @brief create vertical plane factors
  */
-int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
+int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
                                const int& plane_type,
-                               KeyFrame::Ptr& keyframe,
+                               const KeyFrame::Ptr& keyframe,
+                               const pcl::PointCloud<PointNormal>::Ptr cloud_seg_body,
                                const g2o::Plane3D& det_plane_map_frame,
                                const g2o::Plane3D& det_plane_body_frame,
                                std::unordered_map<int, VerticalPlanes>& x_vert_planes,
@@ -154,8 +157,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
   Eigen::Matrix4d Gij;
   Gij.setZero();
   if (use_point_to_plane) {
-    auto it = keyframe->cloud_seg_body->points.begin();
-    while (it != keyframe->cloud_seg_body->points.end()) {
+    auto it = cloud_seg_body->points.begin();
+    while (it != cloud_seg_body->points.end()) {
       PointNormal point_tmp;
       point_tmp = *it;
       Eigen::Vector4d point(point_tmp.x, point_tmp.y, point_tmp.z, 1);
@@ -166,7 +169,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         Gij += point * point.transpose();
         ++it;
       } else {
-        it = keyframe->cloud_seg_body->points.erase(it);
+        it = cloud_seg_body->points.erase(it);
       }
     }
   }
@@ -176,7 +179,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
   data_association = associate_plane(plane_type,
                                      keyframe,
                                      det_plane_body_frame.coeffs(),
-                                     keyframe->cloud_seg_body,
+                                     cloud_seg_body,
                                      x_vert_planes,
                                      y_vert_planes,
                                      hort_planes);
@@ -184,28 +187,27 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
   switch (plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       if (x_vert_planes.empty() || data_association == -1) {
-        data_association = graph_slam->retrieve_local_nbr_of_vertices();
-        plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+        data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
+        plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association;
-        vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+        vert_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         vert_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
-        color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
-        color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
-        color.push_back(keyframe->cloud_seg_body->points.back().b);  // blue
+        color.push_back(cloud_seg_body->points.back().r);  // red
+        color.push_back(cloud_seg_body->points.back().g);  // green
+        color.push_back(cloud_seg_body->points.back().b);  // blue
         vert_plane.color = color;
 
         x_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->x_plane_ids.push_back(vert_plane.id);
       } else {
         plane_node = x_vert_planes[data_association].plane_node;
-        x_vert_planes[data_association].cloud_seg_body_vec.push_back(
-            keyframe->cloud_seg_body);
+        x_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         x_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->x_plane_ids.push_back(x_vert_planes[data_association].id);
       }
@@ -213,27 +215,26 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
     }
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
       if (y_vert_planes.empty() || data_association == -1) {
-        data_association = graph_slam->retrieve_local_nbr_of_vertices();
-        plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+        data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
+        plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
         vert_plane.id = data_association;
-        vert_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+        vert_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
         vert_plane.cloud_seg_map = nullptr;
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         vert_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
-        color.push_back(keyframe->cloud_seg_body->points.back().r);  // red
-        color.push_back(keyframe->cloud_seg_body->points.back().g);  // green
-        color.push_back(keyframe->cloud_seg_body->points.back().b);  // blue
+        color.push_back(cloud_seg_body->points.back().r);  // red
+        color.push_back(cloud_seg_body->points.back().g);  // green
+        color.push_back(cloud_seg_body->points.back().b);  // blue
         vert_plane.color = color;
         y_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->y_plane_ids.push_back(vert_plane.id);
       } else {
         plane_node = y_vert_planes[data_association].plane_node;
-        y_vert_planes[data_association].cloud_seg_body_vec.push_back(
-            keyframe->cloud_seg_body);
+        y_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         y_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->y_plane_ids.push_back(y_vert_planes[data_association].id);
       }
@@ -241,11 +242,11 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
     }
     case PlaneUtils::plane_class::HORT_PLANE: {
       if (hort_planes.empty() || data_association == -1) {
-        data_association = graph_slam->retrieve_local_nbr_of_vertices();
-        plane_node = graph_slam->add_plane_node(det_plane_map_frame.coeffs());
+        data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
+        plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
         HorizontalPlanes hort_plane;
         hort_plane.id = data_association;
-        hort_plane.cloud_seg_body_vec.push_back(keyframe->cloud_seg_body);
+        hort_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
         hort_plane.keyframe_node_vec.push_back(keyframe->node);
         hort_plane.plane_node = plane_node;
         hort_plane.cloud_seg_map = nullptr;
@@ -260,8 +261,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
         keyframe->hort_plane_ids.push_back(hort_plane.id);
       } else {
         plane_node = hort_planes[data_association].plane_node;
-        hort_planes[data_association].cloud_seg_body_vec.push_back(
-            keyframe->cloud_seg_body);
+        hort_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         hort_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->hort_plane_ids.push_back(hort_planes[data_association].id);
       }
@@ -274,18 +274,18 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& graph_slam,
 
   if (use_point_to_plane) {
     Eigen::Matrix<double, 1, 1> information(0.001);
-    auto edge = graph_slam->add_se3_point_to_plane_edge(
+    auto edge = covisibility_graph->add_se3_point_to_plane_edge(
         keyframe->node, plane_node, Gij, information);
-    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
   } else {
     Eigen::Matrix3d plane_information_mat =
         Eigen::Matrix3d::Identity() * plane_information;
 
-    auto edge = graph_slam->add_se3_plane_edge(keyframe->node,
-                                               plane_node,
-                                               det_plane_body_frame.coeffs(),
-                                               plane_information_mat);
-    graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    auto edge = covisibility_graph->add_se3_plane_edge(keyframe->node,
+                                                       plane_node,
+                                                       det_plane_body_frame.coeffs(),
+                                                       plane_information_mat);
+    covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
   }
 
   convert_plane_points_to_map(x_vert_planes, y_vert_planes, hort_planes);
