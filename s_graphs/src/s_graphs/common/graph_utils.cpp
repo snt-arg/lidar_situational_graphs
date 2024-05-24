@@ -721,10 +721,17 @@ void GraphUtils::connect_broken_keyframes(
               return obj1->id() < obj2->id();
             });
 
+  if (filtered_k_vec.size() % 2 != 0) {
+    // Remove the last element to make the size even
+    filtered_k_vec.pop_back();
+  }
+
   for (int i = 0; i < filtered_k_vec.size(); i += 2) {
     if (filtered_k_vec.size() <= 1) {
       break;
     }
+
+    if (!filtered_k_vec[i] || !filtered_k_vec[i + 1]) break;
 
     std::cout << "keyframes to be connected are: " << filtered_k_vec[i]->id() << " "
               << filtered_k_vec[i + 1]->id() << std::endl;

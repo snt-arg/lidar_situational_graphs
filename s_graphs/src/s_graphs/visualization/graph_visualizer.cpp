@@ -3,7 +3,9 @@
 
 namespace s_graphs {
 
-GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node) {
+GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node,
+                                 std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
   node_ptr_ = node.get();
 
   map_frame_id =
@@ -96,7 +98,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     std::vector<KeyFrame::Ptr> keyframes,
     std::unordered_map<int, Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
-  // markers.markers.resize(11);
 
   // node markers
   double wall_vertex_h = 18;
@@ -288,7 +289,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
         b = 0.0;
       } else if (fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(0)) &&
                  fabs(v2->estimate().normal()(2)) > fabs(v2->estimate().normal()(1))) {
-        pt2 = compute_hort_plane_centroid(v2->id(), hort_plane_snapshot);
+        pt2 = compute_plane_centroid<HorizontalPlanes>(v2->id(), hort_plane_snapshot);
         r = 0;
         g = 0.0;
       } else
@@ -389,96 +390,33 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
   markers.markers.push_back(sphere_marker);
 
   // x vertical plane markers
-  visualization_msgs::msg::Marker x_vert_plane_marker;
-  x_vert_plane_marker.pose.orientation.w = 1.0;
-  x_vert_plane_marker.scale.x = 0.05;
-  x_vert_plane_marker.scale.y = 0.05;
-  x_vert_plane_marker.scale.z = 0.05;
-  // plane_marker.points.resize(vert_planes.size());
+  visualization_msgs::msg::Marker x_vert_plane_marker =
+      fill_plane_makers<VerticalPlanes>(x_plane_snapshot);
   x_vert_plane_marker.header.frame_id = walls_layer_id;
   x_vert_plane_marker.header.stamp = stamp;
   x_vert_plane_marker.ns = "x_vert_planes";
   x_vert_plane_marker.id = markers.markers.size();
   x_vert_plane_marker.lifetime = duration_planes;
-  x_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
-
-  for (const auto& x_plane : x_plane_snapshot) {
-    if (x_plane.second.cloud_seg_map->points.empty()) continue;
-    std_msgs::msg::ColorRGBA color;
-    color.r = x_plane.second.color[0] / 255;
-    color.g = x_plane.second.color[1] / 255;
-    color.b = x_plane.second.color[2] / 255;
-    color.a = 0.5;
-    for (size_t j = 0; j < x_plane.second.cloud_seg_map->size(); ++j) {
-      geometry_msgs::msg::Point point;
-      point.x = x_plane.second.cloud_seg_map->points[j].x;
-      point.y = x_plane.second.cloud_seg_map->points[j].y;
-      point.z = x_plane.second.cloud_seg_map->points[j].z;
-      x_vert_plane_marker.points.push_back(point);
-      x_vert_plane_marker.colors.push_back(color);
-    }
-  }
   markers.markers.push_back(x_vert_plane_marker);
 
   // y vertical plane markers
-  visualization_msgs::msg::Marker y_vert_plane_marker;
-  y_vert_plane_marker.pose.orientation.w = 1.0;
-  y_vert_plane_marker.scale.x = 0.05;
-  y_vert_plane_marker.scale.y = 0.05;
-  y_vert_plane_marker.scale.z = 0.05;
-  // plane_marker.points.resize(vert_planes.size());
+  visualization_msgs::msg::Marker y_vert_plane_marker =
+      fill_plane_makers<VerticalPlanes>(y_plane_snapshot);
   y_vert_plane_marker.header.frame_id = walls_layer_id;
   y_vert_plane_marker.header.stamp = stamp;
   y_vert_plane_marker.ns = "y_vert_planes";
   y_vert_plane_marker.id = markers.markers.size();
   y_vert_plane_marker.lifetime = duration_planes;
-  y_vert_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
-
-  for (const auto& y_plane : y_plane_snapshot) {
-    if (y_plane.second.cloud_seg_map->points.empty()) continue;
-    std_msgs::msg::ColorRGBA color;
-    color.r = y_plane.second.color[0] / 255;
-    color.g = y_plane.second.color[1] / 255;
-    color.b = y_plane.second.color[2] / 255;
-    color.a = 0.5;
-    for (size_t j = 0; j < y_plane.second.cloud_seg_map->size(); ++j) {
-      geometry_msgs::msg::Point point;
-      point.x = y_plane.second.cloud_seg_map->points[j].x;
-      point.y = y_plane.second.cloud_seg_map->points[j].y;
-      point.z = y_plane.second.cloud_seg_map->points[j].z;
-      y_vert_plane_marker.points.push_back(point);
-      y_vert_plane_marker.colors.push_back(color);
-    }
-  }
   markers.markers.push_back(y_vert_plane_marker);
 
   // horizontal plane markers
-  visualization_msgs::msg::Marker hort_plane_marker;
-  hort_plane_marker.pose.orientation.w = 1.0;
-  hort_plane_marker.scale.x = 0.05;
-  hort_plane_marker.scale.y = 0.05;
-  hort_plane_marker.scale.z = 0.05;
-  // plane_marker.points.resize(vert_planes.size());
+  visualization_msgs::msg::Marker hort_plane_marker =
+      fill_plane_makers<HorizontalPlanes>(hort_plane_snapshot);
   hort_plane_marker.header.frame_id = walls_layer_id;
   hort_plane_marker.header.stamp = stamp;
   hort_plane_marker.ns = "hort_planes";
   hort_plane_marker.id = markers.markers.size();
   hort_plane_marker.lifetime = duration_planes;
-  hort_plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
-
-  for (const auto& hort_plane : hort_plane_snapshot) {
-    for (size_t j = 0; j < hort_plane.second.cloud_seg_map->size(); ++j) {
-      if (hort_plane.second.cloud_seg_map->points.empty()) continue;
-      geometry_msgs::msg::Point point;
-      point.x = hort_plane.second.cloud_seg_map->points[j].x;
-      point.y = hort_plane.second.cloud_seg_map->points[j].y;
-      point.z = hort_plane.second.cloud_seg_map->points[j].z;
-      hort_plane_marker.points.push_back(point);
-    }
-    hort_plane_marker.color.r = 1;
-    hort_plane_marker.color.g = 0.65;
-    hort_plane_marker.color.a = 0.5;
-  }
   markers.markers.push_back(hort_plane_marker);
 
   rclcpp::Duration duration_room = rclcpp::Duration::from_seconds(5);
@@ -556,12 +494,10 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                .translation()(2);
 
     p2 = compute_plane_point(p1, (*found_plane1).second.cloud_seg_map);
-
     x_infinite_room_line_marker.points.push_back(p1);
     x_infinite_room_line_marker.points.push_back(p2);
 
     p3 = compute_plane_point(p1, (*found_plane2).second.cloud_seg_map);
-
     x_infinite_room_line_marker.points.push_back(p1);
     x_infinite_room_line_marker.points.push_back(p3);
     markers.markers.push_back(x_infinite_room_line_marker);
@@ -676,14 +612,13 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
                .translation()(2);
 
     p2 = compute_plane_point(p1, (*found_plane1).second.cloud_seg_map);
-
     y_infinite_room_line_marker.points.push_back(p1);
     y_infinite_room_line_marker.points.push_back(p2);
 
     p3 = compute_plane_point(p1, (*found_plane2).second.cloud_seg_map);
-
     y_infinite_room_line_marker.points.push_back(p1);
     y_infinite_room_line_marker.points.push_back(p3);
+
     markers.markers.push_back(y_infinite_room_line_marker);
 
     // y infinite_room cube
@@ -802,22 +737,18 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
     auto found_planey2 = y_plane_snapshot.find(room.second.plane_y2_id);
 
     p2 = compute_plane_point(p1, (*found_planex1).second.cloud_seg_map);
-
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p2);
 
     p3 = compute_plane_point(p1, (*found_planex2).second.cloud_seg_map);
-
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p3);
 
     p4 = compute_plane_point(p1, (*found_planey1).second.cloud_seg_map);
-
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p4);
 
     p5 = compute_plane_point(p1, (*found_planey2).second.cloud_seg_map);
-
     room_line_marker.points.push_back(p1);
     room_line_marker.points.push_back(p5);
 
@@ -936,6 +867,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
 
   return markers;
 }
+
 visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     const rclcpp::Time& stamp,
     const g2o::SparseOptimizer* local_graph,
@@ -1322,12 +1254,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
           deviation_marker.color.b = 255.0;
           deviation_marker.color.a = 0.7;
           deviation_marker.text = "d";
-          // std::cout << " A-graph plane : " << std::endl;
-          // std::cout << v2->estimate().toVector() << std::endl;
-          // std::cout << " S-graph plane : " << std::endl;
-          // std::cout << v3->estimate().toVector() << std::endl;
-          // std::cout << " dev pose  : " << std::endl;
-          // std::cout << v1->estimate().matrix() << std::endl;
           Eigen::Vector3d translation = dev_pose.block<3, 1>(0, 3);
           Eigen::Matrix3d rotation_matrix = dev_pose.block<3, 3>(0, 0);
           Eigen::Quaterniond quaternion(rotation_matrix);
@@ -1748,6 +1674,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
   }
   return prior_markers;
 }
+
 void GraphVisualizer::create_compressed_graph(
     const rclcpp::Time& stamp,
     bool global_optimization,
@@ -1847,7 +1774,7 @@ void GraphVisualizer::create_compressed_graph(
                    fabs(v2->estimate().normal()(2)) >
                        fabs(v2->estimate().normal()(1))) {
           point2.translation() =
-              compute_hort_plane_centroid(v2->id(), hort_plane_snapshot);
+              compute_plane_centroid<HorizontalPlanes>(v2->id(), hort_plane_snapshot);
         } else
           continue;
         point2.linear().setIdentity();
@@ -1904,11 +1831,14 @@ void GraphVisualizer::create_compressed_graph(
           room_p1.y = room_v1->estimate().translation()(1);
           room_p1.z = room_v1->estimate().translation()(2);
 
-          geometry_msgs::msg::Point plane_pl1 =
-              compute_plane_point(room_p1, x_plane.second.cloud_seg_map);
-
-          plane_edge_visual_tools->publishLine(
-              room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+          if (!x_plane.second.cloud_seg_map->points.empty()) {
+            geometry_msgs::msg::Point plane_pl1 =
+                compute_plane_point(room_p1, x_plane.second.cloud_seg_map);
+            plane_edge_visual_tools->publishLine(room_p1,
+                                                 plane_pl1,
+                                                 keyframe_plane_edge_color,
+                                                 rviz_visual_tools::SMALL);
+          }
           continue;
         }
 
@@ -1921,11 +1851,15 @@ void GraphVisualizer::create_compressed_graph(
           room_p1.x = room_v1->estimate().translation()(0);
           room_p1.y = room_v1->estimate().translation()(1);
           room_p1.z = room_v1->estimate().translation()(2);
-          geometry_msgs::msg::Point plane_pl1 =
-              compute_plane_point(room_p1, x_plane.second.cloud_seg_map);
 
-          plane_edge_visual_tools->publishLine(
-              room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
+          if (!x_plane.second.cloud_seg_map->points.empty()) {
+            geometry_msgs::msg::Point plane_pl1 =
+                compute_plane_point(room_p1, x_plane.second.cloud_seg_map);
+            plane_edge_visual_tools->publishLine(room_p1,
+                                                 plane_pl1,
+                                                 keyframe_plane_edge_color,
+                                                 rviz_visual_tools::SMALL);
+          }
           continue;
         }
       }
@@ -1964,7 +1898,6 @@ void GraphVisualizer::create_compressed_graph(
 
           geometry_msgs::msg::Point plane_pl1 =
               compute_plane_point(room_p1, y_plane.second.cloud_seg_map);
-
           plane_edge_visual_tools->publishLine(
               room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
           continue;
@@ -1979,9 +1912,9 @@ void GraphVisualizer::create_compressed_graph(
           room_p1.x = room_v1->estimate().translation()(0);
           room_p1.y = room_v1->estimate().translation()(1);
           room_p1.z = room_v1->estimate().translation()(2);
+
           geometry_msgs::msg::Point plane_pl1 =
               compute_plane_point(room_p1, y_plane.second.cloud_seg_map);
-
           plane_edge_visual_tools->publishLine(
               room_p1, plane_pl1, keyframe_plane_edge_color, rviz_visual_tools::SMALL);
           continue;
@@ -2055,7 +1988,9 @@ void GraphVisualizer::create_compressed_graph(
 Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,
                                                       pcl::PointXYZRGBNormal& p_min,
                                                       pcl::PointXYZRGBNormal& p_max) {
+  shared_graph_mutex.lock();
   double length = pcl::getMaxSegment(*plane.cloud_seg_map, p_min, p_max);
+  shared_graph_mutex.unlock();
 
   Eigen::Isometry3d pose;
   pose.translation() = Eigen::Vector3d((p_min.x - p_max.x) / 2.0 + p_max.x,
@@ -2079,6 +2014,43 @@ Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plan
 }
 
 template <typename T>
+visualization_msgs::msg::Marker GraphVisualizer::fill_plane_makers(
+    const std::unordered_map<int, T>& plane_snapshot) {
+  visualization_msgs::msg::Marker plane_marker;
+  plane_marker.pose.orientation.w = 1.0;
+  plane_marker.scale.x = 0.05;
+  plane_marker.scale.y = 0.05;
+  plane_marker.scale.z = 0.05;
+  plane_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
+
+  for (const auto& plane : plane_snapshot) {
+    std_msgs::msg::ColorRGBA color;
+    color.r = plane.second.color[0] / 255;
+    color.g = plane.second.color[1] / 255;
+    color.b = plane.second.color[2] / 255;
+    color.a = 0.5;
+
+    shared_graph_mutex.lock();
+    if (plane.second.cloud_seg_map == nullptr) continue;
+    auto local_cloud_seg_map =
+        std::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>(
+            *plane.second.cloud_seg_map);
+    shared_graph_mutex.unlock();
+
+    for (int j = 0; j < local_cloud_seg_map->points.size(); ++j) {
+      geometry_msgs::msg::Point point;
+      point.x = local_cloud_seg_map->points[j].x;
+      point.y = local_cloud_seg_map->points[j].y;
+      point.z = local_cloud_seg_map->points[j].z;
+      plane_marker.points.push_back(point);
+      plane_marker.colors.push_back(color);
+    }
+  }
+
+  return plane_marker;
+}
+
+template <typename T>
 Eigen::Vector3d GraphVisualizer::compute_plane_centroid(
     const int current_plane_id,
     const std::unordered_map<int, T>& plane_snapshot) {
@@ -2086,43 +2058,30 @@ Eigen::Vector3d GraphVisualizer::compute_plane_centroid(
   auto plane = plane_snapshot.find(current_plane_id);
 
   if (plane != plane_snapshot.end()) {
-    if (plane->second.cloud_seg_map->points.empty()) {
+    shared_graph_mutex.lock();
+    if (plane->second.cloud_seg_map == nullptr ||
+        plane->second.cloud_seg_map->points.empty()) {
+      shared_graph_mutex.unlock();
       return pt;
     }
-    double x = 0, y = 0, z = 0;
-    for (int p = 0; p < plane->second.cloud_seg_map->points.size(); ++p) {
-      x += plane->second.cloud_seg_map->points[p].x;
-      y += plane->second.cloud_seg_map->points[p].y;
-      z += plane->second.cloud_seg_map->points[p].z;
-    }
-    x = x / plane->second.cloud_seg_map->points.size();
-    y = y / plane->second.cloud_seg_map->points.size();
-    z = z / plane->second.cloud_seg_map->points.size();
-    pt = Eigen::Vector3d(x, y, z);
-  }
-  return pt;
-}
 
-Eigen::Vector3d GraphVisualizer::compute_hort_plane_centroid(
-    const int current_plane_id,
-    const std::unordered_map<int, HorizontalPlanes>& plane_snapshot) {
-  Eigen::Vector3d pt(0, 0, 0);
-  auto plane = plane_snapshot.find(current_plane_id);
-  if (plane != plane_snapshot.end()) {
-    if (plane->second.cloud_seg_map->points.empty()) {
-      return pt;
-    }
+    auto local_cloud_seg_map =
+        std::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>(
+            *plane->second.cloud_seg_map);
+    shared_graph_mutex.unlock();
+
     double x = 0, y = 0, z = 0;
-    for (int p = 0; p < plane->second.cloud_seg_map->points.size(); ++p) {
-      x += plane->second.cloud_seg_map->points[p].x;
-      y += plane->second.cloud_seg_map->points[p].y;
-      z += plane->second.cloud_seg_map->points[p].z;
+    for (int p = 0; p < local_cloud_seg_map->points.size(); ++p) {
+      x += local_cloud_seg_map->points[p].x;
+      y += local_cloud_seg_map->points[p].y;
+      z += local_cloud_seg_map->points[p].z;
     }
-    x = x / plane->second.cloud_seg_map->points.size();
-    y = y / plane->second.cloud_seg_map->points.size();
-    z = z / plane->second.cloud_seg_map->points.size();
+    x = x / local_cloud_seg_map->points.size();
+    y = y / local_cloud_seg_map->points.size();
+    z = z / local_cloud_seg_map->points.size();
     pt = Eigen::Vector3d(x, y, z);
   }
+
   return pt;
 }
 
@@ -2131,10 +2090,17 @@ geometry_msgs::msg::Point GraphVisualizer::compute_plane_point(
     const pcl::PointCloud<PointNormal>::Ptr cloud_seg_map) {
   float min_dist_plane1 = 100;
   geometry_msgs::msg::Point plane_p2;
-  for (int p = 0; p < cloud_seg_map->points.size(); ++p) {
+  plane_p2.x = plane_p2.y = plane_p2.z = 0;
+
+  shared_graph_mutex.lock();
+  auto local_cloud_seg_map =
+      std::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>(*cloud_seg_map);
+  shared_graph_mutex.unlock();
+
+  for (int p = 0; p < local_cloud_seg_map->points.size(); ++p) {
     geometry_msgs::msg::Point p_tmp;
-    p_tmp.x = cloud_seg_map->points[p].x;
-    p_tmp.y = cloud_seg_map->points[p].y;
+    p_tmp.x = local_cloud_seg_map->points[p].x;
+    p_tmp.y = local_cloud_seg_map->points[p].y;
     p_tmp.z = cloud_seg_map->points[p].z;
 
     float norm = std::sqrt(std::pow((room_p1.x - p_tmp.x), 2) +

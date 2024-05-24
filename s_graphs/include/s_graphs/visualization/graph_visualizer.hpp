@@ -85,7 +85,7 @@ class GraphVisualizer {
    *
    * @param node
    */
-  GraphVisualizer(const rclcpp::Node::SharedPtr node);
+  GraphVisualizer(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~GraphVisualizer();
 
  public:
@@ -138,6 +138,18 @@ class GraphVisualizer {
   /**
    * @brief
    *
+   * @tparam T
+   * @param plane_snapshot
+   * @return visualization_msgs::msg::Marker
+   */
+  template <typename T>
+  visualization_msgs::msg::Marker fill_plane_makers(
+      const std::unordered_map<int, T>& plane_snapshot);
+
+  /**
+   * @brief
+   *
+   * @tparam T
    * @param current_plane_id
    * @param plane_snapshot
    * @return Eigen::Vector3d
@@ -146,17 +158,6 @@ class GraphVisualizer {
   Eigen::Vector3d compute_plane_centroid(
       const int current_plane_id,
       const std::unordered_map<int, T>& plane_snapshot);
-
-  /**
-   * @brief
-   *
-   * @param current_plane_id
-   * @param plane_snapshot
-   * @return Eigen::Vector3d
-   */
-  Eigen::Vector3d compute_hort_plane_centroid(
-      const int current_plane_id,
-      const std::unordered_map<int, HorizontalPlanes>& plane_snapshot);
 
   /**
    * @brief Create a prior marker array object
@@ -217,6 +218,7 @@ class GraphVisualizer {
   geometry_msgs::msg::Point compute_room_point(geometry_msgs::msg::Point room_p1);
 
  private:
+  std::mutex& shared_graph_mutex;
   std::string map_frame_id;
   double color_r, color_g, color_b;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};

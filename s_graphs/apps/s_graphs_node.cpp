@@ -484,7 +484,8 @@ class SGraphsNode : public rclcpp::Node {
     inf_room_mapper = std::make_unique<InfiniteRoomMapper>(shared_from_this());
     finite_room_mapper = std::make_unique<FiniteRoomMapper>(shared_from_this());
     floor_mapper = std::make_unique<FloorMapper>();
-    graph_visualizer = std::make_unique<GraphVisualizer>(shared_from_this());
+    graph_visualizer =
+        std::make_unique<GraphVisualizer>(shared_from_this(), graph_mutex);
     keyframe_mapper = std::make_unique<KeyframeMapper>(shared_from_this());
     gps_mapper = std::make_unique<GPSMapper>(shared_from_this());
     imu_mapper = std::make_unique<IMUMapper>(shared_from_this());
@@ -1089,6 +1090,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void optimization_timer_callback() {
+    graph_updated = false;
     if (keyframes.empty()) return;
 
     int num_iterations = this->get_parameter("g2o_solver_num_iterations")
@@ -1281,10 +1283,6 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void map_publish_timer_callback() {
-    if (map_points_pub->get_subscription_count() < 0 || !graph_updated) {
-      return;
-    }
-
     int current_loop = 0;
     KeyFrameSnapshot::Ptr current_snapshot;
     while (keyframes_snapshot_queue.pop(current_snapshot)) {
@@ -1328,13 +1326,13 @@ class SGraphsNode : public rclcpp::Node {
         current_keyframes,
         floors_vec_snapshot);
 
-    graph_visualizer->create_compressed_graph(current_time,
-                                              global_optimization,
-                                              false,
-                                              compressed_graph->graph.get(),
-                                              x_planes_snapshot,
-                                              y_planes_snapshot,
-                                              hort_planes_snapshot);
+    // graph_visualizer->create_compressed_graph(current_time,
+    //                                           global_optimization,
+    //                                           false,
+    //                                           compressed_graph->graph.get(),
+    //                                           x_planes_snapshot,
+    //                                           y_planes_snapshot,
+    //                                           hort_planes_snapshot);
 
     markers_pub->publish(markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
@@ -1420,6 +1418,7 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
+      graph_mutex.lock();
       for (const auto& plane_point_data :
            (local_x_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
@@ -1428,6 +1427,7 @@ class SGraphsNode : public rclcpp::Node {
         plane_point.z = plane_point_data.z;
         plane_data.plane_points.push_back(plane_point);
       }
+      graph_mutex.unlock();
       vert_planes_data.x_planes.push_back(plane_data);
     }
 
@@ -1448,6 +1448,7 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
+      graph_mutex.lock();
       for (const auto& plane_point_data :
            (local_y_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
@@ -1456,6 +1457,8 @@ class SGraphsNode : public rclcpp::Node {
         plane_point.z = plane_point_data.z;
         plane_data.plane_points.push_back(plane_point);
       }
+      graph_mutex.unlock();
+
       vert_planes_data.y_planes.push_back(plane_data);
     }
     map_planes_pub->publish(vert_planes_data);
@@ -1492,6 +1495,7 @@ class SGraphsNode : public rclcpp::Node {
       } else {
         plane_data.data_source = "Online";
       }
+      graph_mutex.lock();
       for (const auto& plane_point_data : (x_vert_plane).second.cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
@@ -1499,6 +1503,7 @@ class SGraphsNode : public rclcpp::Node {
         plane_point.z = plane_point_data.z;
         plane_data.plane_points.push_back(plane_point);
       }
+      graph_mutex.unlock();
       vert_planes_data.x_planes.push_back(plane_data);
     }
 
@@ -1520,6 +1525,7 @@ class SGraphsNode : public rclcpp::Node {
       } else {
         plane_data.data_source = "Online";
       }
+      graph_mutex.lock();
       for (const auto& plane_point_data : (y_vert_plane).second.cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
@@ -1527,6 +1533,7 @@ class SGraphsNode : public rclcpp::Node {
         plane_point.z = plane_point_data.z;
         plane_data.plane_points.push_back(plane_point);
       }
+      graph_mutex.unlock();
       vert_planes_data.y_planes.push_back(plane_data);
     }
     all_map_planes_pub->publish(vert_planes_data);
