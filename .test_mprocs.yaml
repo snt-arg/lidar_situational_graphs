@@ -1,0 +1,20 @@
+procs:
+  rosbag:
+    shell: 'bash -c "source /opt/ros/noetic/setup.bash && rosbag play /media/marco/X9\ Pro/LuxVSD/Rosbag/Seq01.bag --clock /ouster/points:=/platform/velodyne_points"'
+    autostart: true
+    stop: SIGINT
+  roscore:
+    shell: 'bash -c "source /opt/ros/noetic/setup.bash && roscore"'
+    autostart: true
+  s_graphs:
+    shell: 'bash -c "source ~/ros2_ws/install/setup.bash && ros2 launch s_graphs s_graphs_launch.py compute_odom:=true"'
+    autostart: true
+  ros_bridge:
+    shell: 'bash -c "source /opt/ros/noetic/setup.bash && source /opt/ros/foxy/setup.bash && ros2 run ros1_bridge dynamic_bridge --bridge-all-topics"'
+    autostart: true
+  rviz:
+    shell: 'bash -c "source ~/ros2_ws/install/setup.bash && rviz2 -d ~/ros2_ws/src/s_graphs/s_graphs/rviz/s_graphs_ros2.rviz"'
+    autostart: true
+  static_trans:
+    shell: 'bash -c "source /opt/ros/noetic/setup.bash && rosrun tf2_ros static_transform_publisher 0 0 0 0 0 0 1 body os_lidar"'
+    autostart: true
