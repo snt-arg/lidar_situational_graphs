@@ -53,9 +53,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs_msgs/msg/room_data.hpp"
-#include "s_graphs_msgs/msg/rooms_data.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
+#include "situational_graphs_msgs/msg/room_data.hpp"
+#include "situational_graphs_msgs/msg/rooms_data.hpp"
 #include "tf2_ros/transform_listener.h"
 
 namespace s_graphs {
@@ -84,9 +84,9 @@ class FloorAnalyzer {
    * @param floor_plane_candidates_vec
    */
   void perform_floor_segmentation(
-      const std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
-      const std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes,
-      std::vector<s_graphs_msgs::msg::PlaneData>& floor_plane_candidates_vec);
+      const std::vector<situational_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
+      const std::vector<situational_graphs_msgs::msg::PlaneData>& current_y_vert_planes,
+      std::vector<situational_graphs_msgs::msg::PlaneData>& floor_plane_candidates_vec);
 };
 }  // namespace s_graphs
 

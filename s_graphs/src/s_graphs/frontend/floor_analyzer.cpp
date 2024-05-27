@@ -7,12 +7,12 @@ FloorAnalyzer::FloorAnalyzer() {}
 FloorAnalyzer::~FloorAnalyzer() {}
 
 void FloorAnalyzer::perform_floor_segmentation(
-    const std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
-    const std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes,
-    std::vector<s_graphs_msgs::msg::PlaneData>& floor_plane_candidates_vec) {
+    const std::vector<situational_graphs_msgs::msg::PlaneData>& current_x_vert_planes,
+    const std::vector<situational_graphs_msgs::msg::PlaneData>& current_y_vert_planes,
+    std::vector<situational_graphs_msgs::msg::PlaneData>& floor_plane_candidates_vec) {
   // analyze the largest x plane pair
-  s_graphs_msgs::msg::PlaneData floor_x_plane1, floor_x_plane2;
-  s_graphs_msgs::msg::PlaneData floor_y_plane1, floor_y_plane2;
+  situational_graphs_msgs::msg::PlaneData floor_x_plane1, floor_x_plane2;
+  situational_graphs_msgs::msg::PlaneData floor_y_plane1, floor_y_plane2;
   floor_x_plane1.nx = -1;
   floor_x_plane2.nx = -1;
   floor_y_plane1.nx = -1;

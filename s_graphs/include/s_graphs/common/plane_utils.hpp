@@ -41,7 +41,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "geometry_msgs/msg/point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
-#include "s_graphs_msgs/msg/planes_data.hpp"
+#include "situational_graphs_msgs/msg/planes_data.hpp"
 
 namespace s_graphs {
 
@@ -93,8 +93,9 @@ class PlaneUtils {
    * @param
    * @return
    */
-  static float width_between_planes(const s_graphs_msgs::msg::PlaneData& plane1,
-                                    const s_graphs_msgs::msg::PlaneData& plane2);
+  static float width_between_planes(
+      const situational_graphs_msgs::msg::PlaneData& plane1,
+      const situational_graphs_msgs::msg::PlaneData& plane2);
 
   /**
    * @brief
@@ -103,7 +104,7 @@ class PlaneUtils {
    * @return
    */
   static void correct_plane_direction(int plane_type,
-                                      s_graphs_msgs::msg::PlaneData& plane);
+                                      situational_graphs_msgs::msg::PlaneData& plane);
 
   /**
    * @brief
@@ -140,10 +141,10 @@ class PlaneUtils {
    * @return
    */
   static geometry_msgs::msg::Pose room_center(
-      const s_graphs_msgs::msg::PlaneData& x_plane1,
-      const s_graphs_msgs::msg::PlaneData& x_plane2,
-      const s_graphs_msgs::msg::PlaneData& y_plane1,
-      const s_graphs_msgs::msg::PlaneData& y_plane2);
+      const situational_graphs_msgs::msg::PlaneData& x_plane1,
+      const situational_graphs_msgs::msg::PlaneData& x_plane2,
+      const situational_graphs_msgs::msg::PlaneData& y_plane1,
+      const situational_graphs_msgs::msg::PlaneData& y_plane2);
 
   /**
    * @brief
@@ -208,8 +209,8 @@ class PlaneUtils {
    * @param
    * @return
    */
-  static float plane_dot_product(const s_graphs_msgs::msg::PlaneData& plane1,
-                                 const s_graphs_msgs::msg::PlaneData& plane2);
+  static float plane_dot_product(const situational_graphs_msgs::msg::PlaneData& plane1,
+                                 const situational_graphs_msgs::msg::PlaneData& plane2);
 
   static bool plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* plane2);
 
@@ -217,8 +218,8 @@ class PlaneUtils {
       int plane_type,
       pcl::PointXY p1,
       pcl::PointXY p2,
-      s_graphs_msgs::msg::PlaneData plane1,
-      s_graphs_msgs::msg::PlaneData plane2,
+      situational_graphs_msgs::msg::PlaneData plane1,
+      situational_graphs_msgs::msg::PlaneData plane2,
       Eigen::Vector2d& cluster_center);
   /**
    * @brief

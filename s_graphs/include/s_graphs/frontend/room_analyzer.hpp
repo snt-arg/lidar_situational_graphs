@@ -47,9 +47,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include "geometry_msgs/msg/point.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "s_graphs_msgs/msg/plane_data.hpp"
-#include "s_graphs_msgs/msg/planes_data.hpp"
-#include "s_graphs_msgs/msg/rooms_data.hpp"
+#include "situational_graphs_msgs/msg/plane_data.hpp"
+#include "situational_graphs_msgs/msg/planes_data.hpp"
+#include "situational_graphs_msgs/msg/rooms_data.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace s_graphs {
@@ -60,17 +60,17 @@ struct room_analyzer_params {
 
 struct RoomInfo {
  public:
-  const std::vector<s_graphs_msgs::msg::PlaneData>& current_x_vert_planes;
-  const std::vector<s_graphs_msgs::msg::PlaneData>& current_y_vert_planes;
+  const std::vector<situational_graphs_msgs::msg::PlaneData>& current_x_vert_planes;
+  const std::vector<situational_graphs_msgs::msg::PlaneData>& current_y_vert_planes;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster;
 };
 
 struct RoomPlanes {
  public:
-  s_graphs_msgs::msg::PlaneData& x_plane1;
-  s_graphs_msgs::msg::PlaneData& x_plane2;
-  s_graphs_msgs::msg::PlaneData& y_plane1;
-  s_graphs_msgs::msg::PlaneData& y_plane2;
+  situational_graphs_msgs::msg::PlaneData& x_plane1;
+  situational_graphs_msgs::msg::PlaneData& x_plane2;
+  situational_graphs_msgs::msg::PlaneData& y_plane1;
+  situational_graphs_msgs::msg::PlaneData& y_plane2;
   bool found_x1_plane;
   bool found_x2_plane;
   bool found_y1_plane;
@@ -213,8 +213,8 @@ class RoomAnalyzer {
       int plane_type,
       pcl::PointXY p1,
       pcl::PointXY p2,
-      s_graphs_msgs::msg::PlaneData plane1,
-      s_graphs_msgs::msg::PlaneData plane2,
+      situational_graphs_msgs::msg::PlaneData plane1,
+      situational_graphs_msgs::msg::PlaneData plane2,
       Eigen::Vector2d& cluster_center);
 
   /**
@@ -231,7 +231,7 @@ class RoomAnalyzer {
   bool perform_room_segmentation(
       RoomInfo& room_info,
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_cluster,
-      std::vector<s_graphs_msgs::msg::RoomData>& room_candidates_vec,
+      std::vector<situational_graphs_msgs::msg::RoomData>& room_candidates_vec,
       const visualization_msgs::msg::MarkerArray& cloud_marker_array);
 
   /**
@@ -303,9 +303,10 @@ class RoomAnalyzer {
    * @param plane
    * @return
    */
-  std::vector<float> find_plane_points(const pcl::PointXY& start_point,
-                                       const pcl::PointXY& end_point,
-                                       const s_graphs_msgs::msg::PlaneData& plane);
+  std::vector<float> find_plane_points(
+      const pcl::PointXY& start_point,
+      const pcl::PointXY& end_point,
+      const situational_graphs_msgs::msg::PlaneData& plane);
 
   /**
    * @brief
@@ -316,7 +317,7 @@ class RoomAnalyzer {
    * @return
    */
   int find_plane_points(const pcl::PointCloud<pcl::PointXYZRGB>::Ptr& cloud_hull,
-                        const s_graphs_msgs::msg::PlaneData& plane,
+                        const situational_graphs_msgs::msg::PlaneData& plane,
                         pcl::PointCloud<pcl::PointXYZRGB>::Ptr& sub_cloud_cluster);
 
   /**

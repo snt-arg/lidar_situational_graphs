@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 cmake_minimum_required(VERSION 3.5)
-project(s_graphs)
+project(lidar_s_graphs)
 
 # Can we use C++17 in indigo?
 add_definitions(-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
@@ -41,10 +41,10 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
-find_package(reasoning_msgs REQUIRED)
+find_package(situational_graphs_reasoning_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(rviz_visual_tools REQUIRED)
-find_package(s_graphs_msgs REQUIRED)
+find_package(situational_graphs_msgs REQUIRED)
 
 
 find_package(PCL REQUIRED)
@@ -92,14 +92,14 @@ set(DEPENDENCIES
     tf2_ros
     tf2_eigen
     pcl_ros
-    reasoning_msgs
+    situational_graphs_reasoning_msgs
     visualization_msgs
     message_filters
     geographic_msgs
     nmea_msgs
     geodesy
     rviz_visual_tools
-    s_graphs_msgs)
+    situational_graphs_msgs)
 
 SET(G2O_COMMON_LIBS
   ${PCL_LIBRARIES}
@@ -120,32 +120,32 @@ FILE(GLOB_RECURSE S_GRAPHS_SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/s_graphs/*.cpp
 )
 
-add_library(g2o_sgraphs
+add_library(g2o_${PROJECT_NAME}
   ${G2O_S_GRAPHS_SOURCE_FILES}
   )
-target_link_libraries(g2o_sgraphs
+target_link_libraries(g2o_${PROJECT_NAME}
                     ${G2O_COMMON_LIBS}
                     ${PCL_LIBRARIES}
                     )
 
-add_library(s_graphs_core_lib
+add_library(${PROJECT_NAME}_core_lib
     ${S_GRAPHS_SOURCE_FILES}
 )
-target_link_libraries(s_graphs_core_lib
-                      g2o_sgraphs
+target_link_libraries(${PROJECT_NAME}_core_lib
+                      g2o_${PROJECT_NAME}
                       ${G2O_COMMON_LIBS}
                       ${PCL_LIBRARIES}
                       )
-target_include_directories(s_graphs_core_lib
+target_include_directories(${PROJECT_NAME}_core_lib
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
-ament_target_dependencies(s_graphs_core_lib ${DEPENDENCIES})
+ament_target_dependencies(${PROJECT_NAME}_core_lib ${DEPENDENCIES})
 
 ament_export_targets(export_s_graph_lib HAS_LIBRARY_TARGET)
 ament_export_dependencies(${DEPENDENCIES})
 ament_export_include_directories(include)
-ament_export_libraries(s_graphs_core_lib)
+ament_export_libraries(${PROJECT_NAME}_core_lib)
 
 
 add_executable(s_graphs_node
@@ -153,7 +153,7 @@ add_executable(s_graphs_node
 )
 ament_target_dependencies(s_graphs_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_node
-  s_graphs_core_lib
+  ${PROJECT_NAME}_core_lib
 )
 
 # nodes
@@ -168,7 +168,7 @@ add_executable(s_graphs_room_segmentation_node
 )
 ament_target_dependencies(s_graphs_room_segmentation_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_room_segmentation_node
-  s_graphs_core_lib
+  ${PROJECT_NAME}_core_lib
   ${PCL_LIBRARIES}
 )
 
@@ -177,7 +177,7 @@ add_executable(s_graphs_floor_plan_node
 )
 ament_target_dependencies(s_graphs_floor_plan_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_floor_plan_node
-  s_graphs_core_lib
+  ${PROJECT_NAME}_core_lib
   ${PCL_LIBRARIES}
 )
 
@@ -185,7 +185,7 @@ add_executable(s_graphs_scan_matching_odometry_node apps/scan_matching_odometry_
 ament_target_dependencies(s_graphs_scan_matching_odometry_node ${DEPENDENCIES})
 target_link_libraries(s_graphs_scan_matching_odometry_node
   ${PCL_LIBRARIES}
-  s_graphs_core_lib
+  ${PROJECT_NAME}_core_lib
 )
 
 #############
@@ -198,7 +198,7 @@ install(
 )
 
 install(
-  TARGETS s_graphs_core_lib g2o_sgraphs
+  TARGETS ${PROJECT_NAME}_core_lib g2o_${PROJECT_NAME}
   EXPORT export_s_graph_lib
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -240,14 +240,14 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   ament_add_gtest(testPlane test/testPlane.cpp)
-  target_link_libraries(testPlane s_graphs_core_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+  target_link_libraries(testPlane ${PROJECT_NAME}_core_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
   ament_add_gtest(testRoom test/testRoom.cpp)
-  target_link_libraries(testRoom s_graphs_core_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+  target_link_libraries(testRoom ${PROJECT_NAME}_core_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
   # ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp src/s_graphs/room_utils.cpp)
   ament_add_gtest(testRoomCentreCompute test/testRoomCentreCompute.cpp)
-  target_link_libraries(testRoomCentreCompute s_graphs_core_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
+  target_link_libraries(testRoomCentreCompute ${PROJECT_NAME}_core_lib ${PCL_LIBRARIES} ${G2O_LIBRARIES})
 
   install(TARGETS
     testPlane testRoom testRoomCentreCompute DESTINATION test/${PROJECT_NAME})

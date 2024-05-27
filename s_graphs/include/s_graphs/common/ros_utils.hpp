@@ -41,7 +41,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "reasoning_msgs/msg/keyframe.hpp"
+#include "situational_graphs_reasoning_msgs/msg/keyframe.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "s_graphs/common/keyframe.hpp"
@@ -110,7 +110,7 @@ Eigen::Isometry3d odom2isometry(const nav_msgs::msg::Odometry::SharedPtr& odom_m
  * @param
  * @return
  */
-KeyFrame ROS2Keyframe(const reasoning_msgs::msg::Keyframe& msg);
+KeyFrame ROS2Keyframe(const situational_graphs_reasoning_msgs::msg::Keyframe& msg);
 
 /**
  * @brief
@@ -118,7 +118,7 @@ KeyFrame ROS2Keyframe(const reasoning_msgs::msg::Keyframe& msg);
  * @param
  * @return
  */
-reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& keyframe);
+situational_graphs_reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& keyframe);
 
 }  // namespace s_graphs
 #endif  // ROS_UTILS_HPP
