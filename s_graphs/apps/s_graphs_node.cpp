@@ -111,6 +111,11 @@ class SGraphsNode : public rclcpp::Node {
   typedef pcl::PointXYZRGBNormal PointNormal;
 
   SGraphsNode() : Node("s_graphs_node") {
+    anchor_node = nullptr;
+    anchor_edge = nullptr;
+    // one time timer to initialize the classes with the current node obj
+    main_timer = this->create_wall_timer(std::chrono::seconds(1),
+                                         std::bind(&SGraphsNode::init_subclass, this));
     // init ros parameters
     this->declare_ros_params();
     map_frame_id =
@@ -364,12 +369,6 @@ class SGraphsNode : public rclcpp::Node {
         std::chrono::seconds(int(map_cloud_update_interval)),
         std::bind(&SGraphsNode::map_publish_timer_callback, this),
         callback_map_pub_timer);
-
-    anchor_node = nullptr;
-    anchor_edge = nullptr;
-    // one time timer to initialize the classes with the current node obj
-    main_timer = this->create_wall_timer(std::chrono::seconds(1),
-                                         std::bind(&SGraphsNode::init_subclass, this));
   }
 
  private:
@@ -600,17 +599,20 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& floor_data_msg : floor_data_queue) {
+      graph_mutex.lock();
       floor_mapper->lookup_floors(covisibility_graph,
                                   floor_data_msg,
                                   floors_vec,
                                   rooms_vec,
                                   x_infinite_rooms,
                                   y_infinite_rooms);
+      graph_mutex.unlock();
 
       // if new floor was added update floor level and add to it the stair keyframes
       if (floor_mapper->get_floor_level_update_info() &&
           !floor_data_msg.keyframe_ids.empty()) {
         current_floor_level = floor_mapper->get_floor_level();
+        graph_mutex.lock();
         add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
         GraphUtils::update_node_floor_level(
             floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
@@ -621,6 +623,7 @@ class SGraphsNode : public rclcpp::Node {
             rooms_vec,
             x_infinite_rooms,
             y_infinite_rooms);
+        graph_mutex.unlock();
       }
 
       floor_data_mutex.lock();
@@ -635,12 +638,14 @@ class SGraphsNode : public rclcpp::Node {
     floor_data_msg.floor_center.position.y = 0;
     floor_data_msg.floor_center.position.z = 0;
 
+    graph_mutex.lock();
     floor_mapper->lookup_floors(covisibility_graph,
                                 floor_data_msg,
                                 floors_vec,
                                 rooms_vec,
                                 x_infinite_rooms,
                                 y_infinite_rooms);
+    graph_mutex.unlock();
     current_floor_level = floor_mapper->get_floor_level();
   }
 
@@ -689,6 +694,7 @@ class SGraphsNode : public rclcpp::Node {
           if (fabs(x_width) < 0.5 || fabs(y_width) < 0.5) continue;
 
           int current_room_id;
+          graph_mutex.lock();
           bool duplicate_planes_rooms =
               finite_room_mapper->lookup_rooms(covisibility_graph,
                                                room_data,
@@ -700,10 +706,12 @@ class SGraphsNode : public rclcpp::Node {
                                                y_infinite_rooms,
                                                rooms_vec,
                                                current_room_id);
+          graph_mutex.unlock();
+
           if (current_room_id != -1) {
+            graph_mutex.lock();
             // generate local graph per room
             extract_keyframes_from_room(rooms_vec[current_room_id]);
-            graph_mutex.lock();
             room_local_graph_id_queue.push_back(current_room_id);
             graph_mutex.unlock();
             new_rooms.insert(
@@ -718,6 +726,7 @@ class SGraphsNode : public rclcpp::Node {
           if (fabs(x_width) < 0.5) continue;
 
           int current_room_id;
+          graph_mutex.lock();
           bool duplicate_planes_x_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::X_VERT_PLANE,
@@ -730,6 +739,7 @@ class SGraphsNode : public rclcpp::Node {
               y_infinite_rooms,
               rooms_vec,
               current_room_id);
+          graph_mutex.unlock();
 
           if (duplicate_planes_x_inf_rooms) duplicate_planes_found = true;
           if (current_room_id != -1)
@@ -743,6 +753,7 @@ class SGraphsNode : public rclcpp::Node {
           if (fabs(y_width) < 0.5) continue;
 
           int current_room_id;
+          graph_mutex.lock();
           bool duplicate_planes_y_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::Y_VERT_PLANE,
@@ -755,6 +766,7 @@ class SGraphsNode : public rclcpp::Node {
               y_infinite_rooms,
               rooms_vec,
               current_room_id);
+          graph_mutex.unlock();
 
           if (duplicate_planes_y_inf_rooms) duplicate_planes_found = true;
           if (current_room_id != -1)
@@ -768,11 +780,13 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue_mutex.unlock();
     }
 
+    graph_mutex.lock();
     floor_mapper->factor_floor_room_nodes(covisibility_graph,
                                           floors_vec[current_floor_level],
                                           rooms_vec,
                                           x_infinite_rooms,
                                           y_infinite_rooms);
+    graph_mutex.unlock();
   }
 
   /**
@@ -1163,6 +1177,10 @@ class SGraphsNode : public rclcpp::Node {
           duplicate_planes_found = false;
           loop_found = false;
           global_optimization = true;
+        } else {
+          duplicate_planes_found = false;
+          loop_found = false;
+          global_optimization = false;
         }
         graph_mutex.unlock();
         break;
@@ -1189,6 +1207,10 @@ class SGraphsNode : public rclcpp::Node {
           duplicate_planes_found = false;
           loop_found = false;
           global_optimization = true;
+        } else {
+          duplicate_planes_found = false;
+          loop_found = false;
+          global_optimization = false;
         }
         graph_mutex.unlock();
         break;
