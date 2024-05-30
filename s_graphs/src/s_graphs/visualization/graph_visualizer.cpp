@@ -101,6 +101,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
 
   // node markers
   double wall_vertex_h = 18;
+  // lifetime
+  rclcpp::Duration marker_lifetime = rclcpp::Duration::from_seconds(15);
 
   std::string keyframes_layer_id = "keyframes_layer";
   std::string walls_layer_id = "walls_layer";
@@ -125,7 +127,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
 
   traj_marker.pose.orientation.w = 1.0;
   traj_marker.scale.x = traj_marker.scale.y = traj_marker.scale.z = 0.2;
-
+  traj_marker.lifetime = marker_lifetime;
   visualization_msgs::msg::Marker imu_marker;
   imu_marker.header = traj_marker.header;
   imu_marker.ns = "imu";
@@ -134,6 +136,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
 
   imu_marker.pose.orientation.w = 1.0;
   imu_marker.scale.x = imu_marker.scale.y = imu_marker.scale.z = 0.75;
+  imu_marker.lifetime = marker_lifetime;
 
   traj_marker.points.resize(keyframes.size());
   traj_marker.colors.resize(keyframes.size());
@@ -211,6 +214,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   traj_edge_marker.ns = "keyframe_keyframe_edges";
   traj_edge_marker.id = markers.markers.size();
   traj_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+  traj_edge_marker.lifetime = marker_lifetime;
   traj_edge_marker.pose.orientation.w = 1.0;
   traj_edge_marker.scale.x = 0.02;
 
@@ -260,6 +264,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   traj_plane_edge_marker.ns = "keyframe_plane_edges";
   traj_plane_edge_marker.id = markers.markers.size();
   traj_plane_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+  traj_plane_edge_marker.lifetime = marker_lifetime;
   traj_plane_edge_marker.pose.orientation.w = 1.0;
   traj_plane_edge_marker.scale.x = 0.01;
 
@@ -351,6 +356,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
       wall_center_marker.header.stamp = stamp;
       wall_center_marker.id = markers.markers.size() + 1;
       wall_center_marker.type = visualization_msgs::msg::Marker::SPHERE;
+      wall_center_marker.lifetime = marker_lifetime;
       wall_center_marker.color.r = color_r;
       wall_center_marker.color.g = color_g;
       wall_center_marker.color.b = color_b;
@@ -376,6 +382,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   sphere_marker.ns = "loop_close_radius";
   sphere_marker.id = markers.markers.size();
   sphere_marker.type = visualization_msgs::msg::Marker::SPHERE;
+  sphere_marker.lifetime = marker_lifetime;
   if (!keyframes.empty()) {
     auto kf_map = local_graph->vertices().find(keyframes.back()->id());
     if (kf_map != local_graph->vertices().end()) {
@@ -400,6 +407,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   x_vert_plane_marker.header.stamp = stamp;
   x_vert_plane_marker.ns = "x_vert_planes";
   x_vert_plane_marker.id = markers.markers.size();
+  x_vert_plane_marker.lifetime = marker_lifetime;
   markers.markers.push_back(x_vert_plane_marker);
 
   // y vertical plane markers
@@ -409,6 +417,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   y_vert_plane_marker.header.stamp = stamp;
   y_vert_plane_marker.ns = "y_vert_planes";
   y_vert_plane_marker.id = markers.markers.size();
+  y_vert_plane_marker.lifetime = marker_lifetime;
   markers.markers.push_back(y_vert_plane_marker);
 
   // horizontal plane markers
@@ -418,6 +427,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   hort_plane_marker.header.stamp = stamp;
   hort_plane_marker.ns = "hort_planes";
   hort_plane_marker.id = markers.markers.size();
+  hort_plane_marker.lifetime = marker_lifetime;
   markers.markers.push_back(hort_plane_marker);
 
   // x infinite room
@@ -443,6 +453,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     x_infinite_room_line_marker.color.r = color_r;
     x_infinite_room_line_marker.color.g = color_g;
     x_infinite_room_line_marker.color.b = color_b;
+    x_infinite_room_line_marker.lifetime = marker_lifetime;
     x_infinite_room_line_marker.color.a = 1.0;
 
     auto found_plane1 = x_plane_snapshot.find(x_infinite_room.second.plane1_id);
@@ -478,6 +489,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     infinite_room_pose_marker.ns = "x_infinite_room";
     infinite_room_pose_marker.id = markers.markers.size();
     infinite_room_pose_marker.type = visualization_msgs::msg::Marker::CUBE;
+    infinite_room_pose_marker.lifetime = marker_lifetime;
     infinite_room_pose_marker.color.r = 1;
     infinite_room_pose_marker.color.g = 0.64;
     infinite_room_pose_marker.color.a = 1;
@@ -514,6 +526,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     y_infinite_room_line_marker.header.stamp = stamp;
     y_infinite_room_line_marker.id = markers.markers.size() + 1;
     y_infinite_room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    y_infinite_room_line_marker.lifetime = marker_lifetime;
     y_infinite_room_line_marker.color.r = color_r;
     y_infinite_room_line_marker.color.g = color_g;
     y_infinite_room_line_marker.color.b = color_b;
@@ -554,6 +567,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     infinite_room_pose_marker.ns = "y_infinite_room";
     infinite_room_pose_marker.id = markers.markers.size();
     infinite_room_pose_marker.type = visualization_msgs::msg::Marker::CUBE;
+    infinite_room_pose_marker.lifetime = marker_lifetime;
     infinite_room_pose_marker.color.r = 0.13;
     infinite_room_pose_marker.color.g = 0.54;
     infinite_room_pose_marker.color.b = 0.13;
@@ -591,6 +605,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     room_line_marker.header.stamp = stamp;
     room_line_marker.id = markers.markers.size() + 1;
     room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    room_line_marker.lifetime = marker_lifetime;
     room_line_marker.color.r = color_r;
     room_line_marker.color.g = color_g;
     room_line_marker.color.b = color_b;
@@ -673,6 +688,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
       floor_marker.ns = "floors";
       floor_marker.id = markers.markers.size();
       floor_marker.type = visualization_msgs::msg::Marker::CUBE;
+      floor_marker.lifetime = marker_lifetime;
       floor_marker.color.r = 0.49;
       floor_marker.color.g = 0;
       floor_marker.color.b = 1;
@@ -697,6 +713,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
       floor_line_marker.header.stamp = stamp;
       floor_line_marker.id = markers.markers.size() + 1;
       floor_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+      floor_line_marker.lifetime = marker_lifetime;
       floor_line_marker.color.r = color_r;
       floor_line_marker.color.g = color_g;
       floor_line_marker.color.b = color_b;
