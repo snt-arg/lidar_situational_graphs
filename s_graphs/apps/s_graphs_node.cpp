@@ -1351,7 +1351,8 @@ class SGraphsNode : public rclcpp::Node {
     std::unique_ptr<GraphSLAM> local_compressed_graph;
     local_compressed_graph = std::make_unique<GraphSLAM>("", false, false);
     graph_mutex.lock();
-    GraphUtils::copy_graph_vertices(covisibility_graph, local_compressed_graph);
+    GraphUtils::copy_graph_vertices(compressed_graph.get(),
+                                    local_compressed_graph.get());
     graph_mutex.unlock();
     graph_visualizer->visualize_compressed_graph(current_time,
                                                  global_optimization,

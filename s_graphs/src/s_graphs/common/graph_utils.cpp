@@ -6,7 +6,7 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
                             std::unique_ptr<GraphSLAM>& compressed_graph,
                             const std::map<int, KeyFrame::Ptr>& keyframes) {
   compressed_graph->graph->clear();
-  copy_graph_vertices(covisibility_graph, compressed_graph);
+  copy_graph_vertices(covisibility_graph.get(), compressed_graph.get());
   std::vector<g2o::VertexSE3*> filtered_k_vec =
       copy_graph_edges(covisibility_graph, compressed_graph);
   connect_broken_keyframes(
@@ -16,15 +16,14 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
 void GraphUtils::copy_entire_graph(
     const std::shared_ptr<GraphSLAM>& covisibility_graph,
     std::unique_ptr<GraphSLAM>& covisibility_graph_copy) {
-  copy_graph_vertices(covisibility_graph, covisibility_graph_copy, true);
+  copy_graph_vertices(covisibility_graph.get(), covisibility_graph_copy.get(), true);
   std::vector<g2o::VertexSE3*> filtered_k_vec =
       copy_graph_edges(covisibility_graph, covisibility_graph_copy);
 }
 
-void GraphUtils::copy_graph_vertices(
-    const std::shared_ptr<GraphSLAM>& covisibility_graph,
-    const std::unique_ptr<GraphSLAM>& compressed_graph,
-    const bool include_marginazed) {
+void GraphUtils::copy_graph_vertices(const GraphSLAM* covisibility_graph,
+                                     GraphSLAM* compressed_graph,
+                                     const bool include_marginazed) {
   for (g2o::HyperGraph::VertexIDMap::iterator it =
            covisibility_graph->graph->vertices().begin();
        it != covisibility_graph->graph->vertices().end();
