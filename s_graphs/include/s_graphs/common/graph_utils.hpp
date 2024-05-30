@@ -68,6 +68,15 @@ class GraphUtils {
   /**
    * @brief
    *
+   * @param covisibility_graph
+   * @param compressed_graph
+   */
+  static void copy_entire_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                std::unique_ptr<GraphSLAM>& covisibility_graph_copy);
+
+  /**
+   * @brief
+   *
    * @param current_floor_level
    * @param covisibility_graph
    * @param compressed_graph
@@ -98,7 +107,8 @@ class GraphUtils {
    * @param compressed_graph
    */
   static void copy_graph_vertices(const std::shared_ptr<GraphSLAM>& covisibility_graph,
-                                  const std::unique_ptr<GraphSLAM>& compressed_graph);
+                                  const std::unique_ptr<GraphSLAM>& compressed_graph,
+                                  const bool include_marginazed = false);
 
   /**
    * @brief

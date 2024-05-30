@@ -85,18 +85,18 @@ GraphVisualizer::~GraphVisualizer() {}
  * @param stamp
  * @return
  */
-visualization_msgs::msg::MarkerArray GraphVisualizer::create_marker_array(
+visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_graph(
+    const double loop_detector_radius,
     const rclcpp::Time& stamp,
     const g2o::SparseOptimizer* local_graph,
+    std::vector<KeyFrame::Ptr> keyframes,
     const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
     const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
     const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
-    std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
-    std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
-    std::unordered_map<int, Rooms> room_snapshot,
-    double loop_detector_radius,
-    std::vector<KeyFrame::Ptr> keyframes,
-    std::unordered_map<int, Floors> floors_vec) {
+    const std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
+    const std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
+    const std::unordered_map<int, Rooms> room_snapshot,
+    const std::unordered_map<int, Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
 
   // node markers
@@ -1588,7 +1588,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
   return prior_markers;
 }
 
-void GraphVisualizer::create_compressed_graph(
+void GraphVisualizer::visualize_compressed_graph(
     const rclcpp::Time& stamp,
     bool global_optimization,
     bool room_optimization,

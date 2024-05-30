@@ -90,32 +90,36 @@ class GraphVisualizer {
 
  public:
   /**
-   * @brief Creates a marker array
+   * @brief Create a marker array object
    *
+   * @param loop_detector_radius
    * @param stamp
    * @param local_graph
+   * @param keyframes
    * @param x_plane_snapshot
    * @param y_plane_snapshot
-   * @param loop_detector_radius
-   * @param keyframes
+   * @param hort_plane_snapshot
+   * @param x_infinite_room_snapshot
+   * @param y_infinite_room_snapshot
+   * @param room_snapshot
    * @param floors_vec
-   * @return A MarkerArray message.
+   * @return visualization_msgs::msg::MarkerArray
    */
-  visualization_msgs::msg::MarkerArray create_marker_array(
+  visualization_msgs::msg::MarkerArray visualize_covisibility_graph(
+      const double loop_detector_radius,
       const rclcpp::Time& stamp,
       const g2o::SparseOptimizer* local_graph,
+      std::vector<KeyFrame::Ptr> keyframes,
       const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
       const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
       const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
-      std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
-      std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
-      std::unordered_map<int, Rooms> room_snapshot,
-      double loop_detector_radius,
-      std::vector<KeyFrame::Ptr> keyframes,
-      std::unordered_map<int, Floors> floors_vec);
+      const std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
+      const std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
+      const std::unordered_map<int, Rooms> room_snapshot,
+      const std::unordered_map<int, Floors> floors_vec);
 
   /**
-   * @brief Create a compressed graph object
+   * @brief visualize a compressed graph object
    *
    * @param stamp
    * @param global_optimization
@@ -125,7 +129,7 @@ class GraphVisualizer {
    * @param y_plane_snapshot
    * @param hort_plane_snapshot
    */
-  void create_compressed_graph(
+  void visualize_compressed_graph(
       const rclcpp::Time& stamp,
       bool global_optimization,
       bool room_optimization,

@@ -679,10 +679,6 @@ class SGraphsNode : public rclcpp::Node {
       return;
     }
 
-    std::unordered_map<int, s_graphs::Rooms> new_rooms;
-    std::unordered_map<int, s_graphs::InfiniteRooms> new_x_inf_rooms;
-    std::unordered_map<int, s_graphs::InfiniteRooms> new_y_inf_rooms;
-
     for (const auto& room_data_msg : room_data_queue) {
       for (const auto& room_data : room_data_msg.rooms) {
         if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
@@ -714,8 +710,6 @@ class SGraphsNode : public rclcpp::Node {
             extract_keyframes_from_room(rooms_vec[current_room_id]);
             room_local_graph_id_queue.push_back(current_room_id);
             graph_mutex.unlock();
-            new_rooms.insert(
-                {rooms_vec[current_room_id].id, rooms_vec[current_room_id]});
             if (duplicate_planes_rooms) duplicate_planes_found = true;
           }
         }
@@ -742,9 +736,6 @@ class SGraphsNode : public rclcpp::Node {
           graph_mutex.unlock();
 
           if (duplicate_planes_x_inf_rooms) duplicate_planes_found = true;
-          if (current_room_id != -1)
-            new_x_inf_rooms.insert({x_infinite_rooms[current_room_id].id,
-                                    x_infinite_rooms[current_room_id]});
         }
         // y infinite_room
         else if (room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
@@ -769,9 +760,6 @@ class SGraphsNode : public rclcpp::Node {
           graph_mutex.unlock();
 
           if (duplicate_planes_y_inf_rooms) duplicate_planes_found = true;
-          if (current_room_id != -1)
-            new_y_inf_rooms.insert({y_infinite_rooms[current_room_id].id,
-                                    y_infinite_rooms[current_room_id]});
         }
       }
 
@@ -936,6 +924,7 @@ class SGraphsNode : public rclcpp::Node {
       wall_point << walls_msg->walls[j].wall_point.x, walls_msg->walls[j].wall_point.y,
           walls_msg->walls[j].wall_point.z;
 
+      // TODO:HB add graph_mutex here
       wall_mapper->factor_wall(covisibility_graph,
                                wall_pose,
                                wall_point,
@@ -990,7 +979,7 @@ class SGraphsNode : public rclcpp::Node {
     if (keyframes.empty() || gps_queue.empty()) {
       return false;
     }
-
+    // TODO:HB add graph_mutex
     return gps_mapper->map_gps_data(covisibility_graph, gps_queue, keyframes);
   }
 
@@ -1009,7 +998,7 @@ class SGraphsNode : public rclcpp::Node {
     if (keyframes.empty() || imu_queue.empty() || base_frame_id.empty()) {
       return false;
     }
-
+    // TODO:HB add graph_mutex
     return imu_mapper->map_imu_data(
         covisibility_graph, tf_buffer, imu_queue, keyframes, base_frame_id);
   }
@@ -1079,15 +1068,14 @@ class SGraphsNode : public rclcpp::Node {
                    [=](const std::pair<int, KeyFrame::Ptr>& k) {
                      return std::make_shared<KeyFrameSnapshot>(k.second);
                    });
-    keyframes_snapshot.swap(snapshot);
-
-    for (const auto& keyframe_snapshot : keyframes_snapshot) {
+    keyframes_map_snapshot.swap(snapshot);
+    for (const auto& keyframe_snapshot : keyframes_map_snapshot) {
       if (!keyframe_snapshot->k_marginalized)
-        keyframes_snapshot_queue.push(keyframe_snapshot);
+        keyframes_map_snapshot_queue.push(keyframe_snapshot);
     }
 
     for (const auto& keyframe : keyframes) {
-      complete_keyframes_queue.push(keyframe.second);
+      keyframes_complete_snapshot_queue.push(keyframe.second);
     }
 
     x_planes_snapshot = x_vert_planes;
@@ -1309,61 +1297,69 @@ class SGraphsNode : public rclcpp::Node {
 
     int current_loop = 0;
     KeyFrameSnapshot::Ptr current_snapshot;
-    while (keyframes_snapshot_queue.pop(current_snapshot)) {
-      if (current_loop == 0) current_keyframes_snapshot.clear();
-      current_keyframes_snapshot.push_back(current_snapshot);
+    std::vector<KeyFrameSnapshot::Ptr> current_keyframes_map_snapshot;
+    while (keyframes_map_snapshot_queue.pop(current_snapshot)) {
+      if (current_loop == 0) current_keyframes_map_snapshot.clear();
+      current_keyframes_map_snapshot.push_back(current_snapshot);
       current_loop++;
     }
 
     current_loop = 0;
     KeyFrame::Ptr current_keyframe;
-    while (complete_keyframes_queue.pop(current_keyframe)) {
-      if (current_loop == 0) current_keyframes.clear();
-      current_keyframes.push_back(current_keyframe);
+    std::vector<KeyFrame::Ptr> keyframes_complete_snapshot;
+    while (keyframes_complete_snapshot_queue.pop(current_keyframe)) {
+      if (current_loop == 0) keyframes_complete_snapshot.clear();
+      keyframes_complete_snapshot.push_back(current_keyframe);
       current_loop++;
     }
 
-    auto cloud =
-        map_cloud_generator->generate(current_keyframes_snapshot, map_cloud_resolution);
+    if (current_keyframes_map_snapshot.empty() || keyframes_complete_snapshot.empty())
+      return;
+
+    auto cloud = map_cloud_generator->generate(current_keyframes_map_snapshot,
+                                               map_cloud_resolution);
     if (!cloud) {
       return;
     }
 
     cloud->header.frame_id = map_frame_id;
-    cloud->header.stamp = current_keyframes_snapshot.back()->cloud->header.stamp;
+    cloud->header.stamp = current_keyframes_map_snapshot.back()->cloud->header.stamp;
 
     sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg(
         new sensor_msgs::msg::PointCloud2());
     pcl::toROSMsg(*cloud, *cloud_msg);
 
+    std::unique_ptr<GraphSLAM> local_covisibility_graph;
+    local_covisibility_graph = std::make_unique<GraphSLAM>("", false, false);
+    graph_mutex.lock();
+    GraphUtils::copy_entire_graph(covisibility_graph, local_covisibility_graph);
+    graph_mutex.unlock();
     auto current_time = this->now();
-    auto markers = graph_visualizer->create_marker_array(
+    auto markers = graph_visualizer->visualize_covisibility_graph(
+        loop_detector->get_distance_thresh() * 2.0,
         current_time,
-        covisibility_graph->graph.get(),
+        local_covisibility_graph->graph.get(),
+        keyframes_complete_snapshot,
         x_planes_snapshot,
         y_planes_snapshot,
         hort_planes_snapshot,
         x_inf_rooms_snapshot,
         y_inf_rooms_snapshot,
         rooms_vec_snapshot,
-        loop_detector->get_distance_thresh() * 2.0,
-        current_keyframes,
         floors_vec_snapshot);
 
     std::unique_ptr<GraphSLAM> local_compressed_graph;
     local_compressed_graph = std::make_unique<GraphSLAM>("", false, false);
-
     graph_mutex.lock();
     GraphUtils::copy_graph_vertices(covisibility_graph, local_compressed_graph);
     graph_mutex.unlock();
-
-    graph_visualizer->create_compressed_graph(current_time,
-                                              global_optimization,
-                                              false,
-                                              local_compressed_graph->graph.get(),
-                                              x_planes_snapshot,
-                                              y_planes_snapshot,
-                                              hort_planes_snapshot);
+    graph_visualizer->visualize_compressed_graph(current_time,
+                                                 global_optimization,
+                                                 false,
+                                                 local_compressed_graph->graph.get(),
+                                                 x_planes_snapshot,
+                                                 y_planes_snapshot,
+                                                 hort_planes_snapshot);
 
     markers_pub->publish(markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
@@ -1440,6 +1436,7 @@ class SGraphsNode : public rclcpp::Node {
         continue;
       situational_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
+      graph_mutex.lock();
       mapped_plane_coeffs =
           (local_x_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
@@ -1449,7 +1446,6 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      graph_mutex.lock();
       for (const auto& plane_point_data :
            (local_x_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
@@ -1470,6 +1466,7 @@ class SGraphsNode : public rclcpp::Node {
         continue;
       situational_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
+      graph_mutex.lock();
       mapped_plane_coeffs =
           (local_y_vert_plane->second).plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
@@ -1479,7 +1476,6 @@ class SGraphsNode : public rclcpp::Node {
       plane_data.ny = mapped_plane_coeffs(1);
       plane_data.nz = mapped_plane_coeffs(2);
       plane_data.d = mapped_plane_coeffs(3);
-      graph_mutex.lock();
       for (const auto& plane_point_data :
            (local_y_vert_plane->second).cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
@@ -1513,6 +1509,7 @@ class SGraphsNode : public rclcpp::Node {
 
       situational_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
+      graph_mutex.lock();
       mapped_plane_coeffs = (x_vert_plane).second.plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::X_VERT_PLANE,
       // mapped_plane_coeffs);
@@ -1526,7 +1523,6 @@ class SGraphsNode : public rclcpp::Node {
       } else {
         plane_data.data_source = "Online";
       }
-      graph_mutex.lock();
       for (const auto& plane_point_data : (x_vert_plane).second.cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
@@ -1543,6 +1539,7 @@ class SGraphsNode : public rclcpp::Node {
 
       situational_graphs_msgs::msg::PlaneData plane_data;
       Eigen::Vector4d mapped_plane_coeffs;
+      graph_mutex.lock();
       mapped_plane_coeffs = (y_vert_plane).second.plane_node->estimate().coeffs();
       // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
       // mapped_plane_coeffs);
@@ -1556,7 +1553,6 @@ class SGraphsNode : public rclcpp::Node {
       } else {
         plane_data.data_source = "Online";
       }
-      graph_mutex.lock();
       for (const auto& plane_point_data : (y_vert_plane).second.cloud_seg_map->points) {
         geometry_msgs::msg::Vector3 plane_point;
         plane_point.x = plane_point_data.x;
@@ -1661,7 +1657,7 @@ class SGraphsNode : public rclcpp::Node {
       std::shared_ptr<situational_graphs_msgs::srv::SaveMap::Response> res) {
     std::vector<KeyFrameSnapshot::Ptr> snapshot;
 
-    snapshot = keyframes_snapshot;
+    snapshot = keyframes_map_snapshot;
 
     auto cloud = map_cloud_generator->generate(snapshot, req->resolution);
     if (!cloud) {
@@ -2011,13 +2007,11 @@ class SGraphsNode : public rclcpp::Node {
   // for map cloud generation
   std::atomic_bool graph_updated;
   double map_cloud_resolution;
-  std::vector<KeyFrameSnapshot::Ptr> keyframes_snapshot;
+  std::vector<KeyFrameSnapshot::Ptr> keyframes_map_snapshot;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
 
-  boost::lockfree::spsc_queue<KeyFrameSnapshot::Ptr> keyframes_snapshot_queue{1000};
-  boost::lockfree::spsc_queue<KeyFrame::Ptr> complete_keyframes_queue{1000};
-  std::vector<KeyFrame::Ptr> current_keyframes;
-  std::vector<KeyFrameSnapshot::Ptr> current_keyframes_snapshot;
+  boost::lockfree::spsc_queue<KeyFrameSnapshot::Ptr> keyframes_map_snapshot_queue{1000};
+  boost::lockfree::spsc_queue<KeyFrame::Ptr> keyframes_complete_snapshot_queue{1000};
 
   std::mutex graph_mutex;
   int max_keyframes_per_update;

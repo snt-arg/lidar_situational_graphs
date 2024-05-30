@@ -42,6 +42,17 @@ class OptimizationData : public g2o::HyperGraph::Data {
   OptimizationData() {}
   ~OptimizationData() {}
 
+  OptimizationData& operator=(OptimizationData prev_data) {
+    bool marginalized_value;
+    prev_data.get_marginalized_info(marginalized_value);
+    set_marginalized_info(marginalized_value);
+
+    bool get_node_value;
+    prev_data.get_stair_node_info(get_node_value);
+    set_stair_node_info(get_node_value);
+    return *this;
+  }
+
   bool read(std::istream& is) {
     std::cout << "read not implemented" << std::endl;
     return false;

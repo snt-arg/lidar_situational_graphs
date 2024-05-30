@@ -13,9 +13,18 @@ void GraphUtils::copy_graph(const std::shared_ptr<GraphSLAM>& covisibility_graph
       filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
 }
 
+void GraphUtils::copy_entire_graph(
+    const std::shared_ptr<GraphSLAM>& covisibility_graph,
+    std::unique_ptr<GraphSLAM>& covisibility_graph_copy) {
+  copy_graph_vertices(covisibility_graph, covisibility_graph_copy, true);
+  std::vector<g2o::VertexSE3*> filtered_k_vec =
+      copy_graph_edges(covisibility_graph, covisibility_graph_copy);
+}
+
 void GraphUtils::copy_graph_vertices(
     const std::shared_ptr<GraphSLAM>& covisibility_graph,
-    const std::unique_ptr<GraphSLAM>& compressed_graph) {
+    const std::unique_ptr<GraphSLAM>& compressed_graph,
+    const bool include_marginazed) {
   for (g2o::HyperGraph::VertexIDMap::iterator it =
            covisibility_graph->graph->vertices().begin();
        it != covisibility_graph->graph->vertices().end();
@@ -26,9 +35,15 @@ void GraphUtils::copy_graph_vertices(
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
     if (vertex_se3) {
       bool marginalized = get_keyframe_marg_data(vertex_se3);
-      if (!marginalized) {
+      if (!marginalized || include_marginazed) {
         if (compressed_graph->graph->vertex(v->id())) continue;
-        auto current_vertex = compressed_graph->copy_se3_node(vertex_se3);
+        g2o::VertexSE3* current_vertex = compressed_graph->copy_se3_node(vertex_se3);
+        auto vertex_se3_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+        if (vertex_se3_data) {
+          OptimizationData* data = new OptimizationData();
+          *data = *vertex_se3_data;
+          current_vertex->setUserData(data);
+        }
       }
       continue;
     }
