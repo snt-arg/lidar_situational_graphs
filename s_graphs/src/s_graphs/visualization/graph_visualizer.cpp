@@ -503,7 +503,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     }
 
     p4 = compute_plane_point(p1, (*found_planey1).second.cloud_seg_map);
-    if (p4.x = 0 && p4.y == 0 && p4.z == 0) {
+    if (p4.x == 0 && p4.y == 0 && p4.z == 0) {
     } else {
       room_line_marker.points.push_back(p1);
       room_line_marker.points.push_back(p4);
