@@ -301,6 +301,8 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
       } else
         continue;
 
+      if (pt2.x() == 0 && pt2.y() == 0 && pt2.z() == 0) continue;
+
       geometry_msgs::msg::Point point1, point2;
       geometry_msgs::msg::PointStamped point2_stamped, point2_stamped_transformed;
       point1.x = pt1.x();
@@ -430,160 +432,23 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   hort_plane_marker.lifetime = marker_lifetime;
   markers.markers.push_back(hort_plane_marker);
 
-  // x infinite room
-  for (const auto& x_infinite_room : x_infinite_room_snapshot) {
-    auto x_inf_room_map = local_graph->vertices().find(x_infinite_room.first);
-    if (x_inf_room_map == local_graph->vertices().end()) continue;
+  // fil in the x_inf room marker
+  this->fill_infinite_room(0,
+                           stamp,
+                           marker_lifetime,
+                           local_graph,
+                           x_plane_snapshot,
+                           x_infinite_room_snapshot,
+                           markers);
 
-    auto floor_map = local_graph->vertices().find(x_infinite_room.second.floor_level);
-    if (floor_map == local_graph->vertices().end()) {
-      std::cout << "floor node not found for x_inf room" << std::endl;
-      continue;
-    }
-
-    // fill in the line marker
-    visualization_msgs::msg::Marker x_infinite_room_line_marker;
-    x_infinite_room_line_marker.scale.x = 0.02;
-    x_infinite_room_line_marker.pose.orientation.w = 1.0;
-    x_infinite_room_line_marker.ns = "infinite_room_x_lines";
-    x_infinite_room_line_marker.header.frame_id = rooms_layer_id;
-    x_infinite_room_line_marker.header.stamp = stamp;
-    x_infinite_room_line_marker.id = markers.markers.size() + 1;
-    x_infinite_room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-    x_infinite_room_line_marker.color.r = color_r;
-    x_infinite_room_line_marker.color.g = color_g;
-    x_infinite_room_line_marker.color.b = color_b;
-    x_infinite_room_line_marker.lifetime = marker_lifetime;
-    x_infinite_room_line_marker.color.a = 1.0;
-
-    auto found_plane1 = x_plane_snapshot.find(x_infinite_room.second.plane1_id);
-    auto found_plane2 = x_plane_snapshot.find(x_infinite_room.second.plane2_id);
-
-    geometry_msgs::msg::Point p1, p2, p3;
-    p1.x = dynamic_cast<g2o::VertexRoom*>(x_inf_room_map->second)
-               ->estimate()
-               .translation()(0);
-    p1.y = dynamic_cast<g2o::VertexRoom*>(x_inf_room_map->second)
-               ->estimate()
-               .translation()(1);
-    p1.z =
-        dynamic_cast<g2o::VertexFloor*>(floor_map->second)->estimate().translation()(2);
-
-    p2 = compute_plane_point(p1, (*found_plane1).second.cloud_seg_map);
-    x_infinite_room_line_marker.points.push_back(p1);
-    x_infinite_room_line_marker.points.push_back(p2);
-
-    p3 = compute_plane_point(p1, (*found_plane2).second.cloud_seg_map);
-    x_infinite_room_line_marker.points.push_back(p1);
-    x_infinite_room_line_marker.points.push_back(p3);
-    markers.markers.push_back(x_infinite_room_line_marker);
-
-    // x infinite_room cube
-    visualization_msgs::msg::Marker infinite_room_pose_marker;
-    infinite_room_pose_marker.scale.x = 0.5;
-    infinite_room_pose_marker.scale.y = 0.5;
-    infinite_room_pose_marker.scale.z = 0.5;
-    // plane_marker.points.resize(vert_planes.size());
-    infinite_room_pose_marker.header.frame_id = rooms_layer_id;
-    infinite_room_pose_marker.header.stamp = stamp;
-    infinite_room_pose_marker.ns = "x_infinite_room";
-    infinite_room_pose_marker.id = markers.markers.size();
-    infinite_room_pose_marker.type = visualization_msgs::msg::Marker::CUBE;
-    infinite_room_pose_marker.lifetime = marker_lifetime;
-    infinite_room_pose_marker.color.r = 1;
-    infinite_room_pose_marker.color.g = 0.64;
-    infinite_room_pose_marker.color.a = 1;
-    infinite_room_pose_marker.pose.position.x = p1.x;
-    infinite_room_pose_marker.pose.position.y = p1.y;
-    infinite_room_pose_marker.pose.position.z = p1.z;
-
-    Eigen::Quaterniond quat(
-        dynamic_cast<g2o::VertexRoom*>(x_inf_room_map->second)->estimate().linear());
-    infinite_room_pose_marker.pose.orientation.x = quat.x();
-    infinite_room_pose_marker.pose.orientation.y = quat.y();
-    infinite_room_pose_marker.pose.orientation.z = quat.z();
-    infinite_room_pose_marker.pose.orientation.w = quat.w();
-    markers.markers.push_back(infinite_room_pose_marker);
-  }
-
-  // y infinite room
-  for (const auto& y_infinite_room : y_infinite_room_snapshot) {
-    auto y_inf_room_map = local_graph->vertices().find(y_infinite_room.first);
-    if (y_inf_room_map == local_graph->vertices().end()) continue;
-
-    auto floor_map = local_graph->vertices().find(y_infinite_room.second.floor_level);
-    if (floor_map == local_graph->vertices().end()) {
-      std::cout << "floor node not found for y_inf room" << std::endl;
-      continue;
-    }
-
-    // fill in the line marker
-    visualization_msgs::msg::Marker y_infinite_room_line_marker;
-    y_infinite_room_line_marker.scale.x = 0.02;
-    y_infinite_room_line_marker.pose.orientation.w = 1.0;
-    y_infinite_room_line_marker.ns = "infinite_room_y_lines";
-    y_infinite_room_line_marker.header.frame_id = rooms_layer_id;
-    y_infinite_room_line_marker.header.stamp = stamp;
-    y_infinite_room_line_marker.id = markers.markers.size() + 1;
-    y_infinite_room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-    y_infinite_room_line_marker.lifetime = marker_lifetime;
-    y_infinite_room_line_marker.color.r = color_r;
-    y_infinite_room_line_marker.color.g = color_g;
-    y_infinite_room_line_marker.color.b = color_b;
-    y_infinite_room_line_marker.color.a = 1.0;
-
-    auto found_plane1 = y_plane_snapshot.find(y_infinite_room.second.plane1_id);
-    auto found_plane2 = y_plane_snapshot.find(y_infinite_room.second.plane2_id);
-
-    geometry_msgs::msg::Point p1, p2, p3;
-    p1.x = dynamic_cast<g2o::VertexRoom*>(y_inf_room_map->second)
-               ->estimate()
-               .translation()(0);
-    p1.y = dynamic_cast<g2o::VertexRoom*>(y_inf_room_map->second)
-               ->estimate()
-               .translation()(1);
-    p1.z =
-        dynamic_cast<g2o::VertexFloor*>(floor_map->second)->estimate().translation()(2);
-
-    p2 = compute_plane_point(p1, (*found_plane1).second.cloud_seg_map);
-    y_infinite_room_line_marker.points.push_back(p1);
-    y_infinite_room_line_marker.points.push_back(p2);
-
-    p3 = compute_plane_point(p1, (*found_plane2).second.cloud_seg_map);
-    y_infinite_room_line_marker.points.push_back(p1);
-    y_infinite_room_line_marker.points.push_back(p3);
-
-    markers.markers.push_back(y_infinite_room_line_marker);
-
-    // y infinite_room cube
-    visualization_msgs::msg::Marker infinite_room_pose_marker;
-    infinite_room_pose_marker.pose.orientation.w = 1.0;
-    infinite_room_pose_marker.scale.x = 0.5;
-    infinite_room_pose_marker.scale.y = 0.5;
-    infinite_room_pose_marker.scale.z = 0.5;
-    // plane_marker.points.resize(vert_planes.size());
-    infinite_room_pose_marker.header.frame_id = rooms_layer_id;
-    infinite_room_pose_marker.header.stamp = stamp;
-    infinite_room_pose_marker.ns = "y_infinite_room";
-    infinite_room_pose_marker.id = markers.markers.size();
-    infinite_room_pose_marker.type = visualization_msgs::msg::Marker::CUBE;
-    infinite_room_pose_marker.lifetime = marker_lifetime;
-    infinite_room_pose_marker.color.r = 0.13;
-    infinite_room_pose_marker.color.g = 0.54;
-    infinite_room_pose_marker.color.b = 0.13;
-    infinite_room_pose_marker.color.a = 1;
-    infinite_room_pose_marker.pose.position.x = p1.x;
-    infinite_room_pose_marker.pose.position.y = p1.y;
-    infinite_room_pose_marker.pose.position.z = p1.z;
-
-    Eigen::Quaterniond quat(
-        dynamic_cast<g2o::VertexRoom*>(y_inf_room_map->second)->estimate().linear());
-    infinite_room_pose_marker.pose.orientation.x = quat.x();
-    infinite_room_pose_marker.pose.orientation.y = quat.y();
-    infinite_room_pose_marker.pose.orientation.z = quat.z();
-    infinite_room_pose_marker.pose.orientation.w = quat.w();
-    markers.markers.push_back(infinite_room_pose_marker);
-  }
+  // fill in the y_inf room marker
+  this->fill_infinite_room(1,
+                           stamp,
+                           marker_lifetime,
+                           local_graph,
+                           y_plane_snapshot,
+                           y_infinite_room_snapshot,
+                           markers);
 
   // room markers
   for (const auto& room : room_snapshot) {
@@ -624,21 +489,32 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     auto found_planey2 = y_plane_snapshot.find(room.second.plane_y2_id);
 
     p2 = compute_plane_point(p1, (*found_planex1).second.cloud_seg_map);
-    room_line_marker.points.push_back(p1);
-    room_line_marker.points.push_back(p2);
+    if (p2.x == 0 && p2.y == 0 && p2.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p2);
+    }
 
     p3 = compute_plane_point(p1, (*found_planex2).second.cloud_seg_map);
-    room_line_marker.points.push_back(p1);
-    room_line_marker.points.push_back(p3);
+    if (p3.x == 0 && p3.y == 0 && p3.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p3);
+    }
 
     p4 = compute_plane_point(p1, (*found_planey1).second.cloud_seg_map);
-    room_line_marker.points.push_back(p1);
-    room_line_marker.points.push_back(p4);
+    if (p4.x = 0 && p4.y == 0 && p4.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p4);
+    }
 
     p5 = compute_plane_point(p1, (*found_planey2).second.cloud_seg_map);
-    room_line_marker.points.push_back(p1);
-    room_line_marker.points.push_back(p5);
-
+    if (p5.x == 0 && p5.y == 0 && p5.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p5);
+    }
     markers.markers.push_back(room_line_marker);
 
     // fill the pose marker
@@ -1815,6 +1691,100 @@ geometry_msgs::msg::Point GraphVisualizer::compute_room_point(
   room_p1 = point2_stamped_transformed.point;
 
   return room_p1;
+}
+
+void GraphVisualizer::fill_infinite_room(
+    const int& room_class,
+    const rclcpp::Time& stamp,
+    rclcpp::Duration marker_lifetime,
+    const g2o::SparseOptimizer* local_graph,
+    const std::unordered_map<int, VerticalPlanes>& plane_snapshot,
+    std::unordered_map<int, InfiniteRooms> infinite_room_snapshot,
+    visualization_msgs::msg::MarkerArray& markers) {
+  // fill in the line marker
+  for (const auto& infinite_room : infinite_room_snapshot) {
+    auto inf_room_map = local_graph->vertices().find(infinite_room.first);
+    if (inf_room_map == local_graph->vertices().end()) continue;
+
+    auto floor_map = local_graph->vertices().find(infinite_room.second.floor_level);
+    if (floor_map == local_graph->vertices().end()) {
+      std::cout << "floor node not found for inf room" << std::endl;
+      continue;
+    }
+
+    visualization_msgs::msg::Marker infinite_room_line_marker;
+    infinite_room_line_marker.scale.x = 0.02;
+    infinite_room_line_marker.pose.orientation.w = 1.0;
+    if (room_class == 0) infinite_room_line_marker.ns = "infinite_room_x_lines";
+    if (room_class == 1) infinite_room_line_marker.ns = "infinite_room_y_lines";
+    infinite_room_line_marker.header.frame_id = rooms_layer_id;
+    infinite_room_line_marker.header.stamp = stamp;
+    infinite_room_line_marker.id = markers.markers.size() + 1;
+    infinite_room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    infinite_room_line_marker.lifetime = marker_lifetime;
+    infinite_room_line_marker.color.r = color_r;
+    infinite_room_line_marker.color.g = color_g;
+    infinite_room_line_marker.color.b = color_b;
+    infinite_room_line_marker.color.a = 1.0;
+
+    auto found_plane1 = plane_snapshot.find(infinite_room.second.plane1_id);
+    auto found_plane2 = plane_snapshot.find(infinite_room.second.plane2_id);
+
+    geometry_msgs::msg::Point p1, p2, p3;
+    p1.x = dynamic_cast<g2o::VertexRoom*>(inf_room_map->second)
+               ->estimate()
+               .translation()(0);
+    p1.y = dynamic_cast<g2o::VertexRoom*>(inf_room_map->second)
+               ->estimate()
+               .translation()(1);
+    p1.z =
+        dynamic_cast<g2o::VertexFloor*>(floor_map->second)->estimate().translation()(2);
+
+    p2 = compute_plane_point(p1, (*found_plane1).second.cloud_seg_map);
+    if (p2.x == 0 && p2.y == 0 && p2.z == 0) {
+    } else {
+      infinite_room_line_marker.points.push_back(p1);
+      infinite_room_line_marker.points.push_back(p2);
+    }
+
+    p3 = compute_plane_point(p1, (*found_plane2).second.cloud_seg_map);
+    if (p3.x == 0 && p3.y == 0 && p3.z == 0) {
+    } else {
+      infinite_room_line_marker.points.push_back(p1);
+      infinite_room_line_marker.points.push_back(p3);
+    }
+    markers.markers.push_back(infinite_room_line_marker);
+
+    // y infinite_room cube
+    visualization_msgs::msg::Marker infinite_room_pose_marker;
+    infinite_room_pose_marker.pose.orientation.w = 1.0;
+    infinite_room_pose_marker.scale.x = 0.5;
+    infinite_room_pose_marker.scale.y = 0.5;
+    infinite_room_pose_marker.scale.z = 0.5;
+    // plane_marker.points.resize(vert_planes.size());
+    infinite_room_pose_marker.header.frame_id = rooms_layer_id;
+    infinite_room_pose_marker.header.stamp = stamp;
+    if (room_class == 0) infinite_room_pose_marker.ns = "x_infinite_room";
+    if (room_class == 1) infinite_room_pose_marker.ns = "y_infinite_room";
+    infinite_room_pose_marker.id = markers.markers.size();
+    infinite_room_pose_marker.type = visualization_msgs::msg::Marker::CUBE;
+    infinite_room_pose_marker.lifetime = marker_lifetime;
+    infinite_room_pose_marker.color.r = 0.13;
+    infinite_room_pose_marker.color.g = 0.54;
+    infinite_room_pose_marker.color.b = 0.13;
+    infinite_room_pose_marker.color.a = 1;
+    infinite_room_pose_marker.pose.position.x = p1.x;
+    infinite_room_pose_marker.pose.position.y = p1.y;
+    infinite_room_pose_marker.pose.position.z = p1.z;
+
+    Eigen::Quaterniond quat(
+        dynamic_cast<g2o::VertexRoom*>(inf_room_map->second)->estimate().linear());
+    infinite_room_pose_marker.pose.orientation.x = quat.x();
+    infinite_room_pose_marker.pose.orientation.y = quat.y();
+    infinite_room_pose_marker.pose.orientation.z = quat.z();
+    infinite_room_pose_marker.pose.orientation.w = quat.w();
+    markers.markers.push_back(infinite_room_pose_marker);
+  }
 }
 
 }  // namespace s_graphs

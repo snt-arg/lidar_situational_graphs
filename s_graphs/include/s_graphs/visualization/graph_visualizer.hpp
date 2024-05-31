@@ -221,6 +221,21 @@ class GraphVisualizer {
    */
   geometry_msgs::msg::Point compute_room_point(geometry_msgs::msg::Point room_p1);
 
+  /**
+   * @brief
+   *
+   * @param room_class
+   * @param infinite_room_snapshot
+   * @return visualization_msgs::msg::Marker
+   */
+  void fill_infinite_room(const int& room_class,
+                          const rclcpp::Time& stamp,
+                          rclcpp::Duration marker_lifetime,
+                          const g2o::SparseOptimizer* local_graph,
+                          const std::unordered_map<int, VerticalPlanes>& plane_snapshot,
+                          std::unordered_map<int, InfiniteRooms> infinite_room_snapshot,
+                          visualization_msgs::msg::MarkerArray& markers);
+
  private:
   std::mutex& shared_graph_mutex;
   std::string map_frame_id;
