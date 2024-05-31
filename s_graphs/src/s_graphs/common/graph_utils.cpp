@@ -1296,7 +1296,8 @@ void GraphUtils::update_node_floor_level(
     std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::unordered_map<int, Rooms>& rooms_vec,
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
-    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms) {
+    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+    const std::map<int, Floors>& floors_vec) {
   std::vector<g2o::VertexPlane*> connected_planes;
 
   auto it = keyframes.find(first_keyframe_id);
@@ -1341,12 +1342,14 @@ void GraphUtils::update_node_floor_level(
           auto inf_room = x_infinite_rooms.find(edge_room_2planes->vertices()[0]->id());
           if (inf_room != x_infinite_rooms.end()) {
             inf_room->second.floor_level = current_floor_level;
+            set_room_estimate(current_floor_level, inf_room->second.node, floors_vec);
             continue;
           } else {
             auto inf_room =
                 y_infinite_rooms.find(edge_room_2planes->vertices()[0]->id());
             if (inf_room != y_infinite_rooms.end()) {
               inf_room->second.floor_level = current_floor_level;
+              set_room_estimate(current_floor_level, inf_room->second.node, floors_vec);
               continue;
             }
           }
@@ -1358,12 +1361,22 @@ void GraphUtils::update_node_floor_level(
           auto room = rooms_vec.find(edge_room_4planes->vertices()[0]->id());
           if (room != rooms_vec.end()) {
             room->second.floor_level = current_floor_level;
+            set_room_estimate(current_floor_level, room->second.node, floors_vec);
             continue;
           }
         }
       }
     }
   }
+}
+
+void GraphUtils::set_room_estimate(const int& current_floor_level,
+                                   g2o::VertexRoom* room,
+                                   const std::map<int, Floors>& floors_vec) {
+  Eigen::Isometry3d new_room_est = room->estimate();
+  new_room_est.translation().z() =
+      floors_vec.find(current_floor_level)->second.node->estimate().translation().z();
+  room->setEstimate(new_room_est);
 }
 
 }  // namespace s_graphs

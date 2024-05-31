@@ -622,7 +622,8 @@ class SGraphsNode : public rclcpp::Node {
             y_vert_planes,
             rooms_vec,
             x_infinite_rooms,
-            y_infinite_rooms);
+            y_infinite_rooms,
+            floors_vec);
         graph_mutex.unlock();
       }
 
@@ -677,6 +678,16 @@ class SGraphsNode : public rclcpp::Node {
     } else if (room_data_queue.empty()) {
       // std::cout << "room data queue is empty" << std::endl;
       return;
+    }
+
+    // update room height based on current_floor level
+    for (auto& room_data_msg : room_data_queue) {
+      for (auto& room_data : room_data_msg.rooms) {
+        graph_mutex.lock();
+        room_data.room_center.position.z =
+            floors_vec[current_floor_level].node->estimate().translation().z();
+        graph_mutex.unlock();
+      }
     }
 
     for (const auto& room_data_msg : room_data_queue) {

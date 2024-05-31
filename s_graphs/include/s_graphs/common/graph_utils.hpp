@@ -299,7 +299,8 @@ class GraphUtils {
       std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::unordered_map<int, Rooms>& rooms_vec,
       std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
-      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms);
+      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      const std::map<int, Floors>& floors_vec);
 
   /**
    * @brief
@@ -335,6 +336,16 @@ class GraphUtils {
    */
   static void set_stair_keyframes(const std::vector<int>& ids,
                                   const std::map<int, KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief update room height also according to floor height
+   * @param current_floor_level
+   * @param room
+   * @param floors_vec
+   */
+  static void set_room_estimate(const int& current_floor_level,
+                                g2o::VertexRoom* room,
+                                const std::map<int, Floors>& floors_vec);
 };
 
 }  // namespace s_graphs
