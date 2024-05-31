@@ -162,11 +162,14 @@ class EdgeRoom4Planes : public BaseMultiEdge<2, Eigen::Vector2d> {
 };
 
 class EdgeFloorRoom
-    : public BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexFloor, g2o::VertexRoom> {
+    : public BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexFloor, g2o::VertexRoom> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeFloorRoom()
-      : BaseBinaryEdge<2, Eigen::Vector2d, g2o::VertexFloor, g2o::VertexRoom>() {}
+      : BaseBinaryEdge<3, Eigen::Vector3d, g2o::VertexFloor, g2o::VertexRoom>() {
+    _room_bounds(0) = 3.0;
+    _room_bounds(1) = 3.0;
+  }
 
   void computeError() override;
 
@@ -174,7 +177,7 @@ class EdgeFloorRoom
 
   virtual bool write(std::ostream& os) const override;
 
-  virtual void setMeasurement(const Eigen::Vector2d& m) override { _measurement = m; }
+  Eigen::Vector2d _room_bounds;
 };
 
 class Edge2Rooms

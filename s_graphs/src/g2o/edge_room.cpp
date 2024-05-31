@@ -276,16 +276,33 @@ void EdgeFloorRoom::computeError() {
   const VertexFloor* v1 = static_cast<const VertexFloor*>(_vertices[0]);
   const VertexRoom* v2 = static_cast<const VertexRoom*>(_vertices[1]);
 
-  Eigen::Vector2d est;
-  est(0) = v1->estimate().translation()(0) - v2->estimate().translation()(0);
-  est(1) = v1->estimate().translation()(1) - v2->estimate().translation()(1);
+  Eigen::Vector3d relative_position_est;
+  relative_position_est(0) =
+      v1->estimate().translation()(0) - v2->estimate().translation()(0);
+  relative_position_est(1) =
+      v1->estimate().translation()(1) - v2->estimate().translation()(1);
+  relative_position_est(2) =
+      v1->estimate().translation()(2) - v2->estimate().translation()(2);
 
-  _error = est - _measurement;
+  Eigen::Vector3d relative_position_meas = _measurement;
+  Eigen::Vector2d delta =
+      relative_position_est.head(2) - relative_position_meas.head(2);
+  _error.setZero();
+
+  if (std::fabs(delta.x()) > _room_bounds.x()) {
+    _error.x() = delta.x() - (_room_bounds.x() * (delta.x() > 0 ? 1 : -1));
+  }
+
+  if (std::fabs(delta.y()) > _room_bounds.y()) {
+    _error.y() = delta.y() - (_room_bounds.y() * (delta.y() > 0 ? 1 : -1));
+  }
+
+  _error.z() = relative_position_est.z();
 }
 
 bool EdgeFloorRoom::read(std::istream& is) {
-  Eigen::Vector2d v;
-  is >> v(0) >> v(1);
+  Eigen::Vector3d v;
+  is >> v(0) >> v(1) >> v(2);
 
   setMeasurement(v);
   for (int i = 0; i < information().rows(); ++i) {
@@ -300,8 +317,8 @@ bool EdgeFloorRoom::read(std::istream& is) {
 }
 
 bool EdgeFloorRoom::write(std::ostream& os) const {
-  Eigen::Vector2d v = _measurement;
-  os << v(0) << " " << v(1) << " ";
+  Eigen::Vector3d v = _measurement;
+  os << v(0) << " " << v(1) << " " << v(2);
 
   for (int i = 0; i < information().rows(); ++i) {
     for (int j = i; j < information().cols(); ++j) {

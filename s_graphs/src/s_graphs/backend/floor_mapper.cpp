@@ -160,14 +160,16 @@ void FloorMapper::add_floor_room_edges(
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
-  Eigen::Matrix2d information_floor;
+  Eigen::Matrix3d information_floor;
   information_floor(0, 0) = 1.0;
   information_floor(1, 1) = 1.0;
+  information_floor(2, 2) = 1.0;
 
   for (const auto& room : rooms_vec) {
     if (room.second.floor_level != floor.id) continue;
 
-    Eigen::Vector2d measurement;
+    Eigen::Vector3d measurement;
+    measurement.setZero();
     measurement(0) = floor.node->estimate().translation()(0) -
                      room.second.node->estimate().translation()(0);
     measurement(1) = floor.node->estimate().translation()(1) -
@@ -181,7 +183,8 @@ void FloorMapper::add_floor_room_edges(
   for (const auto& x_infinite_room : x_infinite_rooms) {
     if (x_infinite_room.second.floor_level != floor.id) continue;
 
-    Eigen::Vector2d measurement;
+    Eigen::Vector3d measurement;
+    measurement.setZero();
     measurement(0) = floor.node->estimate().translation()(0) -
                      x_infinite_room.second.node->estimate().translation()(0);
     measurement(1) = floor.node->estimate().translation()(1) -
@@ -195,7 +198,8 @@ void FloorMapper::add_floor_room_edges(
   for (const auto& y_infinite_room : y_infinite_rooms) {
     if (y_infinite_room.second.floor_level != floor.id) continue;
 
-    Eigen::Vector2d measurement;
+    Eigen::Vector3d measurement;
+    measurement.setZero();
     measurement(0) = floor.node->estimate().translation()(0) -
                      y_infinite_room.second.node->estimate().translation()(0);
     measurement(1) = floor.node->estimate().translation()(1) -

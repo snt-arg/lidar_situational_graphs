@@ -851,7 +851,7 @@ g2o::EdgeRoom4Planes* GraphSLAM::copy_room_4planes_edge(g2o::EdgeRoom4Planes* e,
 
 g2o::EdgeFloorRoom* GraphSLAM::add_floor_room_edge(g2o::VertexFloor* v_floor,
                                                    g2o::VertexRoom* v_room,
-                                                   const Eigen::Vector2d& measurement,
+                                                   const Eigen::Vector3d& measurement,
                                                    const Eigen::MatrixXd& information) {
   g2o::EdgeFloorRoom* edge(new g2o::EdgeFloorRoom());
   edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));

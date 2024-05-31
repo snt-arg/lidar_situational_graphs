@@ -697,7 +697,7 @@ class GraphSLAM {
    */
   g2o::EdgeFloorRoom* add_floor_room_edge(g2o::VertexFloor* v_floor,
                                           g2o::VertexRoom* v_room,
-                                          const Eigen::Vector2d& measurement,
+                                          const Eigen::Vector3d& measurement,
                                           const Eigen::MatrixXd& information);
 
   /**
