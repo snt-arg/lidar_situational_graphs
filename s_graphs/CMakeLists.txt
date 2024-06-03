@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: BSD-2-Clause
 cmake_minimum_required(VERSION 3.5)
-project(lidar_s_graphs)
+project(lidar_situational_graphs)
 
 # Can we use C++17 in indigo?
 add_definitions(-msse -msse2 -msse3 -msse4 -msse4.1 -msse4.2)
@@ -41,10 +41,10 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
-find_package(situational_graphs_reasoning_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
 find_package(rviz_visual_tools REQUIRED)
 find_package(situational_graphs_msgs REQUIRED)
+find_package(situational_graphs_reasoning_msgs REQUIRED)
 
 
 find_package(PCL REQUIRED)
@@ -95,14 +95,14 @@ set(DEPENDENCIES
     tf2_ros
     tf2_eigen
     pcl_ros
-    situational_graphs_reasoning_msgs
     visualization_msgs
     message_filters
     geographic_msgs
     nmea_msgs
     geodesy
     rviz_visual_tools
-    situational_graphs_msgs)
+    situational_graphs_msgs
+    situational_graphs_reasoning_msgs)
 
 SET(G2O_COMMON_LIBS
   ${PCL_LIBRARIES}
