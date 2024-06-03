@@ -51,7 +51,7 @@ def launch_reasoning():
 
 
 def launch_sgraphs(context, *args, **kwargs):
-    pkg_dir = get_package_share_directory("lidar_s_graphs")
+    pkg_dir = get_package_share_directory("lidar_situational_graphs")
     prefiltering_param_file = os.path.join(pkg_dir, "config", "prefiltering.yaml")
     scan_matching_param_file = os.path.join(pkg_dir, "config", "scan_matching.yaml")
     s_graphs_param_file = os.path.join(pkg_dir, "config", "s_graphs.yaml")
@@ -72,7 +72,7 @@ def launch_sgraphs(context, *args, **kwargs):
         base_link_frame = "base_footprint"
 
     prefiltering_cmd = Node(
-        package="lidar_s_graphs",
+        package="lidar_situational_graphs",
         executable="s_graphs_prefiltering_node",
         namespace=namespace_arg,
         parameters=[{prefiltering_param_file}, {"base_link_frame": base_link_frame}],
@@ -84,7 +84,7 @@ def launch_sgraphs(context, *args, **kwargs):
     )
 
     scan_matching_cmd = Node(
-        package="lidar_s_graphs",
+        package="lidar_situational_graphs",
         executable="s_graphs_scan_matching_odometry_node",
         namespace=namespace_arg,
         parameters=[scan_matching_param_file],
@@ -95,7 +95,7 @@ def launch_sgraphs(context, *args, **kwargs):
 
     if room_segmentation_arg == "old":
         room_segmentation_cmd = Node(
-            package="lidar_s_graphs",
+            package="lidar_situational_graphs",
             executable="s_graphs_room_segmentation_node",
             namespace=namespace_arg,
             parameters=[{"vertex_neigh_thres": 2}],
@@ -105,7 +105,7 @@ def launch_sgraphs(context, *args, **kwargs):
       reasoning_launch = launch_reasoning()
 
     floor_plan_cmd = Node(
-        package="lidar_s_graphs",
+        package="lidar_situational_graphs",
         executable="s_graphs_floor_plan_node",
         namespace=namespace_arg,
         parameters=[{"vertex_neigh_thres": 2}],
@@ -113,7 +113,7 @@ def launch_sgraphs(context, *args, **kwargs):
     )
 
     s_graphs_cmd = Node(
-        package="lidar_s_graphs",
+        package="lidar_situational_graphs",
         executable="s_graphs_node",
         namespace=namespace_arg,
         parameters=[s_graphs_param_file],
