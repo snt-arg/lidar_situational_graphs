@@ -532,7 +532,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     room_marker.color.g = 0.07;
     room_marker.color.b = 0.57;
     room_marker.color.a = 1;
-
+    room_marker.lifetime = marker_lifetime;
     room_marker.pose.position.x = p1.x;
     room_marker.pose.position.y = p1.y;
     room_marker.pose.position.z = p1.z;
