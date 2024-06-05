@@ -323,6 +323,7 @@ class SGraphsNode : public rclcpp::Node {
     duplicate_planes_found = false;
     global_optimization = false;
     graph_updated = false;
+    on_stairs = false;
     prev_edge_count = curr_edge_count = 0;
 
     double graph_update_interval = this->get_parameter("graph_update_interval")
@@ -599,47 +600,59 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (const auto& floor_data_msg : floor_data_queue) {
-      graph_mutex.lock();
-      floor_mapper->lookup_floors(covisibility_graph,
-                                  floor_data_msg,
-                                  floors_vec,
-                                  rooms_vec,
-                                  x_infinite_rooms,
-                                  y_infinite_rooms);
-      graph_mutex.unlock();
-
-      // if new floor was added update floor level and add to it the stair keyframes
-      if (floor_mapper->get_floor_level_update_info() &&
-          !floor_data_msg.keyframe_ids.empty()) {
-        current_floor_level = floor_mapper->get_floor_level();
+      if (floor_data_msg.state == situational_graphs_msgs::msg::FloorData::ON_STAIRS) {
+        on_stairs = true;
+        std::cout << "setting on_stairts to: " << on_stairs << std::endl;
+        floor_data_mutex.lock();
+        floor_data_queue.pop_front();
+        floor_data_mutex.unlock();
+        continue;
+      } else {
         graph_mutex.lock();
-        add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
-        GraphUtils::update_node_floor_level(
-            floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
-            current_floor_level,
-            keyframes,
-            x_vert_planes,
-            y_vert_planes,
-            rooms_vec,
-            x_infinite_rooms,
-            y_infinite_rooms,
-            floors_vec);
+        floor_mapper->lookup_floors(covisibility_graph,
+                                    floor_data_msg,
+                                    floors_vec,
+                                    rooms_vec,
+                                    x_infinite_rooms,
+                                    y_infinite_rooms);
         graph_mutex.unlock();
-      }
 
-      floor_data_mutex.lock();
-      floor_data_queue.pop_front();
-      floor_data_mutex.unlock();
+        // if new floor was added update floor level and add to it the stair keyframes
+        if (!floor_data_msg.keyframe_ids.empty()) {
+          current_floor_level = floor_mapper->get_floor_level();
+          std::cout << "setting current floor level to: " << current_floor_level
+                    << std::endl;
+          graph_mutex.lock();
+          add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
+          GraphUtils::update_node_floor_level(
+              floors_vec.at(current_floor_level).stair_keyframe_ids.back(),
+              current_floor_level,
+              keyframes,
+              x_vert_planes,
+              y_vert_planes,
+              rooms_vec,
+              x_infinite_rooms,
+              y_infinite_rooms,
+              floors_vec);
+          graph_mutex.unlock();
+        }
+
+        floor_data_mutex.lock();
+        floor_data_queue.pop_front();
+        floor_data_mutex.unlock();
+        on_stairs = false;
+        std::cout << "setting on_stairts to: " << on_stairs << std::endl;
+      }
     }
   }
 
   void add_first_floor_node() {
+    graph_mutex.lock();
     situational_graphs_msgs::msg::FloorData floor_data_msg;
     floor_data_msg.floor_center.position.x = 0;
     floor_data_msg.floor_center.position.y = 0;
     floor_data_msg.floor_center.position.z = 0;
 
-    graph_mutex.lock();
     floor_mapper->lookup_floors(covisibility_graph,
                                 floor_data_msg,
                                 floors_vec,
@@ -673,7 +686,7 @@ class SGraphsNode : public rclcpp::Node {
    *
    */
   void flush_room_data_queue() {
-    if (keyframes.empty()) {
+    if (keyframes.empty() || floors_vec.empty()) {
       return;
     } else if (room_data_queue.empty()) {
       // std::cout << "room data queue is empty" << std::endl;
@@ -838,7 +851,7 @@ class SGraphsNode : public rclcpp::Node {
       return;
     }
 
-    // add the first floor node at height 0 before adding any keyframes
+    // add the first floor node at keyframe height  before adding any keyframes
     if (keyframes.empty() && floors_vec.empty()) add_first_floor_node();
 
     double accum_d = keyframe_updater->get_accum_distance();
@@ -1039,11 +1052,15 @@ class SGraphsNode : public rclcpp::Node {
     publish_mapped_planes(x_vert_planes, y_vert_planes);
 
     // loop detection
-    std::vector<Loop::Ptr> loops =
-        loop_detector->detect(keyframes, new_keyframes, *covisibility_graph);
-    if (loops.size() > 0) {
-      loop_found = true;
-      loop_mapper->add_loops(covisibility_graph, loops, graph_mutex);
+    if (!on_stairs) {
+      std::vector<Loop::Ptr> loops =
+          loop_detector->detect(keyframes, new_keyframes, *covisibility_graph);
+      if (loops.size() > 0) {
+        loop_found = true;
+        loop_mapper->add_loops(covisibility_graph, loops, graph_mutex);
+      }
+    } else {
+      std::cout << "on stairs so not doing loop check " << std::endl;
     }
 
     graph_mutex.lock();
@@ -1304,7 +1321,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void map_publish_timer_callback() {
-    if (keyframes.empty()) return;
+    if (keyframes.empty() || floors_vec.empty()) return;
 
     int current_loop = 0;
     KeyFrameSnapshot::Ptr current_snapshot;
@@ -1376,34 +1393,34 @@ class SGraphsNode : public rclcpp::Node {
     markers_pub->publish(markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
     map_points_pub->publish(*cloud_msg);
-    publish_graph();
+    publish_graph(local_covisibility_graph->graph.get(), keyframes_complete_snapshot);
   }
 
   /**
    * @brief generate graph structure and publish it
    * @param event
    */
-  void publish_graph() {
+  void publish_graph(g2o::SparseOptimizer* local_covisibility_graph,
+                     std::vector<KeyFrame::Ptr> keyframes_complete_snapshot) {
     std::string graph_type;
     if (std::string("/robot1") == this->get_namespace()) {
       graph_type = "Prior";
     } else {
       graph_type = "Online";
     }
-    auto graph_structure =
-        graph_publisher->publish_graph(covisibility_graph->graph.get(),
-                                       "Online",
-                                       x_vert_planes_prior,
-                                       y_vert_planes_prior,
-                                       rooms_vec_prior,
-                                       x_planes_snapshot,
-                                       y_planes_snapshot,
-                                       rooms_vec_snapshot,
-                                       x_inf_rooms_snapshot,
-                                       y_inf_rooms_snapshot);
+    auto graph_structure = graph_publisher->publish_graph(local_covisibility_graph,
+                                                          "Online",
+                                                          x_vert_planes_prior,
+                                                          y_vert_planes_prior,
+                                                          rooms_vec_prior,
+                                                          x_planes_snapshot,
+                                                          y_planes_snapshot,
+                                                          rooms_vec_snapshot,
+                                                          x_inf_rooms_snapshot,
+                                                          y_inf_rooms_snapshot);
     graph_structure.name = graph_type;
     auto graph_keyframes = graph_publisher->publish_graph_keyframes(
-        covisibility_graph->graph.get(), this->keyframes);
+        local_covisibility_graph, keyframes_complete_snapshot);
 
     graph_pub->publish(graph_structure);
     graph_keyframes_pub->publish(graph_keyframes);
@@ -1983,6 +2000,7 @@ class SGraphsNode : public rclcpp::Node {
   double min_plane_points;
   double infinite_room_information;
   double room_information, plane_information;
+  bool on_stairs;
 
   enum optimization_class : uint8_t {
     GLOBAL = 1,

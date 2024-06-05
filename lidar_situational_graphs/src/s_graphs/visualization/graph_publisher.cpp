@@ -363,6 +363,18 @@ GraphPublisher::publish_graph_keyframes(
   return msg;
 }
 
+situational_graphs_reasoning_msgs::msg::GraphKeyframes
+GraphPublisher::publish_graph_keyframes(
+    const g2o::SparseOptimizer* local_graph,
+    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
+  situational_graphs_reasoning_msgs::msg::GraphKeyframes msg;
+  msg.keyframes.reserve(keyframes.size());
+  for (auto& keyframe : keyframes) {
+    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));
+  }
+  return msg;
+}
+
 // std::vector<g2o::HyperGraph::Edge*> get_planes_from_room(
 //     g2o::VertexRoom* _room_ptr,
 //     const std::vector<s_graphs::Rooms>& rooms_vec) {

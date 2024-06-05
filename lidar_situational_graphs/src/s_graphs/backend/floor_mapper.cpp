@@ -4,7 +4,7 @@ namespace s_graphs {
 
 FloorMapper::FloorMapper() {
   floor_horizontal_threshold = 0.5;
-  floor_vertical_threshold = 1.0;
+  floor_vertical_threshold = 0.5;
   floor_level_updated = false;
 }
 
@@ -67,12 +67,16 @@ int FloorMapper::associate_floors(const Eigen::Vector3d& floor_center,
   for (const auto& mapped_floor : floors_vec) {
     double z_dist = floor_center(2) - mapped_floor.second.node->estimate()(2, 3);
 
+    std::cout << "z dist " << z_dist << " between detected floor and mapped floor "
+              << mapped_floor.first << std::endl;
+
     if (z_dist < min_z_dist) {
       min_z_dist = z_dist;
       data_association = mapped_floor.first;
     }
   }
 
+  std::cout << "min_z_dist " << min_z_dist << std::endl;
   if (min_z_dist > floor_vertical_threshold) data_association = -1;
 
   return data_association;

@@ -95,6 +95,21 @@ class GraphPublisher {
   ~GraphPublisher();
 
  public:
+  /**
+   * @brief
+   *
+   * @param local_graph
+   * @param graph_type
+   * @param x_vert_planes_prior
+   * @param y_vert_planes_prior
+   * @param rooms_vec_prior
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   * @return situational_graphs_reasoning_msgs::msg::Graph
+   */
   situational_graphs_reasoning_msgs::msg::Graph publish_graph(
       const g2o::SparseOptimizer* local_graph,
       std::string graph_type,
@@ -107,10 +122,34 @@ class GraphPublisher {
       const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms);
 
+  /**
+   * @brief
+   *
+   * @param local_graph
+   * @param keyframes
+   * @return situational_graphs_reasoning_msgs::msg::GraphKeyframes
+   */
   situational_graphs_reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
       const g2o::SparseOptimizer* local_graph,
       const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
 
+  /**
+   * @brief
+   *
+   * @param local_graph
+   * @param keyframes
+   * @return situational_graphs_reasoning_msgs::msg::GraphKeyframes
+   */
+  situational_graphs_reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
+      const g2o::SparseOptimizer* local_graph,
+      const std::vector<s_graphs::KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief
+   *
+   * @param local_graph
+   * @param rooms_vec
+   */
   void publish_room_keyframes(const g2o::SparseOptimizer* local_graph,
                               const std::vector<s_graphs::Rooms>& rooms_vec);
 
