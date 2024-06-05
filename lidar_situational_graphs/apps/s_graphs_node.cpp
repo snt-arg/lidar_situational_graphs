@@ -237,7 +237,7 @@ class SGraphsNode : public rclcpp::Node {
 
     room_data_sub = this->create_subscription<situational_graphs_msgs::msg::RoomsData>(
         "room_segmentation/room_data",
-        1,
+        10,
         std::bind(&SGraphsNode::room_data_callback, this, std::placeholders::_1),
         sub_opt);
     wall_data_sub = this->create_subscription<situational_graphs_msgs::msg::WallsData>(
@@ -247,7 +247,7 @@ class SGraphsNode : public rclcpp::Node {
         sub_opt);
     floor_data_sub = this->create_subscription<situational_graphs_msgs::msg::FloorData>(
         "floor_plan/floor_data",
-        1,
+        10,
         std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1),
         sub_opt);
 
@@ -616,6 +616,13 @@ class SGraphsNode : public rclcpp::Node {
                                     x_infinite_rooms,
                                     y_infinite_rooms);
         graph_mutex.unlock();
+
+        std::cout << "floor_data_msg pose: " << floor_data_msg.floor_center.position.x
+                  << " " << floor_data_msg.floor_center.position.y << " "
+                  << floor_data_msg.floor_center.position.z << std::endl;
+
+        std::cout << "floor_data_msg.keyframe_ids size: "
+                  << floor_data_msg.keyframe_ids.size() << std::endl;
 
         // if new floor was added update floor level and add to it the stair keyframes
         if (!floor_data_msg.keyframe_ids.empty()) {
@@ -1060,6 +1067,7 @@ class SGraphsNode : public rclcpp::Node {
         loop_mapper->add_loops(covisibility_graph, loops, graph_mutex);
       }
     } else {
+      loop_found = false;
       std::cout << "on stairs so not doing loop check " << std::endl;
     }
 
