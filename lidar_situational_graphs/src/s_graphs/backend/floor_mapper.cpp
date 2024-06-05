@@ -65,7 +65,7 @@ int FloorMapper::associate_floors(const Eigen::Vector3d& floor_center,
   int data_association = -1;
   // just check the just of the floors
   for (const auto& mapped_floor : floors_vec) {
-    double z_dist = floor_center(2) - mapped_floor.second.node->estimate()(2, 3);
+    double z_dist = fabs(floor_center(2) - mapped_floor.second.node->estimate()(2, 3));
 
     std::cout << "z dist " << z_dist << " between detected floor and mapped floor "
               << mapped_floor.first << std::endl;
