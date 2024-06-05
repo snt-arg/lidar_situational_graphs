@@ -1642,11 +1642,15 @@ geometry_msgs::msg::Point GraphVisualizer::compute_plane_point(
       std::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>(*cloud_seg_map);
   shared_graph_mutex.unlock();
 
+  if (local_cloud_seg_map->points.empty()) {
+    return plane_p2;
+  }
+
   for (int p = 0; p < local_cloud_seg_map->points.size(); ++p) {
     geometry_msgs::msg::Point p_tmp;
     p_tmp.x = local_cloud_seg_map->points[p].x;
     p_tmp.y = local_cloud_seg_map->points[p].y;
-    p_tmp.z = cloud_seg_map->points[p].z;
+    p_tmp.z = local_cloud_seg_map->points[p].z;
 
     float norm = std::sqrt(std::pow((room_p1.x - p_tmp.x), 2) +
                            std::pow((room_p1.y - p_tmp.y), 2) +
