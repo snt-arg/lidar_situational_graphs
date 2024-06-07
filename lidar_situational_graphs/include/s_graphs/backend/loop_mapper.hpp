@@ -49,6 +49,7 @@ class LoopMapper {
 
  private:
   void set_data(g2o::VertexSE3* keyframe_node);
+  bool get_floor_data(g2o::VertexSE3* keyframe_node);
 
  private:
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
