@@ -65,8 +65,10 @@ class FloorPlanNode : public rclcpp::Node {
     floor_level = 0;
     new_k_added = false;
     prev_z_diff = 0.0;
-    floor_height = 0.0;
+    floor_height = -1;
     CURRENT_STATUS = STATE::ON_FLOOR;
+    stair_keyframes.clear();
+    tmp_stair_keyframes.clear();
 
     room_analyzer_params params{
         this->get_parameter("vertex_neigh_thres").get_parameter_value().get<int>()};
@@ -179,6 +181,7 @@ class FloorPlanNode : public rclcpp::Node {
       auto found_keyframe = keyframes.find(current_keyframe.id());
       if (found_keyframe == keyframes.end()) {
         keyframe_mutex.lock();
+        if (floor_height == -1) floor_height = current_keyframe.node->estimate()(2, 3);
         keyframes.insert(
             {current_keyframe.id(), std::make_shared<KeyFrame>(current_keyframe)});
         new_k_added = true;
@@ -314,83 +317,57 @@ class FloorPlanNode : public rclcpp::Node {
     if (!new_k_added || keyframes.size() < 2) return;
     auto current_k = keyframes.rbegin();
 
+    double slope = 0;
+    tmp_stair_keyframes.push_back(current_k->second);
+    if (tmp_stair_keyframes.size() > 2) {
+      slope = linear_regression(tmp_stair_keyframes);
+      tmp_stair_keyframes.pop_front();
+    }
+
     switch (CURRENT_STATUS) {
       case STATE::ON_FLOOR: {
-        // get the pose difference between the last and the second last keyframe
-        auto prev_k = std::next(current_k);
-        prev_z_diff = this->compute_height_change(current_k->second, prev_k->second);
-
-        std::cout << "prev_z_diff " << prev_z_diff << std::endl;
-
-        if (fabs(prev_z_diff) > 0.5) {
-          stair_keyframes.push_back(prev_k->second);
-          stair_keyframes.push_back(current_k->second);
-          CURRENT_STATUS = STATE::FLOOR_CHANGE;
-        }
-
-        break;
-      }
-      case STATE::FLOOR_CHANGE: {
-        double current_z_diff =
-            this->compute_height_change(current_k->second, stair_keyframes[0]);
-        std::cout << "state floor change" << std::endl;
-        std::cout << "current_z_diff " << current_z_diff << std::endl;
-
-        if (current_z_diff - prev_z_diff > 0.2) {
+        if (slope > 0.5) {
+          for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
           CURRENT_STATUS = STATE::ASCENDING;
-          stair_keyframes.push_back(current_k->second);
-          publish_floor_status();
-        } else if (current_z_diff - prev_z_diff < -0.2) {
+        } else if (slope < -0.5) {
+          for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
           CURRENT_STATUS = STATE::DESCENDING;
-          stair_keyframes.push_back(current_k->second);
-          publish_floor_status();
-        } else {
-          CURRENT_STATUS = STATE::ON_FLOOR;
-          stair_keyframes.clear();
         }
-        prev_z_diff = current_z_diff;
+
         break;
       }
 
       case STATE::ASCENDING: {
-        double current_z_diff =
-            this->compute_height_change(current_k->second, stair_keyframes[0]);
-        std::cout << "state floor ascending" << std::endl;
-        std::cout << "current_z_diff " << current_z_diff << std::endl;
-        double delta_diff = current_z_diff - prev_z_diff;
-        std::cout << "delta_diff " << delta_diff << std::endl;
-
-        if (fabs(delta_diff) < 0.5) {
-          stair_keyframes.push_back(current_k->second);
-          publish_floor_keyframe_info(stair_keyframes[0]->node->estimate()(2, 3) +
-                                      fabs(current_k->second->node->estimate()(2, 3) -
-                                           stair_keyframes[0]->node->estimate()(2, 3)));
+        if (slope < 0.1) {
+          stair_keyframes.push_back(tmp_stair_keyframes.back());
+          filter_stairkeyframes(stair_keyframes);
+          publish_floor_keyframe_info(
+              stair_keyframes.front()->node->estimate()(2, 3) +
+              fabs(stair_keyframes.back()->node->estimate()(2, 3) -
+                   stair_keyframes.front()->node->estimate()(2, 3)));
           break;
         } else {
-          stair_keyframes.push_back(current_k->second);
+          stair_keyframes.push_back(tmp_stair_keyframes.back());
           publish_floor_status();
         }
-        prev_z_diff = current_z_diff;
+
         break;
       }
 
       case STATE::DESCENDING: {
-        double current_z_diff =
-            this->compute_height_change(current_k->second, stair_keyframes[0]);
-        double delta_diff = current_z_diff - prev_z_diff;
-
-        if (fabs(delta_diff) < 0.5) {
-          stair_keyframes.push_back(current_k->second);
+        if (slope > -0.1) {
+          stair_keyframes.push_back(tmp_stair_keyframes.back());
+          filter_stairkeyframes(stair_keyframes);
           publish_floor_keyframe_info(
-              stair_keyframes[0]->node->estimate()(2, 3) -
-              (fabs(current_k->second->node->estimate()(2, 3) -
-                    stair_keyframes[0]->node->estimate()(2, 3))));
+              stair_keyframes.front()->node->estimate()(2, 3) +
+              fabs(stair_keyframes.back()->node->estimate()(2, 3) -
+                   stair_keyframes.front()->node->estimate()(2, 3)));
           break;
         } else {
-          stair_keyframes.push_back(current_k->second);
+          stair_keyframes.push_back(tmp_stair_keyframes.back());
           publish_floor_status();
         }
-        prev_z_diff = current_z_diff;
+
         break;
       }
 
@@ -400,9 +377,48 @@ class FloorPlanNode : public rclcpp::Node {
     new_k_added = false;
   }
 
+  double linear_regression(const std::deque<KeyFrame::Ptr>& tmp_keyframes) {
+    double slope = linear_line_model(tmp_keyframes);
+    std::cout << "slope using eigen method: " << slope << std::endl;
+    return slope;
+  }
+
+  void filter_stairkeyframes(std::deque<KeyFrame::Ptr>& tmp_stair_keyframes) {
+    // filter keyframes outside slope
+    tmp_stair_keyframes.pop_back();
+    tmp_stair_keyframes.pop_back();
+  }
+
+  double linear_line_model(const std::deque<KeyFrame::Ptr>& tmp_keyframes) {
+    Eigen::VectorXd ids(tmp_keyframes.size());
+    Eigen::VectorXd heights(tmp_keyframes.size());
+
+    int id = 0;
+    for (const auto& kf : tmp_keyframes) {
+      ids(id) = id;
+      heights(id) = kf->node->estimate().translation()(2);
+      id++;
+    }
+
+    Eigen::VectorXd ones = Eigen::VectorXd::Ones(ids.size());
+    Eigen::MatrixXd A(ids.size(), 2);
+    A << ids, ones;
+    Eigen::VectorXd result = A.colPivHouseholderQr().solve(heights);
+    return result[0];
+  }
+
   static double compute_height_change(const KeyFrame::Ptr current_k,
                                       const KeyFrame::Ptr prev_k) {
-    return (current_k->node->estimate().inverse() * prev_k->node->estimate())(2, 3);
+    return (current_k->node->estimate().translation() -
+            prev_k->node->estimate().translation())(2);
+  }
+
+  double compute_position_change(const KeyFrame::Ptr current_k,
+                                 const KeyFrame::Ptr prev_k) {
+    return (current_k->node->estimate().translation() -
+            prev_k->node->estimate().translation())
+        .head(3)
+        .norm();
   }
 
   void publish_floor_keyframe_info(double current_keyframe_height) {
@@ -483,7 +499,8 @@ class FloorPlanNode : public rclcpp::Node {
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
   std::map<int, s_graphs::KeyFrame::Ptr> keyframes;
-  std::vector<KeyFrame::Ptr> stair_keyframes;
+  std::deque<KeyFrame::Ptr> stair_keyframes;
+  std::deque<KeyFrame::Ptr> tmp_stair_keyframes;
   int floor_level;
 
   bool new_k_added;
