@@ -291,8 +291,6 @@ class SGraphsNode : public rclcpp::Node {
     all_map_planes_pub =
         this->create_publisher<situational_graphs_msgs::msg::PlanesData>(
             "s_graphs/all_map_planes", 1, pub_opt);
-    read_until_pub = this->create_publisher<std_msgs::msg::Header>(
-        "s_graphs/read_until", 32, pub_opt);
     graph_pub = this->create_publisher<situational_graphs_reasoning_msgs::msg::Graph>(
         "s_graphs/graph_structure", 32, pub_opt);
     graph_keyframes_pub =
@@ -324,6 +322,7 @@ class SGraphsNode : public rclcpp::Node {
     global_optimization = false;
     graph_updated = false;
     on_stairs = false;
+    floor_node_updated = false;
     prev_edge_count = curr_edge_count = 0;
 
     double graph_update_interval = this->get_parameter("graph_update_interval")
@@ -670,6 +669,13 @@ class SGraphsNode : public rclcpp::Node {
     current_floor_level = floor_mapper->get_floor_level();
   }
 
+  void update_first_floor_node(const Eigen::Isometry3d& pose) {
+    graph_mutex.lock();
+    floors_vec.begin()->second.node->setEstimate(pose);
+    graph_mutex.unlock();
+    floor_node_updated = true;
+  }
+
   void add_stair_keyframes_to_floor(const std::vector<int>& stair_keyframe_ids) {
     // get the keyframe ids and update their semantic of belonging to new floor
     floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
@@ -845,16 +851,6 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     if (!keyframe_updater->update(odom)) {
-      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-      if (keyframe_queue.empty()) {
-        std_msgs::msg::Header read_until;
-        read_until.stamp = stamp + rclcpp::Duration(10, 0);
-        read_until.frame_id = points_topic;
-        read_until_pub->publish(read_until);
-        read_until.frame_id = "/filtered_points";
-        read_until_pub->publish(read_until);
-      }
-
       return;
     }
 
@@ -921,13 +917,6 @@ class SGraphsNode : public rclcpp::Node {
         graph_mutex.unlock();
       }
     }
-
-    std_msgs::msg::Header read_until;
-    read_until.stamp = keyframe_queue[num_processed]->stamp + rclcpp::Duration(10, 0);
-    read_until.frame_id = points_topic;
-    read_until_pub->publish(read_until);
-    read_until.frame_id = "/filtered_points";
-    read_until_pub->publish(read_until);
 
     std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
     keyframe_queue.erase(keyframe_queue.begin(),
@@ -1042,15 +1031,6 @@ class SGraphsNode : public rclcpp::Node {
     // add keyframes and floor coeffs in the queues to the pose graph
     bool keyframe_updated = flush_keyframe_queue();
 
-    if (!keyframe_updated) {
-      std_msgs::msg::Header read_until;
-      read_until.stamp = this->now() + rclcpp::Duration(30, 0);
-      read_until.frame_id = points_topic;
-      read_until_pub->publish(read_until);
-      read_until.frame_id = "/filtered_points";
-      read_until_pub->publish(read_until);
-    }
-
     if (!keyframe_updated & !flush_gps_queue() & !flush_imu_queue()) {
       return;
     }
@@ -1085,6 +1065,8 @@ class SGraphsNode : public rclcpp::Node {
 
     // flush the floor poses from the floor planner and no need to return if no floors
     // found
+    if (!keyframes.empty() && !floor_node_updated)
+      update_first_floor_node(keyframes.begin()->second->estimate());
     flush_floor_data_queue();
 
     // move the first node anchor position to the current estimate of the first node
@@ -1129,7 +1111,7 @@ class SGraphsNode : public rclcpp::Node {
    */
   void optimization_timer_callback() {
     graph_updated = false;
-    if (keyframes.empty()) return;
+    if (keyframes.empty() || floors_vec.empty()) return;
 
     int num_iterations = this->get_parameter("g2o_solver_num_iterations")
                              .get_parameter_value()
@@ -1370,6 +1352,8 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.lock();
     GraphUtils::copy_entire_graph(covisibility_graph, local_covisibility_graph);
     graph_mutex.unlock();
+    publish_graph(local_covisibility_graph->graph.get(), keyframes_complete_snapshot);
+
     auto current_time = this->now();
     auto markers = graph_visualizer->visualize_covisibility_graph(
         loop_detector->get_distance_thresh() * 2.0,
@@ -1401,7 +1385,6 @@ class SGraphsNode : public rclcpp::Node {
     markers_pub->publish(markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
     map_points_pub->publish(*cloud_msg);
-    publish_graph(local_covisibility_graph->graph.get(), keyframes_complete_snapshot);
   }
 
   /**
@@ -1948,7 +1931,6 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr odom2map_pub;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr odom_pose_corrected_pub;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_corrected_pub;
-  rclcpp::Publisher<std_msgs::msg::Header>::SharedPtr read_until_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub;
   rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr
@@ -2009,6 +1991,7 @@ class SGraphsNode : public rclcpp::Node {
   double infinite_room_information;
   double room_information, plane_information;
   bool on_stairs;
+  bool floor_node_updated;
 
   enum optimization_class : uint8_t {
     GLOBAL = 1,
