@@ -102,7 +102,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
   // node markers
   double wall_vertex_h = 18;
   // lifetime
-  rclcpp::Duration marker_lifetime = rclcpp::Duration::from_seconds(15);
+  rclcpp::Duration marker_lifetime = rclcpp::Duration::from_seconds(200);
 
   std::string keyframes_layer_id = "keyframes_layer";
   std::string walls_layer_id = "walls_layer";

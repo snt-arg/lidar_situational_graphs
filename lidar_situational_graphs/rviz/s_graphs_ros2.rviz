@@ -5,6 +5,8 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /TF1/Frames1
+        - /PointCloud22
+        - /MarkerArray1
         - /MarkerArray1/Namespaces1
       Splitter Ratio: 0.5
     Tree Height: 1654
@@ -29,81 +31,59 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: false
-        base_footprint:
+        back:
+          Value: false
+        back_fisheye:
           Value: false
         base_link:
           Value: false
         body:
           Value: true
-        camera_depth_frame:
-          Value: false
-        camera_depth_optical_frame:
-          Value: false
-        camera_link:
-          Value: false
-        camera_rgb_frame:
-          Value: false
-        camera_rgb_optical_frame:
+        flat_body:
           Value: false
         floors_layer:
           Value: false
-        front_left_ee:
-          Value: false
-        front_left_hip:
-          Value: false
-        front_left_lower_leg:
-          Value: false
-        front_left_upper_leg:
-          Value: false
         front_rail:
           Value: false
-        front_right_ee:
+        frontleft:
           Value: false
-        front_right_hip:
+        frontleft_fisheye:
           Value: false
-        front_right_lower_leg:
+        frontright:
           Value: false
-        front_right_upper_leg:
+        frontright_fisheye:
           Value: false
-        imu_link:
+        gpe:
           Value: false
-        keyframe:
+        head:
           Value: false
         keyframes_layer:
+          Value: false
+        left:
+          Value: false
+        left_fisheye:
           Value: false
         map:
           Value: true
         odom:
           Value: true
-        rear_left_ee:
-          Value: false
-        rear_left_hip:
-          Value: false
-        rear_left_lower_leg:
-          Value: false
-        rear_left_upper_leg:
-          Value: false
         rear_rail:
           Value: false
-        rear_right_ee:
+        right:
           Value: false
-        rear_right_hip:
-          Value: false
-        rear_right_lower_leg:
-          Value: false
-        rear_right_upper_leg:
+        right_fisheye:
           Value: false
         rooms_layer:
           Value: false
         velodyne:
           Value: false
-        velodyne_base_link:
+        vision:
           Value: false
         walls_layer:
           Value: false
       Marker Scale: 5
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: false
       Tree:
@@ -114,46 +94,36 @@ Visualization Manager:
                 floors_layer:
                   {}
           odom:
-            base_footprint:
-              body:
-                base_link:
-                  camera_link:
-                    camera_depth_frame:
-                      camera_depth_optical_frame:
-                        {}
-                    camera_rgb_frame:
-                      camera_rgb_optical_frame:
-                        {}
-                  imu_link:
+            body:
+              base_link:
+                {}
+              flat_body:
+                {}
+              front_rail:
+                {}
+              head:
+                back:
+                  back_fisheye:
                     {}
-                  velodyne_base_link:
-                    velodyne:
-                      {}
-                front_left_hip:
-                  front_left_upper_leg:
-                    front_left_lower_leg:
-                      front_left_ee:
-                        {}
-                front_rail:
-                  {}
-                front_right_hip:
-                  front_right_upper_leg:
-                    front_right_lower_leg:
-                      front_right_ee:
-                        {}
-                rear_left_hip:
-                  rear_left_upper_leg:
-                    rear_left_lower_leg:
-                      rear_left_ee:
-                        {}
-                rear_rail:
-                  {}
-                rear_right_hip:
-                  rear_right_upper_leg:
-                    rear_right_lower_leg:
-                      rear_right_ee:
-                        {}
-            keyframe:
+                frontleft:
+                  frontleft_fisheye:
+                    {}
+                frontright:
+                  frontright_fisheye:
+                    {}
+                left:
+                  left_fisheye:
+                    {}
+                right:
+                  right_fisheye:
+                    {}
+              rear_rail:
+                {}
+              velodyne:
+                {}
+              vision:
+                {}
+            gpe:
               {}
       Update Interval: 0
       Value: true
@@ -212,7 +182,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.03999999910593033
+      Size (m): 0.05999999865889549
       Style: Flat Squares
       Topic:
         Depth: 5
@@ -231,15 +201,12 @@ Visualization Manager:
         floors: true
         hort_planes: true
         imu: false
-        infinite_room_x_lines: true
         keyframe_keyframe_edges: true
         keyframe_plane_edges: true
         loop_close_radius: false
         nodes: true
         rooms: true
         rooms_line: true
-        wall_center_marker: false
-        x_infinite_room: true
         x_vert_planes: true
         y_vert_planes: true
       Topic:
@@ -304,25 +271,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 63.588130950927734
+      Distance: 64.5839614868164
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -3.4667422771453857
-        Y: -3.368988037109375
-        Z: 11.062368392944336
+        X: 15.845458030700684
+        Y: -43.303836822509766
+        Z: 9.686090469360352
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7397969961166382
-      Target Frame: <Fixed Frame>
-      Value: Orbit (rviz)
-      Yaw: 6.223122596740723
+      Pitch: 0.7547966837882996
+      Target Frame: ""
+      Value: Orbit (rviz_default_plugins)
+      Yaw: 3.663116693496704
     Saved: ~
 Window Geometry:
   Displays:

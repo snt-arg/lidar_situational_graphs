@@ -132,7 +132,7 @@ def launch_sgraphs(context, *args, **kwargs):
         arguments=[
             "0.0",
             "0.0",
-            "7.0",
+            "16.0",
             "0.0",
             "0.0",
             "0.0",
