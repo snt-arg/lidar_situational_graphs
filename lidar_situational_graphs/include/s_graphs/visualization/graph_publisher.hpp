@@ -79,6 +79,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "geometry_msgs/msg/point.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "s_graphs/common/graph_utils.hpp"
 #include "s_graphs/common/room_utils.hpp"
 #include "s_graphs/common/ros_utils.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"

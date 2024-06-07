@@ -358,7 +358,10 @@ GraphPublisher::publish_graph_keyframes(
   situational_graphs_reasoning_msgs::msg::GraphKeyframes msg;
   msg.keyframes.reserve(keyframes.size());
   for (auto& keyframe : keyframes) {
-    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe.second));
+    bool kf_marginalized =
+        s_graphs::GraphUtils::get_keyframe_marg_data(keyframe.second->node);
+    if (!kf_marginalized)
+      msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe.second));
   }
   return msg;
 }
@@ -370,7 +373,8 @@ GraphPublisher::publish_graph_keyframes(
   situational_graphs_reasoning_msgs::msg::GraphKeyframes msg;
   msg.keyframes.reserve(keyframes.size());
   for (auto& keyframe : keyframes) {
-    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));
+    bool kf_marginalized = s_graphs::GraphUtils::get_keyframe_marg_data(keyframe->node);
+    if (!kf_marginalized) msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));
   }
   return msg;
 }

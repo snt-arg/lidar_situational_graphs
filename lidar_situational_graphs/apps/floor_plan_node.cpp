@@ -317,6 +317,11 @@ class FloorPlanNode : public rclcpp::Node {
     if (!new_k_added || keyframes.size() < 2) return;
     auto current_k = keyframes.rbegin();
 
+    for (auto& tmp_kf : tmp_stair_keyframes) {
+      auto kf = keyframes.find(tmp_kf->id());
+      tmp_kf->node->setEstimate(kf->second->node->estimate());
+    }
+
     double slope = 0;
     tmp_stair_keyframes.push_back(current_k->second);
     if (tmp_stair_keyframes.size() > 2) {
@@ -326,10 +331,10 @@ class FloorPlanNode : public rclcpp::Node {
 
     switch (CURRENT_STATUS) {
       case STATE::ON_FLOOR: {
-        if (slope > 0.5) {
+        if (slope > 0.4) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
           CURRENT_STATUS = STATE::ASCENDING;
-        } else if (slope < -0.5) {
+        } else if (slope < -0.4) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
           CURRENT_STATUS = STATE::DESCENDING;
         }
@@ -385,8 +390,13 @@ class FloorPlanNode : public rclcpp::Node {
 
   void filter_stairkeyframes(std::deque<KeyFrame::Ptr>& tmp_stair_keyframes) {
     // filter keyframes outside slope
-    tmp_stair_keyframes.pop_back();
-    tmp_stair_keyframes.pop_back();
+    int elements_to_erase = 2;
+    if (tmp_stair_keyframes.size() > elements_to_erase)
+      tmp_stair_keyframes.erase(tmp_stair_keyframes.end() - elements_to_erase,
+                                tmp_stair_keyframes.end());
+    else if (tmp_stair_keyframes.size() > (elements_to_erase - 1)) {
+      tmp_stair_keyframes.pop_back();
+    }
   }
 
   double linear_line_model(const std::deque<KeyFrame::Ptr>& tmp_keyframes) {
