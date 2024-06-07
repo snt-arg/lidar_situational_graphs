@@ -616,13 +616,6 @@ class SGraphsNode : public rclcpp::Node {
                                     y_infinite_rooms);
         graph_mutex.unlock();
 
-        std::cout << "floor_data_msg pose: " << floor_data_msg.floor_center.position.x
-                  << " " << floor_data_msg.floor_center.position.y << " "
-                  << floor_data_msg.floor_center.position.z << std::endl;
-
-        std::cout << "floor_data_msg.keyframe_ids size: "
-                  << floor_data_msg.keyframe_ids.size() << std::endl;
-
         // if new floor was added update floor level and add to it the stair keyframes
         if (!floor_data_msg.keyframe_ids.empty()) {
           current_floor_level = floor_mapper->get_floor_level();
@@ -1038,6 +1031,15 @@ class SGraphsNode : public rclcpp::Node {
     // publish mapped planes
     publish_mapped_planes(x_vert_planes, y_vert_planes);
 
+    // flush the room poses from room detector and no need to return if no rooms found
+    flush_room_data_queue();
+
+    // flush the floor poses from the floor planner and no need to return if no floors
+    // found
+    if (!keyframes.empty() && !floor_node_updated)
+      update_first_floor_node(keyframes.begin()->second->estimate());
+    flush_floor_data_queue();
+
     // loop detection
     if (!on_stairs) {
       std::vector<Loop::Ptr> loops =
@@ -1047,7 +1049,6 @@ class SGraphsNode : public rclcpp::Node {
         loop_mapper->add_loops(covisibility_graph, loops, graph_mutex);
       }
     } else {
-      loop_found = false;
       std::cout << "on stairs so not doing loop check " << std::endl;
     }
 
@@ -1059,15 +1060,6 @@ class SGraphsNode : public rclcpp::Node {
 
     new_keyframes.clear();
     graph_mutex.unlock();
-
-    // flush the room poses from room detector and no need to return if no rooms found
-    flush_room_data_queue();
-
-    // flush the floor poses from the floor planner and no need to return if no floors
-    // found
-    if (!keyframes.empty() && !floor_node_updated)
-      update_first_floor_node(keyframes.begin()->second->estimate());
-    flush_floor_data_queue();
 
     // move the first node anchor position to the current estimate of the first node
     // pose so the first node moves freely while trying to stay around the origin
