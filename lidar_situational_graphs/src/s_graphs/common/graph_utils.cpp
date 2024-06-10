@@ -225,11 +225,11 @@ void GraphUtils::copy_graph_vertices(
   if (current_floor_level != 0 && fix_kf) {
     auto current_floor = floors_vec.find(current_floor_level);
     if (current_floor != floors_vec.end()) {
-      auto last_floor_kf_id = current_floor->second.stair_keyframe_ids.back();
-      if (compressed_graph->graph->vertex(last_floor_kf_id))
-        compressed_graph->graph->vertex(last_floor_kf_id)->setFixed(true);
+      auto first_floor_kf_id = current_floor->second.stair_keyframe_ids.front();
+      if (compressed_graph->graph->vertex(first_floor_kf_id))
+        compressed_graph->graph->vertex(first_floor_kf_id)->setFixed(true);
       else
-        std::cout << "last stair keyframe node does not exist " << std::endl;
+        std::cout << "first stair keyframe node does not exist " << std::endl;
     }
   }
 }

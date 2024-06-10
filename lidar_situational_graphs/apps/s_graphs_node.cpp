@@ -624,7 +624,7 @@ class SGraphsNode : public rclcpp::Node {
           graph_mutex.lock();
           add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
           GraphUtils::update_node_floor_level(
-              floors_vec.at(current_floor_level).stair_keyframe_ids.back(),
+              floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
               current_floor_level,
               keyframes,
               x_vert_planes,
@@ -643,6 +643,14 @@ class SGraphsNode : public rclcpp::Node {
         std::cout << "setting on_stairts to: " << on_stairs << std::endl;
       }
     }
+  }
+
+  void add_stair_keyframes_to_floor(const std::vector<int>& stair_keyframe_ids) {
+    // get the keyframe ids and update their semantic of belonging to new floor
+    floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
+
+    GraphUtils::set_stair_keyframes(
+        floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
   }
 
   void add_first_floor_node() {
@@ -667,14 +675,6 @@ class SGraphsNode : public rclcpp::Node {
     floors_vec.begin()->second.node->setEstimate(pose);
     graph_mutex.unlock();
     floor_node_updated = true;
-  }
-
-  void add_stair_keyframes_to_floor(const std::vector<int>& stair_keyframe_ids) {
-    // get the keyframe ids and update their semantic of belonging to new floor
-    floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
-
-    GraphUtils::set_stair_keyframes(
-        floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
   }
 
   /**
