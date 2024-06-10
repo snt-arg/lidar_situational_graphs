@@ -46,6 +46,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
 #include <s_graphs/common/rooms.hpp>
+#include <s_graphs/common/walls.hpp>
 #include <unordered_set>
 
 namespace s_graphs {
@@ -86,6 +87,7 @@ class GraphUtils {
    * @param rooms_vec
    * @param x_infinite_rooms
    * @param y_infinite_rooms
+   * @param walls_vec
    * @param floors_vec
    */
   static void copy_floor_graph(
@@ -98,6 +100,7 @@ class GraphUtils {
       const std::unordered_map<int, Rooms>& rooms_vec,
       const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      const std::unordered_map<int, Walls>& walls_vec,
       const std::map<int, Floors>& floors_vec);
 
   /**
@@ -122,6 +125,7 @@ class GraphUtils {
    * @param rooms_vec
    * @param x_infinite_rooms
    * @param y_infinite_rooms
+   * @param walls_vec
    * @param floors_vec
    * @param fix_kf
    * @return * void
@@ -136,6 +140,7 @@ class GraphUtils {
       const std::unordered_map<int, Rooms>& rooms_vec,
       const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      const std::unordered_map<int, Walls>& walls_vec,
       const std::map<int, Floors>& floors_vec,
       const bool& fix_kf = false);
 

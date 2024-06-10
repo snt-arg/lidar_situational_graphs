@@ -48,7 +48,7 @@ namespace s_graphs {
  * @var plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id
  * @var node
  */
-struct Floors {
+struct Walls {
  public:
   int id;
   int plane1_id, plane2_id;
@@ -57,4 +57,4 @@ struct Floors {
 };
 
 }  // namespace s_graphs
-#endif  // FLOORS_HPP
+#endif  // WALLS_HPP

@@ -83,6 +83,7 @@ void GraphUtils::copy_floor_graph(
     const std::unordered_map<int, Rooms>& rooms_vec,
     const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+    const std::unordered_map<int, Walls>& walls_vec,
     const std::map<int, Floors>& floors_vec) {
   compressed_graph->graph->clear();
 
@@ -96,6 +97,7 @@ void GraphUtils::copy_floor_graph(
                       rooms_vec,
                       x_infinite_rooms,
                       y_infinite_rooms,
+                      walls_vec,
                       floors_vec,
                       true);
 
@@ -111,6 +113,7 @@ void GraphUtils::copy_floor_graph(
                         rooms_vec,
                         x_infinite_rooms,
                         y_infinite_rooms,
+                        walls_vec,
                         floors_vec,
                         false);
   }
@@ -131,6 +134,7 @@ void GraphUtils::copy_graph_vertices(
     const std::unordered_map<int, Rooms>& rooms_vec,
     const std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+    const std::unordered_map<int, Walls>& walls_vec,
     const std::map<int, Floors>& floors_vec,
     const bool& fix_kf) {
   for (g2o::HyperGraph::VertexIDMap::iterator it =
@@ -172,31 +176,34 @@ void GraphUtils::copy_graph_vertices(
       if (x_vert_plane != x_vert_planes.end()) {
         if (x_vert_plane->second.floor_level == current_floor_level) {
           auto current_vertex = compressed_graph->copy_plane_node(vertex_plane);
-          continue;
-        } else
-          continue;
+        }
       } else if (y_vert_plane != y_vert_planes.end()) {
         if (y_vert_plane->second.floor_level == current_floor_level) {
           auto current_vertex = compressed_graph->copy_plane_node(vertex_plane);
-          continue;
-        } else
-          continue;
+        }
       }
+      continue;
     }
 
     /* TODO:HB Add walls_vec and then add wall vertex to floor graph */
-    // g2o::VertexWall* vertex_wall = dynamic_cast<g2o::VertexWall*>(v);
-    // if (vertex_wall) {
-    //   auto current_vertex = compressed_graph->copy_wall_node(vertex_wall);
-    //   continue;
-    // }
+    g2o::VertexWall* vertex_wall = dynamic_cast<g2o::VertexWall*>(v);
+    if (vertex_wall) {
+      auto wall = walls_vec.find(vertex_wall->id());
+
+      if (wall != walls_vec.end()) {
+        if (wall->second.floor_level == current_floor_level) {
+          auto current_vertex = compressed_graph->copy_wall_node(vertex_wall);
+        }
+      }
+      continue;
+    }
 
     g2o::VertexFloor* vertex_floor = dynamic_cast<g2o::VertexFloor*>(v);
     if (vertex_floor) {
       if (vertex_floor->id() == current_floor_level) {
         auto current_vertex = compressed_graph->copy_floor_node(vertex_floor);
-        continue;
       }
+      continue;
     }
 
     g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
@@ -208,22 +215,17 @@ void GraphUtils::copy_graph_vertices(
       if (room != rooms_vec.end()) {
         if (room->second.floor_level == current_floor_level) {
           auto current_vertex = compressed_graph->copy_room_node(vertex_room);
-          continue;
-        } else
-          continue;
+        }
       } else if (x_inf_room != x_infinite_rooms.end()) {
         if (x_inf_room->second.floor_level == current_floor_level) {
           auto current_vertex = compressed_graph->copy_room_node(vertex_room);
-          continue;
-        } else
-          continue;
+        }
       } else if (y_inf_room != y_infinite_rooms.end()) {
         if (y_inf_room->second.floor_level == current_floor_level) {
           auto current_vertex = compressed_graph->copy_room_node(vertex_room);
-          continue;
-        } else
-          continue;
+        }
       }
+      continue;
     }
   }
 

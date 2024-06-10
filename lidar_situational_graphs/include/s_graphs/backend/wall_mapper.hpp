@@ -44,6 +44,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/walls.hpp>
 #include <string>
 
 #include "geometry_msgs/msg/point.hpp"
@@ -80,6 +81,7 @@ class WallMapper {
    * @param y_planes_msg
    * @param x_vert_planes
    * @param y_vert_planes
+   * @param walls_vec
    */
   void factor_wall(
       const std::shared_ptr<GraphSLAM> covisibility_graph,
@@ -88,7 +90,8 @@ class WallMapper {
       const std::vector<situational_graphs_msgs::msg::PlaneData> x_planes_msg,
       const std::vector<situational_graphs_msgs::msg::PlaneData> y_planes_msg,
       std::unordered_map<int, VerticalPlanes>& x_vert_planes,
-      std::unordered_map<int, VerticalPlanes>& y_vert_planes);
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, Walls>& walls_vec);
 
   /**
    * @brief
@@ -99,11 +102,11 @@ class WallMapper {
    * @param plane2
    * @return
    */
-  void add_wall_node_and_edge(const std::shared_ptr<GraphSLAM> covisibility_graph,
-                              const Eigen::Vector3d& wall_pose,
-                              const Eigen::Vector3d& wall_point,
-                              VerticalPlanes& plane1,
-                              VerticalPlanes& plane2);
+  int add_wall_node_and_edge(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                             const Eigen::Vector3d& wall_pose,
+                             const Eigen::Vector3d& wall_point,
+                             VerticalPlanes& plane1,
+                             VerticalPlanes& plane2);
 
  private:
   bool use_point_to_plane;

@@ -63,6 +63,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/rooms.hpp>
 #include <s_graphs/common/ros_time_hash.hpp>
 #include <s_graphs/common/ros_utils.hpp>
+#include <s_graphs/common/walls.hpp>
 #include <s_graphs/frontend/keyframe_updater.hpp>
 #include <s_graphs/frontend/loop_detector.hpp>
 #include <s_graphs/frontend/plane_analyzer.hpp>
@@ -940,7 +941,8 @@ class SGraphsNode : public rclcpp::Node {
                                x_planes_msg,
                                y_planes_msg,
                                x_vert_planes,
-                               y_vert_planes);
+                               y_vert_planes,
+                               walls_vec);
     }
   }
 
@@ -1141,6 +1143,7 @@ class SGraphsNode : public rclcpp::Node {
                                        rooms_vec,
                                        x_infinite_rooms,
                                        y_infinite_rooms,
+                                       walls_vec,
                                        floors_vec);
           duplicate_planes_found = false;
           global_optimization = true;
@@ -1154,6 +1157,7 @@ class SGraphsNode : public rclcpp::Node {
                                        rooms_vec,
                                        x_infinite_rooms,
                                        y_infinite_rooms,
+                                       walls_vec,
                                        floors_vec);
           loop_found = false;
           global_optimization = true;
@@ -1167,6 +1171,7 @@ class SGraphsNode : public rclcpp::Node {
                                        rooms_vec,
                                        x_infinite_rooms,
                                        y_infinite_rooms,
+                                       walls_vec,
                                        floors_vec);
           duplicate_planes_found = false;
           loop_found = false;
@@ -2000,6 +2005,7 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<int, Rooms> rooms_vec;  // rooms segmented from planes
   std::vector<Rooms> rooms_vec_prior;
   std::map<int, Floors> floors_vec;
+  std::unordered_map<int, Walls> walls_vec;
   int prev_edge_count, curr_edge_count;
 
   std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
