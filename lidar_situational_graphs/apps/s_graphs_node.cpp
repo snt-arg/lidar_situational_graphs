@@ -601,7 +601,6 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& floor_data_msg : floor_data_queue) {
       if (floor_data_msg.state == situational_graphs_msgs::msg::FloorData::ON_STAIRS) {
         on_stairs = true;
-        std::cout << "setting on_stairts to: " << on_stairs << std::endl;
         floor_data_mutex.lock();
         floor_data_queue.pop_front();
         floor_data_mutex.unlock();
@@ -619,8 +618,6 @@ class SGraphsNode : public rclcpp::Node {
         // if new floor was added update floor level and add to it the stair keyframes
         if (!floor_data_msg.keyframe_ids.empty()) {
           current_floor_level = floor_mapper->get_floor_level();
-          std::cout << "setting current floor level to: " << current_floor_level
-                    << std::endl;
           graph_mutex.lock();
           add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
           GraphUtils::update_node_floor_level(
@@ -640,7 +637,6 @@ class SGraphsNode : public rclcpp::Node {
         floor_data_queue.pop_front();
         floor_data_mutex.unlock();
         on_stairs = false;
-        std::cout << "setting on_stairts to: " << on_stairs << std::endl;
       }
     }
   }

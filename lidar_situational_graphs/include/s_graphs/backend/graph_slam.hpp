@@ -277,14 +277,14 @@ class GraphSLAM {
    * @param wall_center
    * @return registered node
    */
-  g2o::VertexWallXYZ* add_wall_node(const Eigen::Vector3d& wall_center);
+  g2o::VertexWall* add_wall_node(const Eigen::Vector3d& wall_center);
 
   /**
    * @brief copy a Wall node to the graph
    * @param wall_node
    * @return registered node
    */
-  g2o::VertexWallXYZ* copy_wall_node(const g2o::VertexWallXYZ* wall_node);
+  g2o::VertexWall* copy_wall_node(const g2o::VertexWall* wall_node);
 
   /**
    * @brief Add a SE3 Deviation node to the graph.
@@ -585,7 +585,7 @@ class GraphSLAM {
    * @return g2o::EdgeWall2Planes*
    */
   g2o::EdgeWall2Planes* copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
-                                               g2o::VertexWallXYZ* v1,
+                                               g2o::VertexWall* v1,
                                                g2o::VertexPlane* v2,
                                                g2o::VertexPlane* v3);
 
@@ -750,7 +750,7 @@ class GraphSLAM {
       const double& measurement,
       const Eigen::MatrixXd& information);
 
-  g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWallXYZ* v_wall,
+  g2o::EdgeWall2Planes* add_wall_2planes_edge(g2o::VertexWall* v_wall,
                                               g2o::VertexPlane* v_plane1,
                                               g2o::VertexPlane* v_plane2,
                                               Eigen::Vector3d wall_point,

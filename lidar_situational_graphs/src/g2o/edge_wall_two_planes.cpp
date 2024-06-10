@@ -12,7 +12,7 @@ namespace g2o {
 /*   Define Wall edge with wall surfaces here*/
 
 void EdgeWall2Planes::computeError() {
-  const VertexWallXYZ* v1 = static_cast<const VertexWallXYZ*>(_vertices[0]);
+  const VertexWall* v1 = static_cast<const VertexWall*>(_vertices[0]);
   const VertexPlane* v2 = static_cast<const VertexPlane*>(_vertices[1]);
   const VertexPlane* v3 = static_cast<const VertexPlane*>(_vertices[2]);
 

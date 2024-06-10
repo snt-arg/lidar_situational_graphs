@@ -347,8 +347,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     g2o::HyperGraph::Edge* edge = *wall_edge_itr;
     g2o::EdgeWall2Planes* edge_wall = dynamic_cast<g2o::EdgeWall2Planes*>(edge);
     if (edge_wall) {
-      g2o::VertexWallXYZ* v1 =
-          dynamic_cast<g2o::VertexWallXYZ*>(edge_wall->vertices()[0]);
+      g2o::VertexWall* v1 = dynamic_cast<g2o::VertexWall*>(edge_wall->vertices()[0]);
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[1]);
       g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[2]);
       Eigen::Vector3d wall_center = v1->estimate();
@@ -766,8 +765,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
     g2o::HyperGraph::Edge* edge = *wall_edge_itr;
     g2o::EdgeWall2Planes* edge_wall = dynamic_cast<g2o::EdgeWall2Planes*>(edge);
     if (edge_wall) {
-      g2o::VertexWallXYZ* v1 =
-          dynamic_cast<g2o::VertexWallXYZ*>(edge_wall->vertices()[0]);
+      g2o::VertexWall* v1 = dynamic_cast<g2o::VertexWall*>(edge_wall->vertices()[0]);
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[1]);
       g2o::VertexPlane* v3 = dynamic_cast<g2o::VertexPlane*>(edge_wall->vertices()[2]);
       Eigen::Vector3d wall_center = v1->estimate();

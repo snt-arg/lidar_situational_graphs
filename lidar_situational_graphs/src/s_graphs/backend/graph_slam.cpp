@@ -291,8 +291,8 @@ void GraphSLAM::update_floor_node(g2o::VertexFloor* floor_node,
   return;
 }
 
-g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center) {
-  g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
+g2o::VertexWall* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center) {
+  g2o::VertexWall* vertex(new g2o::VertexWall());
   vertex->setId(static_cast<int>(retrieve_local_nbr_of_vertices()));
   vertex->setEstimate(wall_center);
   graph->addVertex(vertex);
@@ -301,8 +301,8 @@ g2o::VertexWallXYZ* GraphSLAM::add_wall_node(const Eigen::Vector3d& wall_center)
   return vertex;
 }
 
-g2o::VertexWallXYZ* GraphSLAM::copy_wall_node(const g2o::VertexWallXYZ* wall_node) {
-  g2o::VertexWallXYZ* vertex(new g2o::VertexWallXYZ());
+g2o::VertexWall* GraphSLAM::copy_wall_node(const g2o::VertexWall* wall_node) {
+  g2o::VertexWall* vertex(new g2o::VertexWall());
   vertex->setId(wall_node->id());
   vertex->setEstimate(wall_node->estimate());
   if (wall_node->fixed()) vertex->setFixed(true);
@@ -651,7 +651,7 @@ g2o::Edge2Planes* GraphSLAM::copy_2planes_edge(g2o::Edge2Planes* e,
 }
 
 g2o::EdgeWall2Planes* GraphSLAM::copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
-                                                        g2o::VertexWallXYZ* v1,
+                                                        g2o::VertexWall* v1,
                                                         g2o::VertexPlane* v2,
                                                         g2o::VertexPlane* v3) {
   g2o::EdgeWall2Planes* edge(new g2o::EdgeWall2Planes(e->get_wall_point()));
@@ -721,7 +721,7 @@ g2o::EdgeRoom2Planes* GraphSLAM::add_room_2planes_edge(
 }
 
 g2o::EdgeWall2Planes* GraphSLAM::add_wall_2planes_edge(
-    g2o::VertexWallXYZ* v_wall,
+    g2o::VertexWall* v_wall,
     g2o::VertexPlane* v_plane1,
     g2o::VertexPlane* v_plane2,
     Eigen::Vector3d wall_point,
