@@ -326,18 +326,15 @@ class FloorPlanNode : public rclcpp::Node {
     tmp_stair_keyframes.push_back(current_k->second);
     if (tmp_stair_keyframes.size() > 2) {
       slope = linear_regression(tmp_stair_keyframes);
-      if (fabs(slope) < slope_thres) tmp_stair_keyframes.pop_front();
     }
 
     switch (CURRENT_STATUS) {
       case STATE::ON_FLOOR: {
         if (slope > slope_thres) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
-          tmp_stair_keyframes.pop_front();
           CURRENT_STATUS = STATE::ASCENDING;
         } else if (slope < -slope_thres) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
-          tmp_stair_keyframes.pop_front();
           CURRENT_STATUS = STATE::DESCENDING;
         }
 
@@ -380,6 +377,11 @@ class FloorPlanNode : public rclcpp::Node {
 
       default:
         break;
+    }
+
+    if (tmp_stair_keyframes.size() > 2) {
+      slope = linear_regression(tmp_stair_keyframes);
+      tmp_stair_keyframes.pop_front();
     }
     new_k_added = false;
   }
