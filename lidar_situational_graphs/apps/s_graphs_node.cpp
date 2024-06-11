@@ -1009,9 +1009,14 @@ class SGraphsNode : public rclcpp::Node {
     if (keyframes.empty() || imu_queue.empty() || base_frame_id.empty()) {
       return false;
     }
-    // TODO:HB add graph_mutex
-    return imu_mapper->map_imu_data(
+
+    bool updated = false;
+    graph_mutex.lock();
+    imu_mapper->map_imu_data(
         covisibility_graph, tf_buffer, imu_queue, keyframes, base_frame_id);
+    graph_mutex.unlock();
+
+    return updated;
   }
 
   /**

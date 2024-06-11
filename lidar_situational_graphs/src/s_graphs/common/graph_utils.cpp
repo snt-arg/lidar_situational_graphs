@@ -185,7 +185,6 @@ void GraphUtils::copy_graph_vertices(
       continue;
     }
 
-    /* TODO:HB Add walls_vec and then add wall vertex to floor graph */
     g2o::VertexWall* vertex_wall = dynamic_cast<g2o::VertexWall*>(v);
     if (vertex_wall) {
       auto wall = walls_vec.find(vertex_wall->id());
@@ -256,6 +255,7 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
         std::find_if(compressed_graph->graph->edges().begin(),
                      compressed_graph->graph->edges().end(),
                      boost::bind(&g2o::HyperGraph::Edge::id, _1) == e->id());
+    if (found_edge != compressed_graph->graph->edges().end()) continue;
 
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(e);
     if (edge_se3) {
@@ -290,14 +290,25 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
       g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3->vertices()[1]->id()));
 
-      if (found_edge != compressed_graph->graph->edges().end()) continue;
-
       auto edge = compressed_graph->copy_se3_edge(edge_se3, v1, v2);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
     }
 
-    if (found_edge != compressed_graph->graph->edges().end()) continue;
+    g2o::EdgeSE3PriorQuat* edge_se3_prior_quat =
+        dynamic_cast<g2o::EdgeSE3PriorQuat*>(e);
+    if (edge_se3_prior_quat) {
+      if (!compressed_graph->graph->vertex(edge_se3_prior_quat->vertices()[0]->id()))
+        continue;
+
+      g2o::VertexSE3* v1 =
+          dynamic_cast<g2o::VertexSE3*>(compressed_graph->graph->vertices().at(
+              edge_se3_prior_quat->vertices()[0]->id()));
+      auto edge = compressed_graph->copy_se3_prior_quat_edge(edge_se3_prior_quat, v1);
+      compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      continue;
+    }
+
     g2o::EdgeSE3Plane* edge_se3_plane = dynamic_cast<g2o::EdgeSE3Plane*>(e);
     if (edge_se3_plane) {
       if (!compressed_graph->graph->vertex(edge_se3_plane->vertices()[0]->id()))

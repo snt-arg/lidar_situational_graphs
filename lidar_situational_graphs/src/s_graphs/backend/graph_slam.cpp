@@ -556,6 +556,18 @@ g2o::EdgeSE3PriorQuat* GraphSLAM::add_se3_prior_quat_edge(
   return edge;
 }
 
+g2o::EdgeSE3PriorQuat* GraphSLAM::copy_se3_prior_quat_edge(g2o::EdgeSE3PriorQuat* e,
+                                                           g2o::VertexSE3* v_se3) {
+  g2o::EdgeSE3PriorQuat* edge(new g2o::EdgeSE3PriorQuat());
+  edge->setId(e->id());
+  edge->setMeasurement(e->measurement());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v_se3;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgePlane* GraphSLAM::add_plane_edge(g2o::VertexPlane* v_plane1,
                                           g2o::VertexPlane* v_plane2,
                                           const Eigen::Vector4d& measurement,

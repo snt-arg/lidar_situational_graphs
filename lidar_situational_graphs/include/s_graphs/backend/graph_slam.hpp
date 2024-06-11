@@ -482,6 +482,16 @@ class GraphSLAM {
   /**
    * @brief
    *
+   * @param e
+   * @param v_se3
+   * @return g2o::EdgeSE3PriorQuat*
+   */
+  g2o::EdgeSE3PriorQuat* copy_se3_prior_quat_edge(g2o::EdgeSE3PriorQuat* e,
+                                                  g2o::VertexSE3* v_se3);
+
+  /**
+   * @brief
+   *
    * @param v_se3
    * @param direction
    * @param measurement
