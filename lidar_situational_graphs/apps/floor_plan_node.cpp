@@ -388,7 +388,6 @@ class FloorPlanNode : public rclcpp::Node {
 
   double linear_regression(const std::deque<KeyFrame::Ptr>& tmp_keyframes) {
     double slope = linear_line_model(tmp_keyframes);
-    std::cout << "slope using eigen method: " << slope << std::endl;
     return slope;
   }
 
