@@ -621,16 +621,6 @@ class SGraphsNode : public rclcpp::Node {
           current_floor_level = floor_mapper->get_floor_level();
           graph_mutex.lock();
           add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
-          GraphUtils::update_node_floor_level(
-              floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
-              current_floor_level,
-              keyframes,
-              x_vert_planes,
-              y_vert_planes,
-              rooms_vec,
-              x_infinite_rooms,
-              y_infinite_rooms,
-              floors_vec);
           graph_mutex.unlock();
         }
 
@@ -890,6 +880,18 @@ class SGraphsNode : public rclcpp::Node {
                                                        anchor_node,
                                                        anchor_edge,
                                                        keyframe_hash);
+
+    if (floor_mapper->get_floor_level_update_info())
+      GraphUtils::update_node_floor_level(
+          floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
+          current_floor_level,
+          keyframes,
+          x_vert_planes,
+          y_vert_planes,
+          rooms_vec,
+          x_infinite_rooms,
+          y_infinite_rooms,
+          floors_vec);
     graph_mutex.unlock();
 
     // perform planar segmentation
