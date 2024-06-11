@@ -64,7 +64,7 @@ class FloorPlanNode : public rclcpp::Node {
     this->declare_parameter("save_timings", false);
     floor_level = 0;
     new_k_added = false;
-    prev_z_diff = 0.0;
+    slope_thres = 0.4;
     floor_height = -1;
     CURRENT_STATUS = STATE::ON_FLOOR;
     stair_keyframes.clear();
@@ -326,16 +326,18 @@ class FloorPlanNode : public rclcpp::Node {
     tmp_stair_keyframes.push_back(current_k->second);
     if (tmp_stair_keyframes.size() > 2) {
       slope = linear_regression(tmp_stair_keyframes);
-      tmp_stair_keyframes.pop_front();
+      if (fabs(slope) < slope_thres) tmp_stair_keyframes.pop_front();
     }
 
     switch (CURRENT_STATUS) {
       case STATE::ON_FLOOR: {
-        if (slope > 0.4) {
+        if (slope > slope_thres) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
+          tmp_stair_keyframes.pop_front();
           CURRENT_STATUS = STATE::ASCENDING;
-        } else if (slope < -0.4) {
+        } else if (slope < -slope_thres) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
+          tmp_stair_keyframes.pop_front();
           CURRENT_STATUS = STATE::DESCENDING;
         }
 
@@ -514,7 +516,7 @@ class FloorPlanNode : public rclcpp::Node {
   int floor_level;
 
   bool new_k_added;
-  double prev_z_diff;
+  double slope_thres;
   double floor_height;
   std::mutex map_plane_mutex;
   std::mutex keyframe_mutex;
