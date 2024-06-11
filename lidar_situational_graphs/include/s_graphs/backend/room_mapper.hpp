@@ -166,7 +166,7 @@ class InfiniteRoomMapper : public MapperUtils {
    * @param private_nh
    * @return
    */
-  InfiniteRoomMapper(const rclcpp::Node::SharedPtr node);
+  InfiniteRoomMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~InfiniteRoomMapper();
 
  private:
@@ -230,7 +230,6 @@ class InfiniteRoomMapper : public MapperUtils {
       std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
       const Eigen::Isometry3d& room_center,
       const Eigen::Isometry3d& cluster_center,
-      const visualization_msgs::msg::MarkerArray& cluster_array,
       int& room_id);
 
   /**
@@ -283,11 +282,53 @@ class InfiniteRoomMapper : public MapperUtils {
                                  g2o::VertexPlane* plane1_node,
                                  g2o::VertexPlane* plane2_node);
 
+  /**
+   * @brief
+   *
+   * @param room_data_association
+   * @param room_plane1_pair
+   * @param room_plane2_pair
+   * @param infinite_rooms
+   * @return true
+   * @return false
+   */
+  bool insert_infinite_room(
+      std::shared_ptr<GraphSLAM>& graph_slam,
+      int room_data_association,
+      int& room_id,
+      const Eigen::Isometry3d& room_center,
+      const Eigen::Isometry3d& cluster_center,
+      const VerticalPlanes& plane1,
+      const VerticalPlanes& plane2,
+      const plane_data_list& room_plane1_pair,
+      const plane_data_list& room_plane2_pair,
+      std::unordered_map<int, InfiniteRooms>& infinite_rooms,
+      const std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
+          detected_mapped_plane_pairs);
+
+  /**
+   * @brief
+   *
+   * @param plane1
+   * @param plane2
+   * @param infinite_room
+   * @param vert_planes
+   * @return std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
+   */
+  std::vector<std::pair<VerticalPlanes, VerticalPlanes>> match_planes(
+      bool& plane1_min_segment,
+      bool& plane2_min_segment,
+      const VerticalPlanes& plane1,
+      const VerticalPlanes& plane2,
+      const InfiniteRooms& infinite_room,
+      const std::unordered_map<int, VerticalPlanes>& vert_planes);
+
  private:
   double infinite_room_information;
   double infinite_room_dist_threshold;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
   double dupl_plane_matching_information;
+  std::mutex& shared_graph_mutex;
 };
 
 /**
@@ -302,7 +343,7 @@ class FiniteRoomMapper : public MapperUtils {
    *
    * @param private_nh
    */
-  FiniteRoomMapper(const rclcpp::Node::SharedPtr node);
+  FiniteRoomMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~FiniteRoomMapper();
 
  private:
@@ -511,6 +552,7 @@ class FiniteRoomMapper : public MapperUtils {
   double room_dist_threshold;
   bool use_parallel_plane_constraint, use_perpendicular_plane_constraint;
   double dupl_plane_matching_information;
+  std::mutex& shared_graph_mutex;
 };
 
 }  // namespace s_graphs

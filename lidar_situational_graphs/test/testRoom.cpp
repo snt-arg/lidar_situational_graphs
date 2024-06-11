@@ -52,8 +52,10 @@ class TestRoom : public ::testing::Test {
     node->declare_parameter("use_parallel_plane_constraint", false);
     node->declare_parameter("use_perpendicular_plane_constraint", false);
 
+    std::mutex graph_mutex;
     graph_slam = std::make_shared<s_graphs::GraphSLAM>();
-    finite_room_mapper = std::make_shared<s_graphs::FiniteRoomMapper>(node);
+    finite_room_mapper =
+        std::make_shared<s_graphs::FiniteRoomMapper>(node, graph_mutex);
   }
 
  public:

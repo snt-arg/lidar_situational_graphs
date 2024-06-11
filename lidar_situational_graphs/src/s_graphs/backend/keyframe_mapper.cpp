@@ -2,7 +2,9 @@
 
 namespace s_graphs {
 
-KeyframeMapper::KeyframeMapper(const rclcpp::Node::SharedPtr node) {
+KeyframeMapper::KeyframeMapper(const rclcpp::Node::SharedPtr node,
+                               std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
   node_obj = node;
 
   node_obj->declare_parameter("fix_first_node", false);
@@ -13,7 +15,7 @@ KeyframeMapper::KeyframeMapper(const rclcpp::Node::SharedPtr node) {
                                  .get<int>();
 
   inf_calclator.reset(new InformationMatrixCalculator(node_obj));
-  loop_detector.reset(new LoopDetector(node_obj));
+  loop_detector.reset(new LoopDetector(node_obj, graph_mutex));
 }
 
 KeyframeMapper::~KeyframeMapper() {}
@@ -38,7 +40,11 @@ int KeyframeMapper::map_keyframes(
 
     // add pose node
     Eigen::Isometry3d odom = odom2map * keyframe->odom;
+
+    shared_graph_mutex.lock();
     keyframe->node = covisibility_graph->add_se3_node(odom);
+    shared_graph_mutex.unlock();
+
     keyframe_hash[keyframe->stamp] = keyframe;
 
     // fix the first node
@@ -50,6 +56,7 @@ int KeyframeMapper::map_keyframes(
       continue;
     }
 
+    shared_graph_mutex.lock();
     // add edge between consecutive keyframes
     const auto& prev_keyframe =
         i == 0 ? keyframes.rbegin()->second : keyframe_queue[i - 1];
@@ -60,6 +67,7 @@ int KeyframeMapper::map_keyframes(
     auto edge = covisibility_graph->add_se3_edge(
         keyframe->node, prev_keyframe->node, relative_pose, information);
     covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    shared_graph_mutex.unlock();
   }
   return num_processed;
 }
@@ -78,21 +86,28 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
     const auto& keyframe = keyframe_queue[i];
 
     // add pose node
+    shared_graph_mutex.lock();
     keyframe->node = local_graph->copy_se3_node(keyframe->node);
+    shared_graph_mutex.unlock();
 
     if (i == 0 && keyframes.empty()) {
+      shared_graph_mutex.lock();
       keyframes.insert({keyframe->id(), keyframe});
       // add_anchor_node(local_graph, keyframe, anchor_node, anchor_edge, true);
+      shared_graph_mutex.unlock();
       continue;
     }
 
+    shared_graph_mutex.lock();
     keyframes.insert({keyframe->id(), keyframe});
+    shared_graph_mutex.unlock();
 
     // add edge between consecutive keyframes
     const auto& prev_keyframe =
         i == 0 ? (keyframes.rbegin()->second) : keyframe_queue[i - 1];
 
     bool edge_found = false;
+    shared_graph_mutex.lock();
     for (g2o::HyperGraph::EdgeSet::iterator it =
              covisibility_graph->graph->edges().begin();
          it != covisibility_graph->graph->edges().end();
@@ -143,6 +158,7 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
         local_graph->add_robust_kernel(edge, "Huber", 1.0);
       }
     }
+    shared_graph_mutex.unlock();
   }
 }
 
@@ -162,6 +178,7 @@ void KeyframeMapper::add_anchor_node(std::shared_ptr<GraphSLAM>& graph,
       inf(j, j) = 1.0 / stddev;
     }
 
+    shared_graph_mutex.lock();
     if (!use_vertex_id)
       anchor_node = graph->add_se3_node(Eigen::Isometry3d::Identity());
     else
@@ -173,6 +190,7 @@ void KeyframeMapper::add_anchor_node(std::shared_ptr<GraphSLAM>& graph,
 
     anchor_edge = graph->add_se3_edge(
         anchor_node, keyframe->node, Eigen::Isometry3d::Identity(), inf);
+    shared_graph_mutex.unlock();
   }
 }
 
@@ -184,6 +202,7 @@ void KeyframeMapper::remap_delayed_keyframe(
   Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
       keyframe->cloud, prev_keyframe->cloud, relative_pose);
 
+  shared_graph_mutex.lock();
   std::set<g2o::HyperGraph::Edge*> edges = keyframe->node->edges();
   for (const auto& edge : edges) {
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(edge);
@@ -196,6 +215,7 @@ void KeyframeMapper::remap_delayed_keyframe(
       }
     }
   }
+  shared_graph_mutex.unlock();
 }
 
 }  // namespace s_graphs

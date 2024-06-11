@@ -39,19 +39,20 @@ namespace s_graphs {
 
 class LoopMapper {
  public:
-  LoopMapper(const rclcpp::Node::SharedPtr node);
+  LoopMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~LoopMapper();
 
  public:
   void add_loops(const std::shared_ptr<GraphSLAM>& covisibility_graph,
-                 const std::vector<Loop::Ptr>& loops,
-                 std::mutex& graph_mutex);
+                 const std::vector<Loop::Ptr>& loops);
 
  private:
   void set_data(g2o::VertexSE3* keyframe_node);
   bool get_floor_data(g2o::VertexSE3* keyframe_node);
 
  private:
+  std::mutex& shared_graph_mutex;
+
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
 };
 }  // namespace s_graphs

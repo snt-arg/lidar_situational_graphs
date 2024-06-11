@@ -2,7 +2,8 @@
 
 namespace s_graphs {
 
-IMUMapper::IMUMapper(const rclcpp::Node::SharedPtr node) {
+IMUMapper::IMUMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
   enable_imu_orientation =
       node->get_parameter("enable_imu_orientation").get_parameter_value().get<bool>();
   enable_imu_acceleration =
@@ -92,20 +93,25 @@ bool IMUMapper::map_imu_data(std::shared_ptr<GraphSLAM>& covisibility_graph,
     if (enable_imu_orientation) {
       Eigen::MatrixXd info =
           Eigen::MatrixXd::Identity(3, 3) / imu_orientation_edge_stddev;
+      shared_graph_mutex.lock();
       auto edge = covisibility_graph->add_se3_prior_quat_edge(
           keyframe.second->node, *keyframe.second->orientation, info);
       covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      shared_graph_mutex.unlock();
     }
 
     if (enable_imu_acceleration) {
       Eigen::MatrixXd info =
           Eigen::MatrixXd::Identity(3, 3) / imu_acceleration_edge_stddev;
+
+      shared_graph_mutex.lock();
       g2o::OptimizableGraph::Edge* edge =
           covisibility_graph->add_se3_prior_vec_edge(keyframe.second->node,
                                                      -Eigen::Vector3d::UnitZ(),
                                                      *keyframe.second->acceleration,
                                                      info);
       covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      shared_graph_mutex.unlock();
     }
     updated = true;
   }

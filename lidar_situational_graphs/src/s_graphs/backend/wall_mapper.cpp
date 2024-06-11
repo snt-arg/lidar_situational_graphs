@@ -2,7 +2,10 @@
 
 namespace s_graphs {
 
-WallMapper::WallMapper(const rclcpp::Node::SharedPtr node) { node_obj = node; }
+WallMapper::WallMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
+  node_obj = node;
+}
 
 WallMapper::~WallMapper() {}
 
@@ -30,13 +33,16 @@ void WallMapper::factor_wall(
                                       wall_point,
                                       matched_x_plane1->second,
                                       matched_x_plane2->second);
+
       Walls wall;
       wall.id = id;
       wall.plane1_id = matched_x_plane1->first;
       wall.plane2_id = matched_x_plane2->first;
       wall.floor_level = matched_x_plane1->second.floor_level;
+      shared_graph_mutex.lock();
       wall.node = dynamic_cast<g2o::VertexWall*>(covisibility_graph->graph->vertex(id));
       walls_vec.insert({wall.id, wall});
+      shared_graph_mutex.unlock();
     }
   } else if (y_planes_msg.size() == 2) {
     auto matched_y_plane1 = y_vert_planes.find(y_planes_msg[0].id);
@@ -53,13 +59,16 @@ void WallMapper::factor_wall(
                                       wall_point,
                                       matched_y_plane1->second,
                                       matched_y_plane2->second);
+
       Walls wall;
       wall.id = id;
       wall.plane1_id = matched_y_plane1->first;
       wall.plane2_id = matched_y_plane2->first;
       wall.floor_level = matched_y_plane1->second.floor_level;
+      shared_graph_mutex.lock();
       wall.node = dynamic_cast<g2o::VertexWall*>(covisibility_graph->graph->vertex(id));
       walls_vec.insert({wall.id, wall});
+      shared_graph_mutex.unlock();
     }
   } else {
     std::cout << "Message size is not 2 !! " << std::endl;
@@ -72,19 +81,25 @@ int WallMapper::add_wall_node_and_edge(
     const Eigen::Vector3d& wall_point,
     VerticalPlanes& plane1,
     VerticalPlanes& plane2) {
+  shared_graph_mutex.lock();
   g2o::VertexWall* wall_node = covisibility_graph->add_wall_node(wall_pose);
+  shared_graph_mutex.unlock();
 
   Eigen::Matrix<double, 3, 3> information_wall_surfaces;
   information_wall_surfaces.setZero();
   information_wall_surfaces(0, 0) = 10;
   information_wall_surfaces(1, 1) = 10;
   information_wall_surfaces(2, 2) = 10;
+
+  shared_graph_mutex.lock();
   auto wall_edge = covisibility_graph->add_wall_2planes_edge(wall_node,
                                                              (plane1).plane_node,
                                                              (plane2).plane_node,
                                                              wall_point,
                                                              information_wall_surfaces);
   covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
+  shared_graph_mutex.unlock();
+
   (plane1).on_wall = true;
   (plane2).on_wall = true;
 

@@ -44,7 +44,7 @@ namespace s_graphs {
 
 class RoomGraphGenerator {
  public:
-  RoomGraphGenerator(rclcpp::Node::SharedPtr node);
+  RoomGraphGenerator(rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~RoomGraphGenerator();
 
  public:
@@ -114,6 +114,9 @@ class RoomGraphGenerator {
    */
   void update_room_graph(const Rooms room,
                          const std::shared_ptr<GraphSLAM>& covisibility_graph);
+
+ private:
+  std::mutex& shared_graph_mutex;
 };
 }  // namespace s_graphs
 

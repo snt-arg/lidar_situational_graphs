@@ -2,7 +2,8 @@
 
 namespace s_graphs {
 
-PlaneMapper::PlaneMapper(const rclcpp::Node::SharedPtr node) {
+PlaneMapper::PlaneMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
   node_obj = node;
   use_point_to_plane =
       node_obj->get_parameter("use_point_to_plane").get_parameter_value().get<bool>();
@@ -203,13 +204,17 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(cloud_seg_body->points.back().b);  // blue
         vert_plane.color = color;
 
+        shared_graph_mutex.lock();
         x_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->x_plane_ids.push_back(vert_plane.id);
+        shared_graph_mutex.unlock();
       } else {
+        shared_graph_mutex.lock();
         plane_node = x_vert_planes[data_association].plane_node;
         x_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         x_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->x_plane_ids.push_back(x_vert_planes[data_association].id);
+        shared_graph_mutex.unlock();
       }
       break;
     }
@@ -230,13 +235,19 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(cloud_seg_body->points.back().g);  // green
         color.push_back(cloud_seg_body->points.back().b);  // blue
         vert_plane.color = color;
+
+        shared_graph_mutex.lock();
         y_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->y_plane_ids.push_back(vert_plane.id);
+        shared_graph_mutex.unlock();
+
       } else {
+        shared_graph_mutex.lock();
         plane_node = y_vert_planes[data_association].plane_node;
         y_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         y_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->y_plane_ids.push_back(y_vert_planes[data_association].id);
+        shared_graph_mutex.unlock();
       }
       break;
     }
@@ -257,13 +268,19 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(0.0);  // green
         color.push_back(100);  // blue
         hort_plane.color = color;
+
+        shared_graph_mutex.lock();
         hort_planes.insert({hort_plane.id, hort_plane});
         keyframe->hort_plane_ids.push_back(hort_plane.id);
+        shared_graph_mutex.unlock();
+
       } else {
+        shared_graph_mutex.lock();
         plane_node = hort_planes[data_association].plane_node;
         hort_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         hort_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->hort_plane_ids.push_back(hort_planes[data_association].id);
+        shared_graph_mutex.unlock();
       }
       break;
     }
@@ -272,6 +289,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
       break;
   }
 
+  shared_graph_mutex.lock();
   if (use_point_to_plane) {
     Eigen::Matrix<double, 1, 1> information(0.001);
     auto edge = covisibility_graph->add_se3_point_to_plane_edge(
@@ -289,6 +307,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
   }
 
   convert_plane_points_to_map(x_vert_planes, y_vert_planes, hort_planes);
+  shared_graph_mutex.unlock();
 
   return data_association;
 }
@@ -307,7 +326,11 @@ int PlaneMapper::associate_plane(
   int data_association;
   double vert_min_maha_dist = 100;
   double hort_min_maha_dist = 100;
+
+  shared_graph_mutex.lock();
   Eigen::Isometry3d m2n = keyframe->estimate().inverse();
+  shared_graph_mutex.unlock();
+
   int current_floor_level = keyframe->floor_level;
 
   switch (plane_type) {
@@ -315,7 +338,10 @@ int PlaneMapper::associate_plane(
       for (const auto& x_vert_plane : x_vert_planes) {
         if (current_floor_level != x_vert_plane.second.floor_level) continue;
 
+        shared_graph_mutex.lock();
         g2o::Plane3D local_plane = m2n * x_vert_plane.second.plane_node->estimate();
+        shared_graph_mutex.unlock();
+
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * x_vert_plane.second.covariance.inverse() * error);
@@ -334,8 +360,12 @@ int PlaneMapper::associate_plane(
           float min_segment = std::numeric_limits<float>::max();
           pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
               new pcl::PointCloud<PointNormal>());
+
+          shared_graph_mutex.lock();
           Eigen::Matrix4f current_keyframe_pose =
               keyframe->estimate().matrix().cast<float>();
+          shared_graph_mutex.unlock();
+
           for (size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
             PointNormal dst_pt;
             dst_pt.getVector4fMap() =
@@ -358,7 +388,10 @@ int PlaneMapper::associate_plane(
       for (const auto& y_vert_plane : y_vert_planes) {
         if (current_floor_level != y_vert_plane.second.floor_level) continue;
 
+        shared_graph_mutex.lock();
         g2o::Plane3D local_plane = m2n * y_vert_plane.second.plane_node->estimate();
+        shared_graph_mutex.unlock();
+
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * y_vert_plane.second.covariance.inverse() * error);
@@ -377,8 +410,12 @@ int PlaneMapper::associate_plane(
           float min_segment = std::numeric_limits<float>::max();
           pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
               new pcl::PointCloud<PointNormal>());
+
+          shared_graph_mutex.lock();
           Eigen::Matrix4f current_keyframe_pose =
               keyframe->estimate().matrix().cast<float>();
+          shared_graph_mutex.unlock();
+
           for (size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
             PointNormal dst_pt;
             dst_pt.getVector4fMap() =
@@ -401,7 +438,10 @@ int PlaneMapper::associate_plane(
       for (const auto& hort_plane : hort_planes) {
         if (current_floor_level != hort_plane.second.floor_level) continue;
 
+        shared_graph_mutex.lock();
         g2o::Plane3D local_plane = m2n * hort_plane.second.plane_node->estimate();
+        shared_graph_mutex.unlock();
+
         Eigen::Vector3d error = local_plane.ominus(det_plane);
         double maha_dist =
             sqrt(error.transpose() * hort_plane.second.covariance.inverse() * error);

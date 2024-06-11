@@ -68,7 +68,7 @@ class WallMapper {
    *
    * @param private_nh
    */
-  WallMapper(const rclcpp::Node::SharedPtr node);
+  WallMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~WallMapper();
 
  public:
@@ -113,6 +113,7 @@ class WallMapper {
 
  private:
   rclcpp::Node::SharedPtr node_obj;
+  std::mutex& shared_graph_mutex;
 };
 
 }  // namespace s_graphs

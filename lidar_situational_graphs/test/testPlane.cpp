@@ -64,8 +64,9 @@ class TestPlane : public ::testing::Test {
     node->declare_parameter("plane_points_dist", 0.1);
     node->declare_parameter("min_plane_points", 100);
 
+    std::mutex graph_mutex;
     graph_slam = std::make_shared<s_graphs::GraphSLAM>();
-    plane_mapper = std::make_shared<s_graphs::PlaneMapper>(node);
+    plane_mapper = std::make_shared<s_graphs::PlaneMapper>(node, graph_mutex);
     cloud = pcl::PointCloud<PointT>::Ptr();
   }
 

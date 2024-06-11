@@ -57,7 +57,7 @@ class KeyframeMapper {
    *
    * @param private_nh
    */
-  KeyframeMapper(const rclcpp::Node::SharedPtr node);
+  KeyframeMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~KeyframeMapper();
 
  public:
@@ -137,6 +137,7 @@ class KeyframeMapper {
   int max_keyframes_per_update;
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
   std::unique_ptr<LoopDetector> loop_detector;
+  std::mutex& shared_graph_mutex;
 };
 }  // namespace s_graphs
 

@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef LOOP_DETECTOR_HPP
 #define LOOP_DETECTOR_HPP
 
@@ -79,7 +77,8 @@ class LoopDetector {
    *
    * @param node
    */
-  LoopDetector(const rclcpp::Node::SharedPtr node) {
+  LoopDetector(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex)
+      : shared_graph_mutex(graph_mutex) {
     distance_thresh =
         node->get_parameter("distance_thresh").get_parameter_value().get<double>();
     accum_distance_thresh = node->get_parameter("accum_distance_thresh")
@@ -193,12 +192,20 @@ class LoopDetector {
 
     registration->setInputTarget(prev_keyframe->cloud);
     registration->setInputSource(keyframe->cloud);
+
+    shared_graph_mutex.lock();
     Eigen::Isometry3d prev_keyframe_estimate = prev_keyframe->node->estimate();
+    shared_graph_mutex.unlock();
+
     prev_keyframe_estimate.linear() =
         Eigen::Quaterniond(prev_keyframe_estimate.linear())
             .normalized()
             .toRotationMatrix();
+
+    shared_graph_mutex.lock();
     Eigen::Isometry3d keyframe_estimate = keyframe->node->estimate();
+    shared_graph_mutex.unlock();
+
     keyframe_estimate.linear() =
         Eigen::Quaterniond(keyframe_estimate.linear()).normalized().toRotationMatrix();
 
@@ -256,8 +263,10 @@ class LoopDetector {
 
       if (new_keyframe->floor_level != k.second->floor_level) continue;
 
+      shared_graph_mutex.lock();
       const auto& pos1 = k.second->node->estimate().translation();
       const auto& pos2 = new_keyframe->node->estimate().translation();
+      shared_graph_mutex.unlock();
 
       // estimated distance between keyframes is too small
       double dist = (pos1.head<2>() - pos2.head<2>()).norm();
@@ -298,22 +307,26 @@ class LoopDetector {
     KeyFrame::Ptr best_matched;
     Eigen::Matrix4f relative_pose;
 
-    // std::cout << std::endl;
-    // std::cout << "--- loop detection ---" << std::endl;
-    // std::cout << "num_candidates: " << candidate_keyframes.size() << std::endl;
-    // std::cout << "matching" << std::flush;
     auto t1 = rclcpp::Clock{}.now();
 
     pcl::PointCloud<PointT>::Ptr aligned(new pcl::PointCloud<PointT>());
     for (const auto& candidate : candidate_keyframes) {
       if (candidate.second->cloud->points.empty()) continue;
       registration->setInputSource(candidate.second->cloud);
+
+      shared_graph_mutex.lock();
       Eigen::Isometry3d new_keyframe_estimate = new_keyframe->node->estimate();
+      shared_graph_mutex.unlock();
+
       new_keyframe_estimate.linear() =
           Eigen::Quaterniond(new_keyframe_estimate.linear())
               .normalized()
               .toRotationMatrix();
+
+      shared_graph_mutex.lock();
       Eigen::Isometry3d candidate_estimate = candidate.second->node->estimate();
+      shared_graph_mutex.unlock();
+
       candidate_estimate.linear() = Eigen::Quaterniond(candidate_estimate.linear())
                                         .normalized()
                                         .toRotationMatrix();
@@ -369,6 +382,8 @@ class LoopDetector {
   }
 
  private:
+  std::mutex& shared_graph_mutex;
+
   double distance_thresh;  // estimated distance between keyframes consisting a loop
                            // must be less than this distance
   double accum_distance_thresh;           // traveled distance between ...

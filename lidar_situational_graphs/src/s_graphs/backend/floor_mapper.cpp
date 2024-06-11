@@ -2,7 +2,7 @@
 
 namespace s_graphs {
 
-FloorMapper::FloorMapper() {
+FloorMapper::FloorMapper(std::mutex& graph_mutex) : shared_graph_mutex(graph_mutex) {
   floor_horizontal_threshold = 0.5;
   floor_vertical_threshold = 0.5;
   floor_level_updated = false;
@@ -39,6 +39,7 @@ void FloorMapper::lookup_floors(
     set_floor_level(floor_id);
     update_floor_level(true);
   } else if (data_association != -1) {
+    shared_graph_mutex.lock();
     double floor_dist =
         sqrt(pow(floors_vec[data_association].node->estimate().translation()(0) -
                      floor_data.floor_center.position.x,
@@ -46,6 +47,8 @@ void FloorMapper::lookup_floors(
              pow(floors_vec[data_association].node->estimate().translation()(1) -
                      floor_data.floor_center.position.y,
                  2));
+    shared_graph_mutex.unlock();
+
     if (floor_dist > floor_horizontal_threshold) {
       update_floor_node(graph_slam,
                         floors_vec[data_association].node,
@@ -65,10 +68,9 @@ int FloorMapper::associate_floors(const Eigen::Vector3d& floor_center,
   int data_association = -1;
   // just check the just of the floors
   for (const auto& mapped_floor : floors_vec) {
+    shared_graph_mutex.lock();
     double z_dist = fabs(floor_center(2) - mapped_floor.second.node->estimate()(2, 3));
-
-    std::cout << "z dist " << z_dist << " between detected floor and mapped floor "
-              << mapped_floor.first << std::endl;
+    shared_graph_mutex.unlock();
 
     if (z_dist < min_z_dist) {
       min_z_dist = z_dist;
@@ -76,7 +78,6 @@ int FloorMapper::associate_floors(const Eigen::Vector3d& floor_center,
     }
   }
 
-  std::cout << "min_z_dist " << min_z_dist << std::endl;
   if (min_z_dist > floor_vertical_threshold) data_association = -1;
 
   return data_association;
@@ -97,8 +98,12 @@ int FloorMapper::factor_floor_node(
   floor_pose.translation().z() = floor_data.floor_center.position.z;
 
   Floors det_floor;
+
+  shared_graph_mutex.lock();
   det_floor.graph_id = graph_slam->retrieve_local_nbr_of_vertices();
   floor_node = graph_slam->add_floor_node(floor_pose);
+  shared_graph_mutex.unlock();
+
   det_floor.id = det_floor.graph_id;
   det_floor.node = floor_node;
   if (floors_vec.empty()) {
@@ -107,7 +112,10 @@ int FloorMapper::factor_floor_node(
     det_floor.color.push_back(0);
   } else
     det_floor.color = PlaneUtils::random_color_vec();
+
+  shared_graph_mutex.lock();
   floors_vec.insert({det_floor.id, det_floor});
+  shared_graph_mutex.unlock();
 
   factor_floor_room_nodes(
       graph_slam, floors_vec, rooms_vec, x_infinite_rooms, y_infinite_rooms);
@@ -129,7 +137,10 @@ void FloorMapper::update_floor_node(
   floor_pose.translation().y() = floor_data.floor_center.position.y;
   floor_pose.translation().z() = floor_data.floor_center.position.z;
 
+  shared_graph_mutex.lock();
   graph_slam->update_floor_node(floor_node, floor_pose);
+  shared_graph_mutex.unlock();
+
   factor_floor_room_nodes(
       graph_slam, floors_vec, rooms_vec, x_infinite_rooms, y_infinite_rooms);
 }
@@ -174,6 +185,8 @@ void FloorMapper::add_floor_room_edges(
 
     Eigen::Vector3d measurement;
     measurement.setZero();
+
+    shared_graph_mutex.lock();
     measurement(0) = floor.node->estimate().translation()(0) -
                      room.second.node->estimate().translation()(0);
     measurement(1) = floor.node->estimate().translation()(1) -
@@ -182,6 +195,7 @@ void FloorMapper::add_floor_room_edges(
     auto edge = graph_slam->add_floor_room_edge(
         floor.node, room.second.node, measurement, information_floor);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    shared_graph_mutex.unlock();
   }
 
   for (const auto& x_infinite_room : x_infinite_rooms) {
@@ -189,6 +203,8 @@ void FloorMapper::add_floor_room_edges(
 
     Eigen::Vector3d measurement;
     measurement.setZero();
+
+    shared_graph_mutex.lock();
     measurement(0) = floor.node->estimate().translation()(0) -
                      x_infinite_room.second.node->estimate().translation()(0);
     measurement(1) = floor.node->estimate().translation()(1) -
@@ -197,6 +213,7 @@ void FloorMapper::add_floor_room_edges(
     auto edge = graph_slam->add_floor_room_edge(
         floor.node, x_infinite_room.second.node, measurement, information_floor);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    shared_graph_mutex.unlock();
   }
 
   for (const auto& y_infinite_room : y_infinite_rooms) {
@@ -204,6 +221,8 @@ void FloorMapper::add_floor_room_edges(
 
     Eigen::Vector3d measurement;
     measurement.setZero();
+
+    shared_graph_mutex.lock();
     measurement(0) = floor.node->estimate().translation()(0) -
                      y_infinite_room.second.node->estimate().translation()(0);
     measurement(1) = floor.node->estimate().translation()(1) -
@@ -212,6 +231,7 @@ void FloorMapper::add_floor_room_edges(
     auto edge = graph_slam->add_floor_room_edge(
         floor.node, y_infinite_room.second.node, measurement, information_floor);
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
+    shared_graph_mutex.unlock();
   }
 }
 
@@ -227,9 +247,11 @@ void FloorMapper::remove_floor_room_nodes(std::shared_ptr<GraphSLAM>& graph_slam
     }
   }
 
+  shared_graph_mutex.lock();
   for (auto edge_floor_room : edge_floor_room_vec) {
     bool ack = graph_slam->remove_room_room_edge(edge_floor_room);
   }
+  shared_graph_mutex.unlock();
 }
 
 std::vector<g2o::EdgeFloorRoom*> FloorMapper::remove_nodes(
@@ -237,6 +259,7 @@ std::vector<g2o::EdgeFloorRoom*> FloorMapper::remove_nodes(
     Floors floor) {
   std::vector<g2o::EdgeFloorRoom*> current_edge_floor_room_vec;
 
+  shared_graph_mutex.lock();
   g2o::VertexFloor* floor_node = floor.node;
   for (g2o::HyperGraph::EdgeSet::iterator e_it = floor_node->edges().begin();
        e_it != floor_node->edges().end();
@@ -247,6 +270,7 @@ std::vector<g2o::EdgeFloorRoom*> FloorMapper::remove_nodes(
       current_edge_floor_room_vec.push_back(edge_floor_room);
     }
   }
+  shared_graph_mutex.unlock();
 
   return current_edge_floor_room_vec;
 }

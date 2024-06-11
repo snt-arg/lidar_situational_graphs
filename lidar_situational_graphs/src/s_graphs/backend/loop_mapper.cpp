@@ -2,20 +2,20 @@
 
 namespace s_graphs {
 
-LoopMapper::LoopMapper(const rclcpp::Node::SharedPtr node) {
+LoopMapper::LoopMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
   inf_calclator.reset(new InformationMatrixCalculator(node));
 }
 
 LoopMapper::~LoopMapper() {}
 
 void LoopMapper::add_loops(const std::shared_ptr<GraphSLAM>& covisibility_graph,
-                           const std::vector<Loop::Ptr>& loops,
-                           std::mutex& graph_mutex) {
+                           const std::vector<Loop::Ptr>& loops) {
   for (const auto& loop : loops) {
     Eigen::Isometry3d relpose(loop->relative_pose.cast<double>());
     Eigen::MatrixXd information_matrix = inf_calclator->calc_information_matrix(
         loop->key1->cloud, loop->key2->cloud, relpose);
-    graph_mutex.lock();
+    shared_graph_mutex.lock();
     std::cout << "loop found between keyframes " << loop->key1->node->id() << " and "
               << loop->key2->node->id() << std::endl;
 
@@ -32,7 +32,7 @@ void LoopMapper::add_loops(const std::shared_ptr<GraphSLAM>& covisibility_graph,
     } else {
       std::cout << "not adding this loop as node is on floor " << std::endl;
     }
-    graph_mutex.unlock();
+    shared_graph_mutex.unlock();
   }
 }
 

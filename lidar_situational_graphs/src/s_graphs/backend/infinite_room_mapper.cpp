@@ -2,7 +2,9 @@
 
 namespace s_graphs {
 
-InfiniteRoomMapper::InfiniteRoomMapper(const rclcpp::Node::SharedPtr node) {
+InfiniteRoomMapper::InfiniteRoomMapper(const rclcpp::Node::SharedPtr node,
+                                       std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
   node_obj = node;
 
   infinite_room_information = node->get_parameter("infinite_room_information")
@@ -101,6 +103,7 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
 
       if (current_room.second.floor_level != current_floor_level) continue;
 
+      shared_graph_mutex.lock();
       float dist_x_inf_room_room =
           sqrt(pow(room_data.room_center.position.x -
                        current_room.second.node->estimate().translation()(0),
@@ -112,6 +115,7 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
         min_dist_x_inf_room_room = dist_x_inf_room_room;
         matched_room = current_room.second;
       }
+      shared_graph_mutex.unlock();
     }
 
     if (min_dist_x_inf_room_room < 1.0) {
@@ -150,7 +154,6 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
                                             y_infinite_rooms,
                                             room_center,
                                             cluster_center,
-                                            room_data.cluster_array,
                                             room_id);
   }
 
@@ -169,6 +172,7 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
 
       if (current_room.second.floor_level != current_floor_level) continue;
 
+      shared_graph_mutex.lock();
       float dist_y_inf_room_room =
           sqrt(pow(room_data.room_center.position.x -
                        current_room.second.node->estimate().translation()(0),
@@ -180,6 +184,7 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
         min_dist_y_inf_room_room = dist_y_inf_room_room;
         matched_room = current_room.second;
       }
+      shared_graph_mutex.unlock();
     }
     if (min_dist_y_inf_room_room < 1.0) {
       std::cout << "Room already exists in the given location, not inserting a y "
@@ -216,7 +221,6 @@ bool InfiniteRoomMapper::lookup_infinite_rooms(
                                             y_infinite_rooms,
                                             room_center,
                                             cluster_center,
-                                            room_data.cluster_array,
                                             room_id);
   }
 
@@ -236,7 +240,6 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     const Eigen::Isometry3d& room_center,
     const Eigen::Isometry3d& cluster_center,
-    const visualization_msgs::msg::MarkerArray& cluster_array,
     int& room_id) {
   room_id = -1;
   g2o::VertexRoom* room_node;
@@ -261,21 +264,6 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
   information_2planes(1, 1) = dupl_plane_matching_information;
   information_2planes(2, 2) = dupl_plane_matching_information;
 
-  RCLCPP_DEBUG(node_obj->get_logger(),
-               "infinite_room planes",
-               "final infinite_room plane 1 %f %f %f %f",
-               room_plane1_pair.plane_unflipped.coeffs()(0),
-               room_plane1_pair.plane_unflipped.coeffs()(1),
-               room_plane1_pair.plane_unflipped.coeffs()(2),
-               room_plane1_pair.plane_unflipped.coeffs()(3));
-  RCLCPP_DEBUG(node_obj->get_logger(),
-               "infinite_room planes",
-               "final infinite_room plane 2 %f %f %f %f",
-               room_plane2_pair.plane_unflipped.coeffs()(0),
-               room_plane2_pair.plane_unflipped.coeffs()(1),
-               room_plane2_pair.plane_unflipped.coeffs()(2),
-               room_plane2_pair.plane_unflipped.coeffs()(3));
-
   if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     auto found_plane1 = x_vert_planes.find(room_plane1_pair.plane_id);
     auto found_plane2 = x_vert_planes.find(room_plane2_pair.plane_id);
@@ -296,84 +284,17 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
                                                      y_infinite_rooms,
                                                      detected_mapped_plane_pairs);
 
-    if ((x_infinite_rooms.empty() || room_data_association == -1)) {
-      std::cout << "found an X infinite_room with pre pose "
-                << room_center.translation() << " between plane "
-                << room_plane1_pair.plane_unflipped.coeffs() << " and plane "
-                << room_plane2_pair.plane_unflipped.coeffs() << std::endl;
-
-      room_data_association = graph_slam->retrieve_local_nbr_of_vertices();
-      room_node = graph_slam->add_room_node(room_center);
-      cluster_center_node = graph_slam->add_room_node(cluster_center);
-      cluster_center_node->setFixed(true);
-
-      InfiniteRooms det_infinite_room;
-      det_infinite_room.id = room_data_association;
-      room_id = det_infinite_room.id;
-      det_infinite_room.plane1 = room_plane1_pair.plane_unflipped;
-      det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
-      det_infinite_room.plane1_id = room_plane1_pair.plane_id;
-      det_infinite_room.plane2_id = room_plane2_pair.plane_id;
-      det_infinite_room.cluster_array = cluster_array;
-
-      det_infinite_room.cluster_center_node = cluster_center_node;
-      det_infinite_room.node = room_node;
-      det_infinite_room.plane1_node = (found_plane1->second).plane_node;
-      det_infinite_room.plane2_node = (found_plane2->second).plane_node;
-      det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
-      det_infinite_room.floor_level = (found_plane1->second).floor_level;
-      x_infinite_rooms.insert({det_infinite_room.id, det_infinite_room});
-
-      auto edge_room_plane =
-          graph_slam->add_room_2planes_edge(room_node,
-                                            (found_plane1->second).plane_node,
-                                            (found_plane2->second).plane_node,
-                                            cluster_center_node,
-                                            information_infinite_room_planes);
-      graph_slam->add_robust_kernel(edge_room_plane, "Huber", 1.0);
-
-    } else {
-      /* add the edge between detected planes and the infinite_room */
-      room_node = x_infinite_rooms[room_data_association].node;
-      room_id = room_data_association;
-      std::cout << "Matched det infinite_room X with pre pose "
-                << room_center.translation() << " to mapped infinite_room with id "
-                << room_data_association << " and pose "
-                << room_node->estimate().translation() << std::endl;
-      x_infinite_rooms[room_data_association].cluster_array = cluster_array;
-
-      std::set<g2o::HyperGraph::Edge*> plane1_edges =
-          (found_plane1->second).plane_node->edges();
-      std::set<g2o::HyperGraph::Edge*> plane2_edges =
-          (found_plane2->second).plane_node->edges();
-
-      if (detected_mapped_plane_pairs[0].first.id !=
-          detected_mapped_plane_pairs[0].second.id) {
-        if (!MapperUtils::check_plane_ids(
-                plane1_edges, detected_mapped_plane_pairs[0].second.plane_node)) {
-          auto edge_planes = graph_slam->add_2planes_edge(
-              detected_mapped_plane_pairs[0].first.plane_node,
-              detected_mapped_plane_pairs[0].second.plane_node,
-              information_2planes);
-          graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
-          duplicate_found = true;
-          std::cout << "Adding new x1 plane " << std::endl;
-        }
-      }
-      if (detected_mapped_plane_pairs[1].first.id !=
-          detected_mapped_plane_pairs[1].second.id) {
-        if (!MapperUtils::check_plane_ids(
-                plane2_edges, detected_mapped_plane_pairs[1].second.plane_node)) {
-          auto edge_planes = graph_slam->add_2planes_edge(
-              detected_mapped_plane_pairs[1].first.plane_node,
-              detected_mapped_plane_pairs[1].second.plane_node,
-              information_2planes);
-          graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
-          duplicate_found = true;
-          std::cout << "Adding new x2 plane " << std::endl;
-        }
-      }
-    }
+    duplicate_found = insert_infinite_room(graph_slam,
+                                           room_data_association,
+                                           room_id,
+                                           room_center,
+                                           cluster_center,
+                                           found_plane1->second,
+                                           found_plane2->second,
+                                           room_plane1_pair,
+                                           room_plane2_pair,
+                                           x_infinite_rooms,
+                                           detected_mapped_plane_pairs);
   }
 
   if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
@@ -395,83 +316,135 @@ bool InfiniteRoomMapper::factor_infinite_rooms(
                                                      y_infinite_rooms,
                                                      detected_mapped_plane_pairs);
 
-    if ((y_infinite_rooms.empty() || room_data_association == -1)) {
-      std::cout << "found an Y infinite_room with pre pose "
-                << room_center.translation() << " between plane "
-                << room_plane1_pair.plane_unflipped.coeffs() << " and plane "
-                << room_plane2_pair.plane_unflipped.coeffs() << std::endl;
+    duplicate_found = insert_infinite_room(graph_slam,
+                                           room_data_association,
+                                           room_id,
+                                           room_center,
+                                           cluster_center,
+                                           found_plane1->second,
+                                           found_plane2->second,
+                                           room_plane1_pair,
+                                           room_plane2_pair,
+                                           y_infinite_rooms,
+                                           detected_mapped_plane_pairs);
+  }
 
-      room_data_association = graph_slam->retrieve_local_nbr_of_vertices();
-      room_node = graph_slam->add_room_node(room_center);
-      cluster_center_node = graph_slam->add_room_node(cluster_center);
-      cluster_center_node->setFixed(true);
+  return duplicate_found;
+}
 
-      InfiniteRooms det_infinite_room;
-      det_infinite_room.id = room_data_association;
-      room_id = det_infinite_room.id;
-      det_infinite_room.plane1 = room_plane1_pair.plane_unflipped;
-      det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
-      det_infinite_room.plane1_id = room_plane1_pair.plane_id;
-      det_infinite_room.plane2_id = room_plane2_pair.plane_id;
-      det_infinite_room.cluster_array = cluster_array;
+bool InfiniteRoomMapper::insert_infinite_room(
+    std::shared_ptr<GraphSLAM>& graph_slam,
+    int room_data_association,
+    int& room_id,
+    const Eigen::Isometry3d& room_center,
+    const Eigen::Isometry3d& cluster_center,
+    const VerticalPlanes& plane1,
+    const VerticalPlanes& plane2,
+    const plane_data_list& room_plane1_pair,
+    const plane_data_list& room_plane2_pair,
+    std::unordered_map<int, InfiniteRooms>& infinite_rooms,
+    const std::vector<std::pair<VerticalPlanes, VerticalPlanes>>&
+        detected_mapped_plane_pairs) {
+  bool duplicate_found = false;
+  g2o::VertexRoom* room_node;
+  g2o::VertexRoom* cluster_center_node;
 
-      det_infinite_room.cluster_center_node = cluster_center_node;
-      det_infinite_room.node = room_node;
-      det_infinite_room.plane1_node = (found_plane1->second).plane_node;
-      det_infinite_room.plane2_node = (found_plane2->second).plane_node;
-      det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
-      det_infinite_room.floor_level = (found_plane1->second).floor_level;
-      y_infinite_rooms.insert({det_infinite_room.id, det_infinite_room});
+  Eigen::Matrix<double, 2, 2> information_infinite_room_planes;
+  information_infinite_room_planes.setZero();
+  information_infinite_room_planes(0, 0) = infinite_room_information;
+  information_infinite_room_planes(1, 1) = infinite_room_information;
 
-      auto edge_room_plane =
-          graph_slam->add_room_2planes_edge(room_node,
-                                            (found_plane1->second).plane_node,
-                                            (found_plane2->second).plane_node,
-                                            cluster_center_node,
-                                            information_infinite_room_planes);
-      graph_slam->add_robust_kernel(edge_room_plane, "Huber", 1.0);
-    } else {
-      /* add the edge between detected planes and the infinite_room */
-      room_node = y_infinite_rooms[room_data_association].node;
-      room_id = room_data_association;
-      std::cout << "Matched det infinite_room Y with pre pose "
-                << room_center.translation() << " to mapped infinite_room with id "
-                << room_data_association << " and pose "
-                << room_node->estimate().translation() << std::endl;
-      y_infinite_rooms[room_data_association].cluster_array = cluster_array;
+  Eigen::Matrix<double, 1, 1> information_infinite_room_plane;
+  information_infinite_room_plane(0, 0) = infinite_room_information;
 
-      std::set<g2o::HyperGraph::Edge*> plane1_edges =
-          (found_plane1->second).plane_node->edges();
-      std::set<g2o::HyperGraph::Edge*> plane2_edges =
-          (found_plane2->second).plane_node->edges();
+  Eigen::Matrix<double, 1, 1> information_infinite_room_prior;
+  information_infinite_room_prior(0, 0) = 1e-5;
 
-      if (detected_mapped_plane_pairs[0].first.id !=
-          detected_mapped_plane_pairs[0].second.id) {
-        if (!MapperUtils::check_plane_ids(
-                plane1_edges, detected_mapped_plane_pairs[0].second.plane_node)) {
-          auto edge_planes = graph_slam->add_2planes_edge(
-              detected_mapped_plane_pairs[0].first.plane_node,
-              detected_mapped_plane_pairs[0].second.plane_node,
-              information_2planes);
-          graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
-          duplicate_found = true;
-          std::cout << "Adding new y1 plane " << std::endl;
-        }
-      }
-      if (detected_mapped_plane_pairs[1].first.id !=
-          detected_mapped_plane_pairs[1].second.id) {
-        if (!MapperUtils::check_plane_ids(
-                plane2_edges, detected_mapped_plane_pairs[1].second.plane_node)) {
-          auto edge_planes = graph_slam->add_2planes_edge(
-              detected_mapped_plane_pairs[1].first.plane_node,
-              detected_mapped_plane_pairs[1].second.plane_node,
-              information_2planes);
-          graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
-          duplicate_found = true;
-          std::cout << "Adding new y2 plane " << std::endl;
-        }
+  Eigen::Matrix<double, 3, 3> information_2planes;
+  information_2planes.setZero();
+  information_2planes(0, 0) = dupl_plane_matching_information;
+  information_2planes(1, 1) = dupl_plane_matching_information;
+  information_2planes(2, 2) = dupl_plane_matching_information;
+
+  if ((infinite_rooms.empty() || room_data_association == -1)) {
+    std::cout << "found an infinite_room with pre pose " << room_center.translation()
+              << " between plane " << room_plane1_pair.plane_unflipped.coeffs()
+              << " and plane " << room_plane2_pair.plane_unflipped.coeffs()
+              << std::endl;
+
+    shared_graph_mutex.lock();
+    room_data_association = graph_slam->retrieve_local_nbr_of_vertices();
+    room_node = graph_slam->add_room_node(room_center);
+    cluster_center_node = graph_slam->add_room_node(cluster_center);
+    cluster_center_node->setFixed(true);
+    shared_graph_mutex.unlock();
+
+    InfiniteRooms det_infinite_room;
+    det_infinite_room.id = room_data_association;
+    room_id = det_infinite_room.id;
+    det_infinite_room.plane1 = room_plane1_pair.plane_unflipped;
+    det_infinite_room.plane2 = room_plane2_pair.plane_unflipped;
+    det_infinite_room.plane1_id = room_plane1_pair.plane_id;
+    det_infinite_room.plane2_id = room_plane2_pair.plane_id;
+
+    det_infinite_room.cluster_center_node = cluster_center_node;
+    det_infinite_room.node = room_node;
+    det_infinite_room.plane1_node = (plane1).plane_node;
+    det_infinite_room.plane2_node = (plane2).plane_node;
+    det_infinite_room.local_graph = std::make_shared<GraphSLAM>();
+    det_infinite_room.floor_level = (plane1).floor_level;
+
+    shared_graph_mutex.lock();
+    infinite_rooms.insert({det_infinite_room.id, det_infinite_room});
+    auto edge_room_plane =
+        graph_slam->add_room_2planes_edge(room_node,
+                                          (plane1).plane_node,
+                                          (plane2).plane_node,
+                                          cluster_center_node,
+                                          information_infinite_room_planes);
+    graph_slam->add_robust_kernel(edge_room_plane, "Huber", 1.0);
+    shared_graph_mutex.unlock();
+  } else {
+    /* add the edge between detected planes and the infinite_room */
+    shared_graph_mutex.lock();
+    room_node = infinite_rooms[room_data_association].node;
+    room_id = room_data_association;
+    std::cout << "Matched det infinite_room with pre pose " << room_center.translation()
+              << " to mapped infinite_room with id " << room_data_association
+              << " and pose " << room_node->estimate().translation() << std::endl;
+    shared_graph_mutex.unlock();
+
+    shared_graph_mutex.lock();
+    std::set<g2o::HyperGraph::Edge*> plane1_edges = (plane1).plane_node->edges();
+    std::set<g2o::HyperGraph::Edge*> plane2_edges = (plane2).plane_node->edges();
+
+    if (detected_mapped_plane_pairs[0].first.id !=
+        detected_mapped_plane_pairs[0].second.id) {
+      if (!MapperUtils::check_plane_ids(
+              plane1_edges, detected_mapped_plane_pairs[0].second.plane_node)) {
+        auto edge_planes = graph_slam->add_2planes_edge(
+            detected_mapped_plane_pairs[0].first.plane_node,
+            detected_mapped_plane_pairs[0].second.plane_node,
+            information_2planes);
+        graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+        duplicate_found = true;
+        std::cout << "Adding new plane1 " << std::endl;
       }
     }
+    if (detected_mapped_plane_pairs[1].first.id !=
+        detected_mapped_plane_pairs[1].second.id) {
+      if (!MapperUtils::check_plane_ids(
+              plane2_edges, detected_mapped_plane_pairs[1].second.plane_node)) {
+        auto edge_planes = graph_slam->add_2planes_edge(
+            detected_mapped_plane_pairs[1].first.plane_node,
+            detected_mapped_plane_pairs[1].second.plane_node,
+            information_2planes);
+        graph_slam->add_robust_kernel(edge_planes, "Huber", 1.0);
+        duplicate_found = true;
+        std::cout << "Adding new plane2 " << std::endl;
+      }
+    }
+    shared_graph_mutex.unlock();
   }
 
   return duplicate_found;
@@ -498,69 +471,20 @@ int InfiniteRoomMapper::associate_infinite_rooms(
   if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
     for (const auto& x_inf_room : x_infinite_rooms) {
       if (x_inf_room.second.floor_level != current_floor_level) continue;
+
+      shared_graph_mutex.lock();
       float dist = sqrt(pow(room_center.translation()(0) -
                                 x_inf_room.second.node->estimate().translation()(0),
                             2));
+      shared_graph_mutex.unlock();
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
-          current_detected_mapped_plane_pairs;
-      std::pair<VerticalPlanes, VerticalPlanes> x1_detected_mapped_plane_pair;
-      std::pair<VerticalPlanes, VerticalPlanes> x2_detected_mapped_plane_pair;
-
-      auto found_mapped_plane1 = x_vert_planes.find(x_inf_room.second.plane1_id);
-      auto found_mapped_plane2 = x_vert_planes.find(x_inf_room.second.plane2_id);
-
-      if (plane1.id == (found_mapped_plane1->second).id ||
-          plane1.id == (found_mapped_plane2->second).id) {
-        plane1_min_segment = true;
-        x1_detected_mapped_plane_pair.first = plane1;
-        x1_detected_mapped_plane_pair.second = plane1;
-      } else if ((plane1).plane_node->estimate().coeffs().head(3).dot(
-                     (found_mapped_plane1->second)
-                         .plane_node->estimate()
-                         .coeffs()
-                         .head(3)) > 0) {
-        plane1_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane1->second).cloud_seg_map, plane1.cloud_seg_map) &&
-            found_mapped_plane1->second.floor_level == plane1.floor_level;
-        x1_detected_mapped_plane_pair.first = plane1;
-        x1_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
-      } else {
-        plane1_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane2->second).cloud_seg_map, plane1.cloud_seg_map) &&
-            found_mapped_plane2->second.floor_level == plane1.floor_level;
-        x1_detected_mapped_plane_pair.first = plane1;
-        x1_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
-      }
-      current_detected_mapped_plane_pairs.push_back(x1_detected_mapped_plane_pair);
-
-      if (plane2.id == (found_mapped_plane1->second).id ||
-          plane2.id == (found_mapped_plane2->second).id) {
-        plane2_min_segment = true;
-        x2_detected_mapped_plane_pair.first = plane2;
-        x2_detected_mapped_plane_pair.second = plane2;
-      } else if ((plane2).plane_node->estimate().coeffs().head(3).dot(
-                     (found_mapped_plane1->second)
-                         .plane_node->estimate()
-                         .coeffs()
-                         .head(3)) > 0) {
-        plane2_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane1->second).cloud_seg_map, plane2.cloud_seg_map) &&
-            found_mapped_plane1->second.floor_level == plane2.floor_level;
-        x2_detected_mapped_plane_pair.first = plane2;
-        x2_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
-      } else {
-        plane2_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane2->second).cloud_seg_map, plane2.cloud_seg_map) &&
-            found_mapped_plane2->second.floor_level == plane2.floor_level;
-        x2_detected_mapped_plane_pair.first = plane2;
-        x2_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
-      }
-      current_detected_mapped_plane_pairs.push_back(x2_detected_mapped_plane_pair);
+          current_detected_mapped_plane_pairs = match_planes(plane1_min_segment,
+                                                             plane2_min_segment,
+                                                             plane1,
+                                                             plane2,
+                                                             x_inf_room.second,
+                                                             x_vert_planes);
 
       if (dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
@@ -575,68 +499,20 @@ int InfiniteRoomMapper::associate_infinite_rooms(
   if (plane_type == PlaneUtils::plane_class::Y_VERT_PLANE) {
     for (const auto& y_inf_room : y_infinite_rooms) {
       if (y_inf_room.second.floor_level != current_floor_level) continue;
+
+      shared_graph_mutex.lock();
       float dist = sqrt(pow(room_center.translation()(1) -
                                 y_inf_room.second.node->estimate().translation()(1),
                             2));
+      shared_graph_mutex.unlock();
 
       std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
-          current_detected_mapped_plane_pairs;
-      std::pair<VerticalPlanes, VerticalPlanes> y1_detected_mapped_plane_pair;
-      std::pair<VerticalPlanes, VerticalPlanes> y2_detected_mapped_plane_pair;
-      auto found_mapped_plane1 = y_vert_planes.find(y_inf_room.second.plane1_id);
-      auto found_mapped_plane2 = y_vert_planes.find(y_inf_room.second.plane2_id);
-
-      if (plane1.id == (found_mapped_plane1->second).id ||
-          plane1.id == (found_mapped_plane2->second).id) {
-        plane1_min_segment = true;
-        y1_detected_mapped_plane_pair.first = plane1;
-        y1_detected_mapped_plane_pair.second = plane1;
-      } else if ((plane1).plane_node->estimate().coeffs().head(3).dot(
-                     (found_mapped_plane1->second)
-                         .plane_node->estimate()
-                         .coeffs()
-                         .head(3)) > 0) {
-        plane1_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane1->second).cloud_seg_map, plane1.cloud_seg_map) &&
-            found_mapped_plane1->second.floor_level == plane1.floor_level;
-        y1_detected_mapped_plane_pair.first = plane1;
-        y1_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
-      } else {
-        plane1_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane2->second).cloud_seg_map, plane1.cloud_seg_map) &&
-            found_mapped_plane2->second.floor_level == plane1.floor_level;
-        y1_detected_mapped_plane_pair.first = plane1;
-        y1_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
-      }
-      current_detected_mapped_plane_pairs.push_back(y1_detected_mapped_plane_pair);
-
-      if (plane2.id == (found_mapped_plane1->second).id ||
-          plane2.id == (found_mapped_plane2->second).id) {
-        plane2_min_segment = true;
-        y2_detected_mapped_plane_pair.first = plane2;
-        y2_detected_mapped_plane_pair.second = plane2;
-      } else if ((plane2).plane_node->estimate().coeffs().head(3).dot(
-                     (found_mapped_plane1->second)
-                         .plane_node->estimate()
-                         .coeffs()
-                         .head(3)) > 0) {
-        plane2_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane1->second).cloud_seg_map, plane2.cloud_seg_map) &&
-            found_mapped_plane1->second.floor_level == plane2.floor_level;
-        y2_detected_mapped_plane_pair.first = plane2;
-        y2_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
-      } else {
-        plane2_min_segment =
-            PlaneUtils::check_point_neighbours(
-                (found_mapped_plane2->second).cloud_seg_map, plane2.cloud_seg_map) &&
-            found_mapped_plane2->second.floor_level == plane2.floor_level;
-        y2_detected_mapped_plane_pair.first = plane2;
-        y2_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
-      }
-      current_detected_mapped_plane_pairs.push_back(y2_detected_mapped_plane_pair);
+          current_detected_mapped_plane_pairs = match_planes(plane2_min_segment,
+                                                             plane2_min_segment,
+                                                             plane1,
+                                                             plane2,
+                                                             y_inf_room.second,
+                                                             y_vert_planes);
 
       if (dist < min_dist && (plane1_min_segment && plane2_min_segment)) {
         min_dist = dist;
@@ -653,6 +529,78 @@ int InfiniteRoomMapper::associate_infinite_rooms(
   if (min_dist > infinite_room_dist_threshold) data_association = -1;
 
   return data_association;
+}
+
+std::vector<std::pair<VerticalPlanes, VerticalPlanes>> InfiniteRoomMapper::match_planes(
+    bool& plane1_min_segment,
+    bool& plane2_min_segment,
+    const VerticalPlanes& plane1,
+    const VerticalPlanes& plane2,
+    const InfiniteRooms& infinite_room,
+    const std::unordered_map<int, VerticalPlanes>& vert_planes) {
+  std::vector<std::pair<VerticalPlanes, VerticalPlanes>>
+      current_detected_mapped_plane_pairs;
+  std::pair<VerticalPlanes, VerticalPlanes> p1_detected_mapped_plane_pair;
+  std::pair<VerticalPlanes, VerticalPlanes> p2_detected_mapped_plane_pair;
+
+  auto found_mapped_plane1 = vert_planes.find(infinite_room.plane1_id);
+  auto found_mapped_plane2 = vert_planes.find(infinite_room.plane2_id);
+
+  shared_graph_mutex.lock();
+  double p1_p2_product = (plane1).plane_node->estimate().coeffs().head(3).dot(
+      (found_mapped_plane1->second).plane_node->estimate().coeffs().head(3));
+  shared_graph_mutex.unlock();
+
+  if (plane1.id == (found_mapped_plane1->second).id ||
+      plane1.id == (found_mapped_plane2->second).id) {
+    plane1_min_segment = true;
+    p1_detected_mapped_plane_pair.first = plane1;
+    p1_detected_mapped_plane_pair.second = plane1;
+  } else if (p1_p2_product > 0) {
+    plane1_min_segment =
+        PlaneUtils::check_point_neighbours((found_mapped_plane1->second).cloud_seg_map,
+                                           plane1.cloud_seg_map) &&
+        found_mapped_plane1->second.floor_level == plane1.floor_level;
+    p1_detected_mapped_plane_pair.first = plane1;
+    p1_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
+  } else {
+    plane1_min_segment =
+        PlaneUtils::check_point_neighbours((found_mapped_plane2->second).cloud_seg_map,
+                                           plane1.cloud_seg_map) &&
+        found_mapped_plane2->second.floor_level == plane1.floor_level;
+    p1_detected_mapped_plane_pair.first = plane1;
+    p1_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
+  }
+  current_detected_mapped_plane_pairs.push_back(p1_detected_mapped_plane_pair);
+
+  shared_graph_mutex.lock();
+  double p2_p1_product = (plane2).plane_node->estimate().coeffs().head(3).dot(
+      (found_mapped_plane1->second).plane_node->estimate().coeffs().head(3));
+  shared_graph_mutex.unlock();
+
+  if (plane2.id == (found_mapped_plane1->second).id ||
+      plane2.id == (found_mapped_plane2->second).id) {
+    plane2_min_segment = true;
+    p2_detected_mapped_plane_pair.first = plane2;
+    p2_detected_mapped_plane_pair.second = plane2;
+  } else if (p2_p1_product > 0) {
+    plane2_min_segment =
+        PlaneUtils::check_point_neighbours((found_mapped_plane1->second).cloud_seg_map,
+                                           plane2.cloud_seg_map) &&
+        found_mapped_plane1->second.floor_level == plane2.floor_level;
+    p2_detected_mapped_plane_pair.first = plane2;
+    p2_detected_mapped_plane_pair.second = (found_mapped_plane1->second);
+  } else {
+    plane2_min_segment =
+        PlaneUtils::check_point_neighbours((found_mapped_plane2->second).cloud_seg_map,
+                                           plane2.cloud_seg_map) &&
+        found_mapped_plane2->second.floor_level == plane2.floor_level;
+    p2_detected_mapped_plane_pair.first = plane2;
+    p2_detected_mapped_plane_pair.second = (found_mapped_plane2->second);
+  }
+  current_detected_mapped_plane_pairs.push_back(p2_detected_mapped_plane_pair);
+
+  return current_detected_mapped_plane_pairs;
 }
 
 bool InfiniteRoomMapper::check_infinite_room_ids(

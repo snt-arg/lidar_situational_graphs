@@ -2,7 +2,8 @@
 
 namespace s_graphs {
 
-GPSMapper::GPSMapper(const rclcpp::Node::SharedPtr node) {
+GPSMapper::GPSMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {
   gps_edge_stddev_xy =
       node->get_parameter("gps_edge_stddev_xy").get_parameter_value().get<double>();
   gps_edge_stddev_z =
@@ -68,16 +69,23 @@ bool GPSMapper::map_gps_data(
     if (std::isnan(xyz.z())) {
       Eigen::Matrix2d information_matrix =
           Eigen::Matrix2d::Identity() / gps_edge_stddev_xy;
+      shared_graph_mutex.lock();
       edge = covisibility_graph->add_se3_prior_xy_edge(
           keyframe.second->node, xyz.head<2>(), information_matrix);
+      shared_graph_mutex.unlock();
     } else {
       Eigen::Matrix3d information_matrix = Eigen::Matrix3d::Identity();
       information_matrix.block<2, 2>(0, 0) /= gps_edge_stddev_xy;
       information_matrix(2, 2) /= gps_edge_stddev_z;
+      shared_graph_mutex.lock();
       edge = covisibility_graph->add_se3_prior_xyz_edge(
           keyframe.second->node, xyz, information_matrix);
+      shared_graph_mutex.unlock();
     }
+
+    shared_graph_mutex.lock();
     covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    shared_graph_mutex.unlock();
 
     updated = true;
 

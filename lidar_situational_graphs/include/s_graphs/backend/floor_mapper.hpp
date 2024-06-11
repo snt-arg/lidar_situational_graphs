@@ -82,7 +82,7 @@ class FloorMapper {
    * @brief Constructor for the class FloorMapper
    *
    */
-  FloorMapper();
+  FloorMapper(std::mutex& graph_mutex);
   ~FloorMapper();
 
  public:
@@ -245,6 +245,8 @@ class FloorMapper {
                                                 Floors floor);
 
  private:
+  std::mutex& shared_graph_mutex;
+
   int current_floor_level;
   bool floor_level_updated;
   double floor_vertical_threshold, floor_horizontal_threshold;

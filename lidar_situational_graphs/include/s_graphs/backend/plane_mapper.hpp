@@ -71,7 +71,7 @@ class PlaneMapper {
    *
    * @param private_nh
    */
-  PlaneMapper(const rclcpp::Node::SharedPtr node);
+  PlaneMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~PlaneMapper();
 
  public:
@@ -233,6 +233,7 @@ class PlaneMapper {
 
  private:
   rclcpp::Node::SharedPtr node_obj;
+  std::mutex& shared_graph_mutex;
 };
 
 }  // namespace s_graphs

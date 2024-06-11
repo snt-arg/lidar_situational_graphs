@@ -56,7 +56,7 @@ class IMUMapper {
    *
    * @param private_nh
    */
-  IMUMapper(const rclcpp::Node::SharedPtr node);
+  IMUMapper(const rclcpp::Node::SharedPtr node, std::mutex& mutex);
   ~IMUMapper();
 
  public:
@@ -67,6 +67,8 @@ class IMUMapper {
                     const std::string base_frame_id);
 
  private:
+  std::mutex& shared_graph_mutex;
+
   bool enable_imu_orientation;
   double imu_orientation_edge_stddev;
   bool enable_imu_acceleration;

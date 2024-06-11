@@ -2,7 +2,9 @@
 
 namespace s_graphs {
 
-RoomGraphGenerator::RoomGraphGenerator(rclcpp::Node::SharedPtr node) {}
+RoomGraphGenerator::RoomGraphGenerator(rclcpp::Node::SharedPtr node,
+                                       std::mutex& graph_mutex)
+    : shared_graph_mutex(graph_mutex) {}
 
 RoomGraphGenerator::~RoomGraphGenerator() {}
 
@@ -71,6 +73,7 @@ void RoomGraphGenerator::generate_local_graph(
   current_room.room_keyframes.clear();
 
   // check which keyframes already exist in the local graph and add only new ones
+  shared_graph_mutex.lock();
   for (const auto& filtered_keyframe : filtered_keyframes) {
     if (current_room.local_graph->graph->vertex(filtered_keyframe.second->id())) {
       continue;
@@ -78,6 +81,7 @@ void RoomGraphGenerator::generate_local_graph(
     } else
       new_room_keyframes.push_back(filtered_keyframe.second);
   }
+  shared_graph_mutex.unlock();
 
   g2o::VertexSE3* anchor_node;
   g2o::EdgeSE3* anchor_edge;
@@ -96,18 +100,24 @@ void RoomGraphGenerator::generate_local_graph(
 
   // get the edges of the keyframe in the cov graph and add them to the local
   // graph
+  shared_graph_mutex.lock();
   std::unordered_set<g2o::VertexSE3*> fixed_keyframes_set =
       GraphUtils::connect_keyframes_planes(covisibility_graph,
                                            current_room.local_graph.get());
+  shared_graph_mutex.unlock();
 
   // loop the fixed keyframe set, make it fixed and add copy its edges to the local
   // compressed graph
+  shared_graph_mutex.lock();
   GraphUtils::fix_and_connect_keyframes(current_room.local_graph.get(),
                                         fixed_keyframes_set);
+  shared_graph_mutex.unlock();
 
   // get the vertices of the planes in the local graph and connect their edges from
   // cov graph to local graph
+  shared_graph_mutex.lock();
   GraphUtils::connect_planes_rooms(covisibility_graph, current_room.local_graph.get());
+  shared_graph_mutex.unlock();
 }
 
 void RoomGraphGenerator::update_room_graph(
@@ -115,6 +125,7 @@ void RoomGraphGenerator::update_room_graph(
     const std::shared_ptr<GraphSLAM>& covisibility_graph) {
   // check the difference between the first representative node in covis graph and its
   // corresponding in the room-local graph
+  shared_graph_mutex.lock();
   Eigen::Isometry3d delta =
       dynamic_cast<g2o::VertexSE3*>(
           room.local_graph->graph->vertex(room.room_keyframes.begin()->first))
@@ -140,6 +151,7 @@ void RoomGraphGenerator::update_room_graph(
       }
     }
   }
+  shared_graph_mutex.unlock();
 }
 
 }  // namespace s_graphs

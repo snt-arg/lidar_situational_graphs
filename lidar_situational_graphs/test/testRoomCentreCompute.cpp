@@ -54,8 +54,10 @@ class TestRoom : public ::testing::Test {
     node->declare_parameter("use_perpendicular_plane_constraint", false);
     node->declare_parameter("g2o_solver_type", "lm_var_cholmod");
 
+    std::mutex graph_mutex;
     graph_slam = std::make_shared<s_graphs::GraphSLAM>("lm_var_cholmod");
-    finite_room_mapper = std::make_shared<s_graphs::FiniteRoomMapper>(node);
+    finite_room_mapper =
+        std::make_shared<s_graphs::FiniteRoomMapper>(node, graph_mutex);
   }
 
  public:

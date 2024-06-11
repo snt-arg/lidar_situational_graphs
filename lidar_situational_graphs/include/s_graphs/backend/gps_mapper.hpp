@@ -54,7 +54,7 @@ class GPSMapper {
    *
    * @param private_nh
    */
-  GPSMapper(const rclcpp::Node::SharedPtr node);
+  GPSMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_mutex);
   ~GPSMapper();
 
  public:
@@ -64,6 +64,8 @@ class GPSMapper {
       const std::map<int, KeyFrame::Ptr>& keyframes);
 
  private:
+  std::mutex& shared_graph_mutex;
+
   boost::optional<Eigen::Vector3d> zero_utm;
   double gps_edge_stddev_xy;
   double gps_edge_stddev_z;

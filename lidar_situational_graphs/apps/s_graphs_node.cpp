@@ -475,23 +475,26 @@ class SGraphsNode : public rclcpp::Node {
     visualization_graph = std::make_unique<GraphSLAM>();
     keyframe_updater = std::make_unique<KeyframeUpdater>(shared_from_this());
     plane_analyzer = std::make_unique<PlaneAnalyzer>(shared_from_this());
-    loop_mapper = std::make_unique<LoopMapper>(shared_from_this());
-    loop_detector = std::make_unique<LoopDetector>(shared_from_this());
+    loop_mapper = std::make_unique<LoopMapper>(shared_from_this(), graph_mutex);
+    loop_detector = std::make_unique<LoopDetector>(shared_from_this(), graph_mutex);
     map_cloud_generator = std::make_unique<MapCloudGenerator>();
     inf_calclator = std::make_unique<InformationMatrixCalculator>(shared_from_this());
     nmea_parser = std::make_unique<NmeaSentenceParser>();
-    plane_mapper = std::make_unique<PlaneMapper>(shared_from_this());
-    inf_room_mapper = std::make_unique<InfiniteRoomMapper>(shared_from_this());
-    finite_room_mapper = std::make_unique<FiniteRoomMapper>(shared_from_this());
-    floor_mapper = std::make_unique<FloorMapper>();
+    plane_mapper = std::make_unique<PlaneMapper>(shared_from_this(), graph_mutex);
+    inf_room_mapper =
+        std::make_unique<InfiniteRoomMapper>(shared_from_this(), graph_mutex);
+    finite_room_mapper =
+        std::make_unique<FiniteRoomMapper>(shared_from_this(), graph_mutex);
+    floor_mapper = std::make_unique<FloorMapper>(graph_mutex);
     graph_visualizer =
         std::make_unique<GraphVisualizer>(shared_from_this(), graph_mutex);
-    keyframe_mapper = std::make_unique<KeyframeMapper>(shared_from_this());
-    gps_mapper = std::make_unique<GPSMapper>(shared_from_this());
-    imu_mapper = std::make_unique<IMUMapper>(shared_from_this());
+    keyframe_mapper = std::make_unique<KeyframeMapper>(shared_from_this(), graph_mutex);
+    gps_mapper = std::make_unique<GPSMapper>(shared_from_this(), graph_mutex);
+    imu_mapper = std::make_unique<IMUMapper>(shared_from_this(), graph_mutex);
     graph_publisher = std::make_unique<GraphPublisher>();
-    wall_mapper = std::make_unique<WallMapper>(shared_from_this());
-    room_graph_generator = std::make_unique<RoomGraphGenerator>(shared_from_this());
+    wall_mapper = std::make_unique<WallMapper>(shared_from_this(), graph_mutex);
+    room_graph_generator =
+        std::make_unique<RoomGraphGenerator>(shared_from_this(), graph_mutex);
 
     main_timer->cancel();
   }
@@ -607,21 +610,17 @@ class SGraphsNode : public rclcpp::Node {
         floor_data_mutex.unlock();
         continue;
       } else {
-        graph_mutex.lock();
         floor_mapper->lookup_floors(covisibility_graph,
                                     floor_data_msg,
                                     floors_vec,
                                     rooms_vec,
                                     x_infinite_rooms,
                                     y_infinite_rooms);
-        graph_mutex.unlock();
 
         // if new floor was added update floor level and add to it the stair keyframes
         if (!floor_data_msg.keyframe_ids.empty()) {
           current_floor_level = floor_mapper->get_floor_level();
-          graph_mutex.lock();
           add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
-          graph_mutex.unlock();
         }
 
         floor_data_mutex.lock();
@@ -636,12 +635,13 @@ class SGraphsNode : public rclcpp::Node {
     // get the keyframe ids and update their semantic of belonging to new floor
     floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
 
+    graph_mutex.lock();
     GraphUtils::set_stair_keyframes(
         floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
+    graph_mutex.unlock();
   }
 
   void add_first_floor_node() {
-    graph_mutex.lock();
     situational_graphs_msgs::msg::FloorData floor_data_msg;
     floor_data_msg.floor_center.position.x = 0;
     floor_data_msg.floor_center.position.y = 0;
@@ -653,7 +653,6 @@ class SGraphsNode : public rclcpp::Node {
                                 rooms_vec,
                                 x_infinite_rooms,
                                 y_infinite_rooms);
-    graph_mutex.unlock();
     current_floor_level = floor_mapper->get_floor_level();
   }
 
@@ -707,7 +706,6 @@ class SGraphsNode : public rclcpp::Node {
           if (fabs(x_width) < 0.5 || fabs(y_width) < 0.5) continue;
 
           int current_room_id;
-          graph_mutex.lock();
           bool duplicate_planes_rooms =
               finite_room_mapper->lookup_rooms(covisibility_graph,
                                                room_data,
@@ -719,14 +717,11 @@ class SGraphsNode : public rclcpp::Node {
                                                y_infinite_rooms,
                                                rooms_vec,
                                                current_room_id);
-          graph_mutex.unlock();
 
           if (current_room_id != -1) {
-            graph_mutex.lock();
             // generate local graph per room
             extract_keyframes_from_room(rooms_vec[current_room_id]);
             room_local_graph_id_queue.push_back(current_room_id);
-            graph_mutex.unlock();
             if (duplicate_planes_rooms) duplicate_planes_found = true;
           }
         }
@@ -737,7 +732,6 @@ class SGraphsNode : public rclcpp::Node {
           if (fabs(x_width) < 0.5) continue;
 
           int current_room_id;
-          graph_mutex.lock();
           bool duplicate_planes_x_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::X_VERT_PLANE,
@@ -750,7 +744,6 @@ class SGraphsNode : public rclcpp::Node {
               y_infinite_rooms,
               rooms_vec,
               current_room_id);
-          graph_mutex.unlock();
 
           if (duplicate_planes_x_inf_rooms) duplicate_planes_found = true;
         }
@@ -761,7 +754,6 @@ class SGraphsNode : public rclcpp::Node {
           if (fabs(y_width) < 0.5) continue;
 
           int current_room_id;
-          graph_mutex.lock();
           bool duplicate_planes_y_inf_rooms = inf_room_mapper->lookup_infinite_rooms(
               covisibility_graph,
               PlaneUtils::plane_class::Y_VERT_PLANE,
@@ -774,7 +766,6 @@ class SGraphsNode : public rclcpp::Node {
               y_infinite_rooms,
               rooms_vec,
               current_room_id);
-          graph_mutex.unlock();
 
           if (duplicate_planes_y_inf_rooms) duplicate_planes_found = true;
         }
@@ -785,13 +776,11 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue_mutex.unlock();
     }
 
-    graph_mutex.lock();
     floor_mapper->factor_floor_room_nodes(covisibility_graph,
                                           floors_vec[current_floor_level],
                                           rooms_vec,
                                           x_infinite_rooms,
                                           y_infinite_rooms);
-    graph_mutex.unlock();
   }
 
   /**
@@ -871,7 +860,6 @@ class SGraphsNode : public rclcpp::Node {
     Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
     trans_odom2map_mutex.unlock();
 
-    graph_mutex.lock();
     int num_processed = keyframe_mapper->map_keyframes(covisibility_graph,
                                                        odom2map,
                                                        keyframe_queue,
@@ -881,6 +869,7 @@ class SGraphsNode : public rclcpp::Node {
                                                        anchor_edge,
                                                        keyframe_hash);
 
+    graph_mutex.lock();
     if (floor_mapper->get_floor_level_update_info())
       GraphUtils::update_node_floor_level(
           floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
@@ -899,14 +888,13 @@ class SGraphsNode : public rclcpp::Node {
       if (extract_planar_surfaces) {
         std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
             plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
-        graph_mutex.lock();
+
         plane_mapper->map_extracted_planes(covisibility_graph,
                                            new_keyframes[i],
                                            extracted_cloud_vec,
                                            x_vert_planes,
                                            y_vert_planes,
                                            hort_planes);
-        graph_mutex.unlock();
       }
     }
 
@@ -936,7 +924,6 @@ class SGraphsNode : public rclcpp::Node {
       wall_point << walls_msg->walls[j].wall_point.x, walls_msg->walls[j].wall_point.y,
           walls_msg->walls[j].wall_point.z;
 
-      // TODO:HB add graph_mutex here
       wall_mapper->factor_wall(covisibility_graph,
                                wall_pose,
                                wall_point,
@@ -992,7 +979,6 @@ class SGraphsNode : public rclcpp::Node {
     if (keyframes.empty() || gps_queue.empty()) {
       return false;
     }
-    // TODO:HB add graph_mutex
     return gps_mapper->map_gps_data(covisibility_graph, gps_queue, keyframes);
   }
 
@@ -1013,10 +999,8 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     bool updated = false;
-    graph_mutex.lock();
     imu_mapper->map_imu_data(
         covisibility_graph, tf_buffer, imu_queue, keyframes, base_frame_id);
-    graph_mutex.unlock();
 
     return updated;
   }
@@ -1051,7 +1035,7 @@ class SGraphsNode : public rclcpp::Node {
           loop_detector->detect(keyframes, new_keyframes, *covisibility_graph);
       if (loops.size() > 0) {
         loop_found = true;
-        loop_mapper->add_loops(covisibility_graph, loops, graph_mutex);
+        loop_mapper->add_loops(covisibility_graph, loops);
       }
     } else {
       std::cout << "on stairs so not doing loop check " << std::endl;
@@ -1071,9 +1055,11 @@ class SGraphsNode : public rclcpp::Node {
     if (anchor_node && this->get_parameter("fix_first_node_adaptive")
                            .get_parameter_value()
                            .get<bool>()) {
+      graph_mutex.lock();
       Eigen::Isometry3d anchor_target =
           static_cast<g2o::VertexSE3*>(anchor_edge->vertices()[1])->estimate();
       anchor_node->setEstimate(anchor_target);
+      graph_mutex.unlock();
     }
 
     std::vector<KeyFrameSnapshot::Ptr> snapshot(keyframes.size());
