@@ -1121,100 +1121,17 @@ class SGraphsNode : public rclcpp::Node {
 
     switch (ongoing_optimization_class) {
       case optimization_class::GLOBAL: {
-        graph_mutex.lock();
-        GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
-        global_optimization = true;
-        graph_mutex.unlock();
-        break;
-      }
-
-      case optimization_class::FLOOR_GLOBAL: {
-        graph_mutex.lock();
-        if (!loop_found && !duplicate_planes_found) {
-          GraphUtils::copy_windowed_graph(optimization_window_size,
-                                          covisibility_graph,
-                                          compressed_graph,
-                                          keyframes);
-          global_optimization = false;
-        } else if (!loop_found && duplicate_planes_found) {
-          GraphUtils::copy_floor_graph(current_floor_level,
-                                       covisibility_graph,
-                                       compressed_graph,
-                                       keyframes,
-                                       x_vert_planes,
-                                       y_vert_planes,
-                                       rooms_vec,
-                                       x_infinite_rooms,
-                                       y_infinite_rooms,
-                                       walls_vec,
-                                       floors_vec);
-          duplicate_planes_found = false;
-          global_optimization = true;
-        } else if (loop_found && !duplicate_planes_found) {
-          GraphUtils::copy_floor_graph(current_floor_level,
-                                       covisibility_graph,
-                                       compressed_graph,
-                                       keyframes,
-                                       x_vert_planes,
-                                       y_vert_planes,
-                                       rooms_vec,
-                                       x_infinite_rooms,
-                                       y_infinite_rooms,
-                                       walls_vec,
-                                       floors_vec);
-          loop_found = false;
-          global_optimization = true;
-        } else if (loop_found && duplicate_planes_found) {
-          GraphUtils::copy_floor_graph(current_floor_level,
-                                       covisibility_graph,
-                                       compressed_graph,
-                                       keyframes,
-                                       x_vert_planes,
-                                       y_vert_planes,
-                                       rooms_vec,
-                                       x_infinite_rooms,
-                                       y_infinite_rooms,
-                                       walls_vec,
-                                       floors_vec);
-          duplicate_planes_found = false;
-          loop_found = false;
-          global_optimization = true;
-        } else {
-          duplicate_planes_found = false;
-          loop_found = false;
-          global_optimization = false;
-        }
-        graph_mutex.unlock();
+        handle_global_optimization();
         break;
       }
 
       case optimization_class::LOCAL_GLOBAL: {
-        graph_mutex.lock();
-        if (!loop_found && !duplicate_planes_found) {
-          GraphUtils::copy_windowed_graph(optimization_window_size,
-                                          covisibility_graph,
-                                          compressed_graph,
-                                          keyframes);
-          global_optimization = false;
-        } else if (loop_found && !duplicate_planes_found) {
-          GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
-          loop_found = false;
-          global_optimization = true;
-        } else if (!loop_found && duplicate_planes_found) {
-          GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
-          duplicate_planes_found = false;
-          global_optimization = true;
-        } else if (loop_found && duplicate_planes_found) {
-          GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
-          duplicate_planes_found = false;
-          loop_found = false;
-          global_optimization = true;
-        } else {
-          duplicate_planes_found = false;
-          loop_found = false;
-          global_optimization = false;
-        }
-        graph_mutex.unlock();
+        handle_local_global_optimization();
+        break;
+      }
+
+      case optimization_class::FLOOR_GLOBAL: {
+        handle_floor_global_optimization();
         break;
       }
 
@@ -1284,6 +1201,52 @@ class SGraphsNode : public rclcpp::Node {
 
     graph_updated = true;
     prev_edge_count = curr_edge_count;
+  }
+
+  void handle_global_optimization() {
+    std::lock_guard<std::mutex> lock(graph_mutex);
+    GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
+    global_optimization = true;
+  }
+
+  void handle_local_global_optimization() {
+    std::lock_guard<std::mutex> lock(graph_mutex);
+
+    if (!loop_found && !duplicate_planes_found) {
+      GraphUtils::copy_windowed_graph(
+          optimization_window_size, covisibility_graph, compressed_graph, keyframes);
+      global_optimization = false;
+    } else {
+      GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
+      loop_found = false;
+      duplicate_planes_found = false;
+      global_optimization = true;
+    }
+  }
+
+  void handle_floor_global_optimization() {
+    std::lock_guard<std::mutex> lock(graph_mutex);
+
+    if (!loop_found && !duplicate_planes_found) {
+      GraphUtils::copy_windowed_graph(
+          optimization_window_size, covisibility_graph, compressed_graph, keyframes);
+      global_optimization = false;
+    } else {
+      GraphUtils::copy_floor_graph(current_floor_level,
+                                   covisibility_graph,
+                                   compressed_graph,
+                                   keyframes,
+                                   x_vert_planes,
+                                   y_vert_planes,
+                                   rooms_vec,
+                                   x_infinite_rooms,
+                                   y_infinite_rooms,
+                                   walls_vec,
+                                   floors_vec);
+      duplicate_planes_found = false;
+      loop_found = false;
+      global_optimization = true;
+    }
   }
 
   /**
@@ -1366,12 +1329,14 @@ class SGraphsNode : public rclcpp::Node {
 
     std::unique_ptr<GraphSLAM> local_compressed_graph;
     local_compressed_graph = std::make_unique<GraphSLAM>("", false, false);
+    bool is_optimization_global = false;
     graph_mutex.lock();
     GraphUtils::copy_graph_vertices(compressed_graph.get(),
                                     local_compressed_graph.get());
+    is_optimization_global = global_optimization;
     graph_mutex.unlock();
     graph_visualizer->visualize_compressed_graph(current_time,
-                                                 global_optimization,
+                                                 is_optimization_global,
                                                  false,
                                                  local_compressed_graph->graph.get(),
                                                  x_planes_snapshot,
