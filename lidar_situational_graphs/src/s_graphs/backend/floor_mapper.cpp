@@ -106,12 +106,7 @@ int FloorMapper::factor_floor_node(
 
   det_floor.id = det_floor.graph_id;
   det_floor.node = floor_node;
-  if (floors_vec.empty()) {
-    det_floor.color.push_back(0);
-    det_floor.color.push_back(0);
-    det_floor.color.push_back(0);
-  } else
-    det_floor.color = PlaneUtils::random_color_vec();
+  det_floor.color = PlaneUtils::random_color_vec();
 
   shared_graph_mutex.lock();
   floors_vec.insert({det_floor.id, det_floor});

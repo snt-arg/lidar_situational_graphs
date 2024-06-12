@@ -160,7 +160,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
       bool stair_keyframe = false;
       current_key_data->get_stair_node_info(stair_keyframe);
       if (marginalized) {
-        traj_marker.colors[i].r = 1.0;
+        traj_marker.colors[i].r = 0.0;
         traj_marker.colors[i].g = 0.0;
         traj_marker.colors[i].b = 0.0;
         traj_marker.colors[i].a = 1.0;
@@ -175,11 +175,6 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
         traj_marker.colors[i].b = current_floor->second.color[2] / 255;
         traj_marker.colors[i].a = 1.0;
       }
-    } else if (kf_node->fixed()) {
-      traj_marker.colors[i].r = 0.0;
-      traj_marker.colors[i].g = 0.0;
-      traj_marker.colors[i].b = 1.0;
-      traj_marker.colors[i].a = 1.0;
     } else {
       traj_marker.colors[i].r = current_floor->second.color[0] / 255;
       traj_marker.colors[i].g = current_floor->second.color[1] / 255;
