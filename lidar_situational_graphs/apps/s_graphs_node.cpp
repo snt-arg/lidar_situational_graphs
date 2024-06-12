@@ -321,7 +321,6 @@ class SGraphsNode : public rclcpp::Node {
     loop_found = false;
     duplicate_planes_found = false;
     global_optimization = false;
-    graph_updated = false;
     on_stairs = false;
     floor_node_updated = false;
     prev_edge_count = curr_edge_count = 0;
@@ -876,7 +875,7 @@ class SGraphsNode : public rclcpp::Node {
                                                        keyframe_hash);
 
     graph_mutex.lock();
-    if (floor_mapper->get_floor_level_update_info())
+    if (floor_mapper->get_floor_level_update_info()) {
       GraphUtils::update_node_floor_level(
           floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
           current_floor_level,
@@ -887,7 +886,8 @@ class SGraphsNode : public rclcpp::Node {
           x_infinite_rooms,
           y_infinite_rooms,
           floors_vec);
-    if (on_stairs) on_stairs = false;
+      if (on_stairs) on_stairs = false;
+    }
     graph_mutex.unlock();
 
     // perform planar segmentation
@@ -1103,7 +1103,6 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void optimization_timer_callback() {
-    graph_updated = false;
     if (keyframes.empty() || floors_vec.empty()) return;
 
     int num_iterations = this->get_parameter("g2o_solver_num_iterations")
@@ -1111,7 +1110,7 @@ class SGraphsNode : public rclcpp::Node {
                              .get<int>();
 
     curr_edge_count = covisibility_graph->retrieve_total_nbr_of_edges();
-    if (curr_edge_count <= prev_edge_count) {
+    if (curr_edge_count == prev_edge_count) {
       return;
     }
 
@@ -1199,7 +1198,6 @@ class SGraphsNode : public rclcpp::Node {
       graph_mutex.unlock();
     }
 
-    graph_updated = true;
     prev_edge_count = curr_edge_count;
   }
 
@@ -1290,8 +1288,11 @@ class SGraphsNode : public rclcpp::Node {
       current_loop++;
     }
 
-    if (current_keyframes_map_snapshot.empty() || keyframes_complete_snapshot.empty())
+    if (current_keyframes_map_snapshot.empty() || keyframes_complete_snapshot.empty()) {
+      markers_pub->publish(s_graphs_markers);
+      map_points_pub->publish(s_graphs_cloud_msg);
       return;
+    }
 
     auto cloud = map_cloud_generator->generate(current_keyframes_map_snapshot,
                                                map_cloud_resolution);
@@ -1301,10 +1302,7 @@ class SGraphsNode : public rclcpp::Node {
 
     cloud->header.frame_id = map_frame_id;
     cloud->header.stamp = current_keyframes_map_snapshot.back()->cloud->header.stamp;
-
-    sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg(
-        new sensor_msgs::msg::PointCloud2());
-    pcl::toROSMsg(*cloud, *cloud_msg);
+    pcl::toROSMsg(*cloud, s_graphs_cloud_msg);
 
     std::unique_ptr<GraphSLAM> local_covisibility_graph;
     local_covisibility_graph = std::make_unique<GraphSLAM>("", false, false);
@@ -1314,7 +1312,7 @@ class SGraphsNode : public rclcpp::Node {
     publish_graph(local_covisibility_graph->graph.get(), keyframes_complete_snapshot);
 
     auto current_time = this->now();
-    auto markers = graph_visualizer->visualize_covisibility_graph(
+    s_graphs_markers = graph_visualizer->visualize_covisibility_graph(
         loop_detector->get_distance_thresh() * 2.0,
         current_time,
         local_covisibility_graph->graph.get(),
@@ -1343,9 +1341,9 @@ class SGraphsNode : public rclcpp::Node {
                                                  y_planes_snapshot,
                                                  hort_planes_snapshot);
 
-    markers_pub->publish(markers);
+    markers_pub->publish(s_graphs_markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
-    map_points_pub->publish(*cloud_msg);
+    map_points_pub->publish(s_graphs_cloud_msg);
   }
 
   /**
@@ -1988,7 +1986,6 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<situational_graphs_msgs::msg::FloorData> floor_data_queue;
 
   // for map cloud generation
-  std::atomic_bool graph_updated;
   double map_cloud_resolution;
   std::vector<KeyFrameSnapshot::Ptr> keyframes_map_snapshot;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
@@ -2005,6 +2002,9 @@ class SGraphsNode : public rclcpp::Node {
   std::map<int, KeyFrame::Ptr> keyframes;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
   int current_floor_level;
+
+  visualization_msgs::msg::MarkerArray s_graphs_markers;
+  sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
   std::unique_ptr<GraphSLAM> compressed_graph;
