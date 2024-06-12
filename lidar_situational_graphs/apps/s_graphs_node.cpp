@@ -626,7 +626,6 @@ class SGraphsNode : public rclcpp::Node {
         floor_data_mutex.lock();
         floor_data_queue.pop_front();
         floor_data_mutex.unlock();
-        on_stairs = false;
       }
     }
   }
@@ -888,6 +887,7 @@ class SGraphsNode : public rclcpp::Node {
           x_infinite_rooms,
           y_infinite_rooms,
           floors_vec);
+    if (on_stairs) on_stairs = false;
     graph_mutex.unlock();
 
     // perform planar segmentation
