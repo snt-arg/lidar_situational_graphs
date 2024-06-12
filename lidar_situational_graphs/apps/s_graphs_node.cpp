@@ -721,8 +721,10 @@ class SGraphsNode : public rclcpp::Node {
           if (current_room_id != -1) {
             // generate local graph per room
             extract_keyframes_from_room(rooms_vec[current_room_id]);
+            graph_mutex.lock();
             room_local_graph_id_queue.push_back(current_room_id);
             if (duplicate_planes_rooms) duplicate_planes_found = true;
+            graph_mutex.unlock();
           }
         }
         // x infinite_room
@@ -745,7 +747,10 @@ class SGraphsNode : public rclcpp::Node {
               rooms_vec,
               current_room_id);
 
+          graph_mutex.lock();
           if (duplicate_planes_x_inf_rooms) duplicate_planes_found = true;
+          graph_mutex.unlock();
+
         }
         // y infinite_room
         else if (room_data.x_planes.size() == 0 && room_data.y_planes.size() == 2) {
@@ -767,7 +772,9 @@ class SGraphsNode : public rclcpp::Node {
               rooms_vec,
               current_room_id);
 
+          graph_mutex.lock();
           if (duplicate_planes_y_inf_rooms) duplicate_planes_found = true;
+          graph_mutex.unlock();
         }
       }
 
@@ -1034,8 +1041,11 @@ class SGraphsNode : public rclcpp::Node {
       std::vector<Loop::Ptr> loops =
           loop_detector->detect(keyframes, new_keyframes, *covisibility_graph);
       if (loops.size() > 0) {
-        loop_found = true;
         loop_mapper->add_loops(covisibility_graph, loops);
+
+        graph_mutex.lock();
+        loop_found = true;
+        graph_mutex.unlock();
       }
     } else {
       std::cout << "on stairs so not doing loop check " << std::endl;

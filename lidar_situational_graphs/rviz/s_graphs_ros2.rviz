@@ -201,12 +201,15 @@ Visualization Manager:
         floors: true
         hort_planes: true
         imu: false
+        infinite_room_x_lines: true
         keyframe_keyframe_edges: true
         keyframe_plane_edges: true
         loop_close_radius: false
         nodes: true
         rooms: true
         rooms_line: true
+        wall_center_marker: false
+        x_infinite_room: true
         x_vert_planes: true
         y_vert_planes: true
       Topic:
@@ -271,25 +274,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 64.5839614868164
+      Distance: 108.32592010498047
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 15.845458030700684
-        Y: -43.303836822509766
-        Z: 9.686090469360352
+        X: 9.984655380249023
+        Y: 16.745742797851562
+        Z: 14.625224113464355
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7547966837882996
+      Pitch: 0.17979666590690613
       Target Frame: ""
       Value: Orbit (rviz_default_plugins)
-      Yaw: 3.663116693496704
+      Yaw: 3.2331154346466064
     Saved: ~
 Window Geometry:
   Displays:

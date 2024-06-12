@@ -130,6 +130,7 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
         }
       }
     }
+    shared_graph_mutex.unlock();
 
     if (!edge_found) {
       Eigen::Matrix4f loop_relative_pose;
@@ -142,13 +143,17 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
             prev_keyframe->cloud,
             Eigen::Isometry3d(loop_relative_pose.cast<double>()));
 
+        shared_graph_mutex.lock();
         auto edge = local_graph->add_se3_edge(
             keyframe->node,
             prev_keyframe->node,
             Eigen::Isometry3d(loop_relative_pose.cast<double>()),
             information);
         local_graph->add_robust_kernel(edge, "Huber", 1.0);
+        shared_graph_mutex.unlock();
+
       } else {
+        shared_graph_mutex.lock();
         Eigen::Isometry3d relative_pose =
             keyframe->node->estimate().inverse() * prev_keyframe->node->estimate();
         Eigen::MatrixXd information = Eigen::MatrixXd::Identity(6, 6);
@@ -156,9 +161,9 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
         auto edge = local_graph->add_se3_edge(
             keyframe->node, prev_keyframe->node, relative_pose, information);
         local_graph->add_robust_kernel(edge, "Huber", 1.0);
+        shared_graph_mutex.unlock();
       }
     }
-    shared_graph_mutex.unlock();
   }
 }
 
