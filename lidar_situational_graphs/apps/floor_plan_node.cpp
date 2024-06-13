@@ -63,7 +63,6 @@ class FloorPlanNode : public rclcpp::Node {
     this->declare_parameter("vertex_neigh_thres", 2);
     this->declare_parameter("save_timings", false);
     floor_level = 0;
-    new_k_added = false;
     slope_thres = 0.4;
     floor_height = -1;
     CURRENT_STATUS = STATE::ON_FLOOR;
@@ -184,7 +183,7 @@ class FloorPlanNode : public rclcpp::Node {
         if (floor_height == -1) floor_height = current_keyframe.node->estimate()(2, 3);
         keyframes.insert(
             {current_keyframe.id(), std::make_shared<KeyFrame>(current_keyframe)});
-        new_k_added = true;
+        keyframes_queue.push_back(std::make_shared<KeyFrame>(current_keyframe));
         keyframe_mutex.unlock();
       } else {
         keyframe_mutex.lock();
@@ -314,8 +313,11 @@ class FloorPlanNode : public rclcpp::Node {
   }
 
   void floor_change_det_callback() {
-    if (!new_k_added || keyframes.size() < 2) return;
-    auto current_k = keyframes.rbegin();
+    if (keyframes_queue.empty() || keyframes.size() < 2) return;
+
+    keyframe_mutex.lock();
+    auto current_k = keyframes_queue.front();
+    keyframe_mutex.unlock();
 
     for (auto& tmp_kf : tmp_stair_keyframes) {
       auto kf = keyframes.find(tmp_kf->id());
@@ -323,7 +325,7 @@ class FloorPlanNode : public rclcpp::Node {
     }
 
     double slope = 0;
-    tmp_stair_keyframes.push_back(current_k->second);
+    tmp_stair_keyframes.push_back(current_k);
     if (tmp_stair_keyframes.size() > 2) {
       slope = linear_regression(tmp_stair_keyframes);
     }
@@ -345,10 +347,7 @@ class FloorPlanNode : public rclcpp::Node {
         if (slope < 0.1) {
           stair_keyframes.push_back(tmp_stair_keyframes.back());
           filter_stairkeyframes(stair_keyframes);
-          publish_floor_keyframe_info(
-              stair_keyframes.front()->node->estimate()(2, 3) +
-              fabs(stair_keyframes.back()->node->estimate()(2, 3) -
-                   stair_keyframes.front()->node->estimate()(2, 3)));
+          publish_floor_keyframe_info(stair_keyframes.back()->node->estimate()(2, 3));
           break;
         } else {
           stair_keyframes.push_back(tmp_stair_keyframes.back());
@@ -362,10 +361,7 @@ class FloorPlanNode : public rclcpp::Node {
         if (slope > -0.1) {
           stair_keyframes.push_back(tmp_stair_keyframes.back());
           filter_stairkeyframes(stair_keyframes);
-          publish_floor_keyframe_info(
-              stair_keyframes.front()->node->estimate()(2, 3) +
-              fabs(stair_keyframes.back()->node->estimate()(2, 3) -
-                   stair_keyframes.front()->node->estimate()(2, 3)));
+          publish_floor_keyframe_info(stair_keyframes.back()->node->estimate()(2, 3));
           break;
         } else {
           stair_keyframes.push_back(tmp_stair_keyframes.back());
@@ -380,10 +376,12 @@ class FloorPlanNode : public rclcpp::Node {
     }
 
     if (tmp_stair_keyframes.size() > 2) {
-      slope = linear_regression(tmp_stair_keyframes);
       tmp_stair_keyframes.pop_front();
     }
-    new_k_added = false;
+
+    keyframe_mutex.lock();
+    keyframes_queue.pop_front();
+    keyframe_mutex.unlock();
   }
 
   double linear_regression(const std::deque<KeyFrame::Ptr>& tmp_keyframes) {
@@ -397,7 +395,7 @@ class FloorPlanNode : public rclcpp::Node {
     if (tmp_stair_keyframes.size() > elements_to_erase)
       tmp_stair_keyframes.erase(tmp_stair_keyframes.end() - elements_to_erase,
                                 tmp_stair_keyframes.end());
-    else if (tmp_stair_keyframes.size() > (elements_to_erase - 1)) {
+    else if (tmp_stair_keyframes.size() < (elements_to_erase - 1)) {
       tmp_stair_keyframes.pop_back();
     }
   }
@@ -512,11 +510,11 @@ class FloorPlanNode : public rclcpp::Node {
   std::unique_ptr<RoomAnalyzer> room_analyzer;
   std::unique_ptr<FloorAnalyzer> floor_analyzer;
   std::map<int, s_graphs::KeyFrame::Ptr> keyframes;
+  std::deque<s_graphs::KeyFrame::Ptr> keyframes_queue;
   std::deque<KeyFrame::Ptr> stair_keyframes;
   std::deque<KeyFrame::Ptr> tmp_stair_keyframes;
   int floor_level;
 
-  bool new_k_added;
   double slope_thres;
   double floor_height;
   std::mutex map_plane_mutex;
