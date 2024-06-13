@@ -231,7 +231,7 @@ class SGraphsNode : public rclcpp::Node {
         sub_opt);
 
     imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
-        "gpsimu_driver/imu_data",
+        "/imu/data",
         1024,
         std::bind(&SGraphsNode::imu_callback, this, std::placeholders::_1),
         sub_opt);
@@ -886,6 +886,7 @@ class SGraphsNode : public rclcpp::Node {
           x_infinite_rooms,
           y_infinite_rooms,
           floors_vec);
+      GraphUtils::update_node_floor_level(current_floor_level, new_keyframes);
       if (on_stairs) on_stairs = false;
     }
     graph_mutex.unlock();

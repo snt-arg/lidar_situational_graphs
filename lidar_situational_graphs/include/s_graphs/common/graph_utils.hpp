@@ -311,6 +311,15 @@ class GraphUtils {
   /**
    * @brief
    *
+   * @param current_floor_level
+   * @param keyframes
+   */
+  static void update_node_floor_level(const int& current_floor_level,
+                                      const std::deque<KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief
+   *
    * @param vertex_se3
    * @return true
    * @return false

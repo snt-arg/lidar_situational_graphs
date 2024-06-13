@@ -602,6 +602,20 @@ std::vector<g2o::VertexSE3*> GraphUtils::connect_keyframes(
     //   continue;
     // }
 
+    g2o::EdgeSE3PriorQuat* edge_se3_prior_quat =
+        dynamic_cast<g2o::EdgeSE3PriorQuat*>(e);
+    if (edge_se3_prior_quat) {
+      if (!compressed_graph->graph->vertex(edge_se3_prior_quat->vertices()[0]->id()))
+        continue;
+
+      g2o::VertexSE3* v1 =
+          dynamic_cast<g2o::VertexSE3*>(compressed_graph->graph->vertices().at(
+              edge_se3_prior_quat->vertices()[0]->id()));
+      auto edge = compressed_graph->copy_se3_prior_quat_edge(edge_se3_prior_quat, v1);
+      compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      continue;
+    }
+
     g2o::EdgeSE3* edge_se3 = dynamic_cast<g2o::EdgeSE3*>(e);
     if (edge_se3) {
       if (complete_keyframe_window.count(edge_se3->vertices()[0]->id()) > 0 &&
@@ -1408,6 +1422,13 @@ void GraphUtils::update_node_floor_level(
         }
       }
     }
+  }
+}
+
+void GraphUtils::update_node_floor_level(const int& current_floor_level,
+                                         const std::deque<KeyFrame::Ptr>& keyframes) {
+  for (auto& kf : keyframes) {
+    kf->floor_level = current_floor_level;
   }
 }
 

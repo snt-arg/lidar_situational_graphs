@@ -139,7 +139,10 @@ class FloorMapper {
    *
    * @param floor_id
    */
-  inline void set_floor_level(const int& floor_id) { current_floor_level = floor_id; }
+  inline void set_floor_level(const int& floor_id) {
+    if (current_floor_level != floor_id) update_floor_level(true);
+    current_floor_level = floor_id;
+  }
 
   inline void update_floor_level(const bool& value) { floor_level_updated = value; }
 
