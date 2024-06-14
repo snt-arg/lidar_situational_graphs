@@ -177,13 +177,18 @@ Eigen::Isometry3d KeyFrame::estimate() const { return node->estimate(); }
 
 KeyFrameSnapshot::KeyFrameSnapshot(const Eigen::Isometry3d& pose,
                                    const pcl::PointCloud<PointT>::ConstPtr& cloud,
-                                   const bool marginalized)
-    : pose(pose), cloud(cloud), k_marginalized(marginalized) {}
+                                   const bool marginalized,
+                                   const int floor_level)
+    : pose(pose),
+      cloud(cloud),
+      k_marginalized(marginalized),
+      floor_level(floor_level) {}
 
 KeyFrameSnapshot::KeyFrameSnapshot(const KeyFrame::Ptr& key) {
   pose = key->node->estimate();
   cloud = key->cloud;
   k_marginalized = GraphUtils::get_keyframe_marg_data(key->node);
+  floor_level = key->floor_level;
 }
 
 KeyFrameSnapshot::~KeyFrameSnapshot() {}

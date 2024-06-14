@@ -10,16 +10,19 @@ MapCloudGenerator::~MapCloudGenerator() {}
 
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     const std::vector<KeyFrameSnapshot::Ptr>& keyframes,
-    double resolution) const {
+    double resolution,
+    const int& current_floor_level) const {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
     return nullptr;
   }
 
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-  cloud->reserve(keyframes.front()->cloud->size() * keyframes.size());
+  // cloud->reserve(keyframes.front()->cloud->size() * keyframes.size());
 
   for (const auto& keyframe : keyframes) {
+    if (keyframe->floor_level != current_floor_level) continue;
+
     Eigen::Matrix4f pose = keyframe->pose.matrix().cast<float>();
     for (const auto& src_pt : keyframe->cloud->points) {
       PointT dst_pt;

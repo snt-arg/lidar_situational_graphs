@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef MAP_CLOUD_GENERATOR_HPP
 #define MAP_CLOUD_GENERATOR_HPP
 
@@ -64,7 +62,8 @@ class MapCloudGenerator {
    */
   pcl::PointCloud<PointT>::Ptr generate(
       const std::vector<KeyFrameSnapshot::Ptr>& keyframes,
-      double resolution) const;
+      double resolution,
+      const int& current_floor_level = 0) const;
   pcl::PointCloud<PointT>::Ptr generate(
       const Eigen::Matrix4f& pose,
       const pcl::PointCloud<PointT>::Ptr& cloud) const;

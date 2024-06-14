@@ -159,7 +159,8 @@ struct KeyFrameSnapshot {
    */
   KeyFrameSnapshot(const Eigen::Isometry3d& pose,
                    const pcl::PointCloud<PointT>::ConstPtr& cloud,
-                   const bool marginalized = false);
+                   const bool marginalized = false,
+                   const int floor_level = 0);
 
   ~KeyFrameSnapshot();
 
@@ -167,6 +168,7 @@ struct KeyFrameSnapshot {
   Eigen::Isometry3d pose;                   // pose estimated by graph optimization
   pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
   bool k_marginalized = false;              // whether keyframe is marginalized
+  int floor_level = 0;
 };
 
 }  // namespace s_graphs

@@ -306,7 +306,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
     covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
   }
 
-  convert_plane_points_to_map(x_vert_planes, y_vert_planes, hort_planes);
+  convert_plane_points_to_map(
+      x_vert_planes, y_vert_planes, hort_planes, keyframe->floor_level);
   shared_graph_mutex.unlock();
 
   return data_association;
@@ -476,9 +477,14 @@ int PlaneMapper::associate_plane(
 void PlaneMapper::convert_plane_points_to_map(
     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     std::unordered_map<int, VerticalPlanes>& y_vert_planes,
-    std::unordered_map<int, HorizontalPlanes>& hort_planes) {
+    std::unordered_map<int, HorizontalPlanes>& hort_planes,
+    const int& current_floor_level) {
   for (auto& x_vert_plane : x_vert_planes) {
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+
+    x_vert_plane.second.cloud_seg_map = cloud_seg_map;
+    // if (x_vert_plane.second.floor_level != current_floor_level) break;
+
     cloud_seg_map->points.clear();
     for (int k = 0; k < x_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
@@ -502,6 +508,10 @@ void PlaneMapper::convert_plane_points_to_map(
 
   for (auto& y_vert_plane : y_vert_planes) {
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+
+    y_vert_plane.second.cloud_seg_map = cloud_seg_map;
+    // if (y_vert_plane.second.floor_level != current_floor_level) break;
+
     cloud_seg_map->points.clear();
     for (int k = 0; k < y_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
@@ -525,6 +535,10 @@ void PlaneMapper::convert_plane_points_to_map(
 
   for (auto& hort_plane : hort_planes) {
     pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+
+    hort_plane.second.cloud_seg_map = cloud_seg_map;
+    // if (hort_plane.second.floor_level != current_floor_level) break;
+
     cloud_seg_map->points.clear();
     for (int k = 0; k < hort_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
