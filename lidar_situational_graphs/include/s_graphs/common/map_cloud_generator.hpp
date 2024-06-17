@@ -62,8 +62,7 @@ class MapCloudGenerator {
    */
   pcl::PointCloud<PointT>::Ptr generate(
       const std::vector<KeyFrameSnapshot::Ptr>& keyframes,
-      double resolution,
-      const int& current_floor_level = 0) const;
+      double resolution) const;
   pcl::PointCloud<PointT>::Ptr generate(
       const Eigen::Matrix4f& pose,
       const pcl::PointCloud<PointT>::Ptr& cloud) const;
