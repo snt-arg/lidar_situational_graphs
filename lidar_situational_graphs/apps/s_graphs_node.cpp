@@ -1295,8 +1295,8 @@ class SGraphsNode : public rclcpp::Node {
       return;
     }
 
-    auto cloud = map_cloud_generator->generate(
-        current_keyframes_map_snapshot, map_cloud_resolution, current_floor_level);
+    auto cloud = map_cloud_generator->generate(current_keyframes_map_snapshot,
+                                               map_cloud_resolution);
 
     if (!cloud) {
       return;

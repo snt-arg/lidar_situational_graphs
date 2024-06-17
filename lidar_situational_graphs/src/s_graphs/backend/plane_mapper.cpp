@@ -195,7 +195,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         vert_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
-        vert_plane.cloud_seg_map = nullptr;
+        vert_plane.cloud_seg_map =
+            pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         vert_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
@@ -227,7 +228,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         vert_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
         vert_plane.keyframe_node_vec.push_back(keyframe->node);
         vert_plane.plane_node = plane_node;
-        vert_plane.cloud_seg_map = nullptr;
+        vert_plane.cloud_seg_map =
+            pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
         vert_plane.covariance = Eigen::Matrix3d::Identity();
         vert_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
@@ -260,7 +262,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         hort_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
         hort_plane.keyframe_node_vec.push_back(keyframe->node);
         hort_plane.plane_node = plane_node;
-        hort_plane.cloud_seg_map = nullptr;
+        hort_plane.cloud_seg_map =
+            pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
         hort_plane.covariance = Eigen::Matrix3d::Identity();
         hort_plane.floor_level = keyframe->floor_level;
         std::vector<double> color;
@@ -480,12 +483,9 @@ void PlaneMapper::convert_plane_points_to_map(
     std::unordered_map<int, HorizontalPlanes>& hort_planes,
     const int& current_floor_level) {
   for (auto& x_vert_plane : x_vert_planes) {
-    pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+    if (x_vert_plane.second.floor_level != current_floor_level) break;
 
-    x_vert_plane.second.cloud_seg_map = cloud_seg_map;
-    // if (x_vert_plane.second.floor_level != current_floor_level) break;
-
-    cloud_seg_map->points.clear();
+    x_vert_plane.second.cloud_seg_map->points.clear();
     for (int k = 0; k < x_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(x_vert_plane.second.keyframe_node_vec[k]);
@@ -500,19 +500,15 @@ void PlaneMapper::convert_plane_points_to_map(
         dst_pt.getVector4fMap() =
             pose *
             x_vert_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        cloud_seg_map->points.push_back(dst_pt);
+        x_vert_plane.second.cloud_seg_map->points.push_back(dst_pt);
       }
     }
-    x_vert_plane.second.cloud_seg_map = cloud_seg_map;
   }
 
   for (auto& y_vert_plane : y_vert_planes) {
-    pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+    if (y_vert_plane.second.floor_level != current_floor_level) break;
 
-    y_vert_plane.second.cloud_seg_map = cloud_seg_map;
-    // if (y_vert_plane.second.floor_level != current_floor_level) break;
-
-    cloud_seg_map->points.clear();
+    y_vert_plane.second.cloud_seg_map->points.clear();
     for (int k = 0; k < y_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(y_vert_plane.second.keyframe_node_vec[k]);
@@ -527,19 +523,15 @@ void PlaneMapper::convert_plane_points_to_map(
         dst_pt.getVector4fMap() =
             pose *
             y_vert_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        cloud_seg_map->points.push_back(dst_pt);
+        y_vert_plane.second.cloud_seg_map->points.push_back(dst_pt);
       }
     }
-    y_vert_plane.second.cloud_seg_map = cloud_seg_map;
   }
 
   for (auto& hort_plane : hort_planes) {
-    pcl::PointCloud<PointNormal>::Ptr cloud_seg_map(new pcl::PointCloud<PointNormal>());
+    if (hort_plane.second.floor_level != current_floor_level) break;
 
-    hort_plane.second.cloud_seg_map = cloud_seg_map;
-    // if (hort_plane.second.floor_level != current_floor_level) break;
-
-    cloud_seg_map->points.clear();
+    hort_plane.second.cloud_seg_map->points.clear();
     for (int k = 0; k < hort_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(hort_plane.second.keyframe_node_vec[k]);
@@ -553,10 +545,9 @@ void PlaneMapper::convert_plane_points_to_map(
         PointNormal dst_pt;
         dst_pt.getVector4fMap() =
             pose * hort_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        cloud_seg_map->points.push_back(dst_pt);
+        hort_plane.second.cloud_seg_map->points.push_back(dst_pt);
       }
     }
-    hort_plane.second.cloud_seg_map = cloud_seg_map;
   }
 }
 
