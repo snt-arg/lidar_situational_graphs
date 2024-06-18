@@ -33,6 +33,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/keyframe.hpp>
 #include <vector>
 
@@ -63,9 +64,29 @@ class MapCloudGenerator {
   pcl::PointCloud<PointT>::Ptr generate(
       const std::vector<KeyFrameSnapshot::Ptr>& keyframes,
       double resolution) const;
+
+  /**
+   * @brief
+   *
+   * @param pose
+   * @param cloud
+   * @return pcl::PointCloud<PointT>::Ptr
+   */
   pcl::PointCloud<PointT>::Ptr generate(
       const Eigen::Matrix4f& pose,
       const pcl::PointCloud<PointT>::Ptr& cloud) const;
+
+  /**
+   * @brief Construct a new MapCloudGenerator::generate_floor_cloud object
+   *
+   * @param current_floor_level
+   * @param keyframes
+   * @param resolution
+   */
+  pcl::PointCloud<MapCloudGenerator::PointT>::Ptr generate_floor_cloud(
+      const int& current_floor_level,
+      double resolution,
+      const std::vector<KeyFrameSnapshot::Ptr>& keyframes);
 };
 
 }  // namespace s_graphs

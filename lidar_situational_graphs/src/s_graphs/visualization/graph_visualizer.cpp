@@ -80,6 +80,53 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node,
 
 GraphVisualizer::~GraphVisualizer() {}
 
+visualization_msgs::msg::MarkerArray
+GraphVisualizer::visualize_floor_covisibility_graph(
+    const rclcpp::Time& stamp,
+    const int& current_floor_level,
+    const g2o::SparseOptimizer* local_graph,
+    std::vector<KeyFrame::Ptr> keyframes,
+    const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
+    const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
+    const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
+    const std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
+    const std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
+    const std::unordered_map<int, Rooms> room_snapshot,
+    const std::map<int, Floors> floors_vec) {
+  visualization_msgs::msg::MarkerArray markers;
+
+  for (const auto& floor : floors_vec) {
+    if (floor.first != current_floor_level) {
+      continue;
+    }
+
+    std::string keyframes_layer_id =
+        std::to_string(floor.second.sequential_id) + "_keyframes_layer";
+    std::string ns = node_ptr_->get_namespace();
+    if (ns.length() > 1) {
+      std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
+      keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
+    }
+
+    std::vector<KeyFrame::Ptr> floor_keyframes;
+    for (const auto& kf : keyframes) {
+      if (kf->floor_level == current_floor_level) floor_keyframes.push_back(kf);
+    }
+
+    visualization_msgs::msg::Marker kf_cloud_marker =
+        this->fill_cloud_makers(floor_keyframes);
+    kf_cloud_marker.header.stamp = stamp;
+    kf_cloud_marker.header.frame_id =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_layer";
+    kf_cloud_marker.ns =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_clouds";
+    kf_cloud_marker.id = markers.markers.size();
+    markers.markers.push_back(kf_cloud_marker);
+  }
+
+  return markers;
+}
+
 /**
  * @brief create visualization marker
  * @param stamp
@@ -96,7 +143,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
     const std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
     const std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
     const std::unordered_map<int, Rooms> room_snapshot,
-    const std::unordered_map<int, Floors> floors_vec) {
+    const std::map<int, Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
 
   // node markers
@@ -1550,6 +1597,36 @@ Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plan
 
   pose.linear() = q.toRotationMatrix();
   return pose;
+}
+
+visualization_msgs::msg::Marker GraphVisualizer::fill_cloud_makers(
+    const std::vector<KeyFrame::Ptr> keyframes) {
+  visualization_msgs::msg::Marker cloud_marker;
+  cloud_marker.pose.orientation.w = 1.0;
+  cloud_marker.scale.x = 0.05;
+  cloud_marker.scale.y = 0.05;
+  cloud_marker.scale.z = 0.05;
+  cloud_marker.type = visualization_msgs::msg::Marker::CUBE_LIST;
+  std_msgs::msg::ColorRGBA color;
+  color.r = 211.0 / 255;
+  color.g = 215.0 / 255;
+  color.b = 207.0 / 255;
+  color.a = 0.1;
+
+  for (const auto& kf : keyframes) {
+    Eigen::Matrix4f pose = kf->estimate().matrix().cast<float>();
+    for (const auto& src_pt : kf->cloud->points) {
+      PointT dst_pt;
+      dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+      geometry_msgs::msg::Point point;
+      point.x = dst_pt.x;
+      point.y = dst_pt.y;
+      point.z = dst_pt.z;
+      cloud_marker.points.push_back(point);
+      cloud_marker.colors.push_back(color);
+    }
+  }
+  return cloud_marker;
 }
 
 template <typename T>

@@ -39,6 +39,7 @@ find_package(fast_gicp REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_eigen REQUIRED)
+find_package(tf2_sensor_msgs REQUIRED)
 find_package(message_filters REQUIRED)
 find_package(geographic_msgs REQUIRED)
 find_package(backward_ros REQUIRED)
@@ -94,6 +95,7 @@ set(DEPENDENCIES
     tf2
     tf2_ros
     tf2_eigen
+    tf2_sensor_msgs
     pcl_ros
     visualization_msgs
     message_filters

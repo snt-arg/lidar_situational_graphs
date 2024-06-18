@@ -100,13 +100,14 @@ int FloorMapper::factor_floor_node(
   Floors det_floor;
 
   shared_graph_mutex.lock();
-  det_floor.graph_id = graph_slam->retrieve_local_nbr_of_vertices();
+  det_floor.id = graph_slam->retrieve_local_nbr_of_vertices();
   floor_node = graph_slam->add_floor_node(floor_pose);
   shared_graph_mutex.unlock();
 
-  det_floor.id = det_floor.graph_id;
+  det_floor.sequential_id = floors_vec.size();
   det_floor.node = floor_node;
   det_floor.color = PlaneUtils::random_color_vec();
+  det_floor.floor_cloud = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
 
   shared_graph_mutex.lock();
   floors_vec.insert({det_floor.id, det_floor});

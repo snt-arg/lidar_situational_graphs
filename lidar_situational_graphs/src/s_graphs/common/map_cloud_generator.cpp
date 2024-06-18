@@ -49,6 +49,28 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   return filtered;
 }
 
+pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
+    const int& current_floor_level,
+    double resolution,
+    const std::vector<KeyFrameSnapshot::Ptr>& keyframes) {
+  if (keyframes.empty()) {
+    std::cerr << "warning: keyframes empty!!" << std::endl;
+    return nullptr;
+  }
+
+  pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+
+  std::vector<KeyFrameSnapshot::Ptr> floor_keyframes;
+  for (const auto& keyframe : keyframes) {
+    if (keyframe->floor_level == current_floor_level)
+      floor_keyframes.push_back(keyframe);
+  }
+
+  pcl::PointCloud<PointT>::Ptr filtered = this->generate(floor_keyframes, resolution);
+
+  return filtered;
+}
+
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     const Eigen::Matrix4f& pose,
     const pcl::PointCloud<PointT>::Ptr& cloud) const {

@@ -36,6 +36,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <Eigen/Eigen>
 
+using PointT = pcl::PointXYZI;
+
 namespace g2o {
 class VertexFloor;
 class HyperGraph;
@@ -55,11 +57,12 @@ namespace s_graphs {
 struct Floors {
  public:
   int id;
-  int graph_id;
+  int sequential_id;
   int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   g2o::VertexFloor* node;  // node instance
   std::vector<double> color;
   std::vector<int> stair_keyframe_ids;
+  pcl::PointCloud<PointT>::Ptr floor_cloud;
 };
 
 }  // namespace s_graphs

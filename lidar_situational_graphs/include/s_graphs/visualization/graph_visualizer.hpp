@@ -90,6 +90,34 @@ class GraphVisualizer {
 
  public:
   /**
+   * @brief
+   *
+   * @param stamp
+   * @param local_graph
+   * @param keyframes
+   * @param x_plane_snapshot
+   * @param y_plane_snapshot
+   * @param hort_plane_snapshot
+   * @param x_infinite_room_snapshot
+   * @param y_infinite_room_snapshot
+   * @param room_snapshot
+   * @param floors_vec
+   * @return visualization_msgs::msg::MarkerArray
+   */
+  visualization_msgs::msg::MarkerArray visualize_floor_covisibility_graph(
+      const rclcpp::Time& stamp,
+      const int& current_floor_level,
+      const g2o::SparseOptimizer* local_graph,
+      std::vector<KeyFrame::Ptr> keyframes,
+      const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
+      const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
+      const std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
+      const std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
+      const std::unordered_map<int, Rooms> room_snapshot,
+      const std::map<int, Floors> floors_vec);
+
+  /**
    * @brief Create a marker array object
    *
    * @param loop_detector_radius
@@ -116,7 +144,7 @@ class GraphVisualizer {
       const std::unordered_map<int, InfiniteRooms> x_infinite_room_snapshot,
       const std::unordered_map<int, InfiniteRooms> y_infinite_room_snapshot,
       const std::unordered_map<int, Rooms> room_snapshot,
-      const std::unordered_map<int, Floors> floors_vec);
+      const std::map<int, Floors> floors_vec);
 
   /**
    * @brief visualize a compressed graph object
@@ -139,6 +167,15 @@ class GraphVisualizer {
       const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot);
 
  private:
+  /**
+   * @brief
+   *
+   * @param keyframes
+   * @return visualization_msgs::msg::Marker
+   */
+  visualization_msgs::msg::Marker fill_cloud_makers(
+      const std::vector<KeyFrame::Ptr> keyframes);
+
   /**
    * @brief
    *

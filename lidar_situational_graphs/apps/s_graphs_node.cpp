@@ -30,6 +30,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/time_synchronizer.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 
 #include <Eigen/Dense>
 #include <atomic>
@@ -100,6 +101,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "tf2_eigen/tf2_eigen.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/buffer_interface.h"
+#include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 #include "visualization_msgs/msg/marker_array.h"
@@ -186,6 +188,8 @@ class SGraphsNode : public rclcpp::Node {
     tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
     odom2map_broadcaster = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+    floor_map_static_transforms =
+        std::make_unique<tf2_ros::StaticTransformBroadcaster>(*this);
 
     callback_group_subscriber =
         this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -285,6 +289,8 @@ class SGraphsNode : public rclcpp::Node {
     odom_path_corrected_pub = this->create_publisher<nav_msgs::msg::Path>(
         "s_graphs/odom_path_corrected", 10, pub_opt);
 
+    lidar_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+        "s_graphs/lidar_points", 1, pub_opt);
     map_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         "s_graphs/map_points", 1, pub_opt);
     map_planes_pub = this->create_publisher<situational_graphs_msgs::msg::PlanesData>(
@@ -514,8 +520,17 @@ class SGraphsNode : public rclcpp::Node {
     } else {
       odom_corrected = trans_odom2map * odom.matrix().cast<float>();
     }
-    geometry_msgs::msg::PoseStamped pose_stamped_corrected =
-        matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id);
+
+    geometry_msgs::msg::PoseStamped pose_stamped_corrected;
+    if (floors_vec.empty())
+      pose_stamped_corrected =
+          matrix2PoseStamped(odom_msg->header.stamp, odom_corrected, map_frame_id);
+    else
+      pose_stamped_corrected = matrix2PoseStamped(
+          odom_msg->header.stamp,
+          odom_corrected,
+          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+              "_layer");
     publish_corrected_odom(pose_stamped_corrected);
 
     if (use_map2map_transform) {
@@ -538,9 +553,14 @@ class SGraphsNode : public rclcpp::Node {
    * @param cloud_msg
    */
   void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
-    cloud_queue_mutex.lock();
-    cloud_queue.push_back(cloud_msg);
-    cloud_queue_mutex.unlock();
+    if (floors_vec.empty()) {
+      cloud_msg->header.frame_id = map_frame_id;
+    } else {
+      cloud_msg->header.frame_id =
+          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+          "_layer";
+    }
+    // lidar_points_pub->publish(*cloud_msg);
   }
 
   /**
@@ -1096,7 +1116,7 @@ class SGraphsNode : public rclcpp::Node {
     x_inf_rooms_snapshot = x_infinite_rooms;
     y_inf_rooms_snapshot = y_infinite_rooms;
     rooms_vec_snapshot = rooms_vec;
-    floors_vec_snapshot.insert(floors_vec.begin(), floors_vec.end());
+    floors_vec_snapshot = floors_vec;
   }
 
   /**
@@ -1271,6 +1291,9 @@ class SGraphsNode : public rclcpp::Node {
   void map_publish_timer_callback() {
     if (keyframes.empty() || floors_vec.empty()) return;
 
+    this->publish_static_tfs();
+    auto current_time = this->now();
+
     int current_loop = 0;
     KeyFrameSnapshot::Ptr current_snapshot;
     std::vector<KeyFrameSnapshot::Ptr> current_keyframes_map_snapshot;
@@ -1295,16 +1318,37 @@ class SGraphsNode : public rclcpp::Node {
       return;
     }
 
-    auto cloud = map_cloud_generator->generate(current_keyframes_map_snapshot,
-                                               map_cloud_resolution);
+    int floor_level = current_floor_level;
+    auto floor_cloud = map_cloud_generator->generate_floor_cloud(
+        floor_level, map_cloud_resolution, current_keyframes_map_snapshot);
+    floors_vec[floor_level].floor_cloud = floor_cloud;
 
-    if (!cloud) {
+    if (!floor_cloud) {
+      std::cout << "returning as floor cloud for floor level "
+                << floors_vec[floor_level].id << " is empty" << std::endl;
       return;
     }
 
-    cloud->header.frame_id = map_frame_id;
-    cloud->header.stamp = current_keyframes_map_snapshot.back()->cloud->header.stamp;
-    pcl::toROSMsg(*cloud, s_graphs_cloud_msg);
+    s_graphs_cloud_msg = sensor_msgs::msg::PointCloud2();
+    sensor_msgs::msg::PointCloud2 floor_cloud_msg;
+    floors_vec[floor_level].floor_cloud->header.frame_id = map_frame_id;
+    floors_vec[floor_level].floor_cloud->header.stamp =
+        current_keyframes_map_snapshot.back()->cloud->header.stamp;
+    pcl::toROSMsg(*floors_vec[floor_level].floor_cloud, s_graphs_cloud_msg);
+    s_graphs_cloud_msg = transform_floor_cloud(
+        s_graphs_cloud_msg, floors_vec[floor_level], current_time);
+
+    for (auto& floor : floors_vec) {
+      if (floor.second.id == floor_level || floor.second.floor_cloud->points.empty()) {
+        continue;
+      }
+
+      pcl::toROSMsg(*floor.second.floor_cloud, floor_cloud_msg);
+      floor_cloud_msg =
+          transform_floor_cloud(floor_cloud_msg, floor.second, current_time);
+      pcl::concatenatePointCloud(
+          s_graphs_cloud_msg, floor_cloud_msg, s_graphs_cloud_msg);
+    }
 
     std::unique_ptr<GraphSLAM> local_covisibility_graph;
     local_covisibility_graph = std::make_unique<GraphSLAM>("", false, false);
@@ -1313,19 +1357,31 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
     publish_graph(local_covisibility_graph->graph.get(), keyframes_complete_snapshot);
 
-    auto current_time = this->now();
-    s_graphs_markers = graph_visualizer->visualize_covisibility_graph(
-        loop_detector->get_distance_thresh() * 2.0,
-        current_time,
-        local_covisibility_graph->graph.get(),
-        keyframes_complete_snapshot,
-        x_planes_snapshot,
-        y_planes_snapshot,
-        hort_planes_snapshot,
-        x_inf_rooms_snapshot,
-        y_inf_rooms_snapshot,
-        rooms_vec_snapshot,
-        floors_vec_snapshot);
+    // s_graphs_markers = graph_visualizer->visualize_covisibility_graph(
+    //     loop_detector->get_distance_thresh() * 2.0,
+    //     current_time,
+    //     local_covisibility_graph->graph.get(),
+    //     keyframes_complete_snapshot,
+    //     x_planes_snapshot,
+    //     y_planes_snapshot,
+    //     hort_planes_snapshot,
+    //     x_inf_rooms_snapshot,
+    //     y_inf_rooms_snapshot,
+    //     rooms_vec_snapshot,
+    //     floors_vec_snapshot);
+    s_graphs_markers.markers.clear();
+    // s_graphs_markers = graph_visualizer->visualize_floor_covisibility_graph(
+    //     current_time,
+    //     current_floor_level,
+    //     local_covisibility_graph->graph.get(),
+    //     keyframes_complete_snapshot,
+    //     x_planes_snapshot,
+    //     y_planes_snapshot,
+    //     hort_planes_snapshot,
+    //     x_inf_rooms_snapshot,
+    //     y_inf_rooms_snapshot,
+    //     rooms_vec_snapshot,
+    //     floors_vec_snapshot);
 
     std::unique_ptr<GraphSLAM> local_compressed_graph;
     local_compressed_graph = std::make_unique<GraphSLAM>("", false, false);
@@ -1376,6 +1432,30 @@ class SGraphsNode : public rclcpp::Node {
 
     graph_pub->publish(graph_structure);
     graph_keyframes_pub->publish(graph_keyframes);
+  }
+
+  sensor_msgs::msg::PointCloud2 transform_floor_cloud(
+      const sensor_msgs::msg::PointCloud2 input_floor_cloud,
+      const Floors& floor,
+      const rclcpp::Time& stamp) {
+    geometry_msgs::msg::TransformStamped transform_stamped;
+    try {
+      transform_stamped = tf_buffer->lookupTransform(
+          map_frame_id,
+          "floor_" + std::to_string(floor.sequential_id) + "_layer",
+          tf2::TimePointZero);
+    } catch (tf2::TransformException& ex) {
+      std::cout << "failed to find transform " << ex.what() << std::endl;
+    }
+
+    sensor_msgs::msg::PointCloud2 transformed_pointcloud;
+    try {
+      tf2::doTransform(input_floor_cloud, transformed_pointcloud, transform_stamped);
+    } catch (tf2::TransformException& ex) {
+      std::cout << "Could not transform point cloud " << ex.what() << std::endl;
+    }
+
+    return transformed_pointcloud;
   }
 
   /**
@@ -1558,6 +1638,64 @@ class SGraphsNode : public rclcpp::Node {
 
     odom_pose_corrected_pub->publish(pose_stamped_corrected);
     odom_path_corrected_pub->publish(path_stamped_corrected);
+  }
+
+  /**
+   * @brief publish static transforms between map and floor levels
+   *
+   */
+  void publish_static_tfs() {
+    double floor_height = 28.0;
+    double keyframe_height = 8.0;
+    std::vector<geometry_msgs::msg::TransformStamped> static_transforms;
+
+    for (auto floor = floors_vec_snapshot.begin(); floor != floors_vec_snapshot.end();
+         ++floor) {
+      geometry_msgs::msg::TransformStamped transform;
+      tf2::Quaternion quat;
+      quat.setRPY(0, 0, 0);
+      transform.transform.rotation.x = quat.x();
+      transform.transform.rotation.y = quat.y();
+      transform.transform.rotation.z = quat.z();
+      transform.transform.rotation.w = quat.w();
+
+      // map to floor transform
+      transform.header.stamp = this->get_clock()->now();
+      transform.header.frame_id = map_frame_id;
+      transform.child_frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
+      transform.transform.translation.x = 0;
+      transform.transform.translation.y = 0;
+      transform.transform.translation.z = floor->second.sequential_id * floor_height;
+      if (floor != floors_vec.begin()) {
+        graph_mutex.lock();
+        double floor_z_diff =
+            floor->second.node->estimate().translation().z() -
+            std::prev(floor)->second.node->estimate().translation().z();
+        graph_mutex.unlock();
+
+        if (floor_z_diff < 0)
+          transform.transform.translation.z =
+              -1 * (transform.transform.translation.z =
+                        floor->second.sequential_id * floor_height);
+      }
+      static_transforms.push_back(transform);
+
+      // floor to keyframe transform
+      transform.header.stamp = this->get_clock()->now();
+      transform.header.frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
+      transform.child_frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_keyframes_layer";
+      transform.transform.translation.x = 0;
+      transform.transform.translation.y = 0;
+      transform.transform.translation.z = keyframe_height;
+      static_transforms.push_back(transform);
+    }
+
+    for (const auto& transform : static_transforms) {
+      floor_map_static_transforms->sendTransform(transform);
+    }
   }
 
   /**
@@ -1892,6 +2030,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr odom2map_pub;
   rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr odom_pose_corrected_pub;
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_corrected_pub;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr lidar_points_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub;
   rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr
@@ -1903,6 +2042,7 @@ class SGraphsNode : public rclcpp::Node {
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   std::unique_ptr<tf2_ros::TransformBroadcaster> odom2map_broadcaster;
+  std::unique_ptr<tf2_ros::StaticTransformBroadcaster> floor_map_static_transforms;
 
   rclcpp::Service<situational_graphs_msgs::srv::DumpGraph>::SharedPtr
       dump_service_server;
@@ -1914,10 +2054,6 @@ class SGraphsNode : public rclcpp::Node {
   // odom queue
   std::mutex odom_queue_mutex;
   std::deque<nav_msgs::msg::Odometry::SharedPtr> odom_queue;
-
-  // cloud queue
-  std::mutex cloud_queue_mutex;
-  std::deque<sensor_msgs::msg::PointCloud2::SharedPtr> cloud_queue;
 
   // keyframe queue
   std::string base_frame_id;
@@ -1979,7 +2115,7 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
   std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
   std::unordered_map<int, Rooms> rooms_vec_snapshot;
-  std::unordered_map<int, Floors> floors_vec_snapshot;
+  std::map<int, Floors> floors_vec_snapshot;
   std::unordered_map<int, InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
 
   // room data queue
