@@ -226,7 +226,7 @@ bool PlaneUtils::check_point_neighbours(
     const pcl::PointCloud<PointNormal>::Ptr& cloud_2) {
   bool valid_neighbour = false;
   int point_count = 0;
-  float min_dist = 0.5;
+  float min_dist = 1.0;
 
   for (std::size_t i = 0; i < cloud_1->points.size(); ++i) {
     for (std::size_t j = 0; j < cloud_2->points.size(); ++j) {
