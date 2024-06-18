@@ -4,7 +4,7 @@ namespace s_graphs {
 
 FloorMapper::FloorMapper(std::mutex& graph_mutex) : shared_graph_mutex(graph_mutex) {
   floor_horizontal_threshold = 0.5;
-  floor_vertical_threshold = 0.5;
+  floor_vertical_threshold = 1.0;
   floor_level_updated = false;
 }
 

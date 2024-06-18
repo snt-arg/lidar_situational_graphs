@@ -1109,14 +1109,6 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& keyframe : keyframes) {
       keyframes_complete_snapshot_queue.push(keyframe.second);
     }
-
-    x_planes_snapshot = x_vert_planes;
-    y_planes_snapshot = y_vert_planes;
-    hort_planes_snapshot = hort_planes;
-    x_inf_rooms_snapshot = x_infinite_rooms;
-    y_inf_rooms_snapshot = y_infinite_rooms;
-    rooms_vec_snapshot = rooms_vec;
-    floors_vec_snapshot = floors_vec;
   }
 
   /**
@@ -1284,6 +1276,16 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
   }
 
+  void copy_data() {
+    x_planes_snapshot = x_vert_planes;
+    y_planes_snapshot = y_vert_planes;
+    hort_planes_snapshot = hort_planes;
+    x_inf_rooms_snapshot = x_infinite_rooms;
+    y_inf_rooms_snapshot = y_infinite_rooms;
+    rooms_vec_snapshot = rooms_vec;
+    floors_vec_snapshot = floors_vec;
+  }
+
   /**
    * @brief generate map point cloud and publish it
    * @param event
@@ -1291,6 +1293,9 @@ class SGraphsNode : public rclcpp::Node {
   void map_publish_timer_callback() {
     if (keyframes.empty() || floors_vec.empty()) return;
 
+    graph_mutex.lock();
+    this->copy_data();
+    graph_mutex.unlock();
     this->publish_static_tfs();
     auto current_time = this->now();
 
@@ -1667,7 +1672,7 @@ class SGraphsNode : public rclcpp::Node {
       transform.transform.translation.x = 0;
       transform.transform.translation.y = 0;
       transform.transform.translation.z = floor->second.sequential_id * floor_height;
-      if (floor != floors_vec.begin()) {
+      if (floor->second.sequential_id != 0) {
         graph_mutex.lock();
         double floor_z_diff =
             floor->second.node->estimate().translation().z() -
