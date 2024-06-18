@@ -345,9 +345,12 @@ class FloorPlanNode : public rclcpp::Node {
 
       case STATE::ASCENDING: {
         if (slope < 0.1) {
+          double current_floor_height =
+              tmp_stair_keyframes.back()->node->estimate()(2, 3);
+
           stair_keyframes.push_back(tmp_stair_keyframes.back());
           filter_stairkeyframes(stair_keyframes);
-          publish_floor_keyframe_info(stair_keyframes.back()->node->estimate()(2, 3));
+          publish_floor_keyframe_info(current_floor_height);
           break;
         } else {
           stair_keyframes.push_back(tmp_stair_keyframes.back());
@@ -359,9 +362,12 @@ class FloorPlanNode : public rclcpp::Node {
 
       case STATE::DESCENDING: {
         if (slope > -0.1) {
+          double current_floor_height =
+              tmp_stair_keyframes.back()->node->estimate()(2, 3);
+
           stair_keyframes.push_back(tmp_stair_keyframes.back());
           filter_stairkeyframes(stair_keyframes);
-          publish_floor_keyframe_info(stair_keyframes.back()->node->estimate()(2, 3));
+          publish_floor_keyframe_info(current_floor_height);
           break;
         } else {
           stair_keyframes.push_back(tmp_stair_keyframes.back());
