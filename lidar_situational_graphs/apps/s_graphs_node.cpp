@@ -1362,31 +1362,19 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
     publish_graph(local_covisibility_graph->graph.get(), keyframes_complete_snapshot);
 
-    // s_graphs_markers = graph_visualizer->visualize_covisibility_graph(
-    //     loop_detector->get_distance_thresh() * 2.0,
-    //     current_time,
-    //     local_covisibility_graph->graph.get(),
-    //     keyframes_complete_snapshot,
-    //     x_planes_snapshot,
-    //     y_planes_snapshot,
-    //     hort_planes_snapshot,
-    //     x_inf_rooms_snapshot,
-    //     y_inf_rooms_snapshot,
-    //     rooms_vec_snapshot,
-    //     floors_vec_snapshot);
     s_graphs_markers.markers.clear();
-    // s_graphs_markers = graph_visualizer->visualize_floor_covisibility_graph(
-    //     current_time,
-    //     current_floor_level,
-    //     local_covisibility_graph->graph.get(),
-    //     keyframes_complete_snapshot,
-    //     x_planes_snapshot,
-    //     y_planes_snapshot,
-    //     hort_planes_snapshot,
-    //     x_inf_rooms_snapshot,
-    //     y_inf_rooms_snapshot,
-    //     rooms_vec_snapshot,
-    //     floors_vec_snapshot);
+    s_graphs_markers = graph_visualizer->visualize_floor_covisibility_graph(
+        current_time,
+        current_floor_level,
+        local_covisibility_graph->graph.get(),
+        keyframes_complete_snapshot,
+        x_planes_snapshot,
+        y_planes_snapshot,
+        hort_planes_snapshot,
+        x_inf_rooms_snapshot,
+        y_inf_rooms_snapshot,
+        rooms_vec_snapshot,
+        floors_vec_snapshot);
 
     std::unique_ptr<GraphSLAM> local_compressed_graph;
     local_compressed_graph = std::make_unique<GraphSLAM>("", false, false);
