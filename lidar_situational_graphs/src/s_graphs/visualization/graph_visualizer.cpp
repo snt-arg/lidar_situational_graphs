@@ -95,49 +95,81 @@ GraphVisualizer::visualize_floor_covisibility_graph(
     const std::map<int, Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
 
-  for (const auto& floor : floors_vec) {
-    if (floor.first != current_floor_level) {
-      continue;
-    }
+  auto floor = floors_vec.at(current_floor_level);
 
-    std::string keyframes_layer_id =
-        "floor_" + std::to_string(floor.second.sequential_id) + "_keyframes_layer";
+  std::string keyframes_layer_id =
+      "floor_" + std::to_string(floor.sequential_id) + "_keyframes_layer";
 
-    std::string ns = node_ptr_->get_namespace();
-    if (ns.length() > 1) {
-      std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
-      keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
-    }
+  std::string walls_layer_id =
+      "floor_" + std::to_string(floor.sequential_id) + "_walls_layer";
 
-    std::vector<KeyFrame::Ptr> floor_keyframes;
-    for (const auto& kf : keyframes) {
-      if (kf->floor_level == current_floor_level) floor_keyframes.push_back(kf);
-    }
-
-    visualization_msgs::msg::Marker kf_marker =
-        fill_kf_markers(local_graph, floor_keyframes, floors_vec);
-    kf_marker.header.stamp = stamp;
-    kf_marker.header.frame_id = keyframes_layer_id;
-    kf_marker.ns = "floor_" + std::to_string(floor.second.sequential_id) + "_keyframes";
-    kf_marker.id = markers.markers.size();
-    kf_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-    kf_marker.pose.orientation.w = 1.0;
-    kf_marker.scale.x = kf_marker.scale.y = kf_marker.scale.z = 0.2;
-    markers.markers.push_back(kf_marker);
-
-    // keyframe edge markers
-    visualization_msgs::msg::Marker kf_edge_marker =
-        fill_kf_edge_markers(local_graph, floor_keyframes);
-    kf_edge_marker.header.frame_id = keyframes_layer_id;
-    kf_edge_marker.header.stamp = stamp;
-    kf_edge_marker.ns =
-        "floor_" + std::to_string(floor.second.sequential_id) + "_keyframe_edges";
-    kf_edge_marker.id = markers.markers.size();
-    kf_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-    kf_edge_marker.pose.orientation.w = 1.0;
-    kf_edge_marker.scale.x = 0.02;
-    markers.markers.push_back(kf_edge_marker);
+  std::string ns = node_ptr_->get_namespace();
+  if (ns.length() > 1) {
+    std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
+    keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
+    walls_layer_id = ns_prefix + "/" + walls_layer_id;
   }
+
+  std::vector<KeyFrame::Ptr> floor_keyframes;
+  for (const auto& kf : keyframes) {
+    if (kf->floor_level == current_floor_level) floor_keyframes.push_back(kf);
+  }
+
+  visualization_msgs::msg::Marker kf_marker =
+      fill_kf_markers(local_graph, floor_keyframes, floors_vec);
+  kf_marker.header.stamp = stamp;
+  kf_marker.header.frame_id = keyframes_layer_id;
+  kf_marker.ns = "floor_" + std::to_string(floor.sequential_id) + "_keyframes";
+  kf_marker.id = markers.markers.size();
+  kf_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+  kf_marker.pose.orientation.w = 1.0;
+  kf_marker.scale.x = kf_marker.scale.y = kf_marker.scale.z = 0.2;
+  markers.markers.push_back(kf_marker);
+
+  // keyframe edge markers
+  visualization_msgs::msg::Marker kf_edge_marker =
+      fill_kf_edge_markers(local_graph, floor_keyframes);
+  kf_edge_marker.header.frame_id = keyframes_layer_id;
+  kf_edge_marker.header.stamp = stamp;
+  kf_edge_marker.ns =
+      "floor_" + std::to_string(floor.sequential_id) + "_keyframe_edges";
+  kf_edge_marker.id = markers.markers.size();
+  kf_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+  kf_edge_marker.pose.orientation.w = 1.0;
+  kf_edge_marker.scale.x = 0.02;
+  markers.markers.push_back(kf_edge_marker);
+
+  // x vertical plane markers
+  std::unordered_map<int, VerticalPlanes> floor_x_plane_snapshot;
+  for (const auto& x_plane : x_plane_snapshot) {
+    if (x_plane.second.floor_level == current_floor_level)
+      floor_x_plane_snapshot.insert({x_plane.first, x_plane.second});
+  }
+
+  visualization_msgs::msg::Marker x_vert_plane_marker =
+      fill_plane_makers<VerticalPlanes>(floor_x_plane_snapshot);
+  x_vert_plane_marker.header.frame_id = walls_layer_id;
+  x_vert_plane_marker.header.stamp = stamp;
+  x_vert_plane_marker.ns =
+      "floor_" + std::to_string(floor.sequential_id) + "x_vert_planes";
+  x_vert_plane_marker.id = markers.markers.size();
+  markers.markers.push_back(x_vert_plane_marker);
+
+  // y vert plane markers
+  std::unordered_map<int, VerticalPlanes> floor_y_plane_snapshot;
+  for (const auto& y_plane : y_plane_snapshot) {
+    if (y_plane.second.floor_level == current_floor_level)
+      floor_y_plane_snapshot.insert({y_plane.first, y_plane.second});
+  }
+
+  visualization_msgs::msg::Marker y_vert_plane_marker =
+      fill_plane_makers<VerticalPlanes>(floor_y_plane_snapshot);
+  y_vert_plane_marker.header.frame_id = walls_layer_id;
+  y_vert_plane_marker.header.stamp = stamp;
+  y_vert_plane_marker.ns =
+      "floor_" + std::to_string(floor.sequential_id) + "y_vert_planes";
+  y_vert_plane_marker.id = markers.markers.size();
+  markers.markers.push_back(y_vert_plane_marker);
 
   return markers;
 }
@@ -1654,7 +1686,7 @@ visualization_msgs::msg::Marker GraphVisualizer::fill_plane_makers(
     color.r = plane.second.color[0] / 255;
     color.g = plane.second.color[1] / 255;
     color.b = plane.second.color[2] / 255;
-    color.a = 0.5;
+    color.a = 0.1;
 
     shared_graph_mutex.lock();
     if (plane.second.cloud_seg_map == nullptr) continue;

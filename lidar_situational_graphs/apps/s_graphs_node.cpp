@@ -1384,6 +1384,7 @@ class SGraphsNode : public rclcpp::Node {
                                     local_compressed_graph.get());
     is_optimization_global = global_optimization;
     graph_mutex.unlock();
+
     graph_visualizer->visualize_compressed_graph(current_time,
                                                  is_optimization_global,
                                                  false,
@@ -1640,6 +1641,7 @@ class SGraphsNode : public rclcpp::Node {
   void publish_static_tfs() {
     double floor_height = 28.0;
     double keyframe_height = 8.0;
+    double walls_height = 16.0;
     std::vector<geometry_msgs::msg::TransformStamped> static_transforms;
 
     for (auto floor = floors_vec_snapshot.begin(); floor != floors_vec_snapshot.end();
@@ -1683,6 +1685,17 @@ class SGraphsNode : public rclcpp::Node {
       transform.transform.translation.x = 0;
       transform.transform.translation.y = 0;
       transform.transform.translation.z = keyframe_height;
+      static_transforms.push_back(transform);
+
+      // floor to walls transform
+      transform.header.stamp = this->get_clock()->now();
+      transform.header.frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
+      transform.child_frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_walls_layer";
+      transform.transform.translation.x = 0;
+      transform.transform.translation.y = 0;
+      transform.transform.translation.z = walls_height;
       static_transforms.push_back(transform);
     }
 
