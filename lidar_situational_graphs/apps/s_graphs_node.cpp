@@ -121,6 +121,7 @@ class SGraphsNode : public rclcpp::Node {
                                          std::bind(&SGraphsNode::init_subclass, this));
     // init ros parameters
     this->declare_ros_params();
+    base_frame_id = "";
     map_frame_id =
         this->get_parameter("map_frame_id").get_parameter_value().get<std::string>();
     odom_frame_id =
@@ -230,7 +231,7 @@ class SGraphsNode : public rclcpp::Node {
 
     point_cloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
         "filtered_points",
-        100,
+        1,
         std::bind(&SGraphsNode::point_cloud_callback, this, std::placeholders::_1),
         sub_opt);
 
@@ -375,6 +376,10 @@ class SGraphsNode : public rclcpp::Node {
         std::chrono::seconds(int(map_cloud_update_interval)),
         std::bind(&SGraphsNode::map_publish_timer_callback, this),
         callback_map_pub_timer);
+    static_tf_timer =
+        this->create_wall_timer(std::chrono::seconds(1),
+                                std::bind(&SGraphsNode::publish_static_tfs, this),
+                                callback_map_pub_timer);
   }
 
  private:
@@ -553,14 +558,13 @@ class SGraphsNode : public rclcpp::Node {
    * @param cloud_msg
    */
   void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
-    if (floors_vec.empty()) {
-      cloud_msg->header.frame_id = map_frame_id;
-    } else {
-      cloud_msg->header.frame_id =
-          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-          "_layer";
+    if (base_frame_id.empty()) {
+      base_frame_id = cloud_msg->header.frame_id;
     }
-    // lidar_points_pub->publish(*cloud_msg);
+
+    geometry_msgs::msg::TransformStamped transform_stamped;
+    if (!floors_vec.empty()) {
+    }
   }
 
   /**
@@ -840,16 +844,14 @@ class SGraphsNode : public rclcpp::Node {
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
     pcl::fromROSMsg(*cloud_msg, *cloud);
 
-    if (base_frame_id.empty()) {
-      base_frame_id = cloud_msg->header.frame_id;
-    }
-
     if (!keyframe_updater->update(odom)) {
       return;
     }
 
     // add the first floor node at keyframe height  before adding any keyframes
-    if (keyframes.empty() && floors_vec.empty()) add_first_floor_node();
+    if (keyframes.empty() && floors_vec.empty()) {
+      add_first_floor_node();
+    }
 
     double accum_d = keyframe_updater->get_accum_distance();
     if (use_map2map_transform) {
@@ -1296,7 +1298,6 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.lock();
     this->copy_data();
     graph_mutex.unlock();
-    this->publish_static_tfs();
     auto current_time = this->now();
 
     int current_loop = 0;
@@ -1341,7 +1342,10 @@ class SGraphsNode : public rclcpp::Node {
         current_keyframes_map_snapshot.back()->cloud->header.stamp;
     pcl::toROSMsg(*floors_vec[floor_level].floor_cloud, s_graphs_cloud_msg);
     s_graphs_cloud_msg = transform_floor_cloud(
-        s_graphs_cloud_msg, floors_vec[floor_level], current_time);
+        s_graphs_cloud_msg,
+        current_time,
+        map_frame_id,
+        "floor_" + std::to_string(floors_vec[floor_level].sequential_id) + "_layer");
 
     for (auto& floor : floors_vec) {
       if (floor.second.id == floor_level || floor.second.floor_cloud->points.empty()) {
@@ -1349,8 +1353,11 @@ class SGraphsNode : public rclcpp::Node {
       }
 
       pcl::toROSMsg(*floor.second.floor_cloud, floor_cloud_msg);
-      floor_cloud_msg =
-          transform_floor_cloud(floor_cloud_msg, floor.second, current_time);
+      floor_cloud_msg = transform_floor_cloud(
+          floor_cloud_msg,
+          current_time,
+          map_frame_id,
+          "floor_" + std::to_string(floor.second.sequential_id) + "_layer");
       pcl::concatenatePointCloud(
           s_graphs_cloud_msg, floor_cloud_msg, s_graphs_cloud_msg);
     }
@@ -1433,18 +1440,23 @@ class SGraphsNode : public rclcpp::Node {
 
   sensor_msgs::msg::PointCloud2 transform_floor_cloud(
       const sensor_msgs::msg::PointCloud2 input_floor_cloud,
-      const Floors& floor,
-      const rclcpp::Time& stamp) {
+      const rclcpp::Time& stamp,
+      const std::string target_frame_id,
+      const std::string source_frame_id) {
     geometry_msgs::msg::TransformStamped transform_stamped;
     try {
       transform_stamped = tf_buffer->lookupTransform(
-          map_frame_id,
-          "floor_" + std::to_string(floor.sequential_id) + "_layer",
-          tf2::TimePointZero);
+          target_frame_id, source_frame_id, tf2::TimePointZero);
     } catch (tf2::TransformException& ex) {
       std::cout << "failed to find transform " << ex.what() << std::endl;
     }
 
+    return apply_transform(input_floor_cloud, transform_stamped);
+  }
+
+  inline sensor_msgs::msg::PointCloud2 apply_transform(
+      const sensor_msgs::msg::PointCloud2 input_floor_cloud,
+      const geometry_msgs::msg::TransformStamped transform_stamped) {
     sensor_msgs::msg::PointCloud2 transformed_pointcloud;
     try {
       tf2::doTransform(input_floor_cloud, transformed_pointcloud, transform_stamped);
@@ -1647,6 +1659,7 @@ class SGraphsNode : public rclcpp::Node {
     double walls_height = 16.0;
     std::vector<geometry_msgs::msg::TransformStamped> static_transforms;
 
+    auto current_time = this->get_clock()->now();
     for (auto floor = floors_vec_snapshot.begin(); floor != floors_vec_snapshot.end();
          ++floor) {
       geometry_msgs::msg::TransformStamped transform;
@@ -1657,14 +1670,6 @@ class SGraphsNode : public rclcpp::Node {
       transform.transform.rotation.z = quat.z();
       transform.transform.rotation.w = quat.w();
 
-      // map to floor transform
-      transform.header.stamp = this->get_clock()->now();
-      transform.header.frame_id = map_frame_id;
-      transform.child_frame_id =
-          "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
-      transform.transform.translation.x = 0;
-      transform.transform.translation.y = 0;
-      transform.transform.translation.z = floor->second.sequential_id * floor_height;
       if (floor->second.sequential_id != 0) {
         graph_mutex.lock();
         double floor_z_diff =
@@ -1672,34 +1677,60 @@ class SGraphsNode : public rclcpp::Node {
             std::prev(floor)->second.node->estimate().translation().z();
         graph_mutex.unlock();
 
-        if (floor_z_diff < 0)
-          transform.transform.translation.z =
-              -1 * (transform.transform.translation.z =
-                        floor->second.sequential_id * floor_height);
+        if (floor_z_diff < 0) floor_height = -1 * floor_height;
       }
-      static_transforms.push_back(transform);
+
+      // map to floor transform
+      geometry_msgs::msg::TransformStamped map_floor_transform;
+      map_floor_transform.header.stamp = current_time;
+      map_floor_transform.header.frame_id = map_frame_id;
+      map_floor_transform.child_frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
+      map_floor_transform.transform.translation.x = 0;
+      map_floor_transform.transform.translation.y = 0;
+      map_floor_transform.transform.translation.z =
+          floor->second.sequential_id * floor_height;
+      map_floor_transform.transform.rotation = transform.transform.rotation;
+      static_transforms.push_back(map_floor_transform);
+
+      // base_frame to floor_base_frame transform
+      geometry_msgs::msg::TransformStamped base_base_floor_transform;
+      base_base_floor_transform.header.stamp = current_time;
+      base_base_floor_transform.header.frame_id = base_frame_id;
+      base_base_floor_transform.child_frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_" + base_frame_id;
+      base_base_floor_transform.transform.translation.x = 0;
+      base_base_floor_transform.transform.translation.y = 0;
+      base_base_floor_transform.transform.translation.z =
+          floor->second.sequential_id * floor_height;
+      base_base_floor_transform.transform.rotation = transform.transform.rotation;
+      static_transforms.push_back(base_base_floor_transform);
 
       // floor to keyframe transform
-      transform.header.stamp = this->get_clock()->now();
-      transform.header.frame_id =
+      geometry_msgs::msg::TransformStamped floor_keyframe_transform;
+      floor_keyframe_transform.header.stamp = current_time;
+      floor_keyframe_transform.header.frame_id =
           "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
-      transform.child_frame_id =
+      floor_keyframe_transform.child_frame_id =
           "floor_" + std::to_string(floor->second.sequential_id) + "_keyframes_layer";
-      transform.transform.translation.x = 0;
-      transform.transform.translation.y = 0;
-      transform.transform.translation.z = keyframe_height;
-      static_transforms.push_back(transform);
+      floor_keyframe_transform.transform.translation.x = 0;
+      floor_keyframe_transform.transform.translation.y = 0;
+      floor_keyframe_transform.transform.translation.z = keyframe_height;
+      floor_keyframe_transform.transform.rotation = transform.transform.rotation;
+      static_transforms.push_back(floor_keyframe_transform);
 
       // floor to walls transform
-      transform.header.stamp = this->get_clock()->now();
-      transform.header.frame_id =
+      geometry_msgs::msg::TransformStamped floor_wall_transform;
+      floor_wall_transform.header.stamp = current_time;
+      floor_wall_transform.header.frame_id =
           "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
-      transform.child_frame_id =
+      floor_wall_transform.child_frame_id =
           "floor_" + std::to_string(floor->second.sequential_id) + "_walls_layer";
-      transform.transform.translation.x = 0;
-      transform.transform.translation.y = 0;
-      transform.transform.translation.z = walls_height;
-      static_transforms.push_back(transform);
+      floor_wall_transform.transform.translation.x = 0;
+      floor_wall_transform.transform.translation.y = 0;
+      floor_wall_transform.transform.translation.z = walls_height;
+      floor_wall_transform.transform.rotation = transform.transform.rotation;
+      static_transforms.push_back(floor_wall_transform);
     }
 
     for (const auto& transform : static_transforms) {
@@ -1997,6 +2028,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr optimization_timer;
   rclcpp::TimerBase::SharedPtr keyframe_timer;
   rclcpp::TimerBase::SharedPtr map_publish_timer;
+  rclcpp::TimerBase::SharedPtr static_tf_timer;
 
   rclcpp::CallbackGroup::SharedPtr callback_group_subscriber;
   rclcpp::CallbackGroup::SharedPtr callback_group_publisher;
@@ -2033,6 +2065,7 @@ class SGraphsNode : public rclcpp::Node {
   std::vector<geometry_msgs::msg::PoseStamped> odom_path_vec;
   std::string map_frame_id;
   std::string odom_frame_id;
+  std::string base_frame_id;
   std::string points_topic;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr markers_pub;
@@ -2065,7 +2098,6 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<nav_msgs::msg::Odometry::SharedPtr> odom_queue;
 
   // keyframe queue
-  std::string base_frame_id;
   std::mutex keyframe_queue_mutex;
   std::deque<KeyFrame::Ptr> keyframe_queue;
 
