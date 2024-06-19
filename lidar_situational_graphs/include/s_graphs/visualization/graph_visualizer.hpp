@@ -159,12 +159,15 @@ class GraphVisualizer {
    */
   void visualize_compressed_graph(
       const rclcpp::Time& stamp,
+      const int& current_floor_level,
       bool global_optimization,
       bool room_optimization,
       const g2o::SparseOptimizer* compressed_graph,
+      const std::vector<KeyFrame::Ptr> keyframes,
       const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
       const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
-      const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot);
+      const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
+      const std::map<int, Floors>& floors_vec);
 
  private:
   /**
@@ -296,6 +299,14 @@ class GraphVisualizer {
                           const std::unordered_map<int, VerticalPlanes>& plane_snapshot,
                           std::unordered_map<int, InfiniteRooms> infinite_room_snapshot,
                           visualization_msgs::msg::MarkerArray& markers);
+
+  /**
+   * @brief
+   *
+   * @param vertex_se3
+   */
+  void publish_cuboid(const g2o::VertexSE3* vertex_se3,
+                      rviz_visual_tools::Colors keyframe_node_color);
 
  private:
   std::mutex& shared_graph_mutex;

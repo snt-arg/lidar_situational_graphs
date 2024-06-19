@@ -32,48 +32,6 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node,
   keyframe_node_visual_tools->enableBatchPublishing();
   keyframe_node_visual_tools->setAlpha(0.5);
 
-  keyframe_edge_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-      keyframes_layer_id, "/rviz_keyframe_edge_visual_tools", node);
-  keyframe_edge_visual_tools->loadMarkerPub(false);
-  keyframe_edge_visual_tools->deleteAllMarkers();
-  keyframe_edge_visual_tools->enableBatchPublishing();
-  keyframe_edge_visual_tools->setAlpha(1);
-
-  plane_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-      walls_layer_id, "/rviz_plane_node_visual_tools", node);
-  plane_node_visual_tools->loadMarkerPub(false);
-  plane_node_visual_tools->deleteAllMarkers();
-  plane_node_visual_tools->enableBatchPublishing();
-  plane_node_visual_tools->setAlpha(0.5);
-
-  plane_edge_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-      rooms_layer_id, "/rviz_plane_edge_visual_tools", node);
-  plane_edge_visual_tools->loadMarkerPub(false);
-  plane_edge_visual_tools->deleteAllMarkers();
-  plane_edge_visual_tools->enableBatchPublishing();
-  plane_edge_visual_tools->setAlpha(1);
-
-  room_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-      rooms_layer_id, "/rviz_room_node_visual_tools", node);
-  room_node_visual_tools->loadMarkerPub(false);
-  room_node_visual_tools->deleteAllMarkers();
-  room_node_visual_tools->enableBatchPublishing();
-  room_node_visual_tools->setAlpha(0.5);
-
-  floor_edge_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-      floors_layer_id, "/rviz_floor_edge_visual_tools", node);
-  floor_edge_visual_tools->loadMarkerPub(false);
-  floor_edge_visual_tools->deleteAllMarkers();
-  floor_edge_visual_tools->enableBatchPublishing();
-  floor_edge_visual_tools->setAlpha(1);
-
-  floor_node_visual_tools = std::make_shared<rviz_visual_tools::RvizVisualTools>(
-      floors_layer_id, "/rviz_floor_node_visual_tools", node);
-  floor_node_visual_tools->loadMarkerPub(false);
-  floor_node_visual_tools->deleteAllMarkers();
-  floor_node_visual_tools->enableBatchPublishing();
-  floor_node_visual_tools->setAlpha(0.5);
-
   tf_buffer = std::make_unique<tf2_ros::Buffer>(node->get_clock());
   tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
 }
@@ -1461,13 +1419,22 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
 
 void GraphVisualizer::visualize_compressed_graph(
     const rclcpp::Time& stamp,
+    const int& current_floor_level,
     bool global_optimization,
     bool room_optimization,
     const g2o::SparseOptimizer* compressed_graph,
+    const std::vector<KeyFrame::Ptr> keyframes,
     const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
     const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
-    const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot) {
+    const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
+    const std::map<int, Floors>& floors_vec) {
+  auto floor = floors_vec.at(current_floor_level);
+  std::string keyframes_layer_id =
+      "floor_" + std::to_string(floor.sequential_id) + "_keyframes_layer";
+
   keyframe_node_visual_tools->deleteAllMarkers();
+  keyframe_node_visual_tools->setBaseFrame(keyframes_layer_id);
+
   rviz_visual_tools::Colors node_color;
   rviz_visual_tools::Colors keyframe_edge_color, keyframe_plane_edge_color;
   rviz_visual_tools::Colors keyframe_node_color;
@@ -1483,30 +1450,62 @@ void GraphVisualizer::visualize_compressed_graph(
   node_color = rviz_visual_tools::TRANSLUCENT;
   keyframe_edge_color = keyframe_plane_edge_color = rviz_visual_tools::TRANSLUCENT;
 
-  for (const auto vertex : compressed_graph->vertices()) {
-    const g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(vertex.second);
-    if (vertex_se3) {
-      Eigen::Isometry3d pose;
-      double depth = 0.4, width = 0.4, height = 0.4;
+  std::vector<std::vector<KeyFrame::Ptr>> non_floor_kfs;
+  non_floor_kfs.resize(floors_vec.size());
+  for (const auto& kf : keyframes) {
+    auto kf_map = compressed_graph->vertices().find(kf->id());
+    if (kf_map == compressed_graph->vertices().end()) continue;
 
-      pose.translation() = Eigen::Vector3d(vertex_se3->estimate().translation()(0),
-                                           vertex_se3->estimate().translation()(1),
-                                           vertex_se3->estimate().translation()(2));
-      pose.linear().setIdentity();
-
-      if (!vertex_se3->fixed())
-        keyframe_node_visual_tools->publishCuboid(
-            pose, depth, width, height, keyframe_node_color);
-      else {
-        keyframe_node_visual_tools->publishCuboid(
-            pose, depth, width, height, rviz_visual_tools::BLUE);
+    if (kf->floor_level == current_floor_level) {
+      const g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(kf_map->second);
+      if (vertex_se3) {
+        this->publish_cuboid(vertex_se3, keyframe_node_color);
       }
+    } else {
+      non_floor_kfs[floors_vec.at(kf->floor_level).sequential_id].push_back(kf);
+    }
+  }
+  keyframe_node_visual_tools->trigger();
+
+  int id = 0;
+  for (int i = 0; i < non_floor_kfs.size(); ++i) {
+    if (!non_floor_kfs[i].empty()) {
+      keyframes_layer_id = "floor_" + std::to_string(i) + "_keyframes_layer";
+      keyframe_node_visual_tools->setBaseFrame(keyframes_layer_id);
+
+      for (const auto& kf : non_floor_kfs[i]) {
+        auto kf_map = compressed_graph->vertices().find(kf->id());
+        if (kf_map == compressed_graph->vertices().end()) continue;
+        const g2o::VertexSE3* vertex_se3 =
+            dynamic_cast<g2o::VertexSE3*>(kf_map->second);
+        if (vertex_se3) {
+          this->publish_cuboid(vertex_se3, keyframe_node_color);
+        }
+      }
+      keyframe_node_visual_tools->trigger();
     }
   }
 
-  keyframe_node_visual_tools->trigger();
-
   return;
+}
+
+void GraphVisualizer::publish_cuboid(const g2o::VertexSE3* vertex_se3,
+                                     rviz_visual_tools::Colors keyframe_node_color) {
+  Eigen::Isometry3d pose;
+  double depth = 0.4, width = 0.4, height = 0.4;
+
+  pose.translation() = Eigen::Vector3d(vertex_se3->estimate().translation()(0),
+                                       vertex_se3->estimate().translation()(1),
+                                       vertex_se3->estimate().translation()(2));
+  pose.linear().setIdentity();
+
+  if (!vertex_se3->fixed())
+    keyframe_node_visual_tools->publishCuboid(
+        pose, depth, width, height, keyframe_node_color);
+  else {
+    keyframe_node_visual_tools->publishCuboid(
+        pose, depth, width, height, rviz_visual_tools::BLUE);
+  }
 }
 
 Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,

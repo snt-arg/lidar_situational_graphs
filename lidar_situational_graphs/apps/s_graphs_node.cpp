@@ -1386,12 +1386,15 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     graph_visualizer->visualize_compressed_graph(current_time,
+                                                 current_floor_level,
                                                  is_optimization_global,
                                                  false,
                                                  local_compressed_graph->graph.get(),
+                                                 keyframes_complete_snapshot,
                                                  x_planes_snapshot,
                                                  y_planes_snapshot,
-                                                 hort_planes_snapshot);
+                                                 hort_planes_snapshot,
+                                                 floors_vec_snapshot);
 
     markers_pub->publish(s_graphs_markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
