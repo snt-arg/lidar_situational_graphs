@@ -108,6 +108,8 @@ int FloorMapper::factor_floor_node(
   det_floor.node = floor_node;
   det_floor.color = PlaneUtils::random_color_vec();
   det_floor.floor_cloud = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
+  det_floor.floor_wall_cloud =
+      pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
 
   shared_graph_mutex.lock();
   floors_vec.insert({det_floor.id, det_floor});

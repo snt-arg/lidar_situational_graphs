@@ -37,6 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <Eigen/Eigen>
 
 using PointT = pcl::PointXYZI;
+using PointNormal = pcl::PointXYZRGBNormal;
 
 namespace g2o {
 class VertexFloor;
@@ -63,6 +64,7 @@ struct Floors {
   std::vector<double> color;
   std::vector<int> stair_keyframe_ids;
   pcl::PointCloud<PointT>::Ptr floor_cloud;
+  pcl::PointCloud<PointNormal>::Ptr floor_wall_cloud;
 };
 
 }  // namespace s_graphs

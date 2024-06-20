@@ -294,6 +294,8 @@ class SGraphsNode : public rclcpp::Node {
         "s_graphs/lidar_points", 1, pub_opt);
     map_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
         "s_graphs/map_points", 1, pub_opt);
+    wall_points_pub = this->create_publisher<sensor_msgs::msg::PointCloud2>(
+        "s_graphs/wall_points", 1, pub_opt);
     map_planes_pub = this->create_publisher<situational_graphs_msgs::msg::PlanesData>(
         "s_graphs/map_planes", 1, pub_opt);
     all_map_planes_pub =
@@ -364,6 +366,9 @@ class SGraphsNode : public rclcpp::Node {
     callback_map_pub_timer =
         this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
+    callback_static_tf_timer =
+        this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
     optimization_timer = this->create_wall_timer(
         std::chrono::seconds(int(graph_update_interval)),
         std::bind(&SGraphsNode::optimization_timer_callback, this),
@@ -379,7 +384,7 @@ class SGraphsNode : public rclcpp::Node {
     static_tf_timer =
         this->create_wall_timer(std::chrono::seconds(1),
                                 std::bind(&SGraphsNode::publish_static_tfs, this),
-                                callback_map_pub_timer);
+                                callback_static_tf_timer);
   }
 
  private:
@@ -1316,7 +1321,13 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
   }
 
-  void copy_data() {
+  void copy_data(std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
+                 std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
+                 std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
+                 std::unordered_map<int, InfiniteRooms>& x_inf_rooms_snapshot,
+                 std::unordered_map<int, InfiniteRooms>& y_inf_rooms_snapshot,
+                 std::unordered_map<int, Rooms>& rooms_vec_snapshot,
+                 std::map<int, Floors>& floors_vec_snapshot) {
     x_planes_snapshot = x_vert_planes;
     y_planes_snapshot = y_vert_planes;
     hort_planes_snapshot = hort_planes;
@@ -1333,8 +1344,20 @@ class SGraphsNode : public rclcpp::Node {
   void map_publish_timer_callback() {
     if (keyframes.empty() || floors_vec.empty()) return;
 
+    std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
+    std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
+    std::unordered_map<int, InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
+    std::unordered_map<int, Rooms> rooms_vec_snapshot;
+    std::map<int, Floors> floors_vec_snapshot;
+
     graph_mutex.lock();
-    this->copy_data();
+    this->copy_data(x_planes_snapshot,
+                    y_planes_snapshot,
+                    hort_planes_snapshot,
+                    x_inf_rooms_snapshot,
+                    y_inf_rooms_snapshot,
+                    rooms_vec_snapshot,
+                    floors_vec_snapshot);
     graph_mutex.unlock();
     auto current_time = this->now();
 
@@ -1358,54 +1381,44 @@ class SGraphsNode : public rclcpp::Node {
 
     if (current_keyframes_map_snapshot.empty() || keyframes_complete_snapshot.empty()) {
       markers_pub->publish(s_graphs_markers);
-      map_points_pub->publish(s_graphs_cloud_msg);
       return;
     }
 
+    graph_mutex.lock();
     int floor_level = current_floor_level;
-    auto floor_cloud = map_cloud_generator->generate_floor_cloud(
-        floor_level, map_cloud_resolution, current_keyframes_map_snapshot);
-    floors_vec[floor_level].floor_cloud = floor_cloud;
+    graph_mutex.unlock();
 
-    if (!floor_cloud) {
+    sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
+    if (!this->handle_floor_cloud(current_time,
+                                  floor_level,
+                                  s_graphs_cloud_msg,
+                                  keyframes_map_snapshot,
+                                  floors_vec_snapshot)) {
       std::cout << "returning as floor cloud for floor level "
-                << floors_vec[floor_level].id << " is empty" << std::endl;
+                << floors_vec_snapshot[floor_level].id << " is empty" << std::endl;
       return;
     }
 
-    s_graphs_cloud_msg = sensor_msgs::msg::PointCloud2();
-    sensor_msgs::msg::PointCloud2 floor_cloud_msg;
-    floors_vec[floor_level].floor_cloud->header.frame_id = map_frame_id;
-    floors_vec[floor_level].floor_cloud->header.stamp =
-        current_keyframes_map_snapshot.back()->cloud->header.stamp;
-    pcl::toROSMsg(*floors_vec[floor_level].floor_cloud, s_graphs_cloud_msg);
-    s_graphs_cloud_msg = transform_floor_cloud(
-        s_graphs_cloud_msg,
-        current_time,
-        map_frame_id,
-        "floor_" + std::to_string(floors_vec[floor_level].sequential_id) + "_layer");
-
-    for (auto& floor : floors_vec) {
-      if (floor.second.id == floor_level || floor.second.floor_cloud->points.empty()) {
-        continue;
-      }
-
-      pcl::toROSMsg(*floor.second.floor_cloud, floor_cloud_msg);
-      floor_cloud_msg = transform_floor_cloud(
-          floor_cloud_msg,
-          current_time,
-          map_frame_id,
-          "floor_" + std::to_string(floor.second.sequential_id) + "_layer");
-      pcl::concatenatePointCloud(
-          s_graphs_cloud_msg, floor_cloud_msg, s_graphs_cloud_msg);
-    }
+    sensor_msgs::msg::PointCloud2 floor_wall_cloud_msg;
+    this->handle_floor_wall_cloud(current_time,
+                                  floor_level,
+                                  floor_wall_cloud_msg,
+                                  x_planes_snapshot,
+                                  y_planes_snapshot,
+                                  floors_vec_snapshot);
 
     std::unique_ptr<GraphSLAM> local_covisibility_graph;
     local_covisibility_graph = std::make_unique<GraphSLAM>("", false, false);
     graph_mutex.lock();
     GraphUtils::copy_entire_graph(covisibility_graph, local_covisibility_graph);
     graph_mutex.unlock();
-    publish_graph(local_covisibility_graph->graph.get(), keyframes_complete_snapshot);
+    publish_graph(local_covisibility_graph->graph.get(),
+                  keyframes_complete_snapshot,
+                  x_planes_snapshot,
+                  y_planes_snapshot,
+                  x_inf_rooms_snapshot,
+                  y_inf_rooms_snapshot,
+                  rooms_vec_snapshot);
 
     s_graphs_markers.markers.clear();
     s_graphs_markers = graph_visualizer->visualize_floor_covisibility_graph(
@@ -1444,6 +1457,163 @@ class SGraphsNode : public rclcpp::Node {
     markers_pub->publish(s_graphs_markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
     map_points_pub->publish(s_graphs_cloud_msg);
+    wall_points_pub->publish(floor_wall_cloud_msg);
+
+    // copy floor cloud to floors_vec
+    graph_mutex.lock();
+    floors_vec[floor_level].floor_cloud = floors_vec_snapshot[floor_level].floor_cloud;
+    floors_vec[floor_level].floor_wall_cloud =
+        floors_vec_snapshot[floor_level].floor_wall_cloud;
+    graph_mutex.unlock();
+  }
+
+  /**
+   * @brief
+   *
+   * @param current_time
+   * @param floor_level
+   * @param current_keyframes_map_snapshot
+   * @param floors_vec_snapshot
+   * @return true
+   * @return false
+   */
+  bool handle_floor_cloud(
+      const auto& current_time,
+      const int& floor_level,
+      sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg,
+      const std::vector<KeyFrameSnapshot::Ptr>& current_keyframes_map_snapshot,
+      std::map<int, Floors>& floors_vec_snapshot) {
+    auto floor_cloud = map_cloud_generator->generate_floor_cloud(
+        floor_level, map_cloud_resolution, current_keyframes_map_snapshot);
+
+    if (!floor_cloud) {
+      return false;
+    }
+
+    floors_vec_snapshot[floor_level].floor_cloud = floor_cloud;
+    floors_vec_snapshot[floor_level].floor_cloud->header.frame_id = map_frame_id;
+    floors_vec_snapshot[floor_level].floor_cloud->header.stamp =
+        current_keyframes_map_snapshot.back()->cloud->header.stamp;
+    pcl::toROSMsg(*floors_vec[floor_level].floor_cloud, s_graphs_cloud_msg);
+    s_graphs_cloud_msg = transform_floor_cloud(
+        s_graphs_cloud_msg,
+        current_time,
+        map_frame_id,
+        "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
+            "_layer");
+
+    this->concatenate_floor_clouds(
+        current_time, floor_level, s_graphs_cloud_msg, floors_vec_snapshot);
+
+    return true;
+  }
+
+  /**
+   * @brief
+   *
+   * @param current_time
+   * @param floor_level
+   * @param floors_vec_snapshot
+   */
+  void concatenate_floor_clouds(const auto& current_time,
+                                const int& floor_level,
+                                sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg,
+                                const std::map<int, Floors>& floors_vec_snapshot) {
+    sensor_msgs::msg::PointCloud2 floor_cloud_msg;
+    for (auto& floor : floors_vec_snapshot) {
+      if (floor.second.id == floor_level || floor.second.floor_cloud->points.empty()) {
+        continue;
+      }
+
+      std::cout << "converting to ros msg " << std::endl;
+      pcl::toROSMsg(*floor.second.floor_cloud, floor_cloud_msg);
+      floor_cloud_msg = transform_floor_cloud(
+          floor_cloud_msg,
+          current_time,
+          map_frame_id,
+          "floor_" + std::to_string(floor.second.sequential_id) + "_layer");
+      std::cout << "after converting to ros msg " << std::endl;
+
+      pcl::concatenatePointCloud(
+          s_graphs_cloud_msg, floor_cloud_msg, s_graphs_cloud_msg);
+    }
+  }
+
+  /**
+   * @brief
+   *
+   * @param current_time
+   * @param floor_level
+   * @param x_planes_snapshot
+   * @param y_planes_snapshot
+   * @param floors_vec_snapshot
+   */
+  void handle_floor_wall_cloud(
+      const auto& current_time,
+      const int& floor_level,
+      sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg,
+      const std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
+      std::map<int, Floors>& floors_vec_snapshot) {
+    sensor_msgs::msg::PointCloud2 current_floor_wall_cloud_msg;
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
+        new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+
+    for (const auto& x_plane : x_planes_snapshot) {
+      if (x_plane.second.floor_level != floor_level) continue;
+      *floor_wall_cloud += *x_plane.second.cloud_seg_map;
+    }
+
+    for (const auto& y_plane : y_planes_snapshot) {
+      if (y_plane.second.floor_level != floor_level) continue;
+      *floor_wall_cloud += *y_plane.second.cloud_seg_map;
+    }
+    floors_vec_snapshot[floor_level].floor_wall_cloud = floor_wall_cloud;
+
+    pcl::toROSMsg(*floors_vec_snapshot[floor_level].floor_wall_cloud,
+                  current_floor_wall_cloud_msg);
+    current_floor_wall_cloud_msg = transform_floor_cloud(
+        current_floor_wall_cloud_msg,
+        current_time,
+        map_frame_id,
+        "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
+            "_walls_layer");
+
+    pcl::concatenatePointCloud(
+        floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
+
+    this->concatenate_floor_wall_clouds(
+        current_time, floor_level, floor_wall_cloud_msg, floors_vec_snapshot);
+  }
+
+  /**
+   * @brief
+   *
+   * @param current_time
+   * @param floor_level
+   * @param floors_vec_snapshot
+   */
+  void concatenate_floor_wall_clouds(
+      const auto& current_time,
+      const int& floor_level,
+      sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg,
+      const std::map<int, Floors>& floors_vec_snapshot) {
+    sensor_msgs::msg::PointCloud2 current_floor_wall_cloud_msg;
+    for (auto& floor : floors_vec_snapshot) {
+      if (floor.second.id == floor_level ||
+          floor.second.floor_wall_cloud->points.empty()) {
+        continue;
+      }
+
+      pcl::toROSMsg(*floor.second.floor_wall_cloud, current_floor_wall_cloud_msg);
+      current_floor_wall_cloud_msg = transform_floor_cloud(
+          current_floor_wall_cloud_msg,
+          current_time,
+          map_frame_id,
+          "floor_" + std::to_string(floor.second.sequential_id) + "_walls_layer");
+      pcl::concatenatePointCloud(
+          floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
+    }
   }
 
   /**
@@ -1451,7 +1621,12 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void publish_graph(g2o::SparseOptimizer* local_covisibility_graph,
-                     std::vector<KeyFrame::Ptr> keyframes_complete_snapshot) {
+                     std::vector<KeyFrame::Ptr> keyframes_complete_snapshot,
+                     std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
+                     std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
+                     std::unordered_map<int, InfiniteRooms>& x_inf_rooms_snapshot,
+                     std::unordered_map<int, InfiniteRooms>& y_inf_rooms_snapshot,
+                     std::unordered_map<int, Rooms>& rooms_vec_snapshot) {
     std::string graph_type;
     if (std::string("/robot1") == this->get_namespace()) {
       graph_type = "Prior";
@@ -1482,20 +1657,11 @@ class SGraphsNode : public rclcpp::Node {
       const std::string target_frame_id,
       const std::string source_frame_id) {
     geometry_msgs::msg::TransformStamped transform_stamped;
-    transform_stamped.transform.translation.x = 0.0;
-    transform_stamped.transform.translation.y = 0.0;
-    transform_stamped.transform.translation.z = 0.0;
-
-    transform_stamped.transform.rotation.x = 0.0;
-    transform_stamped.transform.rotation.y = 0.0;
-    transform_stamped.transform.rotation.z = 0.0;
-    transform_stamped.transform.rotation.w = 1.0;
-
     try {
       transform_stamped = tf_buffer->lookupTransform(
           target_frame_id, source_frame_id, tf2::TimePointZero);
     } catch (tf2::TransformException& ex) {
-      return transform_stamped;
+      return input_floor_cloud;
     }
 
     return apply_transform(input_floor_cloud, transform_stamped);
@@ -1705,6 +1871,10 @@ class SGraphsNode : public rclcpp::Node {
     double keyframe_height = 8.0;
     double walls_height = 16.0;
     std::vector<geometry_msgs::msg::TransformStamped> static_transforms;
+
+    graph_mutex.lock();
+    std::map<int, Floors> floors_vec_snapshot = floors_vec;
+    graph_mutex.unlock();
 
     auto current_time = this->get_clock()->now();
     for (auto floor = floors_vec_snapshot.begin(); floor != floors_vec_snapshot.end();
@@ -2070,6 +2240,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::CallbackGroup::SharedPtr callback_group_opt_timer;
   rclcpp::CallbackGroup::SharedPtr callback_keyframe_timer;
   rclcpp::CallbackGroup::SharedPtr callback_map_pub_timer;
+  rclcpp::CallbackGroup::SharedPtr callback_static_tf_timer;
 
   message_filters::Subscriber<nav_msgs::msg::Odometry> odom_sub;
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2> cloud_sub;
@@ -2108,6 +2279,7 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr odom_path_corrected_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr lidar_points_pub;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr map_points_pub;
+  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr wall_points_pub;
   rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr map_planes_pub;
   rclcpp::Publisher<situational_graphs_msgs::msg::PlanesData>::SharedPtr
       all_map_planes_pub;
@@ -2187,12 +2359,6 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<int, Walls> walls_vec;
   int prev_edge_count, curr_edge_count;
 
-  std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
-  std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
-  std::unordered_map<int, Rooms> rooms_vec_snapshot;
-  std::map<int, Floors> floors_vec_snapshot;
-  std::unordered_map<int, InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
-
   // room data queue
   std::mutex room_data_queue_mutex, floor_data_mutex;
   std::deque<situational_graphs_msgs::msg::RoomsData> room_data_queue;
@@ -2217,7 +2383,6 @@ class SGraphsNode : public rclcpp::Node {
   int current_floor_level;
 
   visualization_msgs::msg::MarkerArray s_graphs_markers;
-  sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
   std::unique_ptr<GraphSLAM> compressed_graph;
