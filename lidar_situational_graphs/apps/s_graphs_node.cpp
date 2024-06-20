@@ -562,8 +562,46 @@ class SGraphsNode : public rclcpp::Node {
       base_frame_id = cloud_msg->header.frame_id;
     }
 
-    geometry_msgs::msg::TransformStamped transform_stamped;
     if (!floors_vec.empty()) {
+      geometry_msgs::msg::TransformStamped base_floor_transform_stamped,
+          map_floor_tranform_stamped;
+      try {
+        base_floor_transform_stamped = tf_buffer->lookupTransform(
+            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+                "_layer",
+            cloud_msg->header.frame_id,
+            tf2::TimePointZero);
+      } catch (tf2::TransformException& ex) {
+        return;
+      }
+
+      try {
+        map_floor_tranform_stamped = tf_buffer->lookupTransform(
+            map_frame_id,
+            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+                "_layer",
+            tf2::TimePointZero);
+      } catch (tf2::TransformException& ex) {
+        return;
+      }
+
+      Eigen::Matrix4f base_floor_t =
+          transformStamped2EigenMatrix(base_floor_transform_stamped);
+
+      Eigen::Matrix4f map_floor_t =
+          transformStamped2EigenMatrix(map_floor_tranform_stamped);
+
+      Eigen::Matrix4f final_t = map_floor_t * base_floor_t;
+      geometry_msgs::msg::TransformStamped final_transform_stamped =
+          eigenMatrixToTransformStamped(
+              final_t, cloud_msg->header.frame_id, map_frame_id);
+
+      *cloud_msg = apply_transform(*cloud_msg, final_transform_stamped);
+      cloud_msg->header.frame_id =
+          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+          "_layer";
+      cloud_msg->header.stamp = cloud_msg->header.stamp;
+      lidar_points_pub->publish(*cloud_msg);
     }
   }
 
@@ -1444,11 +1482,20 @@ class SGraphsNode : public rclcpp::Node {
       const std::string target_frame_id,
       const std::string source_frame_id) {
     geometry_msgs::msg::TransformStamped transform_stamped;
+    transform_stamped.transform.translation.x = 0.0;
+    transform_stamped.transform.translation.y = 0.0;
+    transform_stamped.transform.translation.z = 0.0;
+
+    transform_stamped.transform.rotation.x = 0.0;
+    transform_stamped.transform.rotation.y = 0.0;
+    transform_stamped.transform.rotation.z = 0.0;
+    transform_stamped.transform.rotation.w = 1.0;
+
     try {
       transform_stamped = tf_buffer->lookupTransform(
           target_frame_id, source_frame_id, tf2::TimePointZero);
     } catch (tf2::TransformException& ex) {
-      std::cout << "failed to find transform " << ex.what() << std::endl;
+      return transform_stamped;
     }
 
     return apply_transform(input_floor_cloud, transform_stamped);
@@ -1692,19 +1739,6 @@ class SGraphsNode : public rclcpp::Node {
           floor->second.sequential_id * floor_height;
       map_floor_transform.transform.rotation = transform.transform.rotation;
       static_transforms.push_back(map_floor_transform);
-
-      // base_frame to floor_base_frame transform
-      geometry_msgs::msg::TransformStamped base_base_floor_transform;
-      base_base_floor_transform.header.stamp = current_time;
-      base_base_floor_transform.header.frame_id = base_frame_id;
-      base_base_floor_transform.child_frame_id =
-          "floor_" + std::to_string(floor->second.sequential_id) + "_" + base_frame_id;
-      base_base_floor_transform.transform.translation.x = 0;
-      base_base_floor_transform.transform.translation.y = 0;
-      base_base_floor_transform.transform.translation.z =
-          floor->second.sequential_id * floor_height;
-      base_base_floor_transform.transform.rotation = transform.transform.rotation;
-      static_transforms.push_back(base_base_floor_transform);
 
       // floor to keyframe transform
       geometry_msgs::msg::TransformStamped floor_keyframe_transform;

@@ -118,5 +118,21 @@ KeyFrame ROS2Keyframe(const situational_graphs_reasoning_msgs::msg::Keyframe& ms
  */
 situational_graphs_reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& keyframe);
 
+/**
+ * @brief
+ *
+ */
+Eigen::Matrix4f transformStamped2EigenMatrix(
+    const geometry_msgs::msg::TransformStamped& transform_stamped);
+
+/**
+ * @brief
+ *
+ */
+geometry_msgs::msg::TransformStamped eigenMatrixToTransformStamped(
+    const Eigen::Matrix4f& matrix,
+    const std::string& frame_id,
+    const std::string& child_frame_id);
+
 }  // namespace s_graphs
 #endif  // ROS_UTILS_HPP

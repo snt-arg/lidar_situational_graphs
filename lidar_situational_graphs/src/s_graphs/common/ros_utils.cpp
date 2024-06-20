@@ -160,7 +160,8 @@ KeyFrame ROS2Keyframe(const situational_graphs_reasoning_msgs::msg::Keyframe& ms
   return keyframe;
 }
 
-situational_graphs_reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& keyframe) {
+situational_graphs_reasoning_msgs::msg::Keyframe Keyframe2ROS(
+    const KeyFrame& keyframe) {
   // TODO: add_accumulated_distance
   situational_graphs_reasoning_msgs::msg::Keyframe msg;
   msg.id = keyframe.id();
@@ -168,6 +169,64 @@ situational_graphs_reasoning_msgs::msg::Keyframe Keyframe2ROS(const KeyFrame& ke
   msg.pose = isometry2pose(keyframe.estimate());
   // pcl::toROSMsg(*keyframe.cloud, msg.pointcloud);
   return msg;
+}
+
+Eigen::Matrix4f transformStamped2EigenMatrix(
+    const geometry_msgs::msg::TransformStamped& transform_stamped) {
+  // Extract the translation components
+  double tx = transform_stamped.transform.translation.x;
+  double ty = transform_stamped.transform.translation.y;
+  double tz = transform_stamped.transform.translation.z;
+
+  // Extract the rotation components (quaternion)
+  double qx = transform_stamped.transform.rotation.x;
+  double qy = transform_stamped.transform.rotation.y;
+  double qz = transform_stamped.transform.rotation.z;
+  double qw = transform_stamped.transform.rotation.w;
+
+  // Create an Eigen 4x4 transformation matrix
+  Eigen::Matrix4f transform_matrix = Eigen::Matrix4f::Identity();
+
+  // Set the translation components
+  transform_matrix(0, 3) = tx;
+  transform_matrix(1, 3) = ty;
+  transform_matrix(2, 3) = tz;
+
+  // Create an Eigen quaternion from the extracted quaternion components
+  Eigen::Quaternionf quaternion(qw, qx, qy, qz);
+
+  // Set the rotation components
+  transform_matrix.block<3, 3>(0, 0) = quaternion.toRotationMatrix();
+
+  return transform_matrix;
+}
+
+geometry_msgs::msg::TransformStamped eigenMatrixToTransformStamped(
+    const Eigen::Matrix4f& matrix,
+    const std::string& frame_id,
+    const std::string& child_frame_id) {
+  geometry_msgs::msg::TransformStamped transform_stamped;
+
+  // Extract translation
+  Eigen::Vector3f translation = matrix.block<3, 1>(0, 3);
+
+  // Extract rotation
+  Eigen::Matrix3f rotation_matrix = matrix.block<3, 3>(0, 0);
+  Eigen::Quaternionf quaternion(rotation_matrix);
+
+  // Fill the TransformStamped message
+  transform_stamped.header.stamp = rclcpp::Clock().now();
+  transform_stamped.header.frame_id = frame_id;
+  transform_stamped.child_frame_id = child_frame_id;
+  transform_stamped.transform.translation.x = translation.x();
+  transform_stamped.transform.translation.y = translation.y();
+  transform_stamped.transform.translation.z = translation.z();
+  transform_stamped.transform.rotation.x = quaternion.x();
+  transform_stamped.transform.rotation.y = quaternion.y();
+  transform_stamped.transform.rotation.z = quaternion.z();
+  transform_stamped.transform.rotation.w = quaternion.w();
+
+  return transform_stamped;
 }
 
 }  // namespace s_graphs
