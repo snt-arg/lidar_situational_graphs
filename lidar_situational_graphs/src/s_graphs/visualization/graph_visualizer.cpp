@@ -97,38 +97,6 @@ GraphVisualizer::visualize_floor_covisibility_graph(
   kf_edge_marker.scale.x = 0.02;
   markers.markers.push_back(kf_edge_marker);
 
-  // x vertical plane markers
-  std::unordered_map<int, VerticalPlanes> floor_x_plane_snapshot;
-  for (const auto& x_plane : x_plane_snapshot) {
-    if (x_plane.second.floor_level == current_floor_level)
-      floor_x_plane_snapshot.insert({x_plane.first, x_plane.second});
-  }
-
-  visualization_msgs::msg::Marker x_vert_plane_marker =
-      fill_plane_makers<VerticalPlanes>(floor_x_plane_snapshot);
-  x_vert_plane_marker.header.frame_id = walls_layer_id;
-  x_vert_plane_marker.header.stamp = stamp;
-  x_vert_plane_marker.ns =
-      "floor_" + std::to_string(floor.sequential_id) + "x_vert_planes";
-  x_vert_plane_marker.id = markers.markers.size();
-  markers.markers.push_back(x_vert_plane_marker);
-
-  // y vert plane markers
-  std::unordered_map<int, VerticalPlanes> floor_y_plane_snapshot;
-  for (const auto& y_plane : y_plane_snapshot) {
-    if (y_plane.second.floor_level == current_floor_level)
-      floor_y_plane_snapshot.insert({y_plane.first, y_plane.second});
-  }
-
-  visualization_msgs::msg::Marker y_vert_plane_marker =
-      fill_plane_makers<VerticalPlanes>(floor_y_plane_snapshot);
-  y_vert_plane_marker.header.frame_id = walls_layer_id;
-  y_vert_plane_marker.header.stamp = stamp;
-  y_vert_plane_marker.ns =
-      "floor_" + std::to_string(floor.sequential_id) + "y_vert_planes";
-  y_vert_plane_marker.id = markers.markers.size();
-  markers.markers.push_back(y_vert_plane_marker);
-
   return markers;
 }
 
