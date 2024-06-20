@@ -1405,6 +1405,7 @@ class SGraphsNode : public rclcpp::Node {
                                   floor_wall_cloud_msg,
                                   x_planes_snapshot,
                                   y_planes_snapshot,
+                                  hort_planes_snapshot,
                                   floors_vec_snapshot);
 
     std::unique_ptr<GraphSLAM> local_covisibility_graph;
@@ -1544,8 +1545,10 @@ class SGraphsNode : public rclcpp::Node {
    *
    * @param current_time
    * @param floor_level
+   * @param floor_wall_cloud_msg
    * @param x_planes_snapshot
    * @param y_planes_snapshot
+   * @param hort_planes_snapshot
    * @param floors_vec_snapshot
    */
   void handle_floor_wall_cloud(
@@ -1554,6 +1557,7 @@ class SGraphsNode : public rclcpp::Node {
       sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg,
       const std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
       const std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
+      const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
       std::map<int, Floors>& floors_vec_snapshot) {
     sensor_msgs::msg::PointCloud2 current_floor_wall_cloud_msg;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
@@ -1568,6 +1572,12 @@ class SGraphsNode : public rclcpp::Node {
       if (y_plane.second.floor_level != floor_level) continue;
       *floor_wall_cloud += *y_plane.second.cloud_seg_map;
     }
+
+    for (const auto& hort_plane : hort_planes_snapshot) {
+      if (hort_plane.second.floor_level != floor_level) continue;
+      *floor_wall_cloud += *hort_plane.second.cloud_seg_map;
+    }
+
     floors_vec_snapshot[floor_level].floor_wall_cloud = floor_wall_cloud;
 
     pcl::toROSMsg(*floors_vec_snapshot[floor_level].floor_wall_cloud,
