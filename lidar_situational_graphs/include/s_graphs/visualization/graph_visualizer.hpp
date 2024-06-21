@@ -310,19 +310,86 @@ class GraphVisualizer {
    * @brief
    *
    * @param room_class
+   * @param stamp
+   * @param marker_lifetime
+   * @param local_graph
+   * @param plane_snapshot
    * @param infinite_room_snapshot
-   * @return visualization_msgs::msg::Marker
+   * @param markers
+   * @param walls_layer_id
+   * @param rooms_layer_id
+   * @param floors_layer_id
+   * @param current_floor_level
    */
-  void fill_infinite_room(const int& room_class,
-                          const rclcpp::Time& stamp,
-                          rclcpp::Duration marker_lifetime,
-                          const g2o::SparseOptimizer* local_graph,
-                          const std::unordered_map<int, VerticalPlanes>& plane_snapshot,
-                          std::unordered_map<int, InfiniteRooms> infinite_room_snapshot,
-                          visualization_msgs::msg::MarkerArray& markers,
-                          const std::string& walls_layer_id,
-                          const std::string& rooms_layer_id,
-                          const std::string& floors_layer_id);
+  void fill_infinite_room(
+      const int& room_class,
+      const rclcpp::Time& stamp,
+      rclcpp::Duration marker_lifetime,
+      const g2o::SparseOptimizer* local_graph,
+      const std::unordered_map<int, VerticalPlanes>& plane_snapshot,
+      const std::unordered_map<int, InfiniteRooms>& infinite_room_snapshot,
+      visualization_msgs::msg::MarkerArray& markers,
+      const std::string& walls_layer_id,
+      const std::string& rooms_layer_id,
+      const std::string& floors_layer_id,
+      const int& current_floor_level = 0);
+
+  /**
+   * @brief
+   *
+   * @param stamp
+   * @param marker_lifetime
+   * @param local_graph
+   * @param x_plane_snapshot
+   * @param y_plane_snapshot
+   * @param rooms_snapshot
+   * @param markers
+   * @param walls_layer_id
+   * @param rooms_layer_id
+   * @param floors_layer_id
+   * @param current_floor_level
+   */
+  void fill_room(const rclcpp::Time& stamp,
+                 rclcpp::Duration marker_lifetime,
+                 const g2o::SparseOptimizer* local_graph,
+                 const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
+                 const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
+                 const std::unordered_map<int, Rooms>& rooms_snapshot,
+                 visualization_msgs::msg::MarkerArray& markers,
+                 const std::string& walls_layer_id,
+                 const std::string& rooms_layer_id,
+                 const std::string& floors_layer_id,
+                 const int& current_floor_level = 0);
+
+  /**
+   * @brief
+   *
+   * @param stamp
+   * @param marker_lifetime
+   * @param local_graph
+   * @param x_inf_rooms_snapshot
+   * @param y_inf_rooms_snapshot
+   * @param rooms_snapshot
+   * @param floors_snapshot
+   * @param markers
+   * @param walls_layer_id
+   * @param rooms_layer_id
+   * @param floors_layer_id
+   * @param current_floor_level
+   * @return * void
+   */
+  void fill_floor(
+      const rclcpp::Time& stamp,
+      rclcpp::Duration marker_lifetime,
+      const g2o::SparseOptimizer* local_graph,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& x_inf_rooms_snapshot,
+      const std::unordered_map<int, s_graphs::InfiniteRooms>& y_inf_rooms_snapshot,
+      const std::unordered_map<int, s_graphs::Rooms>& rooms_snapshot,
+      const std::map<int, s_graphs::Floors>& floors_snapshot,
+      visualization_msgs::msg::MarkerArray& markers,
+      const std::string& rooms_layer_id,
+      const std::string& floors_layer_id,
+      const int& current_floor_level = 0);
 
   /**
    * @brief

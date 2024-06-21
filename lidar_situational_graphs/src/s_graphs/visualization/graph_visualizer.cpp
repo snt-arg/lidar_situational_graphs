@@ -56,11 +56,19 @@ GraphVisualizer::visualize_floor_covisibility_graph(
   std::string walls_layer_id =
       "floor_" + std::to_string(floor.sequential_id) + "_walls_layer";
 
+  std::string rooms_layer_id =
+      "floor_" + std::to_string(floor.sequential_id) + "_rooms_layer";
+
+  std::string floors_layer_id =
+      "floor_" + std::to_string(floor.sequential_id) + "_floors_layer";
+
   std::string ns = node_ptr_->get_namespace();
   if (ns.length() > 1) {
     std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
     keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
     walls_layer_id = ns_prefix + "/" + walls_layer_id;
+    rooms_layer_id = ns_prefix + "/" + rooms_layer_id;
+    floors_layer_id = ns_prefix + "/" + floors_layer_id;
   }
 
   std::vector<KeyFrame::Ptr> floor_keyframes;
@@ -110,6 +118,56 @@ GraphVisualizer::visualize_floor_covisibility_graph(
   kf_plane_edge_marker.pose.orientation.w = 1.0;
   kf_plane_edge_marker.scale.x = 0.01;
   markers.markers.push_back(kf_plane_edge_marker);
+
+  // fil in the x_inf room marker
+  this->fill_infinite_room(0,
+                           stamp,
+                           rclcpp::Duration::from_seconds(0),
+                           local_graph,
+                           x_plane_snapshot,
+                           x_infinite_room_snapshot,
+                           markers,
+                           walls_layer_id,
+                           rooms_layer_id,
+                           floors_layer_id,
+                           current_floor_level);
+
+  // fill in the y_inf room marker
+  this->fill_infinite_room(1,
+                           stamp,
+                           rclcpp::Duration::from_seconds(0),
+                           local_graph,
+                           y_plane_snapshot,
+                           y_infinite_room_snapshot,
+                           markers,
+                           walls_layer_id,
+                           rooms_layer_id,
+                           floors_layer_id,
+                           current_floor_level);
+
+  this->fill_room(stamp,
+                  rclcpp::Duration::from_seconds(0),
+                  local_graph,
+                  x_plane_snapshot,
+                  y_plane_snapshot,
+                  room_snapshot,
+                  markers,
+                  walls_layer_id,
+                  rooms_layer_id,
+                  floors_layer_id,
+                  current_floor_level);
+
+  this->fill_floor(stamp,
+                   rclcpp::Duration::from_seconds(0),
+                   local_graph,
+                   x_infinite_room_snapshot,
+                   y_infinite_room_snapshot,
+                   room_snapshot,
+                   floors_vec,
+                   markers,
+                   rooms_layer_id,
+                   floors_layer_id,
+                   current_floor_level);
 
   return markers;
 }
@@ -312,242 +370,27 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
                            rooms_layer_id,
                            floors_layer_id);
 
-  // room markers
-  for (const auto& room : room_snapshot) {
-    auto room_map = local_graph->vertices().find(room.first);
-    if (room_map == local_graph->vertices().end()) continue;
+  this->fill_room(stamp,
+                  marker_lifetime,
+                  local_graph,
+                  x_plane_snapshot,
+                  y_plane_snapshot,
+                  room_snapshot,
+                  markers,
+                  walls_layer_id,
+                  rooms_layer_id,
+                  floors_layer_id);
 
-    auto floor_map = local_graph->vertices().find(room.second.floor_level);
-    if (floor_map == local_graph->vertices().end()) {
-      std::cout << "floor node not found for room" << std::endl;
-      continue;
-    }
-
-    // fill in the line marker
-    visualization_msgs::msg::Marker room_line_marker;
-    room_line_marker.scale.x = 0.02;
-    room_line_marker.pose.orientation.w = 1.0;
-    room_line_marker.ns = "rooms_line";
-    room_line_marker.header.frame_id = rooms_layer_id;
-    room_line_marker.header.stamp = stamp;
-    room_line_marker.id = markers.markers.size() + 1;
-    room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-    room_line_marker.lifetime = marker_lifetime;
-    room_line_marker.color.r = color_r;
-    room_line_marker.color.g = color_g;
-    room_line_marker.color.b = color_b;
-    room_line_marker.color.a = 1.0;
-    geometry_msgs::msg::Point p1, p2, p3, p4, p5;
-    p1.x =
-        dynamic_cast<g2o::VertexRoom*>(room_map->second)->estimate().translation()(0);
-    p1.y =
-        dynamic_cast<g2o::VertexRoom*>(room_map->second)->estimate().translation()(1);
-    p1.z =
-        dynamic_cast<g2o::VertexFloor*>(floor_map->second)->estimate().translation()(2);
-
-    auto found_planex1 = x_plane_snapshot.find(room.second.plane_x1_id);
-    auto found_planex2 = x_plane_snapshot.find(room.second.plane_x2_id);
-    auto found_planey1 = y_plane_snapshot.find(room.second.plane_y1_id);
-    auto found_planey2 = y_plane_snapshot.find(room.second.plane_y2_id);
-
-    p2 = compute_plane_point(p1,
-                             (*found_planex1).second.cloud_seg_map,
-                             walls_layer_id,
-                             rooms_layer_id,
-                             floors_layer_id);
-    if (p2.x == 0 && p2.y == 0 && p2.z == 0) {
-    } else {
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p2);
-    }
-
-    p3 = compute_plane_point(p1,
-                             (*found_planex2).second.cloud_seg_map,
-                             walls_layer_id,
-                             rooms_layer_id,
-                             floors_layer_id);
-    if (p3.x == 0 && p3.y == 0 && p3.z == 0) {
-    } else {
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p3);
-    }
-
-    p4 = compute_plane_point(p1,
-                             (*found_planey1).second.cloud_seg_map,
-                             walls_layer_id,
-                             rooms_layer_id,
-                             floors_layer_id);
-    if (p4.x == 0 && p4.y == 0 && p4.z == 0) {
-    } else {
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p4);
-    }
-
-    p5 = compute_plane_point(p1,
-                             (*found_planey2).second.cloud_seg_map,
-                             walls_layer_id,
-                             rooms_layer_id,
-                             floors_layer_id);
-    if (p5.x == 0 && p5.y == 0 && p5.z == 0) {
-    } else {
-      room_line_marker.points.push_back(p1);
-      room_line_marker.points.push_back(p5);
-    }
-    markers.markers.push_back(room_line_marker);
-
-    // fill the pose marker
-    visualization_msgs::msg::Marker room_marker;
-    room_marker.scale.x = 0.5;
-    room_marker.scale.y = 0.5;
-    room_marker.scale.z = 0.5;
-    // plane_marker.points.resize(vert_planes.size());
-    room_marker.header.frame_id = rooms_layer_id;
-    room_marker.header.stamp = stamp;
-    room_marker.ns = "rooms";
-    room_marker.id = markers.markers.size();
-    room_marker.type = visualization_msgs::msg::Marker::CUBE;
-    room_marker.color.r = 1;
-    room_marker.color.g = 0.07;
-    room_marker.color.b = 0.57;
-    room_marker.color.a = 1;
-    room_marker.lifetime = marker_lifetime;
-    room_marker.pose.position.x = p1.x;
-    room_marker.pose.position.y = p1.y;
-    room_marker.pose.position.z = p1.z;
-
-    Eigen::Quaterniond quat(
-        dynamic_cast<g2o::VertexRoom*>(room_map->second)->estimate().linear());
-    room_marker.pose.orientation.x = quat.x();
-    room_marker.pose.orientation.y = quat.y();
-    room_marker.pose.orientation.z = quat.z();
-    room_marker.pose.orientation.w = quat.w();
-    markers.markers.push_back(room_marker);
-  }
-
-  for (const auto& floor : floors_vec) {
-    if (floor.first != -1) {
-      auto floor_map = local_graph->vertices().find(floor.first);
-      if (floor_map == local_graph->vertices().end()) {
-        continue;
-      }
-
-      visualization_msgs::msg::Marker floor_marker;
-      floor_marker.pose.orientation.w = 1.0;
-      floor_marker.scale.x = 0.5;
-      floor_marker.scale.y = 0.5;
-      floor_marker.scale.z = 0.5;
-      // plane_marker.points.resize(vert_planes.size());
-      floor_marker.header.frame_id = floors_layer_id;
-      floor_marker.header.stamp = stamp;
-      floor_marker.ns = "floors";
-      floor_marker.id = markers.markers.size();
-      floor_marker.type = visualization_msgs::msg::Marker::CUBE;
-      floor_marker.lifetime = marker_lifetime;
-      floor_marker.color.r = 0.49;
-      floor_marker.color.g = 0;
-      floor_marker.color.b = 1;
-      floor_marker.color.a = 1;
-
-      floor_marker.pose.position.x = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
-                                         ->estimate()
-                                         .translation()(0);
-      floor_marker.pose.position.y = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
-                                         ->estimate()
-                                         .translation()(1);
-      floor_marker.pose.position.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
-                                         ->estimate()
-                                         .translation()(2);
-
-      // create line markers between floor and rooms/infinite_rooms
-      visualization_msgs::msg::Marker floor_line_marker;
-      floor_line_marker.scale.x = 0.02;
-      floor_line_marker.pose.orientation.w = 1.0;
-      floor_line_marker.ns = "floor_lines";
-      floor_line_marker.header.frame_id = floors_layer_id;
-      floor_line_marker.header.stamp = stamp;
-      floor_line_marker.id = markers.markers.size() + 1;
-      floor_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-      floor_line_marker.lifetime = marker_lifetime;
-      floor_line_marker.color.r = color_r;
-      floor_line_marker.color.g = color_g;
-      floor_line_marker.color.b = color_b;
-      floor_line_marker.color.a = 1.0;
-
-      for (const auto& room : room_snapshot) {
-        if (room.second.floor_level != floor.first) continue;
-        auto room_map = local_graph->vertices().find(room.first);
-        if (room_map == local_graph->vertices().end()) continue;
-        geometry_msgs::msg::Point p1, p2;
-        p1.x = floor_marker.pose.position.x;
-        p1.y = floor_marker.pose.position.y;
-        p1.z = floor_marker.pose.position.z;
-        p2.x = dynamic_cast<g2o::VertexRoom*>(room_map->second)
-                   ->estimate()
-                   .translation()(0);
-        p2.y = dynamic_cast<g2o::VertexRoom*>(room_map->second)
-                   ->estimate()
-                   .translation()(1);
-        p2.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
-                   ->estimate()
-                   .translation()(2);
-        p2 = compute_room_point(p2, rooms_layer_id, floors_layer_id);
-
-        floor_line_marker.points.push_back(p1);
-        floor_line_marker.points.push_back(p2);
-      }
-      for (const auto& x_infinite_room : x_infinite_room_snapshot) {
-        if (x_infinite_room.second.id == -1 ||
-            x_infinite_room.second.floor_level != floor.first)
-          continue;
-        auto x_inf_room_map = local_graph->vertices().find(x_infinite_room.first);
-        if (x_inf_room_map == local_graph->vertices().end()) continue;
-
-        geometry_msgs::msg::Point p1, p2;
-        p1.x = floor_marker.pose.position.x;
-        p1.y = floor_marker.pose.position.y;
-        p1.z = floor_marker.pose.position.z;
-        p2.x = dynamic_cast<g2o::VertexRoom*>(x_inf_room_map->second)
-                   ->estimate()
-                   .translation()(0);
-        p2.y = dynamic_cast<g2o::VertexRoom*>(x_inf_room_map->second)
-                   ->estimate()
-                   .translation()(1);
-        p2.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
-                   ->estimate()
-                   .translation()(2);
-        p2 = compute_room_point(p2, rooms_layer_id, floors_layer_id);
-
-        floor_line_marker.points.push_back(p1);
-        floor_line_marker.points.push_back(p2);
-      }
-      for (const auto& y_infinite_room : y_infinite_room_snapshot) {
-        if (y_infinite_room.second.id == -1 ||
-            y_infinite_room.second.floor_level != floor.first)
-          continue;
-        auto y_inf_room_map = local_graph->vertices().find(y_infinite_room.first);
-        if (y_inf_room_map == local_graph->vertices().end()) continue;
-        geometry_msgs::msg::Point p1, p2;
-        p1.x = floor_marker.pose.position.x;
-        p1.y = floor_marker.pose.position.y;
-        p1.z = floor_marker.pose.position.z;
-        p2.x = dynamic_cast<g2o::VertexRoom*>(y_inf_room_map->second)
-                   ->estimate()
-                   .translation()(0);
-        p2.y = dynamic_cast<g2o::VertexRoom*>(y_inf_room_map->second)
-                   ->estimate()
-                   .translation()(1);
-        p2.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
-                   ->estimate()
-                   .translation()(2);
-        p2 = compute_room_point(p2, rooms_layer_id, floors_layer_id);
-
-        floor_line_marker.points.push_back(p1);
-        floor_line_marker.points.push_back(p2);
-      }
-      markers.markers.push_back(floor_marker);
-      markers.markers.push_back(floor_line_marker);
-    }
-  }
+  this->fill_floor(stamp,
+                   marker_lifetime,
+                   local_graph,
+                   x_infinite_room_snapshot,
+                   y_infinite_room_snapshot,
+                   room_snapshot,
+                   floors_vec,
+                   markers,
+                   rooms_layer_id,
+                   floors_layer_id);
 
   return markers;
 }
@@ -1851,13 +1694,16 @@ void GraphVisualizer::fill_infinite_room(
     rclcpp::Duration marker_lifetime,
     const g2o::SparseOptimizer* local_graph,
     const std::unordered_map<int, VerticalPlanes>& plane_snapshot,
-    std::unordered_map<int, InfiniteRooms> infinite_room_snapshot,
+    const std::unordered_map<int, InfiniteRooms>& infinite_room_snapshot,
     visualization_msgs::msg::MarkerArray& markers,
     const std::string& walls_layer_id,
     const std::string& rooms_layer_id,
-    const std::string& floors_layer_id) {
+    const std::string& floors_layer_id,
+    const int& current_floor_level) {
   // fill in the line marker
   for (const auto& infinite_room : infinite_room_snapshot) {
+    if (infinite_room.second.floor_level != current_floor_level) continue;
+
     auto inf_room_map = local_graph->vertices().find(infinite_room.first);
     if (inf_room_map == local_graph->vertices().end()) continue;
 
@@ -1947,6 +1793,273 @@ void GraphVisualizer::fill_infinite_room(
     infinite_room_pose_marker.pose.orientation.z = quat.z();
     infinite_room_pose_marker.pose.orientation.w = quat.w();
     markers.markers.push_back(infinite_room_pose_marker);
+  }
+}
+
+void GraphVisualizer::fill_room(
+    const rclcpp::Time& stamp,
+    rclcpp::Duration marker_lifetime,
+    const g2o::SparseOptimizer* local_graph,
+    const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
+    const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
+    const std::unordered_map<int, Rooms>& rooms_snapshot,
+    visualization_msgs::msg::MarkerArray& markers,
+    const std::string& walls_layer_id,
+    const std::string& rooms_layer_id,
+    const std::string& floors_layer_id,
+    const int& current_floor_level) {
+  // room markers
+  for (const auto& room : rooms_snapshot) {
+    if (room.second.floor_level != current_floor_level) continue;
+
+    auto room_map = local_graph->vertices().find(room.first);
+    if (room_map == local_graph->vertices().end()) continue;
+
+    auto floor_map = local_graph->vertices().find(room.second.floor_level);
+    if (floor_map == local_graph->vertices().end()) {
+      std::cout << "floor node not found for room" << std::endl;
+      continue;
+    }
+
+    // fill in the line marker
+    visualization_msgs::msg::Marker room_line_marker;
+    room_line_marker.scale.x = 0.02;
+    room_line_marker.pose.orientation.w = 1.0;
+    room_line_marker.ns = "rooms_line";
+    room_line_marker.header.frame_id = rooms_layer_id;
+    room_line_marker.header.stamp = stamp;
+    room_line_marker.id = markers.markers.size() + 1;
+    room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    room_line_marker.lifetime = marker_lifetime;
+    room_line_marker.color.r = color_r;
+    room_line_marker.color.g = color_g;
+    room_line_marker.color.b = color_b;
+    room_line_marker.color.a = 1.0;
+    geometry_msgs::msg::Point p1, p2, p3, p4, p5;
+    p1.x =
+        dynamic_cast<g2o::VertexRoom*>(room_map->second)->estimate().translation()(0);
+    p1.y =
+        dynamic_cast<g2o::VertexRoom*>(room_map->second)->estimate().translation()(1);
+    p1.z =
+        dynamic_cast<g2o::VertexFloor*>(floor_map->second)->estimate().translation()(2);
+
+    auto found_planex1 = x_plane_snapshot.find(room.second.plane_x1_id);
+    auto found_planex2 = x_plane_snapshot.find(room.second.plane_x2_id);
+    auto found_planey1 = y_plane_snapshot.find(room.second.plane_y1_id);
+    auto found_planey2 = y_plane_snapshot.find(room.second.plane_y2_id);
+
+    p2 = compute_plane_point(p1,
+                             (*found_planex1).second.cloud_seg_map,
+                             walls_layer_id,
+                             rooms_layer_id,
+                             floors_layer_id);
+    if (p2.x == 0 && p2.y == 0 && p2.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p2);
+    }
+
+    p3 = compute_plane_point(p1,
+                             (*found_planex2).second.cloud_seg_map,
+                             walls_layer_id,
+                             rooms_layer_id,
+                             floors_layer_id);
+    if (p3.x == 0 && p3.y == 0 && p3.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p3);
+    }
+
+    p4 = compute_plane_point(p1,
+                             (*found_planey1).second.cloud_seg_map,
+                             walls_layer_id,
+                             rooms_layer_id,
+                             floors_layer_id);
+    if (p4.x == 0 && p4.y == 0 && p4.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p4);
+    }
+
+    p5 = compute_plane_point(p1,
+                             (*found_planey2).second.cloud_seg_map,
+                             walls_layer_id,
+                             rooms_layer_id,
+                             floors_layer_id);
+    if (p5.x == 0 && p5.y == 0 && p5.z == 0) {
+    } else {
+      room_line_marker.points.push_back(p1);
+      room_line_marker.points.push_back(p5);
+    }
+    markers.markers.push_back(room_line_marker);
+
+    // fill the pose marker
+    visualization_msgs::msg::Marker room_marker;
+    room_marker.scale.x = 0.5;
+    room_marker.scale.y = 0.5;
+    room_marker.scale.z = 0.5;
+    // plane_marker.points.resize(vert_planes.size());
+    room_marker.header.frame_id = rooms_layer_id;
+    room_marker.header.stamp = stamp;
+    room_marker.ns = "rooms";
+    room_marker.id = markers.markers.size();
+    room_marker.type = visualization_msgs::msg::Marker::CUBE;
+    room_marker.color.r = 1;
+    room_marker.color.g = 0.07;
+    room_marker.color.b = 0.57;
+    room_marker.color.a = 1;
+    room_marker.lifetime = marker_lifetime;
+    room_marker.pose.position.x = p1.x;
+    room_marker.pose.position.y = p1.y;
+    room_marker.pose.position.z = p1.z;
+
+    Eigen::Quaterniond quat(
+        dynamic_cast<g2o::VertexRoom*>(room_map->second)->estimate().linear());
+    room_marker.pose.orientation.x = quat.x();
+    room_marker.pose.orientation.y = quat.y();
+    room_marker.pose.orientation.z = quat.z();
+    room_marker.pose.orientation.w = quat.w();
+    markers.markers.push_back(room_marker);
+  }
+}
+
+void GraphVisualizer::fill_floor(
+    const rclcpp::Time& stamp,
+    rclcpp::Duration marker_lifetime,
+    const g2o::SparseOptimizer* local_graph,
+    const std::unordered_map<int, s_graphs::InfiniteRooms>& x_inf_rooms_snapshot,
+    const std::unordered_map<int, s_graphs::InfiniteRooms>& y_inf_rooms_snapshot,
+    const std::unordered_map<int, s_graphs::Rooms>& rooms_snapshot,
+    const std::map<int, s_graphs::Floors>& floors_snapshot,
+    visualization_msgs::msg::MarkerArray& markers,
+    const std::string& rooms_layer_id,
+    const std::string& floors_layer_id,
+    const int& current_floor_level) {
+  for (const auto& floor : floors_snapshot) {
+    if (floor.first != current_floor_level) continue;
+
+    if (floor.first != -1) {
+      auto floor_map = local_graph->vertices().find(floor.first);
+      if (floor_map == local_graph->vertices().end()) {
+        continue;
+      }
+
+      visualization_msgs::msg::Marker floor_marker;
+      floor_marker.pose.orientation.w = 1.0;
+      floor_marker.scale.x = 0.5;
+      floor_marker.scale.y = 0.5;
+      floor_marker.scale.z = 0.5;
+      // plane_marker.points.resize(vert_planes.size());
+      floor_marker.header.frame_id = floors_layer_id;
+      floor_marker.header.stamp = stamp;
+      floor_marker.ns = "floors";
+      floor_marker.id = markers.markers.size();
+      floor_marker.type = visualization_msgs::msg::Marker::CUBE;
+      floor_marker.lifetime = marker_lifetime;
+      floor_marker.color.r = 0.49;
+      floor_marker.color.g = 0;
+      floor_marker.color.b = 1;
+      floor_marker.color.a = 1;
+
+      floor_marker.pose.position.x = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
+                                         ->estimate()
+                                         .translation()(0);
+      floor_marker.pose.position.y = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
+                                         ->estimate()
+                                         .translation()(1);
+      floor_marker.pose.position.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
+                                         ->estimate()
+                                         .translation()(2);
+
+      // create line markers between floor and rooms/infinite_rooms
+      visualization_msgs::msg::Marker floor_line_marker;
+      floor_line_marker.scale.x = 0.02;
+      floor_line_marker.pose.orientation.w = 1.0;
+      floor_line_marker.ns = "floor_lines";
+      floor_line_marker.header.frame_id = floors_layer_id;
+      floor_line_marker.header.stamp = stamp;
+      floor_line_marker.id = markers.markers.size() + 1;
+      floor_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+      floor_line_marker.lifetime = marker_lifetime;
+      floor_line_marker.color.r = color_r;
+      floor_line_marker.color.g = color_g;
+      floor_line_marker.color.b = color_b;
+      floor_line_marker.color.a = 1.0;
+
+      for (const auto& room : rooms_snapshot) {
+        if (room.second.floor_level != floor.first) continue;
+        auto room_map = local_graph->vertices().find(room.first);
+        if (room_map == local_graph->vertices().end()) continue;
+        geometry_msgs::msg::Point p1, p2;
+        p1.x = floor_marker.pose.position.x;
+        p1.y = floor_marker.pose.position.y;
+        p1.z = floor_marker.pose.position.z;
+        p2.x = dynamic_cast<g2o::VertexRoom*>(room_map->second)
+                   ->estimate()
+                   .translation()(0);
+        p2.y = dynamic_cast<g2o::VertexRoom*>(room_map->second)
+                   ->estimate()
+                   .translation()(1);
+        p2.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
+                   ->estimate()
+                   .translation()(2);
+        p2 = compute_room_point(p2, rooms_layer_id, floors_layer_id);
+
+        floor_line_marker.points.push_back(p1);
+        floor_line_marker.points.push_back(p2);
+      }
+      for (const auto& x_infinite_room : x_inf_rooms_snapshot) {
+        if (x_infinite_room.second.id == -1 ||
+            x_infinite_room.second.floor_level != floor.first)
+          continue;
+        auto x_inf_room_map = local_graph->vertices().find(x_infinite_room.first);
+        if (x_inf_room_map == local_graph->vertices().end()) continue;
+
+        geometry_msgs::msg::Point p1, p2;
+        p1.x = floor_marker.pose.position.x;
+        p1.y = floor_marker.pose.position.y;
+        p1.z = floor_marker.pose.position.z;
+        p2.x = dynamic_cast<g2o::VertexRoom*>(x_inf_room_map->second)
+                   ->estimate()
+                   .translation()(0);
+        p2.y = dynamic_cast<g2o::VertexRoom*>(x_inf_room_map->second)
+                   ->estimate()
+                   .translation()(1);
+        p2.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
+                   ->estimate()
+                   .translation()(2);
+        p2 = compute_room_point(p2, rooms_layer_id, floors_layer_id);
+
+        floor_line_marker.points.push_back(p1);
+        floor_line_marker.points.push_back(p2);
+      }
+      for (const auto& y_infinite_room : y_inf_rooms_snapshot) {
+        if (y_infinite_room.second.id == -1 ||
+            y_infinite_room.second.floor_level != floor.first)
+          continue;
+        auto y_inf_room_map = local_graph->vertices().find(y_infinite_room.first);
+        if (y_inf_room_map == local_graph->vertices().end()) continue;
+        geometry_msgs::msg::Point p1, p2;
+        p1.x = floor_marker.pose.position.x;
+        p1.y = floor_marker.pose.position.y;
+        p1.z = floor_marker.pose.position.z;
+        p2.x = dynamic_cast<g2o::VertexRoom*>(y_inf_room_map->second)
+                   ->estimate()
+                   .translation()(0);
+        p2.y = dynamic_cast<g2o::VertexRoom*>(y_inf_room_map->second)
+                   ->estimate()
+                   .translation()(1);
+        p2.z = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
+                   ->estimate()
+                   .translation()(2);
+        p2 = compute_room_point(p2, rooms_layer_id, floors_layer_id);
+
+        floor_line_marker.points.push_back(p1);
+        floor_line_marker.points.push_back(p2);
+      }
+      markers.markers.push_back(floor_marker);
+      markers.markers.push_back(floor_line_marker);
+    }
   }
 }
 

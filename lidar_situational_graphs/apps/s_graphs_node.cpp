@@ -1875,9 +1875,12 @@ class SGraphsNode : public rclcpp::Node {
    *
    */
   void publish_static_tfs() {
-    double floor_height = 28.0;
+    double floor_height = 36.0;
     double keyframe_height = 8.0;
     double walls_height = 16.0;
+    double rooms_height = 24.0;
+    double floors_height = 32.0;
+
     std::vector<geometry_msgs::msg::TransformStamped> static_transforms;
 
     graph_mutex.lock();
@@ -1943,6 +1946,32 @@ class SGraphsNode : public rclcpp::Node {
       floor_wall_transform.transform.translation.z = walls_height;
       floor_wall_transform.transform.rotation = transform.transform.rotation;
       static_transforms.push_back(floor_wall_transform);
+
+      // floor to rooms transform
+      geometry_msgs::msg::TransformStamped floor_room_transform;
+      floor_room_transform.header.stamp = current_time;
+      floor_room_transform.header.frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
+      floor_room_transform.child_frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_rooms_layer";
+      floor_room_transform.transform.translation.x = 0;
+      floor_room_transform.transform.translation.y = 0;
+      floor_room_transform.transform.translation.z = rooms_height;
+      floor_room_transform.transform.rotation = transform.transform.rotation;
+      static_transforms.push_back(floor_room_transform);
+
+      // floor to floor transform
+      geometry_msgs::msg::TransformStamped floor_floor_transform;
+      floor_floor_transform.header.stamp = current_time;
+      floor_floor_transform.header.frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
+      floor_floor_transform.child_frame_id =
+          "floor_" + std::to_string(floor->second.sequential_id) + "_floors_layer";
+      floor_floor_transform.transform.translation.x = 0;
+      floor_floor_transform.transform.translation.y = 0;
+      floor_floor_transform.transform.translation.z = floors_height;
+      floor_floor_transform.transform.rotation = transform.transform.rotation;
+      static_transforms.push_back(floor_floor_transform);
     }
 
     for (const auto& transform : static_transforms) {
