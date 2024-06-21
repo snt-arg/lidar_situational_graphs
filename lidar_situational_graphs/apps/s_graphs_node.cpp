@@ -1526,14 +1526,12 @@ class SGraphsNode : public rclcpp::Node {
         continue;
       }
 
-      std::cout << "converting to ros msg " << std::endl;
       pcl::toROSMsg(*floor.second.floor_cloud, floor_cloud_msg);
       floor_cloud_msg = transform_floor_cloud(
           floor_cloud_msg,
           current_time,
           map_frame_id,
           "floor_" + std::to_string(floor.second.sequential_id) + "_layer");
-      std::cout << "after converting to ros msg " << std::endl;
 
       pcl::concatenatePointCloud(
           s_graphs_cloud_msg, floor_cloud_msg, s_graphs_cloud_msg);

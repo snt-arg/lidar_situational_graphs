@@ -221,6 +221,12 @@ class PlaneMapper {
                                  bool& found_room,
                                  plane_data_list& plane_id_pair);
 
+  struct PointNormalComparator {
+    bool operator()(const PointNormal& a, const PointNormal& b) const {
+      return std::tie(a.x, a.y, a.z) < std::tie(b.x, b.y, b.z);
+    }
+  };
+
  private:
   bool use_point_to_plane;
   double plane_information;

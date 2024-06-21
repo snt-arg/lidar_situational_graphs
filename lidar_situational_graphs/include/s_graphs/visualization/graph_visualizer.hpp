@@ -197,6 +197,22 @@ class GraphVisualizer {
   /**
    * @brief
    *
+   * @param local_graph
+   * @param keyframes
+   * @return * void
+   */
+  visualization_msgs::msg::Marker fill_kf_plane_markers(
+      const g2o::SparseOptimizer* local_graph,
+      const std::vector<KeyFrame::Ptr> keyframes,
+      const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
+      const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
+      const std::string& keyframes_layer_id,
+      const std::string& walls_layer_id);
+
+  /**
+   * @brief
+   *
    * @param keyframes
    * @return visualization_msgs::msg::Marker
    */
@@ -275,7 +291,10 @@ class GraphVisualizer {
    */
   geometry_msgs::msg::Point compute_plane_point(
       geometry_msgs::msg::Point room_p1,
-      const pcl::PointCloud<PointNormal>::Ptr cloud_seg_map);
+      const pcl::PointCloud<PointNormal>::Ptr cloud_seg_map,
+      const std::string& walls_layer_id,
+      const std::string& rooms_layer_id,
+      const std::string& floors_layer_id);
 
   /**
    * @brief
@@ -283,7 +302,9 @@ class GraphVisualizer {
    * @param room_p1
    * @return geometry_msgs::msg::Point
    */
-  geometry_msgs::msg::Point compute_room_point(geometry_msgs::msg::Point room_p1);
+  geometry_msgs::msg::Point compute_room_point(geometry_msgs::msg::Point room_p1,
+                                               const std::string& rooms_layer_id,
+                                               const std::string& floors_layer_id);
 
   /**
    * @brief
@@ -298,7 +319,10 @@ class GraphVisualizer {
                           const g2o::SparseOptimizer* local_graph,
                           const std::unordered_map<int, VerticalPlanes>& plane_snapshot,
                           std::unordered_map<int, InfiniteRooms> infinite_room_snapshot,
-                          visualization_msgs::msg::MarkerArray& markers);
+                          visualization_msgs::msg::MarkerArray& markers,
+                          const std::string& walls_layer_id,
+                          const std::string& rooms_layer_id,
+                          const std::string& floors_layer_id);
 
   /**
    * @brief
@@ -315,10 +339,6 @@ class GraphVisualizer {
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   rclcpp::Node* node_ptr_;
-  std::string keyframes_layer_id;
-  std::string walls_layer_id;
-  std::string rooms_layer_id;
-  std::string floors_layer_id;
   rviz_visual_tools::RvizVisualToolsPtr keyframe_node_visual_tools,
       keyframe_edge_visual_tools, plane_node_visual_tools, plane_edge_visual_tools,
       room_node_visual_tools, floor_node_visual_tools, floor_edge_visual_tools;

@@ -485,7 +485,7 @@ void PlaneMapper::convert_plane_points_to_map(
   for (auto& x_vert_plane : x_vert_planes) {
     if (x_vert_plane.second.floor_level != current_floor_level) break;
 
-    x_vert_plane.second.cloud_seg_map->points.clear();
+    std::set<PointNormal, PointNormalComparator> unique_points;
     for (int k = 0; k < x_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(x_vert_plane.second.keyframe_node_vec[k]);
@@ -500,15 +500,23 @@ void PlaneMapper::convert_plane_points_to_map(
         dst_pt.getVector4fMap() =
             pose *
             x_vert_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        x_vert_plane.second.cloud_seg_map->points.push_back(dst_pt);
+        dst_pt.r = x_vert_plane.second.color[0];
+        dst_pt.g = x_vert_plane.second.color[1];
+        dst_pt.b = x_vert_plane.second.color[2];
+        unique_points.insert(dst_pt);
       }
+    }
+
+    x_vert_plane.second.cloud_seg_map->points.clear();
+    for (const auto& unique_point : unique_points) {
+      x_vert_plane.second.cloud_seg_map->points.push_back(unique_point);
     }
   }
 
   for (auto& y_vert_plane : y_vert_planes) {
     if (y_vert_plane.second.floor_level != current_floor_level) break;
 
-    y_vert_plane.second.cloud_seg_map->points.clear();
+    std::set<PointNormal, PointNormalComparator> unique_points;
     for (int k = 0; k < y_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(y_vert_plane.second.keyframe_node_vec[k]);
@@ -523,15 +531,23 @@ void PlaneMapper::convert_plane_points_to_map(
         dst_pt.getVector4fMap() =
             pose *
             y_vert_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        y_vert_plane.second.cloud_seg_map->points.push_back(dst_pt);
+        dst_pt.r = y_vert_plane.second.color[0];
+        dst_pt.g = y_vert_plane.second.color[1];
+        dst_pt.b = y_vert_plane.second.color[2];
+        unique_points.insert(dst_pt);
       }
+    }
+
+    y_vert_plane.second.cloud_seg_map->points.clear();
+    for (const auto& unique_point : unique_points) {
+      y_vert_plane.second.cloud_seg_map->points.push_back(unique_point);
     }
   }
 
   for (auto& hort_plane : hort_planes) {
     if (hort_plane.second.floor_level != current_floor_level) break;
 
-    hort_plane.second.cloud_seg_map->points.clear();
+    std::set<PointNormal, PointNormalComparator> unique_points;
     for (int k = 0; k < hort_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(hort_plane.second.keyframe_node_vec[k]);
@@ -545,8 +561,16 @@ void PlaneMapper::convert_plane_points_to_map(
         PointNormal dst_pt;
         dst_pt.getVector4fMap() =
             pose * hort_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        hort_plane.second.cloud_seg_map->points.push_back(dst_pt);
+        dst_pt.r = hort_plane.second.color[0];
+        dst_pt.g = hort_plane.second.color[1];
+        dst_pt.b = hort_plane.second.color[2];
+        unique_points.insert(dst_pt);
       }
+    }
+
+    hort_plane.second.cloud_seg_map->points.clear();
+    for (const auto& unique_point : unique_points) {
+      hort_plane.second.cloud_seg_map->points.push_back(unique_point);
     }
   }
 }
