@@ -1726,7 +1726,7 @@ void GraphVisualizer::fill_infinite_room(
     infinite_room_line_marker.color.r = color_r;
     infinite_room_line_marker.color.g = color_g;
     infinite_room_line_marker.color.b = color_b;
-    infinite_room_line_marker.color.a = 1.0;
+    infinite_room_line_marker.color.a = 0.5;
 
     auto found_plane1 = plane_snapshot.find(infinite_room.second.plane1_id);
     auto found_plane2 = plane_snapshot.find(infinite_room.second.plane2_id);
@@ -1834,7 +1834,7 @@ void GraphVisualizer::fill_room(
     room_line_marker.color.r = color_r;
     room_line_marker.color.g = color_g;
     room_line_marker.color.b = color_b;
-    room_line_marker.color.a = 1.0;
+    room_line_marker.color.a = 0.5;
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
     p1.x =
         dynamic_cast<g2o::VertexRoom*>(room_map->second)->estimate().translation()(0);
@@ -1984,7 +1984,7 @@ void GraphVisualizer::fill_floor(
       floor_line_marker.color.r = color_r;
       floor_line_marker.color.g = color_g;
       floor_line_marker.color.b = color_b;
-      floor_line_marker.color.a = 1.0;
+      floor_line_marker.color.a = 0.5;
 
       for (const auto& room : rooms_snapshot) {
         if (room.second.floor_level != floor.first) continue;
