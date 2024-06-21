@@ -4,7 +4,7 @@ procs:
     autostart: true
     stop: SIGINT
   s_graphs:
-    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 launch lidar_situational_graphs s_graphs_launch.py compute_odom:=false env:=real"'
+    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 launch lidar_situational_graphs s_graphs_launch.py compute_odom:=false base_link_frame:=body"'
     autostart: true
   rviz:
     shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && rviz2 -d ~/workspaces/s_graphs/s_graphs/rviz/s_graphs_ros2.rviz"'

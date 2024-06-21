@@ -13,14 +13,39 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument(
+                "lidar_topic",
+                default_value="platform/velodyne_points",
+                description="Name of the lidar topic to sub",
+            ),
+            DeclareLaunchArgument(
+                "odom_topic",
+                default_value="platform/odometry",
+                description="Name of the odom topic to sub",
+            ),
+            DeclareLaunchArgument(
+                "imu_topic",
+                default_value="imu/data",
+                description="Name of the imu topic to sub",
+            ),
+            DeclareLaunchArgument(
+                "base_frame",
+                default_value="body",
+                description="Name of the base frame",
+            ),
+            DeclareLaunchArgument(
+                "odom_frame",
+                default_value="odom",
+                description="Name of the base frame",
+            ),
+            DeclareLaunchArgument(
+                "map_frame",
+                default_value="map",
+                description="Name of the base frame",
+            ),
+            DeclareLaunchArgument(
                 "compute_odom",
                 default_value="true",
                 description="Flag to compute the odometry",
-            ),
-            DeclareLaunchArgument(
-                "env",
-                default_value="real",
-                description="Flag to get the environment type real or sim",
             ),
             DeclareLaunchArgument(
                 "namespace",
@@ -56,7 +81,14 @@ def launch_sgraphs(context, *args, **kwargs):
     scan_matching_param_file = os.path.join(pkg_dir, "config", "scan_matching.yaml")
     s_graphs_param_file = os.path.join(pkg_dir, "config", "s_graphs.yaml")
 
-    env_arg = LaunchConfiguration("env").perform(context)
+    lidar_topic_arg = LaunchConfiguration("lidar_topic").perform(context)
+    odom_topic_arg = LaunchConfiguration("odom_topic").perform(context)
+    imu_topic_arg = LaunchConfiguration("imu_topic").perform(context)
+
+    base_frame_arg = LaunchConfiguration("base_frame").perform(context)
+    odom_frame_arg = LaunchConfiguration("odom_frame").perform(context)
+    map_frame_arg = LaunchConfiguration("map_frame").perform(context)
+
     compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
     namespace_arg = LaunchConfiguration("namespace").perform(context)
     room_segmentation_arg =  LaunchConfiguration("room_segmentation").perform(context)
@@ -67,9 +99,9 @@ def launch_sgraphs(context, *args, **kwargs):
     if str(ns_prefix).startswith("/"):
         ns_prefix = ns_prefix[1:]
 
-    base_link_frame = "body"
-    if env_arg == "sim":
-        base_link_frame = "base_footprint"
+    base_link_frame = base_frame_arg
+    odom_frame = odom_frame_arg
+    map_frame = map_frame_arg
 
     prefiltering_cmd = Node(
         package="lidar_situational_graphs",
@@ -78,8 +110,8 @@ def launch_sgraphs(context, *args, **kwargs):
         parameters=[{prefiltering_param_file}, {"base_link_frame": base_link_frame}],
         output="screen",
         remappings=[
-            ("velodyne_points", "platform/velodyne_points"),
-            ("imu/data", "platform/imu/data"),
+            ("velodyne_points", lidar_topic_arg),
+            ("imu/data", imu_topic_arg),
         ],
     )
 
@@ -87,8 +119,8 @@ def launch_sgraphs(context, *args, **kwargs):
         package="lidar_situational_graphs",
         executable="s_graphs_scan_matching_odometry_node",
         namespace=namespace_arg,
-        parameters=[scan_matching_param_file],
-        remappings=[("odom", "platform/odometry")],
+        parameters=[{scan_matching_param_file}],
+        remappings=[("odom", odom_topic_arg)],
         output="screen",
         condition=IfCondition(compute_odom_arg),
     )
@@ -116,12 +148,12 @@ def launch_sgraphs(context, *args, **kwargs):
         package="lidar_situational_graphs",
         executable="s_graphs_node",
         namespace=namespace_arg,
-        parameters=[s_graphs_param_file],
+        parameters=[{s_graphs_param_file}, {"odom_frame_id": odom_frame, "map_frame_id": map_frame}],
         output="screen",
         prefix=["gdbserver localhost:3000"] if debug_mode_arg == "true" else None,
         remappings=[
-            ("velodyne_points", "platform/velodyne_points"),
-            ("odom", "platform/odometry"),
+            ("velodyne_points", lidar_topic_arg),
+            ("odom", odom_topic_arg),
         ],
     )
 

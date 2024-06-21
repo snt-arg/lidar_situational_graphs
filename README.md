@@ -277,26 +277,16 @@ source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/sr
 
 ## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
 
-1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`
+1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`. You can set the `frames`, `topics` for your dataset easily during the launch execution as follows:
 
-2. Remap the point cloud topic in s_graphs_launch.py of **s_graphs_prefiltering_node** and **s_graphs_node**. Like:
-
-```python
-    remappings=[
-            ("velodyne_points", "/rs_lidar/points"),
-            ("imu/data", "/platform/imu/data"),
-        ],
-  ...
+```bash
+    ros2 launch lidar_situational_graphs s_graphs_launch.py compute_odom:=true lidar_topic:=/rs_lidar/points
 ```
 
 3. If you have an odometry source convert it to base ENU frame, then set the arg `compute_odom` to `false` in `s_graphs_ros2_launch.py` and then remap odom topic in **s_graphs_node** like
 
-```python
-     remappings=[
-            ("velodyne_points", "/platform/velodyne_points"),
-            ("/odom", "/husky/odometry"),
-        ],
-  ...
+```bash
+  ros2 launch lidar_situational_graphs s_graphs_launch.py compute_odom:=false lidar_topic:=/rs_lidar/points odom_topic:=/odom
 ```
 
 > [!NOTE]
