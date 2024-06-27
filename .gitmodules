@@ -1,14 +1,6 @@
 [submodule "docs/doxygen_docs/doxygen-awesome-css"]
 	path = docs/doxygen_docs/doxygen-awesome-css
 	url = https://github.com/jothepro/doxygen-awesome-css.git
-[submodule "utils/fast_gicp"]
-	path = utils/fast_gicp
-	url = https://github.com/SMRT-AIST/fast_gicp.git
-	branch = master
-[submodule "utils/ndt_omp"]
-	path = utils/ndt_omp
-	url = https://github.com/koide3/ndt_omp.git
-	branch = master
 [submodule "utils/reasoning/situational_graphs_reasoning"]
 	path = utils/reasoning/situational_graphs_reasoning
 	url = https://github.com/snt-arg/situational_graphs_reasoning.git
