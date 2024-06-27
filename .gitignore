@@ -3,7 +3,8 @@ imgui.ini
 # - IDEs Folder
 build/
 install/
-log
+log/
+utils/
 
 # - Clangd
 compile_commands.json
