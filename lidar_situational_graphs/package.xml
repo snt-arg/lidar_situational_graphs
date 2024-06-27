@@ -26,11 +26,15 @@
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
   <depend>tf2_eigen</depend>
+  <depend>tf2_sensor_msgs</depend>
   <depend>geographic_msgs</depend>
   <depend>message_filters</depend>
   <depend>backward_ros</depend>
   <depend>rviz_visual_tools</depend>
   <depend>libceres-dev</depend>
+  <depend>situational_graphs_msgs</depend>
+  <depend>situational_graphs_reasoning</depend>
+  <depend>situational_graphs_reasoning_msgs</depend>
 
   <depend>ament_cmake_gtest</depend>
 
