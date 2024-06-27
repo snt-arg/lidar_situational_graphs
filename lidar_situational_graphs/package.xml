@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>lidar_situational_graphs</name>
-  <version>3.0.1</version>
+  <version>0.0.1</version>
   <description>The lidar situational graphs package for generating 3D optimizable scene graphs</description>
 
   <maintainer email="hriday.bavle@gmail.com">hriday</maintainer>
