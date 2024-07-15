@@ -30,6 +30,21 @@ KeyFrame::KeyFrame(const std::string& directory, g2o::HyperGraph* graph)
   load(directory, graph);
 }
 
+KeyFrame::KeyFrame(const KeyFrame::Ptr& key) {
+  stamp = key->stamp;
+  odom = key->odom;
+  accum_distance = key->accum_distance;
+  cloud = key->cloud;
+  x_plane_ids = key->x_plane_ids;
+  y_plane_ids = key->y_plane_ids;
+  hort_plane_ids = key->hort_plane_ids;
+  floor_level = key->floor_level;
+
+  node = new g2o::VertexSE3();
+  node->setId(key->node->id());
+  node->setEstimate(key->node->estimate());
+}
+
 KeyFrame::~KeyFrame() {}
 
 void KeyFrame::save(const std::string& directory) {

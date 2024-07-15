@@ -48,7 +48,12 @@ GraphVisualizer::visualize_floor_covisibility_graph(
     const std::map<int, Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
 
-  auto floor = floors_vec.at(current_floor_level);
+  auto floor_itr = floors_vec.find(current_floor_level);
+  Floors floor;
+  if (floor_itr != floors_vec.end())
+    floor = floors_vec.at(current_floor_level);
+  else
+    return markers;
 
   std::string keyframes_layer_id =
       "floor_" + std::to_string(floor.sequential_id) + "_keyframes_layer";
@@ -75,6 +80,8 @@ GraphVisualizer::visualize_floor_covisibility_graph(
   for (const auto& kf : keyframes) {
     if (kf->floor_level == current_floor_level) floor_keyframes.push_back(kf);
   }
+
+  if (floor_keyframes.empty()) return markers;
 
   visualization_msgs::msg::Marker kf_marker =
       fill_kf_markers(local_graph, floor_keyframes, floors_vec);
@@ -1212,7 +1219,13 @@ void GraphVisualizer::visualize_compressed_graph(
     const std::unordered_map<int, VerticalPlanes>& y_plane_snapshot,
     const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
     const std::map<int, Floors>& floors_vec) {
-  auto floor = floors_vec.at(current_floor_level);
+  auto floor_itr = floors_vec.find(current_floor_level);
+  Floors floor;
+  if (floor_itr != floors_vec.end())
+    floor = floors_vec.at(current_floor_level);
+  else
+    return;
+
   std::string keyframes_layer_id =
       "floor_" + std::to_string(floor.sequential_id) + "_keyframes_layer";
 

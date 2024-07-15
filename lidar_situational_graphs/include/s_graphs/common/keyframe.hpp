@@ -83,6 +83,9 @@ struct KeyFrame {
    * @param graph
    */
   KeyFrame(const std::string& directory, g2o::HyperGraph* graph);
+
+  KeyFrame(const KeyFrame::Ptr& key);
+
   virtual ~KeyFrame();
 
   /**

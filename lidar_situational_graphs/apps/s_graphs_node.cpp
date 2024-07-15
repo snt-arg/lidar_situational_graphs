@@ -1145,23 +1145,6 @@ class SGraphsNode : public rclcpp::Node {
                   x_infinite_rooms,
                   y_infinite_rooms,
                   rooms_vec);
-
-    std::vector<KeyFrameSnapshot::Ptr> snapshot(keyframes.size());
-    std::transform(keyframes.begin(),
-                   keyframes.end(),
-                   snapshot.begin(),
-                   [=](const std::pair<int, KeyFrame::Ptr>& k) {
-                     return std::make_shared<KeyFrameSnapshot>(k.second);
-                   });
-    keyframes_map_snapshot.swap(snapshot);
-    for (const auto& keyframe_snapshot : keyframes_map_snapshot) {
-      if (!keyframe_snapshot->k_marginalized)
-        keyframes_map_snapshot_queue.push(keyframe_snapshot);
-    }
-
-    for (const auto& keyframe : keyframes) {
-      keyframes_complete_snapshot_queue.push(keyframe.second);
-    }
   }
 
   /**
@@ -1329,7 +1312,9 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
   }
 
-  void copy_data(std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
+  void copy_data(std::vector<KeyFrame::Ptr>& kf_snapshot,
+                 std::vector<KeyFrameSnapshot::Ptr>& kf_map_snapshot,
+                 std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
                  std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
                  std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
                  std::unordered_map<int, InfiniteRooms>& x_inf_rooms_snapshot,
@@ -1343,6 +1328,23 @@ class SGraphsNode : public rclcpp::Node {
     y_inf_rooms_snapshot = y_infinite_rooms;
     rooms_vec_snapshot = rooms_vec;
     floors_vec_snapshot = floors_vec;
+
+    // TODO:HB remove the kf map snapshot and only use kf_snapshot
+    kf_map_snapshot.resize(keyframes.size());
+    std::transform(keyframes.begin(),
+                   keyframes.end(),
+                   kf_map_snapshot.begin(),
+                   [=](const std::pair<int, KeyFrame::Ptr>& k) {
+                     return std::make_shared<KeyFrameSnapshot>(k.second);
+                   });
+
+    kf_snapshot.resize(keyframes.size());
+    std::transform(keyframes.begin(),
+                   keyframes.end(),
+                   kf_snapshot.begin(),
+                   [=](const std::pair<int, KeyFrame::Ptr>& k) {
+                     return std::make_shared<KeyFrame>(k.second);
+                   });
   }
 
   /**
@@ -1352,6 +1354,8 @@ class SGraphsNode : public rclcpp::Node {
   void map_publish_timer_callback() {
     if (keyframes.empty() || floors_vec.empty()) return;
 
+    std::vector<KeyFrame::Ptr> kf_snapshot;
+    std::vector<KeyFrameSnapshot::Ptr> kf_map_snapshot;
     std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
     std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
     std::unordered_map<int, InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
@@ -1359,7 +1363,9 @@ class SGraphsNode : public rclcpp::Node {
     std::map<int, Floors> floors_vec_snapshot;
 
     graph_mutex.lock();
-    this->copy_data(x_planes_snapshot,
+    this->copy_data(kf_snapshot,
+                    kf_map_snapshot,
+                    x_planes_snapshot,
                     y_planes_snapshot,
                     hort_planes_snapshot,
                     x_inf_rooms_snapshot,
@@ -1369,29 +1375,6 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
     auto current_time = this->now();
 
-    int current_loop = 0;
-    KeyFrameSnapshot::Ptr current_snapshot;
-    std::vector<KeyFrameSnapshot::Ptr> current_keyframes_map_snapshot;
-    while (keyframes_map_snapshot_queue.pop(current_snapshot)) {
-      if (current_loop == 0) current_keyframes_map_snapshot.clear();
-      current_keyframes_map_snapshot.push_back(current_snapshot);
-      current_loop++;
-    }
-
-    current_loop = 0;
-    KeyFrame::Ptr current_keyframe;
-    std::vector<KeyFrame::Ptr> keyframes_complete_snapshot;
-    while (keyframes_complete_snapshot_queue.pop(current_keyframe)) {
-      if (current_loop == 0) keyframes_complete_snapshot.clear();
-      keyframes_complete_snapshot.push_back(current_keyframe);
-      current_loop++;
-    }
-
-    if (current_keyframes_map_snapshot.empty() || keyframes_complete_snapshot.empty()) {
-      markers_pub->publish(s_graphs_markers);
-      return;
-    }
-
     graph_mutex.lock();
     int floor_level = current_floor_level;
     graph_mutex.unlock();
@@ -1400,7 +1383,7 @@ class SGraphsNode : public rclcpp::Node {
     if (!this->handle_floor_cloud(current_time,
                                   floor_level,
                                   s_graphs_cloud_msg,
-                                  keyframes_map_snapshot,
+                                  kf_map_snapshot,
                                   floors_vec_snapshot)) {
       std::cout << "returning as floor cloud for floor level "
                 << floors_vec_snapshot[floor_level].id << " is empty" << std::endl;
@@ -1427,7 +1410,7 @@ class SGraphsNode : public rclcpp::Node {
         current_time,
         current_floor_level,
         local_covisibility_graph->graph.get(),
-        keyframes_complete_snapshot,
+        kf_snapshot,
         x_planes_snapshot,
         y_planes_snapshot,
         hort_planes_snapshot,
@@ -1450,7 +1433,7 @@ class SGraphsNode : public rclcpp::Node {
                                                  is_optimization_global,
                                                  false,
                                                  local_compressed_graph->graph.get(),
-                                                 keyframes_complete_snapshot,
+                                                 kf_snapshot,
                                                  x_planes_snapshot,
                                                  y_planes_snapshot,
                                                  hort_planes_snapshot,
@@ -2064,9 +2047,18 @@ class SGraphsNode : public rclcpp::Node {
       std::shared_ptr<situational_graphs_msgs::srv::SaveMap::Response> res) {
     std::vector<KeyFrameSnapshot::Ptr> snapshot;
 
-    snapshot = keyframes_map_snapshot;
+    std::vector<KeyFrameSnapshot::Ptr> kf_map_snapshot;
+    graph_mutex.lock();
+    kf_map_snapshot.resize(keyframes.size());
+    std::transform(keyframes.begin(),
+                   keyframes.end(),
+                   kf_map_snapshot.begin(),
+                   [=](const std::pair<int, KeyFrame::Ptr>& k) {
+                     return std::make_shared<KeyFrameSnapshot>(k.second);
+                   });
+    graph_mutex.unlock();
 
-    auto cloud = map_cloud_generator->generate(snapshot, req->resolution);
+    auto cloud = map_cloud_generator->generate(kf_map_snapshot, req->resolution);
     if (!cloud) {
       res->success = false;
       return true;
@@ -2079,7 +2071,7 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     cloud->header.frame_id = map_frame_id;
-    cloud->header.stamp = snapshot.back()->cloud->header.stamp;
+    cloud->header.stamp = kf_map_snapshot.back()->cloud->header.stamp;
 
     if (zero_utm) {
       std::ofstream ofs(req->destination + ".utm");
@@ -2410,11 +2402,7 @@ class SGraphsNode : public rclcpp::Node {
 
   // for map cloud generation
   double map_cloud_resolution;
-  std::vector<KeyFrameSnapshot::Ptr> keyframes_map_snapshot;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
-
-  boost::lockfree::spsc_queue<KeyFrameSnapshot::Ptr> keyframes_map_snapshot_queue{1000};
-  boost::lockfree::spsc_queue<KeyFrame::Ptr> keyframes_complete_snapshot_queue{1000};
 
   std::mutex graph_mutex;
   int max_keyframes_per_update;
