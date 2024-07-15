@@ -1,25 +1,29 @@
 repositories:
-  s_graphs_utils/fast_gicp:
+  utils/fast_gicp:
     type: git
     url: https://github.com/SMRT-AIST/fast_gicp.git
     version: master
-  s_graphs_utils/ndt_omp:
+  utils/ndt_omp:
     type: git
     url: https://github.com/koide3/ndt_omp.git
     version: master
-  s_graphs_utils/reasoning/situational_graphs_reasoning:
+  utils/reasoning/situational_graphs_reasoning:
     type: git
     url: https://github.com/snt-arg/situational_graphs_reasoning.git
-    version: complete_gnn_architecture
-  s_graphs_utils/reasoning/situational_graphs_datasets:
+    version: develop
+  utils/reasoning/situational_graphs_datasets:
     type: git
     url: https://github.com/snt-arg/situational_graphs_datasets.git
-    version: graph_reasoning
-  s_graphs_utils/msgs/situational_graphs_reasoning_msgs:
+    version: develop
+  utils/reasoning/situational_graphs_wrapper:
+    type: git
+    url: https://github.com/snt-arg/situational_graphs_wrapper.git
+    version: develop
+  utils/msgs/situational_graphs_reasoning_msgs:
     type: git
     url: https://github.com/snt-arg/situational_graphs_reasoning_msgs.git
     version: main
-  s_graphs_utils/msgs/situational_graphs_msgs:
+  utils/msgs/situational_graphs_msgs:
     type: git
     url: https://github.com/snt-arg/situational_graphs_msgs.git
-    version: main  
+    version: main

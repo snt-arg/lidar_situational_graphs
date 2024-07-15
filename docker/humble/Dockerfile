@@ -7,18 +7,17 @@ RUN apt update && \
     vim \
     python3-pip \
     python3-vcstool \
-    python3-catkin-tools \
     wget \
     git
 
 #  Creating working spaces directory and clone s_graphs inside it
 RUN mkdir -p /root/workspaces
 WORKDIR /root/workspaces
-RUN git clone https://github.com/snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
+RUN git clone https://github.com/snt-arg/lidar_situational_graphs -b feature/ros2 s_graphs
 
 # Fetching all packages specified in the .rosinstall file and running build everything with colcon build.
 WORKDIR /root/workspaces/s_graphs
-RUN git submodule update --init --recursive
+RUN vcs import . < .rosinstall_ros2
 WORKDIR /root/workspaces/s_graphs
 RUN sudo apt install python3-rosdep
 RUN rosdep install --from-paths . -y --ignore-src -r

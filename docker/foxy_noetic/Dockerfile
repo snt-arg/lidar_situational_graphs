@@ -27,11 +27,11 @@ RUN apt install --no-install-recommends -y \
 #  Creating working spaces directory and clone s_graphs inside it
 RUN mkdir -p /root/workspaces
 WORKDIR /root/workspaces
-RUN git clone https://github.com/snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
+RUN git clone https://github.com/snt-arg/lidar_situational_graphs.git -b feature/ros2 s_graphs
 
 # Fetching all packages specified in the gitsubmodules and running build everything with colcon build.
 WORKDIR /root/workspaces/s_graphs
-RUN git submodule update --init --recursive
+RUN vcs import . < .rosinstall_ros2
 WORKDIR /root/workspaces/s_graphs
 RUN sudo apt install python3-rosdep
 RUN rosdep install --from-paths . -y --ignore-src -r
@@ -56,7 +56,7 @@ RUN rosdep update --include-eol-distros
 # Setup ROS1 workspace for ROS1 related dependencies of s_graphs
 RUN mkdir -p /root/workspaces/s_graphs_ros1_ws/src
 WORKDIR /root/workspaces/s_graphs_ros1_ws/src
-RUN git clone https://github.com/snt-arg/lidar_s_graphs.git -b feature/ros2 s_graphs
+RUN git clone https://github.com/snt-arg/lidar_situational_graphs.git -b feature/ros2 s_graphs
 WORKDIR /root/workspaces/s_graphs_ros1_ws/src/s_graphs
 RUN vcs import --recursive ../ < .rosinstall_ros1
 WORKDIR /root/workspaces/s_graphs_ros1_ws
@@ -66,7 +66,7 @@ RUN apt install --no-install-recommends -y \
     ros-noetic-pcl-ros \
     ros-foxy-ros1-bridge
 RUN source /opt/ros/noetic/setup.bash && \
-    catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && \ 
+    catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && \
     catkin build
 
 # Install mprocs

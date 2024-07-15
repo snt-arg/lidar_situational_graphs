@@ -6,8 +6,11 @@ DEBIAN_FRONTEND=noninteractive sudo apt install -y libceres-dev python3-pip
 #rosdep init
 rosdep update --include-eol-distros
 
+#install vcs-tools
+DEBIAN_FRONTEND=noninteractive sudo apt install python3-vcstool
+
 #import all repos
-git submodule update --init --recursive
+vcs import . < .rosinstall_ros2
 
 #rosdep install
 DEBIAN_FRONTEND=noninteractive rosdep install --from-paths . -y --ignore-src -r
