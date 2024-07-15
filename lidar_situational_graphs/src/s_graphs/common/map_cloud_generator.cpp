@@ -9,7 +9,7 @@ MapCloudGenerator::MapCloudGenerator() {}
 MapCloudGenerator::~MapCloudGenerator() {}
 
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
-    const std::vector<KeyFrameSnapshot::Ptr>& keyframes,
+    const std::vector<KeyFrame::Ptr>& keyframes,
     double resolution) const {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
@@ -20,7 +20,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   // cloud->reserve(keyframes.front()->cloud->size() * keyframes.size());
 
   for (const auto& keyframe : keyframes) {
-    Eigen::Matrix4f pose = keyframe->pose.matrix().cast<float>();
+    Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
     for (const auto& src_pt : keyframe->cloud->points) {
       PointT dst_pt;
       dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
@@ -52,7 +52,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
     const int& current_floor_level,
     double resolution,
-    const std::vector<KeyFrameSnapshot::Ptr>& keyframes) {
+    const std::vector<KeyFrame::Ptr>& keyframes) {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
     return nullptr;
@@ -60,10 +60,12 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floo
 
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
 
-  std::vector<KeyFrameSnapshot::Ptr> floor_keyframes;
+  std::vector<KeyFrame::Ptr> floor_keyframes;
   for (const auto& keyframe : keyframes) {
-    if (keyframe->floor_level == current_floor_level)
-      floor_keyframes.push_back(keyframe);
+    if (keyframe->floor_level == current_floor_level) {
+      bool stair_node = GraphUtils::get_keyframe_stair_data(keyframe->node);
+      if (!stair_node) floor_keyframes.push_back(keyframe);
+    }
   }
 
   pcl::PointCloud<PointT>::Ptr filtered = this->generate(floor_keyframes, resolution);

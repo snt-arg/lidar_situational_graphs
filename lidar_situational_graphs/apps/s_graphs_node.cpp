@@ -1313,7 +1313,6 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void copy_data(std::vector<KeyFrame::Ptr>& kf_snapshot,
-                 std::vector<KeyFrameSnapshot::Ptr>& kf_map_snapshot,
                  std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
                  std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
                  std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
@@ -1328,15 +1327,6 @@ class SGraphsNode : public rclcpp::Node {
     y_inf_rooms_snapshot = y_infinite_rooms;
     rooms_vec_snapshot = rooms_vec;
     floors_vec_snapshot = floors_vec;
-
-    // TODO:HB remove the kf map snapshot and only use kf_snapshot
-    kf_map_snapshot.resize(keyframes.size());
-    std::transform(keyframes.begin(),
-                   keyframes.end(),
-                   kf_map_snapshot.begin(),
-                   [=](const std::pair<int, KeyFrame::Ptr>& k) {
-                     return std::make_shared<KeyFrameSnapshot>(k.second);
-                   });
 
     kf_snapshot.resize(keyframes.size());
     std::transform(keyframes.begin(),
@@ -1355,7 +1345,6 @@ class SGraphsNode : public rclcpp::Node {
     if (keyframes.empty() || floors_vec.empty()) return;
 
     std::vector<KeyFrame::Ptr> kf_snapshot;
-    std::vector<KeyFrameSnapshot::Ptr> kf_map_snapshot;
     std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
     std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
     std::unordered_map<int, InfiniteRooms> x_inf_rooms_snapshot, y_inf_rooms_snapshot;
@@ -1364,7 +1353,6 @@ class SGraphsNode : public rclcpp::Node {
 
     graph_mutex.lock();
     this->copy_data(kf_snapshot,
-                    kf_map_snapshot,
                     x_planes_snapshot,
                     y_planes_snapshot,
                     hort_planes_snapshot,
@@ -1383,7 +1371,7 @@ class SGraphsNode : public rclcpp::Node {
     if (!this->handle_floor_cloud(current_time,
                                   floor_level,
                                   s_graphs_cloud_msg,
-                                  kf_map_snapshot,
+                                  kf_snapshot,
                                   floors_vec_snapshot)) {
       std::cout << "returning as floor cloud for floor level "
                 << floors_vec_snapshot[floor_level].id << " is empty" << std::endl;
@@ -1457,19 +1445,18 @@ class SGraphsNode : public rclcpp::Node {
    *
    * @param current_time
    * @param floor_level
-   * @param current_keyframes_map_snapshot
+   * @param current_keyframes_snapshot
    * @param floors_vec_snapshot
    * @return true
    * @return false
    */
-  bool handle_floor_cloud(
-      const auto& current_time,
-      const int& floor_level,
-      sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg,
-      const std::vector<KeyFrameSnapshot::Ptr>& current_keyframes_map_snapshot,
-      std::map<int, Floors>& floors_vec_snapshot) {
+  bool handle_floor_cloud(const auto& current_time,
+                          const int& floor_level,
+                          sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg,
+                          const std::vector<KeyFrame::Ptr>& current_keyframes_snapshot,
+                          std::map<int, Floors>& floors_vec_snapshot) {
     auto floor_cloud = map_cloud_generator->generate_floor_cloud(
-        floor_level, map_cloud_resolution, current_keyframes_map_snapshot);
+        floor_level, map_cloud_resolution, current_keyframes_snapshot);
 
     if (!floor_cloud) {
       return false;
@@ -1478,7 +1465,7 @@ class SGraphsNode : public rclcpp::Node {
     floors_vec_snapshot[floor_level].floor_cloud = floor_cloud;
     floors_vec_snapshot[floor_level].floor_cloud->header.frame_id = map_frame_id;
     floors_vec_snapshot[floor_level].floor_cloud->header.stamp =
-        current_keyframes_map_snapshot.back()->cloud->header.stamp;
+        current_keyframes_snapshot.back()->cloud->header.stamp;
     pcl::toROSMsg(*floors_vec[floor_level].floor_cloud, s_graphs_cloud_msg);
     s_graphs_cloud_msg = transform_floor_cloud(
         s_graphs_cloud_msg,
@@ -2045,20 +2032,19 @@ class SGraphsNode : public rclcpp::Node {
   bool save_map_service(
       const std::shared_ptr<situational_graphs_msgs::srv::SaveMap::Request> req,
       std::shared_ptr<situational_graphs_msgs::srv::SaveMap::Response> res) {
-    std::vector<KeyFrameSnapshot::Ptr> snapshot;
-
-    std::vector<KeyFrameSnapshot::Ptr> kf_map_snapshot;
+    std::vector<KeyFrame::Ptr> kf_snapshot;
     graph_mutex.lock();
-    kf_map_snapshot.resize(keyframes.size());
+    kf_snapshot.resize(keyframes.size());
+    kf_snapshot.resize(keyframes.size());
     std::transform(keyframes.begin(),
                    keyframes.end(),
-                   kf_map_snapshot.begin(),
+                   kf_snapshot.begin(),
                    [=](const std::pair<int, KeyFrame::Ptr>& k) {
-                     return std::make_shared<KeyFrameSnapshot>(k.second);
+                     return std::make_shared<KeyFrame>(k.second);
                    });
     graph_mutex.unlock();
 
-    auto cloud = map_cloud_generator->generate(kf_map_snapshot, req->resolution);
+    auto cloud = map_cloud_generator->generate(kf_snapshot, req->resolution);
     if (!cloud) {
       res->success = false;
       return true;
@@ -2071,7 +2057,7 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     cloud->header.frame_id = map_frame_id;
-    cloud->header.stamp = kf_map_snapshot.back()->cloud->header.stamp;
+    cloud->header.stamp = kf_snapshot.back()->cloud->header.stamp;
 
     if (zero_utm) {
       std::ofstream ofs(req->destination + ".utm");
