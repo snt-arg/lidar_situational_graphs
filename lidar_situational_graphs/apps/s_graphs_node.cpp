@@ -1138,6 +1138,14 @@ class SGraphsNode : public rclcpp::Node {
       graph_mutex.unlock();
     }
 
+    publish_graph(covisibility_graph->graph.get(),
+                  keyframes,
+                  x_vert_planes,
+                  y_vert_planes,
+                  x_infinite_rooms,
+                  y_infinite_rooms,
+                  rooms_vec);
+
     std::vector<KeyFrameSnapshot::Ptr> snapshot(keyframes.size());
     std::transform(keyframes.begin(),
                    keyframes.end(),
@@ -1413,13 +1421,6 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.lock();
     GraphUtils::copy_entire_graph(covisibility_graph, local_covisibility_graph);
     graph_mutex.unlock();
-    publish_graph(local_covisibility_graph->graph.get(),
-                  keyframes_complete_snapshot,
-                  x_planes_snapshot,
-                  y_planes_snapshot,
-                  x_inf_rooms_snapshot,
-                  y_inf_rooms_snapshot,
-                  rooms_vec_snapshot);
 
     s_graphs_markers.markers.clear();
     s_graphs_markers = graph_visualizer->visualize_floor_covisibility_graph(
@@ -1629,7 +1630,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param event
    */
   void publish_graph(g2o::SparseOptimizer* local_covisibility_graph,
-                     std::vector<KeyFrame::Ptr> keyframes_complete_snapshot,
+                     std::map<int, KeyFrame::Ptr> keyframes_complete_snapshot,
                      std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
                      std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
                      std::unordered_map<int, InfiniteRooms>& x_inf_rooms_snapshot,
@@ -1641,6 +1642,8 @@ class SGraphsNode : public rclcpp::Node {
     } else {
       graph_type = "Online";
     }
+
+    graph_mutex.lock();
     auto graph_structure = graph_publisher->publish_graph(local_covisibility_graph,
                                                           "Online",
                                                           x_vert_planes_prior,
@@ -1651,9 +1654,13 @@ class SGraphsNode : public rclcpp::Node {
                                                           rooms_vec_snapshot,
                                                           x_inf_rooms_snapshot,
                                                           y_inf_rooms_snapshot);
+    graph_mutex.unlock();
     graph_structure.name = graph_type;
+
+    graph_mutex.lock();
     auto graph_keyframes = graph_publisher->publish_graph_keyframes(
         local_covisibility_graph, keyframes_complete_snapshot);
+    graph_mutex.unlock();
 
     graph_pub->publish(graph_structure);
     graph_keyframes_pub->publish(graph_keyframes);
