@@ -1499,11 +1499,16 @@ visualization_msgs::msg::Marker GraphVisualizer::fill_kf_plane_markers(
         point2_stamped.point.x = pt2.x();
         point2_stamped.point.y = pt2.y();
         point2_stamped.point.z = pt2.z();
-        tf_buffer->transform(point2_stamped,
-                             point2_stamped_transformed,
-                             keyframes_layer_id,
-                             tf2::TimePointZero,
-                             walls_layer_id);
+        if (tf_buffer->canTransform(keyframes_layer_id,
+                                    point2_stamped.header.frame_id,
+                                    tf2::TimePointZero)) {
+          tf_buffer->transform(point2_stamped,
+                               point2_stamped_transformed,
+                               keyframes_layer_id,
+                               tf2::TimePointZero,
+                               walls_layer_id);
+        } else
+          continue;
 
         point2 = point2_stamped_transformed.point;
         kf_plane_edge_marker.points.push_back(point1);
@@ -1671,11 +1676,14 @@ geometry_msgs::msg::Point GraphVisualizer::compute_plane_point(
   point2_stamped.point.z = plane_p2.z;
 
   // convert point p2 to rooms_layer_id currently it is map_frame_id
-  tf_buffer->transform(point2_stamped,
-                       point2_stamped_transformed,
-                       rooms_layer_id,
-                       tf2::TimePointZero,
-                       walls_layer_id);
+  if (tf_buffer->canTransform(
+          rooms_layer_id, point2_stamped.header.frame_id, tf2::TimePointZero)) {
+    tf_buffer->transform(point2_stamped,
+                         point2_stamped_transformed,
+                         rooms_layer_id,
+                         tf2::TimePointZero,
+                         walls_layer_id);
+  }
 
   return point2_stamped_transformed.point;
 }
@@ -1691,11 +1699,14 @@ geometry_msgs::msg::Point GraphVisualizer::compute_room_point(
   point2_stamped.point.z = room_p1.z;
 
   // convert point p2 to rooms_layer_id currently it is map_frame_id
-  tf_buffer->transform(point2_stamped,
-                       point2_stamped_transformed,
-                       floors_layer_id,
-                       tf2::TimePointZero,
-                       rooms_layer_id);
+  if (tf_buffer->canTransform(
+          floors_layer_id, point2_stamped.header.frame_id, tf2::TimePointZero)) {
+    tf_buffer->transform(point2_stamped,
+                         point2_stamped_transformed,
+                         floors_layer_id,
+                         tf2::TimePointZero,
+                         rooms_layer_id);
+  }
   room_p1 = point2_stamped_transformed.point;
 
   return room_p1;
