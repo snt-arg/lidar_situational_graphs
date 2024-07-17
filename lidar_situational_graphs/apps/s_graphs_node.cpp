@@ -220,7 +220,7 @@ class SGraphsNode : public rclcpp::Node {
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
-        ApproxSyncPolicy(32), odom_sub, cloud_sub));
+        ApproxSyncPolicy(256), odom_sub, cloud_sub));
     sync->registerCallback(&SGraphsNode::cloud_callback, this);
 
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
@@ -566,48 +566,6 @@ class SGraphsNode : public rclcpp::Node {
     if (base_frame_id.empty()) {
       base_frame_id = cloud_msg->header.frame_id;
     }
-
-    if (!floors_vec.empty()) {
-      geometry_msgs::msg::TransformStamped base_floor_transform_stamped,
-          map_floor_tranform_stamped;
-      try {
-        base_floor_transform_stamped = tf_buffer->lookupTransform(
-            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-                "_layer",
-            cloud_msg->header.frame_id,
-            tf2::TimePointZero);
-      } catch (tf2::TransformException& ex) {
-        return;
-      }
-
-      try {
-        map_floor_tranform_stamped = tf_buffer->lookupTransform(
-            map_frame_id,
-            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-                "_layer",
-            tf2::TimePointZero);
-      } catch (tf2::TransformException& ex) {
-        return;
-      }
-
-      Eigen::Matrix4f base_floor_t =
-          transformStamped2EigenMatrix(base_floor_transform_stamped);
-
-      Eigen::Matrix4f map_floor_t =
-          transformStamped2EigenMatrix(map_floor_tranform_stamped);
-
-      Eigen::Matrix4f final_t = map_floor_t * base_floor_t;
-      geometry_msgs::msg::TransformStamped final_transform_stamped =
-          eigenMatrixToTransformStamped(
-              final_t, cloud_msg->header.frame_id, map_frame_id);
-
-      *cloud_msg = apply_transform(*cloud_msg, final_transform_stamped);
-      cloud_msg->header.frame_id =
-          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-          "_layer";
-      cloud_msg->header.stamp = cloud_msg->header.stamp;
-      lidar_points_pub->publish(*cloud_msg);
-    }
   }
 
   /**
@@ -913,6 +871,22 @@ class SGraphsNode : public rclcpp::Node {
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
       keyframe_queue.push_back(keyframe);
     }
+
+    Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
+    pcl::PointCloud<PointT>::Ptr cloud_transformed(new pcl::PointCloud<PointT>());
+
+    for (const auto& src_pt : cloud->points) {
+      PointT dst_pt;
+      dst_pt.getVector4fMap() = odom_corrected * src_pt.getVector4fMap();
+      dst_pt.intensity = src_pt.intensity;
+      cloud_transformed->push_back(dst_pt);
+    }
+
+    sensor_msgs::msg::PointCloud2 cloud_transformed_msg;
+    pcl::toROSMsg(*cloud_transformed, cloud_transformed_msg);
+    cloud_transformed_msg.header.frame_id = map_frame_id;
+    cloud_transformed_msg.header.stamp = cloud_msg->header.stamp;
+    lidar_points_pub->publish(cloud_transformed_msg);
   }
 
   /**
@@ -1379,13 +1353,13 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     sensor_msgs::msg::PointCloud2 floor_wall_cloud_msg;
-    this->handle_floor_wall_cloud(current_time,
-                                  floor_level,
-                                  floor_wall_cloud_msg,
-                                  x_planes_snapshot,
-                                  y_planes_snapshot,
-                                  hort_planes_snapshot,
-                                  floors_vec_snapshot);
+    // this->handle_floor_wall_cloud(current_time,
+    //                               floor_level,
+    //                               floor_wall_cloud_msg,
+    //                               x_planes_snapshot,
+    //                               y_planes_snapshot,
+    //                               hort_planes_snapshot,
+    //                               floors_vec_snapshot);
 
     std::unique_ptr<GraphSLAM> local_covisibility_graph;
     local_covisibility_graph = std::make_unique<GraphSLAM>("", false, false);
@@ -1474,8 +1448,8 @@ class SGraphsNode : public rclcpp::Node {
         "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
             "_layer");
 
-    this->concatenate_floor_clouds(
-        current_time, floor_level, s_graphs_cloud_msg, floors_vec_snapshot);
+    // this->concatenate_floor_clouds(
+    //    current_time, floor_level, s_graphs_cloud_msg, floors_vec_snapshot);
 
     return true;
   }

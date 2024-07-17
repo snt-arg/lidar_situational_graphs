@@ -63,8 +63,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floo
   std::vector<KeyFrame::Ptr> floor_keyframes;
   for (const auto& keyframe : keyframes) {
     if (keyframe->floor_level == current_floor_level) {
-      bool stair_node = GraphUtils::get_keyframe_stair_data(keyframe->node);
-      if (!stair_node) floor_keyframes.push_back(keyframe);
+      floor_keyframes.push_back(keyframe);
     }
   }
 

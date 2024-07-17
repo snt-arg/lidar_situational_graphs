@@ -489,10 +489,8 @@ void PlaneMapper::convert_plane_points_to_map(
     for (int k = 0; k < x_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(x_vert_plane.second.keyframe_node_vec[k]);
-      bool stair_node =
-          GraphUtils::get_keyframe_stair_data(x_vert_plane.second.keyframe_node_vec[k]);
 
-      if (marginalized || stair_node) continue;
+      if (marginalized) continue;
 
       Eigen::Matrix4f pose =
           x_vert_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
@@ -523,9 +521,8 @@ void PlaneMapper::convert_plane_points_to_map(
     for (int k = 0; k < y_vert_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(y_vert_plane.second.keyframe_node_vec[k]);
-      bool stair_node =
-          GraphUtils::get_keyframe_stair_data(y_vert_plane.second.keyframe_node_vec[k]);
-      if (marginalized || stair_node) continue;
+
+      if (marginalized) continue;
 
       Eigen::Matrix4f pose =
           y_vert_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
@@ -556,10 +553,8 @@ void PlaneMapper::convert_plane_points_to_map(
     for (int k = 0; k < hort_plane.second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
           GraphUtils::get_keyframe_marg_data(hort_plane.second.keyframe_node_vec[k]);
-      bool stair_node =
-          GraphUtils::get_keyframe_stair_data(hort_plane.second.keyframe_node_vec[k]);
 
-      if (marginalized || stair_node) continue;
+      if (marginalized) continue;
 
       Eigen::Matrix4f pose =
           hort_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
