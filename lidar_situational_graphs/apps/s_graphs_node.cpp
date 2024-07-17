@@ -333,6 +333,7 @@ class SGraphsNode : public rclcpp::Node {
     on_stairs = false;
     floor_node_updated = false;
     prev_edge_count = curr_edge_count = 0;
+    prev_mapped_keyframes = 0;
 
     double graph_update_interval = this->get_parameter("graph_update_interval")
                                        .get_parameter_value()
@@ -1341,16 +1342,15 @@ class SGraphsNode : public rclcpp::Node {
     int floor_level = current_floor_level;
     graph_mutex.unlock();
 
-    sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
-    if (!this->handle_floor_cloud(current_time,
-                                  floor_level,
-                                  s_graphs_cloud_msg,
-                                  kf_snapshot,
-                                  floors_vec_snapshot)) {
-      std::cout << "returning as floor cloud for floor level "
-                << floors_vec_snapshot[floor_level].id << " is empty" << std::endl;
-      return;
-    }
+    // if (!this->handle_floor_cloud(current_time,
+    //                               floor_level,
+    //                               s_graphs_cloud_msg,
+    //                               kf_snapshot,
+    //                               floors_vec_snapshot)) {
+    //   std::cout << "returning as floor cloud for floor level "
+    //             << floors_vec_snapshot[floor_level].id << " is empty" << std::endl;
+    //   return;
+    // }
 
     sensor_msgs::msg::PointCloud2 floor_wall_cloud_msg;
     // this->handle_floor_wall_cloud(current_time,
@@ -1401,6 +1401,13 @@ class SGraphsNode : public rclcpp::Node {
                                                  hort_planes_snapshot,
                                                  floors_vec_snapshot);
 
+    sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
+    this->handle_map_cloud(current_time,
+                           is_optimization_global,
+                           prev_mapped_keyframes,
+                           kf_snapshot,
+                           s_graphs_cloud_msg);
+
     markers_pub->publish(s_graphs_markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
     map_points_pub->publish(s_graphs_cloud_msg);
@@ -1412,6 +1419,31 @@ class SGraphsNode : public rclcpp::Node {
     floors_vec[floor_level].floor_wall_cloud =
         floors_vec_snapshot[floor_level].floor_wall_cloud;
     graph_mutex.unlock();
+    prev_mapped_keyframes = kf_snapshot.size();
+  }
+
+  void handle_map_cloud(const auto& current_time,
+                        bool is_optimization_global,
+                        int prev_mapped_kfs,
+                        const std::vector<KeyFrame::Ptr>& kf_snapshot,
+                        sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg) {
+    int kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
+
+    if (map_cloud == nullptr || is_optimization_global) {
+      map_cloud = map_cloud_generator->generate(kf_snapshot, map_cloud_resolution);
+    } else if (kfs_to_map != 0) {
+      std::vector<KeyFrame::Ptr> kf_map_window;
+      for (auto it = kf_snapshot.rbegin();
+           it != kf_snapshot.rend() && kf_map_window.size() <= kfs_to_map;
+           ++it) {
+        kf_map_window.push_back(*it);
+      }
+      map_cloud_generator->augment(kf_map_window, map_cloud);
+    }
+
+    pcl::toROSMsg(*map_cloud, s_graphs_cloud_msg);
+    s_graphs_cloud_msg.header.stamp = current_time;
+    s_graphs_cloud_msg.header.frame_id = map_frame_id;
   }
 
   /**
@@ -2298,10 +2330,6 @@ class SGraphsNode : public rclcpp::Node {
   rclcpp::Service<situational_graphs_msgs::srv::SaveMap>::SharedPtr
       save_map_service_server;
 
-  // odom queue
-  std::mutex odom_queue_mutex;
-  std::deque<nav_msgs::msg::Odometry::SharedPtr> odom_queue;
-
   // keyframe queue
   std::mutex keyframe_queue_mutex;
   std::deque<KeyFrame::Ptr> keyframe_queue;
@@ -2377,6 +2405,8 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
   int current_floor_level;
 
+  int prev_mapped_keyframes;
+  pcl::PointCloud<PointT>::Ptr map_cloud;
   visualization_msgs::msg::MarkerArray s_graphs_markers;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;

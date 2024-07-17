@@ -76,6 +76,9 @@ class MapCloudGenerator {
       const Eigen::Matrix4f& pose,
       const pcl::PointCloud<PointT>::Ptr& cloud) const;
 
+  void augment(const std::vector<KeyFrame::Ptr>& new_keyframes,
+               const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud);
+
   /**
    * @brief Construct a new MapCloudGenerator::generate_floor_cloud object
    *

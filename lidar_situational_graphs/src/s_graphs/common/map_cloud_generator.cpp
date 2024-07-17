@@ -49,6 +49,24 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   return filtered;
 }
 
+void MapCloudGenerator::augment(
+    const std::vector<KeyFrame::Ptr>& new_keyframes,
+    const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud) {
+  for (const auto& keyframe : new_keyframes) {
+    Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
+    for (const auto& src_pt : keyframe->cloud->points) {
+      PointT dst_pt;
+      dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+      dst_pt.intensity = src_pt.intensity;
+      cloud->push_back(dst_pt);
+    }
+  }
+
+  cloud->width = cloud->size();
+  cloud->height = 1;
+  cloud->is_dense = false;
+}
+
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
     const int& current_floor_level,
     double resolution,
