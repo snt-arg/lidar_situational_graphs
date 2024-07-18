@@ -846,48 +846,46 @@ class SGraphsNode : public rclcpp::Node {
     pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
     pcl::fromROSMsg(*cloud_msg, *cloud);
 
-    if (!keyframe_updater->update(odom)) {
-      return;
-    }
-
     // add the first floor node at keyframe height  before adding any keyframes
     if (keyframes.empty() && floors_vec.empty()) {
       add_first_floor_node();
     }
 
-    double accum_d = keyframe_updater->get_accum_distance();
-    if (use_map2map_transform) {
-      Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
-      Eigen::Quaterniond quaternion(map2map_trans.rotation());
-      Eigen::Isometry3d odom_trans = map2map_trans * odom;
-      Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
-
-      KeyFrame::Ptr keyframe(
-          new KeyFrame(stamp, odom_trans, accum_d, cloud, current_floor_level));
-      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-      keyframe_queue.push_back(keyframe);
-    } else {
-      KeyFrame::Ptr keyframe(
-          new KeyFrame(stamp, odom, accum_d, cloud, current_floor_level));
-      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-      keyframe_queue.push_back(keyframe);
-    }
-
+    // TODO: add use_map2map_transform check
     Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
-    pcl::PointCloud<PointT>::Ptr cloud_transformed(new pcl::PointCloud<PointT>());
+    keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
 
-    for (const auto& src_pt : cloud->points) {
-      PointT dst_pt;
-      dst_pt.getVector4fMap() = odom_corrected * src_pt.getVector4fMap();
-      dst_pt.intensity = src_pt.intensity;
-      cloud_transformed->push_back(dst_pt);
+    if (keyframe_updater->update(odom)) {
+      double accum_d = keyframe_updater->get_accum_distance();
+      if (use_map2map_transform) {
+        Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
+        Eigen::Quaterniond quaternion(map2map_trans.rotation());
+        Eigen::Isometry3d odom_trans = map2map_trans * odom;
+        Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
+
+        KeyFrame::Ptr keyframe(
+            new KeyFrame(stamp, odom_trans, accum_d, cloud, current_floor_level));
+        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+        keyframe_queue.push_back(keyframe);
+      } else {
+        KeyFrame::Ptr keyframe(
+            new KeyFrame(stamp, odom, accum_d, cloud, current_floor_level));
+        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+
+        keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
+            odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+        keyframe_queue.push_back(keyframe);
+        keyframe_updater->reset_collected_pose_cloud();
+      }
     }
 
+    pcl::PointCloud<PointT>::Ptr cloud_transformed =
+        map_cloud_generator->generate(odom_corrected, cloud);
     sensor_msgs::msg::PointCloud2 cloud_transformed_msg;
     pcl::toROSMsg(*cloud_transformed, cloud_transformed_msg);
     cloud_transformed_msg.header.frame_id = map_frame_id;
     cloud_transformed_msg.header.stamp = cloud_msg->header.stamp;
-    lidar_points_pub->publish(cloud_transformed_msg);
+    map_points_pub->publish(cloud_transformed_msg);
   }
 
   /**
@@ -1401,16 +1399,8 @@ class SGraphsNode : public rclcpp::Node {
                                                  hort_planes_snapshot,
                                                  floors_vec_snapshot);
 
-    sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
-    this->handle_map_cloud(current_time,
-                           is_optimization_global,
-                           prev_mapped_keyframes,
-                           kf_snapshot,
-                           s_graphs_cloud_msg);
-
     markers_pub->publish(s_graphs_markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
-    map_points_pub->publish(s_graphs_cloud_msg);
     wall_points_pub->publish(floor_wall_cloud_msg);
 
     // copy floor cloud to floors_vec
@@ -1430,7 +1420,8 @@ class SGraphsNode : public rclcpp::Node {
     int kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
 
     if (map_cloud == nullptr || is_optimization_global) {
-      map_cloud = map_cloud_generator->generate(kf_snapshot, map_cloud_resolution);
+      map_cloud =
+          map_cloud_generator->generate(kf_snapshot, map_cloud_resolution, false);
     } else if (kfs_to_map != 0) {
       std::vector<KeyFrame::Ptr> kf_map_window;
       for (auto it = kf_snapshot.rbegin();
@@ -2053,7 +2044,7 @@ class SGraphsNode : public rclcpp::Node {
                    });
     graph_mutex.unlock();
 
-    auto cloud = map_cloud_generator->generate(kf_snapshot, req->resolution);
+    auto cloud = map_cloud_generator->generate(kf_snapshot, req->resolution, true);
     if (!cloud) {
       res->success = false;
       return true;
@@ -2095,7 +2086,7 @@ class SGraphsNode : public rclcpp::Node {
     rclcpp::Time stamp;
     Eigen::Isometry3d odom;
     double accum_distance;
-    pcl::PointCloud<PointT>::ConstPtr cloud;
+    pcl::PointCloud<PointT>::Ptr cloud;
     sst << boost::format("%s") % directory;
     std::map<int, KeyFrame::Ptr> loaded_keyframes;
     g2o::SparseOptimizer* local_graph;

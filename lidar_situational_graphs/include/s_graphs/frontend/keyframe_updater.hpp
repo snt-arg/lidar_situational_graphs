@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef KEYFRAME_UPDATER_HPP
 #define KEYFRAME_UPDATER_HPP
 
@@ -96,14 +94,28 @@ class KeyframeUpdater {
    */
   double get_accum_distance() const { return accum_distance; }
 
+  void augment_collected_cloud(Eigen::Matrix4f odom_corrected,
+                               pcl::PointCloud<PointT>::Ptr cloud) {
+    collected_pose_cloud.push_back(std::make_pair(odom_corrected, cloud));
+  }
+
+  std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
+  get_collected_pose_cloud() {
+    return collected_pose_cloud;
+  }
+
+  void reset_collected_pose_cloud() { collected_pose_cloud.clear(); }
+
  private:
   // parameters
-  double keyframe_delta_trans;  //
-  double keyframe_delta_angle;  //
+  double keyframe_delta_trans;
+  double keyframe_delta_angle;
 
   bool is_first;
   double accum_distance;
   Eigen::Isometry3d prev_keypose;
+  std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
+      collected_pose_cloud;
 };
 
 }  // namespace s_graphs

@@ -10,7 +10,8 @@ MapCloudGenerator::~MapCloudGenerator() {}
 
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     const std::vector<KeyFrame::Ptr>& keyframes,
-    double resolution) const {
+    double resolution,
+    bool dense_cloud) const {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
     return nullptr;
@@ -21,7 +22,15 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
 
   for (const auto& keyframe : keyframes) {
     Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
-    for (const auto& src_pt : keyframe->cloud->points) {
+
+    pcl::PointCloud<PointT>::Ptr kf_cloud;
+    if (dense_cloud) {
+      kf_cloud = keyframe->dense_cloud;
+    } else {
+      kf_cloud = keyframe->cloud;
+    }
+
+    for (const auto& src_pt : kf_cloud->points) {
       PointT dst_pt;
       dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
       dst_pt.intensity = src_pt.intensity;
@@ -51,14 +60,22 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
 
 void MapCloudGenerator::augment(
     const std::vector<KeyFrame::Ptr>& new_keyframes,
-    const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud) {
+    const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud,
+    bool dense_cloud) {
   for (const auto& keyframe : new_keyframes) {
     Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
-    for (const auto& src_pt : keyframe->cloud->points) {
-      PointT dst_pt;
-      dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
-      dst_pt.intensity = src_pt.intensity;
-      cloud->push_back(dst_pt);
+
+    pcl::PointCloud<PointT>::Ptr kf_cloud;
+    if (dense_cloud) {
+      kf_cloud = keyframe->dense_cloud;
+    } else {
+      kf_cloud = keyframe->cloud;
+      for (const auto& src_pt : kf_cloud->points) {
+        PointT dst_pt;
+        dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+        dst_pt.intensity = src_pt.intensity;
+        cloud->push_back(dst_pt);
+      }
     }
   }
 
@@ -105,6 +122,29 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     map_cloud->height = 1;
     map_cloud->is_dense = false;
   }
+  return map_cloud;
+}
+
+pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
+    const Eigen::Matrix4f& kf_pose,
+    std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
+        pose_map_cloud) {
+  pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
+
+  for (const auto current_pose_map : pose_map_cloud) {
+    Eigen::Matrix4f current_odom_pose = current_pose_map.first;
+    pcl::PointCloud<PointT>::Ptr cloud = current_pose_map.second;
+
+    Eigen::Matrix4f odom_pose_transformed = kf_pose.inverse() * current_odom_pose;
+
+    for (const auto& src_pt : cloud->points) {
+      PointT dst_pt;
+      dst_pt.getVector4fMap() = odom_pose_transformed * src_pt.getVector4fMap();
+      dst_pt.intensity = src_pt.intensity;
+      map_cloud->push_back(dst_pt);
+    }
+  }
+
   return map_cloud;
 }
 

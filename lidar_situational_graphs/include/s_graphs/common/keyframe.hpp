@@ -72,7 +72,7 @@ struct KeyFrame {
   KeyFrame(const rclcpp::Time& stamp,
            const Eigen::Isometry3d& odom,
            double accum_distance,
-           const pcl::PointCloud<PointT>::ConstPtr& cloud,
+           const pcl::PointCloud<PointT>::Ptr& cloud,
            const int floor_level = 0);
 
   /**
@@ -87,6 +87,13 @@ struct KeyFrame {
   KeyFrame(const KeyFrame::Ptr& key);
 
   virtual ~KeyFrame();
+
+  /**
+   * @brief Construct a new KeyFrame::set_dense_cloud object
+   *
+   * @param cloud
+   */
+  void set_dense_cloud(const pcl::PointCloud<PointT>::Ptr& cloud);
 
   /**
    * @brief Saves the keyframe into a given directory.
@@ -119,11 +126,13 @@ struct KeyFrame {
   Eigen::Isometry3d estimate() const;
 
  public:
-  rclcpp::Time stamp;      // timestamp
-  Eigen::Isometry3d odom;  // odometry (estimated by scan_matching_odometry)
-  double accum_distance;   // accumulated distance from the first node (by
-                           // scan_matching_odometry)
-  pcl::PointCloud<PointT>::ConstPtr cloud;  // point cloud
+  rclcpp::Time stamp;                  // timestamp
+  Eigen::Isometry3d odom;              // odometry (estimated by scan_matching_odometry)
+  double accum_distance;               // accumulated distance from the first node (by
+                                       // scan_matching_odometry)
+  pcl::PointCloud<PointT>::Ptr cloud;  // point cloud
+  pcl::PointCloud<PointT>::Ptr dense_cloud;  // denser point cloud
+
   std::vector<int> x_plane_ids, y_plane_ids,
       hort_plane_ids;  // list of planes associated with the keyframe
 

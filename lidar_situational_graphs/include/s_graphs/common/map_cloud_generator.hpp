@@ -60,10 +60,14 @@ class MapCloudGenerator {
    *          snapshots of keyframes
    * @param resolution
    *          resolution of generated map
+   * @param dense_cloud
+   *           visualize dense kf cloud
+   *
    * @return generated map point cloud
    */
   pcl::PointCloud<PointT>::Ptr generate(const std::vector<KeyFrame::Ptr>& keyframes,
-                                        double resolution) const;
+                                        double resolution,
+                                        bool dense_cloud = false) const;
 
   /**
    * @brief
@@ -76,8 +80,16 @@ class MapCloudGenerator {
       const Eigen::Matrix4f& pose,
       const pcl::PointCloud<PointT>::Ptr& cloud) const;
 
+  /**
+   * @brief
+   *
+   * @param new_keyframes
+   * @param cloud
+   * @param dense_cloud
+   */
   void augment(const std::vector<KeyFrame::Ptr>& new_keyframes,
-               const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud);
+               const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud,
+               bool dense_cloud = false);
 
   /**
    * @brief Construct a new MapCloudGenerator::generate_floor_cloud object
@@ -90,6 +102,18 @@ class MapCloudGenerator {
       const int& current_floor_level,
       double resolution,
       const std::vector<KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief
+   *
+   * @param kf_pose
+   * @param pose_map_cloud
+   * @return pcl::PointCloud<MapCloudGenerator::PointT>::Ptr
+   */
+  pcl::PointCloud<MapCloudGenerator::PointT>::Ptr generate_kf_cloud(
+      const Eigen::Matrix4f& kf_pose,
+      std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
+          pose_map_cloud);
 };
 
 }  // namespace s_graphs

@@ -11,7 +11,7 @@ namespace s_graphs {
 KeyFrame::KeyFrame(const rclcpp::Time& stamp,
                    const Eigen::Isometry3d& odom,
                    double accum_distance,
-                   const pcl::PointCloud<PointT>::ConstPtr& cloud,
+                   const pcl::PointCloud<PointT>::Ptr& cloud,
                    const int floor_level)
     : stamp(stamp),
       odom(odom),
@@ -35,6 +35,7 @@ KeyFrame::KeyFrame(const KeyFrame::Ptr& key) {
   odom = key->odom;
   accum_distance = key->accum_distance;
   cloud = key->cloud;
+  dense_cloud = key->dense_cloud;
   x_plane_ids = key->x_plane_ids;
   y_plane_ids = key->y_plane_ids;
   hort_plane_ids = key->hort_plane_ids;
@@ -43,6 +44,10 @@ KeyFrame::KeyFrame(const KeyFrame::Ptr& key) {
   node = new g2o::VertexSE3();
   node->setId(key->node->id());
   node->setEstimate(key->node->estimate());
+}
+
+void KeyFrame::set_dense_cloud(const pcl::PointCloud<PointT>::Ptr& cloud) {
+  dense_cloud = cloud;
 }
 
 KeyFrame::~KeyFrame() {}
