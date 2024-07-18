@@ -79,12 +79,15 @@
     min_stddev_q: 0.2
     max_stddev_q: 0.8
     graph_update_interval: 3.0
-    map_cloud_update_interval: 3.0
+    map_cloud_update_interval: 10.0
     map_cloud_resolution: 0.05
+    map_cloud_pub_resolution: 0.06
+    fast_mapping: true
+    viz_dense_map: false #true: will make the rviz visualization too slow
 
 
     extract_planar_surfaces:    true
-    min_seg_points:             100
+    min_seg_points:             500
     use_euclidean_filter:       true
     min_horizontal_inliers:     800
     min_vertical_inliers:       500

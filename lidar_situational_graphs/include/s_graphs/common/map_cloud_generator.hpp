@@ -60,14 +60,14 @@ class MapCloudGenerator {
    *          snapshots of keyframes
    * @param resolution
    *          resolution of generated map
-   * @param dense_cloud
+   * @param use_dense_cloud
    *           visualize dense kf cloud
    *
    * @return generated map point cloud
    */
   pcl::PointCloud<PointT>::Ptr generate(const std::vector<KeyFrame::Ptr>& keyframes,
                                         double resolution,
-                                        bool dense_cloud = false) const;
+                                        bool use_dense_cloud = false) const;
 
   /**
    * @brief
@@ -83,13 +83,11 @@ class MapCloudGenerator {
   /**
    * @brief
    *
-   * @param new_keyframes
    * @param cloud
-   * @param dense_cloud
+   * @param resolution
+   * @return void
    */
-  void augment(const std::vector<KeyFrame::Ptr>& new_keyframes,
-               const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud,
-               bool dense_cloud = false);
+  void downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud, double resolution) const;
 
   /**
    * @brief Construct a new MapCloudGenerator::generate_floor_cloud object

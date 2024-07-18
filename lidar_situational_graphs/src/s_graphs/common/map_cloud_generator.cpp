@@ -11,7 +11,7 @@ MapCloudGenerator::~MapCloudGenerator() {}
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     const std::vector<KeyFrame::Ptr>& keyframes,
     double resolution,
-    bool dense_cloud) const {
+    bool use_dense_cloud) const {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
     return nullptr;
@@ -24,7 +24,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
 
     pcl::PointCloud<PointT>::Ptr kf_cloud;
-    if (dense_cloud) {
+    if (use_dense_cloud) {
       kf_cloud = keyframe->dense_cloud;
     } else {
       kf_cloud = keyframe->cloud;
@@ -44,40 +44,18 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
 
   if (resolution <= 0.0) return cloud;  // To get unfiltered point cloud with intensity
 
+  downsample_cloud(cloud, resolution);
+
+  return cloud;
+}
+
+void MapCloudGenerator::downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud,
+                                         double resolution) const {
   pcl::octree::OctreePointCloud<PointT> octree(resolution);
   octree.setInputCloud(cloud);
   octree.addPointsFromInputCloud();
 
-  pcl::PointCloud<PointT>::Ptr filtered(new pcl::PointCloud<PointT>());
-  octree.getOccupiedVoxelCenters(filtered->points);
-
-  filtered->width = filtered->size();
-  filtered->height = 1;
-  filtered->is_dense = false;
-
-  return filtered;
-}
-
-void MapCloudGenerator::augment(
-    const std::vector<KeyFrame::Ptr>& new_keyframes,
-    const pcl::PointCloud<MapCloudGenerator::PointT>::Ptr cloud,
-    bool dense_cloud) {
-  for (const auto& keyframe : new_keyframes) {
-    Eigen::Matrix4f pose = keyframe->node->estimate().matrix().cast<float>();
-
-    pcl::PointCloud<PointT>::Ptr kf_cloud;
-    if (dense_cloud) {
-      kf_cloud = keyframe->dense_cloud;
-    } else {
-      kf_cloud = keyframe->cloud;
-      for (const auto& src_pt : kf_cloud->points) {
-        PointT dst_pt;
-        dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
-        dst_pt.intensity = src_pt.intensity;
-        cloud->push_back(dst_pt);
-      }
-    }
-  }
+  octree.getOccupiedVoxelCenters(cloud->points);
 
   cloud->width = cloud->size();
   cloud->height = 1;
