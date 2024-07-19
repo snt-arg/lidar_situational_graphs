@@ -203,8 +203,6 @@ class PrefilteringNode : public rclcpp::Node {
 
       pcl::PointCloud<PointT>::Ptr transformed(new pcl::PointCloud<PointT>());
       pcl_ros::transformPointCloud(*src_cloud, *transformed, transform_msg);
-      transformed->header.frame_id = base_link_frame;
-      transformed->header.stamp = src_cloud->header.stamp;
       src_cloud = transformed;
     }
 
@@ -214,6 +212,8 @@ class PrefilteringNode : public rclcpp::Node {
 
     sensor_msgs::msg::PointCloud2 filtered_msg;
     pcl::toROSMsg(*filtered, filtered_msg);
+    filtered_msg.header.stamp = src_cloud_msg->header.stamp;
+    filtered_msg.header.frame_id = base_link_frame;
     points_pub->publish(filtered_msg);
   }
 
