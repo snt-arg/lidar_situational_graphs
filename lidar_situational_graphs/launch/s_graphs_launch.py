@@ -151,9 +151,7 @@ def launch_sgraphs(context, *args, **kwargs):
         parameters=[{s_graphs_param_file}, {"odom_frame_id": odom_frame, "map_frame_id": map_frame}],
         output="screen",
         prefix=["gdbserver localhost:3000"] if debug_mode_arg == "true" else None,
-        remappings=[
-            ("velodyne_points", lidar_topic_arg),
-            ("odom", odom_topic_arg),
+        remappings=[("odom", odom_topic_arg),
         ],
     )
 

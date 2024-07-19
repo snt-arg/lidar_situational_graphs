@@ -29,6 +29,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/time_synchronizer.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 
@@ -180,9 +181,6 @@ class SGraphsNode : public rclcpp::Node {
     room_information =
         this->get_parameter("room_information").get_parameter_value().get<double>();
 
-    points_topic =
-        this->get_parameter("points_topic").get_parameter_value().get<std::string>();
-
     // tfs
     tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -218,7 +216,7 @@ class SGraphsNode : public rclcpp::Node {
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
-        ApproxSyncPolicy(10), odom_sub, cloud_sub));
+        ApproxSyncPolicy(32), odom_sub, cloud_sub));
     sync->registerCallback(&SGraphsNode::cloud_callback, this);
 
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
@@ -475,7 +473,6 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("room_dist_threshold", 1.0);
     this->declare_parameter("dupl_plane_matching_information", 0.01);
 
-    this->declare_parameter("points_topic", "velodyne_points");
     this->declare_parameter("enable_gps", false);
     this->declare_parameter("graph_update_interval", 3.0);
     this->declare_parameter("keyframe_timer_update_interval", 3.0);
@@ -2209,7 +2206,6 @@ class SGraphsNode : public rclcpp::Node {
   std::string map_frame_id;
   std::string odom_frame_id;
   std::string base_frame_id;
-  std::string points_topic;
 
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr markers_pub;
   rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr odom2map_pub;
