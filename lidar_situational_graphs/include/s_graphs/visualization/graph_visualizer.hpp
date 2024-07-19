@@ -403,6 +403,7 @@ class GraphVisualizer {
   std::mutex& shared_graph_mutex;
   std::string map_frame_id;
   double color_r, color_g, color_b;
+  int marker_duration_time;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
   rclcpp::Node* node_ptr_;

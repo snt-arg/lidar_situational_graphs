@@ -82,6 +82,7 @@
     #mapping
     graph_update_interval: 3.0
     map_cloud_update_interval: 3.0
+    marker_duration: 10
     map_cloud_resolution: 0.05
     map_cloud_pub_resolution: 0.06
     fast_mapping: true   #if set to true increase the decay time of map_points and wall_points in rviz

@@ -13,6 +13,8 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node,
   color_r = node->get_parameter("color_r").get_parameter_value().get<double>();
   color_g = node->get_parameter("color_g").get_parameter_value().get<double>();
   color_b = node->get_parameter("color_b").get_parameter_value().get<double>();
+  marker_duration_time =
+      node->get_parameter("marker_duration").get_parameter_value().get<int>();
 
   std::string ns = node_ptr_->get_namespace();
   if (ns.length() > 1) {
@@ -47,134 +49,133 @@ GraphVisualizer::visualize_floor_covisibility_graph(
     const std::unordered_map<int, Rooms> room_snapshot,
     const std::map<int, Floors> floors_vec) {
   visualization_msgs::msg::MarkerArray markers;
+  rclcpp::Duration marker_duration =
+      rclcpp::Duration::from_seconds(marker_duration_time);
 
-  auto floor_itr = floors_vec.find(current_floor_level);
-  Floors floor;
-  if (floor_itr != floors_vec.end())
-    floor = floors_vec.at(current_floor_level);
-  else
-    return markers;
+  for (const auto& floor : floors_vec) {
+    std::string keyframes_layer_id =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_keyframes_layer";
 
-  std::string keyframes_layer_id =
-      "floor_" + std::to_string(floor.sequential_id) + "_keyframes_layer";
+    std::string walls_layer_id =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_walls_layer";
 
-  std::string walls_layer_id =
-      "floor_" + std::to_string(floor.sequential_id) + "_walls_layer";
+    std::string rooms_layer_id =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_rooms_layer";
 
-  std::string rooms_layer_id =
-      "floor_" + std::to_string(floor.sequential_id) + "_rooms_layer";
+    std::string floors_layer_id =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_floors_layer";
 
-  std::string floors_layer_id =
-      "floor_" + std::to_string(floor.sequential_id) + "_floors_layer";
+    std::string ns = node_ptr_->get_namespace();
+    if (ns.length() > 1) {
+      std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
+      keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
+      walls_layer_id = ns_prefix + "/" + walls_layer_id;
+      rooms_layer_id = ns_prefix + "/" + rooms_layer_id;
+      floors_layer_id = ns_prefix + "/" + floors_layer_id;
+    }
 
-  std::string ns = node_ptr_->get_namespace();
-  if (ns.length() > 1) {
-    std::string ns_prefix = std::string(node_ptr_->get_namespace()).substr(1);
-    keyframes_layer_id = ns_prefix + "/" + keyframes_layer_id;
-    walls_layer_id = ns_prefix + "/" + walls_layer_id;
-    rooms_layer_id = ns_prefix + "/" + rooms_layer_id;
-    floors_layer_id = ns_prefix + "/" + floors_layer_id;
+    std::vector<KeyFrame::Ptr> floor_keyframes;
+    for (const auto& kf : keyframes) {
+      if (kf->floor_level == floor.first) floor_keyframes.push_back(kf);
+    }
+
+    if (floor_keyframes.empty()) continue;
+
+    visualization_msgs::msg::Marker kf_marker =
+        fill_kf_markers(local_graph, floor_keyframes, floors_vec);
+    kf_marker.header.stamp = stamp;
+    kf_marker.header.frame_id = keyframes_layer_id;
+    kf_marker.ns = "floor_" + std::to_string(floor.second.sequential_id) + "_keyframes";
+    kf_marker.id = markers.markers.size();
+    kf_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
+    kf_marker.pose.orientation.w = 1.0;
+    kf_marker.scale.x = kf_marker.scale.y = kf_marker.scale.z = 0.2;
+    kf_marker.lifetime = marker_duration;
+    markers.markers.push_back(kf_marker);
+
+    // keyframe edge markers
+    visualization_msgs::msg::Marker kf_edge_marker =
+        fill_kf_edge_markers(local_graph, floor_keyframes);
+    kf_edge_marker.header.frame_id = keyframes_layer_id;
+    kf_edge_marker.header.stamp = stamp;
+    kf_edge_marker.ns =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_keyframe_edges";
+    kf_edge_marker.id = markers.markers.size();
+    kf_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    kf_edge_marker.pose.orientation.w = 1.0;
+    kf_edge_marker.scale.x = 0.02;
+    kf_edge_marker.lifetime = marker_duration;
+    markers.markers.push_back(kf_edge_marker);
+
+    // keyframe plane edge marker
+    visualization_msgs::msg::Marker kf_plane_edge_marker =
+        fill_kf_plane_markers(local_graph,
+                              floor_keyframes,
+                              x_plane_snapshot,
+                              y_plane_snapshot,
+                              hort_plane_snapshot,
+                              keyframes_layer_id,
+                              walls_layer_id);
+    kf_plane_edge_marker.header.frame_id = keyframes_layer_id;
+    kf_plane_edge_marker.header.stamp = stamp;
+    kf_plane_edge_marker.ns =
+        "floor_" + std::to_string(floor.second.sequential_id) + "_keyframe_plane_edges";
+    kf_plane_edge_marker.id = markers.markers.size();
+    kf_plane_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+    kf_plane_edge_marker.pose.orientation.w = 1.0;
+    kf_plane_edge_marker.scale.x = 0.01;
+    markers.markers.push_back(kf_plane_edge_marker);
+
+    // fil in the x_inf room marker
+    this->fill_infinite_room(0,
+                             stamp,
+                             marker_duration,
+                             local_graph,
+                             x_plane_snapshot,
+                             x_infinite_room_snapshot,
+                             markers,
+                             walls_layer_id,
+                             rooms_layer_id,
+                             floors_layer_id,
+                             current_floor_level);
+
+    // fill in the y_inf room marker
+    this->fill_infinite_room(1,
+                             stamp,
+                             marker_duration,
+                             local_graph,
+                             y_plane_snapshot,
+                             y_infinite_room_snapshot,
+                             markers,
+                             walls_layer_id,
+                             rooms_layer_id,
+                             floors_layer_id,
+                             current_floor_level);
+
+    this->fill_room(stamp,
+                    marker_duration,
+                    local_graph,
+                    x_plane_snapshot,
+                    y_plane_snapshot,
+                    room_snapshot,
+                    markers,
+                    walls_layer_id,
+                    rooms_layer_id,
+                    floors_layer_id,
+                    current_floor_level);
+
+    this->fill_floor(stamp,
+                     marker_duration,
+                     local_graph,
+                     x_infinite_room_snapshot,
+                     y_infinite_room_snapshot,
+                     room_snapshot,
+                     floors_vec,
+                     markers,
+                     rooms_layer_id,
+                     floors_layer_id,
+                     current_floor_level);
   }
-
-  std::vector<KeyFrame::Ptr> floor_keyframes;
-  for (const auto& kf : keyframes) {
-    if (kf->floor_level == current_floor_level) floor_keyframes.push_back(kf);
-  }
-
-  if (floor_keyframes.empty()) return markers;
-
-  visualization_msgs::msg::Marker kf_marker =
-      fill_kf_markers(local_graph, floor_keyframes, floors_vec);
-  kf_marker.header.stamp = stamp;
-  kf_marker.header.frame_id = keyframes_layer_id;
-  kf_marker.ns = "floor_" + std::to_string(floor.sequential_id) + "_keyframes";
-  kf_marker.id = markers.markers.size();
-  kf_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
-  kf_marker.pose.orientation.w = 1.0;
-  kf_marker.scale.x = kf_marker.scale.y = kf_marker.scale.z = 0.2;
-  markers.markers.push_back(kf_marker);
-
-  // keyframe edge markers
-  visualization_msgs::msg::Marker kf_edge_marker =
-      fill_kf_edge_markers(local_graph, floor_keyframes);
-  kf_edge_marker.header.frame_id = keyframes_layer_id;
-  kf_edge_marker.header.stamp = stamp;
-  kf_edge_marker.ns =
-      "floor_" + std::to_string(floor.sequential_id) + "_keyframe_edges";
-  kf_edge_marker.id = markers.markers.size();
-  kf_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-  kf_edge_marker.pose.orientation.w = 1.0;
-  kf_edge_marker.scale.x = 0.02;
-  markers.markers.push_back(kf_edge_marker);
-
-  // keyframe plane edge marker
-  visualization_msgs::msg::Marker kf_plane_edge_marker =
-      fill_kf_plane_markers(local_graph,
-                            floor_keyframes,
-                            x_plane_snapshot,
-                            y_plane_snapshot,
-                            hort_plane_snapshot,
-                            keyframes_layer_id,
-                            walls_layer_id);
-  kf_plane_edge_marker.header.frame_id = keyframes_layer_id;
-  kf_plane_edge_marker.header.stamp = stamp;
-  kf_plane_edge_marker.ns =
-      "floor_" + std::to_string(floor.sequential_id) + "_keyframe_plane_edges";
-  kf_plane_edge_marker.id = markers.markers.size();
-  kf_plane_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
-  kf_plane_edge_marker.pose.orientation.w = 1.0;
-  kf_plane_edge_marker.scale.x = 0.01;
-  markers.markers.push_back(kf_plane_edge_marker);
-
-  // fil in the x_inf room marker
-  this->fill_infinite_room(0,
-                           stamp,
-                           rclcpp::Duration::from_seconds(0),
-                           local_graph,
-                           x_plane_snapshot,
-                           x_infinite_room_snapshot,
-                           markers,
-                           walls_layer_id,
-                           rooms_layer_id,
-                           floors_layer_id,
-                           current_floor_level);
-
-  // fill in the y_inf room marker
-  this->fill_infinite_room(1,
-                           stamp,
-                           rclcpp::Duration::from_seconds(0),
-                           local_graph,
-                           y_plane_snapshot,
-                           y_infinite_room_snapshot,
-                           markers,
-                           walls_layer_id,
-                           rooms_layer_id,
-                           floors_layer_id,
-                           current_floor_level);
-
-  this->fill_room(stamp,
-                  rclcpp::Duration::from_seconds(0),
-                  local_graph,
-                  x_plane_snapshot,
-                  y_plane_snapshot,
-                  room_snapshot,
-                  markers,
-                  walls_layer_id,
-                  rooms_layer_id,
-                  floors_layer_id,
-                  current_floor_level);
-
-  this->fill_floor(stamp,
-                   rclcpp::Duration::from_seconds(0),
-                   local_graph,
-                   x_infinite_room_snapshot,
-                   y_infinite_room_snapshot,
-                   room_snapshot,
-                   floors_vec,
-                   markers,
-                   rooms_layer_id,
-                   floors_layer_id,
-                   current_floor_level);
 
   return markers;
 }

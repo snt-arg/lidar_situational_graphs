@@ -398,6 +398,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("color_r", 0.0);
     this->declare_parameter("color_g", 0.0);
     this->declare_parameter("color_b", 0.0);
+    this->declare_parameter("marker_duration", 10);
     this->declare_parameter("save_timings", false);
 
     this->declare_parameter("max_keyframes_per_update", 10);
