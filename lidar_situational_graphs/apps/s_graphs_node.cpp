@@ -216,7 +216,7 @@ class SGraphsNode : public rclcpp::Node {
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
-        ApproxSyncPolicy(32), odom_sub, cloud_sub));
+        ApproxSyncPolicy(10), odom_sub, cloud_sub));
     sync->registerCallback(&SGraphsNode::cloud_callback, this);
 
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
@@ -1381,15 +1381,6 @@ class SGraphsNode : public rclcpp::Node {
                                                  hort_planes_snapshot,
                                                  floors_vec_snapshot);
 
-    // sensor_msgs::msg::PointCloud2 floor_wall_cloud_msg;
-    // this->handle_floor_wall_cloud(current_time,
-    //                               prev_mapped_keyframes,
-    //                               kf_snapshot,
-    //                               x_planes_snapshot,
-    //                               y_planes_snapshot,
-    //                               hort_planes_snapshot,
-    //                               floor_wall_cloud_msg);
-
     markers_pub->publish(s_graphs_markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
     if (!fast_mapping) {
@@ -1402,7 +1393,23 @@ class SGraphsNode : public rclcpp::Node {
       map_points_pub->publish(s_graphs_cloud_msg);
     }
 
-    // wall_points_pub->publish(floor_wall_cloud_msg);
+    sensor_msgs::msg::PointCloud2 floor_wall_cloud_msg;
+    this->handle_floor_wall_cloud(current_time,
+                                  floor_level,
+                                  floor_wall_cloud_msg,
+                                  x_planes_snapshot,
+                                  y_planes_snapshot,
+                                  hort_planes_snapshot,
+                                  floors_vec_snapshot);
+
+    // this->handle_floor_wall_cloud(current_time,
+    //                               prev_mapped_keyframes,
+    //                               kf_snapshot,
+    //                               x_planes_snapshot,
+    //                               y_planes_snapshot,
+    //                               hort_planes_snapshot,
+    //                               floor_wall_cloud_msg);
+    wall_points_pub->publish(floor_wall_cloud_msg);
 
     // copy floor cloud to floors_vec
     graph_mutex.lock();
@@ -1438,6 +1445,81 @@ class SGraphsNode : public rclcpp::Node {
     pcl::toROSMsg(*map_cloud, s_graphs_cloud_msg);
     s_graphs_cloud_msg.header.stamp = current_time;
     s_graphs_cloud_msg.header.frame_id = map_frame_id;
+  }
+
+  void handle_floor_wall_cloud(
+      const auto& current_time,
+      const int& floor_level,
+      sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg,
+      const std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
+      const std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
+      const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
+      std::map<int, Floors>& floors_vec_snapshot) {
+    sensor_msgs::msg::PointCloud2 current_floor_wall_cloud_msg;
+    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
+        new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+
+    for (const auto& x_plane : x_planes_snapshot) {
+      if (x_plane.second.floor_level != floor_level) continue;
+      *floor_wall_cloud += *x_plane.second.cloud_seg_map;
+    }
+
+    for (const auto& y_plane : y_planes_snapshot) {
+      if (y_plane.second.floor_level != floor_level) continue;
+      *floor_wall_cloud += *y_plane.second.cloud_seg_map;
+    }
+
+    for (const auto& hort_plane : hort_planes_snapshot) {
+      if (hort_plane.second.floor_level != floor_level) continue;
+      *floor_wall_cloud += *hort_plane.second.cloud_seg_map;
+    }
+
+    floors_vec_snapshot[floor_level].floor_wall_cloud = floor_wall_cloud;
+
+    pcl::toROSMsg(*floors_vec_snapshot[floor_level].floor_wall_cloud,
+                  current_floor_wall_cloud_msg);
+    current_floor_wall_cloud_msg = transform_floor_cloud(
+        current_floor_wall_cloud_msg,
+        current_time,
+        map_frame_id,
+        "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
+            "_walls_layer");
+
+    pcl::concatenatePointCloud(
+        floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
+
+    this->concatenate_floor_wall_clouds(
+        current_time, floor_level, floor_wall_cloud_msg, floors_vec_snapshot);
+  }
+
+  /**
+   * @brief
+   *
+   * @param current_time
+   * @param floor_level
+   * @param floors_vec_snapshot
+   */
+  void concatenate_floor_wall_clouds(
+      const auto& current_time,
+      const int& floor_level,
+      sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg,
+      const std::map<int, Floors>& floors_vec_snapshot) {
+    sensor_msgs::msg::PointCloud2 current_floor_wall_cloud_msg;
+    for (auto& floor : floors_vec_snapshot) {
+      if (floor.second.id == floor_level ||
+          floor.second.floor_wall_cloud->points.empty()) {
+        continue;
+      }
+
+      pcl::toROSMsg(*floor.second.floor_wall_cloud, current_floor_wall_cloud_msg);
+      current_floor_wall_cloud_msg = transform_floor_cloud(
+          current_floor_wall_cloud_msg,
+          current_time,
+          map_frame_id,
+          "floor_" + std::to_string(floor.second.sequential_id) + "_walls_layer");
+      pcl::concatenatePointCloud(
+          floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
+    }
   }
 
   /**
@@ -1476,27 +1558,44 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& kf : kf_map_window) {
       for (const auto& x_id : kf->x_plane_ids) {
         auto x_plane = x_planes_snapshot.find(x_id);
+        this->update_wall_cloud<VerticalPlanes>(kf, x_plane->second, wall_map_cloud);
+      }
+      for (const auto& y_id : kf->y_plane_ids) {
+        auto y_plane = y_planes_snapshot.find(y_id);
+        this->update_wall_cloud<VerticalPlanes>(kf, y_plane->second, wall_map_cloud);
+      }
+      for (const auto& h_id : kf->hort_plane_ids) {
+        auto h_plane = hort_planes_snapshot.find(h_id);
+        this->update_wall_cloud<HorizontalPlanes>(kf, h_plane->second, wall_map_cloud);
+      }
+    }
 
-        int search_id = kf->id();
-        auto current_kf = std::find_if(x_plane->second.keyframe_node_vec.begin(),
-                                       x_plane->second.keyframe_node_vec.end(),
-                                       [search_id](const g2o::VertexSE3* keyframe) {
-                                         return keyframe->id() == search_id;
-                                       });
+    pcl::toROSMsg(*wall_map_cloud, floor_wall_cloud_msg);
+    floor_wall_cloud_msg.header.stamp = current_time;
+    floor_wall_cloud_msg.header.frame_id = map_frame_id;
+  }
 
-        if (current_kf != x_plane->second.keyframe_node_vec.end()) {
-          int kf_position =
-              std::distance(x_plane->second.keyframe_node_vec.begin(), current_kf);
-          auto kf_cloud_body = x_plane->second.cloud_seg_body_vec[kf_position];
+  template <typename planeT>
+  void update_wall_cloud(KeyFrame::Ptr kf,
+                         planeT plane,
+                         pcl::PointCloud<PointNormal>::Ptr& wall_map_cloud) {
+    int search_id = kf->id();
+    auto current_kf = std::find_if(plane.keyframe_node_vec.begin(),
+                                   plane.keyframe_node_vec.end(),
+                                   [search_id](const g2o::VertexSE3* keyframe) {
+                                     return keyframe->id() == search_id;
+                                   });
 
-          for (const auto& src_pt : kf_cloud_body->points) {
-            PointNormal dst_pt;
-            dst_pt.rgb = src_pt.rgb;
-            dst_pt.getVector4fMap() =
-                kf->node->estimate().matrix().cast<float>() * src_pt.getVector4fMap();
-            wall_map_cloud->push_back(dst_pt);
-          }
-        }
+    if (current_kf != plane.keyframe_node_vec.end()) {
+      int kf_position = std::distance(plane.keyframe_node_vec.begin(), current_kf);
+      auto kf_cloud_body = plane.cloud_seg_body_vec[kf_position];
+
+      for (const auto& src_pt : kf_cloud_body->points) {
+        PointNormal dst_pt;
+        dst_pt.rgb = src_pt.rgb;
+        dst_pt.getVector4fMap() =
+            kf->node->estimate().matrix().cast<float>() * src_pt.getVector4fMap();
+        wall_map_cloud->push_back(dst_pt);
       }
     }
   }
@@ -1771,7 +1870,7 @@ class SGraphsNode : public rclcpp::Node {
       if (floor->second.sequential_id == 0)
         floor_height = 0;
       else
-        floor_height = 20;
+        floor_height = 24;
       geometry_msgs::msg::TransformStamped transform;
       tf2::Quaternion quat;
       quat.setRPY(0, 0, 0);
@@ -1850,7 +1949,7 @@ class SGraphsNode : public rclcpp::Node {
       static_transforms.push_back(floor_room_transform);
 
       // floor to floor transform
-      double floors_height = 8.0;
+      double floors_height = 16.0;
       geometry_msgs::msg::TransformStamped floor_floor_transform;
       floor_floor_transform.header.stamp = current_time;
       floor_floor_transform.header.frame_id =
