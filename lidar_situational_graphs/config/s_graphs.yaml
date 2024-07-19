@@ -78,11 +78,13 @@
     max_stddev_x: 5.0
     min_stddev_q: 0.2
     max_stddev_q: 0.8
+
+    #mapping
     graph_update_interval: 3.0
-    map_cloud_update_interval: 10.0
+    map_cloud_update_interval: 3.0
     map_cloud_resolution: 0.05
     map_cloud_pub_resolution: 0.06
-    fast_mapping: true
+    fast_mapping: true   #if set to true increase the decay time of map_points and wall_points in rviz
     viz_dense_map: false #true: will make the rviz visualization too slow
 
 

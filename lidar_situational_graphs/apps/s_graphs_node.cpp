@@ -921,32 +921,9 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
-    if (fast_mapping) {
-      if (!floors_vec.empty()) {
-        geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
-        try {
-          map_floor_tranform_stamped = tf_buffer->lookupTransform(
-              map_frame_id,
-              "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-                  "_layer",
-              tf2::TimePointZero);
-        } catch (tf2::TransformException& ex) {
-          return;
-        }
-
-        Eigen::Matrix4f map_floor_t =
-            transformStamped2EigenMatrix(map_floor_tranform_stamped);
-        odom_corrected = map_floor_t * odom_corrected;
-      }
-
-      pcl::PointCloud<PointT>::Ptr cloud_transformed =
-          map_cloud_generator->generate(odom_corrected, cloud);
-      sensor_msgs::msg::PointCloud2 cloud_transformed_msg;
-      pcl::toROSMsg(*cloud_transformed, cloud_transformed_msg);
-      cloud_transformed_msg.header.frame_id = map_frame_id;
-      cloud_transformed_msg.header.stamp = cloud_msg->header.stamp;
-      map_points_pub->publish(cloud_transformed_msg);
-    }
+    odom_cloud_queue_mutex.lock();
+    odom_cloud_queue.push_back(std::make_pair(odom_corrected, cloud));
+    odom_cloud_queue_mutex.unlock();
   }
 
   /**
@@ -1410,7 +1387,7 @@ class SGraphsNode : public rclcpp::Node {
     s_graphs_markers.markers.clear();
     s_graphs_markers = graph_visualizer->visualize_floor_covisibility_graph(
         current_time,
-        current_floor_level,
+        floor_level,
         local_covisibility_graph->graph.get(),
         kf_snapshot,
         x_planes_snapshot,
@@ -1431,7 +1408,7 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     graph_visualizer->visualize_compressed_graph(current_time,
-                                                 current_floor_level,
+                                                 floor_level,
                                                  is_optimization_global,
                                                  false,
                                                  local_compressed_graph->graph.get(),
@@ -1443,32 +1420,38 @@ class SGraphsNode : public rclcpp::Node {
 
     markers_pub->publish(s_graphs_markers);
     publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
-    if (!fast_mapping) {
-      sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
+
+    // TODO:HB add fast mapping logic here from cloud_callback
+    sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
+    if (fast_mapping)
+      handle_map_cloud(current_time, floor_level, odom_cloud_queue, s_graphs_cloud_msg);
+    else
       handle_map_cloud(current_time,
+                       floor_level,
                        is_optimization_global,
                        prev_mapped_keyframes,
                        kf_snapshot,
                        s_graphs_cloud_msg);
-      map_points_pub->publish(s_graphs_cloud_msg);
-    }
+    map_points_pub->publish(s_graphs_cloud_msg);
 
     sensor_msgs::msg::PointCloud2 floor_wall_cloud_msg;
-    this->handle_floor_wall_cloud(current_time,
-                                  floor_level,
-                                  floor_wall_cloud_msg,
-                                  x_planes_snapshot,
-                                  y_planes_snapshot,
-                                  hort_planes_snapshot,
-                                  floors_vec_snapshot);
-
-    // this->handle_floor_wall_cloud(current_time,
-    //                               prev_mapped_keyframes,
-    //                               kf_snapshot,
-    //                               x_planes_snapshot,
-    //                               y_planes_snapshot,
-    //                               hort_planes_snapshot,
-    //                               floor_wall_cloud_msg);
+    if (fast_mapping)
+      this->handle_floor_wall_cloud(current_time,
+                                    floor_level,
+                                    prev_mapped_keyframes,
+                                    kf_snapshot,
+                                    x_planes_snapshot,
+                                    y_planes_snapshot,
+                                    hort_planes_snapshot,
+                                    floor_wall_cloud_msg);
+    else
+      this->handle_floor_wall_cloud(current_time,
+                                    floor_level,
+                                    x_planes_snapshot,
+                                    y_planes_snapshot,
+                                    hort_planes_snapshot,
+                                    floors_vec_snapshot,
+                                    floor_wall_cloud_msg);
     wall_points_pub->publish(floor_wall_cloud_msg);
 
     // copy floor cloud to floors_vec
@@ -1480,16 +1463,74 @@ class SGraphsNode : public rclcpp::Node {
     prev_mapped_keyframes = kf_snapshot.size();
   }
 
+  void handle_map_cloud(
+      const auto& current_time,
+      int floor_level,
+      std::deque<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>&
+          odom_cloud_queue,
+      sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg) {
+    std::deque<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
+        current_odom_cloud_queue;
+
+    odom_cloud_queue_mutex.lock();
+    current_odom_cloud_queue = odom_cloud_queue;
+    odom_cloud_queue_mutex.unlock();
+
+    Eigen::Matrix4f map_floor_t(Eigen::Matrix4f::Identity());
+    if (!floors_vec.empty()) {
+      geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
+      try {
+        map_floor_tranform_stamped = tf_buffer->lookupTransform(
+            map_frame_id,
+            "floor_" + std::to_string(floors_vec[floor_level].sequential_id) + "_layer",
+            tf2::TimePointZero);
+      } catch (tf2::TransformException& ex) {
+        return;
+      }
+      map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
+    }
+
+    pcl::PointCloud<PointT>::Ptr cloud_transformed(new pcl::PointCloud<PointT>);
+    for (const auto& odom_cloud_pair : current_odom_cloud_queue)
+      *cloud_transformed += *map_cloud_generator->generate(
+          map_floor_t * odom_cloud_pair.first, odom_cloud_pair.second);
+
+    pcl::toROSMsg(*cloud_transformed, s_graphs_cloud_msg);
+    s_graphs_cloud_msg.header.stamp = current_time;
+    s_graphs_cloud_msg.header.frame_id = map_frame_id;
+
+    std::lock_guard<std::mutex> lock(odom_cloud_queue_mutex);
+    odom_cloud_queue.erase(odom_cloud_queue.begin(),
+                           odom_cloud_queue.begin() + current_odom_cloud_queue.size());
+  }
+
   void handle_map_cloud(const auto& current_time,
+                        int floor_level,
                         bool is_optimization_global,
                         int prev_mapped_kfs,
                         const std::vector<KeyFrame::Ptr>& kf_snapshot,
                         sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg) {
     int kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
 
+    Eigen::Matrix4f map_floor_t(Eigen::Matrix4f::Identity());
+    if (!floors_vec.empty()) {
+      geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
+      try {
+        map_floor_tranform_stamped = tf_buffer->lookupTransform(
+            map_frame_id,
+            "floor_" + std::to_string(floors_vec[floor_level].sequential_id) + "_layer",
+            tf2::TimePointZero);
+      } catch (tf2::TransformException& ex) {
+        return;
+      }
+
+      map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
+    }
+
+    // TODO:HB use generate_floor_cloud_function here
     if (!map_cloud || is_optimization_global) {
       map_cloud = map_cloud_generator->generate(
-          kf_snapshot, map_cloud_pub_resolution, viz_dense_map);
+          kf_snapshot, map_cloud_pub_resolution, map_floor_t, viz_dense_map);
     } else if (kfs_to_map != 0) {
       std::vector<KeyFrame::Ptr> kf_map_window;
       for (auto it = kf_snapshot.rbegin();
@@ -1498,7 +1539,7 @@ class SGraphsNode : public rclcpp::Node {
         kf_map_window.push_back(*it);
       }
       pcl::PointCloud<PointT>::Ptr aug_map_cloud = map_cloud_generator->generate(
-          kf_map_window, map_cloud_pub_resolution, viz_dense_map);
+          kf_map_window, map_cloud_pub_resolution, map_floor_t, viz_dense_map);
       *map_cloud += *aug_map_cloud;
     }
 
@@ -1510,11 +1551,11 @@ class SGraphsNode : public rclcpp::Node {
   void handle_floor_wall_cloud(
       const auto& current_time,
       const int& floor_level,
-      sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg,
       const std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
       const std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
       const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
-      std::map<int, Floors>& floors_vec_snapshot) {
+      std::map<int, Floors>& floors_vec_snapshot,
+      sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg) {
     sensor_msgs::msg::PointCloud2 current_floor_wall_cloud_msg;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
         new pcl::PointCloud<pcl::PointXYZRGBNormal>);
@@ -1586,6 +1627,7 @@ class SGraphsNode : public rclcpp::Node {
    * @brief
    *
    * @param current_time
+   * @param floor_level
    * @param prev_mapped_kfs
    * @param kf_snapshot
    * @param x_planes_snapshot
@@ -1595,6 +1637,7 @@ class SGraphsNode : public rclcpp::Node {
    */
   void handle_floor_wall_cloud(
       const auto& current_time,
+      const int& floor_level,
       const int& prev_mapped_kfs,
       const std::vector<KeyFrame::Ptr>& kf_snapshot,
       const std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
@@ -1618,15 +1661,18 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& kf : kf_map_window) {
       for (const auto& x_id : kf->x_plane_ids) {
         auto x_plane = x_planes_snapshot.find(x_id);
-        this->update_wall_cloud<VerticalPlanes>(kf, x_plane->second, wall_map_cloud);
+        this->update_wall_cloud<VerticalPlanes>(
+            kf, floor_level, x_plane->second, wall_map_cloud);
       }
       for (const auto& y_id : kf->y_plane_ids) {
         auto y_plane = y_planes_snapshot.find(y_id);
-        this->update_wall_cloud<VerticalPlanes>(kf, y_plane->second, wall_map_cloud);
+        this->update_wall_cloud<VerticalPlanes>(
+            kf, floor_level, y_plane->second, wall_map_cloud);
       }
       for (const auto& h_id : kf->hort_plane_ids) {
         auto h_plane = hort_planes_snapshot.find(h_id);
-        this->update_wall_cloud<HorizontalPlanes>(kf, h_plane->second, wall_map_cloud);
+        this->update_wall_cloud<HorizontalPlanes>(
+            kf, floor_level, h_plane->second, wall_map_cloud);
       }
     }
 
@@ -1636,8 +1682,9 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   template <typename planeT>
-  void update_wall_cloud(KeyFrame::Ptr kf,
-                         planeT plane,
+  void update_wall_cloud(const KeyFrame::Ptr kf,
+                         const int& floor_level,
+                         const planeT plane,
                          pcl::PointCloud<PointNormal>::Ptr& wall_map_cloud) {
     int search_id = kf->id();
     auto current_kf = std::find_if(plane.keyframe_node_vec.begin(),
@@ -1650,11 +1697,32 @@ class SGraphsNode : public rclcpp::Node {
       int kf_position = std::distance(plane.keyframe_node_vec.begin(), current_kf);
       auto kf_cloud_body = plane.cloud_seg_body_vec[kf_position];
 
+      Eigen::Matrix4f map_floor_t(Eigen::Matrix4f::Identity());
+      if (!floors_vec.empty()) {
+        geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
+        try {
+          map_floor_tranform_stamped = tf_buffer->lookupTransform(
+              map_frame_id,
+              "floor_" + std::to_string(floors_vec[floor_level].sequential_id) +
+                  "_layer",
+              tf2::TimePointZero);
+        } catch (tf2::TransformException& ex) {
+          return;
+        }
+
+        map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
+      }
+
       for (const auto& src_pt : kf_cloud_body->points) {
+        // TODO: Check if mutex if needed
         PointNormal dst_pt;
-        dst_pt.rgb = src_pt.rgb;
-        dst_pt.getVector4fMap() =
-            kf->node->estimate().matrix().cast<float>() * src_pt.getVector4fMap();
+        dst_pt.r = plane.color[0];
+        dst_pt.g = plane.color[1];
+        dst_pt.b = plane.color[2];
+
+        dst_pt.getVector4fMap() = map_floor_t *
+                                  kf->node->estimate().matrix().cast<float>() *
+                                  src_pt.getVector4fMap();
         wall_map_cloud->push_back(dst_pt);
       }
     }
@@ -2116,7 +2184,8 @@ class SGraphsNode : public rclcpp::Node {
                    });
     graph_mutex.unlock();
 
-    auto cloud = map_cloud_generator->generate(kf_snapshot, req->resolution, true);
+    auto cloud = map_cloud_generator->generate(
+        kf_snapshot, req->resolution, Eigen::Matrix4f::Identity(), true);
     if (!cloud) {
       res->success = false;
       return true;
@@ -2395,6 +2464,9 @@ class SGraphsNode : public rclcpp::Node {
   // keyframe queue
   std::mutex keyframe_queue_mutex;
   std::deque<KeyFrame::Ptr> keyframe_queue;
+
+  std::mutex odom_cloud_queue_mutex;
+  std::deque<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>> odom_cloud_queue;
 
   // gps queue
   int gps_time_offset;

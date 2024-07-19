@@ -60,14 +60,18 @@ class MapCloudGenerator {
    *          snapshots of keyframes
    * @param resolution
    *          resolution of generated map
+   * @param generate
+   *            transform of current floor and map
    * @param use_dense_cloud
    *           visualize dense kf cloud
    *
    * @return generated map point cloud
    */
-  pcl::PointCloud<PointT>::Ptr generate(const std::vector<KeyFrame::Ptr>& keyframes,
-                                        double resolution,
-                                        bool use_dense_cloud = false) const;
+  pcl::PointCloud<PointT>::Ptr generate(
+      const std::vector<KeyFrame::Ptr>& keyframes,
+      double resolution,
+      Eigen::Matrix4f generate = Eigen::Matrix4f::Identity(),
+      bool use_dense_cloud = false) const;
 
   /**
    * @brief
