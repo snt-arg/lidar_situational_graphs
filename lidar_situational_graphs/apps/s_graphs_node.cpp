@@ -566,6 +566,49 @@ class SGraphsNode : public rclcpp::Node {
     if (base_frame_id.empty()) {
       base_frame_id = cloud_msg->header.frame_id;
     }
+
+    if (!floors_vec.empty()) {
+      geometry_msgs::msg::TransformStamped base_floor_transform_stamped,
+          map_floor_tranform_stamped;
+
+      try {
+        base_floor_transform_stamped = tf_buffer->lookupTransform(
+            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+                "_layer",
+            cloud_msg->header.frame_id,
+            tf2::TimePointZero);
+      } catch (tf2::TransformException& ex) {
+        return;
+      }
+
+      try {
+        map_floor_tranform_stamped = tf_buffer->lookupTransform(
+            map_frame_id,
+            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+                "_layer",
+            tf2::TimePointZero);
+      } catch (tf2::TransformException& ex) {
+        return;
+      }
+
+      Eigen::Matrix4f base_floor_t =
+          transformStamped2EigenMatrix(base_floor_transform_stamped);
+
+      Eigen::Matrix4f map_floor_t =
+          transformStamped2EigenMatrix(map_floor_tranform_stamped);
+
+      Eigen::Matrix4f final_t = map_floor_t * base_floor_t;
+      geometry_msgs::msg::TransformStamped final_transform_stamped =
+          eigenMatrixToTransformStamped(
+              final_t, cloud_msg->header.frame_id, map_frame_id);
+
+      *cloud_msg = apply_transform(*cloud_msg, final_transform_stamped);
+      cloud_msg->header.frame_id =
+          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+          "_layer";
+      cloud_msg->header.stamp = cloud_msg->header.stamp;
+      lidar_points_pub->publish(*cloud_msg);
+    }
   }
 
   /**
@@ -879,6 +922,23 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     if (fast_mapping) {
+      if (!floors_vec.empty()) {
+        geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
+        try {
+          map_floor_tranform_stamped = tf_buffer->lookupTransform(
+              map_frame_id,
+              "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+                  "_layer",
+              tf2::TimePointZero);
+        } catch (tf2::TransformException& ex) {
+          return;
+        }
+
+        Eigen::Matrix4f map_floor_t =
+            transformStamped2EigenMatrix(map_floor_tranform_stamped);
+        odom_corrected = map_floor_t * odom_corrected;
+      }
+
       pcl::PointCloud<PointT>::Ptr cloud_transformed =
           map_cloud_generator->generate(odom_corrected, cloud);
       sensor_msgs::msg::PointCloud2 cloud_transformed_msg;

@@ -5,9 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /TF1/Frames1
+        - /PointCloud21
         - /PointCloud22
         - /PointCloud23
-        - /PointCloud23/Status1
         - /Pose1/Topic1
         - /MarkerArray1/Namespaces1
       Splitter Ratio: 0.5
@@ -42,7 +42,7 @@ Visualization Manager:
         {}
       Update Interval: 0
       Value: false
-    - Alpha: 0.6000000238418579
+    - Alpha: 0.10000000149011612
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 10
@@ -71,7 +71,7 @@ Visualization Manager:
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /ouster/points
+        Value: /s_graphs/lidar_points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -167,9 +167,6 @@ Visualization Manager:
         floor_0_keyframe_edges: true
         floor_0_keyframe_plane_edges: true
         floor_0_keyframes: true
-        floor_1_keyframe_edges: true
-        floor_1_keyframe_plane_edges: true
-        floor_1_keyframes: true
         floor_lines: true
         floors: true
         infinite_room_y_lines: true
@@ -236,25 +233,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 127.68362426757812
+      Distance: 79.33702850341797
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -10.266753196716309
-        Y: -21.556352615356445
-        Z: 9.359968185424805
+        X: -8.8757905960083
+        Y: -3.6470375061035156
+        Z: -4.328091621398926
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5147959589958191
+      Pitch: 0.9797956943511963
       Target Frame: ""
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.09040609002113342
+      Yaw: 0.33540621399879456
     Saved: ~
 Window Geometry:
   Displays:
