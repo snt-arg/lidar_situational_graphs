@@ -11,7 +11,7 @@ Panels:
         - /Pose1/Topic1
         - /MarkerArray1/Namespaces1
       Splitter Ratio: 0.5
-    Tree Height: 363
+    Tree Height: 1654
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -69,13 +69,14 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /s_graphs/lidar_points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Alpha: 0.009999999776482582
+    - Alpha: 0.07999999821186066
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 3.5636231899261475
@@ -86,7 +87,7 @@ Visualization Manager:
       Class: rviz_default_plugins/PointCloud2
       Color: 186; 189; 182
       Color Transformer: FlatColor
-      Decay Time: 1000
+      Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -102,13 +103,14 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /s_graphs/map_points
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Alpha: 0.4000000059604645
+    - Alpha: 0.20000000298023224
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 10
@@ -119,7 +121,7 @@ Visualization Manager:
       Class: rviz_default_plugins/PointCloud2
       Color: 255; 255; 255
       Color Transformer: RGB8
-      Decay Time: 1000
+      Decay Time: 0
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
@@ -135,6 +137,7 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /s_graphs/wall_points
@@ -156,6 +159,7 @@ Visualization Manager:
       Topic:
         Depth: 5
         Durability Policy: Volatile
+        Filter size: 10
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /s_graphs/odom_pose_corrected
@@ -169,10 +173,6 @@ Visualization Manager:
         floor_0_keyframes: true
         floor_lines: true
         floors: true
-        infinite_room_y_lines: true
-        rooms: true
-        rooms_line: true
-        y_infinite_room: true
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -207,6 +207,9 @@ Visualization Manager:
     - Class: rviz_default_plugins/Measure
       Line color: 128; 128; 0
     - Class: rviz_default_plugins/SetInitialPose
+      Covariance x: 0.25
+      Covariance y: 0.25
+      Covariance yaw: 0.06853891909122467
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -235,25 +238,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 120.06163787841797
+      Distance: 108.01173400878906
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -6.83164644241333
-        Y: -3.1889469623565674
-        Z: -10.46648120880127
+        X: -23.371723175048828
+        Y: -24.454898834228516
+        Z: -23.035587310791016
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1297955513000488
+      Pitch: 0.8997962474822998
       Target Frame: ""
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.06540601700544357
+      Yaw: 0.5954076647758484
     Saved: ~
 Window Geometry:
   Displays:
@@ -270,4 +273,4 @@ Window Geometry:
     collapsed: true
   Width: 1080
   X: 3840
-  Y: 0
+  Y: 119

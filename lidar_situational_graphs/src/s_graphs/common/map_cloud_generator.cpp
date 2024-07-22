@@ -111,10 +111,9 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_kf_c
         pose_map_cloud) {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
 
-  for (const auto current_pose_map : pose_map_cloud) {
-    Eigen::Matrix4f current_odom_pose = current_pose_map.first;
-    pcl::PointCloud<PointT>::Ptr cloud = current_pose_map.second;
-
+  for (int i = 0; i < pose_map_cloud.size(); i += 2) {
+    Eigen::Matrix4f current_odom_pose = pose_map_cloud[i].first;
+    pcl::PointCloud<PointT>::Ptr cloud = pose_map_cloud[i].second;
     Eigen::Matrix4f odom_pose_transformed = kf_pose.inverse() * current_odom_pose;
 
     for (const auto& src_pt : cloud->points) {
