@@ -30,11 +30,10 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef FLOOR_HPP
 #define FLOOR_HPP
 
-#include <g2o/types/slam3d_addons/plane3d.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-
 #include <Eigen/Eigen>
+#include <g2o/vertex_floor.hpp>
 
 using PointT = pcl::PointXYZI;
 using PointNormal = pcl::PointXYZRGBNormal;

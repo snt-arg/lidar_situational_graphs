@@ -57,6 +57,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #define G2O_VERTEX_ROOM
 
 #include <g2o/types/slam3d/g2o_types_slam3d_api.h>
+#include <g2o/types/slam3d/isometry3d_mappings.h>
 
 #include <Eigen/Core>
 
