@@ -174,9 +174,7 @@ void FloorMapper::add_floor_room_edges(
     const std::unordered_map<int, s_graphs::InfiniteRooms>& x_infinite_rooms,
     const std::unordered_map<int, s_graphs::InfiniteRooms>& y_infinite_rooms) {
   Eigen::Matrix3d information_floor;
-  information_floor(0, 0) = 1.0;
-  information_floor(1, 1) = 1.0;
-  information_floor(2, 2) = 1.0;
+  information_floor.setIdentity();
 
   for (const auto& room : rooms_vec) {
     if (room.second.floor_level != floor.id) continue;
