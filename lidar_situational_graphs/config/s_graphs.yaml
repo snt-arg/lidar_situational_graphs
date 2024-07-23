@@ -87,7 +87,7 @@
     map_cloud_resolution: 0.05
     map_cloud_pub_resolution: 0.06
     fast_mapping: false   #if set to true increase the decay time of map_points and wall_points in rviz
-    viz_dense_map: true #true: will make the rviz visualization too slow
+    viz_dense_map: true #true: might make the rviz visualization slow
 
 
     extract_planar_surfaces:    true

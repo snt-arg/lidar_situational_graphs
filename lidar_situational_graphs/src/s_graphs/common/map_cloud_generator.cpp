@@ -10,9 +10,9 @@ MapCloudGenerator::~MapCloudGenerator() {}
 
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     const std::vector<KeyFrame::Ptr>& keyframes,
-    double resolution,
-    Eigen::Matrix4f map_floor_t,
-    bool use_dense_cloud) const {
+    const double resolution,
+    const Eigen::Matrix4f map_floor_t,
+    const bool use_dense_cloud) const {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
     return nullptr;
@@ -64,29 +64,6 @@ void MapCloudGenerator::downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud,
   cloud->is_dense = false;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
-    const int& current_floor_level,
-    double resolution,
-    const std::vector<KeyFrame::Ptr>& keyframes) {
-  if (keyframes.empty()) {
-    std::cerr << "warning: keyframes empty!!" << std::endl;
-    return nullptr;
-  }
-
-  pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-
-  std::vector<KeyFrame::Ptr> floor_keyframes;
-  for (const auto& keyframe : keyframes) {
-    if (keyframe->floor_level == current_floor_level) {
-      floor_keyframes.push_back(keyframe);
-    }
-  }
-
-  pcl::PointCloud<PointT>::Ptr filtered = this->generate(floor_keyframes, resolution);
-
-  return filtered;
-}
-
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     const Eigen::Matrix4f& pose,
     const pcl::PointCloud<PointT>::Ptr& cloud) const {
@@ -105,9 +82,35 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   return map_cloud;
 }
 
+pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
+    const std::vector<KeyFrame::Ptr>& keyframes,
+    const int& current_floor_level,
+    const double resolution,
+    const Eigen::Matrix4f map_floor_t,
+    const bool use_dense_cloud) {
+  if (keyframes.empty()) {
+    std::cerr << "warning: keyframes empty!!" << std::endl;
+    return nullptr;
+  }
+
+  pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+
+  std::vector<KeyFrame::Ptr> floor_keyframes;
+  for (const auto& keyframe : keyframes) {
+    if (keyframe->floor_level == current_floor_level) {
+      floor_keyframes.push_back(keyframe);
+    }
+  }
+
+  pcl::PointCloud<PointT>::Ptr filtered =
+      this->generate(floor_keyframes, resolution, map_floor_t);
+
+  return filtered;
+}
+
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
     const Eigen::Matrix4f& kf_pose,
-    std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
+    const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
         pose_map_cloud) {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
 
