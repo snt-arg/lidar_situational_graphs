@@ -1424,13 +1424,18 @@ class SGraphsNode : public rclcpp::Node {
 
     sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
     if (fast_mapping)
-      handle_map_cloud(current_time, floor_level, odom_cloud_queue, s_graphs_cloud_msg);
+      handle_map_cloud(current_time,
+                       floor_level,
+                       odom_cloud_queue,
+                       floors_vec_snapshot,
+                       s_graphs_cloud_msg);
     else
       handle_map_cloud(current_time,
                        floor_level,
                        is_optimization_global,
                        prev_mapped_keyframes,
                        kf_snapshot,
+                       floors_vec_snapshot,
                        s_graphs_cloud_msg);
     map_points_pub->publish(s_graphs_cloud_msg);
 
@@ -1468,6 +1473,7 @@ class SGraphsNode : public rclcpp::Node {
       int floor_level,
       std::deque<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>&
           odom_cloud_queue,
+      std::map<int, Floors> floors_vec_snapshot,
       sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg) {
     std::deque<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
         current_odom_cloud_queue;
@@ -1477,12 +1483,13 @@ class SGraphsNode : public rclcpp::Node {
     odom_cloud_queue_mutex.unlock();
 
     Eigen::Matrix4f map_floor_t(Eigen::Matrix4f::Identity());
-    if (!floors_vec.empty()) {
+    if (!floors_vec_snapshot.empty()) {
       geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
       try {
         map_floor_tranform_stamped = tf_buffer->lookupTransform(
             map_frame_id,
-            "floor_" + std::to_string(floors_vec[floor_level].sequential_id) + "_layer",
+            "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
+                "_layer",
             tf2::TimePointZero);
       } catch (tf2::TransformException& ex) {
         return;
@@ -1509,8 +1516,9 @@ class SGraphsNode : public rclcpp::Node {
                         bool is_optimization_global,
                         int prev_mapped_kfs,
                         const std::vector<KeyFrame::Ptr>& kf_snapshot,
+                        std::map<int, Floors>& floors_vec_snapshot,
                         sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg) {
-    if (floors_vec.empty()) return;
+    if (floors_vec_snapshot.empty()) return;
 
     int kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
 
@@ -1519,15 +1527,16 @@ class SGraphsNode : public rclcpp::Node {
     try {
       map_floor_tranform_stamped = tf_buffer->lookupTransform(
           map_frame_id,
-          "floor_" + std::to_string(floors_vec[floor_level].sequential_id) + "_layer",
+          "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
+              "_layer",
           tf2::TimePointZero);
     } catch (tf2::TransformException& ex) {
       return;
     }
     map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
 
-    if (!floors_vec[floor_level].floor_cloud || is_optimization_global) {
-      floors_vec[floor_level].floor_cloud =
+    if (!floors_vec_snapshot[floor_level].floor_cloud || is_optimization_global) {
+      floors_vec_snapshot[floor_level].floor_cloud =
           map_cloud_generator->generate_floor_cloud(kf_snapshot,
                                                     floor_level,
                                                     map_cloud_pub_resolution,
@@ -1547,14 +1556,11 @@ class SGraphsNode : public rclcpp::Node {
                                                     map_floor_t,
                                                     viz_dense_map);
 
-      *floors_vec[floor_level].floor_cloud += *augmented_cloud;
+      *floors_vec_snapshot[floor_level].floor_cloud += *augmented_cloud;
     }
 
-    map_cloud = floors_vec[floor_level].floor_cloud;
-    for (const auto& floor : floors_vec) {
-      if (floor.first == floor_level) continue;
-      *map_cloud += *floors_vec[floor_level].floor_cloud;
-    }
+    if (floors_vec_snapshot[floor_level].floor_cloud == nullptr) return;
+    map_cloud = floors_vec_snapshot[floor_level].floor_cloud;
 
     pcl::toROSMsg(*map_cloud, s_graphs_cloud_msg);
     s_graphs_cloud_msg.header.stamp = current_time;

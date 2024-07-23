@@ -15,7 +15,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     const bool use_dense_cloud) const {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
-    return nullptr;
+    return pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   }
 
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
@@ -90,7 +90,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floo
     const bool use_dense_cloud) {
   if (keyframes.empty()) {
     std::cerr << "warning: keyframes empty!!" << std::endl;
-    return nullptr;
+    return pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   }
 
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
