@@ -1388,7 +1388,6 @@ class SGraphsNode : public rclcpp::Node {
     s_graphs_markers.markers.clear();
     s_graphs_markers = graph_visualizer->visualize_floor_covisibility_graph(
         current_time,
-        floor_level,
         local_covisibility_graph->graph.get(),
         kf_snapshot,
         x_planes_snapshot,

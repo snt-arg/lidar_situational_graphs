@@ -38,7 +38,6 @@ GraphVisualizer::~GraphVisualizer() {}
 visualization_msgs::msg::MarkerArray
 GraphVisualizer::visualize_floor_covisibility_graph(
     const rclcpp::Time& stamp,
-    const int& current_floor_level,
     const g2o::SparseOptimizer* local_graph,
     std::vector<KeyFrame::Ptr> keyframes,
     const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
@@ -80,6 +79,7 @@ GraphVisualizer::visualize_floor_covisibility_graph(
     }
 
     if (floor_keyframes.empty()) continue;
+    int current_floor_level = floor.first;
 
     visualization_msgs::msg::Marker kf_marker =
         fill_kf_markers(local_graph, floor_keyframes, floors_vec);

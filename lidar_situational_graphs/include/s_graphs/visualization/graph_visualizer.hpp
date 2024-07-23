@@ -106,7 +106,6 @@ class GraphVisualizer {
    */
   visualization_msgs::msg::MarkerArray visualize_floor_covisibility_graph(
       const rclcpp::Time& stamp,
-      const int& current_floor_level,
       const g2o::SparseOptimizer* local_graph,
       std::vector<KeyFrame::Ptr> keyframes,
       const std::unordered_map<int, VerticalPlanes>& x_plane_snapshot,
