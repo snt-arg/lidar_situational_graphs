@@ -953,6 +953,7 @@ class SGraphsNode : public rclcpp::Node {
 
     graph_mutex.lock();
     if (floor_mapper->get_floor_level_update_info()) {
+      std::vector<g2o::VertexPlane*> new_x_planes, new_y_planes;
       GraphUtils::update_node_floor_level(
           floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
           current_floor_level,
@@ -962,8 +963,16 @@ class SGraphsNode : public rclcpp::Node {
           rooms_vec,
           x_infinite_rooms,
           y_infinite_rooms,
-          floors_vec);
+          floors_vec,
+          new_x_planes,
+          new_y_planes);
       GraphUtils::update_node_floor_level(current_floor_level, new_keyframes);
+      plane_mapper->factor_new_planes(current_floor_level,
+                                      covisibility_graph,
+                                      new_x_planes,
+                                      new_y_planes,
+                                      x_vert_planes,
+                                      y_vert_planes);
       if (on_stairs) on_stairs = false;
     }
     graph_mutex.unlock();
@@ -1580,6 +1589,13 @@ class SGraphsNode : public rclcpp::Node {
 
     for (const auto& x_plane : x_planes_snapshot) {
       if (x_plane.second.floor_level != floor_level) continue;
+
+      // std::cout << "floor level: " << floor_level << std::endl;
+      // std::cout << "adding xplane: " <<
+      // x_plane.second.plane_node->estimate().coeffs()
+      //           << std::endl;
+      // std::cout << "adding xplane points: "
+      //           << x_plane.second.cloud_seg_map->points.size() << std::endl;
       *floor_wall_cloud += *x_plane.second.cloud_seg_map;
     }
 

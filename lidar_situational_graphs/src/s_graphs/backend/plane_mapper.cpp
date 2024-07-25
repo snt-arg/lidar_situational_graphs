@@ -20,6 +20,33 @@ PlaneMapper::PlaneMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_m
 
 PlaneMapper::~PlaneMapper() {}
 
+VerticalPlanes PlaneMapper::add_plane(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                      g2o::VertexPlane* plane) {
+  int id = covisibility_graph->retrieve_local_nbr_of_vertices();
+  auto plane_node = covisibility_graph->add_plane_node(plane->estimate().coeffs());
+  VerticalPlanes vert_plane;
+  vert_plane.id = id;
+  vert_plane.plane_node = plane_node;
+  vert_plane.cloud_seg_map =
+      pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
+  vert_plane.covariance = Eigen::Matrix3d::Identity();
+  std::vector<double> color;
+  color.push_back(rand() % 256);  // red
+  color.push_back(rand() % 256);  // green
+  color.push_back(rand() % 256);  // blue
+  vert_plane.color = color;
+
+  return vert_plane;
+}
+
+// void PlaneMapper::factor_new_planes(
+//     const auto& current_floor_level,
+//     std::shared_ptr<GraphSLAM>& covisibility_graph,
+//     const std::vector<g2o::VertexPlane*> new_x_planes,
+//     const std::vector<g2o::VertexPlane*> new_y_planes,
+//     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+//     std::unordered_map<int, VerticalPlanes>& y_vert_planes) {}
+
 void PlaneMapper::map_extracted_planes(
     std::shared_ptr<GraphSLAM>& covisibility_graph,
     KeyFrame::Ptr keyframe,
@@ -188,6 +215,10 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
   switch (plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       if (x_vert_planes.empty() || data_association == -1) {
+        std::cout << "floor level: " << keyframe->floor_level << std::endl;
+        std::cout << "adding plane estimate: " << det_plane_map_frame.coeffs()
+                  << std::endl;
+
         data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
         plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
@@ -211,6 +242,9 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         shared_graph_mutex.unlock();
       } else {
         shared_graph_mutex.lock();
+        std::cout << "floor level: " << keyframe->floor_level << std::endl;
+        std::cout << "augmenting plane estimate: " << det_plane_map_frame.coeffs()
+                  << std::endl;
         plane_node = x_vert_planes[data_association].plane_node;
         x_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         x_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);

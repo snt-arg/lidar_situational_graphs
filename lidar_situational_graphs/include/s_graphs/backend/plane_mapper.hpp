@@ -136,7 +136,52 @@ class PlaneMapper {
                       const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                       const std::unordered_map<int, HorizontalPlanes>& hort_planes);
 
+  /**
+   * @brief
+   *
+   * @param current_floor_level
+   * @param covisibility_graph
+   * @param new_x_planes
+   * @param new_y_planes
+   * @param x_vert_planes
+   * @param y_vert_planes
+   */
+  void factor_new_planes(const auto& current_floor_level,
+                         std::shared_ptr<GraphSLAM>& covisibility_graph,
+                         const std::vector<g2o::VertexPlane*> new_x_planes,
+                         const std::vector<g2o::VertexPlane*> new_y_planes,
+                         std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                         std::unordered_map<int, VerticalPlanes>& y_vert_planes) {
+    for (const auto& new_x_plane : new_x_planes) {
+      VerticalPlanes vert_plane = this->add_plane(covisibility_graph, new_x_plane);
+
+      vert_plane.floor_level = current_floor_level;
+      shared_graph_mutex.lock();
+      x_vert_planes.insert({vert_plane.id, vert_plane});
+      shared_graph_mutex.unlock();
+    }
+
+    for (const auto& new_y_plane : new_y_planes) {
+      VerticalPlanes vert_plane = this->add_plane(covisibility_graph, new_y_plane);
+
+      vert_plane.floor_level = current_floor_level;
+      shared_graph_mutex.lock();
+      y_vert_planes.insert({vert_plane.id, vert_plane});
+      shared_graph_mutex.unlock();
+    }
+  }
+
  private:
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param plane
+   * @return VerticalPlanes
+   */
+  VerticalPlanes add_plane(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                           g2o::VertexPlane* plane);
+
   /**
    * @brief
    *

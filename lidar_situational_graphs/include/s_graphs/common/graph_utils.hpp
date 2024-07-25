@@ -296,6 +296,9 @@ class GraphUtils {
    * @param rooms_vec
    * @param x_infinite_rooms
    * @param y_infinite_rooms
+   * @param new_x_vert_planes
+   * @param new_y_vert_planes
+
    */
   static void update_node_floor_level(
       const int& first_keyframe_id,
@@ -306,7 +309,9 @@ class GraphUtils {
       std::unordered_map<int, Rooms>& rooms_vec,
       std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-      const std::map<int, Floors>& floors_vec);
+      const std::map<int, Floors>& floors_vec,
+      std::vector<g2o::VertexPlane*>& new_x_vert_planes,
+      std::vector<g2o::VertexPlane*>& new_y_vert_planes);
 
   /**
    * @brief
@@ -316,6 +321,19 @@ class GraphUtils {
    */
   static void update_node_floor_level(const int& current_floor_level,
                                       const std::deque<KeyFrame::Ptr>& keyframes);
+
+  /**
+   * @brief
+   *
+   * @param current_floor_level
+   * @param plane_vertex
+   * @param keyframes
+   * @return true
+   * @return false
+   */
+  static bool plane_kf_check(const int& current_floor_level,
+                             const g2o::VertexPlane* plane_vertex,
+                             const std::map<int, KeyFrame::Ptr>& keyframes);
 
   /**
    * @brief
