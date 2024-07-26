@@ -31,8 +31,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/time_synchronizer.h>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
-
+#include <unistd.h>
 #include <Eigen/Dense>
 #include <atomic>
 #include <boost/algorithm/string.hpp>
@@ -68,6 +67,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/frontend/plane_analyzer.hpp>
 #include <s_graphs/visualization/graph_publisher.hpp>
 #include <s_graphs/visualization/graph_visualizer.hpp>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #include <unordered_map>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -89,8 +89,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "situational_graphs_msgs/srv/dump_graph.hpp"
 #include "situational_graphs_msgs/srv/load_graph.hpp"
 #include "situational_graphs_msgs/srv/save_map.hpp"
-#include "tf2_eigen/tf2_eigen.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_eigen/tf2_eigen.hpp"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/buffer_interface.h"
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -181,6 +181,9 @@ class SGraphsNode : public rclcpp::Node {
     room_information =
         this->get_parameter("room_information").get_parameter_value().get<double>();
 
+    int odom_pc_sync_queue =
+        this->get_parameter("odom_pc_sync_queue").get_parameter_value().get<int>();
+
     // tfs
     tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -216,7 +219,7 @@ class SGraphsNode : public rclcpp::Node {
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
     sync.reset(new message_filters::Synchronizer<ApproxSyncPolicy>(
-        ApproxSyncPolicy(10), odom_sub, cloud_sub));
+        ApproxSyncPolicy(odom_pc_sync_queue), odom_sub, cloud_sub));
     sync->registerCallback(&SGraphsNode::cloud_callback, this);
 
     raw_odom_sub = this->create_subscription<nav_msgs::msg::Odometry>(
@@ -400,6 +403,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("color_b", 0.0);
     this->declare_parameter("marker_duration", 10);
     this->declare_parameter("save_timings", false);
+    this->declare_parameter("odom_pc_sync_queue", 32);
 
     this->declare_parameter("max_keyframes_per_update", 10);
     this->declare_parameter("gps_time_offset", 0);
@@ -545,7 +549,6 @@ class SGraphsNode : public rclcpp::Node {
     publish_corrected_odom(pose_stamped_corrected);
 
     if (use_map2map_transform) {
-      Eigen::Matrix4f current_map2map_trans = map2map_trans.matrix().cast<float>();
       odom2map_transform =
           matrix2transform(odom_msg->header.stamp,
                            trans_odom2map * map2map_trans.matrix().cast<float>(),
@@ -978,7 +981,7 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     // perform planar segmentation
-    for (int i = 0; i < new_keyframes.size(); i++) {
+    for (long unsigned int i = 0; i < new_keyframes.size(); i++) {
       if (extract_planar_surfaces) {
         std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
             plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
@@ -1125,8 +1128,7 @@ class SGraphsNode : public rclcpp::Node {
 
     // loop detection
     if (!on_stairs) {
-      std::vector<Loop::Ptr> loops =
-          loop_detector->detect(keyframes, new_keyframes, *covisibility_graph);
+      std::vector<Loop::Ptr> loops = loop_detector->detect(keyframes, new_keyframes);
       if (loops.size() > 0) {
         loop_mapper->add_loops(covisibility_graph, loops);
 
@@ -1458,8 +1460,7 @@ class SGraphsNode : public rclcpp::Node {
                                     hort_planes_snapshot,
                                     floor_wall_cloud_msg);
     else
-      this->handle_floor_wall_cloud(current_time,
-                                    floor_level,
+      this->handle_floor_wall_cloud(floor_level,
                                     x_planes_snapshot,
                                     y_planes_snapshot,
                                     hort_planes_snapshot,
@@ -1576,7 +1577,6 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void handle_floor_wall_cloud(
-      const auto& current_time,
       const int& floor_level,
       const std::unordered_map<int, VerticalPlanes>& x_planes_snapshot,
       const std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
@@ -1609,7 +1609,6 @@ class SGraphsNode : public rclcpp::Node {
                   current_floor_wall_cloud_msg);
     current_floor_wall_cloud_msg = transform_floor_cloud(
         current_floor_wall_cloud_msg,
-        current_time,
         map_frame_id,
         "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
             "_walls_layer");
@@ -1618,7 +1617,7 @@ class SGraphsNode : public rclcpp::Node {
         floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
 
     this->concatenate_floor_wall_clouds(
-        current_time, floor_level, floor_wall_cloud_msg, floors_vec_snapshot);
+        floor_level, floor_wall_cloud_msg, floors_vec_snapshot);
   }
 
   /**
@@ -1629,7 +1628,6 @@ class SGraphsNode : public rclcpp::Node {
    * @param floors_vec_snapshot
    */
   void concatenate_floor_wall_clouds(
-      const auto& current_time,
       const int& floor_level,
       sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg,
       const std::map<int, Floors>& floors_vec_snapshot) {
@@ -1643,7 +1641,6 @@ class SGraphsNode : public rclcpp::Node {
       pcl::toROSMsg(*floor.second.floor_wall_cloud, current_floor_wall_cloud_msg);
       current_floor_wall_cloud_msg = transform_floor_cloud(
           current_floor_wall_cloud_msg,
-          current_time,
           map_frame_id,
           "floor_" + std::to_string(floor.second.sequential_id) + "_walls_layer");
       pcl::concatenatePointCloud(
@@ -1664,7 +1661,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param floor_wall_cloud_msg
    */
   void handle_floor_wall_cloud(
-      const auto& current_time,
+      const rclcpp::Time& current_time,
       const int& floor_level,
       const int& prev_mapped_kfs,
       const std::vector<KeyFrame::Ptr>& kf_snapshot,
@@ -1799,7 +1796,6 @@ class SGraphsNode : public rclcpp::Node {
 
   sensor_msgs::msg::PointCloud2 transform_floor_cloud(
       const sensor_msgs::msg::PointCloud2 input_floor_cloud,
-      const rclcpp::Time& stamp,
       const std::string target_frame_id,
       const std::string source_frame_id) {
     geometry_msgs::msg::TransformStamped transform_stamped;
@@ -1847,11 +1843,11 @@ class SGraphsNode : public rclcpp::Node {
          it != keyframe_window.rend();
          ++it) {
       for (const auto& x_plane_id : (it)->second->x_plane_ids) {
-        auto result = unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));
+        unique_x_plane_ids.insert(std::pair<int, int>(x_plane_id, 1));
       }
 
       for (const auto& y_plane_id : (it)->second->y_plane_ids) {
-        auto result = unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));
+        unique_y_plane_ids.insert(std::pair<int, int>(y_plane_id, 1));
       }
     }
 
@@ -2153,23 +2149,23 @@ class SGraphsNode : public rclcpp::Node {
     std::cout << "all data dumped to:" << directory << std::endl;
 
     covisibility_graph->save(directory + "/graph.g2o");
-    for (int i = 0; i < keyframes.size(); i++) {
+    for (long unsigned int i = 0; i < keyframes.size(); i++) {
       std::stringstream sst;
       sst << boost::format("%s/%06d") % directory % i;
 
       keyframes[i]->save(sst.str());
     }
-    for (int i = 0; i < x_vert_planes.size(); i++) {
+    for (long unsigned int i = 0; i < x_vert_planes.size(); i++) {
       std::stringstream sst;
       sst << boost::format("%s/%06d") % directory % i;
       x_vert_planes[i].save(sst.str(), 'x');
     }
-    for (int i = 0; i < y_vert_planes.size(); i++) {
+    for (long unsigned int i = 0; i < y_vert_planes.size(); i++) {
       std::stringstream sst;
       sst << boost::format("%s/%06d") % directory % i;
       y_vert_planes[i].save(sst.str(), 'y');
     }
-    for (int i = 0; i < rooms_vec.size(); i++) {
+    for (long unsigned int i = 0; i < rooms_vec.size(); i++) {
       std::stringstream sst;
       sst << boost::format("%s/%06d") % directory % i;
       rooms_vec[i].save(sst.str());
@@ -2249,9 +2245,6 @@ class SGraphsNode : public rclcpp::Node {
         x_planes_directories, room_directories;
     ;
     std::stringstream sst;
-    bool keyframe_load_success = false;
-    bool plane_load_success = false;
-    bool room_load_success = false;
     rclcpp::Time stamp;
     Eigen::Isometry3d odom;
     double accum_distance;
@@ -2263,8 +2256,6 @@ class SGraphsNode : public rclcpp::Node {
     VerticalPlanes load_x_planes;
     // load_x_planes.load(sst.str(), local_graph);
     boost::filesystem::path parentPath(directory);
-    int numSubdirectories = 0;
-    int iterator = 0;
     if (boost::filesystem::is_directory(parentPath)) {
       for (const auto& entry : boost::filesystem::directory_iterator(parentPath)) {
         if (boost::filesystem::is_directory(entry.path())) {
@@ -2274,14 +2265,14 @@ class SGraphsNode : public rclcpp::Node {
     }
     std::sort(keyframe_directories.begin(), keyframe_directories.end());
 
-    for (int i = 0; i < keyframe_directories.size(); i++) {
+    for (long unsigned int i = 0; i < keyframe_directories.size(); i++) {
       auto keyframe = std::make_shared<KeyFrame>(stamp, odom, accum_distance, cloud);
       keyframe->node = covisibility_graph->add_se3_node(keyframe->odom);
-      keyframe_load_success = keyframe->load(keyframe_directories[i], local_graph);
+      keyframe->load(keyframe_directories[i], local_graph);
       loaded_keyframes.insert({keyframe->id(), keyframe});
     }
 
-    for (int i = 0; i < loaded_keyframes.size() - 1; i++) {
+    for (long unsigned int i = 0; i < loaded_keyframes.size() - 1; i++) {
       KeyFrame::Ptr& prev_keyframe = loaded_keyframes[i];
       KeyFrame::Ptr& next_keyframe = loaded_keyframes[i + 1];
 
@@ -2313,29 +2304,29 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
-    for (int i = 0; i < y_planes_directories.size(); i++) {
+    for (long unsigned int i = 0; i < y_planes_directories.size(); i++) {
       VerticalPlanes vert_plane;
       g2o::Plane3D loaded_plane;
       g2o::VertexPlane* p_node =
           covisibility_graph->add_plane_node(loaded_plane.coeffs());
       vert_plane.plane_node = p_node;
-      plane_load_success = vert_plane.load(y_planes_directories[i], local_graph, "y");
+      vert_plane.load(y_planes_directories[i], local_graph, "y");
       y_vert_planes.insert({vert_plane.id, vert_plane});
     }
 
-    for (int i = 0; i < x_planes_directories.size(); i++) {
+    for (long unsigned int i = 0; i < x_planes_directories.size(); i++) {
       VerticalPlanes vert_plane;
       g2o::Plane3D loaded_plane;
       g2o::VertexPlane* p_node =
           covisibility_graph->add_plane_node(loaded_plane.coeffs());
       vert_plane.plane_node = p_node;
-      plane_load_success = vert_plane.load(x_planes_directories[i], local_graph, "x");
+      vert_plane.load(x_planes_directories[i], local_graph, "x");
       x_vert_planes.insert({vert_plane.id, vert_plane});
     }
     for (auto& y_vert_plane : y_vert_planes) {
       Eigen::Matrix3d plane_information_mat =
           Eigen::Matrix3d::Identity() * plane_information;
-      plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
+      plane_information_mat(2, 2) = plane_information_mat(2, 2) / 10;
 
       assert(y_vert_plane.second.cloud_seg_body_vec.size() ==
              y_vert_plane.second.keyframe_node_vec.size());
@@ -2361,7 +2352,7 @@ class SGraphsNode : public rclcpp::Node {
     for (auto& x_vert_plane : x_vert_planes) {
       Eigen::Matrix3d plane_information_mat =
           Eigen::Matrix3d::Identity() * plane_information;
-      plane_information_mat(3, 3) = plane_information_mat(3, 3) / 10;
+      plane_information_mat(2, 2) = plane_information_mat(2, 2) / 10;
 
       assert(x_vert_plane.second.cloud_seg_body_vec.size() ==
              x_vert_plane.second.keyframe_node_vec.size());
@@ -2390,20 +2381,19 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
     std::sort(room_directories.begin(), room_directories.end());
-    for (int i = 0; i < room_directories.size(); i++) {
+    for (long unsigned int i = 0; i < room_directories.size(); i++) {
       Rooms loaded_room;
       Eigen::Isometry3d room_center;
       auto r_node = covisibility_graph->add_room_node(room_center);
       loaded_room.node = r_node;
-      room_load_success =
-          loaded_room.load(room_directories[i], covisibility_graph->graph.get());
+      loaded_room.load(room_directories[i], covisibility_graph->graph.get());
       rooms_vec.insert({loaded_room.id, loaded_room});
     }
     Eigen::Matrix<double, 2, 2> information_room_planes;
     information_room_planes.setZero();
     information_room_planes(0, 0) = room_information;
     information_room_planes(1, 1) = room_information;
-    for (int i = 0; i < rooms_vec.size(); i++) {
+    for (long unsigned int i = 0; i < rooms_vec.size(); i++) {
       auto edge_room_planes =
           covisibility_graph->add_room_4planes_edge(rooms_vec[i].node,
                                                     rooms_vec[i].plane_x1_node,

@@ -81,6 +81,7 @@
     max_stddev_q: 0.8
 
     #mapping
+    odom_pc_sync_queue: 32
     graph_update_interval: 3.0
     map_cloud_update_interval: 3.0
     marker_duration: 10

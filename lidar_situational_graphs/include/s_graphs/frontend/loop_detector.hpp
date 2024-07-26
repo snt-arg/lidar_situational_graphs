@@ -135,17 +135,14 @@ class LoopDetector {
    *          Keyframes
    * @param new_keyframes
    *          Newly registered keyframes
-   * @param covisibility_graph
-   *          Pose graph
    * @return Loop vector
    */
   std::vector<Loop::Ptr> detect(const std::map<int, KeyFrame::Ptr>& keyframes,
-                                const std::deque<KeyFrame::Ptr>& new_keyframes,
-                                s_graphs::GraphSLAM& covisibility_graph) {
+                                const std::deque<KeyFrame::Ptr>& new_keyframes) {
     std::vector<Loop::Ptr> detected_loops;
     for (const auto& new_keyframe : new_keyframes) {
       auto candidates = find_candidates(keyframes, new_keyframe);
-      auto loop = matching(candidates, new_keyframe, covisibility_graph);
+      auto loop = matching(candidates, new_keyframe);
       if (loop) {
         detected_loops.push_back(loop);
       }
@@ -155,12 +152,11 @@ class LoopDetector {
   }
 
   std::vector<Loop::Ptr> detect(const std::map<int, KeyFrame::Ptr>& keyframes,
-                                const std::vector<KeyFrame::Ptr>& new_keyframes,
-                                s_graphs::GraphSLAM& covisibility_graph) {
+                                const std::vector<KeyFrame::Ptr>& new_keyframes) {
     std::vector<Loop::Ptr> detected_loops;
     for (const auto& new_keyframe : new_keyframes) {
       auto candidates = find_candidates(keyframes, new_keyframe);
-      auto loop = matching(candidates, new_keyframe, covisibility_graph);
+      auto loop = matching(candidates, new_keyframe);
       if (loop) {
         detected_loops.push_back(loop);
       }
@@ -171,11 +167,10 @@ class LoopDetector {
 
   std::vector<Loop::Ptr> detectWithAllKeyframes(
       const std::map<int, KeyFrame::Ptr>& keyframes,
-      const std::vector<KeyFrame::Ptr>& new_keyframes,
-      s_graphs::GraphSLAM& covisibility_graph) {
+      const std::vector<KeyFrame::Ptr>& new_keyframes) {
     std::vector<Loop::Ptr> detected_loops;
     for (const auto& new_keyframe : new_keyframes) {
-      auto loop = matching(keyframes, new_keyframe, covisibility_graph, false);
+      auto loop = matching(keyframes, new_keyframe, false);
       if (loop) {
         detected_loops.push_back(loop);
       }
@@ -289,13 +284,10 @@ class LoopDetector {
    *          candidate keyframes of loop start
    * @param new_keyframe
    *          loop end keyframe
-   * @param covisibility_graph
-   *          graph slam
    * @return Loop pointer
    */
   Loop::Ptr matching(const std::map<int, KeyFrame::Ptr>& candidate_keyframes,
                      const KeyFrame::Ptr& new_keyframe,
-                     s_graphs::GraphSLAM& covisibility_graph,
                      bool use_prior = true) {
     if (candidate_keyframes.empty() || new_keyframe->cloud->points.empty()) {
       return nullptr;
