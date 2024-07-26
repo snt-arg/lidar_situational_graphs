@@ -109,12 +109,13 @@ class PlaneMapper {
    * @param x_vert_planes
    * @param y_vert_planes
    * @param hort_planes
+   * @param keyframe
    */
   void convert_plane_points_to_map(
       std::unordered_map<int, VerticalPlanes>& x_vert_planes,
       std::unordered_map<int, VerticalPlanes>& y_vert_planes,
       std::unordered_map<int, HorizontalPlanes>& hort_planes,
-      const int& current_floor_level);
+      const KeyFrame::Ptr keyframe);
 
   /**
    * @brief

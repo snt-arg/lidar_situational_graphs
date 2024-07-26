@@ -100,7 +100,7 @@ class TestPlane : public ::testing::Test {
     x_vert_plane.keyframe_node_vec.push_back(keyframe->node);
     x_vert_planes.insert({x_vert_plane.id, x_vert_plane});
     plane_mapper->convert_plane_points_to_map(
-        x_vert_planes, y_vert_planes, hort_planes, keyframe->floor_level);
+        x_vert_planes, y_vert_planes, hort_planes, keyframe);
   }
 
   int testAssociatePlanes() {

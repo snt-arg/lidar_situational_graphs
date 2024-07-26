@@ -93,8 +93,7 @@ void PlaneMapper::map_extracted_planes(
                                          hort_planes);
   }
 
-  convert_plane_points_to_map(
-      x_vert_planes, y_vert_planes, hort_planes, keyframe->floor_level);
+  convert_plane_points_to_map(x_vert_planes, y_vert_planes, hort_planes, keyframe);
 }
 
 /**
@@ -527,99 +526,93 @@ void PlaneMapper::convert_plane_points_to_map(
     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     std::unordered_map<int, HorizontalPlanes>& hort_planes,
-    const int& current_floor_level) {
-  for (auto& x_vert_plane : x_vert_planes) {
-    if (x_vert_plane.second.floor_level != current_floor_level) break;
+    const KeyFrame::Ptr keyframe) {
+  int current_floor_level = keyframe->floor_level;
 
-    std::set<PointNormal, PointNormalComparator> unique_points;
-    for (int k = 0; k < x_vert_plane.second.keyframe_node_vec.size(); ++k) {
+  std::vector<int> x_plane_ids = keyframe->x_plane_ids;
+  for (auto& x_plane_id : x_plane_ids) {
+    auto x_vert_plane = x_vert_planes.find(x_plane_id);
+    if (x_vert_plane->second.floor_level != current_floor_level) break;
+    x_vert_plane->second.cloud_seg_map->points.clear();
+
+    for (int k = 0; k < x_vert_plane->second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
-          GraphUtils::get_keyframe_marg_data(x_vert_plane.second.keyframe_node_vec[k]);
+          GraphUtils::get_keyframe_marg_data(x_vert_plane->second.keyframe_node_vec[k]);
 
       if (marginalized) continue;
 
       Eigen::Matrix4f pose =
-          x_vert_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
+          x_vert_plane->second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
 
-      for (size_t j = 0; j < x_vert_plane.second.cloud_seg_body_vec[k]->points.size();
+      for (size_t j = 0; j < x_vert_plane->second.cloud_seg_body_vec[k]->points.size();
            ++j) {
         PointNormal dst_pt;
         dst_pt.getVector4fMap() =
             pose *
-            x_vert_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        dst_pt.r = x_vert_plane.second.color[0];
-        dst_pt.g = x_vert_plane.second.color[1];
-        dst_pt.b = x_vert_plane.second.color[2];
-        unique_points.insert(dst_pt);
+            x_vert_plane->second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
+        dst_pt.r = x_vert_plane->second.color[0];
+        dst_pt.g = x_vert_plane->second.color[1];
+        dst_pt.b = x_vert_plane->second.color[2];
+        x_vert_plane->second.cloud_seg_map->points.push_back(dst_pt);
       }
-    }
-
-    x_vert_plane.second.cloud_seg_map->points.clear();
-    for (const auto& unique_point : unique_points) {
-      x_vert_plane.second.cloud_seg_map->points.push_back(unique_point);
     }
   }
 
-  for (auto& y_vert_plane : y_vert_planes) {
-    if (y_vert_plane.second.floor_level != current_floor_level) break;
+  std::vector<int> y_plane_ids = keyframe->y_plane_ids;
+  for (auto& y_plane_id : y_plane_ids) {
+    auto y_vert_plane = y_vert_planes.find(y_plane_id);
+    if (y_vert_plane->second.floor_level != current_floor_level) break;
 
-    std::set<PointNormal, PointNormalComparator> unique_points;
-    for (int k = 0; k < y_vert_plane.second.keyframe_node_vec.size(); ++k) {
+    y_vert_plane->second.cloud_seg_map->points.clear();
+    for (int k = 0; k < y_vert_plane->second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
-          GraphUtils::get_keyframe_marg_data(y_vert_plane.second.keyframe_node_vec[k]);
+          GraphUtils::get_keyframe_marg_data(y_vert_plane->second.keyframe_node_vec[k]);
 
       if (marginalized) continue;
 
       Eigen::Matrix4f pose =
-          y_vert_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
+          y_vert_plane->second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
 
-      for (size_t j = 0; j < y_vert_plane.second.cloud_seg_body_vec[k]->points.size();
+      for (size_t j = 0; j < y_vert_plane->second.cloud_seg_body_vec[k]->points.size();
            ++j) {
         PointNormal dst_pt;
         dst_pt.getVector4fMap() =
             pose *
-            y_vert_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        dst_pt.r = y_vert_plane.second.color[0];
-        dst_pt.g = y_vert_plane.second.color[1];
-        dst_pt.b = y_vert_plane.second.color[2];
-        unique_points.insert(dst_pt);
+            y_vert_plane->second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
+        dst_pt.r = y_vert_plane->second.color[0];
+        dst_pt.g = y_vert_plane->second.color[1];
+        dst_pt.b = y_vert_plane->second.color[2];
+        y_vert_plane->second.cloud_seg_map->points.push_back(dst_pt);
       }
-    }
-
-    y_vert_plane.second.cloud_seg_map->points.clear();
-    for (const auto& unique_point : unique_points) {
-      y_vert_plane.second.cloud_seg_map->points.push_back(unique_point);
     }
   }
 
-  for (auto& hort_plane : hort_planes) {
-    if (hort_plane.second.floor_level != current_floor_level) break;
+  std::vector<int> hort_plane_ids = keyframe->hort_plane_ids;
+  for (auto& hort_plane_id : hort_plane_ids) {
+    auto hort_plane = hort_planes.find(hort_plane_id);
 
-    std::set<PointNormal, PointNormalComparator> unique_points;
-    for (int k = 0; k < hort_plane.second.keyframe_node_vec.size(); ++k) {
+    if (hort_plane->second.floor_level != current_floor_level) break;
+    hort_plane->second.cloud_seg_map->points.clear();
+
+    for (int k = 0; k < hort_plane->second.keyframe_node_vec.size(); ++k) {
       bool marginalized =
-          GraphUtils::get_keyframe_marg_data(hort_plane.second.keyframe_node_vec[k]);
+          GraphUtils::get_keyframe_marg_data(hort_plane->second.keyframe_node_vec[k]);
 
       if (marginalized) continue;
 
       Eigen::Matrix4f pose =
-          hort_plane.second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
+          hort_plane->second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
 
-      for (size_t j = 0; j < hort_plane.second.cloud_seg_body_vec[k]->points.size();
+      for (size_t j = 0; j < hort_plane->second.cloud_seg_body_vec[k]->points.size();
            ++j) {
         PointNormal dst_pt;
         dst_pt.getVector4fMap() =
-            pose * hort_plane.second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        dst_pt.r = hort_plane.second.color[0];
-        dst_pt.g = hort_plane.second.color[1];
-        dst_pt.b = hort_plane.second.color[2];
-        unique_points.insert(dst_pt);
+            pose * hort_plane->second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
+        dst_pt.r = hort_plane->second.color[0];
+        dst_pt.g = hort_plane->second.color[1];
+        dst_pt.b = hort_plane->second.color[2];
+        hort_plane->second.cloud_seg_map->points.push_back(dst_pt);
       }
-    }
-
-    hort_plane.second.cloud_seg_map->points.clear();
-    for (const auto& unique_point : unique_points) {
-      hort_plane.second.cloud_seg_map->points.push_back(unique_point);
     }
   }
 }
