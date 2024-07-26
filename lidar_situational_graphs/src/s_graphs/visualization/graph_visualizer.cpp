@@ -1581,18 +1581,14 @@ visualization_msgs::msg::Marker GraphVisualizer::fill_plane_makers(
     color.b = plane.second.color[2] / 255;
     color.a = 0.1;
 
-    shared_graph_mutex.lock();
+    std::lock_guard<std::mutex> lock(shared_graph_mutex);
     if (plane.second.cloud_seg_map == nullptr) continue;
-    auto local_cloud_seg_map =
-        std::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>(
-            *plane.second.cloud_seg_map);
-    shared_graph_mutex.unlock();
 
-    for (int j = 0; j < local_cloud_seg_map->points.size(); ++j) {
+    for (int j = 0; j < plane.second.cloud_seg_map->points.size(); ++j) {
       geometry_msgs::msg::Point point;
-      point.x = local_cloud_seg_map->points[j].x;
-      point.y = local_cloud_seg_map->points[j].y;
-      point.z = local_cloud_seg_map->points[j].z;
+      point.x = plane.second.cloud_seg_map->points[j].x;
+      point.y = plane.second.cloud_seg_map->points[j].y;
+      point.z = plane.second.cloud_seg_map->points[j].z;
       plane_marker.points.push_back(point);
       plane_marker.colors.push_back(color);
     }
@@ -1609,26 +1605,20 @@ Eigen::Vector3d GraphVisualizer::compute_plane_centroid(
   auto plane = plane_snapshot.find(current_plane_id);
 
   if (plane != plane_snapshot.end()) {
-    shared_graph_mutex.lock();
-    if (plane->second.cloud_seg_map->points.empty()) {
-      shared_graph_mutex.unlock();
+    std::lock_guard<std::mutex> lock(shared_graph_mutex);
+    if (!plane->second.cloud_seg_map || plane->second.cloud_seg_map->points.empty()) {
       return pt;
     }
 
-    auto local_cloud_seg_map =
-        std::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>(
-            *plane->second.cloud_seg_map);
-    shared_graph_mutex.unlock();
-
     double x = 0, y = 0, z = 0;
-    for (int p = 0; p < local_cloud_seg_map->points.size(); ++p) {
-      x += local_cloud_seg_map->points[p].x;
-      y += local_cloud_seg_map->points[p].y;
-      z += local_cloud_seg_map->points[p].z;
+    for (const auto& point : plane->second.cloud_seg_map->points) {
+      x += point.x;
+      y += point.y;
+      z += point.z;
     }
-    x = x / local_cloud_seg_map->points.size();
-    y = y / local_cloud_seg_map->points.size();
-    z = z / local_cloud_seg_map->points.size();
+    x = x / plane->second.cloud_seg_map->points.size();
+    y = y / plane->second.cloud_seg_map->points.size();
+    z = z / plane->second.cloud_seg_map->points.size();
     pt = Eigen::Vector3d(x, y, z);
   }
 
@@ -1645,20 +1635,17 @@ geometry_msgs::msg::Point GraphVisualizer::compute_plane_point(
   geometry_msgs::msg::Point plane_p2;
   plane_p2.x = plane_p2.y = plane_p2.z = 0;
 
-  shared_graph_mutex.lock();
-  auto local_cloud_seg_map =
-      std::make_shared<pcl::PointCloud<pcl::PointXYZRGBNormal>>(*cloud_seg_map);
-  shared_graph_mutex.unlock();
+  std::lock_guard<std::mutex> lock(shared_graph_mutex);
 
-  if (local_cloud_seg_map->points.empty()) {
+  if (cloud_seg_map->points.empty()) {
     return plane_p2;
   }
 
-  for (int p = 0; p < local_cloud_seg_map->points.size(); ++p) {
+  for (const auto& point : cloud_seg_map->points) {
     geometry_msgs::msg::Point p_tmp;
-    p_tmp.x = local_cloud_seg_map->points[p].x;
-    p_tmp.y = local_cloud_seg_map->points[p].y;
-    p_tmp.z = local_cloud_seg_map->points[p].z;
+    p_tmp.x = point.x;
+    p_tmp.y = point.y;
+    p_tmp.z = point.z;
 
     float norm = std::sqrt(std::pow((room_p1.x - p_tmp.x), 2) +
                            std::pow((room_p1.y - p_tmp.y), 2) +
