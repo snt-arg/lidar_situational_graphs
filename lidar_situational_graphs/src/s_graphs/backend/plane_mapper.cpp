@@ -39,13 +39,31 @@ VerticalPlanes PlaneMapper::add_plane(std::shared_ptr<GraphSLAM>& covisibility_g
   return vert_plane;
 }
 
-// void PlaneMapper::factor_new_planes(
-//     const auto& current_floor_level,
-//     std::shared_ptr<GraphSLAM>& covisibility_graph,
-//     const std::vector<g2o::VertexPlane*> new_x_planes,
-//     const std::vector<g2o::VertexPlane*> new_y_planes,
-//     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
-//     std::unordered_map<int, VerticalPlanes>& y_vert_planes) {}
+void PlaneMapper::factor_new_planes(
+    const int& current_floor_level,
+    std::shared_ptr<GraphSLAM>& covisibility_graph,
+    const std::vector<g2o::VertexPlane*> new_x_planes,
+    const std::vector<g2o::VertexPlane*> new_y_planes,
+    std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    std::unordered_map<int, VerticalPlanes>& y_vert_planes) {
+  for (const auto& new_x_plane : new_x_planes) {
+    VerticalPlanes vert_plane = this->add_plane(covisibility_graph, new_x_plane);
+
+    vert_plane.floor_level = current_floor_level;
+    shared_graph_mutex.lock();
+    x_vert_planes.insert({vert_plane.id, vert_plane});
+    shared_graph_mutex.unlock();
+  }
+
+  for (const auto& new_y_plane : new_y_planes) {
+    VerticalPlanes vert_plane = this->add_plane(covisibility_graph, new_y_plane);
+
+    vert_plane.floor_level = current_floor_level;
+    shared_graph_mutex.lock();
+    y_vert_planes.insert({vert_plane.id, vert_plane});
+    shared_graph_mutex.unlock();
+  }
+}
 
 void PlaneMapper::map_extracted_planes(
     std::shared_ptr<GraphSLAM>& covisibility_graph,
@@ -74,6 +92,9 @@ void PlaneMapper::map_extracted_planes(
                                          y_vert_planes,
                                          hort_planes);
   }
+
+  convert_plane_points_to_map(
+      x_vert_planes, y_vert_planes, hort_planes, keyframe->floor_level);
 }
 
 /**
@@ -215,10 +236,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
   switch (plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       if (x_vert_planes.empty() || data_association == -1) {
-        std::cout << "floor level: " << keyframe->floor_level << std::endl;
-        std::cout << "adding plane estimate: " << det_plane_map_frame.coeffs()
-                  << std::endl;
-
         data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
         plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
         VerticalPlanes vert_plane;
@@ -242,9 +259,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         shared_graph_mutex.unlock();
       } else {
         shared_graph_mutex.lock();
-        std::cout << "floor level: " << keyframe->floor_level << std::endl;
-        std::cout << "augmenting plane estimate: " << det_plane_map_frame.coeffs()
-                  << std::endl;
         plane_node = x_vert_planes[data_association].plane_node;
         x_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
         x_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
@@ -343,8 +357,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
     covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
   }
 
-  convert_plane_points_to_map(
-      x_vert_planes, y_vert_planes, hort_planes, keyframe->floor_level);
   shared_graph_mutex.unlock();
 
   return data_association;
