@@ -1590,12 +1590,6 @@ class SGraphsNode : public rclcpp::Node {
     for (const auto& x_plane : x_planes_snapshot) {
       if (x_plane.second.floor_level != floor_level) continue;
 
-      // std::cout << "floor level: " << floor_level << std::endl;
-      // std::cout << "adding xplane: " <<
-      // x_plane.second.plane_node->estimate().coeffs()
-      //           << std::endl;
-      // std::cout << "adding xplane points: "
-      //           << x_plane.second.cloud_seg_map->points.size() << std::endl;
       *floor_wall_cloud += *x_plane.second.cloud_seg_map;
     }
 
