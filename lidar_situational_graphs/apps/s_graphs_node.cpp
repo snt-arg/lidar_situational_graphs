@@ -971,12 +971,12 @@ class SGraphsNode : public rclcpp::Node {
           new_x_planes,
           new_y_planes);
       GraphUtils::update_node_floor_level(current_floor_level, new_keyframes);
-      // plane_mapper->factor_new_planes(current_floor_level,
-      //                                 covisibility_graph,
-      //                                 new_x_planes,
-      //                                 new_y_planes,
-      //                                 x_vert_planes,
-      //                                 y_vert_planes);
+      plane_mapper->factor_new_planes(current_floor_level,
+                                      covisibility_graph,
+                                      new_x_planes,
+                                      new_y_planes,
+                                      x_vert_planes,
+                                      y_vert_planes);
       if (on_stairs) on_stairs = false;
     }
     graph_mutex.unlock();
