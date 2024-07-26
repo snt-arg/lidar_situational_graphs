@@ -32,6 +32,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/time_synchronizer.h>
 #include <unistd.h>
+
 #include <Eigen/Dense>
 #include <atomic>
 #include <boost/algorithm/string.hpp>
@@ -970,12 +971,12 @@ class SGraphsNode : public rclcpp::Node {
           new_x_planes,
           new_y_planes);
       GraphUtils::update_node_floor_level(current_floor_level, new_keyframes);
-      plane_mapper->factor_new_planes(current_floor_level,
-                                      covisibility_graph,
-                                      new_x_planes,
-                                      new_y_planes,
-                                      x_vert_planes,
-                                      y_vert_planes);
+      // plane_mapper->factor_new_planes(current_floor_level,
+      //                                 covisibility_graph,
+      //                                 new_x_planes,
+      //                                 new_y_planes,
+      //                                 x_vert_planes,
+      //                                 y_vert_planes);
       if (on_stairs) on_stairs = false;
     }
     graph_mutex.unlock();
@@ -1583,7 +1584,6 @@ class SGraphsNode : public rclcpp::Node {
       const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
       std::map<int, Floors>& floors_vec_snapshot,
       sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg) {
-    sensor_msgs::msg::PointCloud2 current_floor_wall_cloud_msg;
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
         new pcl::PointCloud<pcl::PointXYZRGBNormal>);
 
@@ -1606,15 +1606,15 @@ class SGraphsNode : public rclcpp::Node {
     floors_vec_snapshot[floor_level].floor_wall_cloud = floor_wall_cloud;
 
     pcl::toROSMsg(*floors_vec_snapshot[floor_level].floor_wall_cloud,
-                  current_floor_wall_cloud_msg);
-    current_floor_wall_cloud_msg = transform_floor_cloud(
-        current_floor_wall_cloud_msg,
+                  floor_wall_cloud_msg);
+    floor_wall_cloud_msg = transform_floor_cloud(
+        floor_wall_cloud_msg,
         map_frame_id,
         "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
             "_walls_layer");
 
-    pcl::concatenatePointCloud(
-        floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
+    // pcl::concatenatePointCloud(
+    //    floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
 
     this->concatenate_floor_wall_clouds(
         floor_level, floor_wall_cloud_msg, floors_vec_snapshot);
@@ -1656,7 +1656,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param prev_mapped_kfs
    * @param kf_snapshot
    * @param x_planes_snapshot
-   * @param y_planes_snapshot
+   * @param   y_planes_snapshot
    * @param hort_planes_snapshot
    * @param floor_wall_cloud_msg
    */
@@ -1803,6 +1803,8 @@ class SGraphsNode : public rclcpp::Node {
       transform_stamped = tf_buffer->lookupTransform(
           target_frame_id, source_frame_id, tf2::TimePointZero);
     } catch (tf2::TransformException& ex) {
+      std::cout << "could not find transform between " << target_frame_id << " and"
+                << source_frame_id << std::endl;
       return input_floor_cloud;
     }
 
