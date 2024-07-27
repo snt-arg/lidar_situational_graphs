@@ -66,7 +66,7 @@ int FloorMapper::associate_floors(const Eigen::Vector3d& floor_center,
                                   const std::map<int, Floors>& floors_vec) {
   double min_z_dist = 100;
   int data_association = -1;
-  // just check the just of the floors
+  // just check the z of the floors
   for (const auto& mapped_floor : floors_vec) {
     shared_graph_mutex.lock();
     double z_dist = fabs(floor_center(2) - mapped_floor.second.node->estimate()(2, 3));
