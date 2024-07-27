@@ -2044,7 +2044,6 @@ class SGraphsNode : public rclcpp::Node {
       }
 
       // map to floor transform
-      double keyframe_height = 0.0;
       geometry_msgs::msg::TransformStamped map_floor_transform;
       map_floor_transform.header.stamp = current_time;
       if (floor->second.sequential_id == 0)
@@ -2062,6 +2061,7 @@ class SGraphsNode : public rclcpp::Node {
       static_transforms.push_back(map_floor_transform);
 
       // floor to keyframe transform
+      double keyframe_height = 0.0;
       geometry_msgs::msg::TransformStamped floor_keyframe_transform;
       floor_keyframe_transform.header.stamp = current_time;
       floor_keyframe_transform.header.frame_id =
