@@ -149,7 +149,10 @@ def launch_sgraphs(context, *args, **kwargs):
         executable="s_graphs_node",
         namespace=namespace_arg,
         parameters=[{s_graphs_param_file}, {"odom_frame_id": odom_frame, "map_frame_id": map_frame}],
-        output="screen",
+        output={
+                'stdout': 'screen',
+                'stderr': 'screen',
+                },
         prefix=["gdbserver localhost:3000"] if debug_mode_arg == "true" else None,
         remappings=[("odom", odom_topic_arg),
         ],
