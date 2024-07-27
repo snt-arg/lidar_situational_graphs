@@ -57,7 +57,6 @@ void FloorMapper::lookup_floors(
                         rooms_vec,
                         x_infinite_rooms,
                         y_infinite_rooms);
-      set_floor_level(data_association);
     }
     set_floor_level(data_association);
   }
