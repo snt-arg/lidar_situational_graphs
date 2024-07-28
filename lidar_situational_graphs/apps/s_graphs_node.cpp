@@ -2213,7 +2213,6 @@ class SGraphsNode : public rclcpp::Node {
     std::vector<KeyFrame::Ptr> kf_snapshot;
     graph_mutex.lock();
     kf_snapshot.resize(keyframes.size());
-    kf_snapshot.resize(keyframes.size());
     std::transform(keyframes.begin(),
                    keyframes.end(),
                    kf_snapshot.begin(),
