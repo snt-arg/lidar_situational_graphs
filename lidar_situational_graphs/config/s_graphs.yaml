@@ -89,7 +89,7 @@
     map_cloud_pub_resolution: 0.1
     fast_mapping: false   #if set to true increase the decay time of map_points and wall_points in rviz
     viz_dense_map: true #true: might make the rviz visualization slow
-    floor_level_viz_height: 10
+    floor_level_viz_height: 10.0
     room_viz_height: 8.0
     floor_node_viz_height: 12.0
 
