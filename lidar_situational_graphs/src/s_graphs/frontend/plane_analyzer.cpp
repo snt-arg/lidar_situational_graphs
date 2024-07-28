@@ -69,10 +69,10 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
       // Mandatory
       seg.setModelType(pcl::SACMODEL_PLANE);
       seg.setMethodType(pcl::SAC_RANSAC);
-      seg.setDistanceThreshold(0.05);
+      seg.setDistanceThreshold(0.01);
       seg.setInputCloud(transformed_cloud);
       seg.setNumberOfThreads(8);
-      seg.setMaxIterations(100);
+      seg.setMaxIterations(500);
       // seg.setInputNormals(normal_cloud);
       // int model_type = seg.getModelType();
       seg.segment(*inliers, *coefficients);
