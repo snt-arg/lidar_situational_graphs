@@ -406,7 +406,6 @@ int PlaneMapper::associate_plane(
       }
       if (vert_min_maha_dist < plane_dist_threshold) {
         if (!x_vert_planes.at(data_association).cloud_seg_map->empty()) {
-          float min_segment = std::numeric_limits<float>::max();
           pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
               new pcl::PointCloud<PointNormal>());
 
@@ -456,7 +455,6 @@ int PlaneMapper::associate_plane(
       }
       if (vert_min_maha_dist < plane_dist_threshold) {
         if (!y_vert_planes.at(data_association).cloud_seg_map->empty()) {
-          float min_segment = std::numeric_limits<float>::max();
           pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
               new pcl::PointCloud<PointNormal>());
 
@@ -504,17 +502,38 @@ int PlaneMapper::associate_plane(
           data_association = hort_plane.second.id;
         }
       }
+      if (hort_min_maha_dist < plane_dist_threshold) {
+        if (!hort_planes.at(data_association).cloud_seg_map->empty()) {
+          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
+              new pcl::PointCloud<PointNormal>());
 
-      if (hort_min_maha_dist > plane_dist_threshold) data_association = -1;
+          shared_graph_mutex.lock();
+          Eigen::Matrix4f current_keyframe_pose =
+              keyframe->estimate().matrix().cast<float>();
+          shared_graph_mutex.unlock();
+
+          for (size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
+            PointNormal dst_pt;
+            dst_pt.getVector4fMap() =
+                current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
+            cloud_seg_detected->points.push_back(dst_pt);
+          }
+          bool valid_neighbour = PlaneUtils::check_point_neighbours(
+              hort_planes.at(data_association).cloud_seg_map, cloud_seg_detected);
+
+          if (!valid_neighbour) {
+            data_association = -1;
+          }
+        }
+      } else {
+        data_association = -1;
+      }
       break;
     }
     default:
       std::cout << "associating planes had an error " << std::endl;
       break;
   }
-
-  // printf("\n vert min maha dist: %f", vert_min_maha_dist);
-  // printf("\n hort min maha dist: %f", hort_min_maha_dist);
 
   return data_association;
 }
