@@ -185,6 +185,22 @@ class SGraphsNode : public rclcpp::Node {
     int odom_pc_sync_queue =
         this->get_parameter("odom_pc_sync_queue").get_parameter_value().get<int>();
 
+    floor_level_viz_height = this->get_parameter("floor_level_viz_height")
+                                 .get_parameter_value()
+                                 .get<double>();
+    keyframe_viz_height =
+        this->get_parameter("keyframe_viz_height").get_parameter_value().get<double>();
+
+    wall_viz_height =
+        this->get_parameter("wall_viz_height").get_parameter_value().get<double>();
+
+    room_viz_height =
+        this->get_parameter("room_viz_height").get_parameter_value().get<double>();
+
+    floor_node_viz_height = this->get_parameter("floor_node_viz_height")
+                                .get_parameter_value()
+                                .get<double>();
+
     // tfs
     tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
     tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -405,6 +421,11 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("marker_duration", 10);
     this->declare_parameter("save_timings", false);
     this->declare_parameter("odom_pc_sync_queue", 32);
+    this->declare_parameter("floor_level_viz_height", 10.0);
+    this->declare_parameter("keyframe_viz_height", 0.0);
+    this->declare_parameter("wall_viz_height", 0.0);
+    this->declare_parameter("room_viz_height", 8.0);
+    this->declare_parameter("floor_node_viz_height", 12.0);
 
     this->declare_parameter("max_keyframes_per_update", 10);
     this->declare_parameter("gps_time_offset", 0);
@@ -2024,7 +2045,7 @@ class SGraphsNode : public rclcpp::Node {
       if (floor->second.sequential_id == 0)
         floor_height = 0;
       else
-        floor_height = 24;
+        floor_height = floor_level_viz_height;
       geometry_msgs::msg::TransformStamped transform;
       tf2::Quaternion quat;
       quat.setRPY(0, 0, 0);
@@ -2037,21 +2058,16 @@ class SGraphsNode : public rclcpp::Node {
         graph_mutex.lock();
         double floor_z_diff =
             floor->second.node->estimate().translation().z() -
-            std::prev(floor)->second.node->estimate().translation().z();
+            floors_vec_snapshot.begin()->second.node->estimate().translation().z();
         graph_mutex.unlock();
 
-        if (floor_z_diff < 0) floor_height = -1 * floor_height;
+        floor_height = floor_z_diff * floor_height;
       }
 
       // map to floor transform
       geometry_msgs::msg::TransformStamped map_floor_transform;
       map_floor_transform.header.stamp = current_time;
-      if (floor->second.sequential_id == 0)
-        map_floor_transform.header.frame_id = map_frame_id;
-      else
-        map_floor_transform.header.frame_id =
-            "floor_" + std::to_string(std::prev(floor)->second.sequential_id) +
-            "_layer";
+      map_floor_transform.header.frame_id = map_frame_id;
       map_floor_transform.child_frame_id =
           "floor_" + std::to_string(floor->second.sequential_id) + "_layer";
       map_floor_transform.transform.translation.x = 0;
@@ -2061,7 +2077,6 @@ class SGraphsNode : public rclcpp::Node {
       static_transforms.push_back(map_floor_transform);
 
       // floor to keyframe transform
-      double keyframe_height = 0.0;
       geometry_msgs::msg::TransformStamped floor_keyframe_transform;
       floor_keyframe_transform.header.stamp = current_time;
       floor_keyframe_transform.header.frame_id =
@@ -2070,12 +2085,11 @@ class SGraphsNode : public rclcpp::Node {
           "floor_" + std::to_string(floor->second.sequential_id) + "_keyframes_layer";
       floor_keyframe_transform.transform.translation.x = 0;
       floor_keyframe_transform.transform.translation.y = 0;
-      floor_keyframe_transform.transform.translation.z = keyframe_height;
+      floor_keyframe_transform.transform.translation.z = keyframe_viz_height;
       floor_keyframe_transform.transform.rotation = transform.transform.rotation;
       static_transforms.push_back(floor_keyframe_transform);
 
       // floor to walls transform
-      double walls_height = 0.0;
       geometry_msgs::msg::TransformStamped floor_wall_transform;
       floor_wall_transform.header.stamp = current_time;
       floor_wall_transform.header.frame_id =
@@ -2084,12 +2098,11 @@ class SGraphsNode : public rclcpp::Node {
           "floor_" + std::to_string(floor->second.sequential_id) + "_walls_layer";
       floor_wall_transform.transform.translation.x = 0;
       floor_wall_transform.transform.translation.y = 0;
-      floor_wall_transform.transform.translation.z = walls_height;
+      floor_wall_transform.transform.translation.z = wall_viz_height;
       floor_wall_transform.transform.rotation = transform.transform.rotation;
       static_transforms.push_back(floor_wall_transform);
 
       // floor to rooms transform
-      double rooms_height = 8.0;
       geometry_msgs::msg::TransformStamped floor_room_transform;
       floor_room_transform.header.stamp = current_time;
       floor_room_transform.header.frame_id =
@@ -2098,12 +2111,11 @@ class SGraphsNode : public rclcpp::Node {
           "floor_" + std::to_string(floor->second.sequential_id) + "_rooms_layer";
       floor_room_transform.transform.translation.x = 0;
       floor_room_transform.transform.translation.y = 0;
-      floor_room_transform.transform.translation.z = rooms_height;
+      floor_room_transform.transform.translation.z = room_viz_height;
       floor_room_transform.transform.rotation = transform.transform.rotation;
       static_transforms.push_back(floor_room_transform);
 
       // floor to floor transform
-      double floors_height = 16.0;
       geometry_msgs::msg::TransformStamped floor_floor_transform;
       floor_floor_transform.header.stamp = current_time;
       floor_floor_transform.header.frame_id =
@@ -2112,7 +2124,7 @@ class SGraphsNode : public rclcpp::Node {
           "floor_" + std::to_string(floor->second.sequential_id) + "_floors_layer";
       floor_floor_transform.transform.translation.x = 0;
       floor_floor_transform.transform.translation.y = 0;
-      floor_floor_transform.transform.translation.z = floors_height;
+      floor_floor_transform.transform.translation.z = floor_node_viz_height;
       floor_floor_transform.transform.rotation = transform.transform.rotation;
       static_transforms.push_back(floor_floor_transform);
     }
@@ -2517,6 +2529,8 @@ class SGraphsNode : public rclcpp::Node {
   double room_information, plane_information;
   bool on_stairs;
   bool floor_node_updated;
+  double floor_level_viz_height, keyframe_viz_height, wall_viz_height, room_viz_height,
+      floor_node_viz_height;
 
   enum optimization_class : uint8_t {
     GLOBAL = 1,
