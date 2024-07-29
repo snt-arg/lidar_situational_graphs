@@ -1146,14 +1146,18 @@ void GraphUtils::connect_rooms_floors(
   }
 }
 
-void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph,
-                              std::map<int, KeyFrame::Ptr> keyframes,
-                              std::unordered_map<int, VerticalPlanes>& x_vert_planes,
-                              std::unordered_map<int, VerticalPlanes>& y_vert_planes,
-                              std::unordered_map<int, Rooms>& rooms_vec,
-                              std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
-                              std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
-                              std::map<int, Floors>& floors_vec) {
+void GraphUtils::update_graph(
+    const std::unique_ptr<GraphSLAM>& compressed_graph,
+    std::map<int, KeyFrame::Ptr> keyframes,
+    std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+    std::unordered_map<int, HorizontalPlanes>& hort_planes,
+    std::unordered_map<int, Rooms>& rooms_vec,
+    std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+    std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+    std::map<int, Floors>& floors_vec,
+    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+        updated_planes_tuple) {
   // Loop over all the vertices of the graph
   for (auto it = compressed_graph->graph->vertices().begin();
        it != compressed_graph->graph->vertices().end();
@@ -1178,13 +1182,23 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph
 
       if (x_plane != x_vert_planes.end()) {
         (*x_plane).second.plane_node->setEstimate(vertex_plane->estimate());
+        std::get<0>(updated_planes_tuple).push_back((*x_plane).first);
         continue;
       } else {
         auto y_plane = y_vert_planes.find(id);
 
         if (y_plane != y_vert_planes.end()) {
           (*y_plane).second.plane_node->setEstimate(vertex_plane->estimate());
+          std::get<1>(updated_planes_tuple).push_back((*y_plane).first);
           continue;
+        } else {
+          auto hort_plane = hort_planes.find(id);
+
+          if (hort_plane != hort_planes.end()) {
+            (*hort_plane).second.plane_node->setEstimate(vertex_plane->estimate());
+            std::get<2>(updated_planes_tuple).push_back((*hort_plane).first);
+            continue;
+          }
         }
       }
     }
@@ -1225,6 +1239,8 @@ void GraphUtils::update_graph(const std::unique_ptr<GraphSLAM>& compressed_graph
       }
     }
   }
+
+  // TODO:HB Update Wall nodes also
 }
 
 void GraphUtils::set_marginalize_info(

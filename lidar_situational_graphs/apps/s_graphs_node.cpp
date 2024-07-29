@@ -1247,14 +1247,25 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     graph_mutex.lock();
+    std::vector<int> updated_x_planes, updated_y_planes, updated_hort_planes;
+    auto updated_planes_tuple =
+        std::make_tuple(updated_x_planes, updated_y_planes, updated_hort_planes);
+
     GraphUtils::update_graph(compressed_graph,
                              keyframes,
                              x_vert_planes,
                              y_vert_planes,
+                             hort_planes,
                              rooms_vec,
                              x_infinite_rooms,
                              y_infinite_rooms,
-                             floors_vec);
+                             floors_vec,
+                             updated_planes_tuple);
+
+    if (global_optimization) {
+      plane_mapper->convert_plane_points_to_map(
+          x_vert_planes, y_vert_planes, hort_planes, updated_planes_tuple);
+    }
 
     Eigen::Isometry3d trans = keyframes[keyframe_id]->node->estimate() *
                               keyframes[keyframe_id]->odom.inverse();

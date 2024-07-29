@@ -120,6 +120,20 @@ class PlaneMapper {
   /**
    * @brief
    *
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param hort_planes
+   */
+  void convert_plane_points_to_map(
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, HorizontalPlanes>& hort_planes,
+      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+          updated_planes_tuple);
+
+  /**
+   * @brief
+   *
    * @param plane_type
    * @param keyframe
    * @param det_plane
@@ -248,6 +262,15 @@ class PlaneMapper {
                                  bool& found_infinite_room,
                                  bool& found_room,
                                  plane_data_list& plane_id_pair);
+
+  /**
+   * @brief
+   *
+   * @tparam T
+   * @param plane
+   */
+  template <typename T>
+  void fill_plane_points(T& plane);
 
   struct PointNormalComparator {
     bool operator()(const PointNormal& a, const PointNormal& b) const {

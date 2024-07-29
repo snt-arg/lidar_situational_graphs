@@ -552,29 +552,8 @@ void PlaneMapper::convert_plane_points_to_map(
   for (auto& x_plane_id : x_plane_ids) {
     auto x_vert_plane = x_vert_planes.find(x_plane_id);
     if (x_vert_plane->second.floor_level != current_floor_level) break;
-    x_vert_plane->second.cloud_seg_map->points.clear();
 
-    for (int k = 0; k < x_vert_plane->second.keyframe_node_vec.size(); ++k) {
-      bool marginalized =
-          GraphUtils::get_keyframe_marg_data(x_vert_plane->second.keyframe_node_vec[k]);
-
-      if (marginalized) continue;
-
-      Eigen::Matrix4f pose =
-          x_vert_plane->second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
-
-      for (size_t j = 0; j < x_vert_plane->second.cloud_seg_body_vec[k]->points.size();
-           ++j) {
-        PointNormal dst_pt;
-        dst_pt.getVector4fMap() =
-            pose *
-            x_vert_plane->second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        dst_pt.r = x_vert_plane->second.color[0];
-        dst_pt.g = x_vert_plane->second.color[1];
-        dst_pt.b = x_vert_plane->second.color[2];
-        x_vert_plane->second.cloud_seg_map->points.push_back(dst_pt);
-      }
-    }
+    this->fill_plane_points<VerticalPlanes>(x_vert_plane->second);
   }
 
   std::vector<int> y_plane_ids = keyframe->y_plane_ids;
@@ -582,28 +561,7 @@ void PlaneMapper::convert_plane_points_to_map(
     auto y_vert_plane = y_vert_planes.find(y_plane_id);
     if (y_vert_plane->second.floor_level != current_floor_level) break;
 
-    y_vert_plane->second.cloud_seg_map->points.clear();
-    for (int k = 0; k < y_vert_plane->second.keyframe_node_vec.size(); ++k) {
-      bool marginalized =
-          GraphUtils::get_keyframe_marg_data(y_vert_plane->second.keyframe_node_vec[k]);
-
-      if (marginalized) continue;
-
-      Eigen::Matrix4f pose =
-          y_vert_plane->second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
-
-      for (size_t j = 0; j < y_vert_plane->second.cloud_seg_body_vec[k]->points.size();
-           ++j) {
-        PointNormal dst_pt;
-        dst_pt.getVector4fMap() =
-            pose *
-            y_vert_plane->second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        dst_pt.r = y_vert_plane->second.color[0];
-        dst_pt.g = y_vert_plane->second.color[1];
-        dst_pt.b = y_vert_plane->second.color[2];
-        y_vert_plane->second.cloud_seg_map->points.push_back(dst_pt);
-      }
-    }
+    this->fill_plane_points<VerticalPlanes>(y_vert_plane->second);
   }
 
   std::vector<int> hort_plane_ids = keyframe->hort_plane_ids;
@@ -611,27 +569,53 @@ void PlaneMapper::convert_plane_points_to_map(
     auto hort_plane = hort_planes.find(hort_plane_id);
 
     if (hort_plane->second.floor_level != current_floor_level) break;
-    hort_plane->second.cloud_seg_map->points.clear();
 
-    for (int k = 0; k < hort_plane->second.keyframe_node_vec.size(); ++k) {
-      bool marginalized =
-          GraphUtils::get_keyframe_marg_data(hort_plane->second.keyframe_node_vec[k]);
+    this->fill_plane_points<HorizontalPlanes>(hort_plane->second);
+  }
+}
 
-      if (marginalized) continue;
+void PlaneMapper::convert_plane_points_to_map(
+    std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+    std::unordered_map<int, HorizontalPlanes>& hort_planes,
+    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+        updated_planes_tuple) {
+  for (auto& x_plane_id : std::get<0>(updated_planes_tuple)) {
+    auto x_vert_plane = x_vert_planes.find(x_plane_id);
+    this->fill_plane_points<VerticalPlanes>(x_vert_plane->second);
+  }
 
-      Eigen::Matrix4f pose =
-          hort_plane->second.keyframe_node_vec[k]->estimate().matrix().cast<float>();
+  for (const auto& y_plane_id : std::get<1>(updated_planes_tuple)) {
+    auto y_vert_plane = x_vert_planes.find(y_plane_id);
+    this->fill_plane_points<VerticalPlanes>(y_vert_plane->second);
+  }
 
-      for (size_t j = 0; j < hort_plane->second.cloud_seg_body_vec[k]->points.size();
-           ++j) {
-        PointNormal dst_pt;
-        dst_pt.getVector4fMap() =
-            pose * hort_plane->second.cloud_seg_body_vec[k]->points[j].getVector4fMap();
-        dst_pt.r = hort_plane->second.color[0];
-        dst_pt.g = hort_plane->second.color[1];
-        dst_pt.b = hort_plane->second.color[2];
-        hort_plane->second.cloud_seg_map->points.push_back(dst_pt);
-      }
+  for (const auto& hort_plane_id : std::get<2>(updated_planes_tuple)) {
+    auto hort_plane = hort_planes.find(hort_plane_id);
+    this->fill_plane_points<HorizontalPlanes>(hort_plane->second);
+  }
+}
+
+template <typename T>
+void PlaneMapper::fill_plane_points(T& plane) {
+  plane.cloud_seg_map->points.clear();
+
+  for (int k = 0; k < plane.keyframe_node_vec.size(); ++k) {
+    bool marginalized = GraphUtils::get_keyframe_marg_data(plane.keyframe_node_vec[k]);
+
+    if (marginalized) continue;
+
+    Eigen::Matrix4f pose =
+        plane.keyframe_node_vec[k]->estimate().matrix().template cast<float>();
+
+    for (size_t j = 0; j < plane.cloud_seg_body_vec[k]->points.size(); ++j) {
+      PointNormal dst_pt;
+      dst_pt.getVector4fMap() =
+          pose * plane.cloud_seg_body_vec[k]->points[j].getVector4fMap();
+      dst_pt.r = plane.color[0];
+      dst_pt.g = plane.color[1];
+      dst_pt.b = plane.color[2];
+      plane.cloud_seg_map->points.push_back(dst_pt);
     }
   }
 }
