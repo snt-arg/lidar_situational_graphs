@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef PLANE_ANALYZER_HPP
 #define PLANE_ANALYZER_HPP
 
@@ -148,6 +146,7 @@ class PlaneAnalyzer {
 
  private:
   int min_seg_points_;
+  int plane_ransac_itr, plane_ransac_acc;
   int min_horizontal_inliers, min_vertical_inliers;
   bool use_euclidean_filter, use_shadow_filter;
   std::string plane_extraction_frame, plane_visualization_frame;

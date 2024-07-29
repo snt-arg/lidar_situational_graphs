@@ -13,6 +13,10 @@ PlaneAnalyzer::PlaneAnalyzer(rclcpp::Node::SharedPtr node) {
       node->get_parameter("use_euclidean_filter").get_parameter_value().get<bool>();
   use_shadow_filter =
       node->get_parameter("use_shadow_filter").get_parameter_value().get<bool>();
+  plane_ransac_itr =
+      node->get_parameter("plane_ransac_itr").get_parameter_value().get<int>();
+  plane_ransac_acc =
+      node->get_parameter("plane_ransac_acc").get_parameter_value().get<int>();
 
   plane_extraction_frame = node->get_parameter("plane_extraction_frame_id")
                                .get_parameter_value()
@@ -69,10 +73,10 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
       // Mandatory
       seg.setModelType(pcl::SACMODEL_PLANE);
       seg.setMethodType(pcl::SAC_RANSAC);
-      seg.setDistanceThreshold(0.01);
+      seg.setDistanceThreshold(plane_ransac_acc);
       seg.setInputCloud(transformed_cloud);
-      seg.setNumberOfThreads(8);
-      seg.setMaxIterations(500);
+      seg.setNumberOfThreads(16);
+      seg.setMaxIterations(plane_ransac_itr);
       // seg.setInputNormals(normal_cloud);
       // int model_type = seg.getModelType();
       seg.segment(*inliers, *coefficients);

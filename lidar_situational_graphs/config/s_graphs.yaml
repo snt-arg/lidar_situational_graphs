@@ -18,7 +18,7 @@
     enable_imu_orientation: false
 
     # Keyframe registration
-    max_keyframes_per_update: 50
+    max_keyframes_per_update: 100
     keyframe_delta_trans: 2.0
     keyframe_delta_angle: 2.0
 
@@ -81,7 +81,9 @@
     max_stddev_q: 0.8
 
     #mapping
-    odom_pc_sync_queue: 32
+    plane_ransac_itr: 100
+    plane_ransac_acc: 0.01
+    odom_pc_sync_queue: 256
     graph_update_interval: 3.0
     map_cloud_update_interval: 3.0
     marker_duration: 10

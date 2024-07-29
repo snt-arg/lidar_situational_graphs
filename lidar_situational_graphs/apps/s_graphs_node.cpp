@@ -420,6 +420,10 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("color_b", 0.0);
     this->declare_parameter("marker_duration", 10);
     this->declare_parameter("save_timings", false);
+
+    this->declare_parameter("plane_ransac_itr", 100);
+    this->declare_parameter("plane_ransac_acc", 0.01);
+
     this->declare_parameter("odom_pc_sync_queue", 32);
     this->declare_parameter("floor_level_viz_height", 10.0);
     this->declare_parameter("keyframe_viz_height", 0.0);
