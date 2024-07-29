@@ -146,7 +146,8 @@ class PlaneAnalyzer {
 
  private:
   int min_seg_points_;
-  int plane_ransac_itr, plane_ransac_acc;
+  int plane_ransac_itr;
+  double plane_ransac_acc;
   int min_horizontal_inliers, min_vertical_inliers;
   bool use_euclidean_filter, use_shadow_filter;
   std::string plane_extraction_frame, plane_visualization_frame;

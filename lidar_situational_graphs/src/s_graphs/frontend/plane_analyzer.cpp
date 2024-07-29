@@ -16,7 +16,7 @@ PlaneAnalyzer::PlaneAnalyzer(rclcpp::Node::SharedPtr node) {
   plane_ransac_itr =
       node->get_parameter("plane_ransac_itr").get_parameter_value().get<int>();
   plane_ransac_acc =
-      node->get_parameter("plane_ransac_acc").get_parameter_value().get<int>();
+      node->get_parameter("plane_ransac_acc").get_parameter_value().get<double>();
 
   plane_extraction_frame = node->get_parameter("plane_extraction_frame_id")
                                .get_parameter_value()
