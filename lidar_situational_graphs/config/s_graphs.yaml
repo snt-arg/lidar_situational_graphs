@@ -91,14 +91,14 @@
     viz_dense_map: true #true: might make the rviz visualization slow
     floor_level_viz_height: 10.0
     room_viz_height: 8.0
-    floor_node_viz_height: 12.0
+    floor_node_viz_height: 14.0
 
 
     extract_planar_surfaces:    true
-    min_seg_points:             500
+    min_seg_points:             100
     use_euclidean_filter:       true
     min_horizontal_inliers:     800
-    min_vertical_inliers:       500
+    min_vertical_inliers:       100
     keyframe_window_size:       1
     plane_information:          0.1
     room_information:           0.1
@@ -106,7 +106,7 @@
     plane_dist_threshold:       0.35
     plane_points_dist:          0.5
     constant_covariance:        true
-    min_plane_points:           500
+    min_plane_points:           100
     dupl_plane_matching_information: 0.1
     optimization_window_size: 5
     optimization_type: "FLOOR_GLOBAL"

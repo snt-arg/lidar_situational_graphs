@@ -1634,9 +1634,6 @@ class SGraphsNode : public rclcpp::Node {
         "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
             "_walls_layer");
 
-    // pcl::concatenatePointCloud(
-    //    floor_wall_cloud_msg, current_floor_wall_cloud_msg, floor_wall_cloud_msg);
-
     this->concatenate_floor_wall_clouds(
         floor_level, floor_wall_cloud_msg, floors_vec_snapshot);
   }
