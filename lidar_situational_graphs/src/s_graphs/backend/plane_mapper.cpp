@@ -34,6 +34,8 @@ VerticalPlanes PlaneMapper::add_plane(std::shared_ptr<GraphSLAM>& covisibility_g
   color.push_back(rand() % 256);  // red
   color.push_back(rand() % 256);  // green
   color.push_back(rand() % 256);  // blue
+  color.push_back(255);           // alpha
+
   vert_plane.color = color;
 
   return vert_plane;
@@ -250,6 +252,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(cloud_seg_body->points.back().r);  // red
         color.push_back(cloud_seg_body->points.back().g);  // green
         color.push_back(cloud_seg_body->points.back().b);  // blue
+        color.push_back(255);                              // alpha
         vert_plane.color = color;
 
         shared_graph_mutex.lock();
@@ -283,6 +286,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(cloud_seg_body->points.back().r);  // red
         color.push_back(cloud_seg_body->points.back().g);  // green
         color.push_back(cloud_seg_body->points.back().b);  // blue
+        color.push_back(255);                              // alpha
         vert_plane.color = color;
 
         shared_graph_mutex.lock();
@@ -317,6 +321,8 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(255);  // red
         color.push_back(0.0);  // green
         color.push_back(100);  // blue
+        color.push_back(100);  // alpha
+
         hort_plane.color = color;
 
         shared_graph_mutex.lock();
@@ -615,6 +621,7 @@ void PlaneMapper::fill_plane_points(T& plane) {
       dst_pt.r = plane.color[0];
       dst_pt.g = plane.color[1];
       dst_pt.b = plane.color[2];
+      dst_pt.a = plane.color[3];
       plane.cloud_seg_map->points.push_back(dst_pt);
     }
   }
