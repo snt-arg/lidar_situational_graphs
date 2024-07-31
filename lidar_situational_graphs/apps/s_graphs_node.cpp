@@ -415,9 +415,24 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("map_cloud_pub_resolution", 0.1);
     this->declare_parameter("wait_trans_odom2map", false);
     this->declare_parameter("use_map2map_transform", false);
-    this->declare_parameter("color_r", 0.0);
-    this->declare_parameter("color_g", 0.0);
-    this->declare_parameter("color_b", 0.0);
+
+    this->declare_parameter("line_color_r", 0.0);
+    this->declare_parameter("line_color_g", 0.0);
+    this->declare_parameter("line_color_b", 0.0);
+
+    this->declare_parameter("room_cube_color_r", 1.0);
+    this->declare_parameter("room_cube_color_g", 0.07);
+    this->declare_parameter("room_cube_color_b", 0.57);
+
+    this->declare_parameter("floor_cube_color_r", 0.49);
+    this->declare_parameter("floor_cube_color_g", 0.0);
+    this->declare_parameter("floor_cube_color_b", 1.0);
+
+    this->declare_parameter("line_marker_size", 0.04);
+    this->declare_parameter("kf_marker_size", 0.3);
+    this->declare_parameter("room_marker_size", 0.5);
+    this->declare_parameter("floor_marker_size", 0.5);
+
     this->declare_parameter("marker_duration", 10);
     this->declare_parameter("save_timings", false);
 

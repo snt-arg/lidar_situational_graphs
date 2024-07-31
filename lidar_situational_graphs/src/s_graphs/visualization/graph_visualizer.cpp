@@ -10,9 +10,37 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node,
 
   map_frame_id =
       node->get_parameter("map_frame_id").get_parameter_value().get<std::string>();
-  color_r = node->get_parameter("color_r").get_parameter_value().get<double>();
-  color_g = node->get_parameter("color_g").get_parameter_value().get<double>();
-  color_b = node->get_parameter("color_b").get_parameter_value().get<double>();
+
+  line_color_r =
+      node->get_parameter("line_color_r").get_parameter_value().get<double>();
+  line_color_g =
+      node->get_parameter("line_color_g").get_parameter_value().get<double>();
+  line_color_b =
+      node->get_parameter("line_color_b").get_parameter_value().get<double>();
+
+  room_cube_color_r =
+      node->get_parameter("room_cube_color_r").get_parameter_value().get<double>();
+  room_cube_color_g =
+      node->get_parameter("room_cube_color_g").get_parameter_value().get<double>();
+  room_cube_color_b =
+      node->get_parameter("room_cube_color_b").get_parameter_value().get<double>();
+
+  floor_cube_color_r =
+      node->get_parameter("floor_cube_color_r").get_parameter_value().get<double>();
+  floor_cube_color_g =
+      node->get_parameter("floor_cube_color_g").get_parameter_value().get<double>();
+  floor_cube_color_b =
+      node->get_parameter("floor_cube_color_b").get_parameter_value().get<double>();
+
+  line_marker_size =
+      node->get_parameter("line_marker_size").get_parameter_value().get<double>();
+  kf_marker_size =
+      node->get_parameter("kf_marker_size").get_parameter_value().get<double>();
+  room_marker_size =
+      node->get_parameter("room_marker_size").get_parameter_value().get<double>();
+  floor_marker_size =
+      node->get_parameter("floor_marker_size").get_parameter_value().get<double>();
+
   marker_duration_time =
       node->get_parameter("marker_duration").get_parameter_value().get<int>();
 
@@ -27,7 +55,7 @@ GraphVisualizer::GraphVisualizer(const rclcpp::Node::SharedPtr node,
   keyframe_node_visual_tools->loadMarkerPub(false);
   keyframe_node_visual_tools->deleteAllMarkers();
   keyframe_node_visual_tools->enableBatchPublishing();
-  keyframe_node_visual_tools->setAlpha(0.5);
+  keyframe_node_visual_tools->setAlpha(0.8);
 
   tf_buffer = std::make_unique<tf2_ros::Buffer>(node->get_clock());
   tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -89,7 +117,7 @@ GraphVisualizer::visualize_floor_covisibility_graph(
     kf_marker.id = markers.markers.size();
     kf_marker.type = visualization_msgs::msg::Marker::SPHERE_LIST;
     kf_marker.pose.orientation.w = 1.0;
-    kf_marker.scale.x = kf_marker.scale.y = kf_marker.scale.z = 0.2;
+    kf_marker.scale.x = kf_marker.scale.y = kf_marker.scale.z = 0.3;
     kf_marker.lifetime = marker_duration;
     markers.markers.push_back(kf_marker);
 
@@ -103,7 +131,7 @@ GraphVisualizer::visualize_floor_covisibility_graph(
     kf_edge_marker.id = markers.markers.size();
     kf_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
     kf_edge_marker.pose.orientation.w = 1.0;
-    kf_edge_marker.scale.x = 0.02;
+    kf_edge_marker.scale.x = line_marker_size;
     kf_edge_marker.lifetime = marker_duration;
     markers.markers.push_back(kf_edge_marker);
 
@@ -281,9 +309,9 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
       wall_center_marker.id = markers.markers.size() + 1;
       wall_center_marker.type = visualization_msgs::msg::Marker::SPHERE;
       wall_center_marker.lifetime = marker_lifetime;
-      wall_center_marker.color.r = color_r;
-      wall_center_marker.color.g = color_g;
-      wall_center_marker.color.b = color_b;
+      wall_center_marker.color.r = line_color_r;
+      wall_center_marker.color.g = line_color_r;
+      wall_center_marker.color.b = line_color_r;
       wall_center_marker.color.a = 1.0;
       wall_center_marker.scale.x = 0.3;
       wall_center_marker.scale.y = 0.3;
@@ -1233,7 +1261,6 @@ void GraphVisualizer::visualize_compressed_graph(
   keyframe_node_visual_tools->deleteAllMarkers();
   keyframe_node_visual_tools->setBaseFrame(keyframes_layer_id);
 
-  rviz_visual_tools::Colors node_color;
   rviz_visual_tools::Colors keyframe_edge_color, keyframe_plane_edge_color;
   rviz_visual_tools::Colors keyframe_node_color;
 
@@ -1242,11 +1269,8 @@ void GraphVisualizer::visualize_compressed_graph(
   } else if (room_optimization) {
     keyframe_node_color = rviz_visual_tools::RED;
   } else {
-    keyframe_node_color = rviz_visual_tools::TRANSLUCENT;
+    keyframe_node_color = rviz_visual_tools::ORANGE;
   }
-
-  node_color = rviz_visual_tools::TRANSLUCENT;
-  keyframe_edge_color = keyframe_plane_edge_color = rviz_visual_tools::TRANSLUCENT;
 
   std::vector<std::vector<KeyFrame::Ptr>> non_floor_kfs;
   non_floor_kfs.resize(floors_vec.size());
@@ -1422,12 +1446,14 @@ visualization_msgs::msg::Marker GraphVisualizer::fill_kf_edge_markers(
         double p2 = static_cast<double>(v2->id()) / local_graph->vertices().size();
 
         std_msgs::msg::ColorRGBA color1, color2;
-        color1.r = 0.0;
-        color1.g = 0.0;
+        color1.r = line_color_r;
+        color1.g = line_color_g;
+        color1.b = line_color_b;
         color1.a = 1.0;
 
-        color2.r = 0.0;
-        color2.g = 0.0;
+        color2.r = line_color_r;
+        color2.g = line_color_g;
+        color2.b = line_color_b;
         color2.a = 1.0;
         kf_edge_marker.colors.push_back(color1);
         kf_edge_marker.colors.push_back(color2);
@@ -1516,15 +1542,15 @@ visualization_msgs::msg::Marker GraphVisualizer::fill_kf_plane_markers(
         kf_plane_edge_marker.points.push_back(point2);
 
         std_msgs::msg::ColorRGBA color1, color2;
-        color1.r = 0;
-        color1.g = 0;
-        color1.b = 0;
-        color1.a = 0.3;
+        color1.r = line_color_r;
+        color1.g = line_color_g;
+        color1.b = line_color_b;
+        color1.a = 0.1;
 
-        color2.r = 0;
-        color2.g = 0;
-        color2.b = 0;
-        color2.a = 0.3;
+        color2.r = line_color_r;
+        color2.g = line_color_b;
+        color2.b = line_color_g;
+        color2.a = 0.1;
         kf_plane_edge_marker.colors.push_back(color1);
         kf_plane_edge_marker.colors.push_back(color2);
       }
@@ -1726,7 +1752,7 @@ void GraphVisualizer::fill_infinite_room(
     }
 
     visualization_msgs::msg::Marker infinite_room_line_marker;
-    infinite_room_line_marker.scale.x = 0.02;
+    infinite_room_line_marker.scale.x = line_marker_size;
     infinite_room_line_marker.pose.orientation.w = 1.0;
     if (room_class == 0) infinite_room_line_marker.ns = "infinite_room_x_lines";
     if (room_class == 1) infinite_room_line_marker.ns = "infinite_room_y_lines";
@@ -1735,9 +1761,9 @@ void GraphVisualizer::fill_infinite_room(
     infinite_room_line_marker.id = markers.markers.size() + 1;
     infinite_room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
     infinite_room_line_marker.lifetime = marker_lifetime;
-    infinite_room_line_marker.color.r = color_r;
-    infinite_room_line_marker.color.g = color_g;
-    infinite_room_line_marker.color.b = color_b;
+    infinite_room_line_marker.color.r = line_color_r;
+    infinite_room_line_marker.color.g = line_color_g;
+    infinite_room_line_marker.color.b = line_color_b;
     infinite_room_line_marker.color.a = 0.5;
 
     auto found_plane1 = plane_snapshot.find(infinite_room.second.plane1_id);
@@ -1779,9 +1805,9 @@ void GraphVisualizer::fill_infinite_room(
     // y infinite_room cube
     visualization_msgs::msg::Marker infinite_room_pose_marker;
     infinite_room_pose_marker.pose.orientation.w = 1.0;
-    infinite_room_pose_marker.scale.x = 0.5;
-    infinite_room_pose_marker.scale.y = 0.5;
-    infinite_room_pose_marker.scale.z = 0.5;
+    infinite_room_pose_marker.scale.x = room_marker_size;
+    infinite_room_pose_marker.scale.y = room_marker_size;
+    infinite_room_pose_marker.scale.z = room_marker_size;
     // plane_marker.points.resize(vert_planes.size());
     infinite_room_pose_marker.header.frame_id = rooms_layer_id;
     infinite_room_pose_marker.header.stamp = stamp;
@@ -1835,7 +1861,7 @@ void GraphVisualizer::fill_room(
 
     // fill in the line marker
     visualization_msgs::msg::Marker room_line_marker;
-    room_line_marker.scale.x = 0.02;
+    room_line_marker.scale.x = line_marker_size;
     room_line_marker.pose.orientation.w = 1.0;
     room_line_marker.ns = "rooms_line";
     room_line_marker.header.frame_id = rooms_layer_id;
@@ -1843,9 +1869,9 @@ void GraphVisualizer::fill_room(
     room_line_marker.id = markers.markers.size() + 1;
     room_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
     room_line_marker.lifetime = marker_lifetime;
-    room_line_marker.color.r = color_r;
-    room_line_marker.color.g = color_g;
-    room_line_marker.color.b = color_b;
+    room_line_marker.color.r = line_color_r;
+    room_line_marker.color.g = line_color_g;
+    room_line_marker.color.b = line_color_b;
     room_line_marker.color.a = 0.5;
     geometry_msgs::msg::Point p1, p2, p3, p4, p5;
     p1.x =
@@ -1916,9 +1942,9 @@ void GraphVisualizer::fill_room(
     room_marker.ns = "rooms";
     room_marker.id = markers.markers.size();
     room_marker.type = visualization_msgs::msg::Marker::CUBE;
-    room_marker.color.r = 1;
-    room_marker.color.g = 0.07;
-    room_marker.color.b = 0.57;
+    room_marker.color.r = room_cube_color_r;
+    room_marker.color.g = room_cube_color_g;
+    room_marker.color.b = room_cube_color_b;
     room_marker.color.a = 1;
     room_marker.lifetime = marker_lifetime;
     room_marker.pose.position.x = p1.x;
@@ -1958,9 +1984,9 @@ void GraphVisualizer::fill_floor(
 
       visualization_msgs::msg::Marker floor_marker;
       floor_marker.pose.orientation.w = 1.0;
-      floor_marker.scale.x = 0.5;
-      floor_marker.scale.y = 0.5;
-      floor_marker.scale.z = 0.5;
+      floor_marker.scale.x = floor_marker_size;
+      floor_marker.scale.y = floor_marker_size;
+      floor_marker.scale.z = floor_marker_size;
       // plane_marker.points.resize(vert_planes.size());
       floor_marker.header.frame_id = floors_layer_id;
       floor_marker.header.stamp = stamp;
@@ -1968,9 +1994,9 @@ void GraphVisualizer::fill_floor(
       floor_marker.id = markers.markers.size();
       floor_marker.type = visualization_msgs::msg::Marker::CUBE;
       floor_marker.lifetime = marker_lifetime;
-      floor_marker.color.r = 0.49;
-      floor_marker.color.g = 0;
-      floor_marker.color.b = 1;
+      floor_marker.color.r = floor_cube_color_r;
+      floor_marker.color.g = floor_cube_color_g;
+      floor_marker.color.b = floor_cube_color_b;
       floor_marker.color.a = 1;
 
       floor_marker.pose.position.x = dynamic_cast<g2o::VertexFloor*>(floor_map->second)
@@ -1985,7 +2011,7 @@ void GraphVisualizer::fill_floor(
 
       // create line markers between floor and rooms/infinite_rooms
       visualization_msgs::msg::Marker floor_line_marker;
-      floor_line_marker.scale.x = 0.02;
+      floor_line_marker.scale.x = line_marker_size;
       floor_line_marker.pose.orientation.w = 1.0;
       floor_line_marker.ns = "floor_lines";
       floor_line_marker.header.frame_id = floors_layer_id;
@@ -1993,9 +2019,9 @@ void GraphVisualizer::fill_floor(
       floor_line_marker.id = markers.markers.size() + 1;
       floor_line_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
       floor_line_marker.lifetime = marker_lifetime;
-      floor_line_marker.color.r = color_r;
-      floor_line_marker.color.g = color_g;
-      floor_line_marker.color.b = color_b;
+      floor_line_marker.color.r = line_color_r;
+      floor_line_marker.color.g = line_color_r;
+      floor_line_marker.color.b = line_color_r;
       floor_line_marker.color.a = 0.5;
 
       for (const auto& room : rooms_snapshot) {

@@ -401,7 +401,12 @@ class GraphVisualizer {
  private:
   std::mutex& shared_graph_mutex;
   std::string map_frame_id;
-  double color_r, color_g, color_b;
+  double line_color_r, line_color_g, line_color_b;
+  double room_cube_color_r, room_cube_color_g, room_cube_color_b;
+  double floor_cube_color_r, floor_cube_color_g, floor_cube_color_b;
+  double line_marker_size;
+  double kf_marker_size, room_marker_size, floor_marker_size;
+
   int marker_duration_time;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer;
