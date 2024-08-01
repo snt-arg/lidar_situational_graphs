@@ -86,8 +86,7 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
         break;
       }
       /* filtering out noisy ground plane measurements */
-      if ((fabs(coefficients->values[2]) > 0.9 &&
-           inliers->indices.size() < min_horizontal_inliers) ||
+      if ((inliers->indices.size() < min_horizontal_inliers) ||
           inliers->indices.size() < min_vertical_inliers) {
         extract.setInputCloud(transformed_cloud);
         extract.setIndices(inliers);

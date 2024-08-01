@@ -6,7 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /TF1/Frames1
-        - /PointCloud23
+        - /PointCloud21
+        - /PointCloud22
         - /Pose1/Topic1
         - /MarkerArray1/Namespaces1
       Splitter Ratio: 0.5
@@ -50,7 +51,7 @@ Visualization Manager:
       Axis: Z
       Channel Name: z
       Class: rviz_default_plugins/PointCloud2
-      Color: 186; 189; 182
+      Color: 192; 191; 188
       Color Transformer: FlatColor
       Decay Time: 1
       Enabled: true
@@ -75,7 +76,7 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Alpha: 0.10000000149011612
+    - Alpha: 0.20000000298023224
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 3.5636231899261475
@@ -84,7 +85,7 @@ Visualization Manager:
       Axis: Z
       Channel Name: y
       Class: rviz_default_plugins/PointCloud2
-      Color: 186; 189; 182
+      Color: 154; 153; 150
       Color Transformer: FlatColor
       Decay Time: 0
       Enabled: true
@@ -97,7 +98,7 @@ Visualization Manager:
       Position Transformer: XYZ
       Selectable: true
       Size (Pixels): 1
-      Size (m): 0.05000000074505806
+      Size (m): 0.05999999865889549
       Style: Flat Squares
       Topic:
         Depth: 5
@@ -167,16 +168,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        floor_0_keyframe_edges: true
-        floor_0_keyframe_plane_edges: true
-        floor_0_keyframes: true
-        floor_1_keyframe_edges: true
-        floor_1_keyframe_plane_edges: true
-        floor_1_keyframes: true
-        floor_lines: true
-        floors: true
-        infinite_room_x_lines: true
-        x_infinite_room: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -188,7 +180,7 @@ Visualization Manager:
       Enabled: true
       Name: MarkerArray
       Namespaces:
-        Cuboid: true
+        {}
       Topic:
         Depth: 5
         Durability Policy: Volatile
@@ -242,25 +234,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 193.60569763183594
+      Distance: 164.63368225097656
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -13.388675689697266
-        Y: -20.416797637939453
-        Z: -31.976301193237305
+        X: -9.64805793762207
+        Y: 12.218351364135742
+        Z: -9.851886749267578
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9397960901260376
+      Pitch: 0.6397968530654907
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz_default_plugins)
-      Yaw: 0.555607259273529
+      Yaw: 0.30243179202079773
     Saved: ~
 Window Geometry:
   Displays:
