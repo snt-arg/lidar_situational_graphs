@@ -120,10 +120,13 @@
     line_color_g: 1.0
     line_color_b: 1.0
 
+    floor_cube_color_r: 1.0
+    floor_cube_color_g: 0.0
+    floor_cube_color_b: 1.0
 
     line_marker_size: 0.04
     kf_marker_size: 0.3
     room_marker_size: 0.7
-    floor_marker_size: 1.0
+    floor_marker_size: 1.2
 
 
