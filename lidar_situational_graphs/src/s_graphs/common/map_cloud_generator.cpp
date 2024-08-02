@@ -53,11 +53,27 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
 
 void MapCloudGenerator::downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud,
                                          double resolution) const {
-  pcl::octree::OctreePointCloud<PointT> octree(resolution);
+  pcl::octree::OctreePointCloudSearch<PointT> octree(resolution);
   octree.setInputCloud(cloud);
   octree.addPointsFromInputCloud();
-
   octree.getOccupiedVoxelCenters(cloud->points);
+
+  for (auto& voxel_point : cloud->points) {
+    PointT point;
+    point.x = voxel_point.x;
+    point.y = voxel_point.y;
+    point.z = voxel_point.z;
+
+    // Find the original points within the voxel and average their intensity
+    std::vector<int> point_indices;
+    octree.voxelSearch(voxel_point, point_indices);
+
+    float intensity_sum = 0.0f;
+    for (int idx : point_indices) {
+      intensity_sum += cloud->points[idx].intensity;
+    }
+    voxel_point.intensity = intensity_sum / point_indices.size();
+  }
 
   cloud->width = cloud->size();
   cloud->height = 1;

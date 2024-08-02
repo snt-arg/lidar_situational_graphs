@@ -30,6 +30,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef MAP_CLOUD_GENERATOR_HPP
 #define MAP_CLOUD_GENERATOR_HPP
 
+#include <pcl/octree/octree_pointcloud.h>
+#include <pcl/octree/octree_search.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 

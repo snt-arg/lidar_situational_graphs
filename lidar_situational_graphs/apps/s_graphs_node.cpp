@@ -136,6 +136,8 @@ class SGraphsNode : public rclcpp::Node {
         this->get_parameter("fast_mapping").get_parameter_value().get<bool>();
     viz_dense_map =
         this->get_parameter("viz_dense_map").get_parameter_value().get<bool>();
+    viz_all_floor_cloud =
+        this->get_parameter("viz_all_floor_cloud").get_parameter_value().get<bool>();
     wait_trans_odom2map =
         this->get_parameter("wait_trans_odom2map").get_parameter_value().get<bool>();
     use_map2map_transform =
@@ -350,7 +352,6 @@ class SGraphsNode : public rclcpp::Node {
     floor_node_updated = false;
     prev_edge_count = curr_edge_count = 0;
     prev_mapped_keyframes = 0;
-    map_cloud = nullptr;
 
     double graph_update_interval = this->get_parameter("graph_update_interval")
                                        .get_parameter_value()
@@ -411,6 +412,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("odom_frame_id", "odom");
     this->declare_parameter("fast_mapping", true);
     this->declare_parameter("viz_dense_map", false);
+    this->declare_parameter("viz_all_floor_cloud", false);
     this->declare_parameter("map_cloud_resolution", 0.05);
     this->declare_parameter("map_cloud_pub_resolution", 0.1);
     this->declare_parameter("wait_trans_odom2map", false);
@@ -1596,7 +1598,8 @@ class SGraphsNode : public rclcpp::Node {
     }
     map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
 
-    if (!floors_vec_snapshot[floor_level].floor_cloud || is_optimization_global) {
+    if (floors_vec_snapshot[floor_level].floor_cloud->points.empty() ||
+        is_optimization_global) {
       floors_vec_snapshot[floor_level].floor_cloud =
           map_cloud_generator->generate_floor_cloud(kf_snapshot,
                                                     floor_level,
@@ -1621,9 +1624,19 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     if (floors_vec_snapshot[floor_level].floor_cloud == nullptr) return;
-    map_cloud = floors_vec_snapshot[floor_level].floor_cloud;
 
-    pcl::toROSMsg(*map_cloud, s_graphs_cloud_msg);
+    pcl::PointCloud<PointT> map_cloud;
+    pcl::copyPointCloud(*floors_vec_snapshot[floor_level].floor_cloud, map_cloud);
+
+    if (viz_all_floor_cloud) {
+      for (const auto& floor : floors_vec_snapshot) {
+        if (floor.first != floor_level) {
+          map_cloud += *floor.second.floor_cloud;
+        }
+      }
+    }
+
+    pcl::toROSMsg(map_cloud, s_graphs_cloud_msg);
     s_graphs_cloud_msg.header.stamp = current_time;
     s_graphs_cloud_msg.header.frame_id = map_frame_id;
   }
@@ -2586,8 +2599,7 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<situational_graphs_msgs::msg::FloorData> floor_data_queue;
 
   // for map cloud generation
-  bool fast_mapping;
-  bool viz_dense_map;
+  bool fast_mapping, viz_dense_map, viz_all_floor_cloud;
   double map_cloud_resolution;
   double map_cloud_pub_resolution;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
@@ -2603,7 +2615,6 @@ class SGraphsNode : public rclcpp::Node {
   int current_floor_level;
 
   int prev_mapped_keyframes;
-  pcl::PointCloud<PointT>::Ptr map_cloud;
   visualization_msgs::msg::MarkerArray s_graphs_markers;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
