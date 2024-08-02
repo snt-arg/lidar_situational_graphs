@@ -126,7 +126,7 @@
 
     line_marker_size: 0.04
     kf_marker_size: 0.3
-    room_marker_size: 0.7
-    floor_marker_size: 1.2
+    room_marker_size: 1.0
+    floor_marker_size: 1.5
 
 

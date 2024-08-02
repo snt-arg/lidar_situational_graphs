@@ -1606,6 +1606,20 @@ class SGraphsNode : public rclcpp::Node {
                                                     map_cloud_pub_resolution,
                                                     map_floor_t,
                                                     viz_dense_map);
+
+      if (is_optimization_global) {
+        auto it = floors_vec_snapshot.find(floor_level);
+        for (; it != floors_vec_snapshot.end(); ++it) {
+          Eigen::Matrix4f map_floor_t = get_floor_map_transform(it[floor_level]);
+          it[floor_level].floor_cloud =
+              map_cloud_generator->generate_floor_cloud(kf_snapshot,
+                                                        floor_level,
+                                                        map_cloud_pub_resolution,
+                                                        map_floor_t,
+                                                        viz_dense_map);
+        }
+      }
+
     } else if (kfs_to_map != 0) {
       std::vector<KeyFrame::Ptr> kf_map_window;
       for (auto it = kf_snapshot.rbegin();
@@ -1639,6 +1653,22 @@ class SGraphsNode : public rclcpp::Node {
     pcl::toROSMsg(map_cloud, s_graphs_cloud_msg);
     s_graphs_cloud_msg.header.stamp = current_time;
     s_graphs_cloud_msg.header.frame_id = map_frame_id;
+  }
+
+  Eigen::Matrix4f get_floor_map_transform(const Floors floor) {
+    Eigen::Matrix4f map_floor_t(Eigen::Matrix4f::Identity());
+    geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
+    try {
+      map_floor_tranform_stamped = tf_buffer->lookupTransform(
+          map_frame_id,
+          "floor_" + std::to_string(floor.sequential_id) + "_layer",
+          tf2::TimePointZero);
+    } catch (tf2::TransformException& ex) {
+      return;
+    }
+    map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
+
+    return map_floor_t;
   }
 
   void handle_floor_wall_cloud(
