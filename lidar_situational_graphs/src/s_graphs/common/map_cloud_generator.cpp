@@ -44,21 +44,24 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   cloud->height = 1;
   cloud->is_dense = false;
 
-  if (resolution <= 0.0) return cloud;  // To get unfiltered point cloud with intensity
+  if (resolution <= 0.0) return cloud;
 
-  downsample_cloud(cloud, resolution);
+  pcl::PointCloud<PointT>::Ptr filtered_cloud = downsample_cloud(cloud, resolution);
 
-  return cloud;
+  return filtered_cloud;
 }
 
-void MapCloudGenerator::downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud,
-                                         double resolution) const {
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::downsample_cloud(
+    const pcl::PointCloud<PointT>::Ptr cloud,
+    double resolution) const {
+  pcl::PointCloud<PointT>::Ptr filtered_cloud(new pcl::PointCloud<PointT>);
+
   pcl::octree::OctreePointCloudSearch<PointT> octree(resolution);
   octree.setInputCloud(cloud);
   octree.addPointsFromInputCloud();
-  octree.getOccupiedVoxelCenters(cloud->points);
+  octree.getOccupiedVoxelCenters(filtered_cloud->points);
 
-  for (auto& voxel_point : cloud->points) {
+  for (auto& voxel_point : filtered_cloud->points) {
     PointT point;
     point.x = voxel_point.x;
     point.y = voxel_point.y;
@@ -75,9 +78,11 @@ void MapCloudGenerator::downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud,
     voxel_point.intensity = intensity_sum / point_indices.size();
   }
 
-  cloud->width = cloud->size();
-  cloud->height = 1;
-  cloud->is_dense = false;
+  filtered_cloud->width = filtered_cloud->size();
+  filtered_cloud->height = 1;
+  filtered_cloud->is_dense = false;
+
+  return filtered_cloud;
 }
 
 pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(

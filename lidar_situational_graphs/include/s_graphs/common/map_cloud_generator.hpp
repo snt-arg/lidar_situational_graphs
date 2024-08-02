@@ -91,9 +91,10 @@ class MapCloudGenerator {
    *
    * @param cloud
    * @param resolution
-   * @return void
+   * @return pcl::PointCloud<PointT>::Ptr
    */
-  void downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud, double resolution) const;
+  pcl::PointCloud<PointT>::Ptr downsample_cloud(pcl::PointCloud<PointT>::Ptr cloud,
+                                                double resolution) const;
 
   /**
    * @brief Construct a new MapCloudGenerator::generate_floor_cloud object
