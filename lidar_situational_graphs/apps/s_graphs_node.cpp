@@ -1585,18 +1585,8 @@ class SGraphsNode : public rclcpp::Node {
 
     int kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
 
-    Eigen::Matrix4f map_floor_t(Eigen::Matrix4f::Identity());
-    geometry_msgs::msg::TransformStamped map_floor_tranform_stamped;
-    try {
-      map_floor_tranform_stamped = tf_buffer->lookupTransform(
-          map_frame_id,
-          "floor_" + std::to_string(floors_vec_snapshot[floor_level].sequential_id) +
-              "_layer",
-          tf2::TimePointZero);
-    } catch (tf2::TransformException& ex) {
-      return;
-    }
-    map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
+    Eigen::Matrix4f map_floor_t =
+        get_floor_map_transform(floors_vec_snapshot[floor_level]);
 
     if (floors_vec_snapshot[floor_level].floor_cloud->points.empty() ||
         is_optimization_global) {
@@ -1610,8 +1600,8 @@ class SGraphsNode : public rclcpp::Node {
       if (is_optimization_global) {
         auto it = floors_vec_snapshot.find(floor_level);
         for (; it != floors_vec_snapshot.end(); ++it) {
-          Eigen::Matrix4f map_floor_t = get_floor_map_transform(it[floor_level]);
-          it[floor_level].floor_cloud =
+          Eigen::Matrix4f map_floor_t = get_floor_map_transform(it->second);
+          it->second.floor_cloud =
               map_cloud_generator->generate_floor_cloud(kf_snapshot,
                                                         floor_level,
                                                         map_cloud_pub_resolution,
@@ -1664,7 +1654,7 @@ class SGraphsNode : public rclcpp::Node {
           "floor_" + std::to_string(floor.sequential_id) + "_layer",
           tf2::TimePointZero);
     } catch (tf2::TransformException& ex) {
-      return;
+      return map_floor_t;
     }
     map_floor_t = transformStamped2EigenMatrix(map_floor_tranform_stamped);
 
