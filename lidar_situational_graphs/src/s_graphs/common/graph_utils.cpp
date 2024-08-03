@@ -87,21 +87,8 @@ void GraphUtils::copy_floor_graph(
     const std::map<int, Floors>& floors_vec) {
   compressed_graph->graph->clear();
 
-  /* Add all the graph vertices of the given floor-level */
-  copy_graph_vertices(current_floor_level,
-                      covisibility_graph,
-                      compressed_graph,
-                      keyframes,
-                      x_vert_planes,
-                      y_vert_planes,
-                      rooms_vec,
-                      x_infinite_rooms,
-                      y_infinite_rooms,
-                      walls_vec,
-                      floors_vec,
-                      true);
-
-  /* get all the floor levels (if any) which were seen after the current floor */
+  /* get the curren floor level and all the floor levels (if any) which were seen after
+   * the current floor */
   auto it = floors_vec.find(current_floor_level);
   for (; it != floors_vec.end(); ++it) {
     copy_graph_vertices(it->first,
