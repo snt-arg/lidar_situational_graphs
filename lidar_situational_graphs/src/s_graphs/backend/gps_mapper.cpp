@@ -100,6 +100,7 @@ bool GPSMapper::map_gps_data(
     gps_queue.erase(gps_queue.begin(), remove_loc);
     return updated;
   }
+  return updated;
 }
 
 }  // namespace s_graphs
