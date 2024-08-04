@@ -34,7 +34,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <unistd.h>
 
 #include <Eigen/Dense>
-#include <atomic>
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
@@ -1048,7 +1047,7 @@ class SGraphsNode : public rclcpp::Node {
 
   void wall_data_callback(
       const situational_graphs_msgs::msg::WallsData::SharedPtr walls_msg) {
-    for (int j = 0; j < walls_msg->walls.size(); j++) {
+    for (size_t j = 0; j < walls_msg->walls.size(); j++) {
       std::vector<situational_graphs_msgs::msg::PlaneData> x_planes_msg =
           walls_msg->walls[j].x_planes;
       std::vector<situational_graphs_msgs::msg::PlaneData> y_planes_msg =
@@ -1592,7 +1591,7 @@ class SGraphsNode : public rclcpp::Node {
                         sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg) {
     if (floors_vec_snapshot.empty()) return;
 
-    int kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
+    size_t kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
 
     Eigen::Matrix4f map_floor_t =
         get_floor_map_transform(floors_vec_snapshot[floor_level]);
@@ -1749,7 +1748,7 @@ class SGraphsNode : public rclcpp::Node {
       const std::unordered_map<int, VerticalPlanes>& y_planes_snapshot,
       const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
       sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg) {
-    int kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
+    size_t kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
     std::vector<KeyFrame::Ptr> kf_map_window;
     pcl::PointCloud<PointNormal>::Ptr wall_map_cloud(
         new pcl::PointCloud<PointNormal>());
@@ -2403,7 +2402,7 @@ class SGraphsNode : public rclcpp::Node {
       assert(y_vert_plane.second.cloud_seg_body_vec.size() ==
              y_vert_plane.second.keyframe_node_vec.size());
 
-      for (int j = 0; j < y_vert_plane.second.keyframe_node_vec.size(); j++) {
+      for (size_t j = 0; j < y_vert_plane.second.keyframe_node_vec.size(); j++) {
         // std::cout << "Y keyframe node id : "
         //           << y_vert_planes[i].keyframe_node_vec[j]->id() << std::endl;
         // std::cout << "plane : " << i << "  cloud : " << j << std::endl;
@@ -2428,7 +2427,7 @@ class SGraphsNode : public rclcpp::Node {
 
       assert(x_vert_plane.second.cloud_seg_body_vec.size() ==
              x_vert_plane.second.keyframe_node_vec.size());
-      for (int j = 0; j < x_vert_plane.second.keyframe_node_vec.size(); j++) {
+      for (size_t j = 0; j < x_vert_plane.second.keyframe_node_vec.size(); j++) {
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
             x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
             x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,
@@ -2579,7 +2578,7 @@ class SGraphsNode : public rclcpp::Node {
   int optimization_window_size;
   bool loop_found, duplicate_planes_found;
   bool global_optimization;
-  int keyframe_window_size;
+  size_t keyframe_window_size;
   bool extract_planar_surfaces;
   bool constant_covariance;
   double min_plane_points;
