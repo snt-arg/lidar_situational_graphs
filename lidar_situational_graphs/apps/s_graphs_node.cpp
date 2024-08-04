@@ -39,6 +39,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <mutex>
+#include <rclcpp/time.hpp>
 #include <s_graphs/backend/floor_mapper.hpp>
 #include <s_graphs/backend/gps_mapper.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
@@ -1153,7 +1154,7 @@ class SGraphsNode : public rclcpp::Node {
     // add keyframes and floor coeffs in the queues to the pose graph
     bool keyframe_updated = flush_keyframe_queue();
 
-    if (!keyframe_updated & !flush_gps_queue() & !flush_imu_queue()) {
+    if (!keyframe_updated && !flush_gps_queue() && !flush_imu_queue()) {
       return;
     }
 
@@ -1540,7 +1541,7 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   void handle_map_cloud(
-      const auto& current_time,
+      const rclcpp::Time& current_time,
       int floor_level,
       std::deque<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>&
           odom_cloud_queue,
@@ -1582,7 +1583,7 @@ class SGraphsNode : public rclcpp::Node {
                            odom_cloud_queue.begin() + current_odom_cloud_queue.size());
   }
 
-  void handle_map_cloud(const auto& current_time,
+  void handle_map_cloud(const rclcpp::Time& current_time,
                         int floor_level,
                         bool is_optimization_global,
                         int prev_mapped_kfs,
@@ -1598,16 +1599,16 @@ class SGraphsNode : public rclcpp::Node {
 
     if (floors_vec_snapshot[floor_level].floor_cloud->points.empty() ||
         is_optimization_global) {
-        auto it = floors_vec_snapshot.find(floor_level);
-        for (; it != floors_vec_snapshot.end(); ++it) {
-          Eigen::Matrix4f map_floor_t = get_floor_map_transform(it->second);
+      auto it = floors_vec_snapshot.find(floor_level);
+      for (; it != floors_vec_snapshot.end(); ++it) {
+        Eigen::Matrix4f map_floor_t = get_floor_map_transform(it->second);
         floors_vec_snapshot[it->first].floor_cloud =
-              map_cloud_generator->generate_floor_cloud(kf_snapshot,
+            map_cloud_generator->generate_floor_cloud(kf_snapshot,
                                                       it->first,
-                                                        map_cloud_pub_resolution,
-                                                        map_floor_t,
-                                                        viz_dense_map);
-        }
+                                                      map_cloud_pub_resolution,
+                                                      map_floor_t,
+                                                      viz_dense_map);
+      }
     } else if (kfs_to_map != 0) {
       std::vector<KeyFrame::Ptr> kf_map_window;
       for (auto it = kf_snapshot.rbegin();
