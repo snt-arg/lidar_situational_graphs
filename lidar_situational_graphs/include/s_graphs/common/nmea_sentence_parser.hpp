@@ -27,8 +27,6 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-
-
 #ifndef NMEA_SENTENCE_PARSER_HPP
 #define NMEA_SENTENCE_PARSER_HPP
 
@@ -132,7 +130,7 @@ class NmeaSentenceParser {
    * @return Instance of GPRMC.
    */
   GPRMC parse(const std::string& sentence) const {
-    int checksum_loc = sentence.find('*');
+    size_t checksum_loc = sentence.find('*');
     if (checksum_loc == std::string::npos) {
       return GPRMC();
     }

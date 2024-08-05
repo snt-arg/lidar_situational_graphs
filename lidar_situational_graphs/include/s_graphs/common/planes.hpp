@@ -162,12 +162,12 @@ class VerticalPlanes : public Planes {
       ofs << plane_node->fixed() << "\n";
 
       ofs << "keyframe_vec_node_ids\n";
-      for (int i = 0; i < keyframe_node_vec.size(); i++) {
+      for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
       }
       pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_map.pcd",
                                  *cloud_seg_map);
-      for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
+      for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
         std::string filename =
             x_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
         pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
@@ -200,14 +200,14 @@ class VerticalPlanes : public Planes {
       ofs << plane_node->fixed() << "\n";
 
       ofs << "keyframe_vec_node_ids\n";
-      for (int i = 0; i < keyframe_node_vec.size(); i++) {
+      for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
         std::cout << "keyframe id at :  " << i << "   " << keyframe_node_vec[i]->id()
                   << std::endl;
       }
       pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_map.pcd",
                                  *cloud_seg_map);
-      for (int i = 0; i < cloud_seg_body_vec.size(); i++) {
+      for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
         std::string filename =
             y_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
         pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
@@ -250,7 +250,7 @@ class VerticalPlanes : public Planes {
         while (ifs >> id) {
           ids.push_back(id);
         }
-        for (int i = 0; i < ids.size(); i++) {
+        for (size_t i = 0; i < ids.size(); i++) {
           for (const auto& vertex_pair : local_graph->vertices()) {
             g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(vertex_pair.second);
             if (vertex && vertex->id() == ids[i]) {
