@@ -87,7 +87,12 @@
         "numericaldiff": "cpp",
         "eigen": "cpp",
         "*.inc": "cpp",
-        "nonlinearoptimization": "cpp"
+        "nonlinearoptimization": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled",
     "python.formatting.provider": "black",
