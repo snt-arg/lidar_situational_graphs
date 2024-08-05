@@ -1598,16 +1598,16 @@ class SGraphsNode : public rclcpp::Node {
 
     if (floors_vec_snapshot[floor_level].floor_cloud->points.empty() ||
         is_optimization_global) {
-        auto it = floors_vec_snapshot.find(floor_level);
-        for (; it != floors_vec_snapshot.end(); ++it) {
-          Eigen::Matrix4f map_floor_t = get_floor_map_transform(it->second);
+      auto it = floors_vec_snapshot.find(floor_level);
+      for (; it != floors_vec_snapshot.end(); ++it) {
+        Eigen::Matrix4f map_floor_t = get_floor_map_transform(it->second);
         floors_vec_snapshot[it->first].floor_cloud =
-              map_cloud_generator->generate_floor_cloud(kf_snapshot,
+            map_cloud_generator->generate_floor_cloud(kf_snapshot,
                                                       it->first,
-                                                        map_cloud_pub_resolution,
-                                                        map_floor_t,
-                                                        viz_dense_map);
-        }
+                                                      map_cloud_pub_resolution,
+                                                      map_floor_t,
+                                                      viz_dense_map);
+      }
     } else if (kfs_to_map != 0) {
       std::vector<KeyFrame::Ptr> kf_map_window;
       for (auto it = kf_snapshot.rbegin();
