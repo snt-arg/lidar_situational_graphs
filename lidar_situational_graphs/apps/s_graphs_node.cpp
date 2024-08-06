@@ -247,12 +247,6 @@ class SGraphsNode : public rclcpp::Node {
         std::bind(&SGraphsNode::raw_odom_callback, this, std::placeholders::_1),
         sub_opt);
 
-    point_cloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-        "filtered_points",
-        1,
-        std::bind(&SGraphsNode::point_cloud_callback, this, std::placeholders::_1),
-        sub_opt);
-
     imu_sub = this->create_subscription<sensor_msgs::msg::Imu>(
         "/imu/data",
         1024,
@@ -605,60 +599,6 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief receive the raw pointcloud
-   *
-   * @param cloud_msg
-   */
-  void point_cloud_callback(const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
-    if (base_frame_id.empty()) {
-      base_frame_id = cloud_msg->header.frame_id;
-    }
-
-    if (!floors_vec.empty()) {
-      geometry_msgs::msg::TransformStamped base_floor_transform_stamped,
-          map_floor_tranform_stamped;
-
-      try {
-        base_floor_transform_stamped = tf_buffer->lookupTransform(
-            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-                "_layer",
-            cloud_msg->header.frame_id,
-            tf2::TimePointZero);
-      } catch (tf2::TransformException& ex) {
-        return;
-      }
-
-      try {
-        map_floor_tranform_stamped = tf_buffer->lookupTransform(
-            map_frame_id,
-            "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-                "_layer",
-            tf2::TimePointZero);
-      } catch (tf2::TransformException& ex) {
-        return;
-      }
-
-      Eigen::Matrix4f base_floor_t =
-          transformStamped2EigenMatrix(base_floor_transform_stamped);
-
-      Eigen::Matrix4f map_floor_t =
-          transformStamped2EigenMatrix(map_floor_tranform_stamped);
-
-      Eigen::Matrix4f final_t = map_floor_t * base_floor_t;
-      geometry_msgs::msg::TransformStamped final_transform_stamped =
-          eigenMatrixToTransformStamped(
-              final_t, cloud_msg->header.frame_id, map_frame_id);
-
-      *cloud_msg = apply_transform(*cloud_msg, final_transform_stamped);
-      cloud_msg->header.frame_id =
-          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-          "_layer";
-      cloud_msg->header.stamp = cloud_msg->header.stamp;
-      lidar_points_pub->publish(*cloud_msg);
-    }
-  }
-
-  /**
    * @brief receive the initial transform between map and odom frame
    * @param map2odom_pose_msg
    */
@@ -968,9 +908,24 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
-    odom_cloud_queue_mutex.lock();
-    odom_cloud_queue.push_back(std::make_pair(odom_corrected, cloud));
-    odom_cloud_queue_mutex.unlock();
+    if (fast_mapping) {
+      odom_cloud_queue_mutex.lock();
+      odom_cloud_queue.push_back(std::make_pair(odom_corrected, cloud));
+      odom_cloud_queue_mutex.unlock();
+    }
+
+    if (!floors_vec.empty()) {
+      pcl::PointCloud<PointT>::Ptr cloud_trans =
+          map_cloud_generator->generate(odom_corrected, cloud);
+      sensor_msgs::msg::PointCloud2 cloud_trans_msg;
+      pcl::toROSMsg(*cloud_trans, cloud_trans_msg);
+
+      cloud_trans_msg.header.frame_id =
+          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+          "_layer";
+      cloud_trans_msg.header.stamp = cloud_msg->header.stamp;
+      lidar_points_pub->publish(cloud_trans_msg);
+    }
   }
 
   /**
@@ -2512,7 +2467,6 @@ class SGraphsNode : public rclcpp::Node {
       wall_data_sub;
   rclcpp::Subscription<situational_graphs_msgs::msg::FloorData>::SharedPtr
       floor_data_sub;
-  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr point_cloud_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
       map_2map_transform_sub;
 
