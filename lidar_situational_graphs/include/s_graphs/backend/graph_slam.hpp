@@ -624,7 +624,7 @@ class GraphSLAM {
    */
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3,
                                       g2o::VertexRoom* v_room,
-                                      const Eigen::Vector2d& measurement,
+                                      const Eigen::Isometry3d& measurement,
                                       const Eigen::MatrixXd& information);
 
   /**
