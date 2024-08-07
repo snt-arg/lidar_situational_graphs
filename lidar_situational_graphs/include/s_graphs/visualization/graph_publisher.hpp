@@ -114,9 +114,9 @@ class GraphPublisher {
   situational_graphs_reasoning_msgs::msg::Graph publish_graph(
       const g2o::SparseOptimizer* local_graph,
       std::string graph_type,
-      const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior,
-      const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior,
-      const std::vector<s_graphs::Rooms>& rooms_vec_prior,
+      const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes_prior,
+      const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes_prior,
+      const std::unordered_map<int, s_graphs::Rooms>& rooms_vec_prior,
       const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
       const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
       const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,

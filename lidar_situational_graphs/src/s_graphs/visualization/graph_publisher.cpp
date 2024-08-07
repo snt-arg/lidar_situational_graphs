@@ -12,9 +12,9 @@ GraphPublisher::~GraphPublisher() {}
 situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
     const g2o::SparseOptimizer* local_graph,
     std::string graph_type,
-    const std::vector<s_graphs::VerticalPlanes>& x_vert_planes_prior,
-    const std::vector<s_graphs::VerticalPlanes>& y_vert_planes_prior,
-    const std::vector<s_graphs::Rooms>& rooms_vec_prior,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes_prior,
+    const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes_prior,
+    const std::unordered_map<int, s_graphs::Rooms>& rooms_vec_prior,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& y_vert_planes,
     const std::unordered_map<int, s_graphs::Rooms>& rooms_vec,
@@ -29,64 +29,80 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
   // Graph Type
   if (graph_type == "Prior") {
     graph_msg.name = "Prior";
-    for (int i = 0; i < x_vert_planes_prior.size(); i++) {
-      g2o::Plane3D v_plane = x_vert_planes_prior[i].plane_node->estimate();
+    for (const auto& [key, value] : x_vert_planes_prior) {
+      g2o::Plane3D v_plane = value.plane_node->estimate();
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = x_vert_planes_prior[i].id;
+
+      graph_node.id = value.id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
+
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
       node_attribute.fl_value.push_back(plane_coeffs(2));
       node_attribute.fl_value.push_back(plane_coeffs(3));
+
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec;
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
+
       nodes_vec.push_back(graph_node);
       node_attribute.fl_value.clear();
       node_att_vec.clear();
     }
-    for (int i = 0; i < y_vert_planes_prior.size(); i++) {
-      g2o::Plane3D v_plane = y_vert_planes_prior[i].plane_node->estimate();
+    for (const auto& [key, value] : y_vert_planes_prior) {
+      g2o::Plane3D v_plane = value.plane_node->estimate();
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = y_vert_planes_prior[i].id;
+
+      graph_node.id = value.id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
+
       Eigen::Vector4d plane_coeffs = v_plane.coeffs();
       node_attribute.fl_value.push_back(plane_coeffs(0));
       node_attribute.fl_value.push_back(plane_coeffs(1));
       node_attribute.fl_value.push_back(plane_coeffs(2));
       node_attribute.fl_value.push_back(plane_coeffs(3));
+
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec;
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
+
       nodes_vec.push_back(graph_node);
       node_attribute.fl_value.clear();
       node_att_vec.clear();
     }
-    for (int i = 0; i < rooms_vec_prior.size(); i++) {
-      g2o::VertexRoom* v_room = rooms_vec_prior[i].node;
+
+    for (const auto& [key, room] : rooms_vec_prior) {
+      g2o::VertexRoom* v_room = room.node;
       situational_graphs_reasoning_msgs::msg::Edge graph_edge;
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = rooms_vec_prior[i].id;
+
+      graph_node.id = room.id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
       Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
-      node_attribute.fl_value.push_back(room_pose.x());
-      node_attribute.fl_value.push_back(room_pose.y());
-      node_attribute.fl_value.push_back(0.0);
+      node_attribute.fl_value = {room_pose.x(), room_pose.y(), 0.0};
+
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec;
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
       nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
+
+      // Edge creation
+      graph_edge.origin_node = v_room->id();
+      edge_attribute.name = "Geometric_info";
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> edge_att_vec;
+      edge_att_vec.push_back(edge_attribute);
 
       // first edge
       graph_edge.origin_node = v_room->id();
-      graph_edge.target_node = rooms_vec_prior[i].plane_x1_id;
+      graph_edge.target_node = room.plane_x1_id;
       edge_attribute.name = "Geometric_info";
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
@@ -95,7 +111,7 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 2nd edge
 
-      graph_edge.target_node = rooms_vec_prior[i].plane_x2_id;
+      graph_edge.target_node = room.plane_x2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
@@ -103,19 +119,71 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 3rd edge
 
-      graph_edge.target_node = rooms_vec_prior[i].plane_y1_id;
+      graph_edge.target_node = room.plane_y1_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
 
       // 4th edge
-      graph_edge.target_node = rooms_vec_prior[i].plane_y2_id;
+      graph_edge.target_node = room.plane_y2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
     }
+
+    // for (int i = 0; i < rooms_vec_prior.size(); i++) {
+    //   g2o::VertexRoom* v_room = rooms_vec_prior[i].node;
+    //   situational_graphs_reasoning_msgs::msg::Edge graph_edge;
+    //   situational_graphs_reasoning_msgs::msg::Node graph_node;
+    //   situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
+    //   situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
+    //   graph_node.id = rooms_vec_prior[i].id;
+    //   graph_node.type = "Finite Room";
+    //   node_attribute.name = "Geometric_info";
+    //   Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
+    //   node_attribute.fl_value.push_back(room_pose.x());
+    //   node_attribute.fl_value.push_back(room_pose.y());
+    //   node_attribute.fl_value.push_back(0.0);
+    //   node_att_vec.push_back(node_attribute);
+    //   graph_node.attributes = node_att_vec;
+    //   nodes_vec.push_back(graph_node);
+    //   node_attribute.fl_value.clear();
+    //   node_att_vec.clear();
+
+    //   // first edge
+    //   graph_edge.origin_node = v_room->id();
+    //   graph_edge.target_node = rooms_vec_prior[i].plane_x1_id;
+    //   edge_attribute.name = "Geometric_info";
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
+
+    //   // 2nd edge
+
+    //   graph_edge.target_node = rooms_vec_prior[i].plane_x2_id;
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
+
+    //   // 3rd edge
+
+    //   graph_edge.target_node = rooms_vec_prior[i].plane_y1_id;
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
+
+    //   // 4th edge
+    //   graph_edge.target_node = rooms_vec_prior[i].plane_y2_id;
+    //   edge_att_vec.push_back(edge_attribute);
+    //   graph_edge.attributes = edge_att_vec;
+    //   edges_vec.push_back(graph_edge);
+    //   edge_att_vec.clear();
+    // }
 
   } else {
     graph_msg.name = "ONLINE";
