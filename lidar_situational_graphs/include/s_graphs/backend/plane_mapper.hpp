@@ -285,7 +285,7 @@ class PlaneMapper {
   double plane_points_dist;
   double infinite_room_min_plane_length;
   double room_min_plane_length, room_max_plane_length;
-  double min_plane_points;
+  int min_plane_points, min_plane_points_opti;
   bool use_infinite_room_constraint;
   bool use_room_constraint;
 

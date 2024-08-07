@@ -16,6 +16,8 @@ PlaneMapper::PlaneMapper(const rclcpp::Node::SharedPtr node, std::mutex& graph_m
       node_obj->get_parameter("plane_points_dist").get_parameter_value().get<double>();
   min_plane_points =
       node_obj->get_parameter("min_plane_points").get_parameter_value().get<int>();
+  min_plane_points_opti =
+      node_obj->get_parameter("min_plane_points").get_parameter_value().get<int>();
 }
 
 PlaneMapper::~PlaneMapper() {}
@@ -233,7 +235,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
                                      x_vert_planes,
                                      y_vert_planes,
                                      hort_planes);
-
+  int plane_points = cloud_seg_body->points.size();
   switch (plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       if (x_vert_planes.empty() || data_association == -1) {
@@ -254,7 +256,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(cloud_seg_body->points.back().b);  // blue
         color.push_back(255);                              // alpha
         vert_plane.color = color;
-
         shared_graph_mutex.lock();
         x_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->x_plane_ids.push_back(vert_plane.id);
@@ -322,7 +323,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         color.push_back(0.0);  // green
         color.push_back(100);  // blue
         color.push_back(100);  // alpha
-
         hort_plane.color = color;
 
         shared_graph_mutex.lock();
@@ -355,11 +355,14 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
     Eigen::Matrix3d plane_information_mat =
         Eigen::Matrix3d::Identity() * plane_information;
 
-    auto edge = covisibility_graph->add_se3_plane_edge(keyframe->node,
-                                                       plane_node,
-                                                       det_plane_body_frame.coeffs(),
-                                                       plane_information_mat);
-    covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    // further reduce the info mat if too less points
+    if (plane_points > min_plane_points_opti) {
+      auto edge = covisibility_graph->add_se3_plane_edge(keyframe->node,
+                                                         plane_node,
+                                                         det_plane_body_frame.coeffs(),
+                                                         plane_information_mat);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    }
   }
 
   shared_graph_mutex.unlock();
@@ -427,7 +430,9 @@ int PlaneMapper::associate_plane(
             cloud_seg_detected->points.push_back(dst_pt);
           }
           bool valid_neighbour = PlaneUtils::check_point_neighbours(
-              x_vert_planes.at(data_association).cloud_seg_map, cloud_seg_detected);
+              x_vert_planes.at(data_association).cloud_seg_map,
+              cloud_seg_detected,
+              plane_points_dist);
 
           if (!valid_neighbour) {
             data_association = -1;
@@ -476,7 +481,9 @@ int PlaneMapper::associate_plane(
             cloud_seg_detected->points.push_back(dst_pt);
           }
           bool valid_neighbour = PlaneUtils::check_point_neighbours(
-              y_vert_planes.at(data_association).cloud_seg_map, cloud_seg_detected);
+              y_vert_planes.at(data_association).cloud_seg_map,
+              cloud_seg_detected,
+              plane_points_dist);
 
           if (!valid_neighbour) {
             data_association = -1;
@@ -525,7 +532,9 @@ int PlaneMapper::associate_plane(
             cloud_seg_detected->points.push_back(dst_pt);
           }
           bool valid_neighbour = PlaneUtils::check_point_neighbours(
-              hort_planes.at(data_association).cloud_seg_map, cloud_seg_detected);
+              hort_planes.at(data_association).cloud_seg_map,
+              cloud_seg_detected,
+              plane_points_dist);
 
           if (!valid_neighbour) {
             data_association = -1;

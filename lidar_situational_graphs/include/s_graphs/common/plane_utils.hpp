@@ -181,7 +181,8 @@ class PlaneUtils {
    * @return
    */
   static bool check_point_neighbours(const pcl::PointCloud<PointNormal>::Ptr& cloud_1,
-                                     const pcl::PointCloud<PointNormal>::Ptr& cloud_2);
+                                     const pcl::PointCloud<PointNormal>::Ptr& cloud_2,
+                                     const float min_dist = 1.0);
 
   /**
    * @brief

@@ -145,9 +145,9 @@ class PlaneAnalyzer {
   std_msgs::msg::ColorRGBA random_color();
 
  private:
-  int min_seg_points_;
+  int min_seg_points;
   int plane_ransac_itr;
-  double plane_ransac_acc;
+  double plane_ransac_acc, plane_points_dist;
   int min_horizontal_inliers, min_vertical_inliers;
   bool use_euclidean_filter, use_shadow_filter;
   std::string plane_extraction_frame, plane_visualization_frame;
