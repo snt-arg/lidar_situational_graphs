@@ -114,9 +114,6 @@ class Rooms {
     return *this;
   }
   bool save(const std::string &directory) {
-    if (!boost::filesystem::is_directory(directory)) {
-      boost::filesystem::create_directory(directory);
-    }
     std::ofstream ofs(directory + "/room_data");
     ofs << "id\n";
     ofs << id << "\n";
@@ -164,8 +161,6 @@ class Rooms {
     std::cout << "room_keyframes.size() : " << room_keyframes.size() << std::endl;
     for (const auto &room_keyframe : room_keyframes) {
       ofs << room_keyframe.first << "\n";
-      std::cout << "keyframe id at :  "
-                << "   " << room_keyframe.first << std::endl;
     }
     return true;
   }

@@ -2177,29 +2177,60 @@ class SGraphsNode : public rclcpp::Node {
       boost::filesystem::create_directory(directory);
     }
 
+    std::string kf_directory = directory + "/keyframes";
+    if (!boost::filesystem::is_directory(kf_directory)) {
+      boost::filesystem::create_directory(kf_directory);
+    }
+    std::string x_vert_planes_directory = directory + "/x_vert_planes";
+    if (!boost::filesystem::is_directory(directory + x_vert_planes_directory)) {
+      boost::filesystem::create_directory(x_vert_planes_directory);
+    }
+    std::string y_vert_planes_directory = directory + "/y_vert_planes";
+    if (!boost::filesystem::is_directory(y_vert_planes_directory)) {
+      boost::filesystem::create_directory(y_vert_planes_directory);
+    }
+    std::string hort_planes_directory = directory + "/hort_planes";
+    if (!boost::filesystem::is_directory(hort_planes_directory)) {
+      boost::filesystem::create_directory(hort_planes_directory);
+    }
+    std::string rooms_directory = directory + "/rooms";
+    if (!boost::filesystem::is_directory(rooms_directory)) {
+      boost::filesystem::create_directory(rooms_directory);
+    }
+
     std::cout << "all data dumped to:" << directory << std::endl;
-
     covisibility_graph->save(directory + "/graph.g2o");
-    for (long unsigned int i = 0; i < keyframes.size(); i++) {
-      std::stringstream sst;
-      sst << boost::format("%s/%06d") % directory % i;
 
-      keyframes[i]->save(sst.str());
-    }
-    for (long unsigned int i = 0; i < x_vert_planes.size(); i++) {
+    int id = 0;
+    for (const auto& kf : keyframes) {
       std::stringstream sst;
-      sst << boost::format("%s/%06d") % directory % i;
-      x_vert_planes[i].save(sst.str(), 'x');
+      sst << boost::format("%s/%06d") % kf_directory % id;
+      kf.second->save(sst.str());
+      id++;
     }
-    for (long unsigned int i = 0; i < y_vert_planes.size(); i++) {
+
+    id = 0;
+    for (auto& x_vert_plane : x_vert_planes) {
       std::stringstream sst;
-      sst << boost::format("%s/%06d") % directory % i;
-      y_vert_planes[i].save(sst.str(), 'y');
+      sst << boost::format("%s/%06d") % x_vert_planes_directory % id;
+      x_vert_plane.second.save(sst.str(), 'x');
+      id++;
     }
-    for (long unsigned int i = 0; i < rooms_vec.size(); i++) {
+
+    id = 0;
+    for (auto& y_vert_plane : y_vert_planes) {
       std::stringstream sst;
-      sst << boost::format("%s/%06d") % directory % i;
-      rooms_vec[i].save(sst.str());
+      sst << boost::format("%s/%06d") % y_vert_planes_directory % id;
+      y_vert_plane.second.save(sst.str(), 'y');
+      id++;
+    }
+
+    id = 0;
+    for (auto& room : rooms_vec) {
+      std::stringstream sst;
+      sst << boost::format("%s/%06d") % rooms_directory % id;
+      room.second.save(sst.str());
+      id++;
     }
     if (zero_utm) {
       std::ofstream zero_utm_ofs(directory + "/zero_utm");

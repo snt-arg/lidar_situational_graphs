@@ -89,55 +89,13 @@ class Planes {
     return *this;
   }
 
- public:
-  int id;
-  std::vector<pcl::PointCloud<PointNormal>::Ptr>
-      cloud_seg_body_vec;  // vector of segmented points of the plane in local
-                           // body frame
-  std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
-  pcl::PointCloud<PointNormal>::Ptr
-      cloud_seg_map;           // segmented points of the plane in global map frame
-  Eigen::Matrix3d covariance;  // covariance of the landmark
-  std::vector<double> color;
-  int floor_level;  // current floor level
-  int revit_id;
-  g2o::VertexPlane* plane_node = nullptr;  // node instance
-  std::string type;                        // Type online or prior
-  double length;                           // Length of plane
-  bool matched = false;                    // Flag if matched with prior/online or not
-  Eigen::Vector2d start_point =
-      Eigen::Vector2d::Ones();  // start point of the PRIOR wall in revit
-  Eigen::Vector3d wall_point;   // point used to calculate prior wall center
-  bool on_wall = false;  // variable to check if a plane is already associated to a wall
-};
-
-class VerticalPlanes : public Planes {
- public:
-  VerticalPlanes() : Planes() {}
-  ~VerticalPlanes() {}
-
-  // copy constructor
-  VerticalPlanes(const VerticalPlanes& old_plane, const bool deep_copy = false)
-      : Planes(old_plane, deep_copy) {}
-
-  VerticalPlanes& operator=(const VerticalPlanes& old_plane) {
-    if (this != &old_plane) {
-      Planes::operator=(old_plane);
-    }
-    return *this;
-  }
   void save(const std::string& directory, char type) {
     if (!boost::filesystem::is_directory(directory)) {
       boost::filesystem::create_directory(directory);
     }
-    std::string x_planes_directory = directory + '/' + "x_planes";
 
-    std::string y_planes_directory = directory + '/' + "y_planes";
     if (type == 'x') {
-      if (!boost::filesystem::is_directory(x_planes_directory)) {
-        boost::filesystem::create_directory(x_planes_directory);
-      }
-      std::ofstream ofs(x_planes_directory + "/x_plane_data");
+      std::ofstream ofs(directory + "/x_plane_data");
       ofs << "id\n";
       ofs << id << "\n";
 
@@ -165,18 +123,14 @@ class VerticalPlanes : public Planes {
       for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
       }
-      pcl::io::savePCDFileBinary(x_planes_directory + "/cloud_seg_map.pcd",
-                                 *cloud_seg_map);
+      pcl::io::savePCDFileBinary(directory + "/cloud_seg_map.pcd", *cloud_seg_map);
       for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
         std::string filename =
-            x_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+            directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
         pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
       }
     } else if (type == 'y') {
-      if (!boost::filesystem::is_directory(y_planes_directory)) {
-        boost::filesystem::create_directory(y_planes_directory);
-      }
-      std::ofstream ofs(y_planes_directory + "/y_plane_data");
+      std::ofstream ofs(directory + "/y_plane_data");
       ofs << "id\n";
       ofs << id << "\n";
 
@@ -202,14 +156,11 @@ class VerticalPlanes : public Planes {
       ofs << "keyframe_vec_node_ids\n";
       for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
-        std::cout << "keyframe id at :  " << i << "   " << keyframe_node_vec[i]->id()
-                  << std::endl;
       }
-      pcl::io::savePCDFileBinary(y_planes_directory + "/cloud_seg_map.pcd",
-                                 *cloud_seg_map);
+      pcl::io::savePCDFileBinary(directory + "/cloud_seg_map.pcd", *cloud_seg_map);
       for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
         std::string filename =
-            y_planes_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+            directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
         pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
       }
     }
@@ -305,6 +256,44 @@ class VerticalPlanes : public Planes {
     pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
     cloud_seg_map = map_cloud;
     return true;
+  }
+
+ public:
+  int id;
+  std::vector<pcl::PointCloud<PointNormal>::Ptr>
+      cloud_seg_body_vec;  // vector of segmented points of the plane in local
+                           // body frame
+  std::vector<g2o::VertexSE3*> keyframe_node_vec;  // vector keyframe node instance
+  pcl::PointCloud<PointNormal>::Ptr
+      cloud_seg_map;           // segmented points of the plane in global map frame
+  Eigen::Matrix3d covariance;  // covariance of the landmark
+  std::vector<double> color;
+  int floor_level;  // current floor level
+  int revit_id;
+  g2o::VertexPlane* plane_node = nullptr;  // node instance
+  std::string type;                        // Type online or prior
+  double length;                           // Length of plane
+  bool matched = false;                    // Flag if matched with prior/online or not
+  Eigen::Vector2d start_point =
+      Eigen::Vector2d::Ones();  // start point of the PRIOR wall in revit
+  Eigen::Vector3d wall_point;   // point used to calculate prior wall center
+  bool on_wall = false;  // variable to check if a plane is already associated to a wall
+};
+
+class VerticalPlanes : public Planes {
+ public:
+  VerticalPlanes() : Planes() {}
+  ~VerticalPlanes() {}
+
+  // copy constructor
+  VerticalPlanes(const VerticalPlanes& old_plane, const bool deep_copy = false)
+      : Planes(old_plane, deep_copy) {}
+
+  VerticalPlanes& operator=(const VerticalPlanes& old_plane) {
+    if (this != &old_plane) {
+      Planes::operator=(old_plane);
+    }
+    return *this;
   }
 };
 
