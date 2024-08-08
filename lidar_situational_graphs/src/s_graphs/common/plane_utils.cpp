@@ -223,10 +223,10 @@ float PlaneUtils::get_min_segment(const pcl::PointCloud<PointNormal>::Ptr& cloud
 
 bool PlaneUtils::check_point_neighbours(
     const pcl::PointCloud<PointNormal>::Ptr& cloud_1,
-    const pcl::PointCloud<PointNormal>::Ptr& cloud_2) {
+    const pcl::PointCloud<PointNormal>::Ptr& cloud_2,
+    const float min_dist) {
   bool valid_neighbour = false;
   int point_count = 0;
-  float min_dist = 1.0;
 
   for (std::size_t i = 0; i < cloud_1->points.size(); ++i) {
     for (std::size_t j = 0; j < cloud_2->points.size(); ++j) {

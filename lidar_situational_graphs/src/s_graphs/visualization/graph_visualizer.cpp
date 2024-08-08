@@ -1959,9 +1959,9 @@ void GraphVisualizer::fill_room(
 
     // fill the pose marker
     visualization_msgs::msg::Marker room_marker;
-    room_marker.scale.x = 0.5;
-    room_marker.scale.y = 0.5;
-    room_marker.scale.z = 0.5;
+    room_marker.scale.x = room_marker_size;
+    room_marker.scale.y = room_marker_size;
+    room_marker.scale.z = room_marker_size;
     // plane_marker.points.resize(vert_planes.size());
     room_marker.header.frame_id = rooms_layer_id;
     room_marker.header.stamp = stamp;
