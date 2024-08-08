@@ -31,6 +31,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/time_synchronizer.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
 #include <unistd.h>
 
 #include <Eigen/Dense>
@@ -68,7 +69,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/frontend/plane_analyzer.hpp>
 #include <s_graphs/visualization/graph_publisher.hpp>
 #include <s_graphs/visualization/graph_visualizer.hpp>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #include <unordered_map>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -90,8 +90,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "situational_graphs_msgs/srv/dump_graph.hpp"
 #include "situational_graphs_msgs/srv/load_graph.hpp"
 #include "situational_graphs_msgs/srv/save_map.hpp"
-#include "tf2_eigen/tf2_eigen.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include "tf2_eigen/tf2_eigen.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/buffer_interface.h"
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
@@ -2596,17 +2596,16 @@ class SGraphsNode : public rclcpp::Node {
   } ongoing_optimization_class;
 
   // vertical and horizontal planes
-  std::unordered_map<int, VerticalPlanes> x_vert_planes,
-      y_vert_planes;  // vertically segmented planes
-  std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
+  std::unordered_map<int, VerticalPlanes> x_vert_planes, y_vert_planes,
+      x_vert_planes_prior, y_vert_planes_prior;  // vertically segmented planes
   std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes,
       dupl_y_vert_planes;  // vertically segmented planes
   std::unordered_map<int, HorizontalPlanes>
       hort_planes;  // horizontally segmented planes
   std::unordered_map<int, InfiniteRooms> x_infinite_rooms,
-      y_infinite_rooms;                      // infinite_rooms segmented from planes
-  std::unordered_map<int, Rooms> rooms_vec;  // rooms segmented from planes
-  std::vector<Rooms> rooms_vec_prior;
+      y_infinite_rooms;  // infinite_rooms segmented from planes
+  std::unordered_map<int, Rooms> rooms_vec,
+      rooms_vec_prior;  // rooms segmented from planes
   std::map<int, Floors> floors_vec;
   std::unordered_map<int, Walls> walls_vec;
   int prev_edge_count, curr_edge_count;
