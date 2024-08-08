@@ -168,6 +168,18 @@ class GraphVisualizer {
       const std::unordered_map<int, HorizontalPlanes>& hort_plane_snapshot,
       const std::map<int, Floors>& floors_vec);
 
+  std::vector<visualization_msgs::msg::MarkerArray> visualize_a_graph(
+      const rclcpp::Time& stamp,
+      const g2o::SparseOptimizer* local_graph,
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes_prior,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes_prior,
+      std::unordered_map<int, Rooms> rooms_vec_prior,
+      std::unordered_map<int, Rooms> rooms_vec,
+      bool got_trans_prior2map_,
+      const std::vector<DoorWays> doorways_vec_prior,
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes);
+
  private:
   /**
    * @brief
@@ -257,17 +269,6 @@ class GraphVisualizer {
    * @param y_vert_planes
    * @return * visualization_msgs::msg::MarkerArray
    */
-  visualization_msgs::msg::MarkerArray create_prior_marker_array(
-      const rclcpp::Time& stamp,
-      const g2o::SparseOptimizer* local_graph,
-      std::vector<VerticalPlanes>& x_vert_planes_prior,
-      std::vector<VerticalPlanes>& y_vert_planes_prior,
-      std::vector<Rooms> rooms_vec_prior,
-      std::vector<Rooms> rooms_vec,
-      bool got_trans_prior2map_,
-      const std::vector<DoorWays> doorways_vec_prio,
-      std::vector<VerticalPlanes>& x_vert_planes,
-      std::vector<VerticalPlanes>& y_vert_planes);
 
   /**
    * @brief
