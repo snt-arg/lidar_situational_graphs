@@ -5,8 +5,10 @@ namespace s_graphs {
 PlaneAnalyzer::PlaneAnalyzer(rclcpp::Node::SharedPtr node) {
   min_seg_points =
       node->get_parameter("min_seg_points").get_parameter_value().get<int>();
-  plane_points_dist =
-      node->get_parameter("plane_points_dist").get_parameter_value().get<double>();
+  cluster_min_size =
+      node->get_parameter("cluster_min_size").get_parameter_value().get<int>();
+  cluster_tolerance =
+      node->get_parameter("cluster_tolerance").get_parameter_value().get<double>();
   min_horizontal_inliers =
       node->get_parameter("min_horizontal_inliers").get_parameter_value().get<int>();
   min_vertical_inliers =
@@ -200,9 +202,9 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(
   tree->setInputCloud(extracted_cloud);
   std::vector<pcl::PointIndices> cluster_indices;
   pcl::EuclideanClusterExtraction<PointNormal> ec;
-  ec.setClusterTolerance(plane_points_dist);
-  ec.setMinClusterSize(1);
-  ec.setMaxClusterSize(10);
+  ec.setClusterTolerance(cluster_tolerance);
+  ec.setMinClusterSize(cluster_min_size);
+  ec.setMaxClusterSize(2500000);
   ec.setSearchMethod(tree);
   ec.setInputCloud(extracted_cloud);
   ec.extract(cluster_indices);
@@ -212,11 +214,7 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(
   // pcl::PointIndices& rhs) { return lhs.indices.size() < rhs.indices.size(); });
 
   pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
-  int cluster_id = 0;
   for (auto single_cluster : cluster_indices) {
-    // std_msgs::msg::ColorRGBA color =
-    // rainbow_color_map((single_cluster).indices.size() % 100 / 10.0);
-    if (single_cluster.indices.size() < 50) continue;
     for (const auto& idx : (single_cluster).indices) {
       cloud_cluster->push_back(extracted_cloud->points[idx]);
       cloud_cluster->width = cloud_cluster->size();
@@ -230,7 +228,6 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::compute_clusters(
       cloud_cluster->back().g = extracted_cloud->back().g;
       cloud_cluster->back().b = extracted_cloud->back().b;
     }
-    cluster_id++;
   }
 
   return cloud_cluster;

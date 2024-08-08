@@ -507,6 +507,9 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("plane_information", 0.01);
     this->declare_parameter("plane_dist_threshold", 0.15);
     this->declare_parameter("plane_points_dist", 0.5);
+    this->declare_parameter("cluster_min_size", 50);
+    this->declare_parameter("cluster_tolerance", 0.1);
+
     this->declare_parameter("min_plane_points", 100);
     this->declare_parameter("min_plane_points_opti", 500);
 

@@ -80,14 +80,16 @@
     min_stddev_q: 0.2
     max_stddev_q: 0.8
 
-    #plane detection
+    # Plane detection
     extract_planar_surfaces:    true
     min_seg_points:             100
-    use_euclidean_filter:       false
+    use_euclidean_filter:       true
     min_horizontal_inliers:     500
     min_vertical_inliers:       100
+    cluster_min_size:           50
+    cluster_tolerance:          0.2
 
-    #mapping
+    # Mapping
     plane_ransac_itr: 500
     plane_ransac_acc: 0.01
     odom_pc_sync_queue: 256
@@ -117,7 +119,7 @@
     optimization_type: "FLOOR_GLOBAL"
 
 
-    #visualization
+    # Visualization
     line_color_r: 1.0
     line_color_g: 1.0
     line_color_b: 1.0
