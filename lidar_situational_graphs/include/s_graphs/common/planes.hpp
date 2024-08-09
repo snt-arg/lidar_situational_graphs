@@ -34,6 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <g2o/types/slam3d_addons/plane3d.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
+#include <pcl/common/distances.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -89,13 +90,18 @@ class Planes {
     return *this;
   }
 
-  void save(const std::string& directory, char type) {
-    if (!boost::filesystem::is_directory(directory)) {
-      boost::filesystem::create_directory(directory);
-    }
+  void save(const std::string& directory, char type, int sequential_id) {
+    std::string parent_directory = directory.substr(0, directory.find_last_of("/\\"));
+    write_wall_data_to_csv(parent_directory, type);
 
     if (type == 'x') {
-      std::ofstream ofs(directory + "/x_plane_data");
+      std::string x_vert_planes_sub_directory =
+          directory + "/" + std::to_string(sequential_id);
+      if (!boost::filesystem::is_directory(x_vert_planes_sub_directory)) {
+        boost::filesystem::create_directory(x_vert_planes_sub_directory);
+      }
+
+      std::ofstream ofs(x_vert_planes_sub_directory + "/x_plane_data");
       ofs << "id\n";
       ofs << id << "\n";
 
@@ -123,14 +129,21 @@ class Planes {
       for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
       }
-      pcl::io::savePCDFileBinary(directory + "/cloud_seg_map.pcd", *cloud_seg_map);
+      pcl::io::savePCDFileBinary(x_vert_planes_sub_directory + "/cloud_seg_map.pcd",
+                                 *cloud_seg_map);
       for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
-        std::string filename =
-            directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+        std::string filename = x_vert_planes_sub_directory + "/cloud_seg_body_" +
+                               std::to_string(i) + ".pcd";
         pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
       }
     } else if (type == 'y') {
-      std::ofstream ofs(directory + "/y_plane_data");
+      std::string y_vert_planes_sub_directory =
+          directory + "/" + std::to_string(sequential_id);
+      if (!boost::filesystem::is_directory(y_vert_planes_sub_directory)) {
+        boost::filesystem::create_directory(y_vert_planes_sub_directory);
+      }
+
+      std::ofstream ofs(y_vert_planes_sub_directory + "/y_plane_data");
       ofs << "id\n";
       ofs << id << "\n";
 
@@ -157,10 +170,11 @@ class Planes {
       for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
         ofs << keyframe_node_vec[i]->id() << "\n";
       }
-      pcl::io::savePCDFileBinary(directory + "/cloud_seg_map.pcd", *cloud_seg_map);
+      pcl::io::savePCDFileBinary(y_vert_planes_sub_directory + "/cloud_seg_map.pcd",
+                                 *cloud_seg_map);
       for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
-        std::string filename =
-            directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+        std::string filename = y_vert_planes_sub_directory + "/cloud_seg_body_" +
+                               std::to_string(i) + ".pcd";
         pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
       }
     }
@@ -256,6 +270,44 @@ class Planes {
     pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
     cloud_seg_map = map_cloud;
     return true;
+  }
+
+  // write plane data to csv
+  void write_wall_data_to_csv(const std::string parent_directory, char type) {
+    if (on_wall) {
+      std::cout << "Not adding plane " << id << " as its on wall" << std::endl;
+      return;
+    }
+
+    std::string file_path = parent_directory + "/wall_surfaces.csv";
+    bool file_exists = boost::filesystem::exists(file_path);
+    std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
+    if (!file_exists) {
+      csv_ofs << "id,level,"
+                 "start_point_x,start_point_y,start_point_z,end_point_x,end_point_y,"
+                 "end_point_z,length,height\n";
+    }
+
+    pcl::PointXYZRGBNormal p_min, p_max;
+    double length = pcl::getMaxSegment(*cloud_seg_map, p_min, p_max);
+    double height = std::abs(p_max.z - p_min.z);
+
+    if (p_min.z > p_max.z) {
+      p_min.z = p_max.z;
+    }
+
+    // assuming planes which dont belong to a wall have a thickness of 20cm
+    pcl::PointXYZRGBNormal p_min_new, p_max_new;
+    p_min_new.x = p_min.x + 0.1 * plane_node->estimate().coeffs()(0);
+    p_min_new.y = p_min.y + 0.1 * plane_node->estimate().coeffs()(1);
+
+    p_max_new.x = p_max_new.x + 0.1 * plane_node->estimate().coeffs()(0);
+    p_max_new.y = p_max_new.y + 0.1 * plane_node->estimate().coeffs()(1);
+
+    csv_ofs << id << "," << floor_level << "," << p_min_new.x << "," << p_min_new.y
+            << "," << p_min.z << "," << p_max_new.x << "," << p_max_new.y << ","
+            << p_min.z << "," << length << "," << height << "\n";
+    csv_ofs.close();
   }
 
  public:

@@ -52,12 +52,14 @@ void KeyFrame::set_dense_cloud(const pcl::PointCloud<PointT>::Ptr& cloud) {
 
 KeyFrame::~KeyFrame() {}
 
-void KeyFrame::save(const std::string& directory) {
-  if (!boost::filesystem::is_directory(directory)) {
-    boost::filesystem::create_directory(directory);
+void KeyFrame::save(const std::string& directory, const int& sequential_id) {
+  std::string kf_sub_directory = directory + "/" + std::to_string(sequential_id);
+
+  if (!boost::filesystem::is_directory(kf_sub_directory)) {
+    boost::filesystem::create_directory(kf_sub_directory);
   }
 
-  std::ofstream ofs(directory + "/data");
+  std::ofstream ofs(kf_sub_directory + "/kf_data");
   ofs << "stamp " << stamp.seconds() << " " << stamp.nanoseconds() << "\n";
 
   ofs << "estimate\n";
@@ -89,7 +91,7 @@ void KeyFrame::save(const std::string& directory) {
     ofs << "id " << node->id() << "\n";
   }
 
-  pcl::io::savePCDFileBinary(directory + "/cloud.pcd", *cloud);
+  pcl::io::savePCDFileBinary(kf_sub_directory + "/cloud.pcd", *cloud);
 }
 
 bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
@@ -156,7 +158,6 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
       int id;
       ifs >> id;
       node_id = id;
-      // std::cout << "keyframe id : " << node_id << std::endl;
     }
   }
 

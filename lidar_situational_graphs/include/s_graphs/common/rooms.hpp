@@ -113,8 +113,13 @@ class Rooms {
 
     return *this;
   }
-  bool save(const std::string &directory) {
-    std::ofstream ofs(directory + "/room_data");
+  bool save(const std::string &directory, int sequential_id) {
+    std::string rooms_sub_directory = directory + "/" + std::to_string(sequential_id);
+    if (!boost::filesystem::is_directory(rooms_sub_directory)) {
+      boost::filesystem::create_directory(rooms_sub_directory);
+    }
+
+    std::ofstream ofs(rooms_sub_directory + "/room_data");
     ofs << "id\n";
     ofs << id << "\n";
 
@@ -158,7 +163,6 @@ class Rooms {
     ofs << node->estimate().matrix() << "\n";
 
     ofs << "room_keyframes_ids\n";
-    std::cout << "room_keyframes.size() : " << room_keyframes.size() << std::endl;
     for (const auto &room_keyframe : room_keyframes) {
       ofs << room_keyframe.first << "\n";
     }

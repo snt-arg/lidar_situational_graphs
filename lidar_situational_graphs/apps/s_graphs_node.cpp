@@ -2198,40 +2198,33 @@ class SGraphsNode : public rclcpp::Node {
       boost::filesystem::create_directory(rooms_directory);
     }
 
-    std::cout << "all data dumped to:" << directory << std::endl;
+    std::cout << "All data will be dumped to: " << directory << std::endl;
     covisibility_graph->save(directory + "/graph.g2o");
 
     int id = 0;
     for (const auto& kf : keyframes) {
-      std::stringstream sst;
-      sst << boost::format("%s/%06d") % kf_directory % id;
-      kf.second->save(sst.str());
+      kf.second->save(kf_directory, id);
       id++;
     }
 
     id = 0;
     for (auto& x_vert_plane : x_vert_planes) {
-      std::stringstream sst;
-      sst << boost::format("%s/%06d") % x_vert_planes_directory % id;
-      x_vert_plane.second.save(sst.str(), 'x');
+      x_vert_plane.second.save(x_vert_planes_directory, 'x', id);
       id++;
     }
 
     id = 0;
     for (auto& y_vert_plane : y_vert_planes) {
-      std::stringstream sst;
-      sst << boost::format("%s/%06d") % y_vert_planes_directory % id;
-      y_vert_plane.second.save(sst.str(), 'y');
+      y_vert_plane.second.save(y_vert_planes_directory, 'y', id);
       id++;
     }
 
     id = 0;
     for (auto& room : rooms_vec) {
-      std::stringstream sst;
-      sst << boost::format("%s/%06d") % rooms_directory % id;
-      room.second.save(sst.str());
+      room.second.save(rooms_directory, id);
       id++;
     }
+
     if (zero_utm) {
       std::ofstream zero_utm_ofs(directory + "/zero_utm");
       zero_utm_ofs << boost::format("%.6f %.6f %.6f") % zero_utm->x() % zero_utm->y() %
@@ -2302,9 +2295,10 @@ class SGraphsNode : public rclcpp::Node {
       const std::shared_ptr<situational_graphs_msgs::srv::LoadGraph::Request> req,
       std::shared_ptr<situational_graphs_msgs::srv::LoadGraph::Response> res) {
     std::string directory = req->destination;
+
     std::vector<std::string> keyframe_directories, y_planes_directories,
         x_planes_directories, room_directories;
-    ;
+
     std::stringstream sst;
     rclcpp::Time stamp;
     Eigen::Isometry3d odom;
@@ -2315,7 +2309,8 @@ class SGraphsNode : public rclcpp::Node {
     g2o::SparseOptimizer* local_graph;
     local_graph = covisibility_graph->graph.get();
     VerticalPlanes load_x_planes;
-    // load_x_planes.load(sst.str(), local_graph);
+
+    // TODO:HB fix this code to read data properly
     boost::filesystem::path parentPath(directory);
     if (boost::filesystem::is_directory(parentPath)) {
       for (const auto& entry : boost::filesystem::directory_iterator(parentPath)) {

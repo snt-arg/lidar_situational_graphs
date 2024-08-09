@@ -99,8 +99,9 @@ struct KeyFrame {
    * @brief Saves the keyframe into a given directory.
    *
    * @param directory
+   * @param directory
    */
-  void save(const std::string& directory);
+  void save(const std::string& directory, const int& sequential_id);
 
   /**
    * @brief Loads the keyframes from a directory into the graph pointer.
