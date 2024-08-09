@@ -297,12 +297,13 @@ class Planes {
     }
 
     // assuming planes which dont belong to a wall have a thickness of 20cm
+    double wall_thickness = 0.2;
     pcl::PointXYZRGBNormal p_min_new, p_max_new;
-    p_min_new.x = p_min.x + 0.1 * plane_node->estimate().coeffs()(0);
-    p_min_new.y = p_min.y + 0.1 * plane_node->estimate().coeffs()(1);
+    p_min_new.x = p_min.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
+    p_min_new.y = p_min.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
 
-    p_max_new.x = p_max_new.x + 0.1 * plane_node->estimate().coeffs()(0);
-    p_max_new.y = p_max_new.y + 0.1 * plane_node->estimate().coeffs()(1);
+    p_max_new.x = p_max.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
+    p_max_new.y = p_max.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
 
     csv_ofs << id << "," << floor_level << "," << p_min_new.x << "," << p_min_new.y
             << "," << p_min.z << "," << p_max_new.x << "," << p_max_new.y << ","
