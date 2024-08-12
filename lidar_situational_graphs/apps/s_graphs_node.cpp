@@ -646,78 +646,70 @@ class SGraphsNode : public rclcpp::Node {
     trans_map2map(2, 3) = pose_msg->pose.position.z;
   }
 
-  void floor_data_callback(
-      const situational_graphs_msgs::msg::FloorData::SharedPtr floor_data_msg) {
-    std::lock_guard<std::mutex> lock(floor_data_mutex);
-    floor_data_queue.push_back(*floor_data_msg);
-  }
+  /**
+   * @brief received point clouds are pushed to #keyframe_queue
+   * @param odom_msg
+   * @param cloud_msg
+   */
+  void cloud_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg,
+                      const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
+    const rclcpp::Time& stamp = cloud_msg->header.stamp;
+    Eigen::Isometry3d odom = odom2isometry(odom_msg);
 
-  void flush_floor_data_queue() {
-    if (keyframes.empty()) {
-      return;
-    } else if (floor_data_queue.empty()) {
-      // std::cout << "floor data queue is empty" << std::endl;
-      return;
+    pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
+    pcl::fromROSMsg(*cloud_msg, *cloud);
+
+    // add the first floor node at keyframe height  before adding any keyframes
+    if (keyframes.empty() && floors_vec.empty()) {
+      add_first_floor_node();
     }
 
-    for (const auto& floor_data_msg : floor_data_queue) {
-      if (floor_data_msg.state == situational_graphs_msgs::msg::FloorData::ON_STAIRS) {
-        on_stairs = true;
-        floor_data_mutex.lock();
-        floor_data_queue.pop_front();
-        floor_data_mutex.unlock();
-        continue;
+    // TODO: add use_map2map_transform check
+    Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
+    keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
+
+    if (keyframe_updater->update(odom)) {
+      double accum_d = keyframe_updater->get_accum_distance();
+      if (use_map2map_transform) {
+        Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
+        Eigen::Quaterniond quaternion(map2map_trans.rotation());
+        Eigen::Isometry3d odom_trans = map2map_trans * odom;
+        Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
+
+        KeyFrame::Ptr keyframe(
+            new KeyFrame(stamp, odom_trans, accum_d, cloud, current_floor_level));
+        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+        keyframe_queue.push_back(keyframe);
       } else {
-        floor_mapper->lookup_floors(covisibility_graph,
-                                    floor_data_msg,
-                                    floors_vec,
-                                    rooms_vec,
-                                    x_infinite_rooms,
-                                    y_infinite_rooms);
+        KeyFrame::Ptr keyframe(
+            new KeyFrame(stamp, odom, accum_d, cloud, current_floor_level));
+        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
 
-        // if new floor was added update floor level and add to it the stair keyframes
-        if (!floor_data_msg.keyframe_ids.empty()) {
-          current_floor_level = floor_mapper->get_floor_level();
-          add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
-        }
-
-        floor_data_mutex.lock();
-        floor_data_queue.pop_front();
-        floor_data_mutex.unlock();
+        keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
+            odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+        keyframe_queue.push_back(keyframe);
+        keyframe_updater->reset_collected_pose_cloud();
       }
     }
-  }
 
-  void add_stair_keyframes_to_floor(const std::vector<int>& stair_keyframe_ids) {
-    // get the keyframe ids and update their semantic of belonging to new floor
-    floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
+    if (fast_mapping) {
+      odom_cloud_queue_mutex.lock();
+      odom_cloud_queue.push_back(std::make_pair(odom_corrected, cloud));
+      odom_cloud_queue_mutex.unlock();
+    }
 
-    graph_mutex.lock();
-    GraphUtils::set_stair_keyframes(
-        floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
-    graph_mutex.unlock();
-  }
+    if (!floors_vec.empty()) {
+      pcl::PointCloud<PointT>::Ptr cloud_trans =
+          map_cloud_generator->generate(odom_corrected, cloud);
+      sensor_msgs::msg::PointCloud2 cloud_trans_msg;
+      pcl::toROSMsg(*cloud_trans, cloud_trans_msg);
 
-  void add_first_floor_node() {
-    situational_graphs_msgs::msg::FloorData floor_data_msg;
-    floor_data_msg.floor_center.position.x = 0;
-    floor_data_msg.floor_center.position.y = 0;
-    floor_data_msg.floor_center.position.z = 0;
-
-    floor_mapper->lookup_floors(covisibility_graph,
-                                floor_data_msg,
-                                floors_vec,
-                                rooms_vec,
-                                x_infinite_rooms,
-                                y_infinite_rooms);
-    current_floor_level = floor_mapper->get_floor_level();
-  }
-
-  void update_first_floor_node(const Eigen::Isometry3d& pose) {
-    graph_mutex.lock();
-    floors_vec.begin()->second.node->setEstimate(pose);
-    graph_mutex.unlock();
-    floor_node_updated = true;
+      cloud_trans_msg.header.frame_id =
+          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
+          "_layer";
+      cloud_trans_msg.header.stamp = cloud_msg->header.stamp;
+      lidar_points_pub->publish(cloud_trans_msg);
+    }
   }
 
   /**
@@ -728,6 +720,166 @@ class SGraphsNode : public rclcpp::Node {
       const situational_graphs_msgs::msg::RoomsData::SharedPtr rooms_msg) {
     std::lock_guard<std::mutex> lock(room_data_queue_mutex);
     room_data_queue.push_back(*rooms_msg);
+  }
+
+  /**
+   * @brief get the floor data from floor segmentation module
+   *
+   */
+  void floor_data_callback(
+      const situational_graphs_msgs::msg::FloorData::SharedPtr floor_data_msg) {
+    std::lock_guard<std::mutex> lock(floor_data_mutex);
+    floor_data_queue.push_back(*floor_data_msg);
+  }
+
+  void wall_data_callback(
+      const situational_graphs_msgs::msg::WallsData::SharedPtr walls_msg) {
+    for (size_t j = 0; j < walls_msg->walls.size(); j++) {
+      std::vector<situational_graphs_msgs::msg::PlaneData> x_planes_msg =
+          walls_msg->walls[j].x_planes;
+      std::vector<situational_graphs_msgs::msg::PlaneData> y_planes_msg =
+          walls_msg->walls[j].y_planes;
+
+      if (x_planes_msg.size() != 2 && y_planes_msg.size() != 2) continue;
+
+      Eigen::Vector3d wall_pose;
+      wall_pose << walls_msg->walls[j].wall_center.position.x,
+          walls_msg->walls[j].wall_center.position.y,
+          walls_msg->walls[j].wall_center.position.z;
+
+      Eigen::Vector3d wall_point;
+      wall_point << walls_msg->walls[j].wall_point.x, walls_msg->walls[j].wall_point.y,
+          walls_msg->walls[j].wall_point.z;
+
+      wall_mapper->factor_wall(covisibility_graph,
+                               wall_pose,
+                               wall_point,
+                               x_planes_msg,
+                               y_planes_msg,
+                               x_vert_planes,
+                               y_vert_planes,
+                               walls_vec);
+    }
+  }
+
+  void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
+    GPRMC grmc = nmea_parser->parse(nmea_msg->sentence);
+
+    if (grmc.status != 'A') {
+      return;
+    }
+
+    geographic_msgs::msg::GeoPointStamped::SharedPtr gps_msg(
+        new geographic_msgs::msg::GeoPointStamped());
+    gps_msg->header = nmea_msg->header;
+    gps_msg->position.latitude = grmc.latitude;
+    gps_msg->position.longitude = grmc.longitude;
+    gps_msg->position.altitude = NAN;
+
+    gps_callback(gps_msg);
+  }
+
+  void navsat_callback(const sensor_msgs::msg::NavSatFix::SharedPtr navsat_msg) {
+    geographic_msgs::msg::GeoPointStamped::SharedPtr gps_msg(
+        new geographic_msgs::msg::GeoPointStamped());
+    gps_msg->header = navsat_msg->header;
+    gps_msg->position.latitude = navsat_msg->latitude;
+    gps_msg->position.longitude = navsat_msg->longitude;
+    gps_msg->position.altitude = navsat_msg->altitude;
+
+    gps_callback(gps_msg);
+  }
+
+  /**
+   * @brief received gps data is added to #gps_queue
+   * @param gps_msg
+   */
+  void gps_callback(const geographic_msgs::msg::GeoPointStamped::SharedPtr gps_msg) {
+    std::lock_guard<std::mutex> lock(gps_queue_mutex);
+    rclcpp::Time(gps_msg->header.stamp) += rclcpp::Duration(gps_time_offset, 0);
+    gps_queue.push_back(gps_msg);
+  }
+
+  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg) {
+    if (!enable_imu_orientation && !enable_imu_acceleration) {
+      return;
+    }
+
+    std::lock_guard<std::mutex> lock(imu_queue_mutex);
+    rclcpp::Time(imu_msg->header.stamp) += rclcpp::Duration(imu_time_offset, 0);
+    imu_queue.push_back(imu_msg);
+  }
+
+  /**
+   * @brief this method adds all the keyframes in #keyframe_queue to the pose graph
+   * (odometry edges)
+   * @return if true, at least one keyframe was added to the pose graph
+   */
+  bool flush_keyframe_queue() {
+    if (keyframe_queue.empty()) {
+      // std::cout << "keyframe_queue is empty " << std::endl;
+      return false;
+    }
+
+    trans_odom2map_mutex.lock();
+    Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
+    trans_odom2map_mutex.unlock();
+
+    int num_processed = keyframe_mapper->map_keyframes(covisibility_graph,
+                                                       odom2map,
+                                                       keyframe_queue,
+                                                       keyframes,
+                                                       new_keyframes,
+                                                       anchor_node,
+                                                       anchor_edge,
+                                                       keyframe_hash);
+
+    graph_mutex.lock();
+    if (floor_mapper->get_floor_level_update_info()) {
+      std::vector<g2o::VertexPlane*> new_x_planes, new_y_planes;
+      GraphUtils::update_node_floor_level(
+          floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
+          current_floor_level,
+          keyframes,
+          x_vert_planes,
+          y_vert_planes,
+          rooms_vec,
+          x_infinite_rooms,
+          y_infinite_rooms,
+          floors_vec,
+          new_x_planes,
+          new_y_planes);
+      GraphUtils::update_node_floor_level(current_floor_level, new_keyframes);
+      plane_mapper->factor_new_planes(current_floor_level,
+                                      covisibility_graph,
+                                      new_x_planes,
+                                      new_y_planes,
+                                      x_vert_planes,
+                                      y_vert_planes);
+      if (on_stairs) on_stairs = false;
+    }
+    graph_mutex.unlock();
+
+    // perform planar segmentation
+    for (long unsigned int i = 0; i < new_keyframes.size(); i++) {
+      if (extract_planar_surfaces) {
+        std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
+            plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
+
+        plane_mapper->map_extracted_planes(covisibility_graph,
+                                           new_keyframes[i],
+                                           extracted_cloud_vec,
+                                           x_vert_planes,
+                                           y_vert_planes,
+                                           hort_planes);
+      }
+    }
+
+    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+    keyframe_queue.erase(keyframe_queue.begin(),
+                         keyframe_queue.begin() + num_processed + 1);
+
+    return true;
   }
 
   /**
@@ -847,6 +999,96 @@ class SGraphsNode : public rclcpp::Node {
                                           y_infinite_rooms);
   }
 
+  void flush_floor_data_queue() {
+    if (keyframes.empty()) {
+      return;
+    } else if (floor_data_queue.empty()) {
+      // std::cout << "floor data queue is empty" << std::endl;
+      return;
+    }
+
+    for (const auto& floor_data_msg : floor_data_queue) {
+      if (floor_data_msg.state == situational_graphs_msgs::msg::FloorData::ON_STAIRS) {
+        on_stairs = true;
+        floor_data_mutex.lock();
+        floor_data_queue.pop_front();
+        floor_data_mutex.unlock();
+        continue;
+      } else {
+        floor_mapper->lookup_floors(covisibility_graph,
+                                    floor_data_msg,
+                                    floors_vec,
+                                    rooms_vec,
+                                    x_infinite_rooms,
+                                    y_infinite_rooms);
+
+        // if new floor was added update floor level and add to it the stair keyframes
+        if (!floor_data_msg.keyframe_ids.empty()) {
+          current_floor_level = floor_mapper->get_floor_level();
+          add_stair_keyframes_to_floor(floor_data_msg.keyframe_ids);
+        }
+
+        floor_data_mutex.lock();
+        floor_data_queue.pop_front();
+        floor_data_mutex.unlock();
+      }
+    }
+  }
+
+  bool flush_gps_queue() {
+    std::lock_guard<std::mutex> lock(gps_queue_mutex);
+
+    if (keyframes.empty() || gps_queue.empty()) {
+      return false;
+    }
+    return gps_mapper->map_gps_data(covisibility_graph, gps_queue, keyframes);
+  }
+
+  bool flush_imu_queue() {
+    std::lock_guard<std::mutex> lock(imu_queue_mutex);
+    if (keyframes.empty() || imu_queue.empty() || base_frame_id.empty()) {
+      return false;
+    }
+
+    bool updated = false;
+    imu_mapper->map_imu_data(
+        covisibility_graph, tf_buffer, imu_queue, keyframes, base_frame_id);
+
+    return updated;
+  }
+
+  void add_stair_keyframes_to_floor(const std::vector<int>& stair_keyframe_ids) {
+    // get the keyframe ids and update their semantic of belonging to new floor
+    floors_vec.at(current_floor_level).stair_keyframe_ids = stair_keyframe_ids;
+
+    graph_mutex.lock();
+    GraphUtils::set_stair_keyframes(
+        floors_vec.at(current_floor_level).stair_keyframe_ids, keyframes);
+    graph_mutex.unlock();
+  }
+
+  void add_first_floor_node() {
+    situational_graphs_msgs::msg::FloorData floor_data_msg;
+    floor_data_msg.floor_center.position.x = 0;
+    floor_data_msg.floor_center.position.y = 0;
+    floor_data_msg.floor_center.position.z = 0;
+
+    floor_mapper->lookup_floors(covisibility_graph,
+                                floor_data_msg,
+                                floors_vec,
+                                rooms_vec,
+                                x_infinite_rooms,
+                                y_infinite_rooms);
+    current_floor_level = floor_mapper->get_floor_level();
+  }
+
+  void update_first_floor_node(const Eigen::Isometry3d& pose) {
+    graph_mutex.lock();
+    floors_vec.begin()->second.node->setEstimate(pose);
+    graph_mutex.unlock();
+    floor_node_updated = true;
+  }
+
   /**
    *@brief extract all the keyframes from the found room
    **/
@@ -864,244 +1106,6 @@ class SGraphsNode : public rclcpp::Node {
       room_graph_generator->generate_local_graph(
           keyframe_mapper, covisibility_graph, room_keyframes, odom2map, current_room);
     }
-  }
-
-  /**
-   * @brief received point clouds are pushed to #keyframe_queue
-   * @param odom_msg
-   * @param cloud_msg
-   */
-  void cloud_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg,
-                      const sensor_msgs::msg::PointCloud2::SharedPtr cloud_msg) {
-    const rclcpp::Time& stamp = cloud_msg->header.stamp;
-    Eigen::Isometry3d odom = odom2isometry(odom_msg);
-
-    pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
-    pcl::fromROSMsg(*cloud_msg, *cloud);
-
-    // add the first floor node at keyframe height  before adding any keyframes
-    if (keyframes.empty() && floors_vec.empty()) {
-      add_first_floor_node();
-    }
-
-    // TODO: add use_map2map_transform check
-    Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
-    keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
-
-    if (keyframe_updater->update(odom)) {
-      double accum_d = keyframe_updater->get_accum_distance();
-      if (use_map2map_transform) {
-        Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
-        Eigen::Quaterniond quaternion(map2map_trans.rotation());
-        Eigen::Isometry3d odom_trans = map2map_trans * odom;
-        Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
-
-        KeyFrame::Ptr keyframe(
-            new KeyFrame(stamp, odom_trans, accum_d, cloud, current_floor_level));
-        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-        keyframe_queue.push_back(keyframe);
-      } else {
-        KeyFrame::Ptr keyframe(
-            new KeyFrame(stamp, odom, accum_d, cloud, current_floor_level));
-        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-
-        keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
-            odom_corrected, keyframe_updater->get_collected_pose_cloud()));
-        keyframe_queue.push_back(keyframe);
-        keyframe_updater->reset_collected_pose_cloud();
-      }
-    }
-
-    if (fast_mapping) {
-      odom_cloud_queue_mutex.lock();
-      odom_cloud_queue.push_back(std::make_pair(odom_corrected, cloud));
-      odom_cloud_queue_mutex.unlock();
-    }
-
-    if (!floors_vec.empty()) {
-      pcl::PointCloud<PointT>::Ptr cloud_trans =
-          map_cloud_generator->generate(odom_corrected, cloud);
-      sensor_msgs::msg::PointCloud2 cloud_trans_msg;
-      pcl::toROSMsg(*cloud_trans, cloud_trans_msg);
-
-      cloud_trans_msg.header.frame_id =
-          "floor_" + std::to_string(floors_vec[current_floor_level].sequential_id) +
-          "_layer";
-      cloud_trans_msg.header.stamp = cloud_msg->header.stamp;
-      lidar_points_pub->publish(cloud_trans_msg);
-    }
-  }
-
-  /**
-   * @brief this method adds all the keyframes in #keyframe_queue to the pose graph
-   * (odometry edges)
-   * @return if true, at least one keyframe was added to the pose graph
-   */
-  bool flush_keyframe_queue() {
-    if (keyframe_queue.empty()) {
-      // std::cout << "keyframe_queue is empty " << std::endl;
-      return false;
-    }
-
-    trans_odom2map_mutex.lock();
-    Eigen::Isometry3d odom2map(trans_odom2map.cast<double>());
-    trans_odom2map_mutex.unlock();
-
-    int num_processed = keyframe_mapper->map_keyframes(covisibility_graph,
-                                                       odom2map,
-                                                       keyframe_queue,
-                                                       keyframes,
-                                                       new_keyframes,
-                                                       anchor_node,
-                                                       anchor_edge,
-                                                       keyframe_hash);
-
-    graph_mutex.lock();
-    if (floor_mapper->get_floor_level_update_info()) {
-      std::vector<g2o::VertexPlane*> new_x_planes, new_y_planes;
-      GraphUtils::update_node_floor_level(
-          floors_vec.at(current_floor_level).stair_keyframe_ids.front(),
-          current_floor_level,
-          keyframes,
-          x_vert_planes,
-          y_vert_planes,
-          rooms_vec,
-          x_infinite_rooms,
-          y_infinite_rooms,
-          floors_vec,
-          new_x_planes,
-          new_y_planes);
-      GraphUtils::update_node_floor_level(current_floor_level, new_keyframes);
-      plane_mapper->factor_new_planes(current_floor_level,
-                                      covisibility_graph,
-                                      new_x_planes,
-                                      new_y_planes,
-                                      x_vert_planes,
-                                      y_vert_planes);
-      if (on_stairs) on_stairs = false;
-    }
-    graph_mutex.unlock();
-
-    // perform planar segmentation
-    for (long unsigned int i = 0; i < new_keyframes.size(); i++) {
-      if (extract_planar_surfaces) {
-        std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
-            plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
-
-        plane_mapper->map_extracted_planes(covisibility_graph,
-                                           new_keyframes[i],
-                                           extracted_cloud_vec,
-                                           x_vert_planes,
-                                           y_vert_planes,
-                                           hort_planes);
-      }
-    }
-
-    std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-    keyframe_queue.erase(keyframe_queue.begin(),
-                         keyframe_queue.begin() + num_processed + 1);
-
-    return true;
-  }
-
-  void wall_data_callback(
-      const situational_graphs_msgs::msg::WallsData::SharedPtr walls_msg) {
-    for (size_t j = 0; j < walls_msg->walls.size(); j++) {
-      std::vector<situational_graphs_msgs::msg::PlaneData> x_planes_msg =
-          walls_msg->walls[j].x_planes;
-      std::vector<situational_graphs_msgs::msg::PlaneData> y_planes_msg =
-          walls_msg->walls[j].y_planes;
-
-      if (x_planes_msg.size() != 2 && y_planes_msg.size() != 2) continue;
-
-      Eigen::Vector3d wall_pose;
-      wall_pose << walls_msg->walls[j].wall_center.position.x,
-          walls_msg->walls[j].wall_center.position.y,
-          walls_msg->walls[j].wall_center.position.z;
-
-      Eigen::Vector3d wall_point;
-      wall_point << walls_msg->walls[j].wall_point.x, walls_msg->walls[j].wall_point.y,
-          walls_msg->walls[j].wall_point.z;
-
-      wall_mapper->factor_wall(covisibility_graph,
-                               wall_pose,
-                               wall_point,
-                               x_planes_msg,
-                               y_planes_msg,
-                               x_vert_planes,
-                               y_vert_planes,
-                               walls_vec);
-    }
-  }
-
-  void nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
-    GPRMC grmc = nmea_parser->parse(nmea_msg->sentence);
-
-    if (grmc.status != 'A') {
-      return;
-    }
-
-    geographic_msgs::msg::GeoPointStamped::SharedPtr gps_msg(
-        new geographic_msgs::msg::GeoPointStamped());
-    gps_msg->header = nmea_msg->header;
-    gps_msg->position.latitude = grmc.latitude;
-    gps_msg->position.longitude = grmc.longitude;
-    gps_msg->position.altitude = NAN;
-
-    gps_callback(gps_msg);
-  }
-
-  void navsat_callback(const sensor_msgs::msg::NavSatFix::SharedPtr navsat_msg) {
-    geographic_msgs::msg::GeoPointStamped::SharedPtr gps_msg(
-        new geographic_msgs::msg::GeoPointStamped());
-    gps_msg->header = navsat_msg->header;
-    gps_msg->position.latitude = navsat_msg->latitude;
-    gps_msg->position.longitude = navsat_msg->longitude;
-    gps_msg->position.altitude = navsat_msg->altitude;
-
-    gps_callback(gps_msg);
-  }
-
-  /**
-   * @brief received gps data is added to #gps_queue
-   * @param gps_msg
-   */
-  void gps_callback(const geographic_msgs::msg::GeoPointStamped::SharedPtr gps_msg) {
-    std::lock_guard<std::mutex> lock(gps_queue_mutex);
-    rclcpp::Time(gps_msg->header.stamp) += rclcpp::Duration(gps_time_offset, 0);
-    gps_queue.push_back(gps_msg);
-  }
-
-  bool flush_gps_queue() {
-    std::lock_guard<std::mutex> lock(gps_queue_mutex);
-
-    if (keyframes.empty() || gps_queue.empty()) {
-      return false;
-    }
-    return gps_mapper->map_gps_data(covisibility_graph, gps_queue, keyframes);
-  }
-
-  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr imu_msg) {
-    if (!enable_imu_orientation && !enable_imu_acceleration) {
-      return;
-    }
-
-    std::lock_guard<std::mutex> lock(imu_queue_mutex);
-    rclcpp::Time(imu_msg->header.stamp) += rclcpp::Duration(imu_time_offset, 0);
-    imu_queue.push_back(imu_msg);
-  }
-
-  bool flush_imu_queue() {
-    std::lock_guard<std::mutex> lock(imu_queue_mutex);
-    if (keyframes.empty() || imu_queue.empty() || base_frame_id.empty()) {
-      return false;
-    }
-
-    bool updated = false;
-    imu_mapper->map_imu_data(
-        covisibility_graph, tf_buffer, imu_queue, keyframes, base_frame_id);
-
-    return updated;
   }
 
   /**
