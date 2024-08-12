@@ -34,6 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_types.h>
 
 #include <boost/optional.hpp>
+#include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
 #include <vector>
@@ -82,7 +83,7 @@ struct KeyFrame {
    * @param directory
    * @param graph
    */
-  KeyFrame(const std::string& directory, g2o::HyperGraph* graph);
+  KeyFrame(const std::string& directory, std::shared_ptr<GraphSLAM> covisibility_graph);
 
   KeyFrame(const KeyFrame::Ptr& key);
 
@@ -110,7 +111,8 @@ struct KeyFrame {
    * @param graph
    * @return Success or failure
    */
-  bool load(const std::string& directory, g2o::HyperGraph* graph);
+  bool load(const std::string& directory,
+            std::shared_ptr<GraphSLAM> covisibility_graph);
 
   /**
    * @brief

@@ -153,9 +153,9 @@ class Planes {
             std::string type) {
     std::ifstream ifs;
     if (type == "y") {
-      ifs.open(directory + "/y_plane_data");
+      ifs.open(directory + "/y_plane_data.txt");
     } else if (type == "x") {
-      ifs.open(directory + "/x_plane_data");
+      ifs.open(directory + "/x_plane_data.txt");
     } else {
       std::cout << "plane type not mentioned !" << std::endl;
       return false;
