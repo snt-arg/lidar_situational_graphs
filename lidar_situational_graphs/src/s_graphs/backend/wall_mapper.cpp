@@ -27,7 +27,7 @@ void WallMapper::factor_wall(
 
     if (!same_floor_level) return;
 
-    if (!(matched_x_plane1->second).on_wall && !(matched_x_plane2->second).on_wall) {
+    if (!(matched_x_plane1->second).on_wall || !(matched_x_plane2->second).on_wall) {
       int id = add_wall_node_and_edge(covisibility_graph,
                                       wall_pose,
                                       wall_point,
@@ -36,6 +36,7 @@ void WallMapper::factor_wall(
 
       Walls wall;
       wall.id = id;
+      wall.plane_type = PlaneUtils::plane_class::X_VERT_PLANE;
       wall.plane1_id = matched_x_plane1->first;
       wall.plane2_id = matched_x_plane2->first;
       wall.floor_level = matched_x_plane1->second.floor_level;
@@ -53,7 +54,7 @@ void WallMapper::factor_wall(
 
     if (!same_floor_level) return;
 
-    if (!(matched_y_plane1->second).on_wall && !(matched_y_plane2->second).on_wall) {
+    if (!(matched_y_plane1->second).on_wall || !(matched_y_plane2->second).on_wall) {
       int id = add_wall_node_and_edge(covisibility_graph,
                                       wall_pose,
                                       wall_point,
@@ -62,6 +63,7 @@ void WallMapper::factor_wall(
 
       Walls wall;
       wall.id = id;
+      wall.plane_type = PlaneUtils::plane_class::Y_VERT_PLANE;
       wall.plane1_id = matched_y_plane1->first;
       wall.plane2_id = matched_y_plane2->first;
       wall.floor_level = matched_y_plane1->second.floor_level;

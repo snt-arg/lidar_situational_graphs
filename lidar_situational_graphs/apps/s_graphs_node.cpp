@@ -2193,6 +2193,10 @@ class SGraphsNode : public rclcpp::Node {
     if (!boost::filesystem::is_directory(hort_planes_directory)) {
       boost::filesystem::create_directory(hort_planes_directory);
     }
+    std::string walls_directory = directory + "/walls";
+    if (!boost::filesystem::is_directory(walls_directory)) {
+      boost::filesystem::create_directory(walls_directory);
+    }
     std::string rooms_directory = directory + "/rooms";
     if (!boost::filesystem::is_directory(rooms_directory)) {
       boost::filesystem::create_directory(rooms_directory);
@@ -2216,6 +2220,15 @@ class SGraphsNode : public rclcpp::Node {
     id = 0;
     for (auto& y_vert_plane : y_vert_planes) {
       y_vert_plane.second.save(y_vert_planes_directory, 'y', id);
+      id++;
+    }
+
+    id = 0;
+    for (auto& wall : walls_vec) {
+      if (wall.second.plane_type == PlaneUtils::plane_class::X_VERT_PLANE)
+        wall.second.save(walls_directory, x_vert_planes, id);
+      else if (wall.second.plane_type == PlaneUtils::plane_class::Y_VERT_PLANE)
+        wall.second.save(walls_directory, y_vert_planes, id);
       id++;
     }
 
@@ -2308,7 +2321,6 @@ class SGraphsNode : public rclcpp::Node {
     std::map<int, KeyFrame::Ptr> loaded_keyframes;
     g2o::SparseOptimizer* local_graph;
     local_graph = covisibility_graph->graph.get();
-    VerticalPlanes load_x_planes;
 
     // TODO:HB fix this code to read data properly
     boost::filesystem::path parentPath(directory);
@@ -2388,9 +2400,6 @@ class SGraphsNode : public rclcpp::Node {
              y_vert_plane.second.keyframe_node_vec.size());
 
       for (size_t j = 0; j < y_vert_plane.second.keyframe_node_vec.size(); j++) {
-        // std::cout << "Y keyframe node id : "
-        //           << y_vert_planes[i].keyframe_node_vec[j]->id() << std::endl;
-        // std::cout << "plane : " << i << "  cloud : " << j << std::endl;
         g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
             y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
             y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,

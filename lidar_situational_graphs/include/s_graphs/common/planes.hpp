@@ -92,91 +92,57 @@ class Planes {
 
   void save(const std::string& directory, char type, int sequential_id) {
     std::string parent_directory = directory.substr(0, directory.find_last_of("/\\"));
-    write_wall_data_to_csv(parent_directory, type);
+    write_plane_data_to_csv(parent_directory, type);
 
+    std::string plane_sub_directory;
+    plane_sub_directory = directory + "/" + std::to_string(sequential_id);
+
+    std::ofstream ofs;
     if (type == 'x') {
-      std::string x_vert_planes_sub_directory =
-          directory + "/" + std::to_string(sequential_id);
-      if (!boost::filesystem::is_directory(x_vert_planes_sub_directory)) {
-        boost::filesystem::create_directory(x_vert_planes_sub_directory);
-      }
-
-      std::ofstream ofs(x_vert_planes_sub_directory + "/x_plane_data");
-      ofs << "id\n";
-      ofs << id << "\n";
-
-      ofs << "Covariance\n";
-      ofs << covariance << "\n";
-
-      ofs << "plane_node_id\n";
-      ofs << plane_node->id() << "\n";
-
-      ofs << "plane_node_pose\n";
-      ofs << plane_node->estimate().coeffs() << "\n";
-
-      ofs << "type\n";
-      ofs << type << "\n";
-
-      ofs << "color\n";
-      ofs << color[0] << "\n";
-      ofs << color[1] << "\n";
-      ofs << color[2] << "\n";
-
-      ofs << "fixed\n";
-      ofs << plane_node->fixed() << "\n";
-
-      ofs << "keyframe_vec_node_ids\n";
-      for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
-        ofs << keyframe_node_vec[i]->id() << "\n";
-      }
-      pcl::io::savePCDFileBinary(x_vert_planes_sub_directory + "/cloud_seg_map.pcd",
-                                 *cloud_seg_map);
-      for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
-        std::string filename = x_vert_planes_sub_directory + "/cloud_seg_body_" +
-                               std::to_string(i) + ".pcd";
-        pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
-      }
+      ofs.open(plane_sub_directory + "/x_plane_data");
     } else if (type == 'y') {
-      std::string y_vert_planes_sub_directory =
-          directory + "/" + std::to_string(sequential_id);
-      if (!boost::filesystem::is_directory(y_vert_planes_sub_directory)) {
-        boost::filesystem::create_directory(y_vert_planes_sub_directory);
-      }
+      ofs.open(plane_sub_directory + "/y_plane_data");
+    } else if (type == 'hort') {
+      ofs.open(plane_sub_directory + "/hort_plane_data");
+    }
 
-      std::ofstream ofs(y_vert_planes_sub_directory + "/y_plane_data");
-      ofs << "id\n";
-      ofs << id << "\n";
+    if (!boost::filesystem::is_directory(plane_sub_directory)) {
+      boost::filesystem::create_directory(plane_sub_directory);
+    }
 
-      ofs << "Covariance\n";
-      ofs << covariance << "\n";
+    ofs << "id\n";
+    ofs << id << "\n";
 
-      ofs << "plane_node_id\n";
-      ofs << plane_node->id() << "\n";
+    ofs << "Covariance\n";
+    ofs << covariance << "\n";
 
-      ofs << "plane_node_pose\n";
-      ofs << plane_node->estimate().coeffs() << "\n";
+    ofs << "plane_node_id\n";
+    ofs << plane_node->id() << "\n";
 
-      ofs << "type\n";
-      ofs << type << "\n";
-      ofs << "color\n";
-      ofs << color[0] << "\n";
-      ofs << color[1] << "\n";
-      ofs << color[2] << "\n";
+    ofs << "plane_node_pose\n";
+    ofs << plane_node->estimate().coeffs() << "\n";
 
-      ofs << "fixed\n";
-      ofs << plane_node->fixed() << "\n";
+    ofs << "type\n";
+    ofs << type << "\n";
 
-      ofs << "keyframe_vec_node_ids\n";
-      for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
-        ofs << keyframe_node_vec[i]->id() << "\n";
-      }
-      pcl::io::savePCDFileBinary(y_vert_planes_sub_directory + "/cloud_seg_map.pcd",
-                                 *cloud_seg_map);
-      for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
-        std::string filename = y_vert_planes_sub_directory + "/cloud_seg_body_" +
-                               std::to_string(i) + ".pcd";
-        pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
-      }
+    ofs << "color\n";
+    ofs << color[0] << "\n";
+    ofs << color[1] << "\n";
+    ofs << color[2] << "\n";
+
+    ofs << "fixed\n";
+    ofs << plane_node->fixed() << "\n";
+
+    ofs << "keyframe_vec_node_ids\n";
+    for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
+      ofs << keyframe_node_vec[i]->id() << "\n";
+    }
+    pcl::io::savePCDFileBinary(plane_sub_directory + "/cloud_seg_map.pcd",
+                               *cloud_seg_map);
+    for (size_t i = 0; i < cloud_seg_body_vec.size(); i++) {
+      std::string filename =
+          plane_sub_directory + "/cloud_seg_body_" + std::to_string(i) + ".pcd";
+      pcl::io::savePCDFileBinary(filename, *cloud_seg_body_vec[i]);
     }
   }
 
@@ -273,7 +239,7 @@ class Planes {
   }
 
   // write plane data to csv
-  void write_wall_data_to_csv(const std::string parent_directory, char type) {
+  void write_plane_data_to_csv(const std::string parent_directory, char type) {
     if (on_wall) {
       std::cout << "Not adding plane " << id << " as its on wall" << std::endl;
       return;
