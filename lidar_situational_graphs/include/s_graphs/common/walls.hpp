@@ -76,15 +76,17 @@ class Walls {
             const std::unordered_map<int, VerticalPlanes> vert_planes,
             const int sequential_id) {
     std::string parent_directory = directory.substr(0, directory.find_last_of("/\\"));
-    write_wall_data_to_csv(parent_directory, vert_planes);
+
+    write_wall_data_to_csv(directory, vert_planes);
+    write_wall_points_data_to_csv(directory, vert_planes);
   }
 
   void load(const std::string& directory, g2o::SparseOptimizer* local_graph) {}
 
   void write_wall_data_to_csv(
-      const std::string parent_directory,
+      const std::string wall_directory,
       const std::unordered_map<int, VerticalPlanes> vert_planes) {
-    std::string file_path = parent_directory + "/walls.csv";
+    std::string file_path = wall_directory + "/wall_data.csv";
     bool file_exists = boost::filesystem::exists(file_path);
     std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
     if (!file_exists) {
@@ -137,6 +139,30 @@ class Walls {
             << "," << p_min.z << "," << p_max_new.x << "," << p_max_new.y << ","
             << p_min.z << "," << length << "," << height << "," << wall_thickness
             << "\n";
+    csv_ofs.close();
+  }
+
+  void write_wall_points_data_to_csv(
+      const std::string wall_directory,
+      const std::unordered_map<int, VerticalPlanes> vert_planes) {
+    std::string file_path = wall_directory + "/wall_points.csv";
+    bool file_exists = boost::filesystem::exists(file_path);
+    std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
+    if (!file_exists) {
+      csv_ofs << "id,x,y,z\n ";
+    }
+
+    // get the planes belonging to wall
+    auto plane1 = vert_planes.find(plane1_id);
+    auto plane2 = vert_planes.find(plane2_id);
+
+    for (const auto& point : plane1->second.cloud_seg_map->points) {
+      csv_ofs << id << "," << point.x << "," << point.y << "," << point.z << "\n";
+    }
+
+    for (const auto& point : plane2->second.cloud_seg_map->points) {
+      csv_ofs << id << "," << point.x << "," << point.y << "," << point.z << "\n";
+    }
     csv_ofs.close();
   }
 

@@ -2228,6 +2228,12 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     id = 0;
+    for (auto& hort_plane : hort_planes) {
+      hort_plane.second.save(hort_planes_directory, 'hort', id);
+      id++;
+    }
+
+    id = 0;
     for (auto& wall : walls_vec) {
       if (wall.second.plane_type == PlaneUtils::plane_class::X_VERT_PLANE)
         wall.second.save(walls_directory, x_vert_planes, id);
