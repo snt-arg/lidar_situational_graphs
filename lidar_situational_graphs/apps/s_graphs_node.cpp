@@ -2205,6 +2205,10 @@ class SGraphsNode : public rclcpp::Node {
     if (!boost::filesystem::is_directory(rooms_directory)) {
       boost::filesystem::create_directory(rooms_directory);
     }
+    std::string floors_directory = directory + "/floors";
+    if (!boost::filesystem::is_directory(floors_directory)) {
+      boost::filesystem::create_directory(floors_directory);
+    }
 
     std::cout << "All data will be dumped to: " << directory << std::endl;
     covisibility_graph->save(directory + "/graph.g2o");
@@ -2245,6 +2249,12 @@ class SGraphsNode : public rclcpp::Node {
     id = 0;
     for (auto& room : rooms_vec) {
       room.second.save(rooms_directory, id);
+      id++;
+    }
+
+    id = 0;
+    for (auto& floor : floors_vec) {
+      floor.second.save(floors_directory, id);
       id++;
     }
 

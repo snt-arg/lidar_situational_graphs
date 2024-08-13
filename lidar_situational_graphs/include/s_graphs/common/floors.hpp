@@ -32,6 +32,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
+
 #include <Eigen/Eigen>
 #include <g2o/vertex_floor.hpp>
 
@@ -54,11 +55,45 @@ namespace s_graphs {
  * @var plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id
  * @var node
  */
-struct Floors {
+class Floors {
+  Floors() {}
+
+  bool save(const std::string& directory, int sequential_id) {
+    std::string floors_sub_directory = directory + "/" + std::to_string(sequential_id);
+    if (!boost::filesystem::is_directory(floors_sub_directory)) {
+      boost::filesystem::create_directory(floors_sub_directory);
+    }
+
+    std::ofstream ofs(floors_sub_directory + "/floor_data");
+
+    ofs << "id\n";
+    ofs << id << "\n";
+
+    ofs << "sequential_id\n";
+    ofs << sequential_id << "\n";
+
+    ofs << "sequential_id\n";
+    ofs << sequential_id << "\n";
+
+    ofs << "floor_node\n";
+    ofs << node->estimate().matrix() << "\n";
+
+    ofs << "color\n";
+    ofs << color[0] << " " << color[1] << " " << color[2] << "\n";
+
+    ofs << "stair_keyframe_ids\n";
+    for (const auto& id : stair_keyframe_ids) ofs << id << "\n";
+
+    pcl::io::savePCDFileBinary(floors_sub_directory + "/floor_cloud.pcd", *floor_cloud);
+    pcl::io::savePCDFileBinary(floors_sub_directory + "/floor_wall_cloud.pcd",
+                               *floor_wall_cloud);
+  }
+
+  bool load(const std::string& directory, g2o::SparseOptimizer* local_graph) {}
+
  public:
   int id;
   int sequential_id;
-  int plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id;
   g2o::VertexFloor* node;  // node instance
   std::vector<double> color;
   std::vector<int> stair_keyframe_ids;
