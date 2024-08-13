@@ -50,9 +50,7 @@ namespace s_graphs {
  * @brief
  *
  * @param id
- * @param plane_x1, plane_x2, plane_y1, plane_y2
  * @param plane_x1_id, plane_x2_id, plane_y1_id, plane_y2_id
- * @param neighbour_ids
  * @param node
  * @param floor_level
  * @param sub_room
@@ -68,15 +66,6 @@ class Rooms {
       node = new g2o::VertexRoom();
       node->setEstimate(old_room.node->estimate());
 
-      plane_x1_node = new g2o::VertexPlane();
-      plane_x1_node->setEstimate(old_room.plane_x1_node->estimate());
-      plane_x2_node = new g2o::VertexPlane();
-      plane_x2_node->setEstimate(old_room.plane_x2_node->estimate());
-      plane_y1_node = new g2o::VertexPlane();
-      plane_y1_node->setEstimate(old_room.plane_y1_node->estimate());
-      plane_y2_node = new g2o::VertexPlane();
-      plane_y2_node->setEstimate(old_room.plane_y2_node->estimate());
-
       // room_keyframes.reserve(old_room.room_keyframes.size());
       for (const auto &k : old_room.room_keyframes) {
         std::make_shared<KeyFrameSnapshot>(k.second);
@@ -87,12 +76,6 @@ class Rooms {
   Rooms &operator=(const Rooms &old_room) {
     id = old_room.id;
     prior_id = old_room.prior_id;
-
-    plane_x1 = old_room.plane_x1;
-    plane_x2 = old_room.plane_x2;
-    plane_y1 = old_room.plane_y1;
-    plane_y2 = old_room.plane_y2;
-
     plane_x1_id = old_room.plane_x1_id;
     plane_x2_id = old_room.plane_x2_id;
     plane_y1_id = old_room.plane_y1_id;
@@ -101,11 +84,6 @@ class Rooms {
     sub_room = old_room.sub_room;
     cluster_array = old_room.cluster_array;
 
-    plane_x1_node = old_room.plane_x1_node;
-    plane_x2_node = old_room.plane_x2_node;
-    plane_y1_node = old_room.plane_y1_node;
-    plane_y2_node = old_room.plane_y2_node;
-
     node = old_room.node;
     room_keyframes = old_room.room_keyframes;
     local_graph = old_room.local_graph;
@@ -113,141 +91,63 @@ class Rooms {
 
     return *this;
   }
-  bool save(const std::string &directory, int sequential_id) {
+
+  void save(const std::string &directory, int sequential_id) {
     std::string rooms_sub_directory = directory + "/" + std::to_string(sequential_id);
     if (!boost::filesystem::is_directory(rooms_sub_directory)) {
       boost::filesystem::create_directory(rooms_sub_directory);
     }
 
-    std::ofstream ofs(rooms_sub_directory + "/room_data");
-    ofs << "id\n";
+    std::ofstream ofs(rooms_sub_directory + "/room_data.txt");
+    ofs << "id ";
     ofs << id << "\n";
 
-    ofs << "Plane_x1 \n";
-    ofs << plane_x1.coeffs() << "\n";
-
-    ofs << "Plane_x2 \n";
-    ofs << plane_x2.coeffs() << "\n";
-
-    ofs << "Plane_y1 \n";
-    ofs << plane_y1.coeffs() << "\n";
-
-    ofs << "Plane_y2 \n";
-    ofs << plane_y2.coeffs() << "\n";
-
-    ofs << "plane_x1_id \n";
+    ofs << "plane_x1_id ";
     ofs << plane_x1_id << "\n";
 
-    ofs << "plane_x2_id \n";
+    ofs << "plane_x2_id ";
     ofs << plane_x2_id << "\n";
 
-    ofs << "plane_y1_id \n";
+    ofs << "plane_y1_id ";
     ofs << plane_y1_id << "\n";
 
-    ofs << "plane_y2_id \n";
+    ofs << "plane_y2_id ";
     ofs << plane_y2_id << "\n";
 
-    ofs << "plane_x1_node \n";
-    ofs << plane_x1_node->estimate().coeffs() << "\n";
-
-    ofs << "plane_x2_node \n";
-    ofs << plane_x2_node->estimate().coeffs() << "\n";
-
-    ofs << "plane_y1_node \n";
-    ofs << plane_y1_node->estimate().coeffs() << "\n";
-
-    ofs << "plane_y2_node \n";
-    ofs << plane_y2_node->estimate().coeffs() << "\n";
-
-    ofs << "room_node \n";
+    ofs << "room_node ";
     ofs << node->estimate().matrix() << "\n";
 
-    ofs << "room_keyframes_ids\n";
-    for (const auto &room_keyframe : room_keyframes) {
-      ofs << room_keyframe.first << "\n";
+    if (!room_keyframes.empty()) {
+      ofs << "room_keyframes_ids\n";
+      for (const auto &room_keyframe : room_keyframes) {
+        ofs << room_keyframe.first << "\n";
+      }
     }
-    return true;
+
+    ofs.close();
   }
 
-  bool load(const std::string &directory, g2o::SparseOptimizer *local_graph) {
-    std::ifstream ifs(directory + "/room_data");
+  bool load(const std::string &directory,
+            const std::shared_ptr<GraphSLAM> covisibility_graph) {
+    std::ifstream ifs(directory + "/room_data.txt");
     if (!ifs) {
       return false;
     }
+
+    Eigen::Isometry3d room_pose;
     while (!ifs.eof()) {
       std::string token;
       ifs >> token;
       if (token == "id") {
         ifs >> id;
-        node->setId(id);
       } else if (token == "plane_x1_id") {
-        int id;
-        ifs >> id;
-        for (const auto &vertex_pair : local_graph->vertices()) {
-          g2o::VertexPlane *vertex =
-              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
-          if (vertex && vertex->id() == id) {
-            plane_x1_node = vertex;
-          }
-        }
-        plane_x1_id = id;
+        ifs >> plane_x1_id;
       } else if (token == "plane_x2_id") {
-        int id;
-        ifs >> id;
-        for (const auto &vertex_pair : local_graph->vertices()) {
-          g2o::VertexPlane *vertex =
-              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
-          if (vertex && vertex->id() == id) {
-            plane_x2_node = vertex;
-          }
-        }
-        plane_x2_id = id;
+        ifs >> plane_x2_id;
       } else if (token == "plane_y1_id") {
-        int id;
-        ifs >> id;
-        for (const auto &vertex_pair : local_graph->vertices()) {
-          g2o::VertexPlane *vertex =
-              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
-          if (vertex && vertex->id() == id) {
-            plane_y1_node = vertex;
-          }
-        }
-        plane_y1_id = id;
+        ifs >> plane_y1_id;
       } else if (token == "plane_y2_id") {
-        int id;
-        ifs >> id;
-        for (const auto &vertex_pair : local_graph->vertices()) {
-          g2o::VertexPlane *vertex =
-              dynamic_cast<g2o::VertexPlane *>(vertex_pair.second);
-          if (vertex && vertex->id() == id) {
-            plane_y2_node = vertex;
-          }
-        }
-        plane_y2_id = id;
-      } else if (token == "Plane_x1") {
-        Eigen::Vector4d plane_coeffs;
-        for (int i = 0; i < 4; i++) {
-          ifs >> plane_coeffs[i];
-        }
-        plane_x1.fromVector(plane_coeffs);
-      } else if (token == "Plane_x2") {
-        Eigen::Vector4d plane_coeffs;
-        for (int i = 0; i < 4; i++) {
-          ifs >> plane_coeffs[i];
-        }
-        plane_x2.fromVector(plane_coeffs);
-      } else if (token == "Plane_y1") {
-        Eigen::Vector4d plane_coeffs;
-        for (int i = 0; i < 4; i++) {
-          ifs >> plane_coeffs[i];
-        }
-        plane_y1.fromVector(plane_coeffs);
-      } else if (token == "Plane_y2") {
-        Eigen::Vector4d plane_coeffs;
-        for (int i = 0; i < 4; i++) {
-          ifs >> plane_coeffs[i];
-        }
-        plane_y2.fromVector(plane_coeffs);
+        ifs >> plane_y2_id;
       } else if (token == "room_node") {
         Eigen::Matrix4d room_pose = Eigen::Matrix4d::Identity();
         for (int i = 0; i < 4; i++) {
@@ -255,33 +155,25 @@ class Rooms {
             ifs >> room_pose(i, j);
           }
         }
-        Eigen::Isometry3d room_isometry_pose(room_pose);
-        node->setEstimate(room_isometry_pose);
       }
     }
+
+    node = covisibility_graph->add_room_node(room_pose);
+    node->setId(id);
+
     return true;
   }
 
  public:
   int id;
   int prior_id;
-  g2o::Plane3D plane_x1;
-  g2o::Plane3D plane_x2;
-  g2o::Plane3D plane_y1;
-  g2o::Plane3D plane_y2;
-  int plane_x1_id;
-  int plane_x2_id;
-  int plane_y1_id;
-  int plane_y2_id;
+  int plane_x1_id, plane_x2_id;
+  int plane_y1_id, plane_y2_id;
   int floor_level;
   bool sub_room;
   bool matched = false;
   visualization_msgs::msg::MarkerArray cluster_array;
 
-  g2o::VertexPlane *plane_x1_node = nullptr;
-  g2o::VertexPlane *plane_x2_node = nullptr;
-  g2o::VertexPlane *plane_y1_node = nullptr;
-  g2o::VertexPlane *plane_y2_node = nullptr;
   g2o::VertexRoom *node = nullptr;  // node instance in covisibility graph
   std::map<int, KeyFrame::Ptr> room_keyframes;
   std::shared_ptr<GraphSLAM> local_graph;

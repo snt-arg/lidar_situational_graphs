@@ -63,15 +63,48 @@ void KeyFrame::save(const std::string& directory, const int& sequential_id) {
   std::ofstream ofs(kf_sub_directory + "/kf_data.txt");
   ofs << "stamp " << stamp.seconds() << " " << stamp.nanoseconds() << "\n";
 
-  ofs << "estimate\n";
+  ofs << "estimate ";
   ofs << node->estimate().matrix() << "\n";
 
-  ofs << "odom\n";
+  ofs << "odom ";
   ofs << odom.matrix() << "\n";
 
   ofs << "accum_distance " << accum_distance << "\n";
 
   ofs << "floor_level " << floor_level << "\n";
+
+  if (!x_plane_ids.empty()) {
+    ofs << "x_plane_ids ";
+    for (size_t i = 0; i < x_plane_ids.size(); i++) {
+      if (i < x_plane_ids.size() - 1)
+        ofs << x_plane_ids[i] << " ";
+      else
+        ofs << x_plane_ids[i];
+    }
+    ofs << "\n";
+  }
+
+  if (!y_plane_ids.empty()) {
+    ofs << "y_plane_ids ";
+    for (size_t i = 0; i < y_plane_ids.size(); i++) {
+      if (i < y_plane_ids.size() - 1)
+        ofs << y_plane_ids[i] << " ";
+      else
+        ofs << y_plane_ids[i];
+    }
+    ofs << "\n";
+  }
+
+  if (!hort_plane_ids.empty()) {
+    ofs << "hort_plane_ids ";
+    for (size_t i = 0; i < hort_plane_ids.size(); i++) {
+      if (i < hort_plane_ids.size() - 1)
+        ofs << hort_plane_ids[i] << " ";
+      else
+        ofs << hort_plane_ids[i];
+    }
+    ofs << "\n";
+  }
 
   if (floor_coeffs) {
     ofs << "floor_coeffs " << floor_coeffs->transpose() << "\n";
@@ -93,13 +126,14 @@ void KeyFrame::save(const std::string& directory, const int& sequential_id) {
   if (node) {
     ofs << "id " << node->id() << "\n";
   }
+  ofs.close();
 
   pcl::io::savePCDFileBinary(kf_sub_directory + "/cloud.pcd", *cloud);
   pcl::io::savePCDFileBinary(kf_sub_directory + "/dense_cloud.pcd", *dense_cloud);
 }
 
 bool KeyFrame::load(const std::string& directory,
-                    std::shared_ptr<GraphSLAM> covisibility_graph) {
+                    const std::shared_ptr<GraphSLAM> covisibility_graph) {
   std::ifstream ifs(directory + "/kf_data.txt");
   if (!ifs) {
     return false;
@@ -144,6 +178,24 @@ bool KeyFrame::load(const std::string& directory,
     } else if (token == "accum_distance") {
       double distance;
       ifs >> accum_distance;
+    } else if (token == "x_plane_ids") {
+      int x_plane_id;
+      while (ifs >> x_plane_id) {
+        x_plane_ids.push_back(x_plane_id);
+        if (ifs.peek() == '\n' || ifs.peek() == '\r') break;
+      }
+    } else if (token == "y_plane_ids") {
+      int y_plane_id;
+      while (ifs >> y_plane_id) {
+        y_plane_ids.push_back(y_plane_id);
+        if (ifs.peek() == '\n' || ifs.peek() == '\r') break;
+      }
+    } else if (token == "hort_plane_ids") {
+      int hort_plane_id;
+      while (ifs >> hort_plane_id) {
+        hort_plane_ids.push_back(hort_plane_id);
+        if (ifs.peek() == '\n' || ifs.peek() == '\r') break;
+      }
     } else if (token == "floor_coeffs") {
       Eigen::Vector4d coeffs;
       ifs >> coeffs[0] >> coeffs[1] >> coeffs[2] >> coeffs[3];

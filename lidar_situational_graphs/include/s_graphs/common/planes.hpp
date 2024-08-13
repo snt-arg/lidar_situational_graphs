@@ -97,8 +97,12 @@ class Planes {
 
     std::string plane_sub_directory;
     plane_sub_directory = directory + "/" + std::to_string(sequential_id);
-    std::ofstream ofs;
 
+    if (!boost::filesystem::is_directory(plane_sub_directory)) {
+      boost::filesystem::create_directory(plane_sub_directory);
+    }
+
+    std::ofstream ofs;
     if (type == 'x') {
       ofs.open(plane_sub_directory + "/x_plane_data.txt");
     } else if (type == 'y') {
@@ -107,34 +111,28 @@ class Planes {
       ofs.open(plane_sub_directory + "/hort_plane_data.txt");
     }
 
-    if (!boost::filesystem::is_directory(plane_sub_directory)) {
-      boost::filesystem::create_directory(plane_sub_directory);
-    }
-
-    ofs << "id\n";
+    ofs << "id ";
     ofs << id << "\n";
 
-    ofs << "Covariance\n";
+    ofs << "Covariance ";
     ofs << covariance << "\n";
 
-    ofs << "plane_node_id\n";
+    ofs << "plane_node_id ";
     ofs << plane_node->id() << "\n";
 
-    ofs << "plane_node_pose\n";
-    ofs << plane_node->estimate().coeffs() << "\n";
+    ofs << "plane_node_pose ";
+    ofs << plane_node->estimate().coeffs().transpose() << "\n";
 
-    ofs << "type\n";
+    ofs << "type ";
     ofs << type << "\n";
 
-    ofs << "color\n";
-    ofs << color[0] << "\n";
-    ofs << color[1] << "\n";
-    ofs << color[2] << "\n";
+    ofs << "color ";
+    ofs << color[0] << " " << color[1] << " " << color[2] << "\n";
 
-    ofs << "fixed\n";
+    ofs << "fixed ";
     ofs << plane_node->fixed() << "\n";
 
-    ofs << "keyframe_vec_node_ids\n";
+    ofs << "keyframe_vec_node_ids ";
     for (size_t i = 0; i < keyframe_node_vec.size(); i++) {
       ofs << keyframe_node_vec[i]->id() << "\n";
     }
@@ -149,26 +147,28 @@ class Planes {
   }
 
   bool load(const std::string& directory,
-            g2o::SparseOptimizer* local_graph,
+            const std::shared_ptr<GraphSLAM> covisibility_graph,
             std::string type) {
     std::ifstream ifs;
-    if (type == "y") {
-      ifs.open(directory + "/y_plane_data.txt");
-    } else if (type == "x") {
+
+    if (type == "x") {
       ifs.open(directory + "/x_plane_data.txt");
-    } else {
-      std::cout << "plane type not mentioned !" << std::endl;
-      return false;
+    } else if (type == "y") {
+      ifs.open(directory + "/y_plane_data.txt");
+    } else if (type == "hort") {
+      ifs.open(directory + "/hort_plane_data.txt");
     }
+
     if (!ifs) {
       return false;
     }
+
+    Eigen::Vector4d plane_coeffs;
     while (!ifs.eof()) {
       std::string token;
       ifs >> token;
       if (token == "id") {
         ifs >> id;
-        plane_node->setId(id);
       } else if (token == "Covariance") {
         Eigen::Matrix3d mat;
         for (int i = 0; i < 3; i++) {
@@ -178,30 +178,24 @@ class Planes {
         }
         covariance = mat;
       } else if (token == "keyframe_vec_node_ids") {
-        std::vector<int> ids;
-        int id;
-        while (ifs >> id) {
-          ids.push_back(id);
+        std::vector<int> kf_ids;
+        int kf_id;
+        while (ifs >> kf_id) {
+          kf_ids.push_back(kf_id);
         }
-        for (size_t i = 0; i < ids.size(); i++) {
-          for (const auto& vertex_pair : local_graph->vertices()) {
+        for (size_t i = 0; i < kf_ids.size(); i++) {
+          for (const auto& vertex_pair : covisibility_graph->graph->vertices()) {
             g2o::VertexSE3* vertex = dynamic_cast<g2o::VertexSE3*>(vertex_pair.second);
-            if (vertex && vertex->id() == ids[i]) {
+            if (vertex && vertex->id() == kf_ids[i]) {
               // Found the vertex with the given keyframe_id
               keyframe_node_vec.push_back(vertex);
             }
           }
         }
-
-      } else if (token == "keyframe_node_id") {
-        int node_id;
-        ifs >> node_id;
       } else if (token == "plane_node_pose") {
-        Eigen::Vector4d plane_coeffs;
         for (int i = 0; i < 4; i++) {
           ifs >> plane_coeffs[i];
         }
-        plane_node->setEstimate(plane_coeffs);
       } else if (token == "color") {
         Eigen::Vector3d color_values;
         for (int i = 0; i < 3; i++) {
@@ -218,22 +212,16 @@ class Planes {
       }
     }
 
-    int cloud_seg_body_vec_size = 0;
-    boost::filesystem::path dir(directory);
-    for (boost::filesystem::directory_iterator it(dir);
-         it != boost::filesystem::directory_iterator();
-         ++it) {
-      if (boost::filesystem::is_regular_file(*it) && it->path().extension() == ".pcd") {
-        cloud_seg_body_vec_size++;
-      }
-    }
+    plane_node = covisibility_graph->add_plane_node(plane_coeffs);
+    plane_node->setId(id);
 
-    for (int i = 0; i < cloud_seg_body_vec_size - 2; i++) {
+    for (int i = 0; i < keyframe_node_vec.size(); i++) {
       std::string filename = "/cloud_seg_body_" + std::to_string(i) + ".pcd";
       pcl::PointCloud<PointNormal>::Ptr body_cloud(new pcl::PointCloud<PointNormal>());
       pcl::io::loadPCDFile(directory + filename, *body_cloud);
       cloud_seg_body_vec.push_back(body_cloud);
     }
+
     pcl::PointCloud<PointNormal>::Ptr map_cloud(new pcl::PointCloud<PointNormal>());
     pcl::io::loadPCDFile(directory + "/cloud_seg_map.pcd", *map_cloud);
     cloud_seg_map = map_cloud;
