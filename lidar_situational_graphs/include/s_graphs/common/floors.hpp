@@ -34,6 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_types.h>
 
 #include <Eigen/Eigen>
+#include <boost/filesystem.hpp>
 #include <g2o/vertex_floor.hpp>
 
 using PointT = pcl::PointXYZI;
@@ -56,7 +57,9 @@ namespace s_graphs {
  * @var node
  */
 class Floors {
+ public:
   Floors() {}
+  ~Floors() {}
 
   bool save(const std::string& directory, int sequential_id) {
     std::string floors_sub_directory = directory + "/" + std::to_string(sequential_id);
