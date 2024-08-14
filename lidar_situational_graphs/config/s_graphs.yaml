@@ -23,7 +23,7 @@
     keyframe_delta_angle: 2.0
 
     # Fix first node for optimization stability
-    fix_first_node: false
+    fix_first_node: true
     fix_first_node_stddev: 1 1 1 1 1 1
 
     fix_first_node_adaptive: true
