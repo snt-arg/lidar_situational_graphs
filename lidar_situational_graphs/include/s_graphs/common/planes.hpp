@@ -129,6 +129,9 @@ class Planes {
     ofs << "color ";
     ofs << color[0] << " " << color[1] << " " << color[2] << "\n";
 
+    ofs << "floor_level ";
+    ofs << floor_level << "\n";
+
     ofs << "fixed ";
     ofs << plane_node->fixed() << "\n";
 
@@ -147,7 +150,7 @@ class Planes {
   }
 
   bool load(const std::string& directory,
-            const std::shared_ptr<GraphSLAM> covisibility_graph,
+            const std::shared_ptr<GraphSLAM>& covisibility_graph,
             std::string type) {
     std::ifstream ifs;
 
@@ -202,6 +205,8 @@ class Planes {
           ifs >> color_values[i];
         }
         color = {color_values[0], color_values[1], color_values[2]};
+      } else if (token == "floor_level") {
+        ifs >> floor_level;
       } else if (token == "fixed") {
         int fixed;
         ifs >> fixed;
@@ -212,8 +217,10 @@ class Planes {
       }
     }
 
-    plane_node = covisibility_graph->add_plane_node(plane_coeffs);
-    plane_node->setId(id);
+    g2o::VertexPlane* node(new g2o::VertexPlane());
+    node->setId(id);
+    node->setEstimate(plane_coeffs);
+    plane_node = covisibility_graph->copy_plane_node(node);
 
     for (int i = 0; i < keyframe_node_vec.size(); i++) {
       std::string filename = "/cloud_seg_body_" + std::to_string(i) + ".pcd";

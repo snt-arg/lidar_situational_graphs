@@ -37,6 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/format.hpp>
+#include <ctime>
 #include <mutex>
 #include <rclcpp/time.hpp>
 #include <s_graphs/backend/floor_mapper.hpp>
@@ -140,8 +141,6 @@ class SGraphsNode : public rclcpp::Node {
         this->get_parameter("viz_all_floor_cloud").get_parameter_value().get<bool>();
     wait_trans_odom2map =
         this->get_parameter("wait_trans_odom2map").get_parameter_value().get<bool>();
-    use_map2map_transform =
-        this->get_parameter("use_map2map_transform").get_parameter_value().get<bool>();
     got_trans_odom2map = false;
     trans_odom2map.setIdentity();
     odom_path_vec.clear();
@@ -228,12 +227,6 @@ class SGraphsNode : public rclcpp::Node {
       rclcpp::spin_some(shared_from_this());
       usleep(1e6);
     }
-    map_2map_transform_sub = this->create_subscription<geometry_msgs::msg::PoseStamped>(
-        "map2map/transform",
-        1,
-        std::bind(
-            &SGraphsNode::map2map_transform_callback, this, std::placeholders::_1),
-        sub_opt);
 
     odom_sub.subscribe(this, "odom");
     cloud_sub.subscribe(this, "filtered_points");
@@ -346,6 +339,7 @@ class SGraphsNode : public rclcpp::Node {
     floor_node_updated = false;
     prev_edge_count = curr_edge_count = 0;
     prev_mapped_keyframes = 0;
+    current_session_id = 0;
 
     double graph_update_interval = this->get_parameter("graph_update_interval")
                                        .get_parameter_value()
@@ -410,7 +404,6 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("map_cloud_resolution", 0.05);
     this->declare_parameter("map_cloud_pub_resolution", 0.1);
     this->declare_parameter("wait_trans_odom2map", false);
-    this->declare_parameter("use_map2map_transform", false);
 
     this->declare_parameter("line_color_r", 0.0);
     this->declare_parameter("line_color_g", 0.0);
@@ -567,15 +560,8 @@ class SGraphsNode : public rclcpp::Node {
    */
   void raw_odom_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
     Eigen::Isometry3d odom = odom2isometry(odom_msg);
-    geometry_msgs::msg::TransformStamped odom2map_transform;
-    Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
     Eigen::Matrix4f odom_corrected;
-    if (use_map2map_transform) {
-      Eigen::Isometry3d odom_trans = map2map_trans * odom;
-      odom_corrected = trans_odom2map * odom_trans.matrix().cast<float>();
-    } else {
-      odom_corrected = trans_odom2map * odom.matrix().cast<float>();
-    }
+    odom_corrected = trans_odom2map * odom.matrix().cast<float>();
 
     geometry_msgs::msg::PoseStamped pose_stamped_corrected;
     if (floors_vec.empty())
@@ -589,16 +575,9 @@ class SGraphsNode : public rclcpp::Node {
               "_layer");
     publish_corrected_odom(pose_stamped_corrected);
 
-    if (use_map2map_transform) {
-      odom2map_transform =
-          matrix2transform(odom_msg->header.stamp,
-                           trans_odom2map * map2map_trans.matrix().cast<float>(),
-                           map_frame_id,
-                           odom_frame_id);
-    } else {
-      odom2map_transform = matrix2transform(
-          odom_msg->header.stamp, trans_odom2map, map_frame_id, odom_frame_id);
-    }
+    geometry_msgs::msg::TransformStamped odom2map_transform = matrix2transform(
+        odom_msg->header.stamp, trans_odom2map, map_frame_id, odom_frame_id);
+
     odom2map_broadcaster->sendTransform(odom2map_transform);
   }
 
@@ -629,24 +608,6 @@ class SGraphsNode : public rclcpp::Node {
   }
 
   /**
-   * @brief receive the transform between loaded and new map frame
-   * @param map2odom_pose_msg
-   */
-  void map2map_transform_callback(
-      const geometry_msgs::msg::PoseStamped::SharedPtr pose_msg) {
-    Eigen::Matrix3f mat3 = Eigen::Quaternionf(pose_msg->pose.orientation.w,
-                                              pose_msg->pose.orientation.x,
-                                              pose_msg->pose.orientation.y,
-                                              pose_msg->pose.orientation.z)
-                               .toRotationMatrix();
-    trans_map2map.setIdentity();
-    trans_map2map.block<3, 3>(0, 0) = mat3;
-    trans_map2map(0, 3) = pose_msg->pose.position.x;
-    trans_map2map(1, 3) = pose_msg->pose.position.y;
-    trans_map2map(2, 3) = pose_msg->pose.position.z;
-  }
-
-  /**
    * @brief received point clouds are pushed to #keyframe_queue
    * @param odom_msg
    * @param cloud_msg
@@ -664,32 +625,19 @@ class SGraphsNode : public rclcpp::Node {
       add_first_floor_node();
     }
 
-    // TODO: add use_map2map_transform check
     Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
     keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
 
     if (keyframe_updater->update(odom)) {
       double accum_d = keyframe_updater->get_accum_distance();
-      if (use_map2map_transform) {
-        Eigen::Isometry3d map2map_trans(trans_map2map.cast<double>());
-        Eigen::Quaterniond quaternion(map2map_trans.rotation());
-        Eigen::Isometry3d odom_trans = map2map_trans * odom;
-        Eigen::Quaterniond odom_quaternion(odom_trans.rotation());
+      KeyFrame::Ptr keyframe(new KeyFrame(
+          stamp, odom, accum_d, cloud, current_floor_level, current_session_id));
 
-        KeyFrame::Ptr keyframe(
-            new KeyFrame(stamp, odom_trans, accum_d, cloud, current_floor_level));
-        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-        keyframe_queue.push_back(keyframe);
-      } else {
-        KeyFrame::Ptr keyframe(
-            new KeyFrame(stamp, odom, accum_d, cloud, current_floor_level));
-        std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-
-        keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
-            odom_corrected, keyframe_updater->get_collected_pose_cloud()));
-        keyframe_queue.push_back(keyframe);
-        keyframe_updater->reset_collected_pose_cloud();
-      }
+      std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
+      keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
+          odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+      keyframe_queue.push_back(keyframe);
+      keyframe_updater->reset_collected_pose_cloud();
     }
 
     if (fast_mapping) {
@@ -1300,8 +1248,11 @@ class SGraphsNode : public rclcpp::Node {
     std::lock_guard<std::mutex> lock(graph_mutex);
 
     if (!loop_found && !duplicate_planes_found) {
-      GraphUtils::copy_windowed_graph(
-          optimization_window_size, covisibility_graph, compressed_graph, keyframes);
+      GraphUtils::copy_windowed_graph(optimization_window_size,
+                                      covisibility_graph,
+                                      compressed_graph,
+                                      keyframes,
+                                      current_session_id);
       global_optimization = false;
     } else {
       GraphUtils::copy_graph(covisibility_graph, compressed_graph, keyframes);
@@ -1315,8 +1266,11 @@ class SGraphsNode : public rclcpp::Node {
     std::lock_guard<std::mutex> lock(graph_mutex);
 
     if (!loop_found && !duplicate_planes_found) {
-      GraphUtils::copy_windowed_graph(
-          optimization_window_size, covisibility_graph, compressed_graph, keyframes);
+      GraphUtils::copy_windowed_graph(optimization_window_size,
+                                      covisibility_graph,
+                                      compressed_graph,
+                                      keyframes,
+                                      current_session_id);
       global_optimization = false;
     } else {
       GraphUtils::copy_floor_graph(current_floor_level,
@@ -2167,6 +2121,14 @@ class SGraphsNode : public rclcpp::Node {
     std::lock_guard<std::mutex> lock(graph_mutex);
 
     std::string directory = req->destination;
+    std::time_t t = std::time(nullptr);
+    struct std::tm* time_now = std::localtime(&t);
+    std::stringstream ss;
+    ss << (time_now->tm_year + 1900) << '-' << (time_now->tm_mon + 1) << '_'
+       << time_now->tm_mday << '_' << time_now->tm_hour << '_' << time_now->tm_min
+       << "_" << time_now->tm_sec;
+    directory += "_" + ss.str();
+
     if (!boost::filesystem::is_directory(directory)) {
       boost::filesystem::create_directory(directory);
     }
@@ -2209,6 +2171,7 @@ class SGraphsNode : public rclcpp::Node {
       id++;
     }
 
+    // TODO:HB save all duplicate planes edges
     id = 0;
     for (auto& x_vert_plane : x_vert_planes) {
       x_vert_plane.second.save(x_vert_planes_directory, 'x', id);
@@ -2227,6 +2190,7 @@ class SGraphsNode : public rclcpp::Node {
       id++;
     }
 
+    // TODO:HB save all wall-planes edges
     id = 0;
     for (auto& wall : walls_vec) {
       if (wall.second.plane_type == PlaneUtils::plane_class::X_VERT_PLANE)
@@ -2253,14 +2217,24 @@ class SGraphsNode : public rclcpp::Node {
       zero_utm_ofs << boost::format("%.6f %.6f %.6f") % zero_utm->x() % zero_utm->y() %
                           zero_utm->z()
                    << std::endl;
+      zero_utm_ofs.close();
     }
 
-    std::ofstream ofs(directory + "/anchor_node.txt");
+    std::ofstream anchor_ofs(directory + "/anchor_node.txt");
     if (anchor_node != nullptr) {
-      ofs << "id " << anchor_node->id() << "\n";
-      ofs << "estimate " << anchor_node->estimate().matrix() << "\n";
+      anchor_ofs << "id " << anchor_node->id() << "\n";
+      anchor_ofs << "estimate " << anchor_node->estimate().matrix() << "\n";
     }
-    ofs.close();
+    anchor_ofs.close();
+
+    std::ofstream session_ofs(directory + "/session_details.txt");
+    session_ofs << "session_id " << current_session_id << "\n";
+    session_ofs << "session_graph_vertices "
+                << covisibility_graph->retrieve_total_nbr_of_vertices() << "\n";
+    session_ofs << "session_graph_edges "
+                << covisibility_graph->retrieve_total_nbr_of_edges() << "\n";
+
+    session_ofs.close();
 
     res->success = true;
     return true;
@@ -2324,8 +2298,6 @@ class SGraphsNode : public rclcpp::Node {
   bool load_service(
       const std::shared_ptr<situational_graphs_msgs::srv::LoadGraph::Request> req,
       std::shared_ptr<situational_graphs_msgs::srv::LoadGraph::Response> res) {
-    std::lock_guard<std::mutex> lock(graph_mutex);
-
     std::string directory = req->destination;
     std::cout << "Reading data from: " << directory << std::endl;
 
@@ -2334,7 +2306,43 @@ class SGraphsNode : public rclcpp::Node {
         floor_directories;
 
     std::map<int, KeyFrame::Ptr> loaded_keyframes;
-    g2o::SparseOptimizer* local_graph = covisibility_graph->graph.get();
+
+    // read the session id
+    std::ifstream ifs(directory + "/session_details.txt");
+    std::string token;
+    int prev_session_id, prev_session_vertices, prev_session_edges;
+    while (!ifs.eof()) {
+      ifs >> token;
+      if (token == "session_id") {
+        ifs >> prev_session_id;
+        current_session_id = prev_session_id + 1;
+      } else if (token == "session_graph_vertices") {
+        ifs >> prev_session_vertices;
+      } else if (token == "session_graph_edges") {
+        ifs >> prev_session_edges;
+      }
+    }
+
+    // update the covisibility graph vertices and edges
+    covisibility_graph->set_total_nbr_of_vertices(prev_session_vertices);
+    covisibility_graph->set_total_nbr_of_edges(prev_session_edges);
+
+    boost::filesystem::path floor_parent_path(directory + "/floors");
+    if (boost::filesystem::is_directory(floor_parent_path)) {
+      for (const auto& entry :
+           boost::filesystem::directory_iterator(floor_parent_path)) {
+        if (boost::filesystem::is_directory(entry.path())) {
+          floor_directories.push_back(entry.path().string());
+        }
+      }
+    }
+    sort_directories(floor_directories);
+
+    for (long unsigned int i = 0; i < floor_directories.size(); i++) {
+      Floors floor;
+      floor.load(floor_directories[i], covisibility_graph);
+      floors_vec.insert({floor.id, floor});
+    }
 
     boost::filesystem::path keyframe_parent_path(directory + "/keyframes");
     if (boost::filesystem::is_directory(keyframe_parent_path)) {
@@ -2350,6 +2358,7 @@ class SGraphsNode : public rclcpp::Node {
     for (long unsigned int i = 0; i < keyframe_directories.size(); i++) {
       auto keyframe =
           std::make_shared<KeyFrame>(keyframe_directories[i], covisibility_graph);
+      keyframe->session_id = prev_session_id;
       loaded_keyframes.insert({keyframe->id(), keyframe});
     }
 
@@ -2365,22 +2374,11 @@ class SGraphsNode : public rclcpp::Node {
 
       auto edge = covisibility_graph->add_se3_edge(
           next_keyframe->node, prev_keyframe->node, relative_pose, information);
-
       covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
     }
 
-    std::cout << "keyframes size before loading: " << keyframes.size() << std::endl;
     for (const auto& loaded_kf : loaded_keyframes) keyframes.insert(loaded_kf);
-    std::cout << "keyframes size after loading: " << keyframes.size() << std::endl;
     for (const auto& kf : keyframes) std::cout << "kf id: " << kf.first << std::endl;
-
-    // add anchor node to the first kf
-    if (anchor_node == nullptr && this->get_parameter("fix_first_node_adaptive")
-                                      .get_parameter_value()
-                                      .get<bool>()) {
-      keyframe_mapper->add_anchor_node(
-          covisibility_graph, keyframes.begin()->second, anchor_node, anchor_edge);
-    }
 
     boost::filesystem::path x_vert_plane_parent_path(directory + "/x_vert_planes");
     if (boost::filesystem::is_directory(x_vert_plane_parent_path)) {
@@ -2395,7 +2393,6 @@ class SGraphsNode : public rclcpp::Node {
 
     for (long unsigned int i = 0; i < x_planes_directories.size(); i++) {
       VerticalPlanes vert_plane;
-
       vert_plane.load(x_planes_directories[i], covisibility_graph, "x");
       x_vert_planes.insert({vert_plane.id, vert_plane});
     }
@@ -2420,129 +2417,118 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
-    // boost::filesystem::path y_vert_plane_parent_path(directory + "/y_vert_planes");
-    // if (boost::filesystem::is_directory(y_vert_plane_parent_path)) {
-    //   for (const auto& entry :
-    //        boost::filesystem::directory_iterator(y_vert_plane_parent_path)) {
-    //     if (boost::filesystem::is_directory(entry.path())) {
-    //       y_planes_directories.push_back(entry.path().string());
-    //     }
-    //   }
-    // }
-    // sort_directories(y_planes_directories);
-
-    // for (long unsigned int i = 0; i < y_planes_directories.size(); i++) {
-    //   VerticalPlanes vert_plane;
-    //   vert_plane.load(y_planes_directories[i], covisibility_graph, "y");
-    //   y_vert_planes.insert({vert_plane.id, vert_plane});
-    // }
-
-    // for (auto& y_vert_plane : y_vert_planes) {
-    //   Eigen::Matrix3d plane_information_mat =
-    //       Eigen::Matrix3d::Identity() * plane_information;
-
-    //   for (size_t j = 0; j < y_vert_plane.second.keyframe_node_vec.size(); j++) {
-    //     g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
-    //         y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
-    //         y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,
-    //         y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_z,
-    //         y_vert_plane.second.cloud_seg_body_vec[j]->back().curvature);
-
-    //     auto edge = covisibility_graph->add_se3_plane_edge(
-    //         y_vert_plane.second.keyframe_node_vec[j],
-    //         y_vert_plane.second.plane_node,
-    //         det_plane_body_frame.coeffs(),
-    //         plane_information_mat);
-    //     covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
-    //   }
-    // }
-
-    // boost::filesystem::path hort_plane_parent_path(directory + "/hort_planes");
-    // if (boost::filesystem::is_directory(hort_plane_parent_path)) {
-    //   for (const auto& entry :
-    //        boost::filesystem::directory_iterator(hort_plane_parent_path)) {
-    //     if (boost::filesystem::is_directory(entry.path())) {
-    //       hort_plane_directories.push_back(entry.path().string());
-    //     }
-    //   }
-    // }
-    // sort_directories(hort_plane_directories);
-
-    // for (long unsigned int i = 0; i < hort_plane_directories.size(); i++) {
-    //   HorizontalPlanes hort_plane;
-    //   hort_plane.load(hort_plane_directories[i], covisibility_graph, "y");
-    //   hort_planes.insert({hort_plane.id, hort_plane});
-    // }
-
-    // for (auto& hort_plane : hort_planes) {
-    //   Eigen::Matrix3d plane_information_mat =
-    //       Eigen::Matrix3d::Identity() * plane_information;
-
-    //   for (size_t j = 0; j < hort_plane.second.keyframe_node_vec.size(); j++) {
-    //     g2o::Plane3D det_plane_body_frame =
-    //         Eigen::Vector4d(hort_plane.second.cloud_seg_body_vec[j]->back().normal_x,
-    //                         hort_plane.second.cloud_seg_body_vec[j]->back().normal_y,
-    //                         hort_plane.second.cloud_seg_body_vec[j]->back().normal_z,
-    //                         hort_plane.second.cloud_seg_body_vec[j]->back().curvature);
-
-    //     auto edge = covisibility_graph->add_se3_plane_edge(
-    //         hort_plane.second.keyframe_node_vec[j],
-    //         hort_plane.second.plane_node,
-    //         det_plane_body_frame.coeffs(),
-    //         plane_information_mat);
-    //     covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
-    //   }
-    // }
-
-    // boost::filesystem::path room_parent_path(directory + "/rooms");
-    // if (boost::filesystem::is_directory(room_parent_path)) {
-    //   for (const auto& entry :
-    //        boost::filesystem::directory_iterator(room_parent_path)) {
-    //     if (boost::filesystem::is_directory(entry.path())) {
-    //       room_directories.push_back(entry.path().string());
-    //     }
-    //   }
-    // }
-    // sort_directories(room_directories);
-
-    // for (long unsigned int i = 0; i < room_directories.size(); i++) {
-    //   Rooms room;
-    //   room.load(room_directories[i], covisibility_graph);
-    //   rooms_vec.insert({room.id, room});
-    // }
-
-    // Eigen::Matrix<double, 2, 2> information_room_planes;
-    // information_room_planes.setIdentity();
-    // information_room_planes(0, 0) = room_information;
-    // information_room_planes(1, 1) = room_information;
-    // for (long unsigned int i = 0; i < rooms_vec.size(); i++) {
-    //   auto edge_room_planes = covisibility_graph->add_room_4planes_edge(
-    //       rooms_vec[i].node,
-    //       x_vert_planes.find(rooms_vec[i].plane_x1_id)->second.plane_node,
-    //       x_vert_planes.find(rooms_vec[i].plane_x2_id)->second.plane_node,
-    //       y_vert_planes.find(rooms_vec[i].plane_y1_id)->second.plane_node,
-    //       y_vert_planes.find(rooms_vec[i].plane_y2_id)->second.plane_node,
-    //       information_room_planes);
-    //   covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
-    // }
-
-    boost::filesystem::path floor_parent_path(directory + "/floors");
-    if (boost::filesystem::is_directory(floor_parent_path)) {
+    boost::filesystem::path y_vert_plane_parent_path(directory + "/y_vert_planes");
+    if (boost::filesystem::is_directory(y_vert_plane_parent_path)) {
       for (const auto& entry :
-           boost::filesystem::directory_iterator(floor_parent_path)) {
+           boost::filesystem::directory_iterator(y_vert_plane_parent_path)) {
         if (boost::filesystem::is_directory(entry.path())) {
-          floor_directories.push_back(entry.path().string());
+          y_planes_directories.push_back(entry.path().string());
         }
       }
     }
-    sort_directories(floor_directories);
+    sort_directories(y_planes_directories);
 
-    for (long unsigned int i = 0; i < floor_directories.size(); i++) {
-      Floors floor;
-      std::cout << "floor directories: " << floor_directories[i] << std::endl;
-      floor.load(floor_directories[i], covisibility_graph);
-      floors_vec.insert({floor.id, floor});
-      std::cout << "inserting floor id: " << floor.id << std::endl;
+    for (long unsigned int i = 0; i < y_planes_directories.size(); i++) {
+      VerticalPlanes vert_plane;
+      vert_plane.load(y_planes_directories[i], covisibility_graph, "y");
+      y_vert_planes.insert({vert_plane.id, vert_plane});
+    }
+
+    for (auto& y_vert_plane : y_vert_planes) {
+      Eigen::Matrix3d plane_information_mat =
+          Eigen::Matrix3d::Identity() * plane_information;
+
+      for (size_t j = 0; j < y_vert_plane.second.keyframe_node_vec.size(); j++) {
+        g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_z,
+            y_vert_plane.second.cloud_seg_body_vec[j]->back().curvature);
+
+        auto edge = covisibility_graph->add_se3_plane_edge(
+            y_vert_plane.second.keyframe_node_vec[j],
+            y_vert_plane.second.plane_node,
+            det_plane_body_frame.coeffs(),
+            plane_information_mat);
+        covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      }
+    }
+
+    boost::filesystem::path hort_plane_parent_path(directory + "/hort_planes");
+    if (boost::filesystem::is_directory(hort_plane_parent_path)) {
+      for (const auto& entry :
+           boost::filesystem::directory_iterator(hort_plane_parent_path)) {
+        if (boost::filesystem::is_directory(entry.path())) {
+          hort_plane_directories.push_back(entry.path().string());
+        }
+      }
+    }
+    sort_directories(hort_plane_directories);
+
+    for (long unsigned int i = 0; i < hort_plane_directories.size(); i++) {
+      HorizontalPlanes hort_plane;
+      hort_plane.load(hort_plane_directories[i], covisibility_graph, "y");
+      hort_planes.insert({hort_plane.id, hort_plane});
+    }
+
+    for (auto& hort_plane : hort_planes) {
+      Eigen::Matrix3d plane_information_mat =
+          Eigen::Matrix3d::Identity() * plane_information;
+
+      for (size_t j = 0; j < hort_plane.second.keyframe_node_vec.size(); j++) {
+        g2o::Plane3D det_plane_body_frame =
+            Eigen::Vector4d(hort_plane.second.cloud_seg_body_vec[j]->back().normal_x,
+                            hort_plane.second.cloud_seg_body_vec[j]->back().normal_y,
+                            hort_plane.second.cloud_seg_body_vec[j]->back().normal_z,
+                            hort_plane.second.cloud_seg_body_vec[j]->back().curvature);
+
+        auto edge = covisibility_graph->add_se3_plane_edge(
+            hort_plane.second.keyframe_node_vec[j],
+            hort_plane.second.plane_node,
+            det_plane_body_frame.coeffs(),
+            plane_information_mat);
+        covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      }
+    }
+
+    boost::filesystem::path room_parent_path(directory + "/rooms");
+    if (boost::filesystem::is_directory(room_parent_path)) {
+      for (const auto& entry :
+           boost::filesystem::directory_iterator(room_parent_path)) {
+        if (boost::filesystem::is_directory(entry.path())) {
+          room_directories.push_back(entry.path().string());
+        }
+      }
+    }
+    sort_directories(room_directories);
+
+    for (long unsigned int i = 0; i < room_directories.size(); i++) {
+      Rooms room;
+      room.load(room_directories[i], covisibility_graph);
+      rooms_vec.insert({room.id, room});
+    }
+
+    Eigen::Matrix<double, 2, 2> information_room_planes;
+    information_room_planes.setIdentity();
+    information_room_planes(0, 0) = room_information;
+    information_room_planes(1, 1) = room_information;
+    for (auto& room : rooms_vec) {
+      auto edge_room_planes = covisibility_graph->add_room_4planes_edge(
+          room.second.node,
+          x_vert_planes.find(room.second.plane_x1_id)->second.plane_node,
+          x_vert_planes.find(room.second.plane_x2_id)->second.plane_node,
+          y_vert_planes.find(room.second.plane_y1_id)->second.plane_node,
+          y_vert_planes.find(room.second.plane_y2_id)->second.plane_node,
+          information_room_planes);
+      covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+    }
+
+    // add anchor node to the first kf
+    if (anchor_node == nullptr && this->get_parameter("fix_first_node_adaptive")
+                                      .get_parameter_value()
+                                      .get<bool>()) {
+      keyframe_mapper->add_anchor_node(
+          covisibility_graph, keyframes.begin()->second, anchor_node, anchor_edge);
     }
 
     current_floor_level = floors_vec.begin()->first;
@@ -2607,8 +2593,8 @@ class SGraphsNode : public rclcpp::Node {
       map_2map_transform_sub;
 
   std::mutex trans_odom2map_mutex;
-  Eigen::Matrix4f trans_odom2map, trans_map2map;
-  bool wait_trans_odom2map, got_trans_odom2map, use_map2map_transform;
+  Eigen::Matrix4f trans_odom2map;
+  bool wait_trans_odom2map, got_trans_odom2map;
   std::vector<geometry_msgs::msg::PoseStamped> odom_path_vec;
   std::string map_frame_id;
   std::string odom_frame_id;
@@ -2720,7 +2706,7 @@ class SGraphsNode : public rclcpp::Node {
   g2o::EdgeSE3* anchor_edge;
   std::map<int, KeyFrame::Ptr> keyframes;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
-  int current_floor_level;
+  int current_floor_level, current_session_id;
 
   int prev_mapped_keyframes;
   visualization_msgs::msg::MarkerArray s_graphs_markers;

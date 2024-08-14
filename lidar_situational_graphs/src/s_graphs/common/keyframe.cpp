@@ -12,21 +12,24 @@ KeyFrame::KeyFrame(const rclcpp::Time& stamp,
                    const Eigen::Isometry3d& odom,
                    double accum_distance,
                    const pcl::PointCloud<PointT>::Ptr& cloud,
-                   const int floor_level)
+                   const int floor_level,
+                   const int session_id)
     : stamp(stamp),
       odom(odom),
       accum_distance(accum_distance),
       cloud(cloud),
       floor_level(floor_level),
+      session_id(session_id),
       node(nullptr) {}
 
 KeyFrame::KeyFrame(const std::string& directory,
-                   std::shared_ptr<GraphSLAM> covisibility_graph)
+                   const std::shared_ptr<GraphSLAM>& covisibility_graph)
     : stamp(),
       odom(Eigen::Isometry3d::Identity()),
       accum_distance(-1),
       cloud(nullptr),
       floor_level(0),
+      session_id(0),
       node(nullptr) {
   load(directory, covisibility_graph);
 }
@@ -133,7 +136,7 @@ void KeyFrame::save(const std::string& directory, const int& sequential_id) {
 }
 
 bool KeyFrame::load(const std::string& directory,
-                    const std::shared_ptr<GraphSLAM> covisibility_graph) {
+                    const std::shared_ptr<GraphSLAM>& covisibility_graph) {
   std::ifstream ifs(directory + "/kf_data.txt");
   if (!ifs) {
     return false;
@@ -225,9 +228,10 @@ bool KeyFrame::load(const std::string& directory,
     return false;
   }
 
-  node = covisibility_graph->add_se3_node(odom);
-  node->setEstimate(*estimate);
-  node->setId(node_id);
+  g2o::VertexSE3* kf_node(new g2o::VertexSE3());
+  kf_node->setId(node_id);
+  kf_node->setEstimate(*estimate);
+  node = covisibility_graph->copy_se3_node(kf_node);
 
   pcl::PointCloud<PointT>::Ptr kf_cloud(new pcl::PointCloud<PointT>());
   pcl::io::loadPCDFile(directory + "/cloud.pcd", *kf_cloud);

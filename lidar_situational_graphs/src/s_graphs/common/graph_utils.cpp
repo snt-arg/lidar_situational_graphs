@@ -439,7 +439,8 @@ void GraphUtils::copy_windowed_graph(
     const int window_size,
     const std::shared_ptr<GraphSLAM>& covisibility_graph,
     const std::unique_ptr<GraphSLAM>& compressed_graph,
-    const std::map<int, KeyFrame::Ptr>& keyframes) {
+    const std::map<int, KeyFrame::Ptr>& keyframes,
+    const int current_session_id) {
   // clear compressed graph
   compressed_graph->graph->clear();
 
@@ -448,6 +449,8 @@ void GraphUtils::copy_windowed_graph(
   std::map<int, KeyFrame::Ptr> complete_keyframe_window;
   auto it = keyframes.rbegin();
   for (; it != keyframes.rend() && keyframe_window.size() < window_size; ++it) {
+    if (it->second->session_id != current_session_id) continue;
+
     bool marginalized =
         get_keyframe_marg_data(dynamic_cast<g2o::VertexSE3*>(it->second->node));
 
@@ -459,6 +462,8 @@ void GraphUtils::copy_windowed_graph(
     keyframe_window.insert(*it);
     complete_keyframe_window.insert(*it);
   }
+
+  if (keyframe_window.empty()) return;
 
   // copy keyframes in the window to the compressed graph
   int min_keyframe_id =

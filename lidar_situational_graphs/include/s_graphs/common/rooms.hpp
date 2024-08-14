@@ -114,6 +114,9 @@ class Rooms {
     ofs << "plane_y2_id ";
     ofs << plane_y2_id << "\n";
 
+    ofs << "floor_level ";
+    ofs << floor_level << "\n";
+
     ofs << "room_node ";
     ofs << node->estimate().matrix() << "\n";
 
@@ -128,7 +131,7 @@ class Rooms {
   }
 
   bool load(const std::string &directory,
-            const std::shared_ptr<GraphSLAM> covisibility_graph) {
+            const std::shared_ptr<GraphSLAM> &covisibility_graph) {
     std::ifstream ifs(directory + "/room_data.txt");
     if (!ifs) {
       return false;
@@ -148,6 +151,8 @@ class Rooms {
         ifs >> plane_y1_id;
       } else if (token == "plane_y2_id") {
         ifs >> plane_y2_id;
+      } else if (token == "floor_level") {
+        ifs >> floor_level;
       } else if (token == "room_node") {
         Eigen::Matrix4d room_pose = Eigen::Matrix4d::Identity();
         for (int i = 0; i < 4; i++) {
@@ -158,8 +163,10 @@ class Rooms {
       }
     }
 
-    node = covisibility_graph->add_room_node(room_pose);
-    node->setId(id);
+    g2o::VertexRoom *room_node(new g2o::VertexRoom());
+    room_node->setId(id);
+    room_node->setEstimate(room_pose);
+    node = covisibility_graph->copy_room_node(room_node);
 
     return true;
   }

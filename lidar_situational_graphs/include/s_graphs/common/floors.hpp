@@ -102,7 +102,7 @@ class Floors {
   }
 
   bool load(const std::string& directory,
-            const std::shared_ptr<GraphSLAM> covisibility_graph) {
+            const std::shared_ptr<GraphSLAM>& covisibility_graph) {
     std::ifstream ifs(directory + "/floor_data.txt");
     if (!ifs) {
       return false;
@@ -140,8 +140,10 @@ class Floors {
       }
     }
 
-    node = covisibility_graph->add_floor_node(floor_estimate);
-    node->setId(id);
+    g2o::VertexFloor* floor_node(new g2o::VertexFloor());
+    floor_node->setId(id);
+    floor_node->setEstimate(floor_estimate);
+    node = covisibility_graph->copy_floor_node(floor_node);
 
     pcl::PointCloud<PointT>::Ptr saved_floor_cloud(new pcl::PointCloud<PointT>());
     pcl::io::loadPCDFile(directory + "/floor_cloud.pcd", *saved_floor_cloud);
