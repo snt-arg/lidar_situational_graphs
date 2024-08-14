@@ -58,6 +58,7 @@ G2O_REGISTER_TYPE(EDGE_SE3_INFINITE_ROOM, EdgeSE3InfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_XPLANE, EdgeInfiniteRoomXPlane)
 G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_YPLANE, EdgeInfiniteRoomYPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_ROOM, EdgeSE3Room)
+G2O_REGISTER_TYPE(EDGE_MULTI_SE3, EdgeMultiSE3)
 G2O_REGISTER_TYPE(EDGE_ROOM_2PLANES, EdgeRoom2Planes)
 G2O_REGISTER_TYPE(EDGE_ROOM_4PLANES, EdgeRoom4Planes)
 G2O_REGISTER_TYPE(EDGE_FLOOR_ROOM, EdgeFloorRoom)
@@ -707,6 +708,23 @@ g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
   edge->setInformation(information);
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_room;
+  graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
+
+  return edge;
+}
+
+g2o::EdgeMultiSE3* GraphSLAM::add_origin_to_origin_edge(
+    g2o::VertexSE3* v_a_graph_origin,
+    g2o::VertexSE3* v_s_graph_origin,
+    g2o::VertexSE3* v_transformation,
+    const Eigen::MatrixXd& information) {
+  g2o::EdgeMultiSE3* edge(new g2o::EdgeMultiSE3());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  edge->setInformation(information);
+  edge->vertices()[0] = v_a_graph_origin;
+  edge->vertices()[1] = v_s_graph_origin;
+  edge->vertices()[2] = v_transformation;
   graph->addEdge(edge);
   this->increment_local_nbr_of_edges();
 
