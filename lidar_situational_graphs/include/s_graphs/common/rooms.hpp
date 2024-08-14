@@ -167,6 +167,7 @@ class Rooms {
     room_node->setId(id);
     room_node->setEstimate(room_pose);
     node = covisibility_graph->copy_room_node(room_node);
+    local_graph = std::make_shared<GraphSLAM>();
 
     return true;
   }
