@@ -1,3 +1,32 @@
+/*
+Copyright (c) 2023, University of Luxembourg
+All rights reserved.
+
+Redistributions and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+*/
+
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <algorithm>
@@ -29,207 +58,58 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
   // Graph Type
   if (graph_type == "Prior") {
     graph_msg.name = "Prior";
-    for (const auto& [key, value] : x_vert_planes_prior) {
-      g2o::Plane3D v_plane = value.plane_node->estimate();
+    for (const auto& pair : x_vert_planes_prior) {
+      const auto& plane_info = pair.second;
+
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
 
-      graph_node.id = value.id;
+      graph_node.id = plane_info.id;
       graph_node.type = "Plane";
       node_attribute.name = "Geometric_info";
 
-      Eigen::Vector4d plane_coeffs = v_plane.coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
+      Eigen::Vector4d plane_coeffs = plane_info.plane_node->estimate().coeffs();
+      node_attribute.fl_value = {
+          plane_coeffs(0), plane_coeffs(1), plane_coeffs(2), plane_coeffs(3)};
 
-      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec;
-      node_att_vec.push_back(node_attribute);
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec = {
+          node_attribute};
       graph_node.attributes = node_att_vec;
-
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
-    }
-    for (const auto& [key, value] : y_vert_planes_prior) {
-      g2o::Plane3D v_plane = value.plane_node->estimate();
-      situational_graphs_reasoning_msgs::msg::Node graph_node;
-      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-
-      graph_node.id = value.id;
-      graph_node.type = "Plane";
-      node_attribute.name = "Geometric_info";
-
-      Eigen::Vector4d plane_coeffs = v_plane.coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-
-      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec;
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-
       nodes_vec.push_back(graph_node);
       node_attribute.fl_value.clear();
       node_att_vec.clear();
     }
 
-    for (const auto& [key, room] : rooms_vec_prior) {
-      g2o::VertexRoom* v_room = room.node;
+    for (const auto& pair : y_vert_planes_prior) {
+      const auto& plane_info = pair.second;
+
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
+
+      graph_node.id = plane_info.id;
+      graph_node.type = "Plane";
+      node_attribute.name = "Geometric_info";
+
+      Eigen::Vector4d plane_coeffs = plane_info.plane_node->estimate().coeffs();
+      node_attribute.fl_value = {
+          plane_coeffs(0), plane_coeffs(1), plane_coeffs(2), plane_coeffs(3)};
+
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec = {
+          node_attribute};
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+    }
+
+    for (const auto& pair : rooms_vec_prior) {
+      const auto& room_info = pair.second;
+      g2o::VertexRoom* v_room = room_info.node;
       situational_graphs_reasoning_msgs::msg::Edge graph_edge;
       situational_graphs_reasoning_msgs::msg::Node graph_node;
       situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
       situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-
-      graph_node.id = room.id;
-      graph_node.type = "Finite Room";
-      node_attribute.name = "Geometric_info";
-      Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
-      node_attribute.fl_value = {room_pose.x(), room_pose.y(), 0.0};
-
-      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec;
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-
-      // Edge creation
-      graph_edge.origin_node = v_room->id();
-      edge_attribute.name = "Geometric_info";
-      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> edge_att_vec;
-      edge_att_vec.push_back(edge_attribute);
-
-      // first edge
-      graph_edge.origin_node = v_room->id();
-      graph_edge.target_node = room.plane_x1_id;
-      edge_attribute.name = "Geometric_info";
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
-
-      // 2nd edge
-
-      graph_edge.target_node = room.plane_x2_id;
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
-
-      // 3rd edge
-
-      graph_edge.target_node = room.plane_y1_id;
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
-
-      // 4th edge
-      graph_edge.target_node = room.plane_y2_id;
-      edge_att_vec.push_back(edge_attribute);
-      graph_edge.attributes = edge_att_vec;
-      edges_vec.push_back(graph_edge);
-      edge_att_vec.clear();
-    }
-
-    // for (int i = 0; i < rooms_vec_prior.size(); i++) {
-    //   g2o::VertexRoom* v_room = rooms_vec_prior[i].node;
-    //   situational_graphs_reasoning_msgs::msg::Edge graph_edge;
-    //   situational_graphs_reasoning_msgs::msg::Node graph_node;
-    //   situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
-    //   situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-    //   graph_node.id = rooms_vec_prior[i].id;
-    //   graph_node.type = "Finite Room";
-    //   node_attribute.name = "Geometric_info";
-    //   Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
-    //   node_attribute.fl_value.push_back(room_pose.x());
-    //   node_attribute.fl_value.push_back(room_pose.y());
-    //   node_attribute.fl_value.push_back(0.0);
-    //   node_att_vec.push_back(node_attribute);
-    //   graph_node.attributes = node_att_vec;
-    //   nodes_vec.push_back(graph_node);
-    //   node_attribute.fl_value.clear();
-    //   node_att_vec.clear();
-
-    //   // first edge
-    //   graph_edge.origin_node = v_room->id();
-    //   graph_edge.target_node = rooms_vec_prior[i].plane_x1_id;
-    //   edge_attribute.name = "Geometric_info";
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
-
-    //   // 2nd edge
-
-    //   graph_edge.target_node = rooms_vec_prior[i].plane_x2_id;
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
-
-    //   // 3rd edge
-
-    //   graph_edge.target_node = rooms_vec_prior[i].plane_y1_id;
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
-
-    //   // 4th edge
-    //   graph_edge.target_node = rooms_vec_prior[i].plane_y2_id;
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
-    // }
-
-  } else {
-    graph_msg.name = "ONLINE";
-    for (const auto& x_vert_plane : x_vert_planes) {
-      g2o::Plane3D v_plane = x_vert_plane.second.plane_node->estimate();
-      situational_graphs_reasoning_msgs::msg::Node graph_node;
-      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = x_vert_plane.second.id;
-      graph_node.type = "Plane";
-      node_attribute.name = "Geometric_info";
-      Eigen::Vector4d plane_coeffs = v_plane.coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
-    }
-    for (const auto& y_vert_plane : y_vert_planes) {
-      g2o::Plane3D v_plane = y_vert_plane.second.plane_node->estimate();
-      situational_graphs_reasoning_msgs::msg::Node graph_node;
-      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = y_vert_plane.second.id;
-      graph_node.type = "Plane";
-      node_attribute.name = "Geometric_info";
-      Eigen::Vector4d plane_coeffs = v_plane.coeffs();
-      node_attribute.fl_value.push_back(plane_coeffs(0));
-      node_attribute.fl_value.push_back(plane_coeffs(1));
-      node_attribute.fl_value.push_back(plane_coeffs(2));
-      node_attribute.fl_value.push_back(plane_coeffs(3));
-      node_att_vec.push_back(node_attribute);
-      graph_node.attributes = node_att_vec;
-      nodes_vec.push_back(graph_node);
-      node_attribute.fl_value.clear();
-      node_att_vec.clear();
-    }
-    for (const auto& room : rooms_vec) {
-      g2o::VertexRoom* v_room = room.second.node;
-      situational_graphs_reasoning_msgs::msg::Edge graph_edge;
-      situational_graphs_reasoning_msgs::msg::Node graph_node;
-      situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
-      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
-      graph_node.id = room.second.id;
+      graph_node.id = room_info.id;
       graph_node.type = "Finite Room";
       node_attribute.name = "Geometric_info";
       Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
@@ -244,8 +124,8 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // first edge
       graph_edge.origin_node = v_room->id();
-      graph_edge.target_node = room.second.plane_x1_id;
-      edge_attribute.name = "EdgeRoom4Planes";
+      graph_edge.target_node = room_info.plane_x1_id;
+      edge_attribute.name = "Geometric_info";
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
@@ -253,7 +133,7 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 2nd edge
 
-      graph_edge.target_node = room.second.plane_x2_id;
+      graph_edge.target_node = room_info.plane_x2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
@@ -261,97 +141,148 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 
       // 3rd edge
 
-      graph_edge.target_node = room.second.plane_y1_id;
+      graph_edge.target_node = room_info.plane_y1_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
 
       // 4th edge
-      graph_edge.target_node = room.second.plane_y2_id;
+      graph_edge.target_node = room_info.plane_y2_id;
       edge_att_vec.push_back(edge_attribute);
       graph_edge.attributes = edge_att_vec;
       edges_vec.push_back(graph_edge);
       edge_att_vec.clear();
     }
 
-    // for(int i = 0; i < x_infinite_rooms.size(); i++) {
-    //   g2o::VertexRoom* v_room = x_infinite_rooms[i].node;
-    //   situational_graphs_reasoning_msgs::msg::Edge graph_edge;
-    //   situational_graphs_reasoning_msgs::msg::Node graph_node;
-    //   situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
-    //   situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
+  } else {
+    graph_msg.name = "Online";
+    std::unordered_map<int, s_graphs::Rooms> publishable_rooms_vec;
+    publishable_rooms_vec = rooms_vec;
+    for (const auto& pair : x_vert_planes) {
+      const auto& plane_info = pair.second;
 
-    //   // X Infinte Room Node
-    //   graph_node.id = x_infinite_rooms[i].id;
-    //   graph_node.type = "Infinite Room";
-    //   node_attribute.name = "X-Infinite Room";
-    //   Eigen::Vector2d room_pose = v_room->estimate();
-    //   node_attribute.fl_value.push_back(room_pose.x());
-    //   node_attribute.fl_value.push_back(room_pose.y());
-    //   node_attribute.fl_value.push_back(0.0);
-    //   node_att_vec.push_back(node_attribute);
-    //   graph_node.attributes = node_att_vec;
-    //   nodes_vec.push_back(graph_node);
-    //   node_attribute.fl_value.clear();
-    //   node_att_vec.clear();
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
 
-    //   // first edge
-    //   graph_edge.origin_node = v_room->id();
-    //   graph_edge.target_node = x_infinite_rooms[i].plane1_id;
-    //   edge_attribute.name = "EdgeRoom2Planes";
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
+      graph_node.id = plane_info.id;
+      graph_node.type = "Plane";
+      node_attribute.name = "Geometric_info";
 
-    //   // 2nd edge
+      Eigen::Vector4d plane_coeffs = plane_info.plane_node->estimate().coeffs();
+      node_attribute.fl_value = {
+          plane_coeffs(0), plane_coeffs(1), plane_coeffs(2), plane_coeffs(3)};
 
-    //   graph_edge.target_node = x_infinite_rooms[i].plane2_id;
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
-    // }
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec = {
+          node_attribute};
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+    }
+    for (const auto& pair : y_vert_planes) {
+      const auto& plane_info = pair.second;
 
-    // for(int i = 0; i < y_infinite_rooms.size(); i++) {
-    //   g2o::VertexRoom* v_room = y_infinite_rooms[i].node;
-    //   situational_graphs_reasoning_msgs::msg::Edge graph_edge;
-    //   situational_graphs_reasoning_msgs::msg::Node graph_node;
-    //   situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
-    //   situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
 
-    //   // Y Infinte Room Node
-    //   graph_node.id = y_infinite_rooms[i].id;
-    //   graph_node.type = "Infinite Room";
-    //   node_attribute.name = "Y-Infinite Room";
-    //   Eigen::Vector2d room_pose = v_room->estimate();
-    //   node_attribute.fl_value.push_back(room_pose.x());
-    //   node_attribute.fl_value.push_back(room_pose.y());
-    //   node_attribute.fl_value.push_back(0.0);
-    //   node_att_vec.push_back(node_attribute);
-    //   graph_node.attributes = node_att_vec;
-    //   nodes_vec.push_back(graph_node);
-    //   node_attribute.fl_value.clear();
-    //   node_att_vec.clear();
+      graph_node.id = plane_info.id;
+      graph_node.type = "Plane";
+      node_attribute.name = "Geometric_info";
 
-    //   // first edge
-    //   graph_edge.origin_node = v_room->id();
-    //   graph_edge.target_node = y_infinite_rooms[i].plane1_id;
-    //   edge_attribute.name = "EdgeRoom2Planes";
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
+      Eigen::Vector4d plane_coeffs = plane_info.plane_node->estimate().coeffs();
+      node_attribute.fl_value = {
+          plane_coeffs(0), plane_coeffs(1), plane_coeffs(2), plane_coeffs(3)};
 
-    //   // 2nd edge
+      std::vector<situational_graphs_reasoning_msgs::msg::Attribute> node_att_vec = {
+          node_attribute};
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+    }
+    std::vector<int> room_keys;
+    for (const auto& pair : publishable_rooms_vec) {
+      room_keys.push_back(pair.first);
+    }
 
-    //   graph_edge.target_node = y_infinite_rooms[i].plane2_id;
-    //   edge_att_vec.push_back(edge_attribute);
-    //   graph_edge.attributes = edge_att_vec;
-    //   edges_vec.push_back(graph_edge);
-    //   edge_att_vec.clear();
-    // }
+    for (int j = 0; j < room_keys.size(); ++j) {
+      publishable_rooms_vec[room_keys[j]].sub_room = false;
+    }
+
+    for (int i = 0; i < room_keys.size(); i++) {
+      if (publishable_rooms_vec[room_keys[i]].sub_room) continue;
+
+      for (auto& pair : publishable_rooms_vec) {
+        auto& room = pair.second;
+        if (room.id == publishable_rooms_vec[room_keys[i]].id) continue;
+
+        float dist_room_room = std::sqrt(
+            std::pow(
+                room.node->estimate().translation()(0) -
+                    publishable_rooms_vec[room_keys[i]].node->estimate().translation()(
+                        0),
+                2) +
+            std::pow(
+                room.node->estimate().translation()(1) -
+                    publishable_rooms_vec[room_keys[i]].node->estimate().translation()(
+                        1),
+                2));
+
+        if (dist_room_room < 2.0 && room.sub_room == false) {
+          room.sub_room = true;
+        }
+      }
+
+      g2o::VertexRoom* v_room = publishable_rooms_vec[room_keys[i]].node;
+      situational_graphs_reasoning_msgs::msg::Edge graph_edge;
+      situational_graphs_reasoning_msgs::msg::Node graph_node;
+      situational_graphs_reasoning_msgs::msg::Attribute edge_attribute;
+      situational_graphs_reasoning_msgs::msg::Attribute node_attribute;
+
+      graph_node.id = publishable_rooms_vec[room_keys[i]].id;
+      graph_node.type = "Finite Room";
+      node_attribute.name = "Geometric_info";
+      Eigen::Vector2d room_pose = v_room->estimate().translation().head(2);
+      node_attribute.fl_value.push_back(room_pose.x());
+      node_attribute.fl_value.push_back(room_pose.y());
+      node_attribute.fl_value.push_back(0.0);
+      node_att_vec.push_back(node_attribute);
+      graph_node.attributes = node_att_vec;
+      nodes_vec.push_back(graph_node);
+      node_attribute.fl_value.clear();
+      node_att_vec.clear();
+
+      // first edge
+      graph_edge.origin_node = v_room->id();
+      graph_edge.target_node = publishable_rooms_vec[room_keys[i]].plane_x1_id;
+      edge_attribute.name = "EdgeRoom4Planes";
+      edge_att_vec.push_back(edge_attribute);
+      graph_edge.attributes = edge_att_vec;
+      edges_vec.push_back(graph_edge);
+      edge_att_vec.clear();
+
+      // 2nd edge
+      graph_edge.target_node = publishable_rooms_vec[room_keys[i]].plane_x2_id;
+      edge_att_vec.push_back(edge_attribute);
+      graph_edge.attributes = edge_att_vec;
+      edges_vec.push_back(graph_edge);
+      edge_att_vec.clear();
+
+      // 3rd edge
+      graph_edge.target_node = publishable_rooms_vec[room_keys[i]].plane_y1_id;
+      edge_att_vec.push_back(edge_attribute);
+      graph_edge.attributes = edge_att_vec;
+      edges_vec.push_back(graph_edge);
+      edge_att_vec.clear();
+
+      // 4th edge
+      graph_edge.target_node = publishable_rooms_vec[room_keys[i]].plane_y2_id;
+      edge_att_vec.push_back(edge_attribute);
+      graph_edge.attributes = edge_att_vec;
+      edges_vec.push_back(graph_edge);
+      edge_att_vec.clear();
+    }
 
     auto edge_itr = local_graph->edges().begin();
     for (int i = 0; edge_itr != local_graph->edges().end(); edge_itr++, i++) {
@@ -425,26 +356,8 @@ GraphPublisher::publish_graph_keyframes(
     const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes) {
   situational_graphs_reasoning_msgs::msg::GraphKeyframes msg;
   msg.keyframes.reserve(keyframes.size());
-  for (auto& keyframe : keyframes) {
-    // bool kf_marginalized =
-    //    s_graphs::GraphUtils::get_keyframe_marg_data(keyframe.second->node);
-    // if (!kf_marginalized)
-    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe.second));
-  }
-  return msg;
-}
-
-situational_graphs_reasoning_msgs::msg::GraphKeyframes
-GraphPublisher::publish_graph_keyframes(
-    const g2o::SparseOptimizer* local_graph,
-    const std::vector<s_graphs::KeyFrame::Ptr>& keyframes) {
-  situational_graphs_reasoning_msgs::msg::GraphKeyframes msg;
-  msg.keyframes.reserve(keyframes.size());
-  for (auto& keyframe : keyframes) {
-    // bool kf_marginalized =
-    // s_graphs::GraphUtils::get_keyframe_marg_data(keyframe->node); if
-    // (!kf_marginalized)
-    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*keyframe));
+  for (const auto& keyframe_pair : keyframes) {
+    msg.keyframes.emplace_back(s_graphs::Keyframe2ROS(*(keyframe_pair.second)));
   }
   return msg;
 }
