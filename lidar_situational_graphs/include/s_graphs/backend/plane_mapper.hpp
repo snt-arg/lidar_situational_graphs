@@ -41,6 +41,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <cmath>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
+#include <s_graphs/backend/room_mapper.hpp>
 #include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
@@ -168,6 +169,29 @@ class PlaneMapper {
                          std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                          std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param plane
+   */
+  template <typename T>
+  void factor_saved_planes(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                           const T& plane);
+
+  /**
+   * @brief
+   *
+   * @tparam T
+   * @param covisibility_graph
+   * @param plane
+   */
+  template <typename T>
+  void factor_saved_duplicate_planes(
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      const std::unordered_map<int, T>& plane_vec,
+      const T& plane);
+
  private:
   /**
    * @brief
@@ -280,7 +304,7 @@ class PlaneMapper {
 
  private:
   bool use_point_to_plane;
-  double plane_information;
+  double plane_information, dupl_plane_matching_information;
   double plane_dist_threshold;
   double plane_points_dist;
   double infinite_room_min_plane_length;

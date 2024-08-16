@@ -108,6 +108,17 @@ class WallMapper {
                              VerticalPlanes& plane1,
                              VerticalPlanes& plane2);
 
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param wall
+   * @param planes
+   */
+  void add_saved_walls(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                       const std::unordered_map<int, VerticalPlanes>& planes,
+                       const Walls wall);
+
  private:
   bool use_point_to_plane;
 

@@ -109,4 +109,23 @@ int WallMapper::add_wall_node_and_edge(
 
   return wall_node->id();
 }
+
+void WallMapper::add_saved_walls(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                                 const std::unordered_map<int, VerticalPlanes>& planes,
+                                 const Walls wall) {
+  Eigen::Matrix<double, 3, 3> information_wall_surfaces;
+  information_wall_surfaces.setIdentity();
+  information_wall_surfaces(0, 0) = 10;
+  information_wall_surfaces(1, 1) = 10;
+  information_wall_surfaces(2, 2) = 10;
+
+  g2o::VertexPlane *plane1, *plane2;
+  plane1 = planes.find(wall.plane1_id)->second.plane_node;
+  plane2 = planes.find(wall.plane2_id)->second.plane_node;
+
+  auto wall_edge = covisibility_graph->add_wall_2planes_edge(
+      wall.node, plane1, plane2, wall.wall_point, information_wall_surfaces);
+  covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
+}
+
 }  // namespace s_graphs

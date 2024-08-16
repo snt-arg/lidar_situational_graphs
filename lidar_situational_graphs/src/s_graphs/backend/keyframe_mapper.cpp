@@ -228,4 +228,16 @@ void KeyframeMapper::remap_delayed_keyframe(
   shared_graph_mutex.unlock();
 }
 
+void KeyframeMapper::map_saved_keyframes(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                         KeyFrame::Ptr keyframe,
+                                         KeyFrame::Ptr prev_keyframe) {
+  Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
+  Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+      keyframe->cloud, prev_keyframe->cloud, relative_pose);
+
+  auto edge = covisibility_graph->add_se3_edge(
+      keyframe->node, prev_keyframe->node, relative_pose, information);
+  covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+}
+
 }  // namespace s_graphs

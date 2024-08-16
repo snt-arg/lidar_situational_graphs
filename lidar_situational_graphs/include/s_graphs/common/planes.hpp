@@ -114,6 +114,11 @@ class Planes {
     ofs << "id ";
     ofs << id << "\n";
 
+    if (duplicate_id != -1) {
+      ofs << "duplicate_id ";
+      ofs << duplicate_id << "\n";
+    }
+
     ofs << "Covariance ";
     ofs << covariance << "\n";
 
@@ -172,6 +177,8 @@ class Planes {
       ifs >> token;
       if (token == "id") {
         ifs >> id;
+      } else if (token == "duplicate_id") {
+        ifs >> duplicate_id;
       } else if (token == "Covariance") {
         Eigen::Matrix3d mat;
         for (int i = 0; i < 3; i++) {
@@ -295,6 +302,7 @@ class Planes {
 
  public:
   int id;
+  int duplicate_id = -1;
   std::vector<pcl::PointCloud<PointNormal>::Ptr>
       cloud_seg_body_vec;  // vector of segmented points of the plane in local
                            // body frame

@@ -852,6 +852,8 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
+    std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes,
+        dupl_y_vert_planes;
     for (const auto& room_data_msg : room_data_queue) {
       for (const auto& room_data : room_data_msg.rooms) {
         if (room_data.x_planes.size() == 2 && room_data.y_planes.size() == 2) {
@@ -940,11 +942,34 @@ class SGraphsNode : public rclcpp::Node {
       room_data_queue_mutex.unlock();
     }
 
+    set_duplicate_planes(dupl_x_vert_planes, dupl_y_vert_planes);
     floor_mapper->factor_floor_room_nodes(covisibility_graph,
                                           floors_vec[current_floor_level],
                                           rooms_vec,
                                           x_infinite_rooms,
                                           y_infinite_rooms);
+  }
+
+  void set_duplicate_planes(
+      std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes,
+      std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_y_vert_planes) {
+    graph_mutex.lock();
+    for (const auto& dupl_x_plane : dupl_x_vert_planes) {
+      x_vert_planes.find(dupl_x_plane.first.id)->second.duplicate_id =
+          dupl_x_plane.second.id;
+
+      x_vert_planes.find(dupl_x_plane.second.id)->second.duplicate_id =
+          dupl_x_plane.first.id;
+    }
+
+    for (const auto& dupl_y_plane : dupl_y_vert_planes) {
+      y_vert_planes.find(dupl_y_plane.first.id)->second.duplicate_id =
+          dupl_y_plane.second.id;
+
+      y_vert_planes.find(dupl_y_plane.second.id)->second.duplicate_id =
+          dupl_y_plane.first.id;
+    }
+    graph_mutex.unlock();
   }
 
   void flush_floor_data_queue() {
@@ -2171,7 +2196,6 @@ class SGraphsNode : public rclcpp::Node {
       id++;
     }
 
-    // TODO:HB save all duplicate planes edges
     id = 0;
     for (auto& x_vert_plane : x_vert_planes) {
       x_vert_plane.second.save(x_vert_planes_directory, 'x', id);
@@ -2364,16 +2388,8 @@ class SGraphsNode : public rclcpp::Node {
     for (auto it = loaded_keyframes.begin(); it != std::prev(loaded_keyframes.end());
          ++it) {
       KeyFrame::Ptr& prev_keyframe = it->second;
-      KeyFrame::Ptr& next_keyframe = std::next(it)->second;
-
-      Eigen::Isometry3d relative_pose =
-          next_keyframe->odom.inverse() * prev_keyframe->odom;
-      Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
-          next_keyframe->cloud, prev_keyframe->cloud, relative_pose);
-
-      auto edge = covisibility_graph->add_se3_edge(
-          next_keyframe->node, prev_keyframe->node, relative_pose, information);
-      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+      KeyFrame::Ptr& keyframe = std::next(it)->second;
+      keyframe_mapper->map_saved_keyframes(covisibility_graph, keyframe, prev_keyframe);
     }
 
     for (const auto& loaded_kf : loaded_keyframes) keyframes.insert(loaded_kf);
@@ -2396,24 +2412,12 @@ class SGraphsNode : public rclcpp::Node {
       x_vert_planes.insert({vert_plane.id, vert_plane});
     }
 
-    for (auto& x_vert_plane : x_vert_planes) {
-      Eigen::Matrix3d plane_information_mat =
-          Eigen::Matrix3d::Identity() * plane_information;
-
-      for (size_t j = 0; j < x_vert_plane.second.keyframe_node_vec.size(); j++) {
-        g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
-            x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
-            x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,
-            x_vert_plane.second.cloud_seg_body_vec[j]->back().normal_z,
-            x_vert_plane.second.cloud_seg_body_vec[j]->back().curvature);
-
-        auto edge = covisibility_graph->add_se3_plane_edge(
-            x_vert_plane.second.keyframe_node_vec[j],
-            x_vert_plane.second.plane_node,
-            det_plane_body_frame.coeffs(),
-            plane_information_mat);
-        covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
-      }
+    for (const auto& x_vert_plane : x_vert_planes) {
+      plane_mapper->factor_saved_planes<VerticalPlanes>(covisibility_graph,
+                                                        x_vert_plane.second);
+      if (x_vert_plane.second.duplicate_id != -1)
+        plane_mapper->factor_saved_duplicate_planes<VerticalPlanes>(
+            covisibility_graph, x_vert_planes, x_vert_plane.second);
     }
 
     boost::filesystem::path y_vert_plane_parent_path(directory + "/y_vert_planes");
@@ -2433,24 +2437,12 @@ class SGraphsNode : public rclcpp::Node {
       y_vert_planes.insert({vert_plane.id, vert_plane});
     }
 
-    for (auto& y_vert_plane : y_vert_planes) {
-      Eigen::Matrix3d plane_information_mat =
-          Eigen::Matrix3d::Identity() * plane_information;
-
-      for (size_t j = 0; j < y_vert_plane.second.keyframe_node_vec.size(); j++) {
-        g2o::Plane3D det_plane_body_frame = Eigen::Vector4d(
-            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_x,
-            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_y,
-            y_vert_plane.second.cloud_seg_body_vec[j]->back().normal_z,
-            y_vert_plane.second.cloud_seg_body_vec[j]->back().curvature);
-
-        auto edge = covisibility_graph->add_se3_plane_edge(
-            y_vert_plane.second.keyframe_node_vec[j],
-            y_vert_plane.second.plane_node,
-            det_plane_body_frame.coeffs(),
-            plane_information_mat);
-        covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
-      }
+    for (const auto& y_vert_plane : y_vert_planes) {
+      plane_mapper->factor_saved_planes<VerticalPlanes>(covisibility_graph,
+                                                        y_vert_plane.second);
+      if (y_vert_plane.second.duplicate_id != -1)
+        plane_mapper->factor_saved_duplicate_planes<VerticalPlanes>(
+            covisibility_graph, y_vert_planes, y_vert_plane.second);
     }
 
     boost::filesystem::path hort_plane_parent_path(directory + "/hort_planes");
@@ -2470,24 +2462,12 @@ class SGraphsNode : public rclcpp::Node {
       hort_planes.insert({hort_plane.id, hort_plane});
     }
 
-    for (auto& hort_plane : hort_planes) {
-      Eigen::Matrix3d plane_information_mat =
-          Eigen::Matrix3d::Identity() * plane_information;
-
-      for (size_t j = 0; j < hort_plane.second.keyframe_node_vec.size(); j++) {
-        g2o::Plane3D det_plane_body_frame =
-            Eigen::Vector4d(hort_plane.second.cloud_seg_body_vec[j]->back().normal_x,
-                            hort_plane.second.cloud_seg_body_vec[j]->back().normal_y,
-                            hort_plane.second.cloud_seg_body_vec[j]->back().normal_z,
-                            hort_plane.second.cloud_seg_body_vec[j]->back().curvature);
-
-        auto edge = covisibility_graph->add_se3_plane_edge(
-            hort_plane.second.keyframe_node_vec[j],
-            hort_plane.second.plane_node,
-            det_plane_body_frame.coeffs(),
-            plane_information_mat);
-        covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
-      }
+    for (const auto& hort_plane : hort_planes) {
+      plane_mapper->factor_saved_planes<HorizontalPlanes>(covisibility_graph,
+                                                          hort_plane.second);
+      if (hort_plane.second.duplicate_id != -1)
+        plane_mapper->factor_saved_duplicate_planes<HorizontalPlanes>(
+            covisibility_graph, hort_planes, hort_plane.second);
     }
 
     boost::filesystem::path wall_parent_path(directory + "/walls");
@@ -2508,28 +2488,11 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     for (auto& wall : walls_vec) {
-      Eigen::Matrix<double, 3, 3> information_wall_surfaces;
-      information_wall_surfaces.setIdentity();
-      information_wall_surfaces(0, 0) = 10;
-      information_wall_surfaces(1, 1) = 10;
-      information_wall_surfaces(2, 2) = 10;
-
-      g2o::VertexPlane *plane1, *plane2;
       if (wall.second.plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
-        plane1 = x_vert_planes.find(wall.second.plane1_id)->second.plane_node;
-        plane2 = x_vert_planes.find(wall.second.plane2_id)->second.plane_node;
+        wall_mapper->add_saved_walls(covisibility_graph, x_vert_planes, wall.second);
       } else {
-        plane1 = y_vert_planes.find(wall.second.plane1_id)->second.plane_node;
-        plane2 = y_vert_planes.find(wall.second.plane2_id)->second.plane_node;
+        wall_mapper->add_saved_walls(covisibility_graph, y_vert_planes, wall.second);
       }
-
-      auto wall_edge =
-          covisibility_graph->add_wall_2planes_edge(wall.second.node,
-                                                    plane1,
-                                                    plane2,
-                                                    wall.second.wall_point,
-                                                    information_wall_surfaces);
-      covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
     }
 
     boost::filesystem::path room_parent_path(directory + "/rooms");
@@ -2549,19 +2512,9 @@ class SGraphsNode : public rclcpp::Node {
       rooms_vec.insert({room.id, room});
     }
 
-    Eigen::Matrix<double, 2, 2> information_room_planes;
-    information_room_planes.setIdentity();
-    information_room_planes(0, 0) = room_information;
-    information_room_planes(1, 1) = room_information;
     for (auto& room : rooms_vec) {
-      auto edge_room_planes = covisibility_graph->add_room_4planes_edge(
-          room.second.node,
-          x_vert_planes.find(room.second.plane_x1_id)->second.plane_node,
-          x_vert_planes.find(room.second.plane_x2_id)->second.plane_node,
-          y_vert_planes.find(room.second.plane_y1_id)->second.plane_node,
-          y_vert_planes.find(room.second.plane_y2_id)->second.plane_node,
-          information_room_planes);
-      covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+      finite_room_mapper->factor_saved_rooms(
+          covisibility_graph, x_vert_planes, y_vert_planes, room.second);
     }
 
     // add anchor node to the first kf
@@ -2716,8 +2669,6 @@ class SGraphsNode : public rclcpp::Node {
   std::unordered_map<int, VerticalPlanes> x_vert_planes,
       y_vert_planes;  // vertically segmented planes
   std::vector<VerticalPlanes> x_vert_planes_prior, y_vert_planes_prior;
-  std::deque<std::pair<VerticalPlanes, VerticalPlanes>> dupl_x_vert_planes,
-      dupl_y_vert_planes;  // vertically segmented planes
   std::unordered_map<int, HorizontalPlanes>
       hort_planes;  // horizontally segmented planes
   std::unordered_map<int, InfiniteRooms> x_infinite_rooms,

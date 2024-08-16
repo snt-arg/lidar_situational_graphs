@@ -865,4 +865,23 @@ void FiniteRoomMapper::remove_mapped_infinite_room(
   shared_graph_mutex.unlock();
 }
 
+void FiniteRoomMapper::factor_saved_rooms(
+    const std::shared_ptr<GraphSLAM> covisibility_graph,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+    const Rooms& room) {
+  Eigen::Matrix<double, 2, 2> information_room_planes;
+  information_room_planes.setIdentity();
+  information_room_planes(0, 0) = room_information;
+  information_room_planes(1, 1) = room_information;
+  auto edge_room_planes = covisibility_graph->add_room_4planes_edge(
+      room.node,
+      x_vert_planes.find(room.plane_x1_id)->second.plane_node,
+      x_vert_planes.find(room.plane_x2_id)->second.plane_node,
+      y_vert_planes.find(room.plane_y1_id)->second.plane_node,
+      y_vert_planes.find(room.plane_y2_id)->second.plane_node,
+      information_room_planes);
+  covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+}
+
 }  // namespace s_graphs
