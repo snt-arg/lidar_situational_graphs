@@ -1316,6 +1316,17 @@ bool GraphUtils::get_keyframe_marg_data(g2o::VertexSE3* vertex_se3) {
   return marginalized;
 }
 
+void GraphUtils::set_keyframe_marg_data(g2o::VertexSE3* vertex_se3, const bool value) {
+  auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+  if (current_data) {
+    current_data->set_marginalized_info(value);
+  } else {
+    OptimizationData* data = new OptimizationData();
+    data->set_marginalized_info(value);
+    vertex_se3->setUserData(data);
+  }
+}
+
 bool GraphUtils::get_keyframe_anchor_data(g2o::VertexSE3* vertex_se3) {
   auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
   bool anchor_node = false;
@@ -1334,6 +1345,17 @@ bool GraphUtils::get_keyframe_stair_data(g2o::VertexSE3* vertex_se3) {
   }
 
   return stair_node;
+}
+
+void GraphUtils::set_keyframe_stair_data(g2o::VertexSE3* vertex_se3, const bool value) {
+  auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+  if (current_data) {
+    current_data->set_stair_node_info(value);
+  } else {
+    OptimizationData* data = new OptimizationData();
+    data->set_stair_node_info(value);
+    vertex_se3->setUserData(data);
+  }
 }
 
 void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,

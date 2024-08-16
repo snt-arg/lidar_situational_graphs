@@ -129,6 +129,17 @@ void KeyFrame::save(const std::string& directory, const int& sequential_id) {
   if (node) {
     ofs << "id " << node->id() << "\n";
   }
+
+  bool marginalized_kf = GraphUtils::get_keyframe_marg_data(node);
+  if (marginalized_kf) {
+    ofs << "marginalized " << marginalized_kf << "\n";
+  }
+
+  bool stair_kf = GraphUtils::get_keyframe_stair_data(node);
+  if (stair_kf) {
+    ofs << "stair_kf " << stair_kf << "\n";
+  }
+
   ofs.close();
 
   pcl::io::savePCDFileBinary(kf_sub_directory + "/cloud.pcd", *cloud);
@@ -143,6 +154,8 @@ bool KeyFrame::load(const std::string& directory,
   }
 
   int node_id = -1;
+  bool marginalized_kf = false;
+  bool stair_kf = false;
   boost::optional<Eigen::Isometry3d> estimate;
   while (!ifs.eof()) {
     std::string token;
@@ -219,6 +232,10 @@ bool KeyFrame::load(const std::string& directory,
       int id;
       ifs >> id;
       node_id = id;
+    } else if (token == "marginalized") {
+      ifs >> marginalized_kf;
+    } else if (token == "stair_kf") {
+      ifs >> stair_kf;
     }
   }
 
@@ -232,6 +249,14 @@ bool KeyFrame::load(const std::string& directory,
   kf_node->setId(node_id);
   kf_node->setEstimate(*estimate);
   node = covisibility_graph->copy_se3_node(kf_node);
+
+  if (marginalized_kf) {
+    GraphUtils::set_keyframe_marg_data(node, marginalized_kf);
+  }
+
+  if (stair_kf) {
+    GraphUtils::set_keyframe_stair_data(node, stair_kf);
+  }
 
   pcl::PointCloud<PointT>::Ptr kf_cloud(new pcl::PointCloud<PointT>());
   pcl::io::loadPCDFile(directory + "/cloud.pcd", *kf_cloud);
