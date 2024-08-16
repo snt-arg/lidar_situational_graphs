@@ -2508,7 +2508,12 @@ class SGraphsNode : public rclcpp::Node {
 
     for (long unsigned int i = 0; i < room_directories.size(); i++) {
       Rooms room;
-      room.load(room_directories[i], covisibility_graph);
+      std::vector<int> rooms_kf_ids;
+      room.load(room_directories[i], rooms_kf_ids, covisibility_graph);
+      for (const auto& room_kf_id : rooms_kf_ids) {
+        auto kf = keyframes.find(room_kf_id);
+        room.room_keyframes.insert({kf->first, kf->second});
+      }
       rooms_vec.insert({room.id, room});
     }
 

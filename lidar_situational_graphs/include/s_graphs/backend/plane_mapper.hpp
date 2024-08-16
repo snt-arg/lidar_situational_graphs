@@ -177,7 +177,24 @@ class PlaneMapper {
    */
   template <typename T>
   void factor_saved_planes(const std::shared_ptr<GraphSLAM>& covisibility_graph,
-                           const T& plane);
+                           const T& plane) {
+    Eigen::Matrix3d plane_information_mat =
+        Eigen::Matrix3d::Identity() * plane_information;
+
+    for (size_t j = 0; j < plane.keyframe_node_vec.size(); j++) {
+      g2o::Plane3D det_plane_body_frame =
+          Eigen::Vector4d(plane.cloud_seg_body_vec[j]->back().normal_x,
+                          plane.cloud_seg_body_vec[j]->back().normal_y,
+                          plane.cloud_seg_body_vec[j]->back().normal_z,
+                          plane.cloud_seg_body_vec[j]->back().curvature);
+
+      auto edge = covisibility_graph->add_se3_plane_edge(plane.keyframe_node_vec[j],
+                                                         plane.plane_node,
+                                                         det_plane_body_frame.coeffs(),
+                                                         plane_information_mat);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    }
+  }
 
   /**
    * @brief
@@ -190,7 +207,23 @@ class PlaneMapper {
   void factor_saved_duplicate_planes(
       const std::shared_ptr<GraphSLAM>& covisibility_graph,
       const std::unordered_map<int, T>& plane_vec,
-      const T& plane);
+      const T& plane) {
+    Eigen::Matrix<double, 3, 3> information_2planes;
+    information_2planes.setIdentity();
+    information_2planes(0, 0) = dupl_plane_matching_information;
+    information_2planes(1, 1) = dupl_plane_matching_information;
+    information_2planes(2, 2) = dupl_plane_matching_information;
+
+    std::set<g2o::HyperGraph::Edge*> plane_edges = plane.plane_node->edges();
+    g2o::VertexPlane* plane2_node =
+        plane_vec.find(plane.duplicate_id)->second.plane_node;
+
+    if (!MapperUtils::check_plane_ids(plane_edges, plane2_node)) {
+      auto edge_planes = covisibility_graph->add_2planes_edge(
+          plane.plane_node, plane2_node, information_2planes);
+      covisibility_graph->add_robust_kernel(edge_planes, "Huber", 1.0);
+    }
+  }
 
  private:
   /**

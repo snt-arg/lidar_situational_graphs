@@ -131,6 +131,7 @@ class Rooms {
   }
 
   bool load(const std::string &directory,
+            std::vector<int> &rooms_kf_ids,
             const std::shared_ptr<GraphSLAM> &covisibility_graph) {
     std::ifstream ifs(directory + "/room_data.txt");
     if (!ifs) {
@@ -159,6 +160,11 @@ class Rooms {
           for (int j = 0; j < 4; j++) {
             ifs >> room_pose(i, j);
           }
+        }
+      } else if (token == "room_keyframes") {
+        int kf_id;
+        while (ifs >> kf_id) {
+          rooms_kf_ids.push_back(kf_id);
         }
       }
     }
