@@ -2210,7 +2210,7 @@ class SGraphsNode : public rclcpp::Node {
 
     id = 0;
     for (auto& hort_plane : hort_planes) {
-      hort_plane.second.save(hort_planes_directory, 'hort', id);
+      hort_plane.second.save(hort_planes_directory, 'h', id);
       id++;
     }
 
@@ -2458,7 +2458,7 @@ class SGraphsNode : public rclcpp::Node {
 
     for (long unsigned int i = 0; i < hort_plane_directories.size(); i++) {
       HorizontalPlanes hort_plane;
-      hort_plane.load(hort_plane_directories[i], covisibility_graph, "y");
+      hort_plane.load(hort_plane_directories[i], covisibility_graph, "h");
       hort_planes.insert({hort_plane.id, hort_plane});
     }
 

@@ -107,7 +107,7 @@ class Planes {
       ofs.open(plane_sub_directory + "/x_plane_data.txt");
     } else if (type == 'y') {
       ofs.open(plane_sub_directory + "/y_plane_data.txt");
-    } else if (type == 'hort') {
+    } else if (type == 'h') {
       ofs.open(plane_sub_directory + "/hort_plane_data.txt");
     }
 
@@ -163,7 +163,7 @@ class Planes {
       ifs.open(directory + "/x_plane_data.txt");
     } else if (type == "y") {
       ifs.open(directory + "/y_plane_data.txt");
-    } else if (type == "hort") {
+    } else if (type == "h") {
       ifs.open(directory + "/hort_plane_data.txt");
     }
 
