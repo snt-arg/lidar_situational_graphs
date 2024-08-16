@@ -77,11 +77,91 @@ class Walls {
             const int sequential_id) {
     std::string parent_directory = directory.substr(0, directory.find_last_of("/\\"));
 
+    std::string wall_sub_directory;
+    wall_sub_directory = directory + "/" + std::to_string(sequential_id);
+
+    if (!boost::filesystem::is_directory(wall_sub_directory)) {
+      boost::filesystem::create_directory(wall_sub_directory);
+    }
+
+    std::ofstream ofs;
+    ofs.open(wall_sub_directory + "/wall_data.txt");
+
+    ofs << "id ";
+    ofs << id << "\n";
+
+    if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+      ofs << "plane_type ";
+      ofs << "x"
+          << "\n";
+    } else {
+      ofs << "plane_type ";
+      ofs << "y"
+          << "\n";
+    }
+
+    ofs << "plane1_id ";
+    ofs << plane1_id << "\n";
+
+    ofs << "plane2_id ";
+    ofs << plane2_id << "\n";
+
+    ofs << "floor_level ";
+    ofs << floor_level << "\n";
+
+    ofs << "wall_point ";
+    ofs << wall_point.transpose() << "\n";
+
+    ofs << "wall_pose ";
+    ofs << node->estimate().transpose() << "\n";
+
     write_wall_data_to_csv(directory, vert_planes);
     write_wall_points_data_to_csv(directory, vert_planes);
   }
 
-  void load(const std::string& directory, g2o::SparseOptimizer* local_graph) {}
+  bool load(const std::string& directory,
+            const std::shared_ptr<GraphSLAM>& covisibility_graph) {
+    std::ifstream ifs;
+    ifs.open(directory + "/wall_data.txt");
+
+    Eigen::Vector3d wall_pose;
+    while (!ifs.eof()) {
+      std::string token;
+      ifs >> token;
+
+      if (token == "id") {
+        ifs >> id;
+      } else if (token == "plane_type") {
+        std::string type;
+        ifs >> type;
+        if (type == "x")
+          plane_type = PlaneUtils::plane_class::X_VERT_PLANE;
+        else
+          plane_type = PlaneUtils::plane_class::Y_VERT_PLANE;
+      } else if (token == "plane1_id") {
+        ifs >> plane1_id;
+      } else if (token == "plane2_id") {
+        ifs >> plane2_id;
+      } else if (token == "floor_level") {
+        ifs >> floor_level;
+      } else if (token == "wall_point") {
+        for (int i = 0; i < 3; i++) {
+          ifs >> wall_point[i];
+        }
+      } else if (token == "wall_pose") {
+        for (int i = 0; i < 3; i++) {
+          ifs >> wall_pose[i];
+        }
+      }
+    }
+
+    g2o::VertexWall* wall_node(new g2o::VertexWall());
+    wall_node->setId(id);
+    wall_node->setEstimate(wall_pose);
+    node = covisibility_graph->copy_wall_node(wall_node);
+
+    return true;
+  }
 
   void write_wall_data_to_csv(
       const std::string wall_directory,
@@ -171,6 +251,7 @@ class Walls {
   PlaneUtils::plane_class plane_type;
   int plane1_id, plane2_id;
   int floor_level;
+  Eigen::Vector3d wall_point;
   g2o::VertexWall* node;  // node instance
 };
 

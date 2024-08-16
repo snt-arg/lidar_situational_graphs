@@ -40,6 +40,7 @@ void WallMapper::factor_wall(
       wall.plane1_id = matched_x_plane1->first;
       wall.plane2_id = matched_x_plane2->first;
       wall.floor_level = matched_x_plane1->second.floor_level;
+      wall.wall_point = wall_point;
       shared_graph_mutex.lock();
       wall.node = dynamic_cast<g2o::VertexWall*>(covisibility_graph->graph->vertex(id));
       walls_vec.insert({wall.id, wall});
@@ -67,6 +68,7 @@ void WallMapper::factor_wall(
       wall.plane1_id = matched_y_plane1->first;
       wall.plane2_id = matched_y_plane2->first;
       wall.floor_level = matched_y_plane1->second.floor_level;
+      wall.wall_point = wall_point;
       shared_graph_mutex.lock();
       wall.node = dynamic_cast<g2o::VertexWall*>(covisibility_graph->graph->vertex(id));
       walls_vec.insert({wall.id, wall});
@@ -88,7 +90,7 @@ int WallMapper::add_wall_node_and_edge(
   shared_graph_mutex.unlock();
 
   Eigen::Matrix<double, 3, 3> information_wall_surfaces;
-  information_wall_surfaces.setZero();
+  information_wall_surfaces.setIdentity();
   information_wall_surfaces(0, 0) = 10;
   information_wall_surfaces(1, 1) = 10;
   information_wall_surfaces(2, 2) = 10;

@@ -2190,7 +2190,6 @@ class SGraphsNode : public rclcpp::Node {
       id++;
     }
 
-    // TODO:HB save all wall-planes edges
     id = 0;
     for (auto& wall : walls_vec) {
       if (wall.second.plane_type == PlaneUtils::plane_class::X_VERT_PLANE)
@@ -2302,8 +2301,8 @@ class SGraphsNode : public rclcpp::Node {
     std::cout << "Reading data from: " << directory << std::endl;
 
     std::vector<std::string> keyframe_directories, y_planes_directories,
-        x_planes_directories, hort_plane_directories, room_directories,
-        floor_directories;
+        x_planes_directories, hort_plane_directories, wall_directories,
+        room_directories, floor_directories;
 
     std::map<int, KeyFrame::Ptr> loaded_keyframes;
 
@@ -2489,6 +2488,48 @@ class SGraphsNode : public rclcpp::Node {
             plane_information_mat);
         covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
       }
+    }
+
+    boost::filesystem::path wall_parent_path(directory + "/walls");
+    if (boost::filesystem::is_directory(wall_parent_path)) {
+      for (const auto& entry :
+           boost::filesystem::directory_iterator(wall_parent_path)) {
+        if (boost::filesystem::is_directory(entry.path())) {
+          wall_directories.push_back(entry.path().string());
+        }
+      }
+    }
+    sort_directories(wall_directories);
+
+    for (long unsigned int i = 0; i < wall_directories.size(); i++) {
+      Walls wall;
+      wall.load(wall_directories[i], covisibility_graph);
+      walls_vec.insert({wall.id, wall});
+    }
+
+    for (auto& wall : walls_vec) {
+      Eigen::Matrix<double, 3, 3> information_wall_surfaces;
+      information_wall_surfaces.setIdentity();
+      information_wall_surfaces(0, 0) = 10;
+      information_wall_surfaces(1, 1) = 10;
+      information_wall_surfaces(2, 2) = 10;
+
+      g2o::VertexPlane *plane1, *plane2;
+      if (wall.second.plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
+        plane1 = x_vert_planes.find(wall.second.plane1_id)->second.plane_node;
+        plane2 = x_vert_planes.find(wall.second.plane2_id)->second.plane_node;
+      } else {
+        plane1 = y_vert_planes.find(wall.second.plane1_id)->second.plane_node;
+        plane2 = y_vert_planes.find(wall.second.plane2_id)->second.plane_node;
+      }
+
+      auto wall_edge =
+          covisibility_graph->add_wall_2planes_edge(wall.second.node,
+                                                    plane1,
+                                                    plane2,
+                                                    wall.second.wall_point,
+                                                    information_wall_surfaces);
+      covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
     }
 
     boost::filesystem::path room_parent_path(directory + "/rooms");
