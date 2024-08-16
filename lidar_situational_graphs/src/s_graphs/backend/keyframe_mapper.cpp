@@ -68,6 +68,14 @@ int KeyframeMapper::map_keyframes(
       auto edge = covisibility_graph->add_se3_edge(
           keyframe->node, prev_keyframe->node, relative_pose, information);
       covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    } else {
+      Eigen::Isometry3d relative_pose =
+          keyframe->odom.inverse() * keyframes.begin()->second->odom;
+      Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+          keyframe->cloud, keyframes.begin()->second->cloud, relative_pose);
+      auto edge = covisibility_graph->add_se3_edge(
+          keyframe->node, keyframes.begin()->second->node, relative_pose, information);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
     }
     shared_graph_mutex.unlock();
   }
