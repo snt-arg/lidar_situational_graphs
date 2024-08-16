@@ -476,8 +476,6 @@ void GraphUtils::copy_windowed_graph(
                         compressed_graph,
                         complete_keyframe_window,
                         anchor_node_exists);
-  if (!anchor_node_exists)
-    compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // check from all the keyframes added in the compressed graph, which have
   // connections to planes
@@ -487,6 +485,9 @@ void GraphUtils::copy_windowed_graph(
   // connect existing keyframes and connect disconnected keyframes
   connect_broken_keyframes(
       filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
+
+  if (!anchor_node_exists && fixed_keyframes_set.empty())
+    compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // loop the fixed keyframe set, make it fixed and copy its edges to the local
   // compressed graph
