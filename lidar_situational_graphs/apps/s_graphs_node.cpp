@@ -427,6 +427,7 @@ class SGraphsNode : public rclcpp::Node {
 
     this->declare_parameter("plane_ransac_itr", 100);
     this->declare_parameter("plane_ransac_acc", 0.01);
+    this->declare_parameter("plane_merging_tolerance", 0.35);
 
     this->declare_parameter("odom_pc_sync_queue", 32);
     this->declare_parameter("floor_level_viz_height", 10.0);
