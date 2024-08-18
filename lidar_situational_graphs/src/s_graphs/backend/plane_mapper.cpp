@@ -232,8 +232,7 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
     }
   }
 
-  int data_association;
-  data_association = -1;
+  int data_association = -1;
   data_association = associate_plane(plane_type,
                                      keyframe,
                                      det_plane_body_frame.coeffs(),
@@ -242,35 +241,25 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
                                      y_vert_planes,
                                      hort_planes);
   int plane_points = cloud_seg_body->points.size();
+
   switch (plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
       if (x_vert_planes.empty() || data_association == -1) {
-        data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
-        plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
-        VerticalPlanes vert_plane;
-        vert_plane.id = data_association;
-        vert_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
-        vert_plane.keyframe_node_vec.push_back(keyframe->node);
-        vert_plane.plane_node = plane_node;
-        vert_plane.cloud_seg_map =
-            pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
-        vert_plane.covariance = Eigen::Matrix3d::Identity();
-        vert_plane.floor_level = keyframe->floor_level;
-        std::vector<double> color;
-        color.push_back(cloud_seg_body->points.back().r);  // red
-        color.push_back(cloud_seg_body->points.back().g);  // green
-        color.push_back(cloud_seg_body->points.back().b);  // blue
-        color.push_back(255);                              // alpha
-        vert_plane.color = color;
+        VerticalPlanes vert_plane = add_new_plane<VerticalPlanes>(covisibility_graph,
+                                                                  det_plane_body_frame,
+                                                                  det_plane_map_frame,
+                                                                  keyframe,
+                                                                  cloud_seg_body,
+                                                                  x_vert_planes);
+
+        plane_node = vert_plane.plane_node;
         shared_graph_mutex.lock();
-        x_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->x_plane_ids.push_back(vert_plane.id);
         shared_graph_mutex.unlock();
       } else {
+        plane_node = update_plane<VerticalPlanes>(
+            data_association, keyframe, cloud_seg_body, x_vert_planes);
         shared_graph_mutex.lock();
-        plane_node = x_vert_planes[data_association].plane_node;
-        x_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
-        x_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->x_plane_ids.push_back(x_vert_planes[data_association].id);
         shared_graph_mutex.unlock();
       }
@@ -278,34 +267,21 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
     }
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
       if (y_vert_planes.empty() || data_association == -1) {
-        data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
-        plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
-        VerticalPlanes vert_plane;
-        vert_plane.id = data_association;
-        vert_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
-        vert_plane.keyframe_node_vec.push_back(keyframe->node);
-        vert_plane.plane_node = plane_node;
-        vert_plane.cloud_seg_map =
-            pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
-        vert_plane.covariance = Eigen::Matrix3d::Identity();
-        vert_plane.floor_level = keyframe->floor_level;
-        std::vector<double> color;
-        color.push_back(cloud_seg_body->points.back().r);  // red
-        color.push_back(cloud_seg_body->points.back().g);  // green
-        color.push_back(cloud_seg_body->points.back().b);  // blue
-        color.push_back(255);                              // alpha
-        vert_plane.color = color;
+        VerticalPlanes vert_plane = add_new_plane<VerticalPlanes>(covisibility_graph,
+                                                                  det_plane_body_frame,
+                                                                  det_plane_map_frame,
+                                                                  keyframe,
+                                                                  cloud_seg_body,
+                                                                  y_vert_planes);
 
+        plane_node = vert_plane.plane_node;
         shared_graph_mutex.lock();
-        y_vert_planes.insert({vert_plane.id, vert_plane});
         keyframe->y_plane_ids.push_back(vert_plane.id);
         shared_graph_mutex.unlock();
-
       } else {
+        plane_node = update_plane<VerticalPlanes>(
+            data_association, keyframe, cloud_seg_body, y_vert_planes);
         shared_graph_mutex.lock();
-        plane_node = y_vert_planes[data_association].plane_node;
-        y_vert_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
-        y_vert_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->y_plane_ids.push_back(y_vert_planes[data_association].id);
         shared_graph_mutex.unlock();
       }
@@ -313,34 +289,23 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
     }
     case PlaneUtils::plane_class::HORT_PLANE: {
       if (hort_planes.empty() || data_association == -1) {
-        data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
-        plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
-        HorizontalPlanes hort_plane;
-        hort_plane.id = data_association;
-        hort_plane.cloud_seg_body_vec.push_back(cloud_seg_body);
-        hort_plane.keyframe_node_vec.push_back(keyframe->node);
-        hort_plane.plane_node = plane_node;
-        hort_plane.cloud_seg_map =
-            pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
-        hort_plane.covariance = Eigen::Matrix3d::Identity();
-        hort_plane.floor_level = keyframe->floor_level;
-        std::vector<double> color;
-        color.push_back(255);  // red
-        color.push_back(0.0);  // green
-        color.push_back(100);  // blue
-        color.push_back(100);  // alpha
-        hort_plane.color = color;
+        HorizontalPlanes hort_plane =
+            add_new_plane<HorizontalPlanes>(covisibility_graph,
+                                            det_plane_body_frame,
+                                            det_plane_map_frame,
+                                            keyframe,
+                                            cloud_seg_body,
+                                            hort_planes);
 
+        plane_node = hort_plane.plane_node;
         shared_graph_mutex.lock();
-        hort_planes.insert({hort_plane.id, hort_plane});
         keyframe->hort_plane_ids.push_back(hort_plane.id);
         shared_graph_mutex.unlock();
 
       } else {
+        plane_node = update_plane<HorizontalPlanes>(
+            data_association, keyframe, cloud_seg_body, hort_planes);
         shared_graph_mutex.lock();
-        plane_node = hort_planes[data_association].plane_node;
-        hort_planes[data_association].cloud_seg_body_vec.push_back(cloud_seg_body);
-        hort_planes[data_association].keyframe_node_vec.push_back(keyframe->node);
         keyframe->hort_plane_ids.push_back(hort_planes[data_association].id);
         shared_graph_mutex.unlock();
       }
@@ -387,168 +352,23 @@ int PlaneMapper::associate_plane(
     const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
     const std::unordered_map<int, HorizontalPlanes>& hort_planes) {
-  int data_association;
-  double vert_min_maha_dist = 100;
-  double hort_min_maha_dist = 100;
-
-  shared_graph_mutex.lock();
-  Eigen::Isometry3d m2n = keyframe->estimate().inverse();
-  shared_graph_mutex.unlock();
-
-  int current_floor_level = keyframe->floor_level;
+  int data_association = -1;
 
   switch (plane_type) {
     case PlaneUtils::plane_class::X_VERT_PLANE: {
-      for (const auto& x_vert_plane : x_vert_planes) {
-        if (current_floor_level != x_vert_plane.second.floor_level) continue;
-
-        shared_graph_mutex.lock();
-        g2o::Plane3D local_plane = m2n * x_vert_plane.second.plane_node->estimate();
-        shared_graph_mutex.unlock();
-
-        Eigen::Vector3d error = local_plane.ominus(det_plane);
-        double maha_dist =
-            sqrt(error.transpose() * x_vert_plane.second.covariance.inverse() * error);
-
-        if (std::isnan(maha_dist) || maha_dist < 1e-3) {
-          Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
-          maha_dist = sqrt(error.transpose() * cov * error);
-        }
-        if (maha_dist < vert_min_maha_dist) {
-          vert_min_maha_dist = maha_dist;
-          data_association = x_vert_plane.second.id;
-        }
-      }
-      if (vert_min_maha_dist < plane_dist_threshold) {
-        if (!x_vert_planes.at(data_association).cloud_seg_map->empty()) {
-          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
-              new pcl::PointCloud<PointNormal>());
-
-          shared_graph_mutex.lock();
-          Eigen::Matrix4f current_keyframe_pose =
-              keyframe->estimate().matrix().cast<float>();
-          shared_graph_mutex.unlock();
-
-          for (size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
-            PointNormal dst_pt;
-            dst_pt.getVector4fMap() =
-                current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
-            cloud_seg_detected->points.push_back(dst_pt);
-          }
-          bool valid_neighbour = PlaneUtils::check_point_neighbours(
-              x_vert_planes.at(data_association).cloud_seg_map,
-              cloud_seg_detected,
-              plane_points_dist);
-
-          if (!valid_neighbour) {
-            data_association = -1;
-          }
-        }
-      } else {
-        data_association = -1;
-      }
+      data_association = get_matched_planes<VerticalPlanes>(
+          det_plane, keyframe, cloud_seg_body, x_vert_planes);
       break;
     }
+
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
-      for (const auto& y_vert_plane : y_vert_planes) {
-        if (current_floor_level != y_vert_plane.second.floor_level) continue;
-
-        shared_graph_mutex.lock();
-        g2o::Plane3D local_plane = m2n * y_vert_plane.second.plane_node->estimate();
-        shared_graph_mutex.unlock();
-
-        Eigen::Vector3d error = local_plane.ominus(det_plane);
-        double maha_dist =
-            sqrt(error.transpose() * y_vert_plane.second.covariance.inverse() * error);
-
-        if (std::isnan(maha_dist) || maha_dist < 1e-3) {
-          Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
-          maha_dist = sqrt(error.transpose() * cov * error);
-        }
-        if (maha_dist < vert_min_maha_dist) {
-          vert_min_maha_dist = maha_dist;
-          data_association = y_vert_plane.second.id;
-        }
-      }
-      if (vert_min_maha_dist < plane_dist_threshold) {
-        if (!y_vert_planes.at(data_association).cloud_seg_map->empty()) {
-          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
-              new pcl::PointCloud<PointNormal>());
-
-          shared_graph_mutex.lock();
-          Eigen::Matrix4f current_keyframe_pose =
-              keyframe->estimate().matrix().cast<float>();
-          shared_graph_mutex.unlock();
-
-          for (size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
-            PointNormal dst_pt;
-            dst_pt.getVector4fMap() =
-                current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
-            cloud_seg_detected->points.push_back(dst_pt);
-          }
-          bool valid_neighbour = PlaneUtils::check_point_neighbours(
-              y_vert_planes.at(data_association).cloud_seg_map,
-              cloud_seg_detected,
-              plane_points_dist);
-
-          if (!valid_neighbour) {
-            data_association = -1;
-          }
-        }
-      } else {
-        data_association = -1;
-      }
+      data_association = get_matched_planes<VerticalPlanes>(
+          det_plane, keyframe, cloud_seg_body, y_vert_planes);
       break;
     }
     case PlaneUtils::plane_class::HORT_PLANE: {
-      for (const auto& hort_plane : hort_planes) {
-        if (current_floor_level != hort_plane.second.floor_level) continue;
-
-        shared_graph_mutex.lock();
-        g2o::Plane3D local_plane = m2n * hort_plane.second.plane_node->estimate();
-        shared_graph_mutex.unlock();
-
-        Eigen::Vector3d error = local_plane.ominus(det_plane);
-        double maha_dist =
-            sqrt(error.transpose() * hort_plane.second.covariance.inverse() * error);
-
-        if (std::isnan(maha_dist) || maha_dist < 1e-3) {
-          Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
-          maha_dist = sqrt(error.transpose() * cov * error);
-        }
-        if (maha_dist < hort_min_maha_dist) {
-          hort_min_maha_dist = maha_dist;
-          data_association = hort_plane.second.id;
-        }
-      }
-      if (hort_min_maha_dist < plane_dist_threshold) {
-        if (!hort_planes.at(data_association).cloud_seg_map->empty()) {
-          pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
-              new pcl::PointCloud<PointNormal>());
-
-          shared_graph_mutex.lock();
-          Eigen::Matrix4f current_keyframe_pose =
-              keyframe->estimate().matrix().cast<float>();
-          shared_graph_mutex.unlock();
-
-          for (size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
-            PointNormal dst_pt;
-            dst_pt.getVector4fMap() =
-                current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
-            cloud_seg_detected->points.push_back(dst_pt);
-          }
-          bool valid_neighbour = PlaneUtils::check_point_neighbours(
-              hort_planes.at(data_association).cloud_seg_map,
-              cloud_seg_detected,
-              plane_points_dist);
-
-          if (!valid_neighbour) {
-            data_association = -1;
-          }
-        }
-      } else {
-        data_association = -1;
-      }
+      data_association = get_matched_planes<HorizontalPlanes>(
+          det_plane, keyframe, cloud_seg_body, hort_planes);
       break;
     }
     default:
@@ -559,9 +379,134 @@ int PlaneMapper::associate_plane(
   return data_association;
 }
 
-/**
- * @brief convert the body points of planes to map frame for mapping
- */
+template <typename T>
+T PlaneMapper::add_new_plane(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                             const g2o::Plane3D& det_plane_body_frame,
+                             const g2o::Plane3D& det_plane_map_frame,
+                             const KeyFrame::Ptr& keyframe,
+                             const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+                             std::unordered_map<int, T>& planes) {
+  int id = covisibility_graph->retrieve_local_nbr_of_vertices();
+  auto plane_node = covisibility_graph->add_plane_node(det_plane_map_frame.coeffs());
+
+  T plane;
+  plane.id = id;
+  plane.cloud_seg_body_vec.push_back(cloud_seg_body);
+  plane.keyframe_node_vec.push_back(keyframe->node);
+  plane.plane_node = plane_node;
+  plane.cloud_seg_map =
+      pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);
+  plane.covariance = Eigen::Matrix3d::Identity();
+  plane.floor_level = keyframe->floor_level;
+  std::vector<double> color;
+  color.push_back(cloud_seg_body->points.back().r);
+  color.push_back(cloud_seg_body->points.back().g);
+  color.push_back(cloud_seg_body->points.back().b);
+  color.push_back(255);
+  plane.color = color;
+
+  shared_graph_mutex.lock();
+  planes.insert({plane.id, plane});
+  shared_graph_mutex.unlock();
+
+  return plane;
+}
+
+template <typename T>
+g2o::VertexPlane* PlaneMapper::update_plane(
+    const int match_id,
+    const KeyFrame::Ptr& keyframe,
+    const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+    std::unordered_map<int, T>& planes) {
+  shared_graph_mutex.lock();
+  planes[match_id].cloud_seg_body_vec.push_back(cloud_seg_body);
+  planes[match_id].keyframe_node_vec.push_back(keyframe->node);
+  shared_graph_mutex.unlock();
+
+  return planes[match_id].plane_node;
+}
+
+template <typename T>
+int PlaneMapper::get_matched_planes(
+    const g2o::Plane3D& det_plane,
+    const KeyFrame::Ptr& keyframe,
+    const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+    const std::unordered_map<int, T>& planes) {
+  int data_association = -1;
+  int min_maha_dist = 100;
+  std::vector<std::pair<int, double>> potential_matches;
+
+  shared_graph_mutex.lock();
+  Eigen::Isometry3d n2m = keyframe->estimate();
+  shared_graph_mutex.unlock();
+
+  Eigen::Isometry3d m2n = n2m.inverse();
+  Eigen::Matrix4f current_keyframe_pose = n2m.matrix().cast<float>();
+  int current_floor_level = keyframe->floor_level;
+
+  for (const auto& plane : planes) {
+    if (current_floor_level != plane.second.floor_level) continue;
+
+    shared_graph_mutex.lock();
+    g2o::Plane3D local_plane = m2n * plane.second.plane_node->estimate();
+    shared_graph_mutex.unlock();
+
+    Eigen::Vector3d error = local_plane.ominus(det_plane);
+    double maha_dist =
+        sqrt(error.transpose() * plane.second.covariance.inverse() * error);
+
+    if (std::isnan(maha_dist) || maha_dist < 1e-3) {
+      Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
+      maha_dist = sqrt(error.transpose() * cov * error);
+    }
+    if (maha_dist < plane_dist_threshold) {
+      potential_matches.emplace_back(plane.second.id, maha_dist);
+    }
+  }
+
+  if (!potential_matches.empty()) {
+    std::sort(potential_matches.begin(),
+              potential_matches.end(),
+              [](const std::pair<int, double>& a, const std::pair<int, double>& b) {
+                return a.second < b.second;
+              });
+
+    pcl::PointCloud<PointNormal>::Ptr cloud_seg_detected(
+        new pcl::PointCloud<PointNormal>());
+    for (size_t j = 0; j < cloud_seg_body->points.size(); ++j) {
+      PointNormal dst_pt;
+      dst_pt.getVector4fMap() =
+          current_keyframe_pose * cloud_seg_body->points[j].getVector4fMap();
+      cloud_seg_detected->points.push_back(dst_pt);
+    }
+
+    // Check all potential matches for point neighbors
+    for (const auto& match : potential_matches) {
+      int match_id = match.first;
+      bool valid_neighbour = false;
+      if (!planes.at(match_id).cloud_seg_map->points.empty()) {
+        valid_neighbour = PlaneUtils::check_point_neighbours(
+            planes.at(match_id).cloud_seg_map, cloud_seg_detected, plane_points_dist);
+      }
+
+      if (valid_neighbour && match.second < min_maha_dist) {
+        min_maha_dist = match.second;
+        data_association = match_id;
+      }
+    }
+
+    // This will associate the closest plane which doesnt have any points but are in the
+    // map
+    if (data_association == -1) {
+      if (planes.at(potential_matches.begin()->first).cloud_seg_map->points.empty()) {
+        data_association = potential_matches.begin()->first;
+      }
+    }
+  }
+
+  return data_association;
+}
+
 void PlaneMapper::convert_plane_points_to_map(
     std::unordered_map<int, VerticalPlanes>& x_vert_planes,
     std::unordered_map<int, VerticalPlanes>& y_vert_planes,

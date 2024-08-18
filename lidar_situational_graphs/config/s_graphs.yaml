@@ -87,7 +87,7 @@
     min_horizontal_inliers:     500
     min_vertical_inliers:       100
     cluster_min_size:           50
-    cluster_tolerance:          1.0
+    cluster_tolerance:          0.5
 
     # Mapping
     plane_ransac_itr: 500

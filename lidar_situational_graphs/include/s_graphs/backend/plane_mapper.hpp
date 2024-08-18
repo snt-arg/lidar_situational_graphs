@@ -304,6 +304,58 @@ class PlaneMapper {
   /**
    * @brief
    *
+   * @tparam T
+   * @param covisibility_graph
+   * @param det_plane_body_frame
+   * @param det_plane_map_frame
+   * @param keyframe
+   * @param cloud_seg_body
+   * @param planes
+   * @return T
+   */
+  template <typename T>
+  T add_new_plane(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                  const g2o::Plane3D& det_plane_body_frame,
+                  const g2o::Plane3D& det_plane_map_frame,
+                  const KeyFrame::Ptr& keyframe,
+                  const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+                  std::unordered_map<int, T>& planes);
+
+  /**
+   * @brief
+   *
+   * @tparam T
+   * @param match_id
+   * @param keyframe
+   * @param cloud_seg_body
+   * @param planes
+   * @return g2o::VertexPlane*
+   */
+  template <typename T>
+  g2o::VertexPlane* update_plane(
+      const int match_id,
+      const KeyFrame::Ptr& keyframe,
+      const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+      std::unordered_map<int, T>& planes);
+
+  /**
+   * @brief Get the matched planes object
+   *
+   * @tparam T
+   * @param det_plane
+   * @param keyframe
+   * @param cloud_seg_body
+   * @param planes
+   */
+  template <typename T>
+  int get_matched_planes(const g2o::Plane3D& det_plane,
+                         const KeyFrame::Ptr& keyframe,
+                         const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+                         const std::unordered_map<int, T>& planes);
+
+  /**
+   * @brief
+   *
    * @param plane_type
    * @param plane_id
    * @param keyframe
