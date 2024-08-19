@@ -301,7 +301,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
         shared_graph_mutex.lock();
         keyframe->hort_plane_ids.push_back(hort_plane.id);
         shared_graph_mutex.unlock();
-
       } else {
         plane_node = update_plane<HorizontalPlanes>(
             data_association, keyframe, cloud_seg_body, hort_planes);
@@ -311,9 +310,6 @@ int PlaneMapper::factor_planes(std::shared_ptr<GraphSLAM>& covisibility_graph,
       }
       break;
     }
-    default:
-      std::cout << "factoring planes function had a weird error " << std::endl;
-      break;
   }
 
   shared_graph_mutex.lock();
@@ -360,7 +356,6 @@ int PlaneMapper::associate_plane(
           det_plane, keyframe, cloud_seg_body, x_vert_planes);
       break;
     }
-
     case PlaneUtils::plane_class::Y_VERT_PLANE: {
       data_association = get_matched_planes<VerticalPlanes>(
           det_plane, keyframe, cloud_seg_body, y_vert_planes);

@@ -502,7 +502,8 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("plane_dist_threshold", 0.15);
     this->declare_parameter("plane_points_dist", 0.5);
     this->declare_parameter("cluster_min_size", 50);
-    this->declare_parameter("cluster_tolerance", 0.1);
+    this->declare_parameter("cluster_clean_tolerance", 0.2);
+    this->declare_parameter("cluster_seperation_tolerance", 2.0);
 
     this->declare_parameter("min_plane_points", 100);
     this->declare_parameter("min_plane_points_opti", 500);
@@ -815,6 +816,7 @@ class SGraphsNode : public rclcpp::Node {
         std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
             plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
 
+        std::cout << "extraced cloud vec: " << extracted_cloud_vec.size() << std::endl;
         plane_mapper->map_extracted_planes(covisibility_graph,
                                            new_keyframes[i],
                                            extracted_cloud_vec,

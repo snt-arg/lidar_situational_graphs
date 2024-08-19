@@ -93,8 +93,27 @@ class PlaneAnalyzer {
    * @param extracted_cloud
    * @return
    */
-  pcl::PointCloud<PointNormal>::Ptr compute_clusters(
+  pcl::PointCloud<PointNormal>::Ptr clean_clusters(
       const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param extracted_cloud
+   * @return * std::vector<pcl::PointCloud<PointNormal>::Ptr>
+   */
+  std::vector<pcl::PointCloud<PointNormal>::Ptr> seperate_clusters(
+      const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param extracted_cloud
+   * @return pcl::PointCloud<PointNormal>::Ptr
+   */
+  std::vector<pcl::PointIndices> computer_clusters(
+      const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud,
+      const double cluster_tolerance);
 
   /**
    * @brief
@@ -145,7 +164,8 @@ class PlaneAnalyzer {
  private:
   int min_seg_points, cluster_min_size;
   int plane_ransac_itr;
-  double plane_ransac_acc, cluster_tolerance, plane_merging_tolerance;
+  double plane_ransac_acc, cluster_clean_tolerance, cluster_seperation_tolerance,
+      plane_merging_tolerance;
   int min_horizontal_inliers, min_vertical_inliers;
   bool use_euclidean_filter, use_shadow_filter;
   std::string plane_extraction_frame, plane_visualization_frame;
