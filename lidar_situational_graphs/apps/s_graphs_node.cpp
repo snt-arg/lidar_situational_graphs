@@ -816,7 +816,6 @@ class SGraphsNode : public rclcpp::Node {
         std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
             plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
 
-        std::cout << "extraced cloud vec: " << extracted_cloud_vec.size() << std::endl;
         plane_mapper->map_extracted_planes(covisibility_graph,
                                            new_keyframes[i],
                                            extracted_cloud_vec,
