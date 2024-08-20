@@ -486,7 +486,7 @@ void GraphUtils::copy_windowed_graph(
   connect_broken_keyframes(
       filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
 
-  if (!anchor_node_exists && fixed_keyframes_set.empty())
+  if (!anchor_node_exists && keyframe_window.size() == window_size)
     compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // loop the fixed keyframe set, make it fixed and copy its edges to the local
