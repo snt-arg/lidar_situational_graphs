@@ -89,10 +89,10 @@
     cluster_min_size:           50
     cluster_clean_tolerance:    0.2
     cluster_seperation_tolerance:  2.0
-
-    # Mapping
     plane_ransac_itr: 500
     plane_ransac_acc: 0.01
+
+    # Mapping
     odom_pc_sync_queue: 256
     graph_update_interval: 3.0
     map_cloud_update_interval: 3.0

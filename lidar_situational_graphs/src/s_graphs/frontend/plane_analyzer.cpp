@@ -64,7 +64,6 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
     transformed_cloud->points.push_back(cloud->points[i]);
   }
 
-  int i = 0;
   auto t1 = rclcpp::Clock{}.now();
   while (transformed_cloud->points.size() > min_seg_points) {
     try {
@@ -163,7 +162,6 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
       extract.setIndices(inliers);
       extract.setNegative(true);
       extract.filter(*transformed_cloud);
-      i++;
     } catch (const std::exception& e) {
       std::cout << "No ransac model found" << std::endl;
       break;
@@ -314,8 +312,8 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::seperate_clusters(
 
   if (cluster_indices.empty()) return seperated_cloud_vec;
 
-  pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
   for (const auto& single_cluster : cluster_indices) {
+    pcl::PointCloud<PointNormal>::Ptr cloud_cluster(new pcl::PointCloud<PointNormal>);
     for (const auto& idx : (single_cluster).indices) {
       cloud_cluster->push_back(extracted_cloud->points[idx]);
     }
