@@ -244,6 +244,13 @@ bool PlaneUtils::check_point_neighbours(
       break;
     }
   }
+
+  if (!valid_neighbour) {
+    if (point_count > cloud_1->points.size() / 2 ||
+        point_count > cloud_2->points.size() / 2)
+      valid_neighbour = true;
+  }
+
   return valid_neighbour;
 }
 
