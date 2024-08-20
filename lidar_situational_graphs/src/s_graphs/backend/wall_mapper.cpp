@@ -27,7 +27,7 @@ void WallMapper::factor_wall(
 
     if (!same_floor_level) return;
 
-    if (!(matched_x_plane1->second).on_wall && !(matched_x_plane2->second).on_wall) {
+    if (!(matched_x_plane1->second).on_wall || !(matched_x_plane2->second).on_wall) {
       int id = add_wall_node_and_edge(covisibility_graph,
                                       wall_pose,
                                       wall_point,
@@ -36,9 +36,11 @@ void WallMapper::factor_wall(
 
       Walls wall;
       wall.id = id;
+      wall.plane_type = PlaneUtils::plane_class::X_VERT_PLANE;
       wall.plane1_id = matched_x_plane1->first;
       wall.plane2_id = matched_x_plane2->first;
       wall.floor_level = matched_x_plane1->second.floor_level;
+      wall.wall_point = wall_point;
       shared_graph_mutex.lock();
       wall.node = dynamic_cast<g2o::VertexWall*>(covisibility_graph->graph->vertex(id));
       walls_vec.insert({wall.id, wall});
@@ -53,7 +55,7 @@ void WallMapper::factor_wall(
 
     if (!same_floor_level) return;
 
-    if (!(matched_y_plane1->second).on_wall && !(matched_y_plane2->second).on_wall) {
+    if (!(matched_y_plane1->second).on_wall || !(matched_y_plane2->second).on_wall) {
       int id = add_wall_node_and_edge(covisibility_graph,
                                       wall_pose,
                                       wall_point,
@@ -62,9 +64,11 @@ void WallMapper::factor_wall(
 
       Walls wall;
       wall.id = id;
+      wall.plane_type = PlaneUtils::plane_class::Y_VERT_PLANE;
       wall.plane1_id = matched_y_plane1->first;
       wall.plane2_id = matched_y_plane2->first;
       wall.floor_level = matched_y_plane1->second.floor_level;
+      wall.wall_point = wall_point;
       shared_graph_mutex.lock();
       wall.node = dynamic_cast<g2o::VertexWall*>(covisibility_graph->graph->vertex(id));
       walls_vec.insert({wall.id, wall});
@@ -86,7 +90,7 @@ int WallMapper::add_wall_node_and_edge(
   shared_graph_mutex.unlock();
 
   Eigen::Matrix<double, 3, 3> information_wall_surfaces;
-  information_wall_surfaces.setZero();
+  information_wall_surfaces.setIdentity();
   information_wall_surfaces(0, 0) = 10;
   information_wall_surfaces(1, 1) = 10;
   information_wall_surfaces(2, 2) = 10;
@@ -105,4 +109,23 @@ int WallMapper::add_wall_node_and_edge(
 
   return wall_node->id();
 }
+
+void WallMapper::add_saved_walls(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                                 const std::unordered_map<int, VerticalPlanes>& planes,
+                                 const Walls wall) {
+  Eigen::Matrix<double, 3, 3> information_wall_surfaces;
+  information_wall_surfaces.setIdentity();
+  information_wall_surfaces(0, 0) = 10;
+  information_wall_surfaces(1, 1) = 10;
+  information_wall_surfaces(2, 2) = 10;
+
+  g2o::VertexPlane *plane1, *plane2;
+  plane1 = planes.find(wall.plane1_id)->second.plane_node;
+  plane2 = planes.find(wall.plane2_id)->second.plane_node;
+
+  auto wall_edge = covisibility_graph->add_wall_2planes_edge(
+      wall.node, plane1, plane2, wall.wall_point, information_wall_surfaces);
+  covisibility_graph->add_robust_kernel(wall_edge, "Huber", 1.0);
+}
+
 }  // namespace s_graphs

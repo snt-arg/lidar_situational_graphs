@@ -244,6 +244,7 @@ bool PlaneUtils::check_point_neighbours(
       break;
     }
   }
+
   return valid_neighbour;
 }
 
@@ -268,7 +269,6 @@ bool PlaneUtils::plane_dot_product(g2o::VertexPlane* plane1, g2o::VertexPlane* p
   Eigen::Vector3d normal1(coeffs1[0], coeffs1[1], coeffs1[2]);
   Eigen::Vector3d normal2(coeffs2[0], coeffs2[1], coeffs2[2]);
   double dot_product = normal1.dot(normal2);
-  std::cout << "dot product : " << dot_product << std::endl;
   return dot_product > 0.9;
 }
 

@@ -76,7 +76,9 @@ class MapperUtils {
    * @param p2
    * @return
    */
-  inline float point_difference(int plane_type, pcl::PointXY p1, pcl::PointXY p2) {
+  static inline float point_difference(int plane_type,
+                                       pcl::PointXY p1,
+                                       pcl::PointXY p2) {
     float point_diff = 0;
 
     if (plane_type == PlaneUtils::plane_class::X_VERT_PLANE) {
@@ -101,9 +103,9 @@ class MapperUtils {
    * @param plane1_node
    * @param plane2_node
    */
-  void parallel_plane_constraint(std::shared_ptr<GraphSLAM>& graph_slam,
-                                 g2o::VertexPlane* plane1_node,
-                                 g2o::VertexPlane* plane2_node) {
+  static void parallel_plane_constraint(std::shared_ptr<GraphSLAM>& graph_slam,
+                                        g2o::VertexPlane* plane1_node,
+                                        g2o::VertexPlane* plane2_node) {
     Eigen::Matrix<double, 1, 1> information(0.1);
     Eigen::Vector3d meas(0, 0, 0);
 
@@ -120,9 +122,9 @@ class MapperUtils {
    * @pram plane1_node
    * @pram plane2_node
    */
-  void perpendicular_plane_constraint(std::shared_ptr<GraphSLAM>& graph_slam,
-                                      g2o::VertexPlane* plane1_node,
-                                      g2o::VertexPlane* plane2_node) {
+  static void perpendicular_plane_constraint(std::shared_ptr<GraphSLAM>& graph_slam,
+                                             g2o::VertexPlane* plane1_node,
+                                             g2o::VertexPlane* plane2_node) {
     Eigen::Matrix<double, 1, 1> information(0.1);
     Eigen::Vector3d meas(0, 0, 0);
 
@@ -131,8 +133,8 @@ class MapperUtils {
     graph_slam->add_robust_kernel(edge, "Huber", 1.0);
   }
 
-  bool check_plane_ids(const std::set<g2o::HyperGraph::Edge*>& plane_edges,
-                       const g2o::VertexPlane* plane_node) {
+  static bool check_plane_ids(const std::set<g2o::HyperGraph::Edge*>& plane_edges,
+                              const g2o::VertexPlane* plane_node) {
     for (auto edge_itr = plane_edges.begin(); edge_itr != plane_edges.end();
          ++edge_itr) {
       g2o::Edge2Planes* edge_2planes = dynamic_cast<g2o::Edge2Planes*>(*edge_itr);
@@ -386,6 +388,19 @@ class FiniteRoomMapper : public MapperUtils {
   double room_measurement(const int& plane_type,
                           const Eigen::Vector2d& room_pose,
                           const Eigen::Vector4d& plane);
+
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param room
+   */
+  void factor_saved_rooms(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                          const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                          const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                          const Rooms& room);
 
  private:
   /**

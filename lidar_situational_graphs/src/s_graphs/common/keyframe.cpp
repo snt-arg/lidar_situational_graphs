@@ -12,22 +12,26 @@ KeyFrame::KeyFrame(const rclcpp::Time& stamp,
                    const Eigen::Isometry3d& odom,
                    double accum_distance,
                    const pcl::PointCloud<PointT>::Ptr& cloud,
-                   const int floor_level)
+                   const int floor_level,
+                   const int session_id)
     : stamp(stamp),
       odom(odom),
       accum_distance(accum_distance),
       cloud(cloud),
       floor_level(floor_level),
+      session_id(session_id),
       node(nullptr) {}
 
-KeyFrame::KeyFrame(const std::string& directory, g2o::HyperGraph* graph)
+KeyFrame::KeyFrame(const std::string& directory,
+                   const std::shared_ptr<GraphSLAM>& covisibility_graph)
     : stamp(),
       odom(Eigen::Isometry3d::Identity()),
       accum_distance(-1),
       cloud(nullptr),
       floor_level(0),
+      session_id(0),
       node(nullptr) {
-  load(directory, graph);
+  load(directory, covisibility_graph);
 }
 
 KeyFrame::KeyFrame(const KeyFrame::Ptr& key) {
@@ -52,21 +56,58 @@ void KeyFrame::set_dense_cloud(const pcl::PointCloud<PointT>::Ptr& cloud) {
 
 KeyFrame::~KeyFrame() {}
 
-void KeyFrame::save(const std::string& directory) {
-  if (!boost::filesystem::is_directory(directory)) {
-    boost::filesystem::create_directory(directory);
+void KeyFrame::save(const std::string& directory, const int& sequential_id) {
+  std::string kf_sub_directory = directory + "/" + std::to_string(sequential_id);
+
+  if (!boost::filesystem::is_directory(kf_sub_directory)) {
+    boost::filesystem::create_directory(kf_sub_directory);
   }
 
-  std::ofstream ofs(directory + "/data");
+  std::ofstream ofs(kf_sub_directory + "/kf_data.txt");
   ofs << "stamp " << stamp.seconds() << " " << stamp.nanoseconds() << "\n";
 
-  ofs << "estimate\n";
+  ofs << "estimate ";
   ofs << node->estimate().matrix() << "\n";
 
-  ofs << "odom\n";
+  ofs << "odom ";
   ofs << odom.matrix() << "\n";
 
   ofs << "accum_distance " << accum_distance << "\n";
+
+  ofs << "floor_level " << floor_level << "\n";
+
+  if (!x_plane_ids.empty()) {
+    ofs << "x_plane_ids ";
+    for (size_t i = 0; i < x_plane_ids.size(); i++) {
+      if (i < x_plane_ids.size() - 1)
+        ofs << x_plane_ids[i] << " ";
+      else
+        ofs << x_plane_ids[i];
+    }
+    ofs << "\n";
+  }
+
+  if (!y_plane_ids.empty()) {
+    ofs << "y_plane_ids ";
+    for (size_t i = 0; i < y_plane_ids.size(); i++) {
+      if (i < y_plane_ids.size() - 1)
+        ofs << y_plane_ids[i] << " ";
+      else
+        ofs << y_plane_ids[i];
+    }
+    ofs << "\n";
+  }
+
+  if (!hort_plane_ids.empty()) {
+    ofs << "hort_plane_ids ";
+    for (size_t i = 0; i < hort_plane_ids.size(); i++) {
+      if (i < hort_plane_ids.size() - 1)
+        ofs << hort_plane_ids[i] << " ";
+      else
+        ofs << hort_plane_ids[i];
+    }
+    ofs << "\n";
+  }
 
   if (floor_coeffs) {
     ofs << "floor_coeffs " << floor_coeffs->transpose() << "\n";
@@ -89,16 +130,32 @@ void KeyFrame::save(const std::string& directory) {
     ofs << "id " << node->id() << "\n";
   }
 
-  pcl::io::savePCDFileBinary(directory + "/cloud.pcd", *cloud);
+  bool marginalized_kf = GraphUtils::get_keyframe_marg_data(node);
+  if (marginalized_kf) {
+    ofs << "marginalized " << marginalized_kf << "\n";
+  }
+
+  bool stair_kf = GraphUtils::get_keyframe_stair_data(node);
+  if (stair_kf) {
+    ofs << "stair_kf " << stair_kf << "\n";
+  }
+
+  ofs.close();
+
+  pcl::io::savePCDFileBinary(kf_sub_directory + "/cloud.pcd", *cloud);
+  pcl::io::savePCDFileBinary(kf_sub_directory + "/dense_cloud.pcd", *dense_cloud);
 }
 
-bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
-  std::ifstream ifs(directory + "/data");
+bool KeyFrame::load(const std::string& directory,
+                    const std::shared_ptr<GraphSLAM>& covisibility_graph) {
+  std::ifstream ifs(directory + "/kf_data.txt");
   if (!ifs) {
     return false;
   }
 
   int node_id = -1;
+  bool marginalized_kf = false;
+  bool stair_kf = false;
   boost::optional<Eigen::Isometry3d> estimate;
   while (!ifs.eof()) {
     std::string token;
@@ -108,6 +165,7 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
       double seconds;
       double nanoseconds;
       ifs >> seconds >> nanoseconds;
+      stamp = rclcpp::Time(seconds, nanoseconds);
     } else if (token == "estimate") {
       Eigen::Matrix4d mat;
       for (int i = 0; i < 4; i++) {
@@ -121,21 +179,39 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
       odom.linear() = mat.block<3, 3>(0, 0);
       odom.translation() = mat.block<3, 1>(0, 3);
 
-    }
-    // else if (token == "odom") {
-    //   Eigen::Matrix4d odom_mat = Eigen::Matrix4d::Identity();
-    //   for (int i = 0; i < 4; i++) {
-    //     for (int j = 0; j < 4; j++) {
-    //       ifs >> odom_mat(i, j);
-    //     }
-    //   }
-    //   odom.setIdentity();
-    //   odom.linear() = odom_mat.block<3, 3>(0, 0);
-    //   odom.translation() = odom_mat.block<3, 1>(0, 3);
-    // }
-    else if (token == "accum_distance") {
+    } else if (token == "odom") {
+      Eigen::Matrix4d odom_mat = Eigen::Matrix4d::Identity();
+      for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+          ifs >> odom_mat(i, j);
+        }
+      }
+      odom.setIdentity();
+      odom.linear() = odom_mat.block<3, 3>(0, 0);
+      odom.translation() = odom_mat.block<3, 1>(0, 3);
+    } else if (token == "floor_level") {
+      ifs >> floor_level;
+    } else if (token == "accum_distance") {
       double distance;
       ifs >> accum_distance;
+    } else if (token == "x_plane_ids") {
+      int x_plane_id;
+      while (ifs >> x_plane_id) {
+        x_plane_ids.push_back(x_plane_id);
+        if (ifs.peek() == '\n' || ifs.peek() == '\r') break;
+      }
+    } else if (token == "y_plane_ids") {
+      int y_plane_id;
+      while (ifs >> y_plane_id) {
+        y_plane_ids.push_back(y_plane_id);
+        if (ifs.peek() == '\n' || ifs.peek() == '\r') break;
+      }
+    } else if (token == "hort_plane_ids") {
+      int hort_plane_id;
+      while (ifs >> hort_plane_id) {
+        hort_plane_ids.push_back(hort_plane_id);
+        if (ifs.peek() == '\n' || ifs.peek() == '\r') break;
+      }
     } else if (token == "floor_coeffs") {
       Eigen::Vector4d coeffs;
       ifs >> coeffs[0] >> coeffs[1] >> coeffs[2] >> coeffs[3];
@@ -156,7 +232,10 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
       int id;
       ifs >> id;
       node_id = id;
-      // std::cout << "keyframe id : " << node_id << std::endl;
+    } else if (token == "marginalized") {
+      ifs >> marginalized_kf;
+    } else if (token == "stair_kf") {
+      ifs >> stair_kf;
     }
   }
 
@@ -166,27 +245,26 @@ bool KeyFrame::load(const std::string& directory, g2o::HyperGraph* graph) {
     return false;
   }
 
-  // if (graph->vertices().find(node_id) == graph->vertices().end()) {
-  //   std::cerr << "vertex ID=" << node_id << " does not exist!!" << std::endl;
-  //   return false;
-  // }
-  node->setEstimate(*estimate);
-  node->setId(node_id);
-  // node = dynamic_cast<g2o::VertexSE3*>(graph->vertices()[node_id]);
-  // if (node == nullptr) {
-  //   std::cerr << "failed to downcast!!" << std::endl;
-  //   return false;
-  // }
+  g2o::VertexSE3* kf_node(new g2o::VertexSE3());
+  kf_node->setId(node_id);
+  kf_node->setEstimate(*estimate);
+  node = covisibility_graph->copy_se3_node(kf_node);
 
-  // if (estimate) {
-  //   std::cout << "setting estimate" << std::endl;
-  //   node->setEstimate(*estimate);
-  //   std::cout << "estimate set " << std::endl;
-  // }
+  if (marginalized_kf) {
+    GraphUtils::set_keyframe_marg_data(node, marginalized_kf);
+  }
 
-  pcl::PointCloud<PointT>::Ptr cloud_(new pcl::PointCloud<PointT>());
-  pcl::io::loadPCDFile(directory + "/cloud.pcd", *cloud_);
-  cloud = cloud_;
+  if (stair_kf) {
+    GraphUtils::set_keyframe_stair_data(node, stair_kf);
+  }
+
+  pcl::PointCloud<PointT>::Ptr kf_cloud(new pcl::PointCloud<PointT>());
+  pcl::io::loadPCDFile(directory + "/cloud.pcd", *kf_cloud);
+  cloud = kf_cloud;
+
+  pcl::PointCloud<PointT>::Ptr kf_dense_cloud(new pcl::PointCloud<PointT>());
+  pcl::io::loadPCDFile(directory + "/dense_cloud.pcd", *kf_dense_cloud);
+  dense_cloud = kf_dense_cloud;
 
   return true;
 }
