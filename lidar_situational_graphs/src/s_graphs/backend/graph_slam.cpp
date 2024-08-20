@@ -146,6 +146,11 @@ void GraphSLAM::select_solver_type(const std::string& solver_type) {
   std::cout << "done" << std::endl;
 }
 
+void GraphSLAM::set_total_nbr_of_vertices(const int vertices) {
+  nbr_of_vertices = vertices + 1;
+}
+void GraphSLAM::set_total_nbr_of_edges(const int edges) { nbr_of_edges = edges + 1; }
+
 int GraphSLAM::retrieve_total_nbr_of_vertices() const {
   return graph->vertices().size();
 }

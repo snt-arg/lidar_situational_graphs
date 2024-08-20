@@ -41,6 +41,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <cmath>
 #include <g2o/edge_se3_point_to_plane.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
+#include <s_graphs/backend/room_mapper.hpp>
 #include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
@@ -168,6 +169,62 @@ class PlaneMapper {
                          std::unordered_map<int, VerticalPlanes>& x_vert_planes,
                          std::unordered_map<int, VerticalPlanes>& y_vert_planes);
 
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param plane
+   */
+  template <typename T>
+  void factor_saved_planes(const std::shared_ptr<GraphSLAM>& covisibility_graph,
+                           const T& plane) {
+    Eigen::Matrix3d plane_information_mat =
+        Eigen::Matrix3d::Identity() * plane_information;
+
+    for (size_t j = 0; j < plane.keyframe_node_vec.size(); j++) {
+      g2o::Plane3D det_plane_body_frame =
+          Eigen::Vector4d(plane.cloud_seg_body_vec[j]->back().normal_x,
+                          plane.cloud_seg_body_vec[j]->back().normal_y,
+                          plane.cloud_seg_body_vec[j]->back().normal_z,
+                          plane.cloud_seg_body_vec[j]->back().curvature);
+
+      auto edge = covisibility_graph->add_se3_plane_edge(plane.keyframe_node_vec[j],
+                                                         plane.plane_node,
+                                                         det_plane_body_frame.coeffs(),
+                                                         plane_information_mat);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    }
+  }
+
+  /**
+   * @brief
+   *
+   * @tparam T
+   * @param covisibility_graph
+   * @param plane
+   */
+  template <typename T>
+  void factor_saved_duplicate_planes(
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      const std::unordered_map<int, T>& plane_vec,
+      const T& plane) {
+    Eigen::Matrix<double, 3, 3> information_2planes;
+    information_2planes.setIdentity();
+    information_2planes(0, 0) = dupl_plane_matching_information;
+    information_2planes(1, 1) = dupl_plane_matching_information;
+    information_2planes(2, 2) = dupl_plane_matching_information;
+
+    std::set<g2o::HyperGraph::Edge*> plane_edges = plane.plane_node->edges();
+    g2o::VertexPlane* plane2_node =
+        plane_vec.find(plane.duplicate_id)->second.plane_node;
+
+    if (!MapperUtils::check_plane_ids(plane_edges, plane2_node)) {
+      auto edge_planes = covisibility_graph->add_2planes_edge(
+          plane.plane_node, plane2_node, information_2planes);
+      covisibility_graph->add_robust_kernel(edge_planes, "Huber", 1.0);
+    }
+  }
+
  private:
   /**
    * @brief
@@ -247,6 +304,58 @@ class PlaneMapper {
   /**
    * @brief
    *
+   * @tparam T
+   * @param covisibility_graph
+   * @param det_plane_body_frame
+   * @param det_plane_map_frame
+   * @param keyframe
+   * @param cloud_seg_body
+   * @param planes
+   * @return T
+   */
+  template <typename T>
+  T add_new_plane(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                  const g2o::Plane3D& det_plane_body_frame,
+                  const g2o::Plane3D& det_plane_map_frame,
+                  const KeyFrame::Ptr& keyframe,
+                  const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+                  std::unordered_map<int, T>& planes);
+
+  /**
+   * @brief
+   *
+   * @tparam T
+   * @param match_id
+   * @param keyframe
+   * @param cloud_seg_body
+   * @param planes
+   * @return g2o::VertexPlane*
+   */
+  template <typename T>
+  g2o::VertexPlane* update_plane(
+      const int match_id,
+      const KeyFrame::Ptr& keyframe,
+      const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+      std::unordered_map<int, T>& planes);
+
+  /**
+   * @brief Get the matched planes object
+   *
+   * @tparam T
+   * @param det_plane
+   * @param keyframe
+   * @param cloud_seg_body
+   * @param planes
+   */
+  template <typename T>
+  int get_matched_planes(const g2o::Plane3D& det_plane,
+                         const KeyFrame::Ptr& keyframe,
+                         const pcl::PointCloud<PointNormal>::Ptr& cloud_seg_body,
+                         const std::unordered_map<int, T>& planes);
+
+  /**
+   * @brief
+   *
    * @param plane_type
    * @param plane_id
    * @param keyframe
@@ -280,7 +389,7 @@ class PlaneMapper {
 
  private:
   bool use_point_to_plane;
-  double plane_information;
+  double plane_information, dupl_plane_matching_information;
   double plane_dist_threshold;
   double plane_points_dist;
   double infinite_room_min_plane_length;

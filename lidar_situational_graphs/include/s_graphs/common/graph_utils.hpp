@@ -163,12 +163,13 @@ class GraphUtils {
    * @param covisibility_graph
    * @param compressed_graph
    * @param keyframes
-   * @return * void
+   * @param session_id
    */
   static void copy_windowed_graph(const int window_size,
                                   const std::shared_ptr<GraphSLAM>& covisibility_graph,
                                   const std::unique_ptr<GraphSLAM>& compressed_graph,
-                                  const std::map<int, KeyFrame::Ptr>& keyframes);
+                                  const std::map<int, KeyFrame::Ptr>& keyframes,
+                                  const int current_session_id = 0);
 
   /**
    * @brief
@@ -351,6 +352,15 @@ class GraphUtils {
   static bool get_keyframe_marg_data(g2o::VertexSE3* vertex_se3);
 
   /**
+   * @brief Set the keyframe marg data object
+   *
+   * @param vertex_se3
+   * @param value
+   * @return * void
+   */
+  static void set_keyframe_marg_data(g2o::VertexSE3* vertex_se3, const bool value);
+
+  /**
    * @brief Get the keyframe anchor data object
    *
    * @param vertex_se3
@@ -367,6 +377,14 @@ class GraphUtils {
    * @return false
    */
   static bool get_keyframe_stair_data(g2o::VertexSE3* vertex_se3);
+
+  /**
+   * @brief Set the keyframe stair data object
+   *
+   * @param vertex_se3
+   * @param value
+   */
+  static void set_keyframe_stair_data(g2o::VertexSE3* vertex_se3, const bool value);
 
   /**
    * @brief
