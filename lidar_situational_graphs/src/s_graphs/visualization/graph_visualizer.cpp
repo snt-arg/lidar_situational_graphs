@@ -151,7 +151,7 @@ GraphVisualizer::visualize_floor_covisibility_graph(
     kf_plane_edge_marker.id = markers.markers.size();
     kf_plane_edge_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
     kf_plane_edge_marker.pose.orientation.w = 1.0;
-    kf_plane_edge_marker.scale.x = 0.01;
+    kf_plane_edge_marker.scale.x = line_marker_size;
     markers.markers.push_back(kf_plane_edge_marker);
 
     // fil in the x_inf room marker
