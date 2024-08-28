@@ -609,11 +609,36 @@ class GraphSLAM {
    * @param v2: plane2 edge
    * @return registered edge
    */
-  g2o::EdgeSE3PlanePlane* add_se3_point_to_2planes_edge(
-      g2o::VertexDeviation* v_se3,
-      g2o::VertexPlane* v_plane1,
-      g2o::VertexPlane* v_plane2,
-      const Eigen::MatrixXd& information);
+  g2o::EdgeSE3PlanePlane* add_se3_2planes_edge(g2o::VertexDeviation* v_se3,
+                                               g2o::VertexPlane* v_plane1,
+                                               g2o::VertexPlane* v_plane2,
+                                               const Eigen::MatrixXd& information);
+
+  /**
+   * @brief Deviation connection edge between two planes
+   *
+   * @param v_se3: Deviation vertex
+   * @param v1: plane1 edge
+   * @param v2: plane2 edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3PlanePlane* copy_se3_2planes_edge(g2o::EdgeSE3PlanePlane* e,
+                                                g2o::VertexDeviation* v_se3,
+                                                g2o::VertexPlane* v_plane1,
+                                                g2o::VertexPlane* v_plane2);
+
+  /**
+   * @brief Deviation connection edge between two planes
+   *
+   * @param v_se3: Deviation vertex
+   * @param v1: Room1 edge
+   * @param v2: Room2 edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3RoomRoom* copy_se3_2rooms_edge(g2o::EdgeSE3RoomRoom* e,
+                                             g2o::VertexDeviation* v1,
+                                             g2o::VertexRoom* v2,
+                                             g2o::VertexRoom* v3);
 
   /**
    * @brief

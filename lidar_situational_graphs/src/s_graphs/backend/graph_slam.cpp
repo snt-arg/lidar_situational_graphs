@@ -678,22 +678,34 @@ g2o::EdgeWall2Planes* GraphSLAM::copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
   return edge;
 }
 
-g2o::EdgeSE3PlanePlane* GraphSLAM::add_se3_point_to_2planes_edge(
+g2o::EdgeSE3PlanePlane* GraphSLAM::add_se3_2planes_edge(
     g2o::VertexDeviation* v_se3,
     g2o::VertexPlane* v_plane1,
     g2o::VertexPlane* v_plane2,
     const Eigen::MatrixXd& information) {
-  std::cout << "inside graph slam function" << std::endl;
   g2o::EdgeSE3PlanePlane* edge(new g2o::EdgeSE3PlanePlane());
   edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setInformation(information);
-  std::cout << "information set" << std::endl;
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
   graph->addEdge(edge);
-  std::cout << "Edge added" << std::endl;
   this->increment_local_nbr_of_edges();
+
+  return edge;
+}
+
+g2o::EdgeSE3PlanePlane* GraphSLAM::copy_se3_2planes_edge(g2o::EdgeSE3PlanePlane* e,
+                                                         g2o::VertexDeviation* v_se3,
+                                                         g2o::VertexPlane* v_plane1,
+                                                         g2o::VertexPlane* v_plane2) {
+  g2o::EdgeSE3PlanePlane* edge(new g2o::EdgeSE3PlanePlane());
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v_se3;
+  edge->vertices()[1] = v_plane1;
+  edge->vertices()[2] = v_plane2;
+  graph->addEdge(edge);
 
   return edge;
 }
@@ -847,6 +859,20 @@ g2o::EdgeSE3RoomRoom* GraphSLAM::add_deviation_two_rooms_edge(
   return edge;
 }
 
+g2o::EdgeSE3RoomRoom* GraphSLAM::copy_se3_2rooms_edge(g2o::EdgeSE3RoomRoom* e,
+                                                      g2o::VertexDeviation* v1,
+                                                      g2o::VertexRoom* v2,
+                                                      g2o::VertexRoom* v3) {
+  g2o::EdgeSE3RoomRoom* edge(new g2o::EdgeSE3RoomRoom());
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
+  graph->addEdge(edge);
+
+  return edge;
+}
 g2o::Edge2Rooms* GraphSLAM::add_2rooms_edge(g2o::VertexRoom* v1,
                                             g2o::VertexRoom* v2,
                                             const Eigen::MatrixXd& information) {
