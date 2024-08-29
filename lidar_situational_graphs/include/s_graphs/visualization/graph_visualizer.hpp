@@ -56,6 +56,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/rooms.hpp>
 #include <s_graphs/frontend/keyframe_updater.hpp>
 #include <s_graphs/frontend/plane_analyzer.hpp>
@@ -77,8 +78,6 @@ namespace s_graphs {
  * @brief
  */
 class GraphVisualizer {
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
  public:
   /**
    * @brief Constructor for class GraphVisualizer.

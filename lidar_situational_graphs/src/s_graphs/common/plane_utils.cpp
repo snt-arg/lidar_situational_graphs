@@ -1,7 +1,5 @@
 #include "s_graphs/common/plane_utils.hpp"
 
-typedef pcl::PointXYZRGBNormal PointNormal;
-
 namespace s_graphs {
 
 PlaneUtils::PlaneUtils() {}

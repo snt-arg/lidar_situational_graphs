@@ -59,6 +59,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/nmea_sentence_parser.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/room_utils.hpp>
 #include <s_graphs/common/rooms.hpp>
 #include <s_graphs/common/ros_time_hash.hpp>
@@ -103,9 +104,6 @@ namespace s_graphs {
 
 class SGraphsNode : public rclcpp::Node {
  public:
-  typedef pcl::PointXYZI PointT;
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
   SGraphsNode() : Node("s_graphs_node") {
     anchor_node = nullptr;
     anchor_edge = nullptr;

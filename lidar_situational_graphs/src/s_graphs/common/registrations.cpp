@@ -7,6 +7,7 @@
 #include <fast_gicp/gicp/fast_gicp.hpp>
 #include <fast_gicp/gicp/fast_vgicp.hpp>
 #include <iostream>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/registrations.hpp>
 
 #ifdef USE_VGICP_CUDA
@@ -17,8 +18,6 @@ namespace s_graphs {
 
 pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr select_registration_method(
     registration_params params) {
-  using PointT = pcl::PointXYZI;
-
   // select a registration method (ICP, GICP, NDT)
   std::string registration_method = params.registration_method;
   if (registration_method == "FAST_GICP") {

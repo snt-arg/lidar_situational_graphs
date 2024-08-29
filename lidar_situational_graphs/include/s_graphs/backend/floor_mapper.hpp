@@ -61,6 +61,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/infinite_rooms.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/rooms.hpp>
 #include <string>
 
@@ -75,8 +76,6 @@ namespace s_graphs {
  * @brief
  */
 class FloorMapper {
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
  public:
   /**
    * @brief Constructor for the class FloorMapper

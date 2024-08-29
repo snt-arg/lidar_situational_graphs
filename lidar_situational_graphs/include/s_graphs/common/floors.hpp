@@ -38,9 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <boost/filesystem.hpp>
 #include <g2o/vertex_floor.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
-
-using PointT = pcl::PointXYZI;
-using PointNormal = pcl::PointXYZRGBNormal;
+#include <s_graphs/common/point_types.hpp>
 
 namespace g2o {
 class VertexFloor;

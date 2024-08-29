@@ -8,7 +8,7 @@ MapCloudGenerator::MapCloudGenerator() {}
 
 MapCloudGenerator::~MapCloudGenerator() {}
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
     const std::vector<KeyFrame::Ptr>& keyframes,
     const double resolution,
     const Eigen::Matrix4f map_floor_t,
@@ -85,7 +85,7 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::downsample_cloud(
   return filtered_cloud;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
     const Eigen::Matrix4f& pose,
     const pcl::PointCloud<PointT>::Ptr& cloud) const {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
@@ -103,7 +103,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   return map_cloud;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
     const std::vector<KeyFrame::Ptr>& keyframes,
     const int& current_floor_level,
     const double resolution,
@@ -129,7 +129,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floo
   return filtered;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
     const Eigen::Matrix4f& kf_pose,
     const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
         pose_map_cloud) {

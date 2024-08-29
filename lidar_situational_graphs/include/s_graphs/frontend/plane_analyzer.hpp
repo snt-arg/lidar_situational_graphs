@@ -49,6 +49,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <iostream>
 #include <pcl/common/impl/io.hpp>
 #include <s_graphs/common/plane_utils.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <string>
 
 #include "pcl_ros/transforms.hpp"
@@ -58,9 +59,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "std_msgs/msg/color_rgba.hpp"
 
 namespace s_graphs {
-
-typedef pcl::PointXYZI PointT;
-typedef pcl::PointXYZRGBNormal PointNormal;
 
 /**
  * @brief This class provides tools for different analysis over pointclouds to extract
