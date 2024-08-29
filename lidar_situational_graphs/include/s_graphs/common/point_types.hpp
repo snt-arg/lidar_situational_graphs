@@ -3,12 +3,12 @@
 
 #include <pcl/point_types.h>
 
-inline bool use_rgb = false;
+#ifdef USE_RGB_CLOUD
+using PointT = pcl::PointXYZRGB;
+#else
+using PointT = pcl::PointXYZI;
+#endif
 
-if (!use_rgb)
-  using PointT = pcl::PointXYZI;
-else
-  using PointT = pcl::PointXYZRGB;
 using PointNormal = pcl::PointXYZRGBNormal;
 
 #endif  // POINT_TYPES_H

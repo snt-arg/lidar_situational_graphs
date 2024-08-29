@@ -119,7 +119,11 @@ typename pcl::PointCloud<PointT>::Ptr transform_pointcloud(
   for (const auto& src_pt : _cloud->points) {
     PointT dst_pt;
     dst_pt.getVector4fMap() = transform_mat * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+    dst_pt.rgb = src_pt.rgb;
+#else
     dst_pt.intensity = src_pt.intensity;
+#endif
     cloud->emplace_back(dst_pt);
   }
   cloud->width = cloud->size();

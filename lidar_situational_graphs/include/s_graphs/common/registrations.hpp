@@ -54,7 +54,7 @@ struct registration_params {
  * @param registration_params
  * @return selected scan matching
  */
-pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr select_registration_method(
+pcl::Registration<PointT, PointT>::Ptr select_registration_method(
     registration_params params);
 
 }  // namespace s_graphs

@@ -16,7 +16,7 @@
 
 namespace s_graphs {
 
-pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr select_registration_method(
+pcl::Registration<PointT, PointT>::Ptr select_registration_method(
     registration_params params) {
   // select a registration method (ICP, GICP, NDT)
   std::string registration_method = params.registration_method;

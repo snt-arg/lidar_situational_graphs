@@ -35,7 +35,12 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
     for (const auto& src_pt : kf_cloud->points) {
       PointT dst_pt;
       dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+      dst_pt.rgb = src_pt.rgb;
+#else
       dst_pt.intensity = src_pt.intensity;
+#endif
+
       cloud->push_back(dst_pt);
     }
   }
@@ -66,16 +71,24 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::downsample_cloud(
     point.x = voxel_point.x;
     point.y = voxel_point.y;
     point.z = voxel_point.z;
-
-    // Find the original points within the voxel and average their intensity
     std::vector<int> point_indices;
     octree.voxelSearch(voxel_point, point_indices);
 
+    // Find the original points within the voxel and average their intensity
+#ifdef USE_RGB_CLOUD
+    float color_sum = 0.0f;
+
+    for (int idx : point_indices) {
+      color_sum += cloud->points[idx].rgb;
+    }
+    voxel_point.rgb = color_sum / point_indices.size();
+#else
     float intensity_sum = 0.0f;
     for (int idx : point_indices) {
       intensity_sum += cloud->points[idx].intensity;
     }
     voxel_point.intensity = intensity_sum / point_indices.size();
+#endif
   }
 
   filtered_cloud->width = filtered_cloud->size();
@@ -93,7 +106,11 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
   for (const auto& src_pt : cloud->points) {
     PointT dst_pt;
     dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+    dst_pt.rgb = src_pt.rgb;
+#else
     dst_pt.intensity = src_pt.intensity;
+#endif
     map_cloud->push_back(dst_pt);
 
     map_cloud->width = cloud->size();
@@ -143,7 +160,11 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
     for (const auto& src_pt : cloud->points) {
       PointT dst_pt;
       dst_pt.getVector4fMap() = odom_pose_transformed * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+      dst_pt.rgb = src_pt.rgb;
+#else
       dst_pt.intensity = src_pt.intensity;
+#endif
       map_cloud->push_back(dst_pt);
     }
   }
