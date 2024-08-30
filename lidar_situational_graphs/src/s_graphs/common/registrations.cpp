@@ -1,13 +1,3 @@
-#include <pcl/registration/gicp.h>
-#include <pcl/registration/icp.h>
-#include <pcl/registration/ndt.h>
-#include <pclomp/gicp_omp.h>
-#include <pclomp/ndt_omp.h>
-
-#include <fast_gicp/gicp/fast_gicp.hpp>
-#include <fast_gicp/gicp/fast_vgicp.hpp>
-#include <iostream>
-#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/registrations.hpp>
 
 #ifdef USE_VGICP_CUDA

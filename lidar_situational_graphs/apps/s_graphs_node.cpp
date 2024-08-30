@@ -1608,8 +1608,8 @@ class SGraphsNode : public rclcpp::Node {
       const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
       std::map<int, Floors>& floors_vec_snapshot,
       sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg) {
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
-        new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+    pcl::PointCloud<PointNormal>::Ptr floor_wall_cloud(
+        new pcl::PointCloud<PointNormal>);
 
     for (const auto& x_plane : x_planes_snapshot) {
       if (x_plane.second.floor_level != floor_level) continue;

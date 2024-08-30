@@ -456,7 +456,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
    */
   void publish_scan_matching_status(const rclcpp::Time& stamp,
                                     const std::string& frame_id,
-                                    pcl::PointCloud<pcl::PointXYZI>::ConstPtr aligned,
+                                    pcl::PointCloud<PointT>::ConstPtr aligned,
                                     const std::string& msf_source,
                                     const Eigen::Isometry3f& msf_delta) {
     if (status_pub->get_subscription_count() == 0) {

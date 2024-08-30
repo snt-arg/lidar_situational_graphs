@@ -277,8 +277,8 @@ class GraphVisualizer {
    * @return * Eigen::Isometry3d
    */
   Eigen::Isometry3d compute_plane_pose(const VerticalPlanes& plane,
-                                       pcl::PointXYZRGBNormal& p_min,
-                                       pcl::PointXYZRGBNormal& p_max);
+                                       PointNormal& p_min,
+                                       PointNormal& p_max);
 
   /**
    * @brief
