@@ -29,10 +29,13 @@ void GraphUtils::copy_graph_vertices(const GraphSLAM* covisibility_graph,
        it != covisibility_graph->graph->vertices().end();
        ++it) {
     g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+
     if (compressed_graph->graph->vertex(v->id())) continue;
 
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
     if (vertex_se3) {
+      // std::cout << "v id: " << v->id() << std::endl;
+      // if (vertex_se3->fixed()) continue;
       bool marginalized = get_keyframe_marg_data(vertex_se3);
       if (!marginalized || include_marginazed) {
         if (compressed_graph->graph->vertex(v->id())) continue;
@@ -49,12 +52,15 @@ void GraphUtils::copy_graph_vertices(const GraphSLAM* covisibility_graph,
 
     g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(v);
     if (vertex_plane) {
+      // if (vertex_plane->fixed()) continue;
+      // std::cout << "plane id: " << v->id() << std::endl;
       auto current_vertex = compressed_graph->copy_plane_node(vertex_plane);
       continue;
     }
 
     g2o::VertexWall* vertex_wall = dynamic_cast<g2o::VertexWall*>(v);
     if (vertex_wall) {
+      // if (vertex_wall->fixed()) continue;
       auto current_vertex = compressed_graph->copy_wall_node(vertex_wall);
       continue;
     }
@@ -67,6 +73,7 @@ void GraphUtils::copy_graph_vertices(const GraphSLAM* covisibility_graph,
 
     g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
     if (vertex_room) {
+      // if (vertex_room->fixed()) continue;
       auto current_vertex = compressed_graph->copy_room_node(vertex_room);
       continue;
     }
@@ -305,12 +312,44 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
       g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[0]->id()));
+      // std::cout << " edge_se3_plane->vertices()[0]->id() "
+      //           << edge_se3_plane->vertices()[0]->id() << std::endl;
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[1]->id()));
       auto edge = compressed_graph->copy_se3_plane_edge(edge_se3_plane, v1, v2);
-      compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      if (edge_se3_plane->robustKernel()) {
+        compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      }
       continue;
     }
+    // g2o::EdgeSE3PlanePlane* edge_se3_2planes =
+    // dynamic_cast<g2o::EdgeSE3PlanePlane*>(e); if (edge_se3_2planes) {
+    //   g2o::VertexDeviation* v1 =
+    //       dynamic_cast<g2o::VertexDeviation*>(compressed_graph->graph->vertices().at(
+    //           edge_se3_2planes->vertices()[0]->id()));
+    //   g2o::VertexPlane* v2 =
+    //       dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
+    //           edge_se3_2planes->vertices()[1]->id()));
+    //   g2o::VertexPlane* v3 =
+    //       dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
+    //           edge_se3_2planes->vertices()[2]->id()));
+
+    //   auto edge = compressed_graph->copy_se3_2planes_edge(edge_se3_2planes, v1, v2,
+    //   v3); compressed_graph->add_robust_kernel(edge, "Huber", 1.0); continue;
+    // }
+
+    // g2o::EdgeSE3RoomRoom* edge_se3_2rooms = dynamic_cast<g2o::EdgeSE3RoomRoom*>(e);
+    // if (edge_se3_2rooms) {
+    //   g2o::VertexDeviation* v1 = dynamic_cast<g2o::VertexDeviation*>(
+    //       compressed_graph->graph->vertices().at(edge_se3_2rooms->vertices()[0]->id()));
+    //   g2o::VertexRoom* v2 = dynamic_cast<g2o::VertexRoom*>(
+    //       compressed_graph->graph->vertices().at(edge_se3_2rooms->vertices()[1]->id()));
+    //   g2o::VertexRoom* v3 = dynamic_cast<g2o::VertexRoom*>(
+    //       compressed_graph->graph->vertices().at(edge_se3_2rooms->vertices()[2]->id()));
+
+    //   auto edge = compressed_graph->copy_se3_2rooms_edge(edge_se3_2rooms, v1, v2,
+    //   v3); compressed_graph->add_robust_kernel(edge, "Huber", 1.0); continue;
+    // }
 
     g2o::EdgeRoom2Planes* edge_room_2planes = dynamic_cast<g2o::EdgeRoom2Planes*>(e);
     if (edge_room_2planes) {

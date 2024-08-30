@@ -116,7 +116,7 @@
     min_plane_points_opti:      500
     dupl_plane_matching_information: 0.1
     optimization_window_size: 5
-    optimization_type: "FLOOR_GLOBAL"
+    optimization_type: "GLOBAL"
 
 
     # Visualization
