@@ -61,12 +61,22 @@ int KeyframeMapper::map_keyframes(
     const auto& prev_keyframe =
         i == 0 ? keyframes.rbegin()->second : keyframe_queue[i - 1];
 
-    Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
-    Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
-        keyframe->cloud, prev_keyframe->cloud, relative_pose);
-    auto edge = covisibility_graph->add_se3_edge(
-        keyframe->node, prev_keyframe->node, relative_pose, information);
-    covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    if (prev_keyframe->session_id == keyframe->session_id) {
+      Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
+      Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+          keyframe->cloud, prev_keyframe->cloud, relative_pose);
+      auto edge = covisibility_graph->add_se3_edge(
+          keyframe->node, prev_keyframe->node, relative_pose, information);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    } else {
+      Eigen::Isometry3d relative_pose =
+          keyframe->odom.inverse() * keyframes.begin()->second->odom;
+      Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+          keyframe->cloud, keyframes.begin()->second->cloud, relative_pose);
+      auto edge = covisibility_graph->add_se3_edge(
+          keyframe->node, keyframes.begin()->second->node, relative_pose, information);
+      covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
+    }
     shared_graph_mutex.unlock();
   }
   return num_processed;
@@ -105,6 +115,8 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
     // add edge between consecutive keyframes
     const auto& prev_keyframe =
         i == 0 ? (keyframes.rbegin()->second) : keyframe_queue[i - 1];
+
+    if (prev_keyframe->session_id != keyframe->session_id) continue;
 
     bool edge_found = false;
     shared_graph_mutex.lock();
@@ -161,6 +173,7 @@ void KeyframeMapper::map_keyframes(std::shared_ptr<GraphSLAM>& local_graph,
         auto edge = local_graph->add_se3_edge(
             keyframe->node, prev_keyframe->node, relative_pose, information);
         local_graph->add_robust_kernel(edge, "Huber", 1.0);
+
         shared_graph_mutex.unlock();
       }
     }
@@ -221,6 +234,18 @@ void KeyframeMapper::remap_delayed_keyframe(
     }
   }
   shared_graph_mutex.unlock();
+}
+
+void KeyframeMapper::map_saved_keyframes(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                                         KeyFrame::Ptr keyframe,
+                                         KeyFrame::Ptr prev_keyframe) {
+  Eigen::Isometry3d relative_pose = keyframe->odom.inverse() * prev_keyframe->odom;
+  Eigen::MatrixXd information = inf_calclator->calc_information_matrix(
+      keyframe->cloud, prev_keyframe->cloud, relative_pose);
+
+  auto edge = covisibility_graph->add_se3_edge(
+      keyframe->node, prev_keyframe->node, relative_pose, information);
+  covisibility_graph->add_robust_kernel(edge, "Huber", 1.0);
 }
 
 }  // namespace s_graphs

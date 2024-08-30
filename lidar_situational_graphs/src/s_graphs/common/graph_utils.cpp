@@ -478,7 +478,8 @@ void GraphUtils::copy_windowed_graph(
     const int window_size,
     const std::shared_ptr<GraphSLAM>& covisibility_graph,
     const std::unique_ptr<GraphSLAM>& compressed_graph,
-    const std::map<int, KeyFrame::Ptr>& keyframes) {
+    const std::map<int, KeyFrame::Ptr>& keyframes,
+    const int current_session_id) {
   // clear compressed graph
   compressed_graph->graph->clear();
 
@@ -487,6 +488,8 @@ void GraphUtils::copy_windowed_graph(
   std::map<int, KeyFrame::Ptr> complete_keyframe_window;
   auto it = keyframes.rbegin();
   for (; it != keyframes.rend() && keyframe_window.size() < window_size; ++it) {
+    if (it->second->session_id != current_session_id) continue;
+
     bool marginalized =
         get_keyframe_marg_data(dynamic_cast<g2o::VertexSE3*>(it->second->node));
 
@@ -499,6 +502,8 @@ void GraphUtils::copy_windowed_graph(
     complete_keyframe_window.insert(*it);
   }
 
+  if (keyframe_window.empty()) return;
+
   // copy keyframes in the window to the compressed graph
   int min_keyframe_id =
       copy_keyframes_to_graph(covisibility_graph, compressed_graph, keyframe_window);
@@ -510,8 +515,6 @@ void GraphUtils::copy_windowed_graph(
                         compressed_graph,
                         complete_keyframe_window,
                         anchor_node_exists);
-  if (!anchor_node_exists)
-    compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // check from all the keyframes added in the compressed graph, which have
   // connections to planes
@@ -521,6 +524,9 @@ void GraphUtils::copy_windowed_graph(
   // connect existing keyframes and connect disconnected keyframes
   connect_broken_keyframes(
       filtered_k_vec, covisibility_graph, compressed_graph, keyframes);
+
+  if (!anchor_node_exists && keyframe_window.size() == window_size)
+    compressed_graph->graph->vertex(min_keyframe_id)->setFixed(true);
 
   // loop the fixed keyframe set, make it fixed and copy its edges to the local
   // compressed graph
@@ -1350,6 +1356,17 @@ bool GraphUtils::get_keyframe_marg_data(g2o::VertexSE3* vertex_se3) {
   return marginalized;
 }
 
+void GraphUtils::set_keyframe_marg_data(g2o::VertexSE3* vertex_se3, const bool value) {
+  auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+  if (current_data) {
+    current_data->set_marginalized_info(value);
+  } else {
+    OptimizationData* data = new OptimizationData();
+    data->set_marginalized_info(value);
+    vertex_se3->setUserData(data);
+  }
+}
+
 bool GraphUtils::get_keyframe_anchor_data(g2o::VertexSE3* vertex_se3) {
   auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
   bool anchor_node = false;
@@ -1368,6 +1385,17 @@ bool GraphUtils::get_keyframe_stair_data(g2o::VertexSE3* vertex_se3) {
   }
 
   return stair_node;
+}
+
+void GraphUtils::set_keyframe_stair_data(g2o::VertexSE3* vertex_se3, const bool value) {
+  auto current_data = dynamic_cast<OptimizationData*>(vertex_se3->userData());
+  if (current_data) {
+    current_data->set_stair_node_info(value);
+  } else {
+    OptimizationData* data = new OptimizationData();
+    data->set_stair_node_info(value);
+    vertex_se3->setUserData(data);
+  }
 }
 
 void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,

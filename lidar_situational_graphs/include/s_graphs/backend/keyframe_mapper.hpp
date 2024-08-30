@@ -132,6 +132,17 @@ class KeyframeMapper {
                               KeyFrame::Ptr keyframe,
                               KeyFrame::Ptr prev_keyframe);
 
+  /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param keyframe
+   * @param prev_keyframe
+   */
+  void map_saved_keyframes(std::shared_ptr<GraphSLAM>& covisibility_graph,
+                           KeyFrame::Ptr keyframe,
+                           KeyFrame::Ptr prev_keyframe);
+
  private:
   rclcpp::Node::SharedPtr node_obj;
   int max_keyframes_per_update;
