@@ -101,6 +101,9 @@ class GraphSLAM {
             bool verbose = true);
   virtual ~GraphSLAM();
 
+  void set_total_nbr_of_vertices(const int vertices);
+  void set_total_nbr_of_edges(const int edges);
+
   /**
    * @brief Counts the number of vertices in the graph.
    *

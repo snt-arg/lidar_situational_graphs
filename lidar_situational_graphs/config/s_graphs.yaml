@@ -80,9 +80,19 @@
     min_stddev_q: 0.2
     max_stddev_q: 0.8
 
-    #mapping
+    # Plane detection
+    extract_planar_surfaces:    true
+    min_seg_points:             100
+    use_euclidean_filter:       true
+    min_horizontal_inliers:     500
+    min_vertical_inliers:       100
+    cluster_min_size:           50
+    cluster_clean_tolerance:    0.2
+    cluster_seperation_tolerance:  2.0
     plane_ransac_itr: 500
     plane_ransac_acc: 0.01
+
+    # Mapping
     odom_pc_sync_queue: 256
     graph_update_interval: 3.0
     map_cloud_update_interval: 3.0
@@ -90,32 +100,27 @@
     map_cloud_resolution: 0.05
     map_cloud_pub_resolution: 0.01
     fast_mapping: false   #if set to true increase the decay time of map_points and wall_points in rviz
-    viz_dense_map: true #true: might make the rviz visualization slow
+    viz_dense_map: false #true: might make the rviz visualization slow
     floor_level_viz_height: 10.0
     room_viz_height: 8.0
     floor_node_viz_height: 14.0
     viz_all_floor_cloud: true
 
-
-    extract_planar_surfaces:    true
-    min_seg_points:             100
-    use_euclidean_filter:       true
-    min_horizontal_inliers:     500
-    min_vertical_inliers:       100
     keyframe_window_size:       1
     plane_information:          0.1
     room_information:           0.1
     corridor_information:       0.1
     plane_dist_threshold:       0.35
-    plane_points_dist:          0.5
+    plane_points_dist:          2.0
     constant_covariance:        true
     min_plane_points:           100
+    min_plane_points_opti:      100
     dupl_plane_matching_information: 0.1
     optimization_window_size: 5
     optimization_type: "FLOOR_GLOBAL"
 
 
-    #visualization
+    # Visualization
     line_color_r: 1.0
     line_color_g: 1.0
     line_color_b: 1.0
@@ -126,7 +131,7 @@
 
     line_marker_size: 0.04
     kf_marker_size: 0.3
-    room_marker_size: 1.0
-    floor_marker_size: 1.5
+    room_marker_size: 0.8
+    floor_marker_size: 1.0
 
 

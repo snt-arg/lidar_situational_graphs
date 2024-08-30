@@ -88,24 +88,32 @@ class PlaneAnalyzer {
 
  private:
   /**
-   * @brief Initializes ros related jobs.
-   *
-   * @param node
-   */
-  void init_ros(rclcpp::Node::SharedPtr node);
-
- private:
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr segmented_cloud_pub;
-
- private:
-  /**
    * @brief
    *
    * @param extracted_cloud
    * @return
    */
-  pcl::PointCloud<PointNormal>::Ptr compute_clusters(
+  pcl::PointCloud<PointNormal>::Ptr clean_clusters(
       const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param extracted_cloud
+   * @return * std::vector<pcl::PointCloud<PointNormal>::Ptr>
+   */
+  std::vector<pcl::PointCloud<PointNormal>::Ptr> seperate_clusters(
+      const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud);
+
+  /**
+   * @brief
+   *
+   * @param extracted_cloud
+   * @return pcl::PointCloud<PointNormal>::Ptr
+   */
+  std::vector<pcl::PointIndices> computer_clusters(
+      const pcl::PointCloud<PointNormal>::Ptr& extracted_cloud,
+      const double cluster_tolerance);
 
   /**
    * @brief
@@ -128,6 +136,15 @@ class PlaneAnalyzer {
       pcl::PointCloud<pcl::Normal>::Ptr cloud_normals);
 
   /**
+   * @brief
+   *
+   * @param extracted_cloud_vec
+   * @return std::vector<pcl::PointCloud<PointNormal>::Ptr>
+   */
+  std::vector<pcl::PointCloud<PointNormal>::Ptr> merge_close_planes(
+      std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec);
+
+  /**
    * @brief Maps an input h from a value between 0.0 and 1.0 into a rainbow.
    * References OctomapProvider in octomap.
    *
@@ -145,9 +162,10 @@ class PlaneAnalyzer {
   std_msgs::msg::ColorRGBA random_color();
 
  private:
-  int min_seg_points_;
+  int min_seg_points, cluster_min_size;
   int plane_ransac_itr;
-  double plane_ransac_acc;
+  double plane_ransac_acc, cluster_clean_tolerance, cluster_seperation_tolerance,
+      plane_merging_tolerance;
   int min_horizontal_inliers, min_vertical_inliers;
   bool use_euclidean_filter, use_shadow_filter;
   std::string plane_extraction_frame, plane_visualization_frame;

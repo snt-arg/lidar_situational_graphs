@@ -317,19 +317,11 @@ bool FiniteRoomMapper::factor_rooms(
     Rooms det_room;
     det_room.id = room_data_association;
     room_id = det_room.id;
-    det_room.plane_x1 = x_room_pair_vec[0].plane_unflipped;
-    det_room.plane_x2 = x_room_pair_vec[1].plane_unflipped;
-    det_room.plane_y1 = y_room_pair_vec[0].plane_unflipped;
-    det_room.plane_y2 = y_room_pair_vec[1].plane_unflipped;
     det_room.plane_x1_id = x_room_pair_vec[0].plane_id;
     det_room.plane_x2_id = x_room_pair_vec[1].plane_id;
     det_room.plane_y1_id = y_room_pair_vec[0].plane_id;
     det_room.plane_y2_id = y_room_pair_vec[1].plane_id;
     det_room.node = room_node;
-    det_room.plane_x1_node = (found_x_plane1->second).plane_node;
-    det_room.plane_x2_node = (found_x_plane2->second).plane_node;
-    det_room.plane_y1_node = (found_y_plane1->second).plane_node;
-    det_room.plane_y2_node = (found_y_plane2->second).plane_node;
     det_room.cluster_array = cluster_array;
     det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.floor_level = (found_x_plane1->second).floor_level;
@@ -703,18 +695,10 @@ void FiniteRoomMapper::map_room_from_existing_infinite_rooms(
 
     Rooms det_room;
     det_room.id = room_data_association;
-    det_room.plane_x1 = matched_x_infinite_room.plane1;
-    det_room.plane_x2 = matched_x_infinite_room.plane2;
-    det_room.plane_y1 = matched_y_infinite_room.plane1;
-    det_room.plane_y2 = matched_y_infinite_room.plane2;
     det_room.plane_x1_id = matched_x_infinite_room.plane1_id;
     det_room.plane_x2_id = matched_x_infinite_room.plane2_id;
     det_room.plane_y1_id = matched_y_infinite_room.plane1_id;
     det_room.plane_y2_id = matched_y_infinite_room.plane2_id;
-    det_room.plane_x1_node = matched_x_infinite_room.plane1_node;
-    det_room.plane_x2_node = matched_x_infinite_room.plane2_node;
-    det_room.plane_y1_node = matched_y_infinite_room.plane1_node;
-    det_room.plane_y2_node = matched_y_infinite_room.plane2_node;
     det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
     det_room.floor_level = (matched_x_infinite_room).floor_level;
@@ -762,30 +746,10 @@ void FiniteRoomMapper::map_room_from_existing_x_infinite_room(
 
     Rooms det_room;
     det_room.id = room_data_association;
-    det_room.plane_x1 = matched_x_infinite_room.plane1;
-    det_room.plane_x2 = matched_x_infinite_room.plane2;
-    Eigen::Vector4d y_plane1(det_room_data.y_planes[0].nx,
-                             det_room_data.y_planes[0].ny,
-                             det_room_data.y_planes[0].nz,
-                             det_room_data.y_planes[0].d);
-    Eigen::Vector4d y_plane2(det_room_data.y_planes[1].nx,
-                             det_room_data.y_planes[1].ny,
-                             det_room_data.y_planes[1].nz,
-                             det_room_data.y_planes[1].d);
-    det_room.plane_y1 = y_plane1;
-    det_room.plane_y2 = y_plane2;
     det_room.plane_x1_id = matched_x_infinite_room.plane1_id;
     det_room.plane_x2_id = matched_x_infinite_room.plane2_id;
     det_room.plane_y1_id = det_room_data.y_planes[0].id;
     det_room.plane_y2_id = det_room_data.y_planes[1].id;
-    det_room.plane_x1_node = matched_x_infinite_room.plane1_node;
-    det_room.plane_x2_node = matched_x_infinite_room.plane2_node;
-
-    auto found_y_plane1 = y_vert_planes.find(det_room_data.y_planes[0].id);
-    auto found_y_plane2 = y_vert_planes.find(det_room_data.y_planes[1].id);
-    det_room.plane_y1_node = (found_y_plane1->second).plane_node;
-    det_room.plane_y2_node = (found_y_plane2->second).plane_node;
-
     for (int i = 0; i < matched_x_infinite_room.cluster_array.markers.size(); ++i)
       det_room.cluster_array.markers.push_back(
           matched_x_infinite_room.cluster_array.markers[i]);
@@ -845,10 +809,7 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
                              det_room_data.x_planes[1].ny,
                              det_room_data.x_planes[1].nz,
                              det_room_data.x_planes[1].d);
-    det_room.plane_x1 = x_plane1;
-    det_room.plane_x2 = x_plane2;
-    det_room.plane_y1 = matched_y_infinite_room.plane1;
-    det_room.plane_y2 = matched_y_infinite_room.plane2;
+
     det_room.plane_x1_id = det_room_data.x_planes[0].id;
     det_room.plane_x2_id = det_room_data.x_planes[1].id;
     det_room.plane_y1_id = matched_y_infinite_room.plane1_id;
@@ -857,12 +818,6 @@ void FiniteRoomMapper::map_room_from_existing_y_infinite_room(
     det_room.plane_x2_id = det_room_data.x_planes[1].id;
     auto found_x_plane1 = x_vert_planes.find(det_room_data.x_planes[0].id);
     auto found_x_plane2 = x_vert_planes.find(det_room_data.x_planes[1].id);
-
-    det_room.plane_x1_node = (found_x_plane1->second).plane_node;
-    det_room.plane_x2_node = (found_x_plane2->second).plane_node;
-    det_room.plane_y1_node = matched_y_infinite_room.plane1_node;
-    det_room.plane_y2_node = matched_y_infinite_room.plane2_node;
-
     det_room.local_graph = std::make_shared<GraphSLAM>();
     det_room.node = room_node;
     det_room.floor_level = (matched_y_infinite_room).floor_level;
@@ -908,6 +863,25 @@ void FiniteRoomMapper::remove_mapped_infinite_room(
     }
   }
   shared_graph_mutex.unlock();
+}
+
+void FiniteRoomMapper::factor_saved_rooms(
+    const std::shared_ptr<GraphSLAM> covisibility_graph,
+    const std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+    const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+    const Rooms& room) {
+  Eigen::Matrix<double, 2, 2> information_room_planes;
+  information_room_planes.setIdentity();
+  information_room_planes(0, 0) = room_information;
+  information_room_planes(1, 1) = room_information;
+  auto edge_room_planes = covisibility_graph->add_room_4planes_edge(
+      room.node,
+      x_vert_planes.find(room.plane_x1_id)->second.plane_node,
+      x_vert_planes.find(room.plane_x2_id)->second.plane_node,
+      y_vert_planes.find(room.plane_y1_id)->second.plane_node,
+      y_vert_planes.find(room.plane_y2_id)->second.plane_node,
+      information_room_planes);
+  covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
 }
 
 }  // namespace s_graphs

@@ -103,5 +103,6 @@
         "/opt/ros/foxy/lib/python3.8/site-packages"
     ],
     "ros.distro": "humble",
-    "cmake.configureOnOpen": false
+    "cmake.configureOnOpen": false,
+    "scm.showHistoryGraph": false
 }

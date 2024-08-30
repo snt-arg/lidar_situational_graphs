@@ -34,6 +34,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_types.h>
 
 #include <boost/optional.hpp>
+#include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
 #include <vector>
@@ -73,7 +74,8 @@ struct KeyFrame {
            const Eigen::Isometry3d& odom,
            double accum_distance,
            const pcl::PointCloud<PointT>::Ptr& cloud,
-           const int floor_level = 0);
+           const int floor_level = 0,
+           const int session_id = 0);
 
   /**
    * @brief Constructor for class KeyFrame
@@ -82,7 +84,8 @@ struct KeyFrame {
    * @param directory
    * @param graph
    */
-  KeyFrame(const std::string& directory, g2o::HyperGraph* graph);
+  KeyFrame(const std::string& directory,
+           const std::shared_ptr<GraphSLAM>& covisibility_graph);
 
   KeyFrame(const KeyFrame::Ptr& key);
 
@@ -99,8 +102,9 @@ struct KeyFrame {
    * @brief Saves the keyframe into a given directory.
    *
    * @param directory
+   * @param directory
    */
-  void save(const std::string& directory);
+  void save(const std::string& directory, const int& sequential_id);
 
   /**
    * @brief Loads the keyframes from a directory into the graph pointer.
@@ -109,7 +113,8 @@ struct KeyFrame {
    * @param graph
    * @return Success or failure
    */
-  bool load(const std::string& directory, g2o::HyperGraph* graph);
+  bool load(const std::string& directory,
+            const std::shared_ptr<GraphSLAM>& covisibility_graph);
 
   /**
    * @brief
@@ -137,6 +142,7 @@ struct KeyFrame {
       hort_plane_ids;  // list of planes associated with the keyframe
 
   int floor_level;  // floor level that the keyframe belongs
+  int session_id;   // current session (multi-session) the keframe belongs to
 
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS
