@@ -181,6 +181,10 @@ class Rooms {
  public:
   int id;
   int prior_id;
+  g2o::Plane3D plane_x1;
+  g2o::Plane3D plane_x2;
+  g2o::Plane3D plane_y1;
+  g2o::Plane3D plane_y2;
   int plane_x1_id, plane_x2_id;
   int plane_y1_id, plane_y2_id;
   int floor_level;
@@ -189,6 +193,10 @@ class Rooms {
   visualization_msgs::msg::MarkerArray cluster_array;
 
   g2o::VertexRoom *node = nullptr;  // node instance in covisibility graph
+  g2o::VertexPlane *plane_x1_node = nullptr;
+  g2o::VertexPlane *plane_x2_node = nullptr;
+  g2o::VertexPlane *plane_y1_node = nullptr;
+  g2o::VertexPlane *plane_y2_node = nullptr;
   std::map<int, KeyFrame::Ptr> room_keyframes;
   std::shared_ptr<GraphSLAM> local_graph;
 };

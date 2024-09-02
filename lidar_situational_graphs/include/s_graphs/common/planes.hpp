@@ -321,6 +321,8 @@ class Planes {
   Eigen::Vector2d start_point =
       Eigen::Vector2d::Ones();  // start point of the PRIOR wall in revit
   Eigen::Vector3d wall_point;   // point used to calculate prior wall center
+  Eigen::Vector3d mid_point =
+      Eigen::Vector3d::Zero();  // mid point of the PRIOR wall in revit
   bool on_wall = false;  // variable to check if a plane is already associated to a wall
 };
 
