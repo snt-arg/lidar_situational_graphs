@@ -1,11 +1,11 @@
 repositories:
   utils/fast_gicp:
     type: git
-    url: https://github.com/snt-arg/fast_gicp
+    url: https://github.com/koide3/fast_gicp.git
     version: master
   utils/ndt_omp:
     type: git
-    url: https://github.com/snt-arg/ndt_omp.git
+    url: https://github.com/koide3/ndt_omp.git
     version: master
   utils/reasoning/situational_graphs_reasoning:
     type: git
