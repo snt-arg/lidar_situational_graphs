@@ -1,7 +1,7 @@
 repositories:
   utils/fast_gicp:
     type: git
-    url: https://github.com/SMRT-AIST/fast_gicp.git
+    url: https://github.com/koide3/fast_gicp.git
     version: master
   utils/ndt_omp:
     type: git

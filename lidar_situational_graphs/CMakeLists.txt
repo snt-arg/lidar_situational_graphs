@@ -53,6 +53,11 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
+option(USE_RGB_CLOUD "Use RGB point cloud" OFF)
+if(USE_RGB_CLOUD)
+    add_definitions(-DUSE_RGB_CLOUD)
+endif()
+
 message(STATUS "PCL_INCLUDE_DIRS:" ${PCL_INCLUDE_DIRS})
 message(STATUS "PCL_LIBRARY_DIRS:" ${PCL_LIBRARY_DIRS})
 message(STATUS "PCL_DEFINITIONS:" ${PCL_DEFINITIONS})

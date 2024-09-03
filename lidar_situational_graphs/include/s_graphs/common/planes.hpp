@@ -42,6 +42,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <Eigen/Eigen>
 #include <boost/filesystem.hpp>
 #include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/point_types.hpp>
 
 namespace s_graphs {
 /**
@@ -58,7 +59,6 @@ namespace s_graphs {
  * @param floor_level
  */
 
-using PointNormal = pcl::PointXYZRGBNormal;
 class Planes {
  public:
   Planes() {}
@@ -258,7 +258,7 @@ class Planes {
                  "end_point_z,length,height\n";
     }
 
-    pcl::PointXYZRGBNormal p_min, p_max;
+    PointNormal p_min, p_max;
     double length = pcl::getMaxSegment(*cloud_seg_map, p_min, p_max);
     double height = std::abs(p_max.z - p_min.z);
 
@@ -268,7 +268,7 @@ class Planes {
 
     // assuming planes which dont belong to a wall have a thickness of 20cm
     double wall_thickness = 0.2;
-    pcl::PointXYZRGBNormal p_min_new, p_max_new;
+    PointNormal p_min_new, p_max_new;
     p_min_new.x = p_min.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
     p_min_new.y = p_min.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
 

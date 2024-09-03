@@ -637,7 +637,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       int d = 0;
       if (abs(v2->estimate().coeffs()(0)) > abs(v2->estimate().coeffs()(1))) {
         Eigen::Vector4d a_graph_wall_coeffs = v2->estimate().toVector();
-        pcl::PointXYZRGBNormal p_min, p_max;
+        PointNormal p_min, p_max;
         geometry_msgs::msg::Point p1, p2, p3;
         Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
         auto found_s_graph_plane =
@@ -789,7 +789,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::create_prior_marker_array(
       } else if (abs(v2->estimate().coeffs()(1)) > abs(v2->estimate().coeffs()(0))) {
         Eigen::Vector4d a_graph_wall_coeffs = v2->estimate().toVector();
 
-        pcl::PointXYZRGBNormal p_min, p_max;
+        PointNormal p_min, p_max;
         Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
         geometry_msgs::msg::Point p1, p2, p3;
         auto found_s_graph_plane =
@@ -1331,8 +1331,8 @@ void GraphVisualizer::publish_cuboid(const g2o::VertexSE3* vertex_se3,
 }
 
 Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,
-                                                      pcl::PointXYZRGBNormal& p_min,
-                                                      pcl::PointXYZRGBNormal& p_max) {
+                                                      PointNormal& p_min,
+                                                      PointNormal& p_max) {
   shared_graph_mutex.lock();
   double length = pcl::getMaxSegment(*plane.cloud_seg_map, p_min, p_max);
   shared_graph_mutex.unlock();

@@ -37,6 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/map_cloud_generator.hpp>
 #include <s_graphs/common/optimization_data.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/ros_time_hash.hpp>
 #include <s_graphs/frontend/keyframe_updater.hpp>
 #include <s_graphs/frontend/loop_detector.hpp>
@@ -49,8 +50,6 @@ namespace s_graphs {
  * @brief
  */
 class KeyframeMapper {
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
  public:
   /**
    * @brief Constructor for class KeyframeMapper

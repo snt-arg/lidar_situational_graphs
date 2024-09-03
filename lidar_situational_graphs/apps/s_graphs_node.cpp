@@ -59,6 +59,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/nmea_sentence_parser.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/room_utils.hpp>
 #include <s_graphs/common/rooms.hpp>
 #include <s_graphs/common/ros_time_hash.hpp>
@@ -103,9 +104,6 @@ namespace s_graphs {
 
 class SGraphsNode : public rclcpp::Node {
  public:
-  typedef pcl::PointXYZI PointT;
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
   SGraphsNode() : Node("s_graphs_node") {
     anchor_node = nullptr;
     anchor_edge = nullptr;
@@ -1610,8 +1608,8 @@ class SGraphsNode : public rclcpp::Node {
       const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
       std::map<int, Floors>& floors_vec_snapshot,
       sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg) {
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
-        new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+    pcl::PointCloud<PointNormal>::Ptr floor_wall_cloud(
+        new pcl::PointCloud<PointNormal>);
 
     for (const auto& x_plane : x_planes_snapshot) {
       if (x_plane.second.floor_level != floor_level) continue;

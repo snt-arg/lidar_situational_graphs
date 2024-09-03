@@ -44,6 +44,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/walls.hpp>
 #include <string>
 
@@ -60,8 +61,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 namespace s_graphs {
 
 class WallMapper {
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
  public:
   /**
    * @brief Contructor of class WallMapper

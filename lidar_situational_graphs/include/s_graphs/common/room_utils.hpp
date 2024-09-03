@@ -54,6 +54,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/nmea_sentence_parser.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/rooms.hpp>
 #include <s_graphs/common/ros_utils.hpp>
 #include <s_graphs/frontend/keyframe_updater.hpp>
@@ -118,7 +119,11 @@ typename pcl::PointCloud<PointT>::Ptr transform_pointcloud(
   for (const auto& src_pt : _cloud->points) {
     PointT dst_pt;
     dst_pt.getVector4fMap() = transform_mat * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+    dst_pt.rgb = src_pt.rgb;
+#else
     dst_pt.intensity = src_pt.intensity;
+#endif
     cloud->emplace_back(dst_pt);
   }
   cloud->width = cloud->size();
@@ -131,22 +136,19 @@ typename pcl::PointCloud<PointT>::Ptr transform_pointcloud(
 
 // REMOVE THIS
 template <typename T>
-pcl::PointCloud<s_graphs::PointT>::Ptr filter_room_pointcloud(
-    pcl::PointCloud<s_graphs::PointT>::Ptr cloud,
-    double max_dist = 0) {
-  pcl::PointCloud<s_graphs::PointT>::Ptr filtered(
-      new pcl::PointCloud<s_graphs::PointT>());
+pcl::PointCloud<PointT>::Ptr filter_room_pointcloud(pcl::PointCloud<PointT>::Ptr cloud,
+                                                    double max_dist = 0) {
+  pcl::PointCloud<PointT>::Ptr filtered(new pcl::PointCloud<PointT>());
 
   // Easy filter, remove floor points -> Although this doesn't affect the
   // descriptor
-  pcl::PassThrough<s_graphs::PointT> pass;
+  pcl::PassThrough<PointT> pass;
   pass.setInputCloud(cloud);
   pass.setFilterFieldName("z");
   pass.setFilterLimits(0.3, 3.0);
   pass.filter(*filtered);
   if (max_dist) {
-    pcl::PointCloud<s_graphs::PointT>::Ptr more_filtered(
-        new pcl::PointCloud<s_graphs::PointT>());
+    pcl::PointCloud<PointT>::Ptr more_filtered(new pcl::PointCloud<PointT>());
     for (auto& pnt : filtered->points) {
       Eigen::Vector3d point = pnt.getVector3fMap().cast<double>();
       point.z() = 0;
@@ -174,19 +176,17 @@ pcl::PointCloud<s_graphs::PointT>::Ptr filter_room_pointcloud(
 }
 
 template <class IterI>
-pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
+pcl::PointCloud<PointT>::Ptr generate_room_pointcloud(
     const s_graphs::Rooms& room,
     const Eigen::Isometry3d& room_centre,
     IterI begin,
     IterI end) {
-  pcl::PointCloud<s_graphs::PointT>::Ptr room_cloud(
-      new pcl::PointCloud<s_graphs::PointT>());
+  pcl::PointCloud<PointT>::Ptr room_cloud(new pcl::PointCloud<PointT>());
   for (auto it = begin; it != end; it++) {
     s_graphs::KeyFrame::Ptr keyframe = it->second;
     // std::cout << "Keyframe:" << keyframe->id() << std::endl;
     Eigen::Isometry3d rel_transform = room_centre.inverse() * keyframe->estimate();
-    auto cloud = transform_pointcloud<s_graphs::KeyFrame::PointT>(keyframe->cloud,
-                                                                  rel_transform);
+    auto cloud = transform_pointcloud<PointT>(keyframe->cloud, rel_transform);
     room_cloud->points.insert(room_cloud->end(), cloud->begin(), cloud->end());
   }
   room_cloud->width = room_cloud->size();
@@ -194,8 +194,7 @@ pcl::PointCloud<s_graphs::PointT>::Ptr generate_room_pointcloud(
   return room_cloud;
 }
 
-std::optional<
-    std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
+std::optional<std::pair<Eigen::Isometry3d, pcl::PointCloud<PointT>::Ptr>>
 generate_room_keyframe(
     const s_graphs::Rooms& room,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
@@ -216,25 +215,21 @@ bool is_keyframe_inside_room(
 
 struct ExtendedRooms : public s_graphs::Rooms {
   ExtendedRooms() : s_graphs::Rooms() {
-    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
-        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+    cloud = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   };
   ExtendedRooms(s_graphs::Rooms&& rooms) : s_graphs::Rooms(rooms) {
-    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
-        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+    cloud = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   };
   ExtendedRooms(s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms) {
-    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
-        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+    cloud = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   };
   ExtendedRooms(const s_graphs::Rooms& rooms) : s_graphs::Rooms(rooms) {
-    cloud = pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr(
-        new pcl::PointCloud<s_graphs::KeyFrame::PointT>());
+    cloud = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   };
   std::vector<PlaneGlobalRep> global_planes;
   Eigen::Isometry3d centre;
   std::vector<s_graphs::KeyFrame::Ptr> keyframes;
-  pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr cloud;
+  pcl::PointCloud<PointT>::Ptr cloud;
 };
 
 class RoomsKeyframeGenerator : public s_graphs::Rooms {

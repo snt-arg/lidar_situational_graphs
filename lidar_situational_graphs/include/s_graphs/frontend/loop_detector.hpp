@@ -35,6 +35,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <boost/format.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/registrations.hpp>
 
 namespace s_graphs {
@@ -70,8 +71,6 @@ struct Loop {
  */
 class LoopDetector {
  public:
-  typedef pcl::PointXYZI PointT;
-
   /**
    * @brief Constructor of the class LoopDetector
    *

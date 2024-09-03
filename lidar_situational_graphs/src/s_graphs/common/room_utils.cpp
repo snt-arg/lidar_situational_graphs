@@ -194,8 +194,7 @@ KeyFramePtrVec obtain_keyframes_from_ids(const std::set<int>& id_list,
   return keyframes;
 }
 
-std::optional<
-    std::pair<Eigen::Isometry3d, pcl::PointCloud<s_graphs::KeyFrame::PointT>::Ptr>>
+std::optional<std::pair<Eigen::Isometry3d, pcl::PointCloud<PointT>::Ptr>>
 generate_room_keyframe(
     const s_graphs::Rooms& room,
     const std::unordered_map<int, s_graphs::VerticalPlanes>& x_vert_planes,
