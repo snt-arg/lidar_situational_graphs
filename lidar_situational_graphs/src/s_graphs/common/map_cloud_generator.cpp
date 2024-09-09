@@ -18,6 +18,7 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
     return pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   }
 
+  std::set<PointT, PointComparator> unique_points;
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
   // cloud->reserve(keyframes.front()->cloud->size() * keyframes.size());
 
@@ -40,8 +41,7 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
 #else
       dst_pt.intensity = src_pt.intensity;
 #endif
-
-      cloud->push_back(dst_pt);
+      if (unique_points.insert(dst_pt).second) cloud->push_back(dst_pt);
     }
   }
 
@@ -151,6 +151,7 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
     const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
         pose_map_cloud) {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
+  std::set<PointT, PointComparator> unique_points;
 
   for (int i = 0; i < pose_map_cloud.size(); i += 2) {
     Eigen::Matrix4f current_odom_pose = pose_map_cloud[i].first;
@@ -165,7 +166,7 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
 #else
       dst_pt.intensity = src_pt.intensity;
 #endif
-      map_cloud->push_back(dst_pt);
+      if (unique_points.insert(dst_pt).second) map_cloud->push_back(dst_pt);
     }
   }
 

@@ -122,6 +122,12 @@ class MapCloudGenerator {
       const Eigen::Matrix4f& kf_pose,
       const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
           pose_map_cloud);
+
+  struct PointComparator {
+    bool operator()(const PointT& a, const PointT& b) const {
+      return std::tie(a.x, a.y, a.z) < std::tie(b.x, b.y, b.z);
+    }
+  };
 };
 
 }  // namespace s_graphs
