@@ -560,6 +560,7 @@ void PlaneMapper::convert_plane_points_to_map(
 template <typename T>
 void PlaneMapper::fill_plane_points(T& plane) {
   plane.cloud_seg_map->points.clear();
+  std::set<PointNormal, PointNormalComparator> unique_points;
 
   for (int k = 0; k < plane.keyframe_node_vec.size(); ++k) {
     bool marginalized = GraphUtils::get_keyframe_marg_data(plane.keyframe_node_vec[k]);
@@ -577,7 +578,10 @@ void PlaneMapper::fill_plane_points(T& plane) {
       dst_pt.g = plane.color[1];
       dst_pt.b = plane.color[2];
       dst_pt.a = plane.color[3];
-      plane.cloud_seg_map->points.push_back(dst_pt);
+
+      if (unique_points.insert(dst_pt).second) {
+        plane.cloud_seg_map->points.push_back(dst_pt);
+      }
     }
   }
 }
