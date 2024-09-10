@@ -19,8 +19,8 @@
 
     # Keyframe registration
     max_keyframes_per_update: 100
-    keyframe_delta_trans: 2.0
-    keyframe_delta_angle: 2.0
+    keyframe_delta_trans: 2.0 #this param is set from the s_graphs launch file
+    keyframe_delta_angle: 2.0 #this param is set from the s_graphs launch file
 
     # Fix first node for optimization stability
     fix_first_node: true
@@ -100,7 +100,7 @@
     map_cloud_resolution: 0.05
     map_cloud_pub_resolution: 0.01
     fast_mapping: false   #if set to true increase the decay time of map_points and wall_points in rviz
-    viz_dense_map: false #true: might make the rviz visualization slow
+    viz_dense_map: false #true: might make the rviz visualization slow (#this param is set from the s_graphs launch file)
     floor_level_viz_height: 10.0
     room_viz_height: 8.0
     floor_node_viz_height: 14.0

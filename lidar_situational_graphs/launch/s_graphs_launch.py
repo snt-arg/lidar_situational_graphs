@@ -64,6 +64,11 @@ def generate_launch_description():
                 description="Value in [m] for recording each keyframe",
             ),
             DeclareLaunchArgument(
+                "viz_dense_map",
+                default_value="false",
+                description="If visualize dense map in rviz",
+            ),
+            DeclareLaunchArgument(
                 "debug_mode",
                 default_value="false",
                 description="Run s_graphs node in debugging mode",
@@ -103,6 +108,7 @@ def launch_sgraphs(context, *args, **kwargs):
     namespace_arg = LaunchConfiguration("namespace").perform(context)
     room_segmentation_arg = LaunchConfiguration("room_segmentation").perform(context)
     keyframe_delta_arg = float(LaunchConfiguration("keyframe_delta").perform(context))
+    viz_dense_map_arg = LaunchConfiguration("viz_dense_map").perform(context)
     debug_mode_arg = LaunchConfiguration("debug_mode").perform(context)
 
     ns_prefix = str(namespace_arg) + "/" if namespace_arg else ""
@@ -170,6 +176,7 @@ def launch_sgraphs(context, *args, **kwargs):
                 "map_frame_id": map_frame,
                 "keyframe_delta_trans": keyframe_delta_arg,
                 "keyframe_delta_angle": keyframe_delta_arg,
+                "viz_dense_map": viz_dense_map_arg,
             },
         ],
         output={
