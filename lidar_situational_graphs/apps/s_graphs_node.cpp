@@ -105,6 +105,7 @@ namespace s_graphs {
 class SGraphsNode : public rclcpp::Node {
  public:
   SGraphsNode() : Node("s_graphs_node") {
+    this->set_dump_directory();
     anchor_node = nullptr;
     anchor_edge = nullptr;
     // one time timer to initialize the classes with the current node obj
@@ -1808,7 +1809,7 @@ class SGraphsNode : public rclcpp::Node {
 
     graph_mutex.lock();
     auto graph_keyframes = graph_publisher->publish_graph_keyframes(
-        local_covisibility_graph, keyframes_complete_snapshot);
+        local_covisibility_graph, keyframes_complete_snapshot, dump_directory);
     graph_mutex.unlock();
 
     graph_pub->publish(graph_structure);
@@ -2134,6 +2135,17 @@ class SGraphsNode : public rclcpp::Node {
     }
   }
 
+  void set_dump_directory() {
+    dump_directory = "/tmp/s_graphs_data";
+    std::time_t t = std::time(nullptr);
+    struct std::tm* time_now = std::localtime(&t);
+    std::stringstream ss;
+    ss << (time_now->tm_year + 1900) << '-' << (time_now->tm_mon + 1) << '_'
+       << time_now->tm_mday << '_' << time_now->tm_hour << '_' << time_now->tm_min
+       << "_" << time_now->tm_sec;
+    dump_directory += "_" + ss.str();
+  }
+
   /**
    * @brief dump all data to the current directory
    * @param req
@@ -2145,50 +2157,41 @@ class SGraphsNode : public rclcpp::Node {
       std::shared_ptr<situational_graphs_msgs::srv::DumpGraph::Response> res) {
     std::lock_guard<std::mutex> lock(graph_mutex);
 
-    std::string directory = req->destination;
-    std::time_t t = std::time(nullptr);
-    struct std::tm* time_now = std::localtime(&t);
-    std::stringstream ss;
-    ss << (time_now->tm_year + 1900) << '-' << (time_now->tm_mon + 1) << '_'
-       << time_now->tm_mday << '_' << time_now->tm_hour << '_' << time_now->tm_min
-       << "_" << time_now->tm_sec;
-    directory += "_" + ss.str();
-
-    if (!boost::filesystem::is_directory(directory)) {
-      boost::filesystem::create_directory(directory);
+    if (!boost::filesystem::is_directory(dump_directory)) {
+      boost::filesystem::create_directory(dump_directory);
     }
 
-    std::string kf_directory = directory + "/keyframes";
+    std::string kf_directory = dump_directory + "/keyframes";
     if (!boost::filesystem::is_directory(kf_directory)) {
       boost::filesystem::create_directory(kf_directory);
     }
-    std::string x_vert_planes_directory = directory + "/x_vert_planes";
+    std::string x_vert_planes_directory = dump_directory + "/x_vert_planes";
     if (!boost::filesystem::is_directory(x_vert_planes_directory)) {
       boost::filesystem::create_directory(x_vert_planes_directory);
     }
-    std::string y_vert_planes_directory = directory + "/y_vert_planes";
+    std::string y_vert_planes_directory = dump_directory + "/y_vert_planes";
     if (!boost::filesystem::is_directory(y_vert_planes_directory)) {
       boost::filesystem::create_directory(y_vert_planes_directory);
     }
-    std::string hort_planes_directory = directory + "/hort_planes";
+    std::string hort_planes_directory = dump_directory + "/hort_planes";
     if (!boost::filesystem::is_directory(hort_planes_directory)) {
       boost::filesystem::create_directory(hort_planes_directory);
     }
-    std::string walls_directory = directory + "/walls";
+    std::string walls_directory = dump_directory + "/walls";
     if (!boost::filesystem::is_directory(walls_directory)) {
       boost::filesystem::create_directory(walls_directory);
     }
-    std::string rooms_directory = directory + "/rooms";
+    std::string rooms_directory = dump_directory + "/rooms";
     if (!boost::filesystem::is_directory(rooms_directory)) {
       boost::filesystem::create_directory(rooms_directory);
     }
-    std::string floors_directory = directory + "/floors";
+    std::string floors_directory = dump_directory + "/floors";
     if (!boost::filesystem::is_directory(floors_directory)) {
       boost::filesystem::create_directory(floors_directory);
     }
 
-    std::cout << "All data will be dumped to: " << directory << std::endl;
-    covisibility_graph->save(directory + "/graph.g2o");
+    std::cout << "All data will be dumped to: " << dump_directory << std::endl;
+    covisibility_graph->save(dump_directory + "/graph.g2o");
 
     int id = 0;
     for (const auto& kf : keyframes) {
@@ -2236,21 +2239,21 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     if (zero_utm) {
-      std::ofstream zero_utm_ofs(directory + "/zero_utm");
+      std::ofstream zero_utm_ofs(dump_directory + "/zero_utm");
       zero_utm_ofs << boost::format("%.6f %.6f %.6f") % zero_utm->x() % zero_utm->y() %
                           zero_utm->z()
                    << std::endl;
       zero_utm_ofs.close();
     }
 
-    std::ofstream anchor_ofs(directory + "/anchor_node.txt");
+    std::ofstream anchor_ofs(dump_directory + "/anchor_node.txt");
     if (anchor_node != nullptr) {
       anchor_ofs << "id " << anchor_node->id() << "\n";
       anchor_ofs << "estimate " << anchor_node->estimate().matrix() << "\n";
     }
     anchor_ofs.close();
 
-    std::ofstream session_ofs(directory + "/session_details.txt");
+    std::ofstream session_ofs(dump_directory + "/session_details.txt");
     session_ofs << "session_id " << current_session_id << "\n";
     session_ofs << "session_graph_vertices "
                 << covisibility_graph->retrieve_total_nbr_of_vertices() << "\n";
@@ -2707,6 +2710,8 @@ class SGraphsNode : public rclcpp::Node {
 
   int prev_mapped_keyframes;
   visualization_msgs::msg::MarkerArray s_graphs_markers;
+
+  std::string dump_directory;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
   std::unique_ptr<GraphSLAM> compressed_graph;

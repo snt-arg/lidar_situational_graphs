@@ -354,8 +354,10 @@ situational_graphs_reasoning_msgs::msg::Graph GraphPublisher::publish_graph(
 situational_graphs_reasoning_msgs::msg::GraphKeyframes
 GraphPublisher::publish_graph_keyframes(
     const g2o::SparseOptimizer* local_graph,
-    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes) {
+    const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes,
+    const std::string& directory) {
   situational_graphs_reasoning_msgs::msg::GraphKeyframes msg;
+  msg.type = directory;
   msg.keyframes.reserve(keyframes.size());
   for (auto& keyframe : keyframes) {
     // bool kf_marginalized =
