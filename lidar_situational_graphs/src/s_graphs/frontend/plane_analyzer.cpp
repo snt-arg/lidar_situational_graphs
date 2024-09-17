@@ -288,7 +288,7 @@ pcl::PointCloud<PointNormal>::Ptr PlaneAnalyzer::clean_clusters(
     }
   }
 
-  if (cloud_cluster->points.empty()) {
+  if (!cloud_cluster->points.empty()) {
     cloud_cluster->width = cloud_cluster->size();
     cloud_cluster->height = 1;
     cloud_cluster->is_dense = true;
