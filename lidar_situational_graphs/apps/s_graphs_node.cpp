@@ -134,6 +134,8 @@ class SGraphsNode : public rclcpp::Node {
 
     fast_mapping =
         this->get_parameter("fast_mapping").get_parameter_value().get<bool>();
+    save_dense_map =
+        this->get_parameter("save_dense_map").get_parameter_value().get<bool>();
     viz_dense_map =
         this->get_parameter("viz_dense_map").get_parameter_value().get<bool>();
     viz_all_floor_cloud =
@@ -399,6 +401,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("odom_frame_id", "odom");
     this->declare_parameter("fast_mapping", true);
     this->declare_parameter("viz_dense_map", false);
+    this->declare_parameter("save_dense_map", false);
     this->declare_parameter("viz_all_floor_cloud", false);
     this->declare_parameter("map_cloud_resolution", 0.05);
     this->declare_parameter("map_cloud_pub_resolution", 0.1);
@@ -627,7 +630,8 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
-    keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
+    if (save_dense_map)
+      keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
 
     if (keyframe_updater->update(odom)) {
       double accum_d = keyframe_updater->get_accum_distance();
@@ -635,10 +639,13 @@ class SGraphsNode : public rclcpp::Node {
           stamp, odom, accum_d, cloud, current_floor_level, current_session_id));
 
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-      keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
-          odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+      if (save_dense_map) {
+        keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
+            odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+        keyframe_updater->reset_collected_pose_cloud();
+      }
+
       keyframe_queue.push_back(keyframe);
-      keyframe_updater->reset_collected_pose_cloud();
     }
 
     if (fast_mapping) {
@@ -1549,7 +1556,7 @@ class SGraphsNode : public rclcpp::Node {
                                                       it->first,
                                                       map_cloud_pub_resolution,
                                                       map_floor_t,
-                                                      viz_dense_map);
+                                                      viz_dense_map && save_dense_map);
       }
     } else if (kfs_to_map != 0) {
       std::vector<KeyFrame::Ptr> kf_map_window;
@@ -1563,7 +1570,7 @@ class SGraphsNode : public rclcpp::Node {
                                                     floor_level,
                                                     map_cloud_pub_resolution,
                                                     map_floor_t,
-                                                    viz_dense_map);
+                                                    viz_dense_map && save_dense_map);
 
       *floors_vec_snapshot[floor_level].floor_cloud += *augmented_cloud;
     }
@@ -2287,7 +2294,7 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     auto cloud = map_cloud_generator->generate(
-        kf_snapshot, req->resolution, Eigen::Matrix4f::Identity(), true);
+        kf_snapshot, req->resolution, Eigen::Matrix4f::Identity(), save_dense_map);
     if (!cloud) {
       res->success = false;
       return true;
@@ -2693,7 +2700,7 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<situational_graphs_msgs::msg::FloorData> floor_data_queue;
 
   // for map cloud generation
-  bool fast_mapping, viz_dense_map, viz_all_floor_cloud;
+  bool fast_mapping, viz_dense_map, save_dense_map, viz_all_floor_cloud;
   double map_cloud_resolution;
   double map_cloud_pub_resolution;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
