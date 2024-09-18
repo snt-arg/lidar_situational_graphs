@@ -817,17 +817,28 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     // perform planar segmentation
-    for (long unsigned int i = 0; i < new_keyframes.size(); i++) {
-      if (extract_planar_surfaces) {
-        std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
-            plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
+    if (extract_planar_surfaces) {
+      std::vector<std::thread> threads;
+      for (long unsigned int i = 0; i < new_keyframes.size(); i++) {
+        threads.push_back(std::thread([&, i]() {
+          // Extract segmented planes
+          std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
+              plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
 
-        plane_mapper->map_extracted_planes(covisibility_graph,
-                                           new_keyframes[i],
-                                           extracted_cloud_vec,
-                                           x_vert_planes,
-                                           y_vert_planes,
-                                           hort_planes);
+          // Map extracted planes, protected by graph_mutex
+          plane_mapper->map_extracted_planes(covisibility_graph,
+                                             new_keyframes[i],
+                                             extracted_cloud_vec,
+                                             x_vert_planes,
+                                             y_vert_planes,
+                                             hort_planes);
+        }));
+      }
+
+      for (auto& t : threads) {
+        if (t.joinable()) {
+          t.join();
+        }
       }
     }
 

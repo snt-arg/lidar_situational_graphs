@@ -102,8 +102,9 @@ void PlaneMapper::map_extracted_planes(
                                          y_vert_planes,
                                          hort_planes);
   }
-
+  shared_graph_mutex.lock();
   convert_plane_points_to_map(x_vert_planes, y_vert_planes, hort_planes, keyframe);
+  shared_graph_mutex.unlock();
 }
 
 /**
