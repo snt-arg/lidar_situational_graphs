@@ -169,6 +169,7 @@ class PlaneAnalyzer {
   std::string plane_extraction_frame, plane_visualization_frame;
 
   bool save_timings;
+  std::mutex extracted_cloud_mutex;
   std::ofstream time_recorder;
 };
 }  // namespace s_graphs

@@ -64,6 +64,8 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
     transformed_cloud->points.push_back(cloud->points[i]);
   }
 
+  std::vector<std::future<void>> post_processing_futures;
+
   auto t1 = rclcpp::Clock{}.now();
   while (transformed_cloud->points.size() > min_seg_points) {
     try {
@@ -136,40 +138,43 @@ std::vector<pcl::PointCloud<PointNormal>::Ptr> PlaneAnalyzer::extract_segmented_
         extracted_cloud->points.push_back(tmp_cloud);
       }
 
-      if (extracted_cloud->points.size() > cluster_min_size) {
-        pcl::PointCloud<PointNormal>::Ptr extracted_cloud_filtered;
-        if (use_euclidean_filter)
-          extracted_cloud_filtered = clean_clusters(extracted_cloud);
-        else if (use_shadow_filter) {
-          pcl::PointCloud<pcl::Normal>::Ptr normals =
-              compute_cloud_normals(extracted_cloud);
-          extracted_cloud_filtered = shadow_filter(extracted_cloud, normals);
-        } else {
-          extracted_cloud_filtered = extracted_cloud;
-        }
-
-        if (!extracted_cloud_filtered->points.empty()) {
-          std::vector<pcl::PointCloud<PointNormal>::Ptr> seperated_cloud_vec =
-              this->seperate_clusters(extracted_cloud_filtered);
-
-          for (const auto& seperated_cloud : seperated_cloud_vec) {
-            extracted_cloud_vec.push_back(seperated_cloud);
-          }
-        }
-      }
-
       extract.setInputCloud(transformed_cloud);
       extract.setIndices(inliers);
       extract.setNegative(true);
       extract.filter(*transformed_cloud);
+
+      post_processing_futures.push_back(
+          std::async(std::launch::async, [&, extracted_cloud]() {
+            pcl::PointCloud<PointNormal>::Ptr extracted_cloud_filtered;
+            if (use_euclidean_filter) {
+              extracted_cloud_filtered = clean_clusters(extracted_cloud);
+            } else if (use_shadow_filter) {
+              pcl::PointCloud<pcl::Normal>::Ptr normals =
+                  compute_cloud_normals(extracted_cloud);
+              extracted_cloud_filtered = shadow_filter(extracted_cloud, normals);
+            } else {
+              extracted_cloud_filtered = extracted_cloud;
+            }
+
+            if (!extracted_cloud_filtered->points.empty()) {
+              std::vector<pcl::PointCloud<PointNormal>::Ptr> separated_cloud_vec =
+                  this->seperate_clusters(extracted_cloud_filtered);
+
+              std::lock_guard<std::mutex> lock(extracted_cloud_mutex);
+              for (const auto& separated_cloud : separated_cloud_vec) {
+                extracted_cloud_vec.push_back(separated_cloud);
+              }
+            }
+          }));
     } catch (const std::exception& e) {
       std::cout << "No ransac model found" << std::endl;
       break;
     }
   }
 
-  // std::vector<pcl::PointCloud<PointNormal>::Ptr> filtered_cloud_vec =
-  //     merge_close_planes(extracted_cloud_vec);
+  for (auto& future : post_processing_futures) {
+    future.get();
+  }
 
   auto t2 = rclcpp::Clock{}.now();
   if (save_timings) {
