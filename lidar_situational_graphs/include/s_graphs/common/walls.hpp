@@ -116,7 +116,7 @@ class Walls {
     ofs << node->estimate().transpose() << "\n";
 
     write_wall_data_to_csv(directory, vert_planes);
-    write_wall_points_data_to_csv(directory, vert_planes);
+    // write_wall_points_data_to_csv(directory, vert_planes);
   }
 
   bool load(const std::string& directory,

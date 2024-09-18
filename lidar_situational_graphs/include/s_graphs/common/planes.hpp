@@ -266,27 +266,13 @@ class Planes {
       p_min.z = p_max.z;
     }
 
-    // assuming planes which dont belong to a wall have a thickness of 20cm
-    double wall_thickness = 0.2;
-    PointNormal p_min_new, p_max_new;
-    p_min_new.x = p_min.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
-    p_min_new.y = p_min.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
-
-    p_max_new.x = p_max.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
-    p_max_new.y = p_max.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
-
-    csv_ofs << id << "," << floor_level << "," << p_min_new.x << "," << p_min_new.y
-            << "," << p_min.z << "," << p_max_new.x << "," << p_max_new.y << ","
-            << p_min.z << "," << length << "," << height << "\n";
+    csv_ofs << id << "," << floor_level << "," << p_min.x << "," << p_min.y << ","
+            << p_min.z << "," << p_max.x << "," << p_max.y << "," << p_min.z << ","
+            << length << "," << height << "\n";
     csv_ofs.close();
   }
 
   void write_plane_points_to_csv(const std::string plane_directory) {
-    if (on_wall) {
-      std::cout << "Not adding plane " << id << " points as its on wall" << std::endl;
-      return;
-    }
-
     std::string file_path = plane_directory + "/plane_points.csv";
     bool file_exists = boost::filesystem::exists(file_path);
     std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
