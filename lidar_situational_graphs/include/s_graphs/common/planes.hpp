@@ -244,11 +244,6 @@ class Planes {
 
   // write plane data to csv
   void write_plane_data_to_csv(const std::string plane_directory) {
-    if (on_wall) {
-      std::cout << "Not adding plane " << id << " as its on wall" << std::endl;
-      return;
-    }
-
     std::string file_path = plane_directory + "/plane_data.csv";
     bool file_exists = boost::filesystem::exists(file_path);
     std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
@@ -277,11 +272,12 @@ class Planes {
     bool file_exists = boost::filesystem::exists(file_path);
     std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
     if (!file_exists) {
-      csv_ofs << "id,x,y,z\n";
+      csv_ofs << "id,x,y,z,r,g,b\n";
     }
 
     for (const auto& point : cloud_seg_map->points) {
-      csv_ofs << id << "," << point.x << "," << point.y << "," << point.z << "\n";
+      csv_ofs << id << "," << point.x << "," << point.y << "," << point.z << ","
+              << color[0] << "," << color[1] << "," << color[2] << "\n";
     }
     csv_ofs.close();
   }
