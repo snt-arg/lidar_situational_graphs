@@ -1371,6 +1371,12 @@ class SGraphsNode : public rclcpp::Node {
   void map_publish_timer_callback() {
     if (keyframes.empty() || floors_vec.empty()) return;
 
+    if (map_points_pub->get_subscription_count() == 0 &&
+        wall_points_pub->get_subscription_count() == 0 &&
+        markers_pub->get_subscription_count() == 0) {
+      return;
+    }
+
     std::vector<KeyFrame::Ptr> kf_snapshot;
     std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
     std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
