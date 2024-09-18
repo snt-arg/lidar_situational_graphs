@@ -142,8 +142,9 @@ void KeyFrame::save(const std::string& directory, const int& sequential_id) {
 
   ofs.close();
 
-  pcl::io::savePCDFileBinary(kf_sub_directory + "/cloud.pcd", *cloud);
-  pcl::io::savePCDFileBinary(kf_sub_directory + "/dense_cloud.pcd", *dense_cloud);
+  if (cloud) pcl::io::savePCDFileBinary(kf_sub_directory + "/cloud.pcd", *cloud);
+  if (dense_cloud)
+    pcl::io::savePCDFileBinary(kf_sub_directory + "/dense_cloud.pcd", *dense_cloud);
 }
 
 bool KeyFrame::load(const std::string& directory,
