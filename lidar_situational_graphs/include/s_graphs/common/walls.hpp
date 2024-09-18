@@ -115,7 +115,7 @@ class Walls {
     ofs << "wall_pose ";
     ofs << node->estimate().transpose() << "\n";
 
-    write_wall_data_to_csv(directory, vert_planes);
+    // write_wall_data_to_csv(directory, vert_planes);
     // write_wall_points_data_to_csv(directory, vert_planes);
   }
 
