@@ -266,6 +266,16 @@ g2o::VertexRoom* GraphSLAM::copy_room_node(const g2o::VertexRoom* node) {
   return vertex;
 }
 
+g2o::VertexDeviation* GraphSLAM::copy_deviation_node(const g2o::VertexDeviation* node) {
+  g2o::VertexDeviation* vertex(new g2o::VertexDeviation());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
 g2o::VertexFloor* GraphSLAM::add_floor_node(const Eigen::Isometry3d& floor_pose,
                                             const int& id) {
   g2o::VertexFloor* vertex(new g2o::VertexFloor());

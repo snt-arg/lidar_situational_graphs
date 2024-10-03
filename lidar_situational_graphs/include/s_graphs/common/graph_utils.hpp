@@ -285,6 +285,33 @@ class GraphUtils {
           updated_planes_tuple);
 
   /**
+   * @brief
+   *
+   * @param covisibility_graph
+   * @param keyframes
+   * @param x_vert_planes
+   * @param y_vert_planes
+   * @param hort_planes
+   * @param rooms_vec
+   * @param x_infinite_rooms
+   * @param y_infinite_rooms
+   * @param floors_vec
+   * @param updated_planes_tuple
+   */
+  static void update_graph(
+      const std::shared_ptr<GraphSLAM>& covisibility_graph,
+      std::map<int, KeyFrame::Ptr> keyframes,
+      std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+      std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+      std::unordered_map<int, HorizontalPlanes>& hort_planes,
+      std::unordered_map<int, Rooms>& rooms_vec,
+      std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
+      std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
+      std::map<int, Floors>& floors_vec,
+      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+          updated_planes_tuple);
+
+  /**
    * @brief Set the marginalize info object
    *
    * @param local_graph

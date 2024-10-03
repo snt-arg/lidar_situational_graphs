@@ -250,6 +250,14 @@ class GraphSLAM {
   g2o::VertexRoom* copy_room_node(const g2o::VertexRoom* node);
 
   /**
+   * @brief copy a room node from another graph
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexDeviation* copy_deviation_node(const g2o::VertexDeviation* node);
+
+  /**
    * @brief Add a floor node to the graph
    *
    * @param floor_pose
