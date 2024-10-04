@@ -242,6 +242,14 @@ class GraphSLAM {
   g2o::VertexDoorWay* add_doorway_node(const Eigen::Isometry3d& doorway_pose);
 
   /**
+   * @brief copy a Doorway node from another graph
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexDoorWay* copy_doorway_node(const g2o::VertexDoorWay* node);
+
+  /**
    * @brief copy a room node from another graph
    *
    * @param node
@@ -516,6 +524,12 @@ class GraphSLAM {
       const Eigen::Vector3d& direction,
       const Eigen::Vector3d& measurement,
       const Eigen::MatrixXd& information_matrix);
+
+  g2o::EdgeDoorWay2Rooms* copy_doorway_2rooms_edge(g2o::EdgeDoorWay2Rooms* e,
+                                                   g2o::VertexDoorWay* v1,
+                                                   g2o::VertexDoorWay* v2,
+                                                   g2o::VertexRoom* v3,
+                                                   g2o::VertexRoom* v4);
 
   /**
    * @brief

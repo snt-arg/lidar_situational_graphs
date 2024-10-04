@@ -256,6 +256,16 @@ g2o::VertexDoorWay* GraphSLAM::add_doorway_node(const Eigen::Isometry3d& doorway
   return vertex;
 }
 
+g2o::VertexDoorWay* GraphSLAM::copy_doorway_node(const g2o::VertexDoorWay* node) {
+  g2o::VertexDoorWay* vertex(new g2o::VertexDoorWay());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
 g2o::VertexRoom* GraphSLAM::copy_room_node(const g2o::VertexRoom* node) {
   g2o::VertexRoom* vertex(new g2o::VertexRoom());
   vertex->setId(node->id());
@@ -874,6 +884,23 @@ g2o::EdgeSE3RoomRoom* GraphSLAM::add_deviation_two_rooms_edge(
   return edge;
 }
 
+g2o::EdgeDoorWay2Rooms* GraphSLAM::copy_doorway_2rooms_edge(g2o::EdgeDoorWay2Rooms* e,
+                                                            g2o::VertexDoorWay* v1,
+                                                            g2o::VertexDoorWay* v2,
+                                                            g2o::VertexRoom* v3,
+                                                            g2o::VertexRoom* v4) {
+  g2o::EdgeDoorWay2Rooms* edge(new g2o::EdgeDoorWay2Rooms());
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
+  edge->vertices()[3] = v4;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
 g2o::EdgeSE3RoomRoom* GraphSLAM::copy_se3_2rooms_edge(g2o::EdgeSE3RoomRoom* e,
                                                       g2o::VertexDeviation* v1,
                                                       g2o::VertexRoom* v2,
@@ -888,6 +915,7 @@ g2o::EdgeSE3RoomRoom* GraphSLAM::copy_se3_2rooms_edge(g2o::EdgeSE3RoomRoom* e,
 
   return edge;
 }
+
 g2o::Edge2Rooms* GraphSLAM::add_2rooms_edge(g2o::VertexRoom* v1,
                                             g2o::VertexRoom* v2,
                                             const Eigen::MatrixXd& information) {
