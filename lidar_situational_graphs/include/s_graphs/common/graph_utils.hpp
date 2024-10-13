@@ -281,7 +281,7 @@ class GraphUtils {
       std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
       std::map<int, Floors>& floors_vec,
-      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>&
           updated_planes_tuple);
 
   /**
@@ -308,7 +308,7 @@ class GraphUtils {
       std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
       std::map<int, Floors>& floors_vec,
-      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>&
           updated_planes_tuple);
 
   /**
