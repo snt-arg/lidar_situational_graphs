@@ -317,8 +317,6 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
 
       g2o::VertexSE3* v1 = dynamic_cast<g2o::VertexSE3*>(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[0]->id()));
-      // std::cout << " edge_se3_plane->vertices()[0]->id() "
-      //           << edge_se3_plane->vertices()[0]->id() << std::endl;
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[1]->id()));
       if (v1->fixed() || v2->fixed()) continue;
@@ -1319,7 +1317,6 @@ void GraphUtils::update_graph(
       }
     }
   }
-
   // TODO:HB Update Wall nodes also
 }
 
