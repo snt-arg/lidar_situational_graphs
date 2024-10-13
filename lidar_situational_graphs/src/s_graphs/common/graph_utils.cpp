@@ -1236,7 +1236,7 @@ void GraphUtils::update_graph(
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::map<int, Floors>& floors_vec,
-    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>&
         updated_planes_tuple) {
   // Loop over all the vertices of the graph
   for (auto it = covisibility_graph->graph->vertices().begin();
@@ -1333,7 +1333,7 @@ void GraphUtils::update_graph(
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::map<int, Floors>& floors_vec,
-    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>&
         updated_planes_tuple) {
   // Loop over all the vertices of the graph
   for (auto it = compressed_graph->graph->vertices().begin();
