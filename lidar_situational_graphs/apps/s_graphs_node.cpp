@@ -480,6 +480,9 @@ class SGraphsNode : public rclcpp::Node {
 
     this->declare_parameter("keyframe_delta_trans", 2.0);
     this->declare_parameter("keyframe_delta_angle", 2.0);
+    this->declare_parameter("stand_still_time", 3.0);
+    this->declare_parameter("stand_still_delta", 0.05);
+
     this->declare_parameter("keyframe_window_size", 1);
     this->declare_parameter("fix_first_node_adaptive", true);
 
