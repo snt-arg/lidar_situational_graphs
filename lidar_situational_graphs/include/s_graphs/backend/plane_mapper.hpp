@@ -46,6 +46,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <string>
 
 #include "geometry_msgs/msg/point.hpp"
@@ -64,8 +65,6 @@ namespace s_graphs {
  * @brief
  */
 class PlaneMapper {
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
  public:
   /**
    * @brief Contructor of class PlaneMapper

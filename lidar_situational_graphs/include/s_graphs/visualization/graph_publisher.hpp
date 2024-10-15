@@ -128,11 +128,13 @@ class GraphPublisher {
    *
    * @param local_graph
    * @param keyframes
+   * @param directory
    * @return situational_graphs_reasoning_msgs::msg::GraphKeyframes
    */
   situational_graphs_reasoning_msgs::msg::GraphKeyframes publish_graph_keyframes(
       const g2o::SparseOptimizer* local_graph,
-      const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes);
+      const std::map<int, s_graphs::KeyFrame::Ptr>& keyframes,
+      const std::string& directory = "");
 
   /**
    * @brief

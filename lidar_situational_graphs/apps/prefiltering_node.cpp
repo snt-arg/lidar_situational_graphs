@@ -35,6 +35,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <s_graphs/common/point_types.hpp>
 #include <string>
 
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -47,12 +48,11 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
+
 namespace s_graphs {
 
 class PrefilteringNode : public rclcpp::Node {
  public:
-  typedef pcl::PointXYZI PointT;
-
   PrefilteringNode() : Node("prefiltering_node") {
     initialize_params();
 

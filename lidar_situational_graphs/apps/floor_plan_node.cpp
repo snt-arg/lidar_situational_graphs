@@ -62,6 +62,8 @@ class FloorPlanNode : public rclcpp::Node {
   void initialize_params() {
     this->declare_parameter("vertex_neigh_thres", 2);
     this->declare_parameter("save_timings", false);
+    this->declare_parameter("keyframe_delta_trans", 2.0);
+
     floor_level = 0;
     slope_thres = 0.4;
     floor_height = -1;
@@ -74,6 +76,18 @@ class FloorPlanNode : public rclcpp::Node {
 
     save_timings =
         this->get_parameter("save_timings").get_parameter_value().get<bool>();
+
+    keyframe_delta_trans =
+        this->get_parameter("keyframe_delta_trans").get_parameter_value().get<double>();
+
+    double default_delta_trans = 2.0;
+    min_kfs_for_slope = 3;
+    min_kfs_for_slope =
+        std::ceil(min_kfs_for_slope * (default_delta_trans / keyframe_delta_trans));
+    min_kfs_for_slope = std::max(min_kfs_for_slope, 3);
+
+    dynamic_slope_thres =
+        std::max(0.1, slope_thres * (keyframe_delta_trans / default_delta_trans));
 
     room_analyzer.reset(new RoomAnalyzer(params));
     floor_analyzer.reset(new FloorAnalyzer());
@@ -313,7 +327,7 @@ class FloorPlanNode : public rclcpp::Node {
   }
 
   void floor_change_det_callback() {
-    if (keyframes_queue.empty() || keyframes.size() < 2) return;
+    if (keyframes_queue.empty() || keyframes.size() < min_kfs_for_slope) return;
 
     keyframe_mutex.lock();
     auto current_k = keyframes_queue.front();
@@ -326,16 +340,16 @@ class FloorPlanNode : public rclcpp::Node {
 
     double slope = 0;
     tmp_stair_keyframes.push_back(current_k);
-    if (tmp_stair_keyframes.size() > 2) {
+    if (tmp_stair_keyframes.size() > min_kfs_for_slope) {
       slope = linear_regression(tmp_stair_keyframes);
     }
 
     switch (CURRENT_STATUS) {
       case STATE::ON_FLOOR: {
-        if (slope > slope_thres) {
+        if (slope > dynamic_slope_thres) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
           CURRENT_STATUS = STATE::ASCENDING;
-        } else if (slope < -slope_thres) {
+        } else if (slope < -dynamic_slope_thres) {
           for (const auto& t_kf : tmp_stair_keyframes) stair_keyframes.push_back(t_kf);
           CURRENT_STATUS = STATE::DESCENDING;
         }
@@ -381,7 +395,7 @@ class FloorPlanNode : public rclcpp::Node {
         break;
     }
 
-    if (tmp_stair_keyframes.size() > 2) {
+    if (tmp_stair_keyframes.size() > min_kfs_for_slope) {
       tmp_stair_keyframes.pop_front();
     }
 
@@ -521,8 +535,10 @@ class FloorPlanNode : public rclcpp::Node {
   std::deque<KeyFrame::Ptr> tmp_stair_keyframes;
   int floor_level;
 
-  double slope_thres;
+  double slope_thres, dynamic_slope_thres;
   double floor_height;
+  double keyframe_delta_trans;
+  int min_kfs_for_slope;
   std::mutex map_plane_mutex;
   std::mutex keyframe_mutex;
   std::deque<std::vector<situational_graphs_msgs::msg::PlaneData>> x_vert_plane_queue,

@@ -33,6 +33,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 
 #include <iostream>
 #include <memory>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/ros_utils.hpp>
 #include <situational_graphs_msgs/msg/scan_matching_status.hpp>
 
@@ -51,7 +52,6 @@ namespace s_graphs {
 
 class ScanMatchingOdometryNode : public rclcpp::Node {
  public:
-  typedef pcl::PointXYZI PointT;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   ScanMatchingOdometryNode() : Node("scan_matching_node") {
@@ -456,7 +456,7 @@ class ScanMatchingOdometryNode : public rclcpp::Node {
    */
   void publish_scan_matching_status(const rclcpp::Time& stamp,
                                     const std::string& frame_id,
-                                    pcl::PointCloud<pcl::PointXYZI>::ConstPtr aligned,
+                                    pcl::PointCloud<PointT>::ConstPtr aligned,
                                     const std::string& msf_source,
                                     const Eigen::Isometry3f& msf_delta) {
     if (status_pub->get_subscription_count() == 0) {

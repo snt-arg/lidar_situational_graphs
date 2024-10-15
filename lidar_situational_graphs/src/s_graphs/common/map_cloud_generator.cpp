@@ -8,7 +8,7 @@ MapCloudGenerator::MapCloudGenerator() {}
 
 MapCloudGenerator::~MapCloudGenerator() {}
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
     const std::vector<KeyFrame::Ptr>& keyframes,
     const double resolution,
     const Eigen::Matrix4f map_floor_t,
@@ -18,6 +18,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     return pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>());
   }
 
+  std::set<PointT, PointComparator> unique_points;
   pcl::PointCloud<PointT>::Ptr cloud(new pcl::PointCloud<PointT>());
   // cloud->reserve(keyframes.front()->cloud->size() * keyframes.size());
 
@@ -35,8 +36,12 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
     for (const auto& src_pt : kf_cloud->points) {
       PointT dst_pt;
       dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+      dst_pt.rgb = src_pt.rgb;
+#else
       dst_pt.intensity = src_pt.intensity;
-      cloud->push_back(dst_pt);
+#endif
+      if (unique_points.insert(dst_pt).second) cloud->push_back(dst_pt);
     }
   }
 
@@ -66,16 +71,24 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::downsample_cloud(
     point.x = voxel_point.x;
     point.y = voxel_point.y;
     point.z = voxel_point.z;
-
-    // Find the original points within the voxel and average their intensity
     std::vector<int> point_indices;
     octree.voxelSearch(voxel_point, point_indices);
 
+    // Find the original points within the voxel and average their intensity
+#ifdef USE_RGB_CLOUD
+    float color_sum = 0.0f;
+
+    for (int idx : point_indices) {
+      color_sum += cloud->points[idx].rgb;
+    }
+    voxel_point.rgb = color_sum / point_indices.size();
+#else
     float intensity_sum = 0.0f;
     for (int idx : point_indices) {
       intensity_sum += cloud->points[idx].intensity;
     }
     voxel_point.intensity = intensity_sum / point_indices.size();
+#endif
   }
 
   filtered_cloud->width = filtered_cloud->size();
@@ -85,7 +98,7 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::downsample_cloud(
   return filtered_cloud;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
     const Eigen::Matrix4f& pose,
     const pcl::PointCloud<PointT>::Ptr& cloud) const {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
@@ -93,7 +106,11 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   for (const auto& src_pt : cloud->points) {
     PointT dst_pt;
     dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+    dst_pt.rgb = src_pt.rgb;
+#else
     dst_pt.intensity = src_pt.intensity;
+#endif
     map_cloud->push_back(dst_pt);
 
     map_cloud->width = cloud->size();
@@ -103,7 +120,7 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate(
   return map_cloud;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
     const std::vector<KeyFrame::Ptr>& keyframes,
     const int& current_floor_level,
     const double resolution,
@@ -129,11 +146,12 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_floo
   return filtered;
 }
 
-pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
+pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
     const Eigen::Matrix4f& kf_pose,
     const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
         pose_map_cloud) {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
+  std::set<PointT, PointComparator> unique_points;
 
   for (int i = 0; i < pose_map_cloud.size(); i += 2) {
     Eigen::Matrix4f current_odom_pose = pose_map_cloud[i].first;
@@ -143,8 +161,12 @@ pcl::PointCloud<MapCloudGenerator::PointT>::Ptr MapCloudGenerator::generate_kf_c
     for (const auto& src_pt : cloud->points) {
       PointT dst_pt;
       dst_pt.getVector4fMap() = odom_pose_transformed * src_pt.getVector4fMap();
+#ifdef USE_RGB_CLOUD
+      dst_pt.rgb = src_pt.rgb;
+#else
       dst_pt.intensity = src_pt.intensity;
-      map_cloud->push_back(dst_pt);
+#endif
+      if (unique_points.insert(dst_pt).second) map_cloud->push_back(dst_pt);
     }
   }
 

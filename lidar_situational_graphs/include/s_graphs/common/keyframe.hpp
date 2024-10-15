@@ -37,6 +37,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <vector>
 
 #include "rclcpp/rclcpp.hpp"
@@ -55,9 +56,6 @@ namespace s_graphs {
 struct KeyFrame {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  using PointT = pcl::PointXYZI;
-  using PointNormal = pcl::PointXYZRGBNormal;
-
   using Ptr = std::shared_ptr<KeyFrame>;
 
   /**
@@ -160,7 +158,6 @@ struct KeyFrameSnapshot {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  using PointT = KeyFrame::PointT;
   using Ptr = std::shared_ptr<KeyFrameSnapshot>;
 
   /**

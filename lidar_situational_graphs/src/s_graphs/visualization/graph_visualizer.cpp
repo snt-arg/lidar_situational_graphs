@@ -898,8 +898,8 @@ void GraphVisualizer::publish_cuboid(const g2o::VertexSE3* vertex_se3,
 }
 
 Eigen::Isometry3d GraphVisualizer::compute_plane_pose(const VerticalPlanes& plane,
-                                                      pcl::PointXYZRGBNormal& p_min,
-                                                      pcl::PointXYZRGBNormal& p_max) {
+                                                      PointNormal& p_min,
+                                                      PointNormal& p_max) {
   shared_graph_mutex.lock();
   double length = pcl::getMaxSegment(*plane.cloud_seg_map, p_min, p_max);
   shared_graph_mutex.unlock();

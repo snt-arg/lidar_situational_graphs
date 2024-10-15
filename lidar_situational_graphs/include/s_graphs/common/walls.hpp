@@ -115,8 +115,8 @@ class Walls {
     ofs << "wall_pose ";
     ofs << node->estimate().transpose() << "\n";
 
-    write_wall_data_to_csv(directory, vert_planes);
-    write_wall_points_data_to_csv(directory, vert_planes);
+    // write_wall_data_to_csv(directory, vert_planes);
+    // write_wall_points_data_to_csv(directory, vert_planes);
   }
 
   bool load(const std::string& directory,
@@ -180,17 +180,17 @@ class Walls {
     auto plane2 = vert_planes.find(plane2_id);
 
     // get the smallest plane and its p_min and p_max
-    pcl::PointXYZRGBNormal plane1_p_min, plane1_p_max;
+    PointNormal plane1_p_min, plane1_p_max;
     double length_plane1 =
         pcl::getMaxSegment(*plane1->second.cloud_seg_map, plane1_p_min, plane1_p_max);
     double height_plane1 = std::abs(plane1_p_max.z - plane1_p_min.z);
 
-    pcl::PointXYZRGBNormal plane2_p_min, plane2_p_max;
+    PointNormal plane2_p_min, plane2_p_max;
     double length_plane2 =
         pcl::getMaxSegment(*plane1->second.cloud_seg_map, plane2_p_min, plane2_p_max);
     double height_plane2 = std::abs(plane2_p_max.z - plane2_p_min.z);
 
-    pcl::PointXYZRGBNormal p_min, p_max;
+    PointNormal p_min, p_max;
     double length, height;
     g2o::VertexPlane* plane_node;
     if (length_plane1 < length_plane2) {
@@ -207,7 +207,7 @@ class Walls {
         plane1->second.plane_node->estimate().coeffs(),
         plane2->second.plane_node->estimate().coeffs());
 
-    pcl::PointXYZRGBNormal p_min_new, p_max_new;
+    PointNormal p_min_new, p_max_new;
     p_min_new.x = p_min.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
     p_min_new.y = p_min.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
 

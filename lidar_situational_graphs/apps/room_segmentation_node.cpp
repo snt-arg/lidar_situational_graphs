@@ -54,6 +54,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <cmath>
 #include <iostream>
 #include <s_graphs/common/plane_utils.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/frontend/room_analyzer.hpp>
 #include <string>
 
@@ -69,8 +70,6 @@ namespace s_graphs {
 
 class RoomSegmentationNode : public rclcpp::Node {
  public:
-  typedef pcl::PointXYZRGBNormal PointT;
-
   RoomSegmentationNode() : Node("room_segmentation_node") {
     this->initialize_params();
     this->init_ros();

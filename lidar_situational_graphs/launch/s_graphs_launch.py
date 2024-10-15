@@ -9,6 +9,7 @@ from ament_index_python import get_package_share_directory
 from launch.actions import OpaqueFunction
 from launch.conditions import IfCondition, LaunchConfigurationEquals
 
+
 def generate_launch_description():
     return LaunchDescription(
         [
@@ -58,6 +59,16 @@ def generate_launch_description():
                 description="Algorithm used for room segmentation",
             ),
             DeclareLaunchArgument(
+                "keyframe_delta",
+                default_value="2.0",
+                description="Value in [m] for recording each keyframe",
+            ),
+            DeclareLaunchArgument(
+                "viz_dense_map",
+                default_value="false",
+                description="If visualize dense map in rviz",
+            ),
+            DeclareLaunchArgument(
                 "debug_mode",
                 default_value="false",
                 description="Run s_graphs node in debugging mode",
@@ -66,11 +77,15 @@ def generate_launch_description():
         ]
     )
 
+
 def launch_reasoning():
-    reasoning_dir = get_package_share_directory('situational_graphs_reasoning')
-    reasoning_launch_file = os.path.join(reasoning_dir, "launch", "situational_graphs_reasoning.launch.py")
+    reasoning_dir = get_package_share_directory("situational_graphs_reasoning")
+    reasoning_launch_file = os.path.join(
+        reasoning_dir, "launch", "situational_graphs_reasoning.launch.py"
+    )
     reasoning_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(reasoning_launch_file))
+        PythonLaunchDescriptionSource(reasoning_launch_file)
+    )
 
     return reasoning_launch
 
@@ -91,9 +106,10 @@ def launch_sgraphs(context, *args, **kwargs):
 
     compute_odom_arg = LaunchConfiguration("compute_odom").perform(context)
     namespace_arg = LaunchConfiguration("namespace").perform(context)
-    room_segmentation_arg =  LaunchConfiguration("room_segmentation").perform(context)
-    debug_mode_arg =  LaunchConfiguration("debug_mode").perform(context)
-
+    room_segmentation_arg = LaunchConfiguration("room_segmentation").perform(context)
+    keyframe_delta_arg = float(LaunchConfiguration("keyframe_delta").perform(context))
+    viz_dense_map_arg = LaunchConfiguration("viz_dense_map").perform(context)
+    debug_mode_arg = LaunchConfiguration("debug_mode").perform(context)
 
     ns_prefix = str(namespace_arg) + "/" if namespace_arg else ""
     if str(ns_prefix).startswith("/"):
@@ -134,13 +150,18 @@ def launch_sgraphs(context, *args, **kwargs):
             output="screen",
         )
     else:
-      reasoning_launch = launch_reasoning()
+        reasoning_launch = launch_reasoning()
 
     floor_plan_cmd = Node(
         package="lidar_situational_graphs",
         executable="s_graphs_floor_plan_node",
         namespace=namespace_arg,
-        parameters=[{"vertex_neigh_thres": 2}],
+        parameters=[
+            {
+                "vertex_neigh_thres": 2,
+                "keyframe_delta_trans": keyframe_delta_arg,
+            }
+        ],
         output="screen",
     )
 
@@ -148,13 +169,23 @@ def launch_sgraphs(context, *args, **kwargs):
         package="lidar_situational_graphs",
         executable="s_graphs_node",
         namespace=namespace_arg,
-        parameters=[{s_graphs_param_file}, {"odom_frame_id": odom_frame, "map_frame_id": map_frame}],
+        parameters=[
+            {s_graphs_param_file},
+            {
+                "odom_frame_id": odom_frame,
+                "map_frame_id": map_frame,
+                "keyframe_delta_trans": keyframe_delta_arg,
+                "keyframe_delta_angle": keyframe_delta_arg,
+                "viz_dense_map": viz_dense_map_arg,
+            },
+        ],
         output={
-                'stdout': 'screen',
-                'stderr': 'screen',
-                },
+            "stdout": "screen",
+            "stderr": "screen",
+        },
         prefix=["gdbserver localhost:3000"] if debug_mode_arg == "true" else None,
-        remappings=[("odom", odom_topic_arg),
+        remappings=[
+            ("odom", odom_topic_arg),
         ],
     )
 

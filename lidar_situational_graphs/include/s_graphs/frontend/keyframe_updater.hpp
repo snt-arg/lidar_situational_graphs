@@ -49,13 +49,21 @@ class KeyframeUpdater {
    * @param node
    */
   KeyframeUpdater(const rclcpp::Node::SharedPtr node)
-      : is_first(true), prev_keypose(Eigen::Isometry3d::Identity()) {
+      : is_first(true),
+        prev_keypose(Eigen::Isometry3d::Identity()),
+        standing_still(false) {
     keyframe_delta_trans =
         node->get_parameter("keyframe_delta_trans").get_parameter_value().get<double>();
     keyframe_delta_angle =
         node->get_parameter("keyframe_delta_angle").get_parameter_value().get<double>();
 
+    stand_still_time =
+        node->get_parameter("stand_still_time").get_parameter_value().get<double>();
+    stand_still_delta =
+        node->get_parameter("stand_still_delta").get_parameter_value().get<double>();
+
     accum_distance = 0.0;
+    n_measurement = 0;
   }
 
   /**
@@ -65,25 +73,73 @@ class KeyframeUpdater {
    * @return  if true, the frame should be registered
    */
   bool update(const Eigen::Isometry3d& pose) {
-    // first frame is always registered to the graph
+    auto now = std::chrono::steady_clock::now();
+
     if (is_first) {
       is_first = false;
       prev_keypose = pose;
+      prev_pose = pose;
+      prev_time = now;
+      n_measurement = 0;
       return true;
     }
 
-    // calculate the delta transformation from the previous keyframe
+    // Calculate the delta transformation from the previous keyframe
     Eigen::Isometry3d delta = prev_keypose.inverse() * pose;
     double dx = delta.translation().norm();
     double da = Eigen::AngleAxisd(delta.linear()).angle();
 
-    // too close to the previous frame
+    // Too close to the previous frame
     if (dx < keyframe_delta_trans && da < keyframe_delta_angle) {
+      n_measurement += 1;
+
+      if (n_measurement >= 20) {
+        Eigen::Isometry3d prev_delta = prev_pose.inverse() * pose;
+        double prev_dx = prev_delta.translation().norm();
+        double prev_da = Eigen::AngleAxisd(prev_delta.linear()).angle();
+
+        if (prev_dx < stand_still_delta && prev_da < stand_still_delta) {
+          if (!standing_still) {
+            standing_still = true;
+            still_time = now;
+          } else {
+            double standing_time =
+                std::chrono::duration_cast<std::chrono::duration<double>>(now -
+                                                                          still_time)
+                    .count();
+            if (standing_time > stand_still_time) {
+              Eigen::Isometry3d delta_still = prev_keypose.inverse() * pose;
+              double dx_still = delta_still.translation().norm();
+              double da_still = Eigen::AngleAxisd(delta_still.linear()).angle();
+
+              if (dx_still >= 0.3 || da_still >= 0.3) {
+                prev_keypose = pose;
+                prev_pose = pose;
+                standing_still = false;
+                prev_time = now;
+
+                return true;
+              }
+            }
+          }
+        } else
+          standing_still = false;
+
+        prev_pose = pose;
+        n_measurement = 0;
+      }
+
+      prev_time = now;
       return false;
     }
 
     accum_distance += dx;
     prev_keypose = pose;
+    prev_pose = pose;
+    standing_still = false;
+    prev_time = now;
+    n_measurement = 0;
+
     return true;
   }
 
@@ -110,12 +166,16 @@ class KeyframeUpdater {
   // parameters
   double keyframe_delta_trans;
   double keyframe_delta_angle;
+  double stand_still_time;
+  double stand_still_delta;
 
-  bool is_first;
+  bool is_first, standing_still;
   double accum_distance;
-  Eigen::Isometry3d prev_keypose;
+  int n_measurement;
+  Eigen::Isometry3d prev_keypose, prev_pose;
   std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
       collected_pose_cloud;
+  std::chrono::steady_clock::time_point prev_time, still_time;
 };
 
 }  // namespace s_graphs
