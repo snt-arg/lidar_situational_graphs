@@ -38,9 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <boost/filesystem.hpp>
 #include <g2o/vertex_floor.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
-
-using PointT = pcl::PointXYZI;
-using PointNormal = pcl::PointXYZRGBNormal;
+#include <s_graphs/common/point_types.hpp>
 
 namespace g2o {
 class VertexFloor;
@@ -94,10 +92,10 @@ class Floors {
     }
     ofs.close();
 
-    if (floor_cloud || floor_cloud->points.empty())
+    if (floor_cloud || !floor_cloud->points.empty())
       pcl::io::savePCDFileBinary(floors_sub_directory + "/floor_cloud.pcd",
                                  *floor_cloud);
-    if (floor_wall_cloud || floor_wall_cloud->points.empty())
+    if (floor_wall_cloud || !floor_wall_cloud->points.empty())
       pcl::io::savePCDFileBinary(floors_sub_directory + "/floor_wall_cloud.pcd",
                                  *floor_wall_cloud);
   }

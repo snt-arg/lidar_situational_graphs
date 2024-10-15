@@ -33,6 +33,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 
+#include <s_graphs/common/point_types.hpp>
+
 #include "rclcpp/rclcpp.hpp"
 
 namespace s_graphs {
@@ -42,8 +44,6 @@ namespace s_graphs {
  */
 class InformationMatrixCalculator {
  public:
-  using PointT = pcl::PointXYZI;
-
   InformationMatrixCalculator() {}
   InformationMatrixCalculator(const rclcpp::Node::SharedPtr node);
   ~InformationMatrixCalculator();

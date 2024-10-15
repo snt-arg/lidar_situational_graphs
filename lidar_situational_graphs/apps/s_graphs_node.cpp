@@ -59,6 +59,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/nmea_sentence_parser.hpp>
 #include <s_graphs/common/plane_utils.hpp>
 #include <s_graphs/common/planes.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/room_utils.hpp>
 #include <s_graphs/common/rooms.hpp>
 #include <s_graphs/common/ros_time_hash.hpp>
@@ -103,10 +104,8 @@ namespace s_graphs {
 
 class SGraphsNode : public rclcpp::Node {
  public:
-  typedef pcl::PointXYZI PointT;
-  typedef pcl::PointXYZRGBNormal PointNormal;
-
   SGraphsNode() : Node("s_graphs_node") {
+    this->set_dump_directory();
     anchor_node = nullptr;
     anchor_edge = nullptr;
     // one time timer to initialize the classes with the current node obj
@@ -135,6 +134,8 @@ class SGraphsNode : public rclcpp::Node {
 
     fast_mapping =
         this->get_parameter("fast_mapping").get_parameter_value().get<bool>();
+    save_dense_map =
+        this->get_parameter("save_dense_map").get_parameter_value().get<bool>();
     viz_dense_map =
         this->get_parameter("viz_dense_map").get_parameter_value().get<bool>();
     viz_all_floor_cloud =
@@ -400,6 +401,7 @@ class SGraphsNode : public rclcpp::Node {
     this->declare_parameter("odom_frame_id", "odom");
     this->declare_parameter("fast_mapping", true);
     this->declare_parameter("viz_dense_map", false);
+    this->declare_parameter("save_dense_map", false);
     this->declare_parameter("viz_all_floor_cloud", false);
     this->declare_parameter("map_cloud_resolution", 0.05);
     this->declare_parameter("map_cloud_pub_resolution", 0.1);
@@ -478,6 +480,9 @@ class SGraphsNode : public rclcpp::Node {
 
     this->declare_parameter("keyframe_delta_trans", 2.0);
     this->declare_parameter("keyframe_delta_angle", 2.0);
+    this->declare_parameter("stand_still_time", 3.0);
+    this->declare_parameter("stand_still_delta", 0.05);
+
     this->declare_parameter("keyframe_window_size", 1);
     this->declare_parameter("fix_first_node_adaptive", true);
 
@@ -628,7 +633,8 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     Eigen::Matrix4f odom_corrected = trans_odom2map * odom.matrix().cast<float>();
-    keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
+    if (save_dense_map)
+      keyframe_updater->augment_collected_cloud(odom_corrected, cloud);
 
     if (keyframe_updater->update(odom)) {
       double accum_d = keyframe_updater->get_accum_distance();
@@ -636,10 +642,13 @@ class SGraphsNode : public rclcpp::Node {
           stamp, odom, accum_d, cloud, current_floor_level, current_session_id));
 
       std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
-      keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
-          odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+      if (save_dense_map) {
+        keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
+            odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+        keyframe_updater->reset_collected_pose_cloud();
+      }
+
       keyframe_queue.push_back(keyframe);
-      keyframe_updater->reset_collected_pose_cloud();
     }
 
     if (fast_mapping) {
@@ -811,17 +820,28 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     // perform planar segmentation
-    for (long unsigned int i = 0; i < new_keyframes.size(); i++) {
-      if (extract_planar_surfaces) {
-        std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
-            plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
+    if (extract_planar_surfaces) {
+      std::vector<std::thread> threads;
+      for (long unsigned int i = 0; i < new_keyframes.size(); i++) {
+        threads.push_back(std::thread([&, i]() {
+          // Extract segmented planes
+          std::vector<pcl::PointCloud<PointNormal>::Ptr> extracted_cloud_vec =
+              plane_analyzer->extract_segmented_planes(new_keyframes[i]->cloud);
 
-        plane_mapper->map_extracted_planes(covisibility_graph,
-                                           new_keyframes[i],
-                                           extracted_cloud_vec,
-                                           x_vert_planes,
-                                           y_vert_planes,
-                                           hort_planes);
+          // Map extracted planes, protected by graph_mutex
+          plane_mapper->map_extracted_planes(covisibility_graph,
+                                             new_keyframes[i],
+                                             extracted_cloud_vec,
+                                             x_vert_planes,
+                                             y_vert_planes,
+                                             hort_planes);
+        }));
+      }
+
+      for (auto& t : threads) {
+        if (t.joinable()) {
+          t.join();
+        }
       }
     }
 
@@ -1365,6 +1385,12 @@ class SGraphsNode : public rclcpp::Node {
   void map_publish_timer_callback() {
     if (keyframes.empty() || floors_vec.empty()) return;
 
+    if (map_points_pub->get_subscription_count() == 0 &&
+        wall_points_pub->get_subscription_count() == 0 &&
+        markers_pub->get_subscription_count() == 0) {
+      return;
+    }
+
     std::vector<KeyFrame::Ptr> kf_snapshot;
     std::unordered_map<int, VerticalPlanes> x_planes_snapshot, y_planes_snapshot;
     std::unordered_map<int, HorizontalPlanes> hort_planes_snapshot;
@@ -1550,7 +1576,7 @@ class SGraphsNode : public rclcpp::Node {
                                                       it->first,
                                                       map_cloud_pub_resolution,
                                                       map_floor_t,
-                                                      viz_dense_map);
+                                                      viz_dense_map && save_dense_map);
       }
     } else if (kfs_to_map != 0) {
       std::vector<KeyFrame::Ptr> kf_map_window;
@@ -1564,7 +1590,7 @@ class SGraphsNode : public rclcpp::Node {
                                                     floor_level,
                                                     map_cloud_pub_resolution,
                                                     map_floor_t,
-                                                    viz_dense_map);
+                                                    viz_dense_map && save_dense_map);
 
       *floors_vec_snapshot[floor_level].floor_cloud += *augmented_cloud;
     }
@@ -1610,8 +1636,8 @@ class SGraphsNode : public rclcpp::Node {
       const std::unordered_map<int, HorizontalPlanes>& hort_planes_snapshot,
       std::map<int, Floors>& floors_vec_snapshot,
       sensor_msgs::msg::PointCloud2& floor_wall_cloud_msg) {
-    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr floor_wall_cloud(
-        new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+    pcl::PointCloud<PointNormal>::Ptr floor_wall_cloud(
+        new pcl::PointCloud<PointNormal>);
 
     for (const auto& x_plane : x_planes_snapshot) {
       if (x_plane.second.floor_level != floor_level) continue;
@@ -1810,7 +1836,7 @@ class SGraphsNode : public rclcpp::Node {
 
     graph_mutex.lock();
     auto graph_keyframes = graph_publisher->publish_graph_keyframes(
-        local_covisibility_graph, keyframes_complete_snapshot);
+        local_covisibility_graph, keyframes_complete_snapshot, dump_directory);
     graph_mutex.unlock();
 
     graph_pub->publish(graph_structure);
@@ -2136,6 +2162,17 @@ class SGraphsNode : public rclcpp::Node {
     }
   }
 
+  void set_dump_directory() {
+    dump_directory = "/tmp/s_graphs_data";
+    std::time_t t = std::time(nullptr);
+    struct std::tm* time_now = std::localtime(&t);
+    std::stringstream ss;
+    ss << (time_now->tm_year + 1900) << '-' << (time_now->tm_mon + 1) << '_'
+       << time_now->tm_mday << '_' << time_now->tm_hour << '_' << time_now->tm_min
+       << "_" << time_now->tm_sec;
+    dump_directory += "_" + ss.str();
+  }
+
   /**
    * @brief dump all data to the current directory
    * @param req
@@ -2147,50 +2184,41 @@ class SGraphsNode : public rclcpp::Node {
       std::shared_ptr<situational_graphs_msgs::srv::DumpGraph::Response> res) {
     std::lock_guard<std::mutex> lock(graph_mutex);
 
-    std::string directory = req->destination;
-    std::time_t t = std::time(nullptr);
-    struct std::tm* time_now = std::localtime(&t);
-    std::stringstream ss;
-    ss << (time_now->tm_year + 1900) << '-' << (time_now->tm_mon + 1) << '_'
-       << time_now->tm_mday << '_' << time_now->tm_hour << '_' << time_now->tm_min
-       << "_" << time_now->tm_sec;
-    directory += "_" + ss.str();
-
-    if (!boost::filesystem::is_directory(directory)) {
-      boost::filesystem::create_directory(directory);
+    if (!boost::filesystem::is_directory(dump_directory)) {
+      boost::filesystem::create_directory(dump_directory);
     }
 
-    std::string kf_directory = directory + "/keyframes";
+    std::string kf_directory = dump_directory + "/keyframes";
     if (!boost::filesystem::is_directory(kf_directory)) {
       boost::filesystem::create_directory(kf_directory);
     }
-    std::string x_vert_planes_directory = directory + "/x_vert_planes";
+    std::string x_vert_planes_directory = dump_directory + "/x_vert_planes";
     if (!boost::filesystem::is_directory(x_vert_planes_directory)) {
       boost::filesystem::create_directory(x_vert_planes_directory);
     }
-    std::string y_vert_planes_directory = directory + "/y_vert_planes";
+    std::string y_vert_planes_directory = dump_directory + "/y_vert_planes";
     if (!boost::filesystem::is_directory(y_vert_planes_directory)) {
       boost::filesystem::create_directory(y_vert_planes_directory);
     }
-    std::string hort_planes_directory = directory + "/hort_planes";
+    std::string hort_planes_directory = dump_directory + "/hort_planes";
     if (!boost::filesystem::is_directory(hort_planes_directory)) {
       boost::filesystem::create_directory(hort_planes_directory);
     }
-    std::string walls_directory = directory + "/walls";
+    std::string walls_directory = dump_directory + "/walls";
     if (!boost::filesystem::is_directory(walls_directory)) {
       boost::filesystem::create_directory(walls_directory);
     }
-    std::string rooms_directory = directory + "/rooms";
+    std::string rooms_directory = dump_directory + "/rooms";
     if (!boost::filesystem::is_directory(rooms_directory)) {
       boost::filesystem::create_directory(rooms_directory);
     }
-    std::string floors_directory = directory + "/floors";
+    std::string floors_directory = dump_directory + "/floors";
     if (!boost::filesystem::is_directory(floors_directory)) {
       boost::filesystem::create_directory(floors_directory);
     }
 
-    std::cout << "All data will be dumped to: " << directory << std::endl;
-    covisibility_graph->save(directory + "/graph.g2o");
+    std::cout << "All data will be dumped to: " << dump_directory << std::endl;
+    covisibility_graph->save(dump_directory + "/graph.g2o");
 
     int id = 0;
     for (const auto& kf : keyframes) {
@@ -2238,21 +2266,21 @@ class SGraphsNode : public rclcpp::Node {
     }
 
     if (zero_utm) {
-      std::ofstream zero_utm_ofs(directory + "/zero_utm");
+      std::ofstream zero_utm_ofs(dump_directory + "/zero_utm");
       zero_utm_ofs << boost::format("%.6f %.6f %.6f") % zero_utm->x() % zero_utm->y() %
                           zero_utm->z()
                    << std::endl;
       zero_utm_ofs.close();
     }
 
-    std::ofstream anchor_ofs(directory + "/anchor_node.txt");
+    std::ofstream anchor_ofs(dump_directory + "/anchor_node.txt");
     if (anchor_node != nullptr) {
       anchor_ofs << "id " << anchor_node->id() << "\n";
       anchor_ofs << "estimate " << anchor_node->estimate().matrix() << "\n";
     }
     anchor_ofs.close();
 
-    std::ofstream session_ofs(directory + "/session_details.txt");
+    std::ofstream session_ofs(dump_directory + "/session_details.txt");
     session_ofs << "session_id " << current_session_id << "\n";
     session_ofs << "session_graph_vertices "
                 << covisibility_graph->retrieve_total_nbr_of_vertices() << "\n";
@@ -2286,7 +2314,7 @@ class SGraphsNode : public rclcpp::Node {
     graph_mutex.unlock();
 
     auto cloud = map_cloud_generator->generate(
-        kf_snapshot, req->resolution, Eigen::Matrix4f::Identity(), true);
+        kf_snapshot, req->resolution, Eigen::Matrix4f::Identity(), save_dense_map);
     if (!cloud) {
       res->success = false;
       return true;
@@ -2692,7 +2720,7 @@ class SGraphsNode : public rclcpp::Node {
   std::deque<situational_graphs_msgs::msg::FloorData> floor_data_queue;
 
   // for map cloud generation
-  bool fast_mapping, viz_dense_map, viz_all_floor_cloud;
+  bool fast_mapping, viz_dense_map, save_dense_map, viz_all_floor_cloud;
   double map_cloud_resolution;
   double map_cloud_pub_resolution;
   std::unique_ptr<MapCloudGenerator> map_cloud_generator;
@@ -2709,6 +2737,8 @@ class SGraphsNode : public rclcpp::Node {
 
   int prev_mapped_keyframes;
   visualization_msgs::msg::MarkerArray s_graphs_markers;
+
+  std::string dump_directory;
 
   std::shared_ptr<GraphSLAM> covisibility_graph;
   std::unique_ptr<GraphSLAM> compressed_graph;

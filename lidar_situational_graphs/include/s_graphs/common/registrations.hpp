@@ -27,10 +27,24 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-#ifndef HDL_GRAPH_SLAM_REGISTRATIONS_HPP
-#define HDL_GRAPH_SLAM_REGISTRATIONS_HPP
+#ifndef REGISTRATIONS_HPP
+#define REGISTRATIONS_HPP
 
-#include <pcl/registration/registration.h>
+#include <pcl/registration/gicp.h>
+#include <pcl/registration/icp.h>
+#include <pcl/registration/ndt.h>
+#include <pclomp/gicp_omp.h>
+#include <pclomp/ndt_omp.h>
+
+#include <fast_gicp/gicp/fast_gicp.hpp>
+#include <fast_gicp/gicp/fast_vgicp.hpp>
+#include <iostream>
+#include <s_graphs/common/point_types.hpp>
+
+#ifdef USE_VGICP_CUDA
+#include <fast_gicp/gicp/fast_vgicp_cuda.hpp>
+#endif
+#include <s_graphs/common/point_types.hpp>
 
 namespace s_graphs {
 
@@ -54,9 +68,9 @@ struct registration_params {
  * @param registration_params
  * @return selected scan matching
  */
-pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr select_registration_method(
+pcl::Registration<PointT, PointT>::Ptr select_registration_method(
     registration_params params);
 
 }  // namespace s_graphs
 
-#endif  //
+#endif  // REGISTRATIONS_HPP

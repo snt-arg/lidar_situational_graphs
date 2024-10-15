@@ -147,8 +147,7 @@ Eigen::Isometry3d odom2isometry(const nav_msgs::msg::Odometry::SharedPtr& odom_m
 }
 
 KeyFrame ROS2Keyframe(const situational_graphs_reasoning_msgs::msg::Keyframe& msg) {
-  pcl::PointCloud<KeyFrame::PointT>::Ptr cloud =
-      pcl::PointCloud<KeyFrame::PointT>::Ptr();
+  pcl::PointCloud<PointT>::Ptr cloud = pcl::PointCloud<PointT>::Ptr();
   // pcl::fromROSMsg(msg.pointcloud, *cloud);
 
   // TODO: add_accumulated_distance

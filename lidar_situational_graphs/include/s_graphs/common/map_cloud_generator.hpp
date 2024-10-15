@@ -38,6 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <vector>
 
 namespace s_graphs {
@@ -47,8 +48,6 @@ namespace s_graphs {
  */
 class MapCloudGenerator {
  public:
-  using PointT = pcl::PointXYZI;
-
   /**
    * @brief Contructor of class MapCloudGenerator
    */
@@ -105,7 +104,7 @@ class MapCloudGenerator {
    * @param map_floor_t
    * @param use_dense_cloud
    */
-  pcl::PointCloud<MapCloudGenerator::PointT>::Ptr generate_floor_cloud(
+  pcl::PointCloud<PointT>::Ptr generate_floor_cloud(
       const std::vector<KeyFrame::Ptr>& keyframes,
       const int& current_floor_level,
       const double resolution,
@@ -117,12 +116,18 @@ class MapCloudGenerator {
    *
    * @param kf_pose
    * @param pose_map_cloud
-   * @return pcl::PointCloud<MapCloudGenerator::PointT>::Ptr
+   * @return pcl::PointCloud<PointT>::Ptr
    */
-  pcl::PointCloud<MapCloudGenerator::PointT>::Ptr generate_kf_cloud(
+  pcl::PointCloud<PointT>::Ptr generate_kf_cloud(
       const Eigen::Matrix4f& kf_pose,
       const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
           pose_map_cloud);
+
+  struct PointComparator {
+    bool operator()(const PointT& a, const PointT& b) const {
+      return std::tie(a.x, a.y, a.z) < std::tie(b.x, b.y, b.z);
+    }
+  };
 };
 
 }  // namespace s_graphs

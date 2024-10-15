@@ -42,6 +42,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <Eigen/Eigen>
 #include <boost/filesystem.hpp>
 #include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/point_types.hpp>
 
 namespace s_graphs {
 /**
@@ -58,7 +59,6 @@ namespace s_graphs {
  * @param floor_level
  */
 
-using PointNormal = pcl::PointXYZRGBNormal;
 class Planes {
  public:
   Planes() {}
@@ -244,11 +244,6 @@ class Planes {
 
   // write plane data to csv
   void write_plane_data_to_csv(const std::string plane_directory) {
-    if (on_wall) {
-      std::cout << "Not adding plane " << id << " as its on wall" << std::endl;
-      return;
-    }
-
     std::string file_path = plane_directory + "/plane_data.csv";
     bool file_exists = boost::filesystem::exists(file_path);
     std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
@@ -258,7 +253,7 @@ class Planes {
                  "end_point_z,length,height\n";
     }
 
-    pcl::PointXYZRGBNormal p_min, p_max;
+    PointNormal p_min, p_max;
     double length = pcl::getMaxSegment(*cloud_seg_map, p_min, p_max);
     double height = std::abs(p_max.z - p_min.z);
 
@@ -266,36 +261,23 @@ class Planes {
       p_min.z = p_max.z;
     }
 
-    // assuming planes which dont belong to a wall have a thickness of 20cm
-    double wall_thickness = 0.2;
-    pcl::PointXYZRGBNormal p_min_new, p_max_new;
-    p_min_new.x = p_min.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
-    p_min_new.y = p_min.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
-
-    p_max_new.x = p_max.x + ((wall_thickness / 2) * plane_node->estimate().coeffs()(0));
-    p_max_new.y = p_max.y + ((wall_thickness / 2) * plane_node->estimate().coeffs()(1));
-
-    csv_ofs << id << "," << floor_level << "," << p_min_new.x << "," << p_min_new.y
-            << "," << p_min.z << "," << p_max_new.x << "," << p_max_new.y << ","
-            << p_min.z << "," << length << "," << height << "\n";
+    csv_ofs << id << "," << floor_level << "," << p_min.x << "," << p_min.y << ","
+            << p_min.z << "," << p_max.x << "," << p_max.y << "," << p_min.z << ","
+            << length << "," << height << "\n";
     csv_ofs.close();
   }
 
   void write_plane_points_to_csv(const std::string plane_directory) {
-    if (on_wall) {
-      std::cout << "Not adding plane " << id << " points as its on wall" << std::endl;
-      return;
-    }
-
     std::string file_path = plane_directory + "/plane_points.csv";
     bool file_exists = boost::filesystem::exists(file_path);
     std::ofstream csv_ofs(file_path, std::ios::out | std::ios::app);
     if (!file_exists) {
-      csv_ofs << "id,x,y,z\n";
+      csv_ofs << "id,x,y,z,r,g,b\n";
     }
 
     for (const auto& point : cloud_seg_map->points) {
-      csv_ofs << id << "," << point.x << "," << point.y << "," << point.z << "\n";
+      csv_ofs << id << "," << point.x << "," << point.y << "," << point.z << ","
+              << color[0] << "," << color[1] << "," << color[2] << "\n";
     }
     csv_ofs.close();
   }

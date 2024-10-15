@@ -34,15 +34,15 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/room_mapper.hpp>
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/common/room_utils.hpp>
 #include <s_graphs/common/rooms.hpp>
 
 #include "geometry_msgs/msg/point.hpp"
 #include "situational_graphs_msgs/msg/plane_data.hpp"
 #include "situational_graphs_msgs/msg/rooms_data.hpp"
+
 using namespace s_graphs;
-typedef pcl::PointXYZI PointT;
-typedef pcl::PointXYZRGBNormal PointNormal;
 
 class TestRoom : public ::testing::Test {
   void SetUp() override {

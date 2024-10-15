@@ -34,10 +34,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/backend/plane_mapper.hpp>
 #include <s_graphs/common/keyframe.hpp>
 #include <s_graphs/common/plane_utils.hpp>
+#include <s_graphs/common/point_types.hpp>
 #include <s_graphs/frontend/plane_analyzer.hpp>
-
-typedef pcl::PointXYZI PointT;
-typedef pcl::PointXYZRGBNormal PointNormal;
 
 class TestPlane : public ::testing::Test {
  public:
