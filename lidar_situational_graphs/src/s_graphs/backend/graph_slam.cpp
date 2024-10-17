@@ -1,37 +1,3 @@
-#include <g2o/core/block_solver.h>
-#include <g2o/core/factory.h>
-#include <g2o/core/linear_solver.h>
-#include <g2o/core/optimization_algorithm.h>
-#include <g2o/core/optimization_algorithm_factory.h>
-#include <g2o/core/optimization_algorithm_levenberg.h>
-#include <g2o/core/robust_kernel_factory.h>
-#include <g2o/core/sparse_optimizer.h>
-#include <g2o/solvers/cholmod/linear_solver_cholmod.h>
-#include <g2o/solvers/pcg/linear_solver_pcg.h>
-#include <g2o/stuff/macros.h>
-#include <g2o/types/slam3d/edge_se3_pointxyz.h>
-#include <g2o/types/slam3d/types_slam3d.h>
-#include <g2o/types/slam3d_addons/types_slam3d_addons.h>
-
-#include <boost/format.hpp>
-#include <g2o/edge_infinite_room_plane.hpp>
-#include <g2o/edge_loop_closure.hpp>
-#include <g2o/edge_plane.hpp>
-#include <g2o/edge_plane_identity.hpp>
-#include <g2o/edge_plane_prior.hpp>
-#include <g2o/edge_room.hpp>
-#include <g2o/edge_se3_plane.hpp>
-#include <g2o/edge_se3_point_to_plane.hpp>
-#include <g2o/edge_se3_priorquat.hpp>
-#include <g2o/edge_se3_priorvec.hpp>
-#include <g2o/edge_se3_priorxy.hpp>
-#include <g2o/edge_se3_priorxyz.hpp>
-#include <g2o/edge_se3_two_planes.hpp>
-#include <g2o/robust_kernel_io.hpp>
-#include <g2o/vertex_deviation.hpp>
-#include <g2o/vertex_infinite_room.hpp>
-#include <g2o/vertex_room.hpp>
-#include <g2o/vertex_wall.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
 
 G2O_USE_OPTIMIZATION_LIBRARY(pcg)
