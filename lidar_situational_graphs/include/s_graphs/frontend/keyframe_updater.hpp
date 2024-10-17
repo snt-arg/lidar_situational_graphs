@@ -57,6 +57,8 @@ class KeyframeUpdater {
     keyframe_delta_angle =
         node->get_parameter("keyframe_delta_angle").get_parameter_value().get<double>();
 
+    record_kf_when_still =
+        node->get_parameter("record_kf_when_still").get_parameter_value().get<bool>();
     stand_still_time =
         node->get_parameter("stand_still_time").get_parameter_value().get<double>();
     stand_still_delta =
@@ -74,6 +76,7 @@ class KeyframeUpdater {
    */
   bool update(const Eigen::Isometry3d& pose) {
     auto now = std::chrono::steady_clock::now();
+    n_measurement += 1;
 
     if (is_first) {
       is_first = false;
@@ -91,9 +94,7 @@ class KeyframeUpdater {
 
     // Too close to the previous frame
     if (dx < keyframe_delta_trans && da < keyframe_delta_angle) {
-      n_measurement += 1;
-
-      if (n_measurement >= 20) {
+      if (n_measurement >= 20 && record_kf_when_still) {
         Eigen::Isometry3d prev_delta = prev_pose.inverse() * pose;
         double prev_dx = prev_delta.translation().norm();
         double prev_da = Eigen::AngleAxisd(prev_delta.linear()).angle();
@@ -107,12 +108,13 @@ class KeyframeUpdater {
                 std::chrono::duration_cast<std::chrono::duration<double>>(now -
                                                                           still_time)
                     .count();
+
             if (standing_time > stand_still_time) {
               Eigen::Isometry3d delta_still = prev_keypose.inverse() * pose;
               double dx_still = delta_still.translation().norm();
               double da_still = Eigen::AngleAxisd(delta_still.linear()).angle();
 
-              if (dx_still >= 0.3 || da_still >= 0.3) {
+              if (dx_still >= 0.2 || da_still >= 0.2) {
                 prev_keypose = pose;
                 prev_pose = pose;
                 standing_still = false;
@@ -169,7 +171,7 @@ class KeyframeUpdater {
   double stand_still_time;
   double stand_still_delta;
 
-  bool is_first, standing_still;
+  bool is_first, standing_still, record_kf_when_still;
   double accum_distance;
   int n_measurement;
   Eigen::Isometry3d prev_keypose, prev_pose;
