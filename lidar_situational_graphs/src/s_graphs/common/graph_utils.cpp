@@ -29,6 +29,7 @@ void GraphUtils::copy_graph_vertices(const GraphSLAM* covisibility_graph,
        it != covisibility_graph->graph->vertices().end();
        ++it) {
     g2o::OptimizableGraph::Vertex* v = (g2o::OptimizableGraph::Vertex*)(it->second);
+
     if (compressed_graph->graph->vertex(v->id())) continue;
 
     g2o::VertexSE3* vertex_se3 = dynamic_cast<g2o::VertexSE3*>(v);
@@ -68,6 +69,18 @@ void GraphUtils::copy_graph_vertices(const GraphSLAM* covisibility_graph,
     g2o::VertexRoom* vertex_room = dynamic_cast<g2o::VertexRoom*>(v);
     if (vertex_room) {
       auto current_vertex = compressed_graph->copy_room_node(vertex_room);
+      continue;
+    }
+    g2o::VertexDoorWay* vertex_doorway = dynamic_cast<g2o::VertexDoorWay*>(v);
+    if (vertex_doorway) {
+      if (vertex_doorway->fixed()) continue;
+      auto current_vertex = compressed_graph->copy_doorway_node(vertex_doorway);
+      continue;
+    }
+
+    g2o::VertexDeviation* vertex_deviation = dynamic_cast<g2o::VertexDeviation*>(v);
+    if (vertex_deviation) {
+      auto current_vertex = compressed_graph->copy_deviation_node(vertex_deviation);
       continue;
     }
   }
@@ -175,7 +188,6 @@ void GraphUtils::copy_graph_vertices(
     g2o::VertexWall* vertex_wall = dynamic_cast<g2o::VertexWall*>(v);
     if (vertex_wall) {
       auto wall = walls_vec.find(vertex_wall->id());
-
       if (wall != walls_vec.end()) {
         if (wall->second.floor_level == current_floor_level) {
           auto current_vertex = compressed_graph->copy_wall_node(vertex_wall);
@@ -307,7 +319,47 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[0]->id()));
       g2o::VertexPlane* v2 = dynamic_cast<g2o::VertexPlane*>(
           compressed_graph->graph->vertices().at(edge_se3_plane->vertices()[1]->id()));
+      if (v1->fixed() || v2->fixed()) continue;
       auto edge = compressed_graph->copy_se3_plane_edge(edge_se3_plane, v1, v2);
+      if (edge_se3_plane->robustKernel()) {
+        compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      }
+      continue;
+    }
+    g2o::EdgeSE3PlanePlane* edge_se3_2planes = dynamic_cast<g2o::EdgeSE3PlanePlane*>(e);
+    if (edge_se3_2planes) {
+      if (!compressed_graph->graph->vertex(edge_se3_2planes->vertices()[0]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_se3_2planes->vertices()[1]->id()))
+        continue;
+      if (!compressed_graph->graph->vertex(edge_se3_2planes->vertices()[2]->id()))
+        continue;
+
+      g2o::VertexDeviation* v1 =
+          dynamic_cast<g2o::VertexDeviation*>(compressed_graph->graph->vertices().at(
+              edge_se3_2planes->vertices()[0]->id()));
+      g2o::VertexPlane* v2 =
+          dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
+              edge_se3_2planes->vertices()[1]->id()));
+      g2o::VertexPlane* v3 =
+          dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
+              edge_se3_2planes->vertices()[2]->id()));
+
+      auto edge = compressed_graph->copy_se3_2planes_edge(edge_se3_2planes, v1, v2, v3);
+      compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
+      continue;
+    }
+
+    g2o::EdgeSE3RoomRoom* edge_se3_2rooms = dynamic_cast<g2o::EdgeSE3RoomRoom*>(e);
+    if (edge_se3_2rooms) {
+      g2o::VertexDeviation* v1 = dynamic_cast<g2o::VertexDeviation*>(
+          compressed_graph->graph->vertices().at(edge_se3_2rooms->vertices()[0]->id()));
+      g2o::VertexRoom* v2 = dynamic_cast<g2o::VertexRoom*>(
+          compressed_graph->graph->vertices().at(edge_se3_2rooms->vertices()[1]->id()));
+      g2o::VertexRoom* v3 = dynamic_cast<g2o::VertexRoom*>(
+          compressed_graph->graph->vertices().at(edge_se3_2rooms->vertices()[2]->id()));
+
+      auto edge = compressed_graph->copy_se3_2rooms_edge(edge_se3_2rooms, v1, v2, v3);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
       continue;
     }
@@ -370,6 +422,8 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
       g2o::VertexPlane* v5 =
           dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
               edge_room_4planes->vertices()[4]->id()));
+      if (v1->fixed() || v2->fixed() || v3->fixed() || v4->fixed() || v5->fixed())
+        continue;
       auto edge = compressed_graph->copy_room_4planes_edge(
           edge_room_4planes, v1, v2, v3, v4, v5);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
@@ -408,7 +462,7 @@ std::vector<g2o::VertexSE3*> GraphUtils::copy_graph_edges(
       g2o::VertexPlane* v3 =
           dynamic_cast<g2o::VertexPlane*>(compressed_graph->graph->vertices().at(
               edge_wall_2planes->vertices()[2]->id()));
-
+      if (v1->fixed() || v2->fixed() || v3->fixed()) continue;
       auto edge =
           compressed_graph->copy_wall_2planes_edge(edge_wall_2planes, v1, v2, v3);
       compressed_graph->add_robust_kernel(edge, "Huber", 1.0);
@@ -1149,7 +1203,7 @@ void GraphUtils::update_graph(
     std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     std::map<int, Floors>& floors_vec,
-    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>&
         updated_planes_tuple) {
   // Loop over all the vertices of the graph
   for (auto it = compressed_graph->graph->vertices().begin();

@@ -35,6 +35,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/core/sparse_optimizer.h>
 
 #include <g2o/edge_doorway_two_rooms.hpp>
+#include <g2o/edge_multi_se3.hpp>
 #include <g2o/edge_se3_two_planes.hpp>
 #include <g2o/edge_se3_two_rooms.hpp>
 #include <g2o/edge_wall_two_planes.hpp>
@@ -77,6 +78,7 @@ class EdgeSE3RoomRoom;
 class EdgePlanePriorNormal;
 class EdgePlanePriorDistance;
 class EdgeDoorWay2Rooms;
+class EdgeMultiSE3;
 class RobustKernelFactory;
 class VertexRoom;
 class VertexFloor;
@@ -240,12 +242,28 @@ class GraphSLAM {
   g2o::VertexDoorWay* add_doorway_node(const Eigen::Isometry3d& doorway_pose);
 
   /**
+   * @brief copy a Doorway node from another graph
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexDoorWay* copy_doorway_node(const g2o::VertexDoorWay* node);
+
+  /**
    * @brief copy a room node from another graph
    *
    * @param node
    * @return Registered node
    */
   g2o::VertexRoom* copy_room_node(const g2o::VertexRoom* node);
+
+  /**
+   * @brief copy a room node from another graph
+   *
+   * @param node
+   * @return Registered node
+   */
+  g2o::VertexDeviation* copy_deviation_node(const g2o::VertexDeviation* node);
 
   /**
    * @brief Add a floor node to the graph
@@ -507,6 +525,12 @@ class GraphSLAM {
       const Eigen::Vector3d& measurement,
       const Eigen::MatrixXd& information_matrix);
 
+  g2o::EdgeDoorWay2Rooms* copy_doorway_2rooms_edge(g2o::EdgeDoorWay2Rooms* e,
+                                                   g2o::VertexDoorWay* v1,
+                                                   g2o::VertexDoorWay* v2,
+                                                   g2o::VertexRoom* v3,
+                                                   g2o::VertexRoom* v4);
+
   /**
    * @brief
    *
@@ -610,11 +634,36 @@ class GraphSLAM {
    * @param v2: plane2 edge
    * @return registered edge
    */
-  g2o::EdgeSE3PlanePlane* add_se3_point_to_2planes_edge(
-      g2o::VertexDeviation* v_se3,
-      g2o::VertexPlane* v_plane1,
-      g2o::VertexPlane* v_plane2,
-      const Eigen::MatrixXd& information);
+  g2o::EdgeSE3PlanePlane* add_se3_2planes_edge(g2o::VertexDeviation* v_se3,
+                                               g2o::VertexPlane* v_plane1,
+                                               g2o::VertexPlane* v_plane2,
+                                               const Eigen::MatrixXd& information);
+
+  /**
+   * @brief Deviation connection edge between two planes
+   *
+   * @param v_se3: Deviation vertex
+   * @param v1: plane1 edge
+   * @param v2: plane2 edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3PlanePlane* copy_se3_2planes_edge(g2o::EdgeSE3PlanePlane* e,
+                                                g2o::VertexDeviation* v_se3,
+                                                g2o::VertexPlane* v_plane1,
+                                                g2o::VertexPlane* v_plane2);
+
+  /**
+   * @brief Deviation connection edge between two planes
+   *
+   * @param v_se3: Deviation vertex
+   * @param v1: Room1 edge
+   * @param v2: Room2 edge
+   * @return registered edge
+   */
+  g2o::EdgeSE3RoomRoom* copy_se3_2rooms_edge(g2o::EdgeSE3RoomRoom* e,
+                                             g2o::VertexDeviation* v1,
+                                             g2o::VertexRoom* v2,
+                                             g2o::VertexRoom* v3);
 
   /**
    * @brief
@@ -627,8 +676,22 @@ class GraphSLAM {
    */
   g2o::EdgeSE3Room* add_se3_room_edge(g2o::VertexSE3* v_se3,
                                       g2o::VertexRoom* v_room,
-                                      const Eigen::Vector2d& measurement,
+                                      const Eigen::Isometry3d& measurement,
                                       const Eigen::MatrixXd& information);
+
+  /**
+   * @brief
+   *
+   * @param v_a_graph_origin
+   * @param v_s_graph_origin
+   * @param v_transformation
+   * @param information
+   * @return registered edge
+   */
+  g2o::EdgeMultiSE3* add_origin_to_origin_edge(g2o::VertexSE3* v_a_graph_origin,
+                                               g2o::VertexSE3* v_s_graph_origin,
+                                               g2o::VertexSE3* v_transformation,
+                                               const Eigen::MatrixXd& information);
 
   /**
    * @brief

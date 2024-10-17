@@ -316,6 +316,7 @@ bool FiniteRoomMapper::factor_rooms(
     // room_node->setFixed(true);
     Rooms det_room;
     det_room.id = room_data_association;
+
     room_id = det_room.id;
     det_room.plane_x1_id = x_room_pair_vec[0].plane_id;
     det_room.plane_x2_id = x_room_pair_vec[1].plane_id;

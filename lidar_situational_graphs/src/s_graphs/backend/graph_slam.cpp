@@ -58,6 +58,7 @@ G2O_REGISTER_TYPE(EDGE_SE3_INFINITE_ROOM, EdgeSE3InfiniteRoom)
 G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_XPLANE, EdgeInfiniteRoomXPlane)
 G2O_REGISTER_TYPE(EDGE_INFINITE_ROOM_YPLANE, EdgeInfiniteRoomYPlane)
 G2O_REGISTER_TYPE(EDGE_SE3_ROOM, EdgeSE3Room)
+G2O_REGISTER_TYPE(EDGE_MULTI_SE3, EdgeMultiSE3)
 G2O_REGISTER_TYPE(EDGE_ROOM_2PLANES, EdgeRoom2Planes)
 G2O_REGISTER_TYPE(EDGE_ROOM_4PLANES, EdgeRoom4Planes)
 G2O_REGISTER_TYPE(EDGE_FLOOR_ROOM, EdgeFloorRoom)
@@ -255,8 +256,28 @@ g2o::VertexDoorWay* GraphSLAM::add_doorway_node(const Eigen::Isometry3d& doorway
   return vertex;
 }
 
+g2o::VertexDoorWay* GraphSLAM::copy_doorway_node(const g2o::VertexDoorWay* node) {
+  g2o::VertexDoorWay* vertex(new g2o::VertexDoorWay());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
 g2o::VertexRoom* GraphSLAM::copy_room_node(const g2o::VertexRoom* node) {
   g2o::VertexRoom* vertex(new g2o::VertexRoom());
+  vertex->setId(node->id());
+  vertex->setEstimate(node->estimate());
+  if (node->fixed()) vertex->setFixed(true);
+  graph->addVertex(vertex);
+
+  return vertex;
+}
+
+g2o::VertexDeviation* GraphSLAM::copy_deviation_node(const g2o::VertexDeviation* node) {
+  g2o::VertexDeviation* vertex(new g2o::VertexDeviation());
   vertex->setId(node->id());
   vertex->setEstimate(node->estimate());
   if (node->fixed()) vertex->setFixed(true);
@@ -682,29 +703,41 @@ g2o::EdgeWall2Planes* GraphSLAM::copy_wall_2planes_edge(g2o::EdgeWall2Planes* e,
   return edge;
 }
 
-g2o::EdgeSE3PlanePlane* GraphSLAM::add_se3_point_to_2planes_edge(
+g2o::EdgeSE3PlanePlane* GraphSLAM::add_se3_2planes_edge(
     g2o::VertexDeviation* v_se3,
     g2o::VertexPlane* v_plane1,
     g2o::VertexPlane* v_plane2,
     const Eigen::MatrixXd& information) {
-  std::cout << "inside graph slam function" << std::endl;
   g2o::EdgeSE3PlanePlane* edge(new g2o::EdgeSE3PlanePlane());
   edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
   edge->setInformation(information);
-  std::cout << "information set" << std::endl;
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_plane1;
   edge->vertices()[2] = v_plane2;
   graph->addEdge(edge);
-  std::cout << "Edge added" << std::endl;
   this->increment_local_nbr_of_edges();
+
+  return edge;
+}
+
+g2o::EdgeSE3PlanePlane* GraphSLAM::copy_se3_2planes_edge(g2o::EdgeSE3PlanePlane* e,
+                                                         g2o::VertexDeviation* v_se3,
+                                                         g2o::VertexPlane* v_plane1,
+                                                         g2o::VertexPlane* v_plane2) {
+  g2o::EdgeSE3PlanePlane* edge(new g2o::EdgeSE3PlanePlane());
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v_se3;
+  edge->vertices()[1] = v_plane1;
+  edge->vertices()[2] = v_plane2;
+  graph->addEdge(edge);
 
   return edge;
 }
 
 g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
                                                g2o::VertexRoom* v_room,
-                                               const Eigen::Vector2d& measurement,
+                                               const Eigen::Isometry3d& measurement,
                                                const Eigen::MatrixXd& information) {
   g2o::EdgeSE3Room* edge(new g2o::EdgeSE3Room());
   edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
@@ -712,6 +745,23 @@ g2o::EdgeSE3Room* GraphSLAM::add_se3_room_edge(g2o::VertexSE3* v_se3,
   edge->setInformation(information);
   edge->vertices()[0] = v_se3;
   edge->vertices()[1] = v_room;
+  graph->addEdge(edge);
+  this->increment_local_nbr_of_edges();
+
+  return edge;
+}
+
+g2o::EdgeMultiSE3* GraphSLAM::add_origin_to_origin_edge(
+    g2o::VertexSE3* v_a_graph_origin,
+    g2o::VertexSE3* v_s_graph_origin,
+    g2o::VertexSE3* v_transformation,
+    const Eigen::MatrixXd& information) {
+  g2o::EdgeMultiSE3* edge(new g2o::EdgeMultiSE3());
+  edge->setId(static_cast<int>(retrieve_local_nbr_of_edges()));
+  edge->setInformation(information);
+  edge->vertices()[0] = v_a_graph_origin;
+  edge->vertices()[1] = v_s_graph_origin;
+  edge->vertices()[2] = v_transformation;
   graph->addEdge(edge);
   this->increment_local_nbr_of_edges();
 
@@ -831,6 +881,38 @@ g2o::EdgeSE3RoomRoom* GraphSLAM::add_deviation_two_rooms_edge(
   graph->addEdge(edge);
   this->increment_local_nbr_of_edges();
   std::cout << "edge added !" << std::endl;
+  return edge;
+}
+
+g2o::EdgeDoorWay2Rooms* GraphSLAM::copy_doorway_2rooms_edge(g2o::EdgeDoorWay2Rooms* e,
+                                                            g2o::VertexDoorWay* v1,
+                                                            g2o::VertexDoorWay* v2,
+                                                            g2o::VertexRoom* v3,
+                                                            g2o::VertexRoom* v4) {
+  g2o::EdgeDoorWay2Rooms* edge(new g2o::EdgeDoorWay2Rooms());
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
+  edge->vertices()[3] = v4;
+  graph->addEdge(edge);
+
+  return edge;
+}
+
+g2o::EdgeSE3RoomRoom* GraphSLAM::copy_se3_2rooms_edge(g2o::EdgeSE3RoomRoom* e,
+                                                      g2o::VertexDeviation* v1,
+                                                      g2o::VertexRoom* v2,
+                                                      g2o::VertexRoom* v3) {
+  g2o::EdgeSE3RoomRoom* edge(new g2o::EdgeSE3RoomRoom());
+  edge->setId(e->id());
+  edge->setInformation(e->information());
+  edge->vertices()[0] = v1;
+  edge->vertices()[1] = v2;
+  edge->vertices()[2] = v3;
+  graph->addEdge(edge);
+
   return edge;
 }
 

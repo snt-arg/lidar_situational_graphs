@@ -40,6 +40,9 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <g2o/edge_room.hpp>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_se3_priorquat.hpp>
+#include <g2o/edge_se3_two_planes.hpp>
+#include <g2o/edge_se3_two_rooms.hpp>
+#include <g2o/vertex_deviation.hpp>
 #include <g2o/vertex_floor.hpp>
 #include <s_graphs/backend/graph_slam.hpp>
 #include <s_graphs/common/floors.hpp>
@@ -278,7 +281,7 @@ class GraphUtils {
       std::unordered_map<int, InfiniteRooms>& x_infinite_rooms,
       std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
       std::map<int, Floors>& floors_vec,
-      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+      std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>&
           updated_planes_tuple);
 
   /**

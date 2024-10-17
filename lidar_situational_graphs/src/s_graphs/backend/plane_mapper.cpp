@@ -548,7 +548,7 @@ void PlaneMapper::convert_plane_points_to_map(
   }
 
   for (const auto& y_plane_id : std::get<1>(updated_planes_tuple)) {
-    auto y_vert_plane = x_vert_planes.find(y_plane_id);
+    auto y_vert_plane = y_vert_planes.find(y_plane_id);
     this->fill_plane_points<VerticalPlanes>(y_vert_plane->second);
   }
 
