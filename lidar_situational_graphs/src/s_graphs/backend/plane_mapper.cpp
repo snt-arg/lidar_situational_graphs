@@ -455,7 +455,13 @@ int PlaneMapper::get_matched_planes(
       Eigen::Matrix3d cov = Eigen::Matrix3d::Identity();
       maha_dist = sqrt(error.transpose() * cov * error);
     }
-    if (maha_dist < plane_dist_threshold) {
+
+    double updated_plane_dist_threshold = plane_dist_threshold;
+    if (cloud_seg_body->points.size() <= min_plane_points * 1.5) {
+      updated_plane_dist_threshold = 0.35 / 7;
+    }
+
+    if (maha_dist < updated_plane_dist_threshold) {
       potential_matches.emplace_back(plane.second.id, maha_dist);
     }
   }

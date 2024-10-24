@@ -84,7 +84,7 @@
     extract_planar_surfaces:    true
     min_seg_points:             100
     use_euclidean_filter:       true
-    min_horizontal_inliers:     500
+    min_horizontal_inliers:     100
     min_vertical_inliers:       100
     cluster_min_size:           50
     cluster_clean_tolerance:    0.2
@@ -122,7 +122,7 @@
     min_plane_points_opti:      100
     dupl_plane_matching_information: 0.1
     optimization_window_size: 5
-    optimization_type: "GLOBAL"
+    optimization_type: "FLOOR_GLOBAL"
 
 
     # Visualization
