@@ -92,10 +92,10 @@ class Floors {
     }
     ofs.close();
 
-    if (floor_cloud || !floor_cloud->points.empty())
+    if (floor_cloud && !floor_cloud->points.empty())
       pcl::io::savePCDFileBinary(floors_sub_directory + "/floor_cloud.pcd",
                                  *floor_cloud);
-    if (floor_wall_cloud || !floor_wall_cloud->points.empty())
+    if (floor_wall_cloud && !floor_wall_cloud->points.empty())
       pcl::io::savePCDFileBinary(floors_sub_directory + "/floor_wall_cloud.pcd",
                                  *floor_wall_cloud);
   }
