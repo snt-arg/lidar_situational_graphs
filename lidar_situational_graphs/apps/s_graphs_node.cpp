@@ -385,10 +385,12 @@ class SGraphsNode : public rclcpp::Node {
         std::chrono::seconds(int(keyframe_timer_update_interval)),
         std::bind(&SGraphsNode::keyframe_update_timer_callback, this),
         callback_keyframe_timer);
+    bool pass = false;
     map_publish_timer = this->create_wall_timer(
         std::chrono::seconds(int(map_cloud_update_interval)),
-        std::bind(&SGraphsNode::map_publish_timer_callback, this),
+        [this, pass]() { this->map_publish_timer_callback(pass); },
         callback_map_pub_timer);
+
     static_tf_timer =
         this->create_wall_timer(std::chrono::seconds(1),
                                 std::bind(&SGraphsNode::publish_static_tfs, this),
@@ -1383,12 +1385,12 @@ class SGraphsNode : public rclcpp::Node {
    * @brief generate map point cloud and publish it
    * @param event
    */
-  void map_publish_timer_callback() {
+  void map_publish_timer_callback(bool pass) {
     if (keyframes.empty() || floors_vec.empty()) return;
 
     if (map_points_pub->get_subscription_count() == 0 &&
         wall_points_pub->get_subscription_count() == 0 &&
-        markers_pub->get_subscription_count() == 0) {
+        markers_pub->get_subscription_count() == 0 && !pass) {
       return;
     }
 
@@ -2206,8 +2208,6 @@ class SGraphsNode : public rclcpp::Node {
   bool dump_service(
       const std::shared_ptr<situational_graphs_msgs::srv::DumpGraph::Request> req,
       std::shared_ptr<situational_graphs_msgs::srv::DumpGraph::Response> res) {
-    std::lock_guard<std::mutex> lock(graph_mutex);
-
     std::string req_directory = req->destination;
     std::string new_dump_directory;
     if (req_directory == "") {
@@ -2222,6 +2222,11 @@ class SGraphsNode : public rclcpp::Node {
       }
     }
 
+    if (floors_vec[current_floor_level].floor_cloud->points.empty()) {
+      map_publish_timer_callback(true);
+    }
+
+    std::lock_guard<std::mutex> lock(graph_mutex);
     if (!boost::filesystem::is_directory(new_dump_directory)) {
       boost::filesystem::create_directory(new_dump_directory);
     }
