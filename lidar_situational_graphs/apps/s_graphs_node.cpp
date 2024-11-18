@@ -259,16 +259,6 @@ SGraphsNode::SGraphsNode() : Node("s_graphs_node") {
   prev_mapped_keyframes = 0;
   current_session_id = 0;
 
-  double graph_update_interval =
-      this->get_parameter("graph_update_interval").get_parameter_value().get<double>();
-  double keyframe_timer_update_interval =
-      this->get_parameter("keyframe_timer_update_interval")
-          .get_parameter_value()
-          .get<double>();
-  double map_cloud_update_interval = this->get_parameter("map_cloud_update_interval")
-                                         .get_parameter_value()
-                                         .get<double>();
-
   std::string optimization_type =
       this->get_parameter("optimization_type").get_parameter_value().get<std::string>();
 
@@ -279,32 +269,6 @@ SGraphsNode::SGraphsNode() : Node("s_graphs_node") {
   } else if (optimization_type == "LOCAL_GLOBAL") {
     ongoing_optimization_class = optimization_class::LOCAL_GLOBAL;
   }
-
-  callback_group_opt_timer =
-      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  callback_keyframe_timer =
-      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  callback_map_pub_timer =
-      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  callback_static_tf_timer =
-      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  optimization_timer = this->create_wall_timer(
-      std::chrono::seconds(int(graph_update_interval)),
-      std::bind(&SGraphsNode::optimization_timer_callback, this),
-      callback_group_opt_timer);
-  keyframe_timer = this->create_wall_timer(
-      std::chrono::seconds(int(keyframe_timer_update_interval)),
-      std::bind(&SGraphsNode::keyframe_update_timer_callback, this),
-      callback_keyframe_timer);
-  bool pass = false;
-  map_publish_timer = this->create_wall_timer(
-      std::chrono::seconds(int(map_cloud_update_interval)),
-      [this, pass]() { this->map_publish_timer_callback(pass); },
-      callback_map_pub_timer);
 
   static_tf_timer =
       this->create_wall_timer(std::chrono::seconds(1),
@@ -474,6 +438,43 @@ void SGraphsNode::init_subclass() {
       std::make_unique<RoomGraphGenerator>(shared_from_this(), graph_mutex);
 
   main_timer->cancel();
+}
+
+void SGraphsNode::start_timers() {
+  double graph_update_interval =
+      this->get_parameter("graph_update_interval").get_parameter_value().get<double>();
+  double keyframe_timer_update_interval =
+      this->get_parameter("keyframe_timer_update_interval")
+          .get_parameter_value()
+          .get<double>();
+  double map_cloud_update_interval = this->get_parameter("map_cloud_update_interval")
+                                         .get_parameter_value()
+                                         .get<double>();
+  callback_group_opt_timer =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  callback_keyframe_timer =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  callback_map_pub_timer =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  callback_static_tf_timer =
+      this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+
+  optimization_timer = this->create_wall_timer(
+      std::chrono::seconds(int(graph_update_interval)),
+      std::bind(&SGraphsNode::optimization_timer_callback, this),
+      callback_group_opt_timer);
+  keyframe_timer = this->create_wall_timer(
+      std::chrono::seconds(int(keyframe_timer_update_interval)),
+      std::bind(&SGraphsNode::keyframe_update_timer_callback, this),
+      callback_keyframe_timer);
+  bool pass = false;
+  map_publish_timer = this->create_wall_timer(
+      std::chrono::seconds(int(map_cloud_update_interval)),
+      [this, pass]() { this->map_publish_timer_callback(pass); },
+      callback_map_pub_timer);
 }
 
 void SGraphsNode::raw_odom_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
@@ -2425,8 +2426,11 @@ void SGraphsNode::sort_directories(std::vector<std::string>& directories) {
 int main(int argc, char* argv[]) {
   rclcpp::init(argc, argv);
   rclcpp::executors::MultiThreadedExecutor multi_executor;
-  auto node = std::make_shared<s_graphs::SGraphsNode>();
-  multi_executor.add_node(node);
+  std::shared_ptr<s_graphs::SGraphsNode> s_graphs_node =
+      std::make_shared<s_graphs::SGraphsNode>();
+  s_graphs_node->start_timers();
+
+  multi_executor.add_node(s_graphs_node);
   multi_executor.spin();
   rclcpp::shutdown();
   return 0;
