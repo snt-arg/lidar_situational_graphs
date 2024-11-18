@@ -27,7 +27,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 */
 
-#include "s_graphs_node.hpp"
+#include "s_graphs/common/s_graphs_node.hpp"
 
 namespace s_graphs {
 
