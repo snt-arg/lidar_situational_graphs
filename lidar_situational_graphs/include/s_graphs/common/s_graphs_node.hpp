@@ -107,6 +107,9 @@ class SGraphsNode : public rclcpp::Node {
   SGraphsNode();
   ~SGraphsNode() {}
 
+ public:
+  void start_timers();
+
  private:
   void declare_ros_params();
   void init_subclass();
