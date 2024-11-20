@@ -155,7 +155,6 @@ class Rooms {
       } else if (token == "floor_level") {
         ifs >> floor_level;
       } else if (token == "room_node") {
-        Eigen::Matrix4d room_pose = Eigen::Matrix4d::Identity();
         for (int i = 0; i < 4; i++) {
           for (int j = 0; j < 4; j++) {
             ifs >> room_pose(i, j);
