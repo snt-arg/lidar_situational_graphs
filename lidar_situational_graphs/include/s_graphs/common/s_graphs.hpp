@@ -108,7 +108,9 @@ class SGraphsNode : public rclcpp::Node {
   ~SGraphsNode() {}
 
  public:
-  void start_timers();
+  void start_timers(bool enable_optimization_timer = true,
+                    bool enable_keyframe_timer = true,
+                    bool enable_map_publish_timer = true);
 
  private:
   void declare_ros_params();

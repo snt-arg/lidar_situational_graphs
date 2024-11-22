@@ -440,7 +440,9 @@ void SGraphsNode::init_subclass() {
   main_timer->cancel();
 }
 
-void SGraphsNode::start_timers() {
+void SGraphsNode::start_timers(bool enable_optimization_timer,
+                               bool enable_keyframe_timer,
+                               bool enable_map_publish_timer) {
   double graph_update_interval =
       this->get_parameter("graph_update_interval").get_parameter_value().get<double>();
   double keyframe_timer_update_interval =
@@ -462,19 +464,23 @@ void SGraphsNode::start_timers() {
   callback_static_tf_timer =
       this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-  optimization_timer = this->create_wall_timer(
-      std::chrono::seconds(int(graph_update_interval)),
-      std::bind(&SGraphsNode::optimization_timer_callback, this),
-      callback_group_opt_timer);
-  keyframe_timer = this->create_wall_timer(
-      std::chrono::seconds(int(keyframe_timer_update_interval)),
-      std::bind(&SGraphsNode::keyframe_update_timer_callback, this),
-      callback_keyframe_timer);
-  bool pass = false;
-  map_publish_timer = this->create_wall_timer(
-      std::chrono::seconds(int(map_cloud_update_interval)),
-      [this, pass]() { this->map_publish_timer_callback(pass); },
-      callback_map_pub_timer);
+  if (enable_optimization_timer)
+    optimization_timer = this->create_wall_timer(
+        std::chrono::seconds(int(graph_update_interval)),
+        std::bind(&SGraphsNode::optimization_timer_callback, this),
+        callback_group_opt_timer);
+  if (enable_keyframe_timer)
+    keyframe_timer = this->create_wall_timer(
+        std::chrono::seconds(int(keyframe_timer_update_interval)),
+        std::bind(&SGraphsNode::keyframe_update_timer_callback, this),
+        callback_keyframe_timer);
+  if (enable_map_publish_timer) {
+    bool pass = false;
+    map_publish_timer = this->create_wall_timer(
+        std::chrono::seconds(int(map_cloud_update_interval)),
+        [this, pass]() { this->map_publish_timer_callback(pass); },
+        callback_map_pub_timer);
+  }
 }
 
 void SGraphsNode::raw_odom_callback(const nav_msgs::msg::Odometry::SharedPtr odom_msg) {
