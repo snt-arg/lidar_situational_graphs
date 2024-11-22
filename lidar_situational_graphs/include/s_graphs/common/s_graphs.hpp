@@ -112,11 +112,11 @@ class SGraphsNode : public rclcpp::Node {
                     bool enable_keyframe_timer = true,
                     bool enable_map_publish_timer = true);
 
- private:
+ protected:
   void declare_ros_params();
   void init_subclass();
 
- private:
+ protected:
   /**
    * @brief receive the raw odom msg to publish the corrected odom after
    *
@@ -180,7 +180,7 @@ class SGraphsNode : public rclcpp::Node {
   void wall_data_callback(
       const situational_graphs_msgs::msg::WallsData::SharedPtr walls_msg);
 
- private:
+ protected:
   /**
    * @brief this method adds all the keyframes in #keyframe_queue to the pose graph
    * (odometry edges)
@@ -242,7 +242,7 @@ class SGraphsNode : public rclcpp::Node {
    **/
   void extract_keyframes_from_room(Rooms& current_room);
 
- private:
+ protected:
   /**
    * @brief this methods adds all the data in the queues to the pose graph
    * @param event
@@ -535,7 +535,7 @@ class SGraphsNode : public rclcpp::Node {
    */
   void sort_directories(std::vector<std::string>& directories);
 
- private:
+ protected:
   // ROS
   rclcpp::TimerBase::SharedPtr main_timer;
   rclcpp::TimerBase::SharedPtr optimization_timer;
