@@ -6,7 +6,7 @@
     distance_near_thresh: 0.5
     distance_far_thresh: 100.0
     downsample_method: "VOXELGRID" # NONE, VOXELGRID, or APPROX_VOXELGRID
-    downsample_resolution: 0.05
+    downsample_resolution: 0.1
     outlier_removal_method: "RADIUS" # NONE, RADIUS, or STATISTICAL
     statistical_mean_k: 30
     statistical_stddev: 1.2
