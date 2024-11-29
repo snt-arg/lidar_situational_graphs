@@ -141,7 +141,7 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
   }
 
   pcl::PointCloud<PointT>::Ptr filtered =
-      this->generate(floor_keyframes, resolution, map_floor_t);
+      this->generate(floor_keyframes, resolution, map_floor_t, use_dense_cloud);
 
   return filtered;
 }
