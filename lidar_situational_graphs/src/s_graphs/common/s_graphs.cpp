@@ -582,7 +582,11 @@ void SGraphsNode::cloud_callback(
 
   if (!floors_vec.empty()) {
     pcl::PointCloud<PointT>::Ptr cloud_trans =
-        map_cloud_generator->generate(odom_corrected, cloud);
+        map_cloud_generator->generate(current_floor_level,
+                                      odom_corrected,
+                                      cloud,
+                                      floors_vec,
+                                      use_floor_color_for_map);
     sensor_msgs::msg::PointCloud2 cloud_trans_msg;
     pcl::toROSMsg(*cloud_trans, cloud_trans_msg);
 
@@ -1423,9 +1427,12 @@ void SGraphsNode::handle_map_cloud(
 
   pcl::PointCloud<PointT>::Ptr cloud_transformed(new pcl::PointCloud<PointT>);
   for (const auto& odom_cloud_pair : current_odom_cloud_queue)
-    *cloud_transformed += *map_cloud_generator->generate(
-        map_floor_t * odom_cloud_pair.first, odom_cloud_pair.second);
-
+    *cloud_transformed +=
+        *map_cloud_generator->generate(floor_level,
+                                       map_floor_t * odom_cloud_pair.first,
+                                       odom_cloud_pair.second,
+                                       floors_vec_snapshot,
+                                       use_floor_color_for_map);
   pcl::toROSMsg(*cloud_transformed, s_graphs_cloud_msg);
   s_graphs_cloud_msg.header.stamp = current_time;
   s_graphs_cloud_msg.header.frame_id = map_frame_id;

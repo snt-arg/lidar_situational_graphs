@@ -82,9 +82,11 @@ class MapCloudGenerator {
    * @param cloud
    * @return pcl::PointCloud<PointT>::Ptr
    */
-  pcl::PointCloud<PointT>::Ptr generate(
-      const Eigen::Matrix4f& pose,
-      const pcl::PointCloud<PointT>::Ptr& cloud) const;
+  pcl::PointCloud<PointT>::Ptr generate(const int& current_floor_level,
+                                        const Eigen::Matrix4f& pose,
+                                        const pcl::PointCloud<PointT>::Ptr& cloud,
+                                        const std::map<int, Floors> floors_vec,
+                                        const bool use_floor_color = false) const;
 
   /**
    * @brief

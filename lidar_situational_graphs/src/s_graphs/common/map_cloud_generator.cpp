@@ -99,15 +99,26 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::downsample_cloud(
 }
 
 pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate(
+    const int& current_floor_level,
     const Eigen::Matrix4f& pose,
-    const pcl::PointCloud<PointT>::Ptr& cloud) const {
+    const pcl::PointCloud<PointT>::Ptr& cloud,
+    const std::map<int, Floors> floors_vec,
+    const bool use_floor_color) const {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
   map_cloud->reserve(cloud->size());
+  auto current_floor = floors_vec.find(current_floor_level);
+
   for (const auto& src_pt : cloud->points) {
     PointT dst_pt;
     dst_pt.getVector4fMap() = pose * src_pt.getVector4fMap();
 #ifdef USE_RGB_CLOUD
-    dst_pt.rgb = src_pt.rgb;
+    if (use_floor_color && current_floor != floors_vec.end() &&
+        current_floor->second.color.size() == 3) {
+      dst_pt.r = current_floor->second.color[0];
+      dst_pt.g = current_floor->second.color[1];
+      dst_pt.b = current_floor->second.color[2];
+    } else
+      dst_pt.rgb = src_pt.rgb;
 #else
     dst_pt.intensity = src_pt.intensity;
 #endif
