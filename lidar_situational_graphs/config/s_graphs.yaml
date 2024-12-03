@@ -139,4 +139,7 @@
     room_marker_size: 0.8
     floor_marker_size: 1.0
 
+    use_floor_color_for_map: false #only work if code is built with rgb flag on
+
+
 
