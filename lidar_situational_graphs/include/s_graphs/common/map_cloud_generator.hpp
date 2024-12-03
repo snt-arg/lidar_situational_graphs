@@ -38,6 +38,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/common/floors.hpp>
 #include <s_graphs/common/graph_utils.hpp>
 #include <s_graphs/common/keyframe.hpp>
+#include <s_graphs/common/optimization_data.hpp>
 #include <s_graphs/common/point_types.hpp>
 #include <vector>
 
@@ -119,10 +120,27 @@ class MapCloudGenerator {
    * @return pcl::PointCloud<PointT>::Ptr
    */
   pcl::PointCloud<PointT>::Ptr generate_kf_cloud(
+      const int& current_floor_level,
       const Eigen::Matrix4f& kf_pose,
       const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
-          pose_map_cloud);
+          pose_map_cloud,
+      const std::map<int, Floors> floors_vec,
+      const bool use_floor_color = false);
 
+  /**
+   * @brief
+   *
+   * @param current_floor_level
+   * @param floors_vec
+   */
+  void color_cloud_using_floor_color(const int& current_floor_level,
+                                     const std::map<int, Floors>& floors_vec,
+                                     const pcl::PointCloud<PointT>::Ptr& cloud);
+
+  /**
+   * @brief
+   *
+   */
   struct PointComparator {
     bool operator()(const PointT& a, const PointT& b) const {
       return std::tie(a.x, a.y, a.z) < std::tie(b.x, b.y, b.z);

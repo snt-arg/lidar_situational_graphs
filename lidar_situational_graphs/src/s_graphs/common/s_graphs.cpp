@@ -123,6 +123,12 @@ SGraphsNode::SGraphsNode() : Node("s_graphs_node") {
   floor_node_viz_height =
       this->get_parameter("floor_node_viz_height").get_parameter_value().get<double>();
 
+  use_floor_color_for_map =
+      this->get_parameter("use_floor_color_for_map").get_parameter_value().get<bool>();
+
+  always_publish_map =
+      this->get_parameter("always_publish_map").get_parameter_value().get<bool>();
+
   // tfs
   tf_buffer = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener = std::make_shared<tf2_ros::TransformListener>(*tf_buffer);
@@ -317,6 +323,8 @@ void SGraphsNode::declare_ros_params() {
   this->declare_parameter("wall_viz_height", 0.0);
   this->declare_parameter("room_viz_height", 8.0);
   this->declare_parameter("floor_node_viz_height", 12.0);
+  this->declare_parameter("use_floor_color_for_map", false);
+  this->declare_parameter("always_publish_map", false);
 
   this->declare_parameter("max_keyframes_per_update", 10);
   this->declare_parameter("gps_time_offset", 0);
@@ -475,7 +483,7 @@ void SGraphsNode::start_timers(bool enable_optimization_timer,
         std::bind(&SGraphsNode::keyframe_update_timer_callback, this),
         callback_keyframe_timer);
   if (enable_map_publish_timer) {
-    bool pass = false;
+    bool pass = always_publish_map;
     map_publish_timer = this->create_wall_timer(
         std::chrono::seconds(int(map_cloud_update_interval)),
         [this, pass]() { this->map_publish_timer_callback(pass); },
@@ -553,10 +561,16 @@ void SGraphsNode::cloud_callback(
     std::lock_guard<std::mutex> lock(keyframe_queue_mutex);
     if (save_dense_map) {
       keyframe->set_dense_cloud(map_cloud_generator->generate_kf_cloud(
-          odom_corrected, keyframe_updater->get_collected_pose_cloud()));
+          current_floor_level,
+          odom_corrected,
+          keyframe_updater->get_collected_pose_cloud(),
+          floors_vec,
+          use_floor_color_for_map));
       keyframe_updater->reset_collected_pose_cloud();
+    } else if (use_floor_color_for_map) {
+      map_cloud_generator->color_cloud_using_floor_color(
+          current_floor_level, floors_vec, cloud);
     }
-
     keyframe_queue.push_back(keyframe);
   }
 
@@ -701,7 +715,8 @@ bool SGraphsNode::flush_keyframe_queue() {
         y_infinite_rooms,
         floors_vec,
         new_x_planes,
-        new_y_planes);
+        new_y_planes,
+        use_floor_color_for_map);
     GraphUtils::update_node_floor_level(current_floor_level, new_keyframes);
     plane_mapper->factor_new_planes(current_floor_level,
                                     covisibility_graph,

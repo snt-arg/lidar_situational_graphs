@@ -147,11 +147,15 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_floor_cloud(
 }
 
 pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
+    const int& current_floor_level,
     const Eigen::Matrix4f& kf_pose,
     const std::vector<std::pair<Eigen::Matrix4f, pcl::PointCloud<PointT>::Ptr>>
-        pose_map_cloud) {
+        pose_map_cloud,
+    const std::map<int, Floors> floors_vec,
+    const bool use_floor_color) {
   pcl::PointCloud<PointT>::Ptr map_cloud(new pcl::PointCloud<PointT>());
   std::set<PointT, PointComparator> unique_points;
+  auto current_floor = floors_vec.find(current_floor_level);
 
   for (int i = 0; i < pose_map_cloud.size(); i += 2) {
     Eigen::Matrix4f current_odom_pose = pose_map_cloud[i].first;
@@ -162,7 +166,13 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
       PointT dst_pt;
       dst_pt.getVector4fMap() = odom_pose_transformed * src_pt.getVector4fMap();
 #ifdef USE_RGB_CLOUD
-      dst_pt.rgb = src_pt.rgb;
+      if (use_floor_color && current_floor != floors_vec.end() &&
+          current_floor->second.color.size() == 3) {
+        dst_pt.r = current_floor->second.color[0];
+        dst_pt.g = current_floor->second.color[1];
+        dst_pt.b = current_floor->second.color[2];
+      } else
+        dst_pt.rgb = src_pt.rgb;
 #else
       dst_pt.intensity = src_pt.intensity;
 #endif
@@ -171,6 +181,25 @@ pcl::PointCloud<PointT>::Ptr MapCloudGenerator::generate_kf_cloud(
   }
 
   return map_cloud;
+}
+
+void MapCloudGenerator::color_cloud_using_floor_color(
+    const int& current_floor_level,
+    const std::map<int, Floors>& floors_vec,
+    const pcl::PointCloud<PointT>::Ptr& cloud) {
+#ifdef USE_RGB_CLOUD
+  auto current_floor = floors_vec.find(current_floor_level);
+  if (current_floor != floors_vec.end() && current_floor->second.color.size() == 3) {
+    for (auto& src_pt : cloud->points) {
+      src_pt.r = current_floor->second.color[0];
+      src_pt.g = current_floor->second.color[1];
+      src_pt.b = current_floor->second.color[2];
+    }
+  }
+#else
+  return;
+#endif
+  return;
 }
 
 }  // namespace s_graphs

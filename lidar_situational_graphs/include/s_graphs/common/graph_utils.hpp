@@ -321,7 +321,8 @@ class GraphUtils {
       std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
       const std::map<int, Floors>& floors_vec,
       std::vector<g2o::VertexPlane*>& new_x_vert_planes,
-      std::vector<g2o::VertexPlane*>& new_y_vert_planes);
+      std::vector<g2o::VertexPlane*>& new_y_vert_planes,
+      const bool use_floor_color_for_map = false);
 
   /**
    * @brief

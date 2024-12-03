@@ -641,7 +641,8 @@ class SGraphsNode : public rclcpp::Node {
   double infinite_room_information;
   double room_information, plane_information;
   bool on_stairs;
-  bool floor_node_updated;
+  bool floor_node_updated, always_publish_map;
+  bool use_floor_color_for_map;
   double floor_level_viz_height, keyframe_viz_height, wall_viz_height, room_viz_height,
       floor_node_viz_height;
 

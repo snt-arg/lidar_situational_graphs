@@ -1439,7 +1439,8 @@ void GraphUtils::update_node_floor_level(
     std::unordered_map<int, InfiniteRooms>& y_infinite_rooms,
     const std::map<int, Floors>& floors_vec,
     std::vector<g2o::VertexPlane*>& new_x_vert_planes,
-    std::vector<g2o::VertexPlane*>& new_y_vert_planes) {
+    std::vector<g2o::VertexPlane*>& new_y_vert_planes,
+    const bool use_floor_color_for_map) {
   std::vector<g2o::VertexPlane*> connected_planes;
 
   auto it = keyframes.find(first_keyframe_id);
@@ -1447,6 +1448,8 @@ void GraphUtils::update_node_floor_level(
     for (; it != keyframes.end(); ++it) {
       // change the floor level to the new floor level
       it->second->floor_level = current_floor_level;
+      if (use_floor_color_for_map)
+        update_kf_color(it->second, floors_vec.find(current_floor_level)->second);
     }
   }
 
@@ -1531,6 +1534,16 @@ void GraphUtils::update_node_floor_level(const int& current_floor_level,
   for (auto& kf : keyframes) {
     kf->floor_level = current_floor_level;
   }
+}
+
+void GraphUtils::update_kf_color(KeyFrame::Ptr keyframe, const Floors& current_floor) {
+#ifdef USE_RGB_CLOUD
+  for (auto& src_pt : keyframe->cloud->points) {
+    src_pt.r = current_floor.color[0];
+    src_pt.g = current_floor.color[1];
+    src_pt.b = current_floor.color[2];
+  }
+#endif
 }
 
 bool GraphUtils::plane_kf_check(const int& current_floor_level,
