@@ -581,12 +581,14 @@ void SGraphsNode::cloud_callback(
   }
 
   if (!floors_vec.empty()) {
+    graph_mutex.lock();
     pcl::PointCloud<PointT>::Ptr cloud_trans =
         map_cloud_generator->generate(current_floor_level,
                                       odom_corrected,
                                       cloud,
                                       floors_vec,
                                       use_floor_color_for_map);
+    graph_mutex.unlock();
     sensor_msgs::msg::PointCloud2 cloud_trans_msg;
     pcl::toROSMsg(*cloud_trans, cloud_trans_msg);
 
