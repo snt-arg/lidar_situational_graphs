@@ -336,6 +336,14 @@ class GraphUtils {
   /**
    * @brief
    *
+   * @param keyframe
+   * @param current_floor
+   */
+  static void update_kf_color(KeyFrame::Ptr keyframe, const Floors& current_floor);
+
+  /**
+   * @brief
+   *
    * @param current_floor_level
    * @param plane_vertex
    * @param keyframes
