@@ -129,6 +129,7 @@ def launch_sgraphs(context, *args, **kwargs):
             ("velodyne_points", lidar_topic_arg),
             ("imu/data", imu_topic_arg),
         ],
+        prefix=["bash -c 'exec 2>/dev/null; $0 $@'"],
     )
 
     scan_matching_cmd = Node(
