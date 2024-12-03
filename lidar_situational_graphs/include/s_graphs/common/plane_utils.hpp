@@ -240,6 +240,14 @@ class PlaneUtils {
    * @return std_msgs::msg::ColorRGBA
    */
   static std_msgs::msg::ColorRGBA rainbow_color_map(double h);
+
+  /**
+   * @brief Get the predefined colors object
+   *
+   * @param id
+   * @return std::vector<double>
+   */
+  static std::vector<double> get_predefined_colors(const int id);
 };
 }  // namespace s_graphs
 #endif  // PLANE_UTILS_HPP

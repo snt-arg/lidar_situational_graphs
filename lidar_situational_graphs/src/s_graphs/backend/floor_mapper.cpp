@@ -106,7 +106,8 @@ int FloorMapper::factor_floor_node(
 
   det_floor.sequential_id = floors_vec.size();
   det_floor.node = floor_node;
-  det_floor.color = PlaneUtils::random_color_vec();
+  det_floor.color.resize(3);
+  det_floor.color = PlaneUtils::get_predefined_colors(det_floor.sequential_id);
   det_floor.floor_cloud = pcl::PointCloud<PointT>::Ptr(new pcl::PointCloud<PointT>);
   det_floor.floor_wall_cloud =
       pcl::PointCloud<PointNormal>::Ptr(new pcl::PointCloud<PointNormal>);

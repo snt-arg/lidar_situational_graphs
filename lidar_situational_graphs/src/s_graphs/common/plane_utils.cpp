@@ -416,4 +416,21 @@ std_msgs::msg::ColorRGBA PlaneUtils::rainbow_color_map(double h) {
   return color;
 }
 
+std::vector<double> PlaneUtils::get_predefined_colors(const int id) {
+  switch (id) {
+    case 0:
+      return {255, 0, 0};  // Red
+    case 1:
+      return {0, 255, 0};  // Green
+    case 2:
+      return {255, 165, 0};  // Orange
+    case 3:
+      return {128, 128, 0};  // Olive
+    case 4:
+      return {128, 64, 0};  // Brownish shade
+    default:
+      return PlaneUtils::random_color_vec();
+  }
+}
+
 }  // namespace s_graphs

@@ -202,7 +202,8 @@ class GraphVisualizer {
    */
   visualization_msgs::msg::Marker fill_kf_edge_markers(
       const g2o::SparseOptimizer* local_graph,
-      const std::vector<KeyFrame::Ptr> keyframes);
+      const std::vector<KeyFrame::Ptr> keyframes,
+      const std::map<int, Floors> floors_vec);
 
   /**
    * @brief

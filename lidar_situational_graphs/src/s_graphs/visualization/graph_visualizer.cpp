@@ -123,7 +123,7 @@ GraphVisualizer::visualize_floor_covisibility_graph(
 
     // keyframe edge markers
     visualization_msgs::msg::Marker kf_edge_marker =
-        fill_kf_edge_markers(local_graph, floor_keyframes);
+        fill_kf_edge_markers(local_graph, floor_keyframes, floors_vec);
     kf_edge_marker.header.frame_id = keyframes_layer_id;
     kf_edge_marker.header.stamp = stamp;
     kf_edge_marker.ns =
@@ -260,7 +260,7 @@ visualization_msgs::msg::MarkerArray GraphVisualizer::visualize_covisibility_gra
 
   // keyframe edge markers
   visualization_msgs::msg::Marker traj_edge_marker =
-      fill_kf_edge_markers(local_graph, keyframes);
+      fill_kf_edge_markers(local_graph, keyframes, floors_vec);
   traj_edge_marker.header.frame_id = keyframes_layer_id;
   traj_edge_marker.header.stamp = stamp;
   traj_edge_marker.ns = "keyframe_keyframe_edges";
@@ -979,13 +979,21 @@ visualization_msgs::msg::Marker GraphVisualizer::fill_kf_markers(
 
 visualization_msgs::msg::Marker GraphVisualizer::fill_kf_edge_markers(
     const g2o::SparseOptimizer* local_graph,
-    const std::vector<KeyFrame::Ptr> keyframes) {
+    const std::vector<KeyFrame::Ptr> keyframes,
+    const std::map<int, Floors> floors_vec) {
   visualization_msgs::msg::Marker kf_edge_marker;
 
   for (int i = 0; i < keyframes.size(); i++) {
     auto kf_map = local_graph->vertices().find(keyframes[i]->id());
     if (kf_map == local_graph->vertices().end()) continue;
     auto kf_node = dynamic_cast<g2o::VertexSE3*>(kf_map->second);
+    auto current_floor = floors_vec.find(keyframes[i]->floor_level);
+    auto current_key_data = dynamic_cast<OptimizationData*>(kf_node->userData());
+    bool stair_keyframe = false;
+
+    if (current_key_data) {
+      current_key_data->get_stair_node_info(stair_keyframe);
+    }
 
     auto kf_edge_itr = kf_node->edges().begin();
     for (int i = 0; kf_edge_itr != kf_node->edges().end(); kf_edge_itr++, i++) {
@@ -1012,18 +1020,27 @@ visualization_msgs::msg::Marker GraphVisualizer::fill_kf_edge_markers(
         double p1 = static_cast<double>(v1->id()) / local_graph->vertices().size();
         double p2 = static_cast<double>(v2->id()) / local_graph->vertices().size();
 
-        std_msgs::msg::ColorRGBA color1, color2;
-        color1.r = line_color_r;
-        color1.g = line_color_g;
-        color1.b = line_color_b;
-        color1.a = 1.0;
+        if (!stair_keyframe) {
+          std_msgs::msg::ColorRGBA color1, color2;
+          color1.r = 0.0 * current_floor->second.color[0] / 255;
+          color1.g = 0.0 * current_floor->second.color[1] / 255;
+          color1.b = 0.0 * current_floor->second.color[2] / 255;
+          color1.a = 1.0;
 
-        color2.r = line_color_r;
-        color2.g = line_color_g;
-        color2.b = line_color_b;
-        color2.a = 1.0;
-        kf_edge_marker.colors.push_back(color1);
-        kf_edge_marker.colors.push_back(color2);
+          color2.r = 0.0 * current_floor->second.color[0] / 255;
+          color2.g = 0.0 * current_floor->second.color[1] / 255;
+          color2.b = 0.0 * current_floor->second.color[2] / 255;
+          color2.a = 1.0;
+          kf_edge_marker.colors.push_back(color1);
+          kf_edge_marker.colors.push_back(color2);
+        } else {
+          std_msgs::msg::ColorRGBA color1;
+          color1.r = line_color_r;
+          color1.g = line_color_g;
+          color1.b = line_color_b;
+          kf_edge_marker.colors.push_back(color1);
+          kf_edge_marker.colors.push_back(color1);
+        }
       }
     }
   }
