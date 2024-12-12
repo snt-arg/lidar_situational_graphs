@@ -1416,6 +1416,7 @@ void GraphUtils::set_keyframe_stair_data(g2o::VertexSE3* vertex_se3, const bool 
 void GraphUtils::set_stair_keyframes(const std::vector<int>& ids,
                                      const std::map<int, KeyFrame::Ptr>& keyframes) {
   for (int id : ids) {
+    keyframes.at(id)->is_stair_kf = true;
     auto keyframe_vert_data =
         dynamic_cast<OptimizationData*>(keyframes.at(id)->node->userData());
     if (keyframe_vert_data) {

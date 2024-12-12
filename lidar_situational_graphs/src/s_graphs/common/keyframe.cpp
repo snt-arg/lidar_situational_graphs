@@ -44,10 +44,22 @@ KeyFrame::KeyFrame(const KeyFrame::Ptr& key) {
   y_plane_ids = key->y_plane_ids;
   hort_plane_ids = key->hort_plane_ids;
   floor_level = key->floor_level;
+  is_stair_kf = key->is_stair_kf;
+
+  auto current_key_data = dynamic_cast<OptimizationData*>(key->node->userData());
+  bool marginalized = false;
+  bool stair_keyframe = false;
+  if (current_key_data) {
+    current_key_data->get_marginalized_info(marginalized);
+    current_key_data->get_stair_node_info(stair_keyframe);
+  }
 
   node = new g2o::VertexSE3();
   node->setId(key->node->id());
   node->setEstimate(key->node->estimate());
+
+  if (stair_keyframe) GraphUtils::set_keyframe_stair_data(node, stair_keyframe);
+  if (marginalized) GraphUtils::set_keyframe_marg_data(node, marginalized);
 }
 
 void KeyFrame::set_dense_cloud(const pcl::PointCloud<PointT>::Ptr& cloud) {
@@ -257,6 +269,7 @@ bool KeyFrame::load(const std::string& directory,
 
   if (stair_kf) {
     GraphUtils::set_keyframe_stair_data(node, stair_kf);
+    is_stair_kf = true;
   }
 
   pcl::PointCloud<PointT>::Ptr kf_cloud(new pcl::PointCloud<PointT>());

@@ -140,7 +140,8 @@ struct KeyFrame {
       hort_plane_ids;  // list of planes associated with the keyframe
 
   int floor_level;  // floor level that the keyframe belongs
-  int session_id;   // current session (multi-session) the keframe belongs to
+  bool is_stair_kf = false;
+  int session_id;  // current session (multi-session) the keframe belongs to
 
   boost::optional<Eigen::Vector4d> floor_coeffs;  // detected floor's coefficients
   boost::optional<Eigen::Vector3d> utm_coord;     // UTM coord obtained by GPS
