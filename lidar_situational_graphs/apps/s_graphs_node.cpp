@@ -34,7 +34,20 @@ int main(int argc, char* argv[]) {
   rclcpp::executors::MultiThreadedExecutor multi_executor;
   std::shared_ptr<s_graphs::SGraphsNode> s_graphs_node =
       std::make_shared<s_graphs::SGraphsNode>();
-  s_graphs_node->start_timers();
+
+  s_graphs_node->declare_parameter("enable_optimization_timer", true);
+  s_graphs_node->declare_parameter("enable_keyframe_timer", true);
+  s_graphs_node->declare_parameter("enable_map_publish_timer", true);
+
+  s_graphs_node->start_timers(s_graphs_node->get_parameter("enable_optimization_timer")
+                                  .get_parameter_value()
+                                  .get<bool>(),
+                              s_graphs_node->get_parameter("enable_keyframe_timer")
+                                  .get_parameter_value()
+                                  .get<bool>(),
+                              s_graphs_node->get_parameter("enable_map_publish_timer")
+                                  .get_parameter_value()
+                                  .get<bool>());
 
   multi_executor.add_node(s_graphs_node);
   multi_executor.spin();
