@@ -2189,6 +2189,11 @@ bool SGraphsNode::dump_service(
 bool SGraphsNode::save_map_service(
     const std::shared_ptr<situational_graphs_msgs::srv::SaveMap::Request> req,
     std::shared_ptr<situational_graphs_msgs::srv::SaveMap::Response> res) {
+  if (keyframes.empty()) {
+    res->success = false;
+    return true;
+  }
+
   std::vector<KeyFrame::Ptr> kf_snapshot;
   graph_mutex.lock();
   kf_snapshot.resize(keyframes.size());
