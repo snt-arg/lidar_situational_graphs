@@ -264,6 +264,7 @@ SGraphsNode::SGraphsNode() : Node("s_graphs_node") {
   prev_edge_count = curr_edge_count = 0;
   prev_mapped_keyframes = 0;
   current_session_id = 0;
+  prev_floor_level = -1;
 
   std::string optimization_type =
       this->get_parameter("optimization_type").get_parameter_value().get<std::string>();
@@ -1360,7 +1361,8 @@ void SGraphsNode::map_publish_timer_callback(bool pass) {
                      prev_mapped_keyframes,
                      kf_snapshot,
                      floors_vec_snapshot,
-                     s_graphs_cloud_msg);
+                     s_graphs_cloud_msg,
+                     prev_floor_level);
   map_points_pub->publish(s_graphs_cloud_msg);
 
   sensor_msgs::msg::PointCloud2 floor_wall_cloud_msg;
@@ -1396,6 +1398,7 @@ void SGraphsNode::map_publish_timer_callback(bool pass) {
   graph_mutex.unlock();
 
   prev_mapped_keyframes = kf_snapshot.size();
+  prev_floor_level = floor_level;
 }
 
 void SGraphsNode::handle_map_cloud(
@@ -1450,7 +1453,8 @@ void SGraphsNode::handle_map_cloud(const rclcpp::Time& current_time,
                                    int prev_mapped_kfs,
                                    const std::vector<KeyFrame::Ptr>& kf_snapshot,
                                    std::map<int, Floors>& floors_vec_snapshot,
-                                   sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg) {
+                                   sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg,
+                                   const int prev_floor_level) {
   if (floors_vec_snapshot.empty()) return;
 
   size_t kfs_to_map = kf_snapshot.size() - prev_mapped_kfs;
@@ -1460,7 +1464,12 @@ void SGraphsNode::handle_map_cloud(const rclcpp::Time& current_time,
 
   if (floors_vec_snapshot[floor_level].floor_cloud->points.empty() ||
       is_optimization_global) {
-    auto it = floors_vec_snapshot.find(floor_level);
+    auto it = floors_vec_snapshot.begin();
+    if (prev_floor_level != floor_level) {
+      it = floors_vec_snapshot.find(prev_floor_level);
+    } else {
+      it = floors_vec_snapshot.find(floor_level);
+    }
     for (; it != floors_vec_snapshot.end(); ++it) {
       Eigen::Matrix4f map_floor_t = get_floor_map_transform(it->second);
       floors_vec_snapshot[it->first].floor_cloud =

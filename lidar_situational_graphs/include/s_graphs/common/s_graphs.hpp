@@ -329,7 +329,7 @@ class SGraphsNode : public rclcpp::Node {
    * @param kf_snapshot
    * @param floors_vec_snapshot
    * @param s_graphs_cloud_msg
-   * @return * void
+   * @param floor_level_changed
    */
   void handle_map_cloud(const rclcpp::Time& current_time,
                         int floor_level,
@@ -337,7 +337,8 @@ class SGraphsNode : public rclcpp::Node {
                         int prev_mapped_kfs,
                         const std::vector<KeyFrame::Ptr>& kf_snapshot,
                         std::map<int, Floors>& floors_vec_snapshot,
-                        sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg);
+                        sensor_msgs::msg::PointCloud2& s_graphs_cloud_msg,
+                        const int prev_floor_level);
 
   /**
    * @brief Get the floor map transform object
@@ -686,7 +687,7 @@ class SGraphsNode : public rclcpp::Node {
   g2o::EdgeSE3* anchor_edge;
   std::map<int, KeyFrame::Ptr> keyframes;
   std::unordered_map<rclcpp::Time, KeyFrame::Ptr, RosTimeHash> keyframe_hash;
-  int current_floor_level, current_session_id;
+  int current_floor_level, prev_floor_level, current_session_id;
 
   int prev_mapped_keyframes;
   visualization_msgs::msg::MarkerArray s_graphs_markers;
