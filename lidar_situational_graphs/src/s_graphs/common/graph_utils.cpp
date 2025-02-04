@@ -1449,8 +1449,10 @@ void GraphUtils::update_node_floor_level(
     for (; it != keyframes.end(); ++it) {
       // change the floor level to the new floor level
       it->second->floor_level = current_floor_level;
-      if (use_floor_color_for_map)
-        update_kf_color(it->second, floors_vec.find(current_floor_level)->second);
+      if (use_floor_color_for_map) {
+        if (floors_vec.find(current_floor_level) != floors_vec.end())
+          update_kf_color(it->second, floors_vec.find(current_floor_level)->second);
+      }
     }
   }
 
