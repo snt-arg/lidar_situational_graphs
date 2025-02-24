@@ -3,7 +3,7 @@ name: ROS 2 Foxy
 on:
   push:
     branches:
-      - feature/ros2
+      - feature/multi_floor
 
 jobs:
   build:
