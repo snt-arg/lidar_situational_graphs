@@ -1,0 +1,42 @@
+site_name: Lidar Situational Graphs
+site_url: https://snt-arg.github.io/lidar_situational_graphs
+repo_url: https://github.com/snt-arg/lidar_situational_graphs
+repo_name: snt-arg/lidar_situational_graphs
+theme:
+  features:
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+  icon:
+    repo: fontawesome/brands/github
+  name: material
+  palette:
+    # Dark Mode
+    - scheme: slate
+      primary: black
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+    # Light Mode
+    - scheme: default
+      primary: black
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+markdown_extensions:
+  - admonition
+  - abbr
+  - attr_list
+  - md_in_html
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.blocks.caption
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
