@@ -5,7 +5,7 @@
     odom_frame_id: "odom"
     plane_extraction_frame_id: body
     plane_visualization_frame_id: body_elevated
-    use_map2map_transform: false   # True if loading a previous posegraph for multi-session
+    use_map2map_transform: false # True if loading a previous posegraph for multi-session
 
     # Optimization params
     g2o_solver_type: "lm_var_cholmod" # gn_var, gn_fix6_3, gn_var_cholmod, lm_var, lm_fix6_3, lm_var_cholmod
@@ -45,9 +45,9 @@
     reg_correspondence_randomness: 20
     reg_resolution: 1.0
     reg_nn_search_method: "DIRECT7"
-        
+
     # Edge parameters
-        
+
     ## GPS
     gps_edge_robust_kernel: "NONE"
     gps_edge_robust_kernel_size: 1.0
@@ -81,14 +81,14 @@
     max_stddev_q: 0.8
 
     # Plane detection
-    extract_planar_surfaces:    true
-    min_seg_points:             100
-    use_euclidean_filter:       true
-    min_horizontal_inliers:     100
-    min_vertical_inliers:       100
-    cluster_min_size:           50
-    cluster_clean_tolerance:    0.2
-    cluster_seperation_tolerance:  2.0
+    extract_planar_surfaces: true
+    min_seg_points: 100
+    use_euclidean_filter: true
+    min_horizontal_inliers: 100
+    min_vertical_inliers: 100
+    cluster_min_size: 50
+    cluster_clean_tolerance: 0.2
+    cluster_seperation_tolerance: 2.0
     plane_ransac_itr: 500
     plane_ransac_acc: 0.01
 
@@ -103,7 +103,7 @@
     marker_duration: 10
     map_cloud_resolution: 0.05
     map_cloud_pub_resolution: 0.0
-    fast_mapping: false   #if set to true increase the decay time of map_points and wall_points in rviz
+    fast_mapping: false #if set to true increase the decay time of map_points and wall_points in rviz
     save_dense_map: false
     viz_dense_map: false #true: might make the rviz visualization slow (#this param is set from the s_graphs launch file)
     floor_level_viz_height: 10.0
@@ -111,24 +111,23 @@
     floor_node_viz_height: 14.0
     viz_all_floor_cloud: true
 
-    keyframe_window_size:       1
-    plane_information:          0.1
-    room_information:           0.1
-    corridor_information:       0.1
-    plane_dist_threshold:       0.35
-    plane_points_dist:          2.0
-    constant_covariance:        true
-    min_plane_points:           100
-    min_plane_points_opti:      100
+    keyframe_window_size: 1
+    plane_information: 0.1
+    room_information: 0.1
+    corridor_information: 0.1
+    plane_dist_threshold: 0.35
+    plane_points_dist: 2.0
+    constant_covariance: true
+    min_plane_points: 100
+    min_plane_points_opti: 100
     dupl_plane_matching_information: 0.1
     optimization_window_size: 5
     optimization_type: "FLOOR_GLOBAL"
 
-
     # Visualization
-    line_color_r: 1.0
-    line_color_g: 1.0
-    line_color_b: 1.0
+    line_color_r: 0.0
+    line_color_g: 0.0
+    line_color_b: 0.0
 
     floor_cube_color_r: 1.0
     floor_cube_color_g: 0.0
@@ -140,6 +139,4 @@
     floor_marker_size: 1.0
 
     use_floor_color_for_map: false #only work if code is built with rgb flag on
-
-
 
