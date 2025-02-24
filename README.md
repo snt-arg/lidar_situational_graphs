@@ -94,7 +94,7 @@ mkdir -p $HOME/workspaces && cd $HOME/workspaces
 3. Clone the S-Graphs repository into the created workspace
 
 ```bash
-git clone git@github.com:snt-arg/lidar_situational_graphs.git -b feature/ros2 s_graphs 
+git clone git@github.com:snt-arg/lidar_situational_graphs.git -b feature/multi_floor s_graphs 
 ```
 
 > [!IMPORTANT]
@@ -142,7 +142,7 @@ mkdir -p $HOME/workspaces/s_graphs_ros1_ws/src && cd $HOME/workspaces/s_graphs_r
 2. Clone the S-Graphs repository into the created workspace
 
 ```bash
-git clone git@github.com:snt-arg/lidar_situational_graphs.git -b feature/ros2 s_graphs
+git clone git@github.com:snt-arg/lidar_situational_graphs.git -b feature/multi_floor s_graphs
 ```
 
 3. Install required dependencies using `vcstool`
@@ -202,7 +202,7 @@ mkdir -p $HOME/workspaces && cd $HOME/workspaces
 2. Change directory to where Dockerfile is located in `s_graphs`
 
 ```sh
-git clone git@github.com:snt-arg/lidar_situational_graphs.git -b feature/ros2 s_graphs && cd $HOME/workspaces/s_graphs/docker/foxy_noetic
+git clone git@github.com:snt-arg/lidar_situational_graphs.git -b feature/multi_floor s_graphs && cd $HOME/workspaces/s_graphs/docker/foxy_noetic
 ```
 
 3. Build image
