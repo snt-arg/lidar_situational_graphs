@@ -7,11 +7,11 @@
 
 </div>
 
-**LiDAR Situational Graphs (S-Graphs)** is a ROS2 package for generating in real-time four-layered hierarchical factor graphs representing a scene graph using 3D LiDAR which includes **_Keyframes_** registring the robot poses, **_Walls_** which map wall planes, **_Rooms Layer_** constraining the wall planes using 4 wall-room or 2 wall-room factors, **_Floors_** constraining the rooms within a given floor level. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package mostly with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam) which as previously in ROS1.
+**LiDAR Situational Graphs (S-Graphs)** is a ROS2 package for generating in real-time four-layered hierarchical factor graphs for single or multi-floor scenes. It reepresents a scene graph using 3D LiDAR which includes **_Keyframes_** registring the robot poses, **_Walls_** which map wall planes, **_Rooms Layer_** constraining the wall planes using 4 wall-room or 2 wall-room factors, **_Floors_** constraining the rooms within a given floor level. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package mostly with Ouster OS-1 and Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam) which as previously in ROS1.
 
 <p align="center">
   <a href="">
-    <img src="./imgs/s_graphs_rotating.gif" alt="Logo" width="80%">
+    <img src="./imgs/main_image.png" alt="Logo" width="80%">
   </a>
 </p>
 
@@ -21,8 +21,8 @@
 - [⚙️ Installation](#installation)
   - [📦 Installation From Source](#installation-from-source)
     - [ROS1 Optional](#installation-for-ros1)
-  - [🐳 Docker](#docker)
 - [🚀 Examples on Datasets](#examples)
+- [🐳 Docker](#docker)
 - [🛠️ Run S_Graphs On Your Data](#custom-data)
 - [🤖 ROS Related](#ros-related)
   - [📥 Subscribed Topics](#subscribed-topics)
@@ -69,7 +69,7 @@
 <!-- TODO: When s-graphs is available in rosdistro add here the command to install -->
 
 > [!NOTE]
-> S-Graphs+ was only tested on Ubuntu 20.04, ROS2 Foxy, Humble Distros.
+> S-Graphs has been tested on Ubuntu 22.04, ROS2 Foxy, Humble Distros.
 > We strongly recommend using [cyclone_dds](https://docs.ros.org/en/humble/Installation/DDS-Implementations/Working-with-Eclipse-CycloneDDS.html) instead of the default fastdds.  
 
 ### 📦 Installation From Source <a id="installation-from-source"></a>
@@ -174,6 +174,21 @@ catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release && catkin build
 
 </details>
 
+
+## 🚀 Example on Datasets <a id="examples"></a>
+
+> [!WARNING]
+> For execution of the experiments we use [mprocs](https://github.com/pvolok/mprocs), which makes the process of launching different processes easier.
+
+### Real Dataset
+
+> [!IMPORTANT]
+> Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/joseluis_sanchezlopez_uni_lu/EZryslkYSpRIqg-uLbKa_PIBTwI85eXo5u6i5xDxWwPtMg?e=qhJIJw) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
+
+```bash
+cd $HOME/workspaces/s_graphs && mprocs --config .real_mprocs.yaml
+```
+
 ### 🐳 Docker <a id="docker"></a>
 
 #### Build Docker Image
@@ -199,30 +214,8 @@ docker build -t sntarg/s_graphs .
 > [!NOTE]
 There are two docker files, one for foxy and another for humble. The above commands build the foxy image, you use the same commands to build the humble image if needed.
 
-## 🚀 Example on Datasets <a id="examples"></a>
 
-> [!WARNING]
-> For execution of the experiments we use [mprocs](https://github.com/pvolok/mprocs), which makes the process of launching different processes easier.
-
-### Real Dataset
-
-> [!IMPORTANT]
-> Download real dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/ET2kNySZrzVBlveGgvSByeUBAvQk5wl05GMF0NwqbkL6ZA?e=hoaaOo) and store it in the folder `~/Downloads/real`, the below mprocs script will not work otherwise.
-
-```bash
-cd $HOME/workspaces/s_graphs && mprocs --config .real_mprocs.yaml
-```
-
-### Virtual Dataset
-
-> [!IMPORTANT]
-> Download virtual dataset using this [link](https://uniluxembourg-my.sharepoint.com/:u:/g/personal/hriday_bavle_uni_lu/ETEfrz2n8qhKrXSJ712gNYgBtl5ra_9lUxZmsmyUa804ew?e=3XJOhG) and store it in the folder `~/Downloads/virtual`, the below mprocs script will not work otherwise.
-
-```bash
-cd $HOME/workspaces/s_graphs && mprocs --config .virtual_mprocs.yaml
-```
-
-### Running S_Graphs with Docker
+### Running S-Graphs with Docker
 
 > [!NOTE]
 > This tutorial assumes that you have followed the instructions to setup docker
@@ -275,7 +268,7 @@ source /opt/ros/foxy/setup.bash && rviz2 -d $HOME/workspaces/s_graphs_ros2_ws/sr
 > [!NOTE]
 > Press reset on rviz2 once in a while when running S-Graphs to avoid freezing effect caused by rviz2 on foxy.
 
-## 🛠️ Run S_Graphs On Your Data <a id="custom-data"></a>
+## 🛠️ Run S-Graphs On Your Data <a id="custom-data"></a>
 
 1. Define the transformation between your sensors (LIDAR, IMU, GPS) and base_link of your system using static_transform_publisher (see [line](https://github.com/snt-arg/s_graphs/blob/c0489660552cb3a2fc8ac0bef17998ee5fb6e15a/launch/s_graphs_launch.py#L118), s_graphs_launch.py). All the sensor data will be transformed into the common `base_link` frame, and then fed to the SLAM algorithm. Note: `base_link` frame in virtual dataset is set to `base_footprint` and in real dataset is set to `body`. You can set the `frames`, `topics` for your dataset easily during the launch execution as follows:
 

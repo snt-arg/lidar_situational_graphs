@@ -1,10 +1,10 @@
 procs:
   rosbag:
-    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 bag play ~/Downloads/real/stugalux_oetrange_f2_3r.db3"'
+    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 bag play ~/Downloads/real/AutoSenseBag2_2024_12_03-14_55_03_0.db3"'
     autostart: true
     stop: SIGINT
   s_graphs:
-    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 launch lidar_situational_graphs s_graphs_launch.py compute_odom:=false base_link_frame:=body"'
+    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && ros2 launch lidar_situational_graphs s_graphs_launch.py lidar_topic:=/cloud/undistorted base_frame:=base_link compute_odom:=false"'
     autostart: true
   rviz:
     shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && rviz2 -d ~/workspaces/s_graphs/s_graphs/rviz/s_graphs_ros2.rviz"'
