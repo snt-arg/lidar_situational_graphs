@@ -1,6 +1,6 @@
 procs:
   rosbag:
-    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && sleep 2 && ros2 bag play ~/Downloads/real/AutoSenseBag2_2024_12_03-14_55_03_0.db3"'
+    shell: 'bash -c "source ~/workspaces/s_graphs/install/setup.bash && sleep 2 && ros2 bag play ~/Downloads/real/main_building_2_floors.db3"'
     autostart: true
     stop:
       send-keys: ["<C-c>"]

@@ -26,7 +26,7 @@ pip3 install -r requirements.txt
 rosdep install --from-paths . -y --ignore-src -r
 
 # - Importing all dependencies
-colcon build --symlink-install
+colcon build --symlink-install --cmake-args -DUSE_RGB_CLOUD=ON
 
 # - Sourcing the workspace
 source install/setup.bash
