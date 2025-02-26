@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://snt-arg.github.io/lidar_situational_graphs/</loc>
+         <lastmod>2025-02-26</lastmod>
+    </url>
+    <url>
+         <loc>https://snt-arg.github.io/lidar_situational_graphs/1.installation/</loc>
+         <lastmod>2025-02-26</lastmod>
+    </url>
+    <url>
+         <loc>https://snt-arg.github.io/lidar_situational_graphs/2.datasets/</loc>
+         <lastmod>2025-02-26</lastmod>
+    </url>
+    <url>
+         <loc>https://snt-arg.github.io/lidar_situational_graphs/3.getting_started/</loc>
+         <lastmod>2025-02-26</lastmod>
+    </url>
+    <url>
+         <loc>https://snt-arg.github.io/lidar_situational_graphs/4.docker/</loc>
+         <lastmod>2025-02-26</lastmod>
+    </url>
+    <url>
+         <loc>https://snt-arg.github.io/lidar_situational_graphs/5.ros_related/</loc>
+         <lastmod>2025-02-26</lastmod>
+    </url>
+</urlset>
