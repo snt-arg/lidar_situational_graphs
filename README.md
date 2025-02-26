@@ -15,6 +15,23 @@
 
 ## 📖 Published Papers <a id="published-papers"></a>
 
+
+<details >
+    <summary><a href="https://arxiv.org/abs/2502.18044">S-Graphs 2.0 -- A Hierarchical-Semantic Optimization and Loop Closure for SLAM </a>
+    </summary>
+
+    @misc{bavle2025sgraphs20hierarchicalsemantic,
+      title={S-Graphs 2.0 -- A Hierarchical-Semantic Optimization and Loop Closure for SLAM}, 
+      author={Hriday Bavle and Jose Luis Sanchez-Lopez and Muhammad Shaheer and Javier Civera and Holger Voos},
+      year={2025},
+      eprint={2502.18044},
+      archivePrefix={arXiv},
+      primaryClass={cs.RO},
+      url={https://arxiv.org/abs/2502.18044}, 
+}
+
+</details>
+
 <details >
     <summary><a href="https://arxiv.org/abs/2212.11770">S-Graphs+: Real-time Localization and Mapping leveraging Hierarchical Representations </a>
     </summary>
@@ -30,6 +47,7 @@
      doi={10.1109/LRA.2023.3290512}}
 
 </details>
+
 <details>
     <summary><a href="https://arxiv.org/abs/2202.12197">Situational Graphs for Robot Navigation in Structured Indoor Environments</a></summary>
 
