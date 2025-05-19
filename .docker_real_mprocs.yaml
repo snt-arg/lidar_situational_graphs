@@ -1,0 +1,12 @@
+procs:
+  rosbag:
+    shell: 'bash -c "source /workspace/install/setup.bash && sleep 2 && ros2 bag play ~/Downloads/real/main_building_2_floors.db3"'
+    autostart: true
+    stop:
+      send-keys: ["<C-c>"]
+  s_graphs:
+    shell: 'bash -c "source /workspace/install/setup.bash && ros2 launch lidar_situational_graphs s_graphs_launch.py lidar_topic:=/cloud/undistorted base_frame:=base_link compute_odom:=false"'
+    autostart: true
+  rviz:
+    shell: 'bash -c "source /workspace/install/setup.bash && rviz2 -d /workspace/src/s_graphs/lidar_situational_graphs/rviz/s_graphs_ros2.rviz"'
+    autostart: true
