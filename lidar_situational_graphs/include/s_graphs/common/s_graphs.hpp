@@ -70,7 +70,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/frontend/plane_analyzer.hpp>
 #include <s_graphs/visualization/graph_publisher.hpp>
 #include <s_graphs/visualization/graph_visualizer.hpp>
-#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
 #include <unordered_map>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -79,6 +78,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "nmea_msgs/msg/sentence.hpp"
 #include "pcl_ros/transforms.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "s_graphs/compatibility/ros2_compat.hpp"
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "situational_graphs_msgs/msg/floor_data.hpp"
@@ -92,8 +92,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "situational_graphs_msgs/srv/dump_graph.hpp"
 #include "situational_graphs_msgs/srv/load_graph.hpp"
 #include "situational_graphs_msgs/srv/save_map.hpp"
-#include "tf2_eigen/tf2_eigen.hpp"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/buffer_interface.h"
 #include "tf2_ros/static_transform_broadcaster.h"
 #include "tf2_ros/transform_broadcaster.h"
