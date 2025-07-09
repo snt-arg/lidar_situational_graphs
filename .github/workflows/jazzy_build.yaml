@@ -20,4 +20,4 @@ jobs:
           submodules: recursive
 
       - name: Build
-        run: . /opt/ros/humble/setup.sh && ./.github/workflows/setup.sh && colcon build
+        run: . /opt/ros/jazzy/setup.sh && ./.github/workflows/setup.sh && colcon build
