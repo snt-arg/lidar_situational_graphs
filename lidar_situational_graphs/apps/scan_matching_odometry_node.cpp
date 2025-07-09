@@ -43,8 +43,8 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include "pcl_conversions/pcl_conversions.h"
 #include "rclcpp/rclcpp.hpp"
 #include "s_graphs/common/registrations.hpp"
+#include "s_graphs/compatibility/ros2_compat.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "tf2_eigen/tf2_eigen.h"
 #include "tf2_ros/transform_broadcaster.h"
 #include "tf2_ros/transform_listener.h"
 

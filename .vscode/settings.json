@@ -92,7 +92,8 @@
         "concepts": "cpp",
         "numbers": "cpp",
         "semaphore": "cpp",
-        "stop_token": "cpp"
+        "stop_token": "cpp",
+        "__config": "cpp"
     },
     "C_Cpp.errorSquiggles": "enabled",
     "python.formatting.provider": "black",
