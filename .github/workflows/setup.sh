@@ -13,7 +13,7 @@ DEBIAN_FRONTEND=noninteractive sudo apt install python3-vcstool
 vcs import . < .rosinstall_ros2
 
 #rosdep install
-DEBIAN_FRONTEND=noninteractive rosdep install --from-paths . -y --ignore-src -r
+DEBIAN_FRONTEND=noninteractive PIP_BREAK_SYSTEM_PACKAGES=1 rosdep install --from-paths . -y --ignore-src -r
 
 # - Importing all dependencies
 colcon build --symlink-install
