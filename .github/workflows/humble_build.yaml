@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - feature/multi_floor
+  pull_request:
+    branches:
+      - feature/multi_floor
 
 jobs:
   build:
@@ -18,3 +21,4 @@ jobs:
 
       - name: Build
         run: . /opt/ros/humble/setup.sh && ./.github/workflows/setup.sh && colcon build
+

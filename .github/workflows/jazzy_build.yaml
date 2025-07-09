@@ -1,4 +1,4 @@
-name: ROS 2 Iron
+name: ROS 2 Jazzy
 
 on:
   push:
@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     container:
-      image: ros:iron
+      image: ros:jazzy
     steps:
       - name: Create Workspace and checkout code
         uses: actions/checkout@v3
@@ -20,5 +20,4 @@ jobs:
           submodules: recursive
 
       - name: Build
-        run: . /opt/ros/iron/setup.sh && ./.github/workflows/setup.sh && colcon build
-
+        run: . /opt/ros/humble/setup.sh && ./.github/workflows/setup.sh && colcon build
