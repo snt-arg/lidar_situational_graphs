@@ -1,4 +1,6 @@
 #include <s_graphs/backend/room_mapper.hpp>
+#include <cassert>
+#include <tuple>
 
 namespace s_graphs {
 
@@ -883,6 +885,99 @@ void FiniteRoomMapper::factor_saved_rooms(
       y_vert_planes.find(room.plane_y2_id)->second.plane_node,
       information_room_planes);
   covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+}
+
+//////////Mixed Reality -> Manual Room
+Rooms FiniteRoomMapper::generate_manual_room(
+  const std::shared_ptr<GraphSLAM> covisibility_graph,
+  const std::vector<int>& planes_ids,
+  std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+  std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+  std::unordered_map<int, Rooms>& rooms_vec) {
+
+//
+std::vector<VerticalPlanes> x_planes, y_planes;
+for (const auto& id : planes_ids){
+  std::cout << "Selecting planes for "<< id << std::endl;
+
+  //Plane direction for X and Y
+  if (x_vert_planes.find(id) != x_vert_planes.end()){
+    std::cout << "Selected plane in X-axis: " << id << std::endl;
+    VerticalPlanes p = x_vert_planes[id];
+    Eigen::Vector4d plane_coeffs = p.plane_node->estimate().coeffs();
+    PlaneUtils::correct_plane_direction(plane_coeffs);
+    x_planes.push_back(p);
+    continue;
+  }
+ 
+    std::cout << "Selected plane in Y_axis: " << id << std::endl;
+    VerticalPlanes p = y_vert_planes[id];
+    Eigen::Vector4d plane_coeffs = p.plane_node->estimate().coeffs();
+    PlaneUtils::correct_plane_direction(plane_coeffs);
+    y_planes.push_back(p);
+ }
+
+  if(x_planes.size() == 2 && y_planes.size() == 2){
+    std::cout << "The room is NOT possible!" << std::endl;
+    
+    return Rooms();
+  }
+
+  Eigen::Vector4d x_plane1_eigen, x_plane2_eigen, y_plane1_eigen, y_plane2_eigen;
+  x_plane1_eigen = x_planes[0].plane_node->estimate().coeffs();
+  x_plane2_eigen = x_planes[1].plane_node->estimate().coeffs();
+  y_plane1_eigen = y_planes[0].plane_node->estimate().coeffs();
+  y_plane2_eigen = y_planes[1].plane_node->estimate().coeffs();
+
+  Eigen::Vector3d x_plane1_orientation = x_planes[0].plane_node->estimate().normal();
+
+  std::tuple<Eigen::Vector3d, Eigen::Quaterniond> center = PlaneUtils::room_center(x_plane1_eigen, x_plane1_orientation, x_plane2_eigen, y_plane1_eigen, y_plane2_eigen);
+
+  std::cout << "New room center is at: " << std::get<0>(center) << " rot: " << std::get<1>(center) << std::endl;
+  g2o::VertexRoom* room_node;
+  Rooms det_room;
+  int room_data_association;
+
+  Eigen::Isometry3d room_center;
+  Eigen::Quaterniond room_quat = std::get<1>(center);
+  room_center.linear() = room_quat.toRotationMatrix();
+  room_center.translation() = std::get<0>(center);
+
+  shared_graph_mutex.lock();
+  room_data_association = covisibility_graph->retrieve_local_nbr_of_vertices();
+  room_node = covisibility_graph->add_room_node(room_center);
+  shared_graph_mutex.unlock();
+
+  Eigen::Matrix<double, 1, 1> information_room_plane;
+  information_room_plane(0, 0) = room_information;
+
+  Eigen::Matrix<double, 2, 2> information_room_planes;
+  information_room_planes.setZero();
+  information_room_planes(0, 0) = room_information;
+  information_room_planes(1, 1) = room_information;
+
+  det_room.id = room_data_association;
+  det_room.plane_x1_id = x_planes[0].id;
+  det_room.plane_x2_id = x_planes[1].id;
+  det_room.plane_y1_id = y_planes[0].id;
+  det_room.plane_y2_id = y_planes[1].id;
+  det_room.node = room_node;
+  det_room.local_graph = std::make_shared<GraphSLAM>();
+  det_room.floor_level = x_planes[0].floor_level;
+
+  shared_graph_mutex.lock();
+  rooms_vec.insert({det_room.id, det_room});
+  auto edge_room_planes =
+    covisibility_graph->add_room_4planes_edge(room_node,
+                                      x_planes[0].plane_node,
+                                      x_planes[1].plane_node,
+                                      y_planes[0].plane_node,
+                                      y_planes[1].plane_node,
+                                      information_room_planes);
+  covisibility_graph->add_robust_kernel(edge_room_planes, "Huber", 1.0);
+  shared_graph_mutex.unlock();
+
+  return det_room;
 }
 
 }  // namespace s_graphs

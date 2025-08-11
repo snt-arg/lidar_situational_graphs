@@ -30,6 +30,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #ifndef PLANE_UTILS_HPP
 #define PLANE_UTILS_HPP
 
+#include <tuple>
 #include <g2o/types/slam3d/vertex_se3.h>
 #include <pcl/common/angles.h>
 #include <pcl/common/common.h>
@@ -135,6 +136,14 @@ class PlaneUtils {
       const situational_graphs_msgs::msg::PlaneData& x_plane2,
       const situational_graphs_msgs::msg::PlaneData& y_plane1,
       const situational_graphs_msgs::msg::PlaneData& y_plane2);
+
+  static std::tuple<Eigen::Vector3d, Eigen::Quaterniond> room_center(
+      Eigen::Vector4d& x_plane1,
+      Eigen::Vector3d& x_plane1_orientation,
+      Eigen::Vector4d& x_plane2,
+      Eigen::Vector4d& y_plane1,
+      Eigen::Vector4d& y_plane2);
+  
 
   /**
    * @brief

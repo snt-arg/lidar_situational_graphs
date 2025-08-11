@@ -71,6 +71,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #include <s_graphs/frontend/plane_analyzer.hpp>
 #include <s_graphs/visualization/graph_publisher.hpp>
 #include <s_graphs/visualization/graph_visualizer.hpp>
+#include <std_msgs/msg/int32_multi_array.hpp>
 #include <unordered_map>
 
 #include "geometry_msgs/msg/pose_stamped.hpp"
@@ -149,6 +150,10 @@ class SGraphsNode : public rclcpp::Node {
    */
   void floor_data_callback(
       const situational_graphs_msgs::msg::FloorData::SharedPtr floor_data_msg);
+  
+  void selected_planes_callback(
+      const std_msgs::msg::Int32MultiArray::SharedPtr planes_ids);
+
   /**
    * @brief
    *
@@ -570,6 +575,8 @@ class SGraphsNode : public rclcpp::Node {
       wall_data_sub;
   rclcpp::Subscription<situational_graphs_msgs::msg::FloorData>::SharedPtr
       floor_data_sub;
+  rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr
+      mixed_reality_sub;
   rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr init_odom2map_sub,
       map_2map_transform_sub;
 

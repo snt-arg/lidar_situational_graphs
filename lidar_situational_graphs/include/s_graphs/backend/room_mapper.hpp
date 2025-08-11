@@ -399,6 +399,21 @@ class FiniteRoomMapper : public MapperUtils {
                           const std::unordered_map<int, VerticalPlanes>& y_vert_planes,
                           const Rooms& room);
 
+
+ /**
+   * @brief Creates the Rooms from Mixed Reality Project
+   *
+   * @param covisibility_graph
+   * @param planes_ids
+   * @param x_vert_planes
+   * @param y_vert_planes
+   */
+  Rooms generate_manual_room(const std::shared_ptr<GraphSLAM> covisibility_graph,
+                             const std::vector<int>& planes_ids,
+                             std::unordered_map<int, VerticalPlanes>& x_vert_planes,
+                             std::unordered_map<int, VerticalPlanes>& y_vert_planes,
+                             std::unordered_map<int, Rooms>& rooms_vec);
+
  private:
   /**
    * @brief Creates the room vertex and adds edges between the vertex and

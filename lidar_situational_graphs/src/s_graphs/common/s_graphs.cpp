@@ -187,7 +187,13 @@ SGraphsNode::SGraphsNode() : Node("s_graphs_node") {
       10,
       std::bind(&SGraphsNode::floor_data_callback, this, std::placeholders::_1),
       sub_opt);
-
+      /////////mixedreality//////
+  mixed_reality_sub = this->create_subscription<std_msgs::msg::Int32MultiArray>(
+      "s_graphs/selected_walls",
+      10,
+      std::bind(&SGraphsNode::selected_planes_callback, this, std::placeholders::_1),
+      sub_opt);
+  
   if (this->get_parameter("enable_gps").get_parameter_value().get<bool>()) {
     gps_sub = this->create_subscription<geographic_msgs::msg::GeoPointStamped>(
         "gps/geopoint",
@@ -204,6 +210,7 @@ SGraphsNode::SGraphsNode() : Node("s_graphs_node") {
         1024,
         std::bind(&SGraphsNode::navsat_callback, this, std::placeholders::_1),
         sub_opt);
+
   }
 
   callback_group_publisher =
@@ -642,6 +649,21 @@ void SGraphsNode::wall_data_callback(
                              walls_vec);
   }
 }
+
+/////////////////////////////Mixed Reality Callback///////////////
+void SGraphsNode::selected_planes_callback(
+    const std_msgs::msg::Int32MultiArray::SharedPtr planes_ids) {
+  for (const auto& id : planes_ids->data) {
+    std::cout <<"Received IDs of selected planes: " << id << std::endl;
+  }
+  if (planes_ids->data.size() < 4){
+    std::cout << "Selected less than 4 planes" << std::endl;
+    return;
+  }
+
+  Rooms room = finite_room_mapper->generate_manual_room(covisibility_graph, planes_ids->data, x_vert_planes, y_vert_planes, rooms_vec);
+}
+
 
 void SGraphsNode::nmea_callback(const nmea_msgs::msg::Sentence::SharedPtr nmea_msg) {
   GPRMC grmc = nmea_parser->parse(nmea_msg->sentence);

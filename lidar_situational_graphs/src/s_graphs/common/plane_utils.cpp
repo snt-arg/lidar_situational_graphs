@@ -97,45 +97,18 @@ geometry_msgs::msg::Pose PlaneUtils::room_center(
   y_plane1_eigen << y_plane1.nx, y_plane1.ny, y_plane1.nz, y_plane1.d;
   y_plane2_eigen << y_plane2.nx, y_plane2.ny, y_plane2.nz, y_plane2.d;
 
-  correct_plane_direction(x_plane1_eigen);
-  correct_plane_direction(x_plane2_eigen);
+  Eigen::Vector3d x_plane1_orientation;
+  x_plane1_orientation << x_plane1.plane_orientation.x, x_plane1.plane_orientation.y, 
+      x_plane1.plane_orientation.z;
+  
+  std::tuple<Eigen::Vector3d, Eigen::Quaterniond> t = room_center(x_plane1_eigen, x_plane1_orientation, x_plane2_eigen, y_plane1_eigen, y_plane2_eigen);
 
-  correct_plane_direction(y_plane1_eigen);
-  correct_plane_direction(y_plane2_eigen);
-
-  if (fabs(x_plane1_eigen(3)) > fabs(x_plane2_eigen(3))) {
-    vec_x = (0.5 * (fabs(x_plane1_eigen(3)) * x_plane1_eigen.head(3) -
-                    fabs(x_plane2_eigen(3)) * x_plane2_eigen.head(3))) +
-            fabs(x_plane2_eigen(3)) * x_plane2_eigen.head(3);
-  } else {
-    vec_x = (0.5 * (fabs(x_plane2_eigen(3)) * x_plane2_eigen.head(3) -
-                    fabs(x_plane1_eigen(3)) * x_plane1_eigen.head(3))) +
-            fabs(x_plane1_eigen(3)) * x_plane1_eigen.head(3);
-  }
-
-  if (fabs(y_plane1_eigen(3)) > fabs(y_plane2_eigen(3))) {
-    vec_y = (0.5 * (fabs(y_plane1_eigen(3)) * y_plane1_eigen.head(3) -
-                    fabs(y_plane2_eigen(3)) * y_plane2_eigen.head(3))) +
-            fabs(y_plane2_eigen(3)) * y_plane2_eigen.head(3);
-  } else {
-    vec_y = (0.5 * (fabs(y_plane2_eigen(3)) * y_plane2_eigen.head(3) -
-                    fabs(y_plane1_eigen(3)) * y_plane1_eigen.head(3))) +
-            fabs(y_plane1_eigen(3)) * y_plane1_eigen.head(3);
-  }
-
-  Eigen::Vector3d final_vec = vec_x + vec_y;
+  Eigen::Vector3d final_vec = std::get<0>(t);
   center.position.x = final_vec(0);
   center.position.y = final_vec(1);
   center.position.z = final_vec(2);
 
-  Eigen::Matrix3d room_orientation;
-  double yaw, pitch;
-  Eigen::Vector3d x_plane1_orietation;
-  x_plane1_orietation << x_plane1.plane_orientation.x, x_plane1.plane_orientation.y,
-      x_plane1.plane_orientation.z;
-  yaw = std::atan2(x_plane1_orietation(1), x_plane1_orietation(1));
-  pitch = std::atan2(x_plane1_orietation(2), x_plane1_orietation.head<2>().norm());
-  Eigen::Quaterniond room_quat = euler_to_quaternion(0.0, pitch, yaw);
+  Eigen::Quaterniond room_quat = std::get<1>(t);
 
   center.orientation.x = room_quat.x();
   center.orientation.y = room_quat.y();
@@ -143,6 +116,52 @@ geometry_msgs::msg::Pose PlaneUtils::room_center(
   center.orientation.w = room_quat.w();
 
   return center;
+}
+
+std::tuple<Eigen::Vector3d, Eigen::Quaterniond> PlaneUtils::room_center(
+      Eigen::Vector4d& x_plane1,
+      Eigen::Vector3d& x_plane1_orientation,
+      Eigen::Vector4d& x_plane2,
+      Eigen::Vector4d& y_plane1,
+      Eigen::Vector4d& y_plane2){
+
+  Eigen::Vector3d vec_x, vec_y;
+  correct_plane_direction(x_plane1);
+  correct_plane_direction(x_plane2);
+
+  correct_plane_direction(y_plane1);
+  correct_plane_direction(y_plane2);
+
+  if (fabs(x_plane1(3)) > fabs(x_plane2(3))) {
+    vec_x = (0.5 * (fabs(x_plane1(3)) * x_plane1.head(3) -
+                    fabs(x_plane2(3)) * x_plane2.head(3))) +
+            fabs(x_plane2(3)) * x_plane2.head(3);
+  } else {
+    vec_x = (0.5 * (fabs(x_plane2(3)) * x_plane2.head(3) -
+                    fabs(x_plane1(3)) * x_plane1.head(3))) +
+            fabs(x_plane1(3)) * x_plane1.head(3);
+  }
+
+  if (fabs(y_plane1(3)) > fabs(y_plane2(3))) {
+    vec_y = (0.5 * (fabs(y_plane1(3)) * y_plane1.head(3) -
+                    fabs(y_plane2(3)) * y_plane2.head(3))) +
+            fabs(y_plane2(3)) * y_plane2.head(3);
+  } else {
+    vec_y = (0.5 * (fabs(y_plane2(3)) * y_plane2.head(3) -
+                    fabs(y_plane1(3)) * y_plane1.head(3))) +
+            fabs(y_plane1(3)) * y_plane1.head(3);
+  }
+
+  Eigen::Vector3d final_vec = vec_x + vec_y;
+
+  Eigen::Matrix3d room_orientation;
+  double yaw, pitch;
+  yaw = std::atan2(x_plane1_orientation(1), x_plane1_orientation(1));
+  pitch = std::atan2(x_plane1_orientation(2), x_plane1_orientation.head<2>().norm());
+  Eigen::Quaterniond room_quat = euler_to_quaternion(0.0, pitch, yaw);
+
+
+  return std::make_tuple(final_vec, room_quat);
 }
 
 float PlaneUtils::plane_length(pcl::PointCloud<PointNormal>::Ptr cloud_seg,
