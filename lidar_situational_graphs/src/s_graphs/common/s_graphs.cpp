@@ -1044,7 +1044,7 @@ void SGraphsNode::keyframe_update_timer_callback() {
   }
 
   // publish mapped planes
-  publish_mapped_planes(x_vert_planes, y_vert_planes);
+  publish_mapped_planes(floors_vec, x_vert_planes, y_vert_planes);
 
   // flush the room poses from room detector and no need to return if no rooms found
   flush_room_data_queue();
@@ -1367,7 +1367,7 @@ void SGraphsNode::map_publish_timer_callback(bool pass) {
                                                floors_vec_snapshot);
 
   markers_pub->publish(s_graphs_markers);
-  publish_all_mapped_planes(x_planes_snapshot, y_planes_snapshot);
+  publish_all_mapped_planes(floors_vec_snapshot, x_planes_snapshot, y_planes_snapshot);
 
   sensor_msgs::msg::PointCloud2 s_graphs_cloud_msg;
   if (fast_mapping)
@@ -1772,9 +1772,13 @@ inline sensor_msgs::msg::PointCloud2 SGraphsNode::apply_transform(
 }
 
 void SGraphsNode::publish_mapped_planes(
+    std::map<int, Floors>& floors_vec_snapshot,
     std::unordered_map<int, VerticalPlanes> x_vert_planes_snapshot,
     std::unordered_map<int, VerticalPlanes> y_vert_planes_snapshot) {
   if (keyframes.empty()) return;
+
+  auto current_floor = floors_vec_snapshot.find(current_floor_level);
+  if (current_floor == floors_vec_snapshot.end()) return;
 
   std::map<int, KeyFrame::Ptr> keyframe_window;
   auto it = keyframes.rbegin();
@@ -1798,6 +1802,7 @@ void SGraphsNode::publish_mapped_planes(
 
   situational_graphs_msgs::msg::PlanesData vert_planes_data;
   vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
+  vert_planes_data.header.frame_id = "floor_" + std::to_string(current_floor->second.sequential_id) + "_walls_layer";
   for (const auto& unique_x_plane_id : unique_x_plane_ids) {
     auto local_x_vert_plane = x_vert_planes_snapshot.find(unique_x_plane_id.first);
 
@@ -1805,6 +1810,8 @@ void SGraphsNode::publish_mapped_planes(
         local_x_vert_plane->second.floor_level != current_floor_level)
       continue;
     situational_graphs_msgs::msg::PlaneData plane_data;
+    plane_data.header.stamp = vert_planes_data.header.stamp;
+    plane_data.header.frame_id = "floor_" + std::to_string(current_floor->second.sequential_id) + "_walls_layer";
     Eigen::Vector4d mapped_plane_coeffs;
     graph_mutex.lock();
     mapped_plane_coeffs = (local_x_vert_plane->second).plane_node->estimate().coeffs();
@@ -1834,7 +1841,10 @@ void SGraphsNode::publish_mapped_planes(
         local_y_vert_plane->second.floor_level != current_floor_level)
       continue;
     situational_graphs_msgs::msg::PlaneData plane_data;
+    plane_data.header.stamp = vert_planes_data.header.stamp;
+    plane_data.header.frame_id = "floor_" + std::to_string(current_floor->second.sequential_id) + "_walls_layer";
     Eigen::Vector4d mapped_plane_coeffs;
+
     graph_mutex.lock();
     mapped_plane_coeffs = (local_y_vert_plane->second).plane_node->estimate().coeffs();
     // correct_plane_direction(PlaneUtils::plane_class::Y_VERT_PLANE,
@@ -1860,18 +1870,24 @@ void SGraphsNode::publish_mapped_planes(
 }
 
 void SGraphsNode::publish_all_mapped_planes(
+    const std::map<int, Floors>& floors_vec_snapshot,
     const std::unordered_map<int, VerticalPlanes>& x_vert_planes_snapshot,
     const std::unordered_map<int, VerticalPlanes>& y_vert_planes_snapshot) {
   if (keyframes.empty()) return;
 
   // int current_floor_level = floor_mapper->get_floor_level();
+  auto current_floor = floors_vec_snapshot.find(current_floor_level);
+  if (current_floor == floors_vec_snapshot.end()) return;
 
   situational_graphs_msgs::msg::PlanesData vert_planes_data;
   vert_planes_data.header.stamp = keyframes.rbegin()->second->stamp;
+  vert_planes_data.header.frame_id = "floor_" + std::to_string(current_floor->second.sequential_id) + "_walls_layer";
   for (const auto& x_vert_plane : x_vert_planes_snapshot) {
     if (x_vert_plane.second.floor_level != current_floor_level) continue;
 
     situational_graphs_msgs::msg::PlaneData plane_data;
+    plane_data.header.stamp = vert_planes_data.header.stamp;
+    plane_data.header.frame_id = "floor_" + std::to_string(current_floor->second.sequential_id) + "_walls_layer";
     Eigen::Vector4d mapped_plane_coeffs;
     graph_mutex.lock();
     mapped_plane_coeffs = (x_vert_plane).second.plane_node->estimate().coeffs();
@@ -1902,6 +1918,8 @@ void SGraphsNode::publish_all_mapped_planes(
     if (y_vert_plane.second.floor_level != current_floor_level) continue;
 
     situational_graphs_msgs::msg::PlaneData plane_data;
+    plane_data.header.stamp = vert_planes_data.header.stamp;
+    plane_data.header.frame_id = "floor_" + std::to_string(current_floor->second.sequential_id) + "_walls_layer";
     Eigen::Vector4d mapped_plane_coeffs;
     graph_mutex.lock();
     mapped_plane_coeffs = (y_vert_plane).second.plane_node->estimate().coeffs();

@@ -466,6 +466,7 @@ class SGraphsNode : public rclcpp::Node {
    *
    */
   void publish_mapped_planes(
+      std::map<int, Floors>& floors_vec_snapshot,
       std::unordered_map<int, VerticalPlanes> x_vert_planes_snapshot,
       std::unordered_map<int, VerticalPlanes> y_vert_planes_snapshot);
 
@@ -474,6 +475,7 @@ class SGraphsNode : public rclcpp::Node {
    *
    */
   void publish_all_mapped_planes(
+      const std::map<int, Floors>& floors_vec_snapshot,
       const std::unordered_map<int, VerticalPlanes>& x_vert_planes_snapshot,
       const std::unordered_map<int, VerticalPlanes>& y_vert_planes_snapshot);
 
