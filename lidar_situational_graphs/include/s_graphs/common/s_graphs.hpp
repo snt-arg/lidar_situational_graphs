@@ -103,16 +103,16 @@ namespace s_graphs {
 class SGraphsNode : public rclcpp::Node {
  public:
   SGraphsNode();
-  ~SGraphsNode() {}
+  virtual ~SGraphsNode() {}
 
  public:
-  void start_timers(bool enable_optimization_timer = true,
-                    bool enable_keyframe_timer = true,
-                    bool enable_map_publish_timer = true);
+  virtual void start_timers(bool enable_optimization_timer = true,
+                            bool enable_keyframe_timer = true,
+                            bool enable_map_publish_timer = true);
 
  protected:
   void declare_ros_params();
-  void init_subclass();
+  virtual void init_subclass();
 
  protected:
   /**
