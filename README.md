@@ -1,5 +1,7 @@
 # S-Graphs
 
+> **Note:** This branch (`feature/snav`) is a modified version of S-Graphs adapted for use with [S-Path](https://github.com/snt-arg/spath_ros) i.e., a hierarchical semantic-geometric path planning framework. See the [S-Path paper](https://doi.org/10.1109/LRA.2026.3656775) for details.
+
 **Situational graphs (S-Graphs)** is a ROS package for generating in real-time four-layered hierarchical factor graphs representing a scene graph including **_Keyframes_** registring the robot poses, **_Walls_** which maps wall planes, **_Rooms Layer_** constraining the wall planes using room/infinite_room factors, **_Floors_** constraining the rooms within a given floor level. It also supports several graph constraints, such as GPS, IMU acceleration (gravity vector), IMU orientation (magnetic sensor). We have tested this package with Velodyne (VLP16) sensors in structured indoor environments. This work is a fork of [hdl_graph_slam](https://github.com/koide3/hdl_graph_slam)
 
 <p align="center">
@@ -32,17 +34,34 @@
 
 ## Published Papers
 
-1. [Situational Graphs for Robot Navigation in Structured Indoor Environments
-   ](https://arxiv.org/abs/2202.12197)
+1. [Situationally-Aware Path Planning Exploiting 3D Scene Graphs](https://doi.org/10.1109/LRA.2026.3656775) — IEEE Robotics and Automation Letters
+   - This branch is used as the scene graph backend for S-Path. The S-Path repository is available at [snt-arg/spath_ros](https://github.com/snt-arg/spath_ros).
    - **Citation**
      ```latex
-     @misc{bavle2022situational,
-           title={Situational Graphs for Robot Navigation in Structured Indoor Environments},
-           author={Hriday Bavle and Jose Luis Sanchez-Lopez and Muhammad Shaheer and Javier Civera and Holger Voos},
-           year={2022},
-           eprint={2202.12197},
-           archivePrefix={arXiv},
-           primaryClass={cs.RO}
+     @ARTICLE{11361085,
+       author={Ejaz, Saad and Giberna, Marco and Shaheer, Muhammad and Millan-Romera, Jose Andres and Tourani, Ali and Kremer, Paul and Voos, Holger and Sanchez-Lopez, Jose Luis},
+       journal={IEEE Robotics and Automation Letters},
+       title={Situationally-Aware Path Planning Exploiting 3D Scene Graphs},
+       year={2026},
+       volume={11},
+       number={3},
+       pages={3358-3365},
+       doi={10.1109/LRA.2026.3656775}
+     }
+     ```
+
+2. [Situational Graphs for Robot Navigation in Structured Indoor Environments](https://doi.org/10.1109/LRA.2022.3189785) — IEEE Robotics and Automation Letters
+   - **Citation**
+     ```latex
+     @ARTICLE{9826367,
+       author={Bavle, Hriday and Sanchez-Lopez, Jose Luis and Shaheer, Muhammad and Civera, Javier and Voos, Holger},
+       journal={IEEE Robotics and Automation Letters},
+       title={Situational Graphs for Robot Navigation in Structured Indoor Environments},
+       year={2022},
+       volume={7},
+       number={4},
+       pages={9107-9114},
+       doi={10.1109/LRA.2022.3189785}
      }
      ```
 
