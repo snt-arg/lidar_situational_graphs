@@ -39,7 +39,7 @@ namespace g2o {
   class G2O_TYPES_SLAM3D_API VertexRoomXYLB : public BaseVertex<2, Vector2>
   {
     public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
       VertexRoomXYLB() {}
 
       virtual void setToOriginImpl() {

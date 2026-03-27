@@ -32,6 +32,10 @@ public:
   Eigen::Vector3d door_pos_w, door_pos_r1, door_pose_r2;
   int room1_id, room2_id;
   g2o::VertexDoorWayXYZ* node;  // node instance
+  
+  // geometric information
+  double width = 0.8;
+  double height = 2.1;
 };
 
 }  // namespace s_graphs

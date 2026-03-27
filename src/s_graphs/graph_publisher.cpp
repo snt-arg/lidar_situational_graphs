@@ -114,6 +114,8 @@ graph_manager_msgs::Graph GraphPublisher::publish_graph(const g2o::SparseOptimiz
       node_attribute.fl_value.push_back(doorway_pose.x());
       node_attribute.fl_value.push_back(doorway_pose.y());
       node_attribute.fl_value.push_back(0.0);
+      node_attribute.fl_value.push_back(doorways_vec_prior[i].width);
+      node_attribute.fl_value.push_back(doorways_vec_prior[i].height);
       node_att_vec.push_back(node_attribute);
       graph_node.attributes = node_att_vec;
       nodes_vec.push_back(graph_node);
